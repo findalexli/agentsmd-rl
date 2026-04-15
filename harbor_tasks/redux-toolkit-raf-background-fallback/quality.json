@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names createRafWithFallbackTimer, the 'called' flag, cancelAnimationFrame, clearTimeout, the exact invocation string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)', the 100ms timeout, the file path src/autoBatchEnhancer.ts, and the test commands. All asserted specifics in the tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Implementation Requirements' section in instruction.md specifies the exact function name 'createRafWithFallbackTimer', the exact flag name 'called', the exact cleanup calls, and the exact invocation 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)'. This effectively dictates the solution rather than describing the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, and test_100ms_timeout_value assert on gold-specific implementation details: the exact helper function name 'createRafWithFallbackTimer', the exact variable name 'called', the exact string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)'. An alternative correct fix (e.g., using a different function name like 'rafWithTimeout', or using a different flag name, or inlining the logic) would fail these tests despi"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, and test_100ms_timeout_value are purely text-matching tests using 'assert X in content' on the source file without any behavioral execution. While test_unit_tests_pass and test_full_test_suite do run code, the fail-to-pass tests are entirely string-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, test_100ms_timeout_value) only check for the presence of specific strings in the source file. An agent could simply append a dead-code comment block containing all required strings (e.g., '// createRafWithFallbackTimer called cancelAnimationFrame clearTimeout') without implementing any actual fix, and the f2p tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/redux-toolkit/packages/toolkit/../../../solution/solve.sh (or wherever mounted). The agent could read solve.sh or the gold patch directly. Additionally, since the instruction.md already contains the exact strings being tested ('createRafWithFallbackTimer(window.requestAnimationFrame, 100)'), the agent can trivially match the fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: the helper function existence, the RAF+setTimeout pattern, the 100ms fallback, the called flag, cleanup functions, the exact invocation, unit tests passing, full test suite, and TypeScript compilation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names and docstrings that explain purpose. They are categorized as 'fail-to-pass' and 'pass-to-pass' in the comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript source code and does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Implementation Requirements' section specifies exact function name 'createRafWithFallbackTimer', exact variable name 'called', exact cleanup calls, and the exact invocation line. This goes well beyond identifying the file to modify and essentially provides the complete solution structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single TypeScript source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings not mentioned in instruction.md: 'selectSAMOverriddenFunction().symbol' (test_fun_interface_lowering_uses_ir_rich_impl), 'needsComposableRemapping()' (test_type_remapper_handles_rich_function_reference), 'overriddenFunctionSymbol.owner.transform(this, null)' (test_type_remapper_handles_rich_function_reference), 'withComposerParamIfNeeded().symbol' (test_composer_param_handles_rich_function_reference), 'super.visitRichFunctionReference(expression)' (test_type_re"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'Enable the ComposableFunInterfaceLowering pass for Native platform when IrRichCallableReferencesInKlibs is supported', 'Add proper handling for IrRichFunctionReference in all three lowering passes', 'Ensure IrRichFunctionReferenceImpl is used for non-JVM platforms in SAM conversion contexts', 'Transform the overriddenFunctionSymbol appropriately'. Combined with hints like 'selectSAMOverriddenFunction() may be useful', this describes exactly what to cha"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation-specific strings like 'expression.overriddenFunctionSymbol = expression.overriddenFunctionSymbol.owner.withComposerParamIfNeeded().symbol', 'expression.overriddenFunctionSymbol.owner.needsComposableRemapping()', 'overriddenFunctionSymbol.owner.transform(this, null)', and 'selectSAMOverriddenFunction().symbol'. An alternative correct fix using different variable naming, method chaining order, or intermediate variables would fail these exact string match assertion"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All functional tests (test_fun_interface_lowering_has_native_check, test_fun_interface_lowering_uses_ir_rich_impl, test_type_remapper_handles_rich_function_reference, test_composer_param_handles_rich_function_reference, test_type_remapper_method_body, test_composer_param_method_body) exclusively use 'assert STRING in file.read_text()' pattern \u2014 pure text matching with no compilation, execution, or behavioral verification of the actual fix."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for strings that don't exist in the base commit files (e.g., 'IrRichFunctionReferenceImpl', 'visitRichFunctionReference', 'isNative()'), so a stub/no-op implementation would not pass. The agent must actually add these constructs to the source files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin (solution/solve.sh contains the full git patch). An agent could read this file or grep for the exact expected strings. Additionally, since tests only check for string presence in files, the agent could simply copy the gold patch content without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements from instruction.md are tested: (1) Native platform enablement with IrRichCallableReferencesInKlibs, (2) IrRichFunctionReference handling in all three passes, (3) IrRichFunctionReferenceImpl usage for non-JVM, (4) overriddenFunctionSymbol transformation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with a module docstring explaining the three lowering passes, descriptive function names (test_fun_interface_lowering_has_native_check, test_type_remapper_handles_rich_function_reference, etc.), section comments (Pass-to-Pass Tests), and per-test docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves modifying Kotlin source files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, class names, method names, and feature flags are consistently and correctly spelled throughout instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names all three exact file paths with full directory structure (e.g., 'plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/ComposableFunInterfaceLowering.kt') and specifies exactly what each file needs (e.g., 'Currently only processes JVM platform', 'Missing handling for rich function reference types'). Combined with Requirements section specifying exact changes, this goes well beyond describing the bug domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Kotlin source files, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

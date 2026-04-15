@@ -1,68 +1,55 @@
 # Fix MCP Database Service Issues
 
-The Superset MCP (Model Context Protocol) service has several issues in the database tools that need to be fixed:
+The Superset MCP (Model Context Protocol) service has several issues in the database tools that need to be fixed to bring them to parity with the chart and dashboard tools.
 
 ## 1. DatabaseFilter Missing User Fields
 
-The `DatabaseFilter` class in `superset/mcp_service/database/schemas.py` is missing the `created_by_fk` and `changed_by_fk` filter columns. These are needed to allow "find my databases" queries using the user's ID from `get_instance_info`.
+The `DatabaseFilter` model does not accept `created_by_fk` and `changed_by_fk` as valid filter columns, preventing "find my databases" queries.
 
-**Expected**: The `col` field in `DatabaseFilter` should accept `created_by_fk` and `changed_by_fk` as valid filter columns, matching the pattern used in chart and dashboard filters.
+**Expected behavior**:
+- `DatabaseFilter(col="created_by_fk", opr="eq", value=123)` should work without validation errors
+- `DatabaseFilter(col="changed_by_fk", opr="eq", value=456)` should work without validation errors
+- The `DatabaseFilter` description text should mention using `created_by_fk with the user` ID from `get_instance_info's current_user`
 
 ## 2. Missing Field Validators for JSON Parsing
 
-The `ListDatabasesRequest` class lacks field validators for `filters` and `select_columns`. MCP clients may send these as JSON strings (due to double-serialization issues), but the current implementation doesn't handle this.
+The database request model does not handle JSON string inputs for `filters` and `select_columns`. MCP clients may send these as JSON strings due to double-serialization issues.
 
-**Expected**: Add `@field_validator` decorators for both `filters` and `select_columns` fields that can parse JSON strings or accept native Python lists. Look at how `DashboardFilter` or `ChartFilter` handles this for reference - they use utilities from `superset.mcp_service.utils.schema_utils`.
+**Expected behavior**:
+- `ListDatabasesRequest(filters='[{"col": "created_by_fk", "opr": "eq", "value": 123}]')` should parse into a list of filter model objects with `.col`, `.opr`, and `.value` accessible
+- `ListDatabasesRequest(select_columns='["id", "database_name", "backend"]')` should parse into `["id", "database_name", "backend"]`
+- The database schemas module must re-export `field_validator` (from pydantic), `parse_json_or_list`, and `parse_json_or_model_list` so they are importable from the `superset.mcp_service.database.schemas` namespace
 
-## 3. Duplicate DEFAULT_DATABASE_COLUMNS
+## 3. Duplicate Default Columns Constant
 
-The `DEFAULT_DATABASE_COLUMNS` list is defined in both `superset/mcp_service/database/tool/list_databases.py` AND `superset/mcp_service/common/schema_discovery.py`. This creates maintenance issues.
-
-**Expected**: The `list_databases.py` file should import `DATABASE_DEFAULT_COLUMNS` from `schema_discovery` instead of defining its own local copy.
+The default database columns list is duplicated — it exists in the database list tool and also in the shared `superset.mcp_service.common.schema_discovery` module as `DATABASE_DEFAULT_COLUMNS`. The local copy in the list tool should be eliminated by importing `DATABASE_DEFAULT_COLUMNS` from `superset.mcp_service.common.schema_discovery` and using it (e.g., `default_columns=DATABASE_DEFAULT_COLUMNS`).
 
 ## 4. Timezone-Aware Timestamp Issues
 
-Two timestamp-related bugs need fixing:
+Two timestamp bugs exist in the database schemas:
 
-a) `DatabaseError.create()` in `schemas.py` uses `datetime.now()` without timezone info, creating naive timestamps.
+- `DatabaseError.create()` produces naive timestamps (missing timezone info)
+- The `_humanize_timestamp` function fails when given timezone-aware datetime objects
 
-b) `_humanize_timestamp()` function doesn't properly handle timezone-aware datetimes, which can cause errors when comparing naive and aware datetimes.
-
-**Expected**: Use `datetime.now(timezone.utc)` for UTC-aware timestamps, and ensure `_humanize_timestamp` handles both aware and naive datetimes correctly.
+**Expected behavior**:
+- `DatabaseError.create(error="Test error", error_type="test")` should produce a timestamp where `.tzinfo is not None`
+- `_humanize_timestamp()` should work correctly with both timezone-aware and naive datetimes (e.g., `datetime.now(timezone.utc) - timedelta(hours=2)` should return a string containing "hour" or "ago"; naive datetimes should also produce valid results)
 
 ## 5. Documentation Updates
 
-The default instructions in `superset/mcp_service/app.py` need updates:
+The default MCP instructions need to be updated to include database examples:
 
-- The "To find your own charts/dashboards:" section should mention databases too
-- Add an example showing `list_databases(filters=[{"col": "created_by_fk", ...}])`
-- Add a "My databases:" section in the examples
+- The existing "charts/dashboards" references should be updated to include databases as well (the literal text `charts/dashboards/databases` should appear)
+- Include an example showing `list_databases(filters=[{"col": "created_by_fk", ...}])`
+- Add a section with the heading `My databases:`
 
 ## 6. Docstring Fix
 
-In `superset/mcp_service/mcp_core.py`, the `ModelGetSchemaCore.__init__` docstring mentions model types but is missing "database" from the list.
+The `ModelGetSchemaCore.__init__` docstring lists supported model types as `(chart, dataset, dashboard)` but omits `database`. It should say `(chart, dataset, dashboard, database)`.
 
-**Expected**: The docstring should say `(chart, dataset, dashboard, database)` instead of just `(chart, dataset, dashboard)`.
+## Verification
 
-## Files to Modify
-
-- `superset/mcp_service/database/schemas.py` - Add field validators, fix timestamps, add filter columns
-- `superset/mcp_service/database/tool/list_databases.py` - Remove duplicate DEFAULT_DATABASE_COLUMNS, import from schema_discovery
-- `superset/mcp_service/app.py` - Update documentation/instructions
-- `superset/mcp_service/mcp_core.py` - Update docstring
-
-## Testing
-
-You can verify your changes by:
-1. Checking that `DatabaseFilter` accepts `created_by_fk` and `changed_by_fk` as valid filter columns
-2. Verifying that `ListDatabasesRequest` can parse JSON string inputs for `filters` and `select_columns`
-3. Confirming that `list_databases.py` imports `DATABASE_DEFAULT_COLUMNS` from schema_discovery
-4. Testing that `DatabaseError.create()` produces timezone-aware timestamps
-5. Ensuring the documentation in `app.py` includes database examples
-
-## Reference
-
-Look at how the chart and dashboard tools implement similar features - they already have these patterns in place:
-- `superset/mcp_service/chart/schemas.py` for filter validators
-- `superset/mcp_service/dashboard/schemas.py` for field validation patterns
-- `superset/mcp_service/common/schema_discovery.py` for the canonical DEFAULT_DATABASE_COLUMNS
+You can verify your changes by running the MCP database unit tests:
+```bash
+SUPERSET_TESTENV=true SUPERSET_SECRET_KEY=test python -m pytest tests/unit_tests/mcp_service/ -v --tb=short -x
+```

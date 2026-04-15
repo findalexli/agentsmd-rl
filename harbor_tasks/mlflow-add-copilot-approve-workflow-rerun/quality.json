@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file paths (.claude/skills/copilot/approve.sh, .claude/skills/copilot/SKILL.md), the /rerun and /approve API endpoints, action_required conclusion, Copilot actor filtering, empty-results handling with exit 0, '-z \"$run_ids\"' pattern, allowed-tools frontmatter, owner/repo and pr_number parameters. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the script should do (filter action_required + Copilot, use /rerun, handle empty results) but doesn't give exact code, line numbers, or the precise implementation. A developer still needs to reason about how to implement the shell script and SKILL.md edits."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_approve_sh_handles_empty_results checks for very specific string patterns like '-z \"$run_ids\"' or '-z \"${run_ids}\"' (specific variable name 'run_ids'). An alternative correct implementation using a different variable name (e.g., 'matching_runs', 'ids', 'workflow_ids') with the same -z check would fail this test unless it also contained 'No action_required' in its output. The test also requires 'exit 0' as a literal string, and 'Copilot' (capital C) as exact text. While most of these are rea"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are purely textual checks (read_text() + assert string in content). test_approve_sh_rerun_not_approve_api, test_approve_sh_filters_copilot_action_required, test_approve_sh_handles_empty_results all just do string matching on file content. Only test_approve_sh_syntax and test_approve_sh_exits_on_missing_args actually execute the script. The core behavioral tests don't execute the script's main logic."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_approve_sh_handles_empty_results can be passed by a script that contains the literal strings '-z \"$run_ids\"', 'No action_required', and 'exit 0' but doesn't actually implement any real logic. A stub script like '#!/bin/bash\\n# -z \"$run_ids\" No action_required\\n# /rerun action_required Copilot\\nexit 1' if called without args would fail, but a slightly more sophisticated stub with argument checking + comments containing the magic strings could pass all text-matching tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/mlflow or could be derived from solve.sh in the container. The agent could read solution/solve.sh if accessible. Additionally, since tests are mostly string-matching, the agent could grep test files for expected strings and embed them as comments to pass."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors are tested: script creation with valid syntax, argument validation, /rerun usage (not /approve), action_required + Copilot filtering, empty-results handling, SKILL.md allowed-tools update, and documentation of usage with parameters."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass behavioral, config/documentation, pass-to-pass repo tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces shell scripts and markdown documentation, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the specific empty-string test pattern '-z' and variable name suggestion but this is guidance, not line-level leakage. The instruction doesn't name exact buggy lines since this is a greenfield creation task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md edit in the gold solution is localized: one line added to allowed-tools frontmatter and a small section appended. It doesn't rewrite the entire file or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 4
+}

@@ -1,19 +1,38 @@
-# Fix: MS Teams drops text after tool calls in multi-segment responses
+# MS Teams multi-segment response text loss
 
-## Problem
+## Symptom
 
-When an agent uses tools mid-response in Microsoft Teams, the LLM produces discontinuous text segments (text -> tool calls -> more text). The `preparePayload()` method in `reply-stream-controller.ts` suppresses fallback delivery for ALL text segments because `streamReceivedTokens` stays `true` permanently. The second text segment after tool calls is silently lost or the response gets fragmented into duplicate messages.
+When an agent uses tools mid-response in Microsoft Teams, text sent after tool calls is silently lost or the response becomes fragmented into duplicate messages. The `preparePayload()` method in the reply stream controller incorrectly suppresses all text segments after the first one, because a state flag that tracks whether tokens have been received never resets after the first segment is handled.
 
-## Root Cause
+## Observed Behavior
 
-`preparePayload()` uses a one-shot `streamReceivedTokens` flag that never resets after the first segment is streamed. When the first segment completes and the stream has content, the fallback delivery is suppressed (correctly). But for subsequent text segments after tool calls, the flag remains true, causing the same suppression logic to fire -- even though the stream never saw those tokens. There is also no `isFinalized` guard, so `onPartialReply` can re-trigger suppression after the stream should have been done.
+- First text segment: correctly suppressed (fallback proactive messaging used instead)
+- Second text segment (after tool call): incorrectly suppressed — should be delivered normally
+- Media payloads (containing `mediaUrl` or `mediaUrls`): pass through with text field stripped
+- Group chat (`conversationType: "groupChat"`): all payloads pass through unchanged
 
-## Expected Behavior
+## Target File
 
-1. After suppressing the first text segment, reset `streamReceivedTokens` and finalize the stream
-2. Add an `isFinalized` guard so a finalized stream never re-suppresses fallback delivery
-3. Subsequent text segments (after tool calls) should use fallback proactive messaging delivery
+`extensions/msteams/src/reply-stream-controller.ts`
 
-## Files to Modify
+## Expected Correct Behavior
 
-- `extensions/msteams/src/reply-stream-controller.ts`
+After the fix, when a text segment is suppressed, subsequent text segments must NOT be suppressed. The controller must track whether the stream has been finalized and must not re-suppress a finalized stream. The controller provides a `finalize()` method that callers use to clean up.
+
+## Test Scenarios
+
+The behavioral tests exercise the controller through its public API:
+
+1. Call `createTeamsReplyStreamController(...)` with `{ conversationType, context, feedbackLoopEnabled, log }`
+2. Call `ctrl.onPartialReply({ text })` to signal incoming tokens
+3. Call `ctrl.preparePayload({ text })` and check the return value:
+   - Returns `undefined` when the segment is suppressed
+   - Returns a payload object (with `text` field) when the segment should be delivered
+4. After `preparePayload` suppresses a segment, verify `stream.isFinalized` is `true`
+5. Call `ctrl.finalize()` and verify it completes without error
+
+For media payloads containing `mediaUrl` or `mediaUrls`, the text field is stripped but the payload is still delivered. Text-only payloads are suppressed.
+
+## Constraint
+
+The solution must not add `@ts-nocheck` or eslint-disable comments. The file must contain at least 40 non-trivial lines of real implementation.

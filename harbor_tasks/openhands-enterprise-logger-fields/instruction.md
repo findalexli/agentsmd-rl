@@ -2,24 +2,35 @@
 
 ## Problem
 
-The enterprise JSON logger (`enterprise/server/logger.py`) currently only outputs `message` and `severity` (renamed from `levelname`) fields. It does not include important debugging context like:
+The enterprise JSON logger (`enterprise/server/logger.py`) currently only outputs `message` and `severity` fields. It does not include important debugging context like:
 
-- `module`: The module name where the log was generated
-- `funcName`: The function name where the log was generated  
+- `module`: The source module name where the log was generated
+- `funcName`: The function name where the log was generated
 - `lineno`: The line number where the log was generated
 
 This makes debugging difficult because log entries don't show where they originated in the codebase.
 
-## Location
-
-- **Primary file**: `enterprise/server/logger.py`
-- **Target function**: `setup_json_logger()`
-
 ## Requirements
 
-Modify the `setup_json_logger()` function to include `module`, `funcName`, and `lineno` fields in the JSON log output.
+Modify the logger to include `module`, `funcName`, and `lineno` fields in the JSON log output.
 
-The current format string style needs to be changed to include these fields. The `JsonFormatter` from `pythonjsonlogger.json` can accept percent-style format strings like `%(fieldname)s`.
+The expected output format is:
+```json
+{
+  "message": "Test message",
+  "severity": "INFO",
+  "module": "test_outputs",
+  "funcName": "my_test_function",
+  "lineno": 45
+}
+```
+
+The fields must be:
+- `message`: The log message string
+- `severity`: The log level (renamed from `levelname`)
+- `module`: The source module name (when logging from tests, this should be `test_outputs`)
+- `funcName`: The function name where the log was emitted (should be `my_test_function`, `comprehensive_test`, `error_test_function`, or `extra_fields_test` depending on which test function is calling the logger)
+- `lineno`: A positive integer indicating the source line number
 
 ## Testing
 
@@ -31,23 +42,4 @@ cd enterprise
 PYTHONPATH=".:$PYTHONPATH" poetry run pytest tests/unit/test_logger.py
 ```
 
-## Expected Behavior
-
-After the fix, logging output should look like:
-```json
-{
-  "message": "Test message",
-  "severity": "INFO",
-  "module": "test_logger",
-  "funcName": "test_info",
-  "lineno": 45
-}
-```
-
-Instead of:
-```json
-{
-  "message": "Test message",
-  "severity": "INFO"
-}
-```
+The fix should also pass the project's linting, type checking, and existing unit tests.

@@ -4,29 +4,34 @@
 
 When a Hugo shortcode includes `RenderShortcodes` and the template code is indented (e.g., inside a nested block), Hugo's internal context markers are being treated as indented code blocks by the Goldmark markdown parser. This causes the markers to leak into the rendered output.
 
-The context markers (like `{{__hugo_ctx pid=123}}`) are internal tracking tokens that should never appear in the final rendered HTML.
+The context markers follow the pattern `{{__hugo_ctx ...}}` (e.g., `{{__hugo_ctx pid=123}}`, `{{__hugo_ctx end}}`, `{{__hugo_ctx /}}`). These are internal tracking tokens that should never appear in the final rendered HTML.
 
-## Files to Investigate
+## Acceptance Criteria
 
-1. `markup/goldmark/hugocontext/hugocontext.go` - This package handles the context markers
-2. `hugolib/page__content.go` - The content rendering pipeline where the fix should be integrated
+The test suite verifies the following requirements. All must pass:
 
-## Expected Behavior
+### DedentMarkers function
 
-Context markers should be stripped of their leading whitespace before markdown parsing occurs, preventing Goldmark from treating them as code blocks. The markers should still function correctly for internal tracking but not appear in output.
+The test suite expects an exported function called `DedentMarkers` in the `markup/goldmark/hugocontext` package with signature `func([]byte) []byte`. It must exhibit the following behavior:
 
-## Reproduction Scenario
+- **Strips leading spaces from marker lines:** `"    {{__hugo_ctx pid=123}}"` → `"{{__hugo_ctx pid=123}}"` and `"  {{__hugo_ctx}}"` → `"{{__hugo_ctx}}"`
+- **Strips leading tabs from marker lines:** `"\t\t{{__hugo_ctx end}}"` → `"{{__hugo_ctx end}}"`
+- **Preserves lines without markers unchanged:** `"regular text without markers"` and `"    indented code block"` are returned as-is
+- **Handles multiple markers in one input:** e.g. a multi-line string with `{{__hugo_ctx pid=1}}` and `{{__hugo_ctx /}}` on separate indented lines — only the marker-containing lines should have their leading whitespace removed
 
-Consider a setup where:
-- A shortcode template is indented (e.g., 4 spaces inside a conditional)
-- The template calls `{{ $p.RenderShortcodes }}`
-- The included page has simple markdown content
+### Integration in the content pipeline
 
-Without the fix, the rendered output will contain visible Hugo context markers that should have been stripped.
+The test suite checks that `DedentMarkers` is called from within the `contentToC` function in `hugolib/page__content.go`, ensuring markers are dedented before Goldmark parsing occurs.
 
-## Implementation Notes
+### Test helper
 
-- The fix should handle both spaces and tabs as leading whitespace
-- The fix should not affect content that doesn't contain context markers
-- Look at how the `Strip` function works for inspiration
-- The fix needs to be applied before Goldmark parsing
+The test suite verifies that a method called `AssertNoRenderShortcodesArtifacts` exists somewhere in the Go source tree, for asserting that rendered output is free of shortcode artifacts.
+
+### Integration test
+
+The test `TestRenderShortcodesCodeBlock` in the `hugolib` package must pass. This test validates that `RenderShortcodes` does not leak context markers when the shortcode template is indented.
+
+## Constraints
+
+- All existing tests in the `hugocontext` and `hugolib` packages must continue to pass
+- The code must pass `go vet` and be properly formatted (`gofmt`)

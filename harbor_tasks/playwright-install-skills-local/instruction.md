@@ -18,6 +18,18 @@ The Playwright CLI has several issues with its command organization:
 - The `ToolCapability` type in `config.d.ts` includes `'network'`
 - Skill documentation is updated to reflect all new commands and capability organization
 
+## Required Documentation Updates
+
+The skill documentation at `packages/playwright/src/skill/SKILL.md` must be updated to include:
+
+1. A `### Network` section (or `## Network` at the top level) documenting the route commands
+2. The `route-list` and `unroute` CLI command names in that section
+3. An `### Install` section documenting `install-browser` and `install-skills` commands
+
+Additionally, `packages/playwright/src/skill/references/request-mocking.md` must document the direct CLI route commands:
+- `playwright-cli route-list`
+- `playwright-cli unroute`
+
 ## Files to Look At
 
 - `packages/playwright/src/mcp/terminal/commands.ts` — CLI command declarations

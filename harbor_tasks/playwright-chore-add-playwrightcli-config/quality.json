@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_config_command_declared checks for a regex pattern `// config[\\s\\S]{0,40}config,` (exact comment format); test_program_routes_config checks for exact method name `configure` on session manager; test_session_manager_configure checks for exact property path `this._options.config`; test_daemon_browser_viewport checks for exact viewport `{width:1280,height:720}` and `contextOptions` key with `cliOptions.daemonHea"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly WHAT to change: add 'config' to Category union, declare command with declareCommand({name:'config', category:'config'}), add to commands array with '// config' comment, add {name:'config',title:'Configuration'} to categories array, route through handleSessionCommand passing 'config', dispatch to configure() method, update this._options.config, add contextOptions with viewport {width:1280,height:720}. This is essentially the full solution specifi"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use very specific regex patterns that constrain implementation to match the gold patch exactly. For example, test_config_command_declared checks `/\\/\\/ config[\\s\\S]{0,40}config,/` requiring a specific comment format; test_program_routes_config checks for exact string patterns like `case 'config'` and `sessionManager.configure`; test_session_manager_configure checks for exact code pattern `this._options.config`. An alternative correct implementation using different variable names, different"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are purely textual/regex checks on source files (e.g., test_config_category_in_type reads file and regex-matches the Category type string, test_config_command_declared regex-matches source code, test_help_has_configuration_category regex-matches source). No test actually imports, compiles, or executes the TypeScript code to verify runtime behavior. The tests are essentially `assert pattern in open(path).read()` style checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "While the tests are text-based, they do check for specific content that wouldn't exist without making changes. A stub/no-op wouldn't add 'config' to the Category type or add the command declaration, so these tests would fail on an unmodified codebase."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright/_eval_tmp.cjs or could be found by examining solve.sh. More importantly, since tests are pure regex/text checks on source files, the agent could grep the test file to discover exact patterns needed (e.g., the `// config` comment format, the `sessionManager.configure` method name) and just insert matching text without understanding the feature."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires the configure() method to 'Check if the session can be connected' and 'If connected, stop the existing session' then 'Reconnect to the session', but test_session_manager_configure only checks for textual presence of patterns like `this._options.config` and `connect` \u2014 it doesn't verify the actual stop-then-reconnect behavior or error handling."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass static, Gates pass_to_pass repo_tests, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves adding a CLI command to a TypeScript project, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names internal implementation details: 'declareCommand with name: config', 'handleSessionCommand', 'configure() method on the session manager', 'this._options.config', specific viewport dimensions {width:1280, height:720}, and the exact comment format '// config'. These are implementation-level specifics that go beyond describing the desired feature."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

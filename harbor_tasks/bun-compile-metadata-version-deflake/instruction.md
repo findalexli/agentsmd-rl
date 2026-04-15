@@ -6,13 +6,18 @@ The test `invalid version format should error gracefully` in `test/bundler/compi
 
 ## Root Cause
 
-The test runs 5 sequential `bun build --compile` invocations inside a single test case using a `for` loop. Each invocation spawns a subprocess that takes a non-trivial amount of time. Since the parent `describe` block uses `.concurrent`, individual test cases get their own timeout budget — but because all 5 invocations share one test case's timeout, the cumulative time often exceeds the 90-second test timeout on slower CI machines.
+The test runs 5 sequential `bun build --compile` invocations inside a single test case using a `for` loop. Each invocation spawns a subprocess that takes a non-trivial amount of time. Because all 5 invocations share one test case's timeout budget, the cumulative time often exceeds the 90-second test timeout on slower CI machines.
 
 ## What to Fix
 
-Restructure the test so that each invalid version string gets its own test case. The parent `describe` block already uses `.concurrent`, so splitting them into individual test cases means they will run in parallel, each with its own timeout budget.
+The fix must eliminate the sequential for-loop pattern and restructure the invalid version tests so they no longer share a single timeout budget.
 
-The invalid versions being tested are:
+Specifically, the restructured test must:
+- Use `test.each()` with an array of objects, where each object has a `version` property containing the invalid version string
+- Include `$version` in the test name string for proper test reporting
+- Remove the `invalidVersions` array variable entirely
+
+The 5 invalid version strings that must be tested are:
 - `"not.a.version"`
 - `"1.2.3.4.5"`
 - `"1.-2.3.4"`
@@ -26,5 +31,8 @@ The invalid versions being tested are:
 ## Constraints
 
 - All 5 invalid version formats must still be tested
-- The test assertions (non-zero exit code) must remain the same
+- The test assertions (non-zero exit code via `expect(exitCode).not.toBe(0)`) must remain the same
 - Do not change any other tests in the file
+- The test bodies must still use `await using proc = Bun.spawn(...)` with `await proc.exited`
+- The file must still use `bunExe()`, `bunEnv`, and `tempDir` from the test harness
+- The `describe.concurrent` pattern must be preserved

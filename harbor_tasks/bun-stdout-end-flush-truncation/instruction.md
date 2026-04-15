@@ -22,16 +22,22 @@ Node.js outputs all 200001 bytes correctly in the same scenario.
 
 ## Analysis
 
-The issue is in `src/js/builtins/ProcessObjectInternals.ts`, in the `getStdioWriteStream` function.
-
-`process.stdout` uses a fast-path write mechanism that bypasses `Writable._writableState` tracking — it never updates `pendingcb`. When `.end()` is called, the internal `finishMaybe()` sees `pendingcb === 0` and immediately schedules the finish callback, even though the underlying file sink may still have buffered data waiting to be flushed through the pipe.
-
-The stream lacks a `_final` hook. In Node.js streams, `_final` runs before the stream transitions to "finished" state, giving an opportunity to flush pending data. Without it, `.end()` completes immediately regardless of pending writes.
+The issue is in the writable stream implementation used for `process.stdout` and `process.stderr`. These streams use a fast-path write mechanism that bypasses `Writable._writableState` tracking — it never updates `pendingcb`. When `.end()` is called, the internal `finishMaybe()` sees `pendingcb === 0` and immediately schedules the finish callback, even though the underlying file sink may still have buffered data waiting to be flushed through the pipe.
 
 ## Expected Behavior
 
 The `.end(callback)` should only invoke the callback after all buffered data has been fully flushed through the underlying sink, matching Node.js behavior.
 
+The stream's completion mechanism must:
+
+1. Call `sink.flush()` to flush any pending data through the underlying file descriptor
+2. Handle synchronous flush completion by invoking the callback with `null` or `undefined`
+3. Handle asynchronous flush completion by detecting when `sink.flush()` returns a Promise, waiting for it to resolve before invoking the callback with `null` or `undefined`
+4. Propagate any errors from the flush operation to the callback without throwing uncaught exceptions
+5. Use `$isPromise` (not `instanceof Promise`) for Promise detection
+6. Use `.$call` and `.$apply` (not `.call` and `.apply`) for function invocation
+
 ## Relevant Files
 
-- `src/js/builtins/ProcessObjectInternals.ts` — the `getStdioWriteStream` function that creates `process.stdout` and `process.stderr` streams
+- `src/js/builtins/ProcessObjectInternals.ts` — contains the stream creation logic for stdio
+- Look for references to `kWriteStreamFastPath` and `internal/fs/streams` module usage

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (Server.php, Install.php, Http/Installer/Install.php, step-4.phtml, step-5.phtml, styles.css, AGENTS.md), key methods (hasExplicitCliParams, Runtime::enableCoroutine(SWOOLE_HOOK_ALL), performInstallation), literal strings ('Updating Appwrite', 'Updating your app'), and concepts (API key hidden on upgrade, data-upgrade CSS) that the tests assert on. The test for '?callable $onComplete = null' is discoverable from 'performInstallation should accept a callback p"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact fixes: 'Runtime::enableCoroutine(SWOOLE_HOOK_ALL) should be called in Server.php', 'hasExplicitCliParams() method should exist', 'performInstallation should accept a callback parameter', 'step-5.phtml should say Updating Appwrite not Updating your app', 'step-4.phtml should wrap the API key badge in an upgrade check'. These are not just descriptions of bugs but prescriptive solutions telling the agent exactly what to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: 'function hasExplicitCliParams()' (specific method name), '?callable $onComplete = null' (specific parameter signature), 'Runtime::enableCoroutine(SWOOLE_HOOK_ALL)' (exact call), '| Command | Purpose |' or '| Command' in AGENTS.md (specific table format). Alternative correct fixes (e.g., using a different method name, a Closure parameter, or enabling coroutines differently) would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every f2p test is purely text-matching: 'assert \"function hasExplicitCliParams()\" in content', 'assert \"Runtime::enableCoroutine(SWOOLE_HOOK_ALL)\" in content', 'assert \"?callable $onComplete = null\" in content', etc. The only behavioral tests are PHP syntax checks (php -l). No test imports, calls, or executes the actual PHP code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Many f2p tests can be satisfied by simply inserting the expected string anywhere in the file without actually fixing the bug. For example, test_has_explicit_cli_params_exists just checks for 'function hasExplicitCliParams()' in the file content \u2014 adding a comment containing that string would pass. Similarly test_agents_md_improved just checks for '| Command | Purpose |' or '| Command' \u2014 appending that string to the file passes without meaningful changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container. The agent could read it directly (cat /solution/solve.sh) and execute it. No measures prevent this. Additionally, since tests are pure string-matching, the agent could grep test files or solution files for expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: Swoole coroutines (test_runtime_enable_coroutine_exists), callback for SSE (test_on_complete_callback_param), API key hidden on upgrade (test_upgrade_api_key_hidden), copy fix (test_copy_appwrite_not_app), CLI params method (test_has_explicit_cli_params_exists), CSS upgrade rule (test_css_installer_page_upgrade), AGENTS.md (test_agents_md_improved), and DNS/telemetry is partially covered by PHP syntax. The only missing explicit test is for th"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, logically grouped into fail-to-pass and pass-to-pass sections with clear comments separating them."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In tests/test_outputs.py line near the end, there is 'AssertionError' instead of 'AssertionError' \u2014 actually it's 'AssertionError' which should be 'AssertionError'. Wait, looking more carefully: 'except AssertionError as e:' \u2014 this is a typo for 'AssertionError' should be 'AssertionError'. Actually the correct spelling is 'AssertionError' vs 'AssertionError'. The code says 'AssertionError' but the correct Python exception is 'AssertionError'. Let me re-read: 'except AssertionError' \u2014 actually 'A"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact method signatures ('hasExplicitCliParams()'), exact API calls ('Runtime::enableCoroutine(SWOOLE_HOOK_ALL)'), exact parameter signatures ('callback parameter'), and exact file locations for each fix. The 'How to verify' section essentially provides a checklist of the exact implementation, going well beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it involves code changes across multiple files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

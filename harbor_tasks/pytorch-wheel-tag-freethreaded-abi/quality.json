@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for multiple specific behaviors not mentioned in instruction.md: (1) test_freethreaded_abi_via_sysconfig checks detection via sysconfig.get_config_var('Py_GIL_DISABLED'), which is never mentioned in the instruction; (2) test_freethreaded_abi_via_env_var checks detection via MATRIX_PYTHON_VERSION ending in 't', never mentioned; (3) test_mac_minos_mode2_attempted checks that check_mac_wheel_minos attempts Mode 2 fallback and asserts 'skipping wheel minos' is NOT in output, but instruct"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (sys.abiflags is empty on free-threaded Python, dead code after raise, missing Mode 2 fallback) but doesn't specify exact code changes, line numbers, or implementation details for the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_freethreaded_abi_via_sysconfig patches sysconfig.get_config_var specifically for 'Py_GIL_DISABLED' key, requiring the solution to use this exact config var. test_freethreaded_abi_via_env_var requires detection via MATRIX_PYTHON_VERSION ending in 't'. test_mac_minos_mode2_attempted asserts 'skipping wheel minos' is not in output, which constrains the implementation to not print that specific message. An alternative correct fix that uses a different detection mechanism (e.g., checking sys.ver"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests actually import and call check_wheel_platform_tag() and check_mac_wheel_minos(), create real wheel files, and verify behavioral outcomes (success or RuntimeError). test_dead_code_removed uses AST inspection which is structural but still programmatic. test_freethreaded_abi_subprocess runs a subprocess."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub check_wheel_platform_tag() that does nothing would fail test_freethreaded_wrong_tag_rejected (which expects RuntimeError). A stub check_mac_wheel_minos() that just returns would fail test_mac_minos_mode2_attempted (which checks output doesn't contain 'skipping'). The dead code test checks AST structure of the actual source file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace as solve.sh and the gold patch is readable. The Dockerfile doesn't remove /solution/ or restrict access. An agent could read the solution directly or grep for the expected patch content."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three issues mentioned in instruction.md are tested: free-threaded ABI tag validation (multiple tests), dead code removal (test_dead_code_removed), and Mode 2 fallback for check_mac_wheel_minos (test_mac_minos_mode2_attempted)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (.ci/pytorch/smoke_test/check_wheel_tags.py) and the two functions, which is appropriate for the task domain. It doesn't specify exact line numbers or exact code changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

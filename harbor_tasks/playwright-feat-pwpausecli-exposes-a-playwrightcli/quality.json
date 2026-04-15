@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific file paths (e.g., packages/playwright/src/cli/daemon/daemon.ts, packages/playwright/src/mcp/test/browserBackend.ts, packages/playwright/src/cli/client/program.ts), specific function names (decorateServer, sessionConfigFromArgs, runDaemonForContext, startMcpDaemonServer), specific variable names (_onDidFinishTestFunctionCallbacks), specific patterns (new Set<, for...of iteration, if (!noShutdown)), exact literal values (actionTimeout 5000, timeout 0), and exact regex pattern"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior needs to change (PWPAUSE=cli mode, multiple finish handlers, export utilities, update docs) but does not specify exact line changes or code snippets to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: _onDidFinishTestFunctionCallbacks must be a Set (not an array), must use for...of iteration, decorateServer must be exported (not re-implemented), sessionConfigFromArgs must be exported with that exact name, noShutdown must be the parameter name, actionTimeout must be exactly 5000, the else-if pattern must match /else\\s+if\\s*\\(\\s*process\\.env\\.PWPAUSE\\s*\\)/. An alternative correct implementation using an array instead of Set, a different paramet"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every fail-to-pass test reads source files and checks regex patterns against source text (e.g., test_finish_callbacks_is_set checks for 'new Set<' in source, test_pwpause_cli_overrides checks regex patterns in source). The pass-to-pass tests (tsc, check-deps, lint) do execute build tools, but the core behavioral tests are purely textual assertions on source code, not behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since the tests are regex-based source text checks, a stub that simply writes files containing the expected strings/patterns would pass. For example, test_run_daemon_for_context_exported just checks that the string 'export async function runDaemonForContext' appears in browserBackend.ts \u2014 a non-functional stub with that signature and the strings 'process.env.PWPAUSE' and 'startMcpDaemonServer' in comments would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/playwright as a git apply target, and the solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh to see the exact patch. Additionally, since tests are regex-based source text checks, the agent could grep test files (if accessible) for expected patterns and insert matching text without understanding the feature."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that PWPAUSE=cli should 'start a daemon server after the test finishes' and 'expose the browser context as a playwright-cli daemon session'. No test actually verifies this runtime behavior \u2014 tests only check source text patterns. The actual daemon-launching behavior is untested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear comments separating pass-to-pass repo checks, gate checks, fail-to-pass code behavioral tests, and fail-to-pass agent config tests. Each test has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names specific files like packages/playwright/src/skill/SKILL.md, packages/playwright/src/skill/references/playwright-tests.md, and mentions specific internal concepts like 'daemon server', 'artifacts recorder', callback mechanism changes. While some file naming is expected for config tasks, specifying internal implementation files narrows the solution space significantly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md and reference doc changes in the gold patch are localized additions/edits, not full-file rewrites, and they don't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

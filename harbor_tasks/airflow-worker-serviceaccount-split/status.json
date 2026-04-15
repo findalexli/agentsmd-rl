@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T17:22:57.573863",
-  "total_time": 488.04,
-  "sandbox_id": "ir9cwxchizz7xumm6l92c",
+  "validated_at": "2026-04-15T03:26:21.054646",
+  "total_time": 769.87,
+  "sandbox_id": "ikssjlzngtkhsbp6o45b5",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.78,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:79: test `test_worker_kubernetes_serviceaccount_template_exists` has 1', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:27: unpinned pip deps: pytest, pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.13,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "gemini",
-      "time": 3866.73,
-      "at": "2026-04-10T02:27:43.255865"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +105,14 @@
       "backend": "fireworks",
       "time": 488.04,
       "at": "2026-04-11T17:22:57.573863"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 769.87,
+      "at": "2026-04-15T03:26:21.054646"
     }
   ]
 }

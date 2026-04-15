@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific function names 'appendTitleSuffix' and 'getTitleString' must exist in meta.ts (test_appendTitleSuffix_function_exists, test_getTitleString_function_exists). These function names are never mentioned in instruction.md, making them undiscoverable from the instruction alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug (TemplateString objects becoming [object Object]) and the three cases to handle, but does not specify exact code changes, line numbers, or helper function names to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists assert that specific gold-solution helper function names ('appendTitleSuffix', 'getTitleString') exist in meta.ts. A correct alternative fix that handles TemplateString objects inline or with differently-named helpers would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_appendTitleSuffix_function_exists and test_getTitleString_function_exists are pure text-matching tests ('assert \"appendTitleSuffix\" in content') with no execution. While other tests do execute code via vitest subprocess calls, these two are purely textual assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (e.g., test_generateMetadata_templateString_default_and_template) run vitest tests that check specific object fields and string values. A stub returning default/empty values would not produce 'Dashboard - My CMS' in the correct object structure."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/payload after solve.sh runs, and the agent could potentially read the gold patch from solution/solve.sh if accessible in the container. Also, the test file meta.spec.ts must be created by the agent, but its exact expected test names are visible in test_outputs.py subprocess calls, which the agent could discover by examining the test runner expectations."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: string titles with suffix, TemplateString with default/template fields, TemplateString with absolute field, and titleSuffix appending."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies and whether it's fail-to-pass or pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a bug in metadata generation, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, commands, and variable names in instruction.md and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the relevant file (meta.ts) which is natural for the task domain, and describes the bug conceptually without naming specific lines or internal implementation details like helper function names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not an agentmd-edits/config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

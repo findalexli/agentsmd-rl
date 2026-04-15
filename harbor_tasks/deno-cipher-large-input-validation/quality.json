@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (ext/node/polyfills/internal/crypto/cipher.ts), the classes (Cipheriv, Decipheriv), the threshold (2^31-1), the exact error message ('Trying to add data in unsupported state'), the native op names (op_node_cipheriv_encrypt, op_node_decipheriv_decrypt), and the requirement that the check be before the native call. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: check `buf.length >= 2 ** 31 - 1`, throw `Error('Trying to add data in unsupported state')`, and do it before `op_node_cipheriv_encrypt`/`op_node_decipheriv_decrypt`. This is essentially the complete implementation, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to match specific patterns like `.length >= 2**31-1` and `throw new Error('Trying to add data in unsupported state')`. An alternative correct fix using a different threshold expression (e.g., `buf.length > 2147483646`) or different error construction (e.g., `throw Error(...)` without `new`, or using a variable for the message) would fail. The regex `_THRESHOLD_RE` does allow some variants (decimal, hex, Math.pow), but `throw new Error` with exact string is mandatory."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests read the source file as text and use regex pattern matching (e.g., `re.search(check_re, body)`, `re.search(throw_pattern, body)`). No test actually imports, calls, or executes the TypeScript code. The tests are fundamentally string/text matching on source code, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass because the tests check for specific code patterns (threshold check, error throw) that must be present in the update method bodies. The unmodified source lacks these patterns, so the tests correctly fail without the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/deno in the container (via solve.sh). The agent could read solution/solve.sh which contains the exact patch. The tests only do regex matching on source text, so the agent could also grep test files or solution files for the exact strings to insert. The fixture strings ('Trying to add data in unsupported state', '2 ** 31 - 1') are directly in the instruction."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in the instruction (threshold check for both Cipheriv and Decipheriv, exact error message, check before native op call) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_cipheriv_update_rejects_large_input, test_size_check_before_encrypt_call, etc.), docstrings, and clear section comments separating fail-to-pass from pass-to-pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (ext/node/polyfills/internal/crypto/cipher.ts), the exact methods (Cipheriv.prototype.update, Decipheriv.prototype.update), the exact native op names to check ordering against (op_node_cipheriv_encrypt, op_node_decipheriv_decrypt), the exact threshold expression, and the exact error message. This goes well beyond describing what's broken and essentially specifies the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

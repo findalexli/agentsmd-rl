@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (utils.py, lora_manager.py), function names (auto_detect_lora_target_modules, get_normalized_target_modules, init_lora_shapes, init_lora_modules, get_layer_id), class names (LinearBase, ParallelLMHead, FusedMoE), import paths, recognized module names (qkv_proj, o_proj, etc.), error string behavior, and normalization rules that the tests check. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes required behavior (auto-detection function signature, normalization rules, error handling) but does not give the exact code changes, line numbers, or implementation details. A developer must still reason about how to implement the detection logic and integrate it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (detected module sets, ValueError messages, import availability, formatting compliance) rather than specific implementation details. Alternative implementations using different internal variable names, loop structures, or detection approaches would pass as long as they produce the correct module sets and error behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess execution to actually import and call the code (e.g., auto_detect_lora_target_modules is called on mock models, get_normalized_target_modules is called with various inputs), AST parsing for structural checks, and linting tool execution. They are not purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_auto_detect_dense_model call auto_detect_lora_target_modules (which doesn't exist in the base commit) and assert specific return sets. A stub returning None/empty set would fail. The normalization tests assert specific ValueError raising for invalid strings, which wouldn't happen with a pass-through stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/sglang and solve.sh is accessible in the container. The agent could potentially read the gold patch from /solution/solve.sh or similar paths if they exist in the container filesystem. The Dockerfile doesn't explicitly remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors specified in instruction.md are tested: auto_detect_lora_target_modules for dense models, FusedMoE detection, embedding exclusion, unrecognized module exclusion, get_normalized_target_modules rejection of invalid strings, normalization of valid lists, the absence of 'cannot be resolved automatically' error, and structural/import checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, Fail-to-pass), descriptive function names (test_auto_detect_dense_model, test_normalize_rejects_invalid_string), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes, not structured data output like JSON/CSV/API responses."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, class names, and variable names in the instruction are consistent and correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction identifies relevant files and methods (which is appropriate for a bug report) but doesn't specify exact line numbers or the precise code changes needed. It describes what behavior should exist, not the exact diff."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

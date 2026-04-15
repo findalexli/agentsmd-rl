@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact files (PurePanel.tsx, style/index.ts), the pattern 'title && (...)', the className pattern with prefixCls, the '&:first-child' selector, marginInlineEnd, marginTop: 0, and token references. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation pattern: 'use the pattern title && (...)' for conditional rendering, add '&:first-child' selector with specific properties marginInlineEnd and marginTop: 0. This tells the agent exactly WHAT to change rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact textual patterns like 'title && (' in content, regex matching 'title\\s*&&\\s*\\(\\s*<div[^>]*className=\\{clsx\\(`\\$\\{prefixCls\\}-title`', and exact string \"'&:first-child'\" with specific property names inside. Alternative correct fixes (e.g., using a ternary 'title ? (...) : null', or using CSS :empty selector, or different conditional patterns) would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (TestConditionalTitleRendering, TestDescriptionFirstChildStyle) exclusively use file content string matching: 'assert \"title && (\" in content', regex searches on file text, 'assert \"'&:first-child'\" in content'. No test renders the component, calls functions, or checks actual DOM/CSS behavior. The integration tests run linters but don't test the actual bug fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific patterns ('title && (', '&:first-child' with marginInlineEnd and marginTop: 0) that don't exist in the base commit's files. A stub/no-op solution would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/antd after solve.sh runs, but more critically, the agent could read the test file at the tests/ path or grep for expected patterns. The tests only check for literal strings in files, so the agent could simply insert the exact text patterns without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: conditional title rendering with 'title && (' pattern, '&:first-child' selector, marginInlineEnd, marginTop: 0, and design token usage."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestConditionalTitleRendering, TestDescriptionFirstChildStyle, TestRepoIntegration) with clear docstrings explaining before/after behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing UI component code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, CSS properties, and commands are all correctly spelled throughout instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'use the pattern title && (...)' for conditional rendering, the exact CSS selector '&:first-child', exact properties marginInlineEnd and marginTop: 0, and even references to specific token names (token.marginXS, token.marginSM). This goes far beyond describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TSX and TS style files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

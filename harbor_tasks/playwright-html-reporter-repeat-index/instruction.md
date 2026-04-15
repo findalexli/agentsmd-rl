@@ -10,20 +10,41 @@ For example, if you run `npx playwright test --repeat-each 3`, the same test app
 
 The HTML reporter should display a `repeatEachIndex` annotation on test cases when the index is non-zero (i.e., repetitions 1, 2, 3, etc.). The first repetition (index 0) should not show this annotation to avoid clutter.
 
-## Files to Look At
+## Implementation Requirements
 
-- `packages/playwright/src/reporters/html.ts` — The HTML reporter that generates test report data. This file creates the `TestCaseSummary` objects that are passed to the HTML reporter UI.
+### Type Definition
 
-- `packages/html-reporter/src/types.d.ts` — TypeScript type definitions for the HTML reporter. You may need to add the `repeatEachIndex` field to the appropriate type(s).
+In `packages/html-reporter/src/types.d.ts`, the `TestCaseSummary` type must include a `repeatEachIndex` field with the following signature:
 
-- `packages/html-reporter/src/testCaseView.tsx` — React component that renders individual test case details in the HTML report. This is where the annotation display logic should be added.
+```
+repeatEachIndex?: number
+```
 
-## Implementation Hints
+### HTML Reporter
 
-1. The HTML reporter (`html.ts`) has access to `test.repeatEachIndex` which indicates which repetition of the test this is (0-indexed).
+In `packages/playwright/src/reporters/html.ts`, the HTML builder must pass `repeatEachIndex` from the test object to the test case summary data. The expression used must handle the zero case by excluding it:
 
-2. The `repeatEachIndex` should only be included in the output when it's non-zero (to avoid cluttering the UI for the common case of no repetition).
+```
+repeatEachIndex: test.repeatEachIndex || undefined
+```
 
-3. In the test case view component, you'll need to add an annotation when `repeatEachIndex` is present and non-zero.
+This ensures the field is absent (undefined) when the index is 0, so the UI knows not to display the annotation.
 
-4. Look at how other annotations are displayed in the test case view for guidance on the UI pattern to follow.
+### Test Case View Component
+
+In `packages/html-reporter/src/testCaseView.tsx`, implement a helper function named `appendRepeatEachIndexAnnotation` that:
+
+1. Takes an annotations array and a `repeatEachIndex` value as parameters
+2. Checks if `repeatEachIndex` is truthy using `if (repeatEachIndex)`
+3. If truthy, pushes an annotation with `type: 'repeatEachIndex'` and `description: String(repeatEachIndex)` converted to a string
+4. Calls this function at least twice — once for `visibleTestAnnotations` and once for `visibleAnnotations` in the result rendering path
+
+### Files to Modify
+
+- `packages/playwright/src/reporters/html.ts` — Add `repeatEachIndex` to test case data passed to the HTML reporter
+- `packages/html-reporter/src/types.d.ts` — Add `repeatEachIndex?: number` field to `TestCaseSummary` type
+- `packages/html-reporter/src/testCaseView.tsx` — Add the `appendRepeatEachIndexAnnotation` function and call it for both test and result annotations
+
+### UI Pattern
+
+Look at how other annotations are displayed in the test case view for guidance on the UI pattern to follow. The annotation should appear as a chip/badge in the test case details when the repetition index is non-zero.

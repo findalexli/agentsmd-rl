@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: tool names (browser_route, browser_route_list, browser_unroute), schema fields (pattern, status, body, contentType, headers, removeHeaders), file paths (context.ts, tools.ts, command.ts, commands.ts, helpGenerator.ts, SKILL.md), RouteEntry type, addRoute/removeRoute/routes methods, defineTool usage, export default, 'No active routes' string, 'network' category, CLI command names (route, route-list, unroute), and the SKILL.md changes (Building secti"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: specific type name RouteEntry with specific fields, exact method names addRoute/removeRoute/routes, exact file locations, exact tool names, exact CLI command names, exact string literals like 'No active routes', and even specifying to 'spread the route module' in tools.ts. While it stops short of giving line numbers, it leaves almost no design decisions to the agent \u2014 it's a specification of the solution r"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_route_tools_registered checks for exact import pattern 'import route from' and '...route' spread syntax; test_context_route_management checks for 'browserContext.route(' and '.unroute(' as exact internal delegation calls; test_route_fulfill_and_continue parses the handler body for '.fulfill(' and '.continue(' strings. An alternative correct implementation using different internal method names or different delegation patterns would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads source files as text and checks for string patterns \u2014 none imports, compiles, or executes the code. For example, test_route_tool_definition checks `src.includes(\"name: 'browser_route'\")`, test_context_route_management checks `src.includes('addRoute')`, test_route_tools_registered checks `src.includes('...route')`. No test actually runs the tools or verifies runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "While the tests are text-based, a stub/empty file would not pass them. They require specific string content like tool definitions with particular names, schema fields, fulfill/continue calls, RouteEntry type exports, etc. An empty or minimal stub would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The tests are purely text-matching on source files. An agent could read the test file (tests/test_outputs.py) to discover exactly what strings are checked and craft files containing just those strings without understanding the actual feature. Additionally, the solution is available at /workspace/playwright and the solve.sh contains the full patch."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies that 'When a body or status is provided, the route should fulfill with a mock response' and 'When only headers are specified, the route should modify headers and continue the request' \u2014 but no test actually verifies this runtime behavior. Also, the CLI commands (route, route-list, unroute) under the 'network' category are specified but test_cli_commands only checks for string presence in commands.ts, not actual CLI functionality."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_route_tool_definition, test_route_fulfill_and_continue, etc.), docstrings explaining what each tests, and comments categorizing them as 'Gates', 'Fail-to-pass (agent_config)', and 'Fail-to-pass (pr_diff)'."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the schema for browser_route's input (pattern: string required, status: number optional, body: string optional, contentType: string optional, headers: array of strings optional, removeHeaders: string optional) and the RouteEntry type with its pattern string field."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "The instruction intentionally includes the typo 'flint' (instead of 'lint') as it refers to existing npm script names in the project. File paths, variable names, and command names are all correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact files to modify (tools.ts 'must import and spread the route module'), exact type names (RouteEntry), exact method signatures (addRoute, removeRoute, routes), and exact implementation details like the SKILL.md lint command fix from 'npm run flint:mcp' to 'npm run flint'. This goes beyond describing the task domain into specifying the exact solution structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md edit in the gold patch is localized \u2014 adding Building sections, adding 'do not run test --debug' lines, and fixing the lint command. It doesn't rewrite the entire file or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 6
+}

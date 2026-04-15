@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings not mentioned in instruction.md: 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', 'is FirTypeOperatorCall if condition.isArgumentWhenSubject() ->', the helper method signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', 'argument.unwrapSmartcastExpression() is FirWhenSubjectExpression', the test data file path 'falsePositiveDuplicateCodition.kt', the directive '// ISSUE: KT-85244', and '// RUN_PIPELINE_TILL: BACKEND'. None of th"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly says 'Modify the checker so that it only considers a condition as a potential duplicate if it's actually checking the when subject' and 'Guard conditions using else if that check other variables should be excluded from duplicate detection' \u2014 this describes exactly WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details: specific guard condition syntax ('is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->'), exact helper method name and signature ('private fun FirCall.isArgumentWhenSubject(): Boolean'), exact implementation ('argument.unwrapSmartcastExpression() is FirWhenSubjectExpression'), and that old patterns must be removed. An alternative correct fix (e.g., using a different method name, inline check, or different approach) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the file content and checks for string patterns (e.g., 'assert equality_guard in content', 'assert re.search(method_pattern, content)'). No test compiles the code, runs the checker, or executes any behavior. This is purely text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply writes the expected strings into the checker file (without any real logic) would pass all tests, since tests only check for string presence/absence in file content, not actual compilation or runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/kotlin (same repo the agent works in). The agent could read solution/solve.sh if accessible, or simply grep the test file at tests/test_outputs.py to discover the exact strings expected (e.g., 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->') and write them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md says 'Actual duplicate conditions on the same subject should still be detected correctly' but no test verifies this regression behavior. Also, instruction says 'The FIR checkers module should compile without errors' but no compilation test exists."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_guard_condition_fix_behavior, test_helper_method_behaviorally_correct, etc.) with docstrings explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "The test data filename is 'falsePositiveDuplicateCodition.kt' \u2014 'Codition' is a typo for 'Condition'. This appears consistently in tests and solution but is still a typo."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction.md names the file to modify (FirWhenConditionChecker.kt) which is reasonable since the task domain makes it obvious. It doesn't specify exact line numbers or the precise code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "no_typos"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

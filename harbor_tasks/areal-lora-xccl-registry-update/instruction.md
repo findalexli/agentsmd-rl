@@ -10,10 +10,15 @@ Additionally, the distributed weight update request builder does not forward the
 
 After a successful LoRA weight update via XCCL:
 
-1. The XCCL update endpoint should receive the LoRA metadata (name, int_id, etc.) in the request payload
-2. The `openai_serving_models.lora_requests` registry should be updated to map the new versioned LoRA name to the correct `lora_int_id`, and the old name entry should be removed
+1. **Payload forwarding**: When `use_lora=True`, the XCCL update request to the LoRA-specific endpoint must include a payload containing:
+   - `lora_name`: the versioned LoRA name in format `{lora_name}-v{version}` (e.g., `gsm8k-lora-v1`)
+   - `lora_int_id`: the integer LoRA identifier
+
+   For the non-LoRA XCCL endpoint, the payload must be empty.
+
+2. **Registry update**: After the LoRA XCCL weight update completes, the `openai_serving_models.lora_requests` registry must be updated to map the new versioned LoRA name to its `lora_int_id`, and the old versioned name entry must be removed.
 
 ## Files to Look At
 
-- `areal/engine/vllm_remote.py` — Builds the HTTP requests for distributed weight updates. The `build_distributed_weight_update_requests` method in `VLLMBackend` constructs the payload sent to the XCCL update endpoint.
-- `areal/engine/vllm_ext/areal_vllm_server.py` — FastAPI server endpoints for vLLM weight updates. The `update_weight_lora_xccl` endpoint handles the XCCL-based LoRA weight update but does not currently update the model name registry.
+- `areal/engine/vllm_remote.py` — Contains the distributed weight update request builder for the vLLM backend. It constructs the HTTP requests sent to the XCCL update endpoints.
+- `areal/engine/vllm_ext/areal_vllm_server.py` — FastAPI server endpoints for vLLM weight updates. One endpoint handles XCCL-based LoRA weight updates.

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:42:43.624169",
-  "total_time": 1492.54,
-  "sandbox_id": "ilztmwij2t0qo0hez8ubk",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:16:54.393313",
+  "total_time": 939.11,
+  "sandbox_id": "i8my4de0tj9rfzfos9jwn",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -42,6 +44,24 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:366: test `test_evaluate_env_empty_outputs` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:515: test `test_no_bare_except` has 1 assert(s), all pass on a stub im', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: numpy, pandas, pyyaml', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.33,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
@@ -68,6 +88,14 @@
       "backend": "fireworks",
       "time": 1492.54,
       "at": "2026-04-12T05:42:43.624169"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 939.11,
+      "at": "2026-04-15T05:16:54.393313"
     }
   ]
 }

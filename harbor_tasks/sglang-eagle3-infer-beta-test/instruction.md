@@ -1,26 +1,25 @@
-# Switch eagle_infer_beta to EAGLE3
+# Update EAGLE test configuration to EAGLE3
 
 ## Problem
 
-The test file `test/registered/spec/eagle/test_eagle_infer_beta.py` is using outdated EAGLE speculative decoding configuration constants and settings. It needs to be updated to use the new EAGLE3 speculative decoding algorithm.
-
-The file currently:
-- Imports `DEFAULT_DRAFT_MODEL_EAGLE` and `DEFAULT_TARGET_MODEL_EAGLE` constants
-- Uses class names `TestEagleServerBase` and `TestEagleServerPage`
-- Sets `--speculative-algorithm EAGLE`
-- Uses a low score threshold of 0.22 for GSM8K tests
+The EAGLE speculative decoding tests in `test/registered/spec/eagle/test_eagle_infer_beta.py` use an older EAGLE configuration that does not match the current EAGLE3 implementation. The tests fail because the file references outdated constants, class names, algorithm settings, and threshold values.
 
 ## Expected Behavior
 
-The test file should be updated to:
-- Import `DEFAULT_DRAFT_MODEL_EAGLE3` and `DEFAULT_TARGET_MODEL_EAGLE3` constants
-- Rename classes to `TestEagle3ServerBase` and `TestEagle3ServerPage`
-- Set `--speculative-algorithm EAGLE3`
-- Add `--dtype=float16` and `--chunked-prefill-size 1024` launch arguments
-- Add `SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN` environment override
-- Update test print statement to use `TestEagle3LargeBS`
-- Update GSM8K score threshold from 0.22 to 0.7
+The test file must be updated so all tests pass. Specifically:
 
-## Files to Look At
+- The file must import EAGLE3 constants from the test utilities (such as `DEFAULT_DRAFT_MODEL_EAGLE3` and `DEFAULT_TARGET_MODEL_EAGLE3`)
+- The file must use EAGLE3 class names (test classes follow a naming convention with `Eagle3` in the name)
+- The speculative algorithm setting must be set to `EAGLE3`
+- The file must include EAGLE3-specific launch arguments: `--dtype` with value `float16` and `--chunked-prefill-size` with value `1024`
+- The file must add an environment override using the `override()` pattern for `SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN`
+- Test output statements must use EAGLE3 naming
+- The GSM8K score threshold must be updated to a value appropriate for EAGLE3
 
-- `test/registered/spec/eagle/test_eagle_infer_beta.py` — The test file requiring updates
+The file `test/registered/spec/eagle/test_eagle_infer_beta.py` should compile without errors and all related EAGLE test files in `test/registered/spec/eagle/` should continue to compile.
+
+## Constraints
+
+- Do not introduce new EAGLE (non-EAGLE3) constants or class names
+- Do not retain the old score threshold value
+- Do not use old class names like `TestEagleLargeBS`

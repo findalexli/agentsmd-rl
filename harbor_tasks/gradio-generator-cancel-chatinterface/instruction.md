@@ -1,25 +1,25 @@
-# Fix generator cancel close in ChatInterface
+# Fix generator cleanup on cancel in ChatInterface
 
 ## Bug Description
 
-When pressing the stop button during streaming in `ChatInterface`, sync generators are not properly closed. The `close()` method is never called on the generator, which means `GeneratorExit` is never raised, and apps cannot clean up resources (e.g., close database connections, cancel API calls).
+When the stop button is pressed during streaming in `ChatInterface`, synchronous generators are not properly closed. This prevents `GeneratorExit` from being raised, meaning applications cannot clean up resources like database connections or API calls when streaming is cancelled.
 
-There are two issues:
+There are two related issues:
 
-1. **In `chat_interface.py`**: The `_stream_fn` and `_examples_stream_fn` methods iterate over the generator but do not use a `finally` block or context manager to ensure the generator is closed when cancellation or any other exit occurs. The generator is simply abandoned.
+1. **In `gradio/chat_interface.py`**: The `_stream_fn` and `_examples_stream_fn` methods iterate over generators but do not ensure the generators are closed when cancellation occurs. The generators are abandoned without proper cleanup.
 
-2. **In `utils.py`**: The `SyncToAsyncIterator.aclose()` method is not declared as `async`, which means `await iterator.aclose()` fails. Similarly, the `safe_aclose_iterator()` helper calls `iterator.aclose()` without `await`, so the close operation does not actually execute.
+2. **In `gradio/utils.py`**: The `SyncToAsyncIterator` class has an `aclose()` method that is not awaitable, preventing it from being used in async contexts where `await` is required. Additionally, the `safe_aclose_iterator()` helper function calls `aclose()` without awaiting it, so the close operation may not actually execute.
 
-## What to Fix
+## Requirements
 
 ### `gradio/chat_interface.py`:
-1. In `_stream_fn`, wrap the generator iteration with `async with aclosing(generator):` (from `contextlib`) to ensure the generator is closed on cancellation or normal exit.
-2. In `_examples_stream_fn`, similarly wrap with `async with aclosing(generator):`.
-3. Add `from contextlib import aclosing` to the imports.
+- `_stream_fn` must wrap its generator iteration with proper cleanup handling that ensures the generator is closed on cancellation or normal exit. The `aclosing` context manager from `contextlib` must be used.
+- `_examples_stream_fn` must similarly wrap its generator iteration with `aclosing`.
+- The file must import `aclosing` from `contextlib`.
 
 ### `gradio/utils.py`:
-1. Make `SyncToAsyncIterator.aclose()` an async method by adding `async` to its definition.
-2. In `safe_aclose_iterator()`, add `await` to the `iterator.aclose()` calls (both for `SyncToAsyncIterator` and the general case).
+- `SyncToAsyncIterator.aclose()` must be an async method that returns a coroutine (can be awaited).
+- `safe_aclose_iterator()` must await the `aclose()` calls for both `SyncToAsyncIterator` and generic async iterators.
 
 ## Affected Code
 
@@ -28,7 +28,7 @@ There are two issues:
 
 ## Acceptance Criteria
 
-- Generator iteration in `_stream_fn` and `_examples_stream_fn` is wrapped with `aclosing()`
-- `SyncToAsyncIterator.aclose()` is an async method
+- Generator iteration in `_stream_fn` and `_examples_stream_fn` is wrapped with `aclosing()` context manager
+- `SyncToAsyncIterator.aclose()` returns a coroutine when called
 - `safe_aclose_iterator()` properly awaits the aclose calls
 - Both files remain syntactically valid Python

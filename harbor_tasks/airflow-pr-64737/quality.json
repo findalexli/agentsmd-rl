@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: `with_row_locks`, `skip_locked=True`, `key_share=False`, `of=Deadline`, `session=session`, `deadline_query` variable name, the comment requirements (mentioning locking and HA/concurrent/duplicate), the file path `airflow-core/src/airflow/jobs/scheduler_job_runner.py`, and the requirement to not leave the query inline. All assert'd specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact fix: extract query into variable named `deadline_query`, call `with_row_locks` with exact parameters `of=Deadline, session=session, skip_locked=True, key_share=False`, add a specific comment. This is not describing what's broken \u2014 it's prescribing the exact code changes including variable names and parameter values."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: `deadline_query` variable name (test_deadline_query_extracted_to_variable), exact parameter names like `of=Deadline`, `session=session`, `skip_locked=True`, `key_share=False` as string matches. An alternative correct fix using different variable names or a different locking approach (e.g., advisory locks, database-level deduplication) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every fail_to_pass test is pure text matching: searching for strings like 'with_row_locks', 'skip_locked=True', 'deadline_query', 'of=Deadline' in the file content. No test actually imports the module, instantiates a scheduler, or verifies that concurrent access is prevented. The only 'execution' tests are syntax checks (py_compile) and ruff linting, which are pass_to_pass."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass the fail_to_pass tests since they check for specific strings (with_row_locks, skip_locked=True, deadline_query, etc.) that don't exist in the original codebase. The agent must actually modify the file to include these constructs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/airflow and solve.sh is in the container's solution/ directory. The agent could read /solution/solve.sh to see the exact gold patch. Additionally, since tests are pure string matching, the agent could grep test_outputs.py to discover exactly what strings to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: with_row_locks usage, skip_locked=True, key_share=False, of=Deadline, session=session, deadline_query variable extraction, explanatory comment, and query not being inline."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_deadline_query_uses_row_locks, test_deadline_row_locks_skip_locked) and include comments categorizing them as fail_to_pass or pass_to_pass. The module docstring explains the purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code, not producing structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (`scheduler_job_runner.py`), the exact function/utility to use (`with_row_locks`), exact parameter values (`skip_locked=True`, `key_share=False`, `of=Deadline`), exact variable name (`deadline_query`), and even the comment content requirements. This goes far beyond identifying what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Python source file, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

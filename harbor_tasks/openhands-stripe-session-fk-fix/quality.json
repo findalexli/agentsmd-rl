@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md explicitly names the file paths (enterprise/integrations/stripe_service.py, enterprise/storage/user_store.py), the function name (migrate_customer), the required call pattern (migrate_customer(session, user_id, org)), and all literal strings checked by tests (a_session_maker, session.commit(), session.execute). The test for test_repo_stripe_service_db_tests_valid checks a file at enterprise/tests/unit/test_stripe_service_db.py which is not mentioned in the instruction, but this is"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix: 'The migrate_customer() function must accept a database session as its first parameter', 'must NOT create a new session using a_session_maker()', 'must NOT call session.commit()', and 'The call pattern migrate_customer(session, user_id, org) must exist in user_store.py'. Under 'Test Assertions' it literally spells out every change needed. A developer doesn't need to reason about what to change \u2014 it's fully prescribed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'migrate_customer(session, user_id, org)' in user_store.py and require the first parameter to be named exactly 'session'. An alternative correct fix could name the parameter 'db_session' or 'db', or could use keyword arguments like 'migrate_customer(session=session, user_id=user_id, org=org)', all of which would be correct but fail the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests are purely text/AST inspection: test_migrate_customer_signature_change parses AST for parameter names, test_migrate_customer_no_new_session checks 'a_session_maker' not in source, test_migrate_customer_uses_session_execute checks 'session.execute' in source, test_user_store_passes_session_to_migrate_customer checks literal string in file content, test_distinctive_fix_line_present checks literal string. No test actually imports, calls, or executes the code to verify the FK "
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply has the right signature and text patterns would pass all tests. For example, 'async def migrate_customer(session, user_id, org): result = await session.execute(select(1))' with no real logic would pass every fail-to-pass test since tests only check text patterns and AST structure, not actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/openhands with solve.sh containing the exact patch. The agent could read solution/solve.sh or simply apply it. Additionally, since tests check for literal strings like 'migrate_customer(session, user_id, org)', the agent could grep test files or solution files to find the exact expected strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five key requirements listed in instruction.md (session as first parameter, no a_session_maker, session.execute usage, no session.commit, caller passes session) are each tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_migrate_customer_signature_change, test_migrate_customer_no_new_session, etc.), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS, and are logically grouped by what they verify."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a code bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and consistent with the test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files to modify, the exact function to change, the exact parameter name to add ('session'), and the exact call pattern to use. The 'Test Assertions' section explicitly lists the literal strings that must be present/absent, which is essentially the complete solution specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

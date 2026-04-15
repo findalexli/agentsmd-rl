@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:11:44.225933",
-  "total_time": 2251.93,
-  "sandbox_id": "iw5s9nvgizz7iy0qf98g7",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:50:12.556758",
+  "total_time": 1514.23,
+  "sandbox_id": "i56fowkmvmd0byc1n4298",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:230: test `test_malformed_encoding_no_crash` has 3 assert(s), all pass']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.49,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 12697.93,
-      "at": "2026-04-10T04:54:53.943268"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +103,14 @@
       "backend": "fireworks",
       "time": 2251.93,
       "at": "2026-04-12T00:11:44.225933"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1514.23,
+      "at": "2026-04-15T04:50:12.556758"
     }
   ]
 }

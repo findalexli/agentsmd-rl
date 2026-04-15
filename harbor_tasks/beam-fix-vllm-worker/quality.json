@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: e.g., test_build_helper_exists checks for a callable named 'build_vllm_server_kwargs', test_default_constants checks for module-level constants '_DEFAULT_VLLM_MAX_NUM_SEQS' and '_DEFAULT_VLLM_GPU_MEMORY_UTILIZATION', test_run_signature_has_vllm_server_kwargs checks run()'s signature for 'vllm_server_kwargs' parameter. While the instruction mentions 'build_vllm_server_kwargs' and 'vllm_server_kwargs', the exa"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact function name to add ('build_vllm_server_kwargs'), exact parameter names ('--vllm_max_num_seqs', '--vllm_gpu_memory_utilization'), exact default values (32, 0.72), exact dict keys ('max-num-seqs', 'gpu-memory-utilization'), and that values must be strings. It also specifies the run() function should accept 'vllm_server_kwargs' parameter. This is essentially a complete specification of the solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_build_helper_exists checks for exactly 'build_vllm_server_kwargs' as a callable, test_default_constants checks for exactly '_DEFAULT_VLLM_MAX_NUM_SEQS' and '_DEFAULT_VLLM_GPU_MEMORY_UTILIZATION' as module-level attributes, test_run_signature_has_vllm_server_kwargs checks the exact parameter name in run()'s signature. An alternative correct fix (e.g., using different constant names, inlining defaults, or using a different helper function "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mock preamble to import and execute the module, call parse_known_args(), call build_vllm_server_kwargs(), inspect function signatures via inspect module, and check actual return values. While some tests do check for attribute existence (hasattr), most actually execute code and verify behavioral output."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific non-trivial behaviors: parse_known_args must return objects with vllm_max_num_seqs=32 and vllm_gpu_memory_utilization=0.72 by default, build_vllm_server_kwargs must return a dict with specific keys and string values, etc. A stub returning None or empty collections would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/beam (the Dockerfile places the repo there), and solve.sh is accessible. The agent could potentially read the solution patch or grep for expected values. The test file itself contains the _MOCK_PREAMBLE with full path references and expected values that could be extracted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: CLI arguments with defaults (test_parse_args_default_*), build_vllm_server_kwargs helper (test_build_helper_exists, test_build_kwargs_*), run() accepting vllm_server_kwargs (test_run_signature_has_vllm_server_kwargs), and README update (test_readme_mentions_gpu_memory)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers ('Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)'), descriptive function names, and docstrings explaining what each test verifies and its category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, commands, and function names in instruction.md are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact function to create ('build_vllm_server_kwargs'), exact argument names, exact default values, exact dict key names, and specifies values must be strings. It also names module-level constants pattern implicitly. This goes well beyond naming the buggy file and into specifying the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

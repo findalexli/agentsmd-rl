@@ -1,35 +1,38 @@
 # Fix CIDB Secret Configuration in collect_statistics.py
 
-The `collect_statistics.py` script is hardcoding secret names for connecting to the CI database (CIDB). This prevents the script from working correctly in private forks that need to use different secret names configured via `private_settings_overrides.py`.
+The `collect_statistics.py` script uses hardcoded AWS SSM parameter names when connecting to the CI database (CIDB). This means the script always queries the public CIDB, ignoring any per-fork secret overrides configured via `private_settings_overrides.py`.
 
-## Problem
+## Symptom
 
-The file `ci/jobs/collect_statistics.py` currently uses hardcoded `Secret.Config` calls with specific AWS SSM parameter names:
+When running in a private fork with custom `Settings.SECRET_CI_DB_*` values, the script still connects to the public CIDB instance instead of respecting the fork-specific configuration.
+
+## Current Behavior
+
+The file `ci/jobs/collect_statistics.py` contains hardcoded secret names:
 - `clickhouse-test-stat-url`
 - `clickhouse-test-stat-login`
 - `clickhouse-test-stat-password`
 
-This means the script always queries the public CIDB, even when running in a private fork that overrides `Settings.SECRET_CI_DB_*` values.
+These appear in calls that look like: `Secret.Config("clickhouse-test-stat-url").get_value()`
 
-## Goal
+## Expected Behavior
 
-Refactor the code to use the `Settings` class for CIDB secrets instead of hardcoded names. Look at how other files like `runner.py` and `cidb_cluster.py` handle this - they use `Info().get_secret(Settings.SECRET_CI_DB_*)` pattern.
+The script should use the same secrets configured via `Settings.SECRET_CI_DB_*` that other CI job files in this repository use. These constants are defined in `ci/praktika/settings.py`:
+- `Settings.SECRET_CI_DB_URL`
+- `Settings.SECRET_CI_DB_USER`
+- `Settings.SECRET_CI_DB_PASSWORD`
 
-## Relevant Files
+The `Info` class in `ci/praktika/info.py` provides a `get_secret()` method that retrieves these values.
 
-- `ci/jobs/collect_statistics.py` - The file to modify
-- `ci/praktika/settings.py` - Contains `Settings.SECRET_CI_DB_URL`, `SECRET_CI_DB_USER`, `SECRET_CI_DB_PASSWORD`
-- `ci/praktika/info.py` - Contains `Info` class with `get_secret()` method
-- `ci/praktika/cidb.py` - The `CIDB` class constructor
+## Constraints
 
-## Requirements
+- The `CIDB` constructor accepts `url`, `user`, and `passwd` keyword arguments
+- The `Info` class must be imported from `ci.praktika.info`
+- `Settings` must be imported from `ci.praktika.settings`
+- The variable holding the `Info()` instance must be named `info` (lowercase) so the pattern `info.get_secret(` appears in the code
+- The old `Secret` import from `ci.praktika` must be removed
+- The hardcoded names above must not appear in the refactored code
 
-1. Import `Settings` from `ci.praktika.settings`
-2. Import `Info` from `ci.praktika.info`
-3. Remove the hardcoded secret names and direct `Secret` import
-4. Use `Info().get_secret(Settings.SECRET_CI_DB_*)` to get secrets
-5. Pass the retrieved values to the `CIDB` constructor
+## How to Discover the Solution Pattern
 
-The `CIDB` class constructor accepts `url`, `user`, and `passwd` parameters. You need to provide these values obtained through the `Info().get_secret()` method using the appropriate `Settings` constants.
-
-Look at the codebase for examples of how `Info().get_secret()` is used with `Settings` constants in other CI job files.
+Look at other files in `ci/jobs/` that use `Info().get_secret(Settings.SECRET_CI_DB_*)` — for example, `runner.py` or `cidb_cluster.py` in the same directory. These files demonstrate the established pattern for accessing CIDB credentials in this codebase.

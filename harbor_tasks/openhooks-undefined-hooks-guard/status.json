@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:49:36.079838",
-  "total_time": 2538.92,
-  "sandbox_id": "ivv182xc2dme52ui84ahe",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:01:38.590687",
+  "total_time": 785.28,
+  "sandbox_id": "izljfl7n30ypd8til76kc",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -79,17 +81,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.37,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:101: test `test_typescript_type_updated` only reads file text', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.67,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 204.86,
-      "at": "2026-04-09T15:01:16.332564"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -121,6 +135,14 @@
       "backend": "fireworks",
       "time": 2538.92,
       "at": "2026-04-12T03:49:36.079838"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 785.28,
+      "at": "2026-04-15T05:01:38.590687"
     }
   ]
 }

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T02:59:56.906596",
-  "total_time": 1514.64,
-  "sandbox_id": "itq2kwn0dqcngmj89j5vq",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:06:05.485722",
+  "total_time": 1544.39,
+  "sandbox_id": "i3ure0k2v8oa9l6ds92xm",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -43,6 +45,26 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:192: test `test_endpoint_returns_json_response_directly_for_v1` has 1 ', 'lint_tier_b:4', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: poetry, uv', 'B:[B] pinned_dependencies @ environment/Dockerfile:36: unpinned pip deps: fastapi, pydantic, pytest, pytest-asyncio, httpx', 'B:[B] no_network_during_tests @ tests/test.sh:4: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.54,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
@@ -61,6 +83,14 @@
       "backend": "fireworks",
       "time": 1514.64,
       "at": "2026-04-12T02:59:56.906596"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1544.39,
+      "at": "2026-04-15T05:06:05.485722"
     }
   ]
 }

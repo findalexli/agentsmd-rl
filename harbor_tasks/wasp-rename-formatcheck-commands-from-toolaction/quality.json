@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four files (waspc/run, package.json, .github/workflows/ci-formatting.yaml, waspc/README.md), the old command names (ormolu:check, prettier:format, cabal-gild:format, etc.), and the new command names (check:ormolu, format:prettier, format:cabal, etc.). It also specifies creating top-level format/check commands. All test assertions reference these known strings, file paths, and conventions documented in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired naming convention and which files to update, but does not specify exact line numbers, exact variable names to change (like PRETTIER_CHECK_CMD), or the precise diff. A developer must reason about what specifically to change in each file."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_run_script_has_top_level_format_command and test_run_script_has_top_level_check_command use 'grep \"^  format)\"' and 'grep \"^  check)\"' respectively, asserting exact indentation (two leading spaces) for the case branch. An alternative correct implementation with different indentation (e.g., tabs, 4 spaces, or no leading spaces) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are almost entirely text-matching via grep (e.g., test_run_script_case_branches_renamed greps for 'check:ormolu' in the file, test_package_json_scripts_renamed checks if a key exists in JSON). While some pass-to-pass tests execute the run script (test_run_script_executes), no fail-to-pass test actually executes the renamed commands to verify they work \u2014 they only check that certain strings appear in files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific new strings (check:ormolu, format:ormolu, format:prettier, check:prettier, etc.) that don't exist in the base commit. A stub or no-op implementation wouldn't produce these strings in the files, so the tests cannot be trivially satisfied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/wasp (accessible in the container) as solution/solve.sh, and the agent could read the test file at tests/test_outputs.py to see exactly what strings to grep for. The tests only check for string presence in files, so the agent could simply insert the expected strings without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires updating waspc/README.md documentation, but no test verifies that README.md was updated with new command names. Also, no test verifies the CI workflow uses the new names for ormolu or cabal-gild \u2014 only check:prettier is tested in CI context."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into pass-to-pass and fail-to-pass categories, and grouped by the file/feature they test."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves renaming commands in scripts and config files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify which is appropriate for the task scope, but doesn't specify exact line numbers or internal variable names. The files listed are the natural scope of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized edits (renaming specific strings) across four files, all consistent with the instruction. No full-file rewrites or contradictions with other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

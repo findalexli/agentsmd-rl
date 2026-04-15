@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file path, the class name LazyFlinkSourceSplitEnumerator, the methods handleSplitRequest and initializeSplits, the field splitsInitialized, the pendingSplits list, and the context.callAsync() mechanism. All test assertions reference these same identifiers which are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (race condition, lack of synchronization, non-volatile field) and the expected behavior (wait for initialization, handle failure, thread-safe flag), but does not specify the exact fix mechanism (e.g., does not say 'use CountDownLatch' or 'add a finally block'). The developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_initialization_signals_in_finally requires a 'finally' block inside initializeSplits with a specific signal pattern (countDown/release/notify/complete/set/signal). A correct alternative fix could use a different error-handling pattern (e.g., catch block + re-signal, or CompletableFuture.handle()) that doesn't use 'finally' but still correctly signals completion on failure. Also test_synchronization_fix_java_validation specifically checks for CountDownLatch/Semaphore/CompletableFuture import"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests (test_handle_split_request_blocks_on_uninitialized, test_splits_initialized_thread_safe, test_initialization_signals_in_finally) are pure text/regex searches on source code \u2014 they read the file and assert string patterns exist. test_synchronization_fix_java_validation does compile and run Java, but that Java code itself just reads the source file and does regex matching. No test actually instantiates or calls the class."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for blocking mechanisms in handleSplitRequest, volatile/AtomicBoolean for splitsInitialized, and finally blocks with signal patterns in initializeSplits. None of these exist in the original code, so a stub/no-op or the unmodified file would fail these tests. The agent must actually add synchronization code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read /workspace/beam/../solution/solve.sh (or the task's solution directory) to obtain the exact fix. The Dockerfile doesn't remove or protect solution files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) handleSplitRequest waits for initializeSplits \u2014 tested by test_handle_split_request_blocks_on_uninitialized; (2) handle initialization failure to avoid blocking forever \u2014 tested by test_initialization_signals_in_finally; (3) splitsInitialized thread-safe \u2014 tested by test_splits_initialized_thread_safe. All explicitly stated behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass static, Fail-to-pass pr_diff), descriptive function names, and detailed docstrings explaining the rationale for each check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a Java source file for a race condition; no structured data output (JSON/CSV/API/DB) is produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, class names, method names, and variable names in instruction.md all match the actual codebase identifiers correctly."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and methods involved but this is appropriate given it's a targeted bug fix task. It describes the problem (race condition, non-volatile field) without specifying the exact solution mechanism (CountDownLatch, finally block, etc.)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single Java source file, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

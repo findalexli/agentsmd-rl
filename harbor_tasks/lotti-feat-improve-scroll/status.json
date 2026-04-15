@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T23:20:16.098903",
-  "total_time": 864.18,
-  "sandbox_id": "iw3v3ki57p6wbhxr7i3ln",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:55:13.365027",
+  "total_time": 2260.47,
+  "sandbox_id": "in8ir5onlzhktjd614wzn",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -50,17 +52,30 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:51: test `test_custom_scroll_view_in_detail_content` only rea', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:76: test `test_sliver_task_panel_class_exists` only reads fil', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:101: test `test_sliver_list_for_lazy_task_rows` only reads fi']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.01,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18408.57,
-      "at": "2026-04-09T14:18:40.676029"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -92,6 +107,14 @@
       "backend": "fireworks",
       "time": 864.18,
       "at": "2026-04-11T23:20:16.098903"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2260.47,
+      "at": "2026-04-15T04:55:13.365027"
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/@mantine/modals/src/context.ts), the exact expected type definition including 'infer M', the removal of intermediate types, and all tooling commands. The test assertions (e.g., 'infer M' in content, 'MantineModalsOverwritten' not in content, '? M' in content, ': Record<string, React.FC<ContextModalProps<any>>>') are all discoverable from the instruction's 'Expected Result' section which gives the exact code block."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly provides the exact replacement code in the 'Expected Result' section: 'export type MantineModals = MantineModalsOverride extends { modals: infer M } ? M : Record<string, React.FC<ContextModalProps<any>>>;'. This is literally the solution \u2014 the agent doesn't need to reason about what to change, just copy-paste."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_type_inference_improved asserts the exact string 'export type MantineModals = MantineModalsOverride extends { modals: infer M }' must appear in the file. test_modals_type_is_direct asserts '? M' and ': Record<string, React.FC<ContextModalProps<any>>>'. An alternative correct implementation using e.g., 'infer Modals' instead of 'infer M', or different formatting, would fail these tests despite being functionally equivalent."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_type_inference_improved, test_no_duplicate_modals_type, test_modals_type_is_direct) are purely text-matching assertions like 'assert \"infer M\" in content' and 'assert \"? M\" in content'. While pass_to_pass tests do run TypeScript compilation and Jest, the core f2p tests only check file content strings without executing the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings ('infer M', absence of 'MantineModalsOverwritten', '? M') that don't exist in the original file. A stub or no-op wouldn't pass because the original code contains 'MantineModalsOverwritten' and lacks 'infer M'."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mantine (solution/solve.sh is available in the container). The agent could read it. Also, the instruction itself contains the exact expected code, and since tests are pure string matching, the agent can just match the literal fixture strings from instruction.md without understanding the underlying type system."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: the simplified type definition, removal of intermediate types, TypeScript compilation, Jest tests, ESLint, and Prettier formatting checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Type inference uses infer M syntax instead of intermediate type (fail_to_pass)') and logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying TypeScript type definitions, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, commands, variable names, and type names in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (packages/@mantine/modals/src/context.ts), describes the specific two-step pattern to remove (MantineModalsOverride conditional + indexing with ['modals']), and provides the exact replacement code. This goes well beyond identifying what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript source file, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

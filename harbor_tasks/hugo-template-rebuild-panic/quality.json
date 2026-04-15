@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names the required function signatures (parseTemplate, doParseTemplate, parseTemplates), the required code pattern ('if prototype.Lookup(name) != nil'), the file paths involved (layouts/tags/list.html), and the behavioral requirement (no panic on rebuild). All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md under 'Required Function Signatures' and 'Required Code Pattern' sections explicitly states the exact fix: remove the 'replace bool' parameter from three functions and change 'if !replace && prototype.Lookup(name) != nil' to 'if prototype.Lookup(name) != nil'. This is not describing what's broken \u2014 it's prescribing exactly what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact string signatures like 'func (s *TemplateStore) parseTemplate(ti *TemplInfo) error' and 'if prototype.Lookup(name) != nil' via text matching. An alternative correct fix (e.g., keeping the parameter but ignoring it, or using a different duplicate-detection mechanism) would fail these tests even if it correctly fixes the panic."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests 1-5 (test_template_functions_parse_template_signature, test_template_functions_do_parse_template_signature, test_template_store_parse_templates_signature, test_template_parsing_calls_no_replace_arg, test_duplicate_template_name_check_always_runs) are purely text-matching assertions using 'assert X in content' on source files. Only test_regression_tags_list_edit actually executes behavior. The majority of fail-to-pass tests are text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., the base has 'replace bool' parameters). A stub or no-op couldn't satisfy these \u2014 the source files need actual modification. The regression test runs the hugo binary and checks for non-panic behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/hugo's solve.sh (solution/solve.sh). The agent could read it directly. Additionally, the tests check for exact string patterns that are documented in instruction.md, so the agent could just do the sed replacements described without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: function signatures, the duplicate check pattern, no panic on rebuild, and successful template update."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_template_functions_parse_template_signature, test_regression_tags_list_edit), have clear docstrings explaining the purpose (including FAIL-TO-PASS vs PASS-TO-PASS labels), and are logically grouped."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact function signatures ('func (s *TemplateStore) parseTemplate(ti *TemplInfo) error'), exact code patterns ('if prototype.Lookup(name) != nil'), and specifies 'should not be conditional on any boolean flag' \u2014 all of which directly reveal the fix rather than just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

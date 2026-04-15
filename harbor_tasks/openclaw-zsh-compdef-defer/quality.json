@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific patterns like 'precmd_functions[(r)' and 'typeset -gaU' (test_dedup_prevents_duplicate_hooks), 'precmd_functions:#' and 'unfunction' and 'unset -f' (test_cleanup_after_successful_registration), specific compdef availability check patterns like '$+functions[compdef]' (test_compdef_availability_check), and test_no_explicit_any, test_no_ts_nocheck, test_repo_lint, test_repo_format, test_repo_tsgo, test_repo_no_conflict_markers, test_repo_host_env_policy are pass-to-pass tes"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (compdef called at source time) and expected behavior patterns (availability check, deferred registration via precmd_functions, cleanup, no duplicates) but doesn't give the exact code to write. The developer still needs to figure out the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_dedup_prevents_duplicate_hooks only accepts two specific patterns: 'precmd_functions[(r)' or 'typeset -gaU'. An alternative correct fix using a guard variable (e.g., if [[ -z $_registered ]]) would fail. test_cleanup_after_successful_registration only accepts 'precmd_functions:#', 'unfunction', or 'unset -f' \u2014 an alternative using a different cleanup mechanism would fail. These test for implementation details rather than behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p tests (test_compdef_not_bare_at_toplevel, test_compdef_availability_check, test_precmd_hook_queues_deferred_registration, test_cleanup_after_successful_registration, test_dedup_prevents_duplicate_hooks) all work by extracting text from the TypeScript source and checking for string patterns. None of them actually execute the generated zsh script to verify it works. They are essentially 'assert pattern in open(path).read()' style tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would fail test_compdef_not_bare_at_toplevel (the original bare compdef line would still be there), test_compdef_availability_check (no check pattern present), and test_precmd_hook_queues_deferred_registration (no precmd_functions reference). The tests require substantive code changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openclaw alongside the test environment. The Dockerfile doesn't remove solution/ or tests/ directories. An agent could read solve.sh to get the exact sed command and apply it directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from the instruction (availability check, deferred registration, cleanup, no duplicate hooks, root completion function intact) have corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_compdef_availability_check, test_cleanup_after_successful_registration, etc.), each has a docstring explaining what it checks, and they're logically grouped from core behavior checks to pass-to-pass repo checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a shell script template in TypeScript, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names 'src/cli/completion-cli.ts' as the file to modify, which is appropriate since this is a single-file fix task. It doesn't specify exact line numbers or the exact code pattern to change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

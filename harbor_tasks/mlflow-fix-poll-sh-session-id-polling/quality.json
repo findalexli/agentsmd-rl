@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the files (.claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md), the required argument convention (session_id as $1), the command 'gh agent-task view', the states 'queued'/'in_progress', the prohibition on timeline API, required YAML fields (name, description, allowed-tools), shebang requirement, shellcheck, trailing whitespace, tabs, executable bit, and the new allowed-tools entry. All test-asserted specifics (file paths, 'agent-task view' string, session ID pa"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (poll by session ID using 'gh agent-task view', accept session_id as $1, loop while queued/in_progress) but does not give exact code, line numbers to change, or the specific implementation. A developer must still decide how to implement the loop, parse the JSON output, structure the arguments, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check behavioral properties: (1) that 'agent-task view' and the session ID appear in gh calls, (2) that 'timeline' doesn't appear in calls, (3) that SKILL.md contains 'agent-task view' and 'session_id' and 'session_url'. These are interface-level requirements, not implementation-specific. Alternative correct implementations (different variable names internally, different loop structures, different argument parsing) would all pass as long as they call 'gh agent-task view' w"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests (test_poll_session_id_polling, test_poll_no_timeline_api) actually execute poll.sh via subprocess with a mock gh binary and inspect the call log for behavioral properties. The pass-to-pass tests run bash -n, shellcheck, test -x, etc. While some tests do read file content (SKILL.md checks), the primary behavioral tests execute the script."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub poll.sh (e.g., just 'exit 0') would not call 'gh agent-task view' with the session ID, so test_poll_session_id_polling would fail (it asserts 'agent-task view' in calls and 'test-sess-abc123' in calls). The original unmodified poll.sh would fail test_poll_no_timeline_api because it calls the timeline API. These tests cannot be satisfied without implementing the actual fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mlflow (solve.sh is in solution/ which according to the problem statement is 'hidden' but the Dockerfile clones the repo and the agent operates in /workspace/mlflow). More critically, the test file test_outputs.py is present in the container at a discoverable location (tests/test_outputs.py), and the agent could read it to see the exact mock setup and expected assertions (e.g., the mock gh binary pattern, the exact strings checked like 'agent-task view', 't"
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicit requirements from the instruction are tested: session ID as $1 (test_poll_session_id_polling), gh agent-task view usage (test_poll_session_id_polling), no timeline API (test_poll_no_timeline_api), SKILL.md updates for agent-task view (test_skill_md_allows_agent_task_view), session_id documentation (test_skill_md_documents_session_id), calling convention documentation (test_skill_md_documents_calling_convention), shellcheck (test_repo_shellcheck_poll_sh), shebang (test_poll_sh_execut"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments ('Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff) - core behavioral tests', 'Config/doc update tests (pr_diff) - SKILL.md changes') and each test has a descriptive docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves shell scripts and markdown documentation, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify (poll.sh, SKILL.md) which is appropriate since the task domain makes these obvious. It describes what behavior to implement but doesn't specify exact line numbers or exact code to write. The files are explicitly part of the task scope, not a localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies only two files (.claude/skills/copilot/poll.sh and .claude/skills/copilot/SKILL.md) with localized changes: replacing the timeline API polling with agent-task view in poll.sh, and adding the new tool permission and documentation in SKILL.md. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

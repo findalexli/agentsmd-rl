@@ -21,9 +21,15 @@ Only `uv self update -qq` (double quiet / silent mode) should suppress everythin
 - `crates/uv/src/printer.rs` — The `Printer` enum controls stderr output based on verbosity level. Currently `stderr()` returns `Disabled` for `Quiet` mode, with no way to distinguish between routine and important messages.
 - `crates/uv/src/commands/self_update.rs` — All user-facing messages use `printer.stderr()`, which means they're all suppressed equally under `-q`.
 
-## Hints
+## Technical Requirements
 
-- Look at how `Printer` maps verbosity levels to `Stderr::Enabled` / `Stderr::Disabled`
-- The `Printer` enum already has multiple variants: `Silent`, `Quiet`, `Default`, `Verbose`, `NoProgress`
-- Consider adding a new output channel that treats `Quiet` differently from `Silent`
-- The test helper in `crates/uv-test/src/lib.rs` may need a version-filtering utility for snapshot tests
+The fix requires:
+
+1. **A new method on `Printer`** that returns `Stderr` and treats `Quiet` mode differently from `Silent` mode. The method must be named `stderr_important` and:
+   - Return `Stderr::Enabled` when the printer is in `Quiet` mode (so important messages are shown under `-q`)
+   - Return `Stderr::Disabled` when the printer is in `Silent` mode (so `-qq` still suppresses everything)
+   - Return `Stderr::Enabled` for all other modes (`Default`, `Verbose`, `NoProgress`)
+
+2. **At least 3 call sites in `self_update.rs`** that use `.stderr_important()` for important messages (update notifications, offline errors, rate-limit warnings, etc.) instead of `.stderr()`.
+
+3. **No regression**: the existing `stderr()` method must continue returning `Disabled` for both `Quiet` and `Silent` modes.

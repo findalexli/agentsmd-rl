@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific variable names like 'current_zookeeper', 'retries_ctl.isRetry()', and 'zookeeper_getter.getZooKeeper()' which are not mentioned in instruction.md. The instruction describes the expected behavior abstractly ('fresh ZooKeeper session should be obtained') but never names these specific identifiers that the tests check for."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's 'Expected behavior' section essentially describes the fix implementation: 'When a retry occurs, a fresh ZooKeeper session should be obtained', 'tryLoadObject() calls within the retry loop should use the current (potentially refreshed) session handle, not the stale one originally passed'. Combined with the 'Code context' listing zookeeper_getter and specific method names, this strongly narrows to the exact solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific variable names: test_fix_session_refresh_in_retry_loop checks for 'current_zookeeper' literal string, test_fix_uses_current_zookeeper_in_tryload asserts `match == 'current_zookeeper'`. An alternative fix using a different variable name (e.g., 'fresh_zk', 'live_zookeeper', 'refreshed_session') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test reads the source file as text and uses string matching (e.g., `'retries_ctl.isRetry()' in func_content`, regex `tryLoadObject\\((\\w+),`). No test compiles the code, executes it, or verifies runtime behavior. All tests are pure text/pattern assertions on source code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns (isRetry check, getObjectNamesAndSetWatch inside retry loop, current_zookeeper in tryLoadObject) that are absent in the buggy code. A stub or no-op would not pass since the original file lacks these patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/clickhouse as solution/solve.sh which contains the exact patch. An agent could read this file or the test file itself to discover the expected variable names ('current_zookeeper', 'retries_ctl.isRetry()') and exact code patterns to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The three key behaviors from instruction.md (fresh session on retry, object names fetched inside retry loop, tryLoadObject uses current session) are each tested by dedicated test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_fix_session_refresh_in_retry_loop, test_fix_object_names_inside_retry_loop, etc.), grouped by FAIL-TO-PASS and PASS-TO-PASS categories, and include docstrings explaining the bug and fix rationale."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a C++ source file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (which is obvious from the task domain) and describes the bug location (refreshObjects method) but doesn't specify exact line numbers or the precise code change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

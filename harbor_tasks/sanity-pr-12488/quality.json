@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all, so none of the test-specific file paths (e.g., transferValue.ts, copy-paste.ts), variable names (skippedReadOnlyFieldNames, ReadOnlyContext, isDocumentLevelPaste), i18n keys, or any other asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely, so it neither leaks nor provides any information. However, since there is no instruction at all, the agent has zero guidance, making the rubric fail by default \u2014 there's nothing to evaluate against."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'skippedReadOnlyFieldNames', 'ReadOnlyContext', 'isDocumentLevelPaste', 'readOnlyContext', 'MAX_DISPLAYED_READONLY_FIELDS', and specific patterns like 'skippedReadOnlyFieldNames.push'. An alternative correct fix using different names (e.g., 'readOnlySkippedFields', 'ReadOnlyInfo') would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_static_readonly_fields_skipped_during_document_paste, test_i18n_strings_exist, test_readonly_context_type_defined, test_collateObjectValue_accepts_readOnlyContext, test_skipped_field_names_tracking, test_readonly_field_warning_generation) all use pattern matching via 'in content' string checks on source files with no execution or behavioral verification of the actual fix."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply writes the expected string patterns into the source files (e.g., appending comments containing 'isDocumentLevelPaste', 'readOnlyContext', 'skippedReadOnlyFieldNames', etc.) would pass all f2p tests without implementing any actual bug fix logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/sanity or could be derived from solve.sh in the container. The agent could read the solution file or grep for the exact string patterns the tests check (e.g., 'skippedReadOnlyFieldNames', 'ReadOnlyContext') and inject them into the source without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing, so no behavior is explicitly required, making it impossible to verify that tests cover all required behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass and pass-to-pass categories, and each test has clear comments explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code patching, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in file paths, variable names, or commands in the test and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely \u2014 there is no instruction content to evaluate for hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

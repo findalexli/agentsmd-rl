@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (ReactFiberNewContext.js), describes the fiber structure (SuspenseComponent \u2192 OffscreenComponent \u2192 FallbackFragment), the context propagation mechanism, and the Suspense fallback behavior. The tests use useContext, Suspense, memo, and ReactNoop which are all standard React testing patterns discoverable from the described bug scenario. No specific SHA, literal string, or schema key in the tests is undiscoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the fiber structure (SuspenseComponent \u2192 child OffscreenComponent \u2192 sibling FallbackFragment) and says to look at how context changes are handled when encountering suspended Suspense boundaries, but it does NOT say what specific code change to make (e.g., 'skip the primary child and jump to sibling'). A developer still needs to reason about what propagation logic to modify."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests only check observable behavior: that context values propagate to fallback consumers (checking renderedValue and renderLog). They don't assert on internal variable names, line positions, or specific helper functions. Multiple correct implementations (e.g., different approaches to traversing the fallback subtree) would all pass these behavioral tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests write temporary Jest test files, execute them via `yarn test` subprocess, and check the return code. The Jest tests themselves create React component trees with Suspense, context providers, and memo boundaries, then assert on rendered context values. This is behavioral execution, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests specifically test that after calling setContext('B'), the fallback consumer's renderedValue updates to 'B'. On the unfixed codebase, renderedValue stays 'A' because context propagation skips the fallback subtree. A stub/no-op implementation cannot pass these tests \u2014 the bug must actually be fixed for the context to propagate through memo boundaries to fallback consumers."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/react (the solve.sh and its patch content are part of the container image context). An agent could potentially read files in the solution/ directory or grep the environment for the gold patch. The Dockerfile doesn't appear to remove solution files, and the agent could access them."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes: (1) context consumers in fallback don't re-render with updated values, (2) the issue surfaces with memo/compiler memoization. Tests cover both: simple context propagation to fallback, memo boundary blocking, multiple memo layers, and multiple sequential context updates. The truncated pass-to-pass tests likely serve as regression guards."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized into clear categories with descriptive names: test_syntax_check (gates), test_context_propagates_to_fallback_simple (fail-to-pass core), test_context_propagates_to_fallback_memo_boundary (fail-to-pass memo), and regression guards. Each Jest describe block and test name clearly describes what is being tested."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in React's fiber reconciler. No structured data (JSON/CSV/API/DB) output is produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (packages/react-reconciler/src/ReactFiberNewContext.js), function names (useContext, Suspense, memo), and component names are all correctly spelled and match the actual React codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file ReactFiberNewContext.js and describes the fiber structure, but this is the natural scope of the bug domain. It doesn't cite specific line numbers or exact code to change. The fiber structure description (SuspenseComponent \u2192 OffscreenComponent \u2192 FallbackFragment) is contextual information about React internals needed to understand the bug, not a direct hint at the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not an agentmd-edits configuration task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

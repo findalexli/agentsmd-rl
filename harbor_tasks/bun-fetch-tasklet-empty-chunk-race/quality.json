@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (src/bun.js/webcore/fetch/FetchTasklet.zig), the exact guard conditions (scheduled_response_buffer.list.items.len == 0, this.result.has_more, this.result.isSuccess()), the required comment strings ('stale-task race', 'onStartStreamingHTTPResponseBodyCallback'), and the placement (before onBodyReceived, inside is_waiting_body block). All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact three conditions for the guard, that it must return early, the exact comment text ('stale-task race'), and references the exact callback name. It effectively dictates the implementation line-by-line rather than just describing the bug. A developer reading this doesn't need to reason about what to change \u2014 it's spelled out completely."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'stale-task race' and 'onStartStreamingHTTPResponseBodyCallback' as comment content, and exact code like 'scheduled_response_buffer.list.items.len == 0'. An alternative correct fix using different variable names, different comment wording, or a different guard structure (e.g., checking buffer emptiness differently) would fail test_empty_chunk_guard_present."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct) are pure text-matching: they read the source file and assert substrings like 'stale-task race' in src. They do not execute the code, run the fetch pipeline, or verify the race condition is actually fixed. While some p2p tests run bun/zig commands, the fail-to-pass tests are entirely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply inserts a comment block containing the required strings ('stale-task race', 'onStartStreamingHTTPResponseBodyCallback', 'scheduled_response_buffer.list.items.len == 0', etc.) in the right location within the existing file would pass test_empty_chunk_guard_present and test_guard_placement_correct without actually implementing the guard logic or fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun accessible via solve.sh, and the agent could read solution/solve.sh which contains the exact git patch. Additionally, since tests only check for literal string presence in the source file, the agent could simply grep for the expected strings and insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (guard with three conditions, comment about stale-task race referencing onStartStreamingHTTPResponseBodyCallback, placement before onBodyReceived inside is_waiting_body) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves patching a Zig source file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file, the exact placement (before onBodyReceived inside is_waiting_body), exact condition expressions (scheduled_response_buffer.list.items.len == 0), and exact comment text required. This goes far beyond naming the buggy file \u2014 it's a complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Zig source file, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

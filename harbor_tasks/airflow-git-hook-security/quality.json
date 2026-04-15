@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details not mentioned in instruction.md. For example, tests check for `shlex.quote` usage specifically (e.g., `test_ssh_command_quotes_key_path_with_spaces` checks for `-i '/path/with spaces/to/key'`), exact error message text `'Invalid strict_host_key_checking value'`, exact `urlquote` encoding behavior with `safe=''`, and the specific `_VALID_STRICT_HOST_KEY_CHECKING` frozenset values. While instruction.md mentions the general issues, it doesn't spe"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (shell injection, missing validation, unencoded credentials, logic bug, unbounded replacement) without specifying exact code changes like 'use shlex.quote' or 'add urlquote with safe=\"\"'. It describes symptoms and expected behavior, leaving the developer to reason about the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details. For example, `test_ssh_command_quotes_key_path_with_spaces` checks for `shlex.quote` output format (`-i '/path/with spaces/to/key'`). An alternative fix using manual quoting or a different escaping library would fail. `test_strict_host_key_checking_validation` checks for exact error message substring 'Invalid strict_host_key_checking value'. `test_ssh_command_quotes_proxy_command` asserts on shlex.quote's specific output format for ProxyComma"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests actually import GitHook, instantiate it, call methods like `_build_ssh_command()` and `_process_git_auth_url()`, and assert on behavioral output. Pass-to-pass tests run subprocess commands (pytest, ruff, flake8, bandit). Tests execute code rather than just checking file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests would not pass with stub implementations. For example, `test_ssh_command_quotes_key_path_with_spaces` requires that `_build_ssh_command` returns a string containing quoted paths. `test_strict_host_key_checking_validation` requires a `ValueError` to be raised. `test_url_encoding_special_chars_in_username` requires URL-encoded output. These all require actual implementation of the fixes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at `/workspace/airflow/` accessible in the container via `solve.sh`. The agent could read the gold patch from the solution directory or from the git history. Additionally, the `solve.sh` script is in the container at a predictable location and contains the exact patch to apply."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behaviors described in instruction.md are tested: shell escaping of SSH arguments (tests for key_path, known_hosts, ssh_config, proxy_command), strict_host_key_checking validation, URL encoding of credentials, logic bug fix (or/and), and unbounded replacement fix (tested via URL encoding tests with protocol in path)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers ('PASS-TO-PASS TESTS' and 'FAIL-TO-PASS TESTS'), descriptive function names (e.g., `test_ssh_command_quotes_key_path_with_spaces`), and docstrings explaining what each test verifies. The module docstring lists all 5 security fixes being tested."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing security vulnerabilities in Python code, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and function names in instruction.md are all correct and consistent with the actual codebase structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md specifies only the single file to modify (`providers/git/src/airflow/providers/git/hooks/git.py`) which is the obvious target file for a GitHook task. It doesn't mention specific line numbers or exact code changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Python source file, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

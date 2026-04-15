@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_no_wildcard_imports checks for wildcard imports (AGENTS.md rule), test_no_trailing_whitespace and test_eof_newline enforce formatting conventions not mentioned, test_repo_ruff_lint/format/bandit enforce linting/security tools not mentioned, and test_no_print_statements is mentioned but test_explicit_type_hints_in_eval_sampler checks that ALL parameters have type annotations which is stated. However, tests like test_repo_bandit ("
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: 'Create a sampler class named EvalDistributedSampler (subclass of DistributedSampler)', 'create_dataloader must dispatch EvalDistributedSampler when given a ValidDatasetConfig', specifies it must use drop_last=False, and describes the exact no-padding behavior. This tells the agent exactly WHAT to change and HOW, leaving little reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on the gold-specific class name 'EvalDistributedSampler' (test_create_dataloader_dispatches_eval_sampler checks type(sampler).__name__ == 'EvalDistributedSampler', test_explicit_type_hints_in_eval_sampler looks for node.name == 'EvalDistributedSampler'). An alternative correct fix using a different class name (e.g., 'ValidationSampler' or 'NoPaddingSampler') would fail. However, the instruction explicitly requires this name, so this is by design. The tests also require it to be a su"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests (test_eval_sampler_no_padding, test_create_dataloader_dispatches_eval_sampler, test_edge_case_small_dataset, test_no_duplicate_indices) execute the code via subprocess, instantiate the sampler, iterate over indices, and verify behavioral properties (no padding, no duplicates, correct dispatch). They don't just grep for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub EvalDistributedSampler that simply inherits DistributedSampler without overriding anything would still pad indices, causing test_eval_sampler_no_padding and test_no_duplicate_indices to fail (sorted(all_indices) != list(range(ds_size)) for non-divisible sizes). The tests require actual no-padding behavior implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /repo as a git repo and solve.sh is in /solution/. If the agent can access /solution/solve.sh, it can directly read and apply the gold patch. The Dockerfile doesn't remove or protect the solution directory, and the test files reference paths like /repo which the agent could explore."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: EvalDistributedSampler no-padding (test_eval_sampler_no_padding, test_edge_case_small_dataset), no duplicates (test_no_duplicate_indices), dispatch for ValidDatasetConfig (test_create_dataloader_dispatches_eval_sampler), training unchanged (test_training_config_unchanged), type annotations (test_explicit_type_hints_in_eval_sampler), no print statements (test_no_print_statements)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories ([static], [pr_diff], [repo_tests], [agent_config])."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python code for a sampler class, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (areal/utils/dataloader.py), the exact function (create_dataloader), the exact class name to create (EvalDistributedSampler), that it must subclass DistributedSampler, and dispatch on ValidDatasetConfig. This is excessive localization that eliminates the need for the agent to diagnose the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Python source files, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

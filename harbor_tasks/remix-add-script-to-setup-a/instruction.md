@@ -6,30 +6,57 @@ The Remix monorepo currently has no way to let users test unreleased code withou
 
 ## What's Needed
 
-Create a new TypeScript script that prepares the current branch to be installable directly from GitHub via pnpm's git install syntax (e.g., `pnpm install "remix-run/remix#nightly&path:packages/remix"`).
+Create a new TypeScript script at `scripts/setup-installable-branch.ts` that prepares the current branch to be installable directly from GitHub via pnpm's git install syntax (e.g., `pnpm install "remix-run/remix#nightly&path:packages/remix"`).
 
-The script should:
-1. Accept a target branch name (defaulting to `nightly`)
-2. Check out the new branch and run a build
-3. Remove `dist/` from `.gitignore` so built code is committed
-4. Update all internal `@remix-run/*` package dependencies to use the GitHub branch format
-5. Move `@remix-run/*` peerDependencies to regular dependencies to avoid install warnings
-6. Apply `publishConfig` overrides so exports point to `dist/` instead of `src/`
-7. Commit the changes
+### New script: `scripts/setup-installable-branch.ts`
 
-The existing `logAndExec` utility in `scripts/utils/process.ts` currently returns void and passes all options through to `execSync`. It needs to be updated to support capturing command output (returning it as a string), since the new script needs to read the output of git commands like `git branch --show-current` and `git status --porcelain`.
+The script must contain references to the following (these strings must appear in the file):
 
-Also add a GitHub Actions workflow (`.github/workflows/nightly.yml`) that runs this script on a daily schedule to keep the `nightly` branch up to date, with manual dispatch support for custom base/installable branch combinations.
+- **`logAndExec`** — the script must import and use the `logAndExec` utility from `scripts/utils/process.ts` for all command execution
+- **`parseArgs`** or **`argv`** — the script must accept a target branch name (defaulting to `nightly`) via command-line argument parsing (using `process.argv` or Node.js's `util.parseArgs`)
+- **`gitignore`** — the script must handle `.gitignore` updates (removing `dist/` so built code is committed)
+- **`dependencies`** — the script must update package `dependencies` (specifically, update all internal `@remix-run/*` package dependencies to use the GitHub branch format, move `@remix-run/*` peerDependencies to regular dependencies, and apply `publishConfig` overrides so exports point to `dist/` instead of `src/`)
 
-After implementing the code changes, update the project documentation to reflect this new capability:
-- The README should document how to install Remix (including the nightly build option)
-- The CONTRIBUTING guide should explain the nightly build process for contributors
+The script should also check out the new branch, run a build, and commit the changes.
+
+### Update `logAndExec` in `scripts/utils/process.ts`
+
+The existing `logAndExec` utility currently returns void and passes all options through to `execSync`. Update it to support capturing command output:
+
+- The function must always **return a `string`** (never void or undefined) — when called without capture mode, it should return an empty string
+- The function must accept an optional **second boolean parameter**: when `true`, capture and return the command's stdout as a string; when omitted or `false`, execute normally (inheriting stdio) and return an empty string
+
+This is needed because the new script has to read the output of git commands like `git branch --show-current` and `git status --porcelain`.
+
+### Register the npm script
+
+Register the new script in `package.json` under the `"scripts"` field with the exact key **`"setup-installable-branch"`**, pointing to the new TypeScript file.
+
+### GitHub Actions workflow: `.github/workflows/nightly.yml`
+
+Create a GitHub Actions workflow at `.github/workflows/nightly.yml` that runs this script on a daily schedule to keep the `nightly` branch up to date, with manual dispatch support. The workflow file must contain:
+
+- A **`schedule`** trigger (for the daily cron)
+- A reference to **`setup-installable-branch`** (to invoke the script)
+
+### README.md updates
+
+Add a **`## Installation`** section to `README.md` documenting how to install Remix. The section must include:
+
+- npm install instructions
+- A nightly build option mentioning the word **`nightly`**
+- The git install format using the string **`remix-run/remix#`** and the **`path:`** parameter (e.g., `pnpm install "remix-run/remix#nightly&path:packages/remix"`)
+
+### CONTRIBUTING.md updates
+
+Add a section with a **`Nightly`** heading to `CONTRIBUTING.md` that documents the nightly build process. The section must reference the **`setup-installable-branch`** script by name.
 
 ## Files to Look At
 
 - `scripts/utils/process.ts` — the `logAndExec` utility that needs output capture support
-- `scripts/` — where the new setup script belongs
+- `scripts/setup-installable-branch.ts` — the new script to create
 - `package.json` — register the new npm script
+- `.github/workflows/nightly.yml` — the new GitHub Actions workflow
 - `README.md` — project documentation
 - `CONTRIBUTING.md` — contributor guide
 - `AGENTS.md` — code style and conventions to follow

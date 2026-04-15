@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file path, all variable names (current_header_id, guide_slug, y, slug), CSS classes (sticky, hidden, lg:block, float-right, etc.), data structure fields (text, href, level), color classes (text-orange-500, text-gray-600), calculation patterns ((slug.level - 2) * 0.75rem), and structural requirements that the tests check for. The tests verify these same elements."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like variable names (current_header_id), exact CSS classes (sticky, hidden, lg:block, float-right, overflow-y-auto, h-screen, top-8), exact indentation formula ((slug.level - 2) * 0.75rem), exact color classes (text-orange-500, font-medium), exact reactive statement syntax ($: with y and slug), exact bind directive (bind:scrollY={y}), and exact conditional rendering ({#if guide_slug.length > 0}). This is essentially the complete solution spe"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_right_sidebar_with_slug_links checks for exact each block patterns over guide_slug with anchor elements; test_scroll_tracking_reactive checks for exact variable name 'current_header_id', exact reactive statement '$:' with 'offsetTop' and '100'; test_toc_indentation_by_level checks for exact pattern '(slug.level - 2)' and 'rem'; test_conditional_toc_rendering checks exact pattern 'guide_slug.length > 0'. Alternative correct implementation"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests primarily use regex pattern matching on the source file text (e.g., searching for 'current_header_id' string, checking for CSS class names in text, pattern matching '{#each}' blocks). While they use Node.js subprocess calls, these are just parsing the file text, not executing/rendering the Svelte component. Tests like test_scroll_tracking_reactive, test_toc_indentation_by_level, and test_conditional_toc_rendering are all text-matching assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific new code that doesn't exist in the base commit (e.g., current_header_id variable, guide_slug each blocks with anchors in a sticky sidebar, level-based indentation, conditional rendering). A stub or no-op would not add these patterns to the file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /repo as solve.sh with the complete patch. The agent could read solution/solve.sh (if accessible) or the gold patch content. Additionally, since tests are purely text-matching on the target file, the agent could grep test files to discover exact patterns being checked and write code matching those patterns without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The tests cover the main requirements: right sidebar with slug links, scroll tracking reactive behavior, TOC indentation by level, main content layout changes (mx-auto removal), conditional TOC rendering, and preservation of existing structure (pass-to-pass tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections, with descriptive function names like test_right_sidebar_with_slug_links and test_scroll_tracking_reactive."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the guide_slug data structure schema with its three fields (text: string, href: string, level: number) and the guide_names type structure."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or CSS class names in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file path (js/_website/src/routes/[[version]]/guides/[guide]/+page.svelte), exact current CSS classes to modify ('lg:w-8/12 mx-auto'), exact replacements ('Remove the mx-auto centering', 'Add lg:min-w-0', 'Add lg:pl-8'), and exact variable names and implementation patterns. This goes well beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all specific file paths (chart/values.yaml, chart/values.schema.json, chart/templates/NOTES.txt, chart/newsfragments/62048.significant.rst, test_worker.py, test_worker_sets.py), exact field names (workers.celery.volumeClaimTemplates), literal strings (DEPRECATION WARNING:, data-volume-1, storage-class-1, etc.), schema keys (type, default, description, examples), and volume details that the tests assert on. All test-specific values are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact field names, exact example values (data-volume-1, storage-class-1, 10Gi, data-volume-2, storage-class-2, 20Gi), exact description strings, exact conditional template syntax ('if not (empty .Values.workers.volumeClaimTemplates)'), exact deprecation warning text, and exact newsfragment content. This effectively tells the agent WHAT to write rather than describing a problem to solve."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests mostly check for the presence of keys, field types, and string containment rather than exact line positions or whitespace. Alternative implementations (different comment styles, different ordering of JSON properties, different exact wording as long as it contains required substrings) would still pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every test is purely text-based: reading files and checking string containment (e.g., 'assert \"data-volume-1\" in content', 'assert \"DEPRECATION WARNING\" in content', 'assert \"pytest.mark.parametrize\" in content'). The TestHelmChartValidation class does parse YAML/JSON to verify structure, but no test actually renders the Helm chart, runs helm template, or executes the test suite. All tests are essentially 'assert X in open(path).read()' or 'assert key in parsed_dict'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific new content that doesn't exist in the base commit (e.g., workers.celery.volumeClaimTemplates field, DEPRECATION WARNING block for this specific field, newsfragment file 62048.significant.rst). A stub/no-op implementation would fail these checks since the fields and files don't exist yet."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/airflow via solve.sh which applies a patch. The agent could potentially read the solution/solve.sh file or examine the gold patch. Additionally, the test file test_outputs.py is visible in the task description with all expected strings, so the agent could simply pattern-match the fixture strings without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: new field in values.yaml with default [], examples, deprecation comments, schema updates with type/description/examples, NOTES.txt deprecation warning with conditional, newsfragment existence and content, and test file parametrization for both paths."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into named classes (TestValuesYaml, TestValuesSchema, TestNotesTxt, TestHelmTests, TestNewsfragment, TestHelmChartValidation) with descriptive method names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact JSON schema structure for values.schema.json (type, default, description, examples, items with $ref) and the YAML structure for values.yaml."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, field names, and variable names in the instruction are consistent and correct (chart/values.yaml, chart/values.schema.json, workers.celery.volumeClaimTemplates, etc.)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths, exact field locations, exact example values, exact conditional template syntax, and essentially the complete implementation. For example, it gives the exact Helm template conditional '{{- if not (empty .Values.workers.volumeClaimTemplates) }}' and exact schema description text."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized to specific sections in each file (adding new fields, updating descriptions, adding conditional blocks) without full-file rewrites, and the changes don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 4
+}

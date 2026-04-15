@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Every test-asserted specific (ProcessEventsAwaiterAsync, PendingEvent readonly record struct, DrainAsync removal, Handlers property, _eventEmitterTask, _myTaskFactory, _enqueueSeq/_processedSeq removal, _drainWaiters removal, PendingEvent(string Method...), Handlers.ToArray(), file path, class structure, IAsyncDisposable, method names, Channel, ConcurrentDictionary) is explicitly named in instruction.md's required structural changes and preservation sections."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates exact implementation details: rename ProcessEventsAsync to ProcessEventsAwaiterAsync, rename _processEventsTask to _eventEmitterTask, add _myTaskFactory static field, replace EventItem with PendingEvent readonly record struct with 'string Method' as first parameter, use registration.Handlers.Add/Remove directly, use Handlers.ToArray(). This is a complete specification of WHAT to change, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names (_myTaskFactory, _eventEmitterTask), exact method name (ProcessEventsAwaiterAsync), exact pattern 'Handlers.ToArray()', exact struct declaration pattern 'private readonly record struct PendingEvent', exact property pattern 'public List<EventHandler> Handlers'. An alternative correct fix (e.g., using _taskFactory instead of _myTaskFactory, or using a different thread-safe iteration pattern) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are pure text matching: 'assert \"ProcessEventsAwaiterAsync\" in content', regex searches on file content, 'assert \"_myTaskFactory\" in content', etc. The only tests that do anything beyond text matching are the dotnet format/build subprocess tests (pass-to-pass). No test imports, instantiates, or calls the EventDispatcher class to verify actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests can be satisfied by writing a file containing the right string patterns without implementing any actual event dispatching logic. For example, a file containing 'ProcessEventsAwaiterAsync', 'private readonly record struct PendingEvent(string Method', '_eventEmitterTask', '_myTaskFactory', 'public List<EventHandler> Handlers {', 'Handlers.ToArray()' as comments would pass all fail-to-pass tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/selenium after solve.sh runs, and the agent could read the gold patch from /solution/solve.sh if it exists in the container. Additionally, since tests are pure text matching, the agent could grep test files for expected strings and write them into the target file without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All structural requirements listed in instruction.md (renaming, field additions/removals, property exposure, iteration pattern) are tested. The subscription flow changes (subscribe before add, direct add/remove) are less directly tested but the Handlers property and removal of AddHandler/RemoveHandler are checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into clearly labeled sections (FAIL-TO-PASS, PASS-TO-PASS, CI-BASED), each test has a descriptive name and docstring explaining what it checks and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies C# source code, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact field names (_myTaskFactory, _eventEmitterTask), exact method renames (ProcessEventsAsync\u2192ProcessEventsAwaiterAsync), exact type replacements (EventItem\u2192PendingEvent readonly record struct), and exact code patterns (registration.Handlers.Add, Handlers.ToArray()). This goes far beyond identifying the buggy file/area and essentially dictates the solution line by line."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single C# source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

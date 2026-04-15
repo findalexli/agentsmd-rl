@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact error string 'Invalid hexadecimal character', the panic message 'ICE unexpected error parsing hex byte string value', the test input pattern b\"\\xA\u00f1\", the package name move-compiler, and the verification commands. All assert'd strings in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (panic on multi-byte UTF-8 chars in hex escapes) and what the expected behavior should be (produce 'Invalid hexadecimal character' error), but does not specify which file to change, which line to change, or the specific code transformation needed. A developer must locate and reason about the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: no panic, presence of 'Invalid hexadecimal character' error string, valid hex escapes still work, and compiler/unit tests pass. Alternative fixes (e.g., catching the error differently, validating chars before calling hex::decode, or using a completely different approach) would all pass as long as they produce the same error message and don't panic."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the Move compiler as a subprocess (cargo run -p move-compiler --bin move-check) on actual Move source files, inspect return codes and output, and run cargo test/check/clippy. They verify runtime behavior, not just file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The key f2p test (test_multibyte_hex_escape_error_handling) asserts that 'Invalid hexadecimal character' appears in the compiler output AND that the panic messages do NOT appear. Without the actual fix, the compiler panics with 'ICE unexpected error parsing hex byte string value', failing the test. A stub/no-op would leave the bug in place."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sui (the solve.sh is in solution/solve.sh and the container has the repo). An agent could read /solution/solve.sh or simply cat the gold patch to see exactly what to change. The Dockerfile doesn't remove or protect the solution directory. Additionally, the agent could grep test_outputs.py for the expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: proper error message for multi-byte UTF-8 chars, no panic, compilation succeeds, unit tests pass, clippy passes, and valid hex escapes still work."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_multibyte_hex_escape_error_handling, test_valid_hex_escape_still_works, etc.), have docstrings explaining purpose, and are logically grouped by scenario."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the module is 'byte string parser' and the panic message but does not name the exact file (byte_string.rs) or line numbers. The domain naturally points to the parser area but doesn't over-specify the location."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

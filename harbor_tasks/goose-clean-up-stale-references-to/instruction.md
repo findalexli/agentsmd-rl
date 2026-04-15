@@ -4,35 +4,34 @@
 
 The codebase has accumulated technical debt:
 
-1. **Debug console.log statements** in UI files that clutter the console and shouldn't be in production code:
-   - `ui/desktop/src/App.tsx` has multiple `console.log` calls for "reactReady signal" and "keyboard shortcuts"
-   - Other UI components have similar debug logging
+1. **Debug console.log statements** in UI files that clutter the console and shouldn't be in production code. Specifically, `ui/desktop/src/App.tsx` contains debug logging statements including:
+   - Messages about "reactReady signal" being sent to Electron
+   - Messages about "keyboard shortcuts" being set up
 
-2. **Stale TODO comment** in `crates/goose/src/config/experiments.rs` that references keeping documentation in sync, but the experiments list is empty
+2. **Stale TODO comment** in `crates/goose/src/config/experiments.rs` containing the text:
+   ```
+   TODO: keep this up to date with the experimental-features.md
+   ```
+   This comment references keeping documentation in sync, but the experiments list is empty, making the TODO obsolete.
 
-3. **Debug log level** in `crates/goose/src/config/extensions.rs` - extension config save failures are logged at `debug` level instead of `warn`
+3. **Insufficient log level** in `crates/goose/src/config/extensions.rs`. The function `save_extensions_map` logs configuration save failures at the `tracing::debug!` level. Since save failures indicate potential user-facing issues (extensions not persisting), these should be logged at a more visible level like `tracing::warn!`. The expected log message content is "Failed to save extensions config".
 
-4. **Dead code files** that are no longer referenced anywhere (~1,186 lines):
+4. **Dead code files** that are no longer referenced anywhere in the codebase:
    - `ui/desktop/src/components/InterruptionHandler.tsx` (236 lines)
    - `ui/desktop/src/hooks/useRecipeManager.ts` (324 lines)
    - `ui/desktop/src/components/WaveformVisualizer.tsx` (113 lines)
-   - `ui/desktop/src/components/schedule/ScheduleFromRecipeModal.tsx` (138 lines)
-   - `ui/desktop/src/utils/sessionCache.ts` (130 lines)
-   - `ui/desktop/src/components/recipes/RecipeExpandableInfo.tsx` (98 lines)
-   - `ui/desktop/src/components/recipes/RecipeInfoModal.tsx` (66 lines)
-   - `ui/desktop/src/components/ui/CustomRadio.tsx` (81 lines)
 
 ## Expected Behavior
 
-- All debug `console.log` statements removed from production code
-- `tracing::debug!` changed to `tracing::warn!` for extension config save failures
-- Stale TODO comment removed from experiments.rs
-- All 8 dead code files removed
+- Debug `console.log` statements with content matching "reactReady signal" or "keyboard shortcuts" should not appear in production code files
+- The stale TODO comment containing "TODO: keep this up to date with the experimental-features.md" should be removed from `experiments.rs`
+- Extension configuration save failures in `save_extensions_map` should be logged using `tracing::warn!` with a message containing "Failed to save extensions config", not `tracing::debug!`
+- Dead code files that are no longer imported or used anywhere should be removed from the repository
 
 ## Files to Look At
 
-- `crates/goose/src/config/extensions.rs` — Extension configuration persistence
-- `crates/goose/src/config/experiments.rs` — Experiment configuration
-- `ui/desktop/src/App.tsx` — Main React application component
+- `crates/goose/src/config/extensions.rs` — Extension configuration persistence (contains `save_extensions_map` function)
+- `crates/goose/src/config/experiments.rs` — Experiment configuration (contains stale TODO)
+- `ui/desktop/src/App.tsx` — Main React application component (contains debug console.log statements)
 - `ui/desktop/src/components/` — React components directory
 - `ui/desktop/src/hooks/` — React hooks directory

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_console_print_called_on_failure asserts 'auto-fixes' must appear in a console_print call within the except block. The instruction says 'inform the user about retrying after auto-fixes' but doesn't mandate the exact lowercase string 'auto-fixes'. Also, test_original_commit_uses_message_flag asserts '\"--message\"' must appear, which the instruction does mention. However, test_repo_black_check, test_repo_breeze_unit_tests, and test_repo_breeze_git_worktree_tests reference specific test files (t"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to use '--message' flag (not '-m'), use '--no-verify' flag, catch subprocess.CalledProcessError, use console_print, re-stage with 'git add', and retry with the same commit message. This is a near-complete specification of the exact code to write, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on highly specific implementation details: exact string '\"--message\"' (test_original_commit_uses_message_flag), exact string '\"--no-verify\"' (test_retry_commit_with_no_verify), 'git\", \"add\"' pattern after except block (test_git_add_before_retry_commit), 'console_print' with 'auto-fixes' in the except block (test_console_print_called_on_failure). An alternative correct fix using '-m' instead of '--message', or using get_console().print() instead of console_print, or printing 'auto-fi"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_commit_wrapped_in_try_except, test_retry_commit_with_no_verify, test_git_add_before_retry_commit, test_original_commit_uses_message_flag, test_console_print_called_on_failure, test_retry_commit_has_same_message, test_upgrade_function_contains_error_handling) are ALL string-matching on file content via read_text() with no execution or behavioral verification. Only pass_to_pass tests do execution (syntax check, black, pytest)."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not contain the required strings like 'except subprocess.CalledProcessError:', '\"--no-verify\"', '\"--message\"', or 'console_print' with 'auto-fixes'. The agent must actually add meaningful code to pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (solution/solve.sh is accessible in the container), and since tests only check for string presence in the file, the agent could simply read the solution patch and apply it. The solve.sh file contains the exact diff to apply."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (catch CalledProcessError, console_print about auto-fixes, git add, retry with --message and --no-verify, same commit message) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into individual aspects of the fix (try/except, no-verify, git add ordering, console_print, commit message)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (ci_commands.py), the exact function (upgrade), and provides extremely detailed implementation steps including specific flag names (--message not -m, --no-verify), the exact exception class (subprocess.CalledProcessError), and the exact function to call (console_print). This goes well beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

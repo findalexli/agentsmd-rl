@@ -2,22 +2,20 @@
 
 ## Summary
 
-The SFT trainer in `src/prime_rl/trainer/sft/train.py` crashes with a `NameError` when context parallelism (CP) is enabled. The hybrid CP setup step references the model object before it has been constructed.
+The SFT trainer crashes with a `NameError` when context parallelism (CP) is enabled in the config (`cp > 1`). The trainer fails before training begins.
 
 ## Reproduction
 
-Run the SFT trainer with context parallelism enabled (e.g., `cp > 1` in the config). The trainer will crash during initialization before training begins.
+Run the SFT trainer with context parallelism enabled. The trainer crashes during initialization.
 
-## Relevant code
+## File
 
-Look at the `train()` function in `src/prime_rl/trainer/sft/train.py`. The function:
+`src/prime_rl/trainer/sft/train.py`
 
-1. Sets up parallel dimensions and CP groups (around line 100-110)
-2. Sets up checkpoint managers
-3. Initializes the model via `setup_model()`
+## Relevant symbols
 
-The hybrid CP configuration step that configures DeltaNet/linear-attention modules for models like Qwen3.5 MoE is called at the wrong point in the initialization sequence. It needs the actual model instance to operate on, but the model hasn't been created yet when it runs.
+The `train()` function calls `setup_model()` to construct the model and `setup_hybrid_cp()` to configure hybrid DeltaNet/linear-attention modules for context-parallel execution. The `setup_hybrid_cp()` call must be guarded by `if parallel_dims.cp_enabled:` so it only runs when CP is active.
 
 ## Expected behavior
 
-The hybrid CP setup should run after the model has been fully constructed so it can properly configure the model's attention modules for context-parallel execution.
+When `cp > 1` is set in the config, the trainer should initialize successfully and begin training without crashing.

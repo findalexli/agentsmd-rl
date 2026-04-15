@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:27:31.432540",
-  "total_time": 1006.94,
-  "sandbox_id": "ioiw02pukb8jmj8iuwdj3",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:17:04.130901",
+  "total_time": 615.46,
+  "sandbox_id": "izasimmrbph4f0l5fyfgw",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -79,17 +81,26 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (correctly detecting buggy code), GOLD test reward=1 (all 16 tests pass after fix), rubric judge 1.0 (empty rubric)"
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.46,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:17: unpinned pip deps: ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.02,
+      "tier_a_fails": [
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1603.81,
-      "at": "2026-04-09T14:54:54.830427"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -121,6 +132,14 @@
       "backend": "fireworks",
       "time": 1006.94,
       "at": "2026-04-12T06:27:31.432540"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 615.46,
+      "at": "2026-04-15T06:17:04.130901"
     }
   ]
 }

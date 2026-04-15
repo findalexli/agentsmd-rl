@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific items like 'MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS' (the exact variable name), 'TOKENIZER_MAPPING_NAMES', entries in TOKENIZER_MAPPING_NAMES for deepseek_v2/deepseek_v3/modernbert (test_new_models_resolve_in_tokenizer_mapping), ruff format/lint checks, sort_auto_mappings, check_copies, check_dummies, check_inits, check_doc_toc, test_tokenizer_mapping_names_use_single_entries, and various repo consistency checks. The instruction.md never mentions 'TOKENIZER_MAPPING_NAM"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (missing model type identifiers from an override set) and lists what needs to be added, but does not specify the exact file, line numbers, or code syntax to use. The agent still needs to locate the relevant code and determine how to add the entries."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check membership in sets/dicts (e.g., 'deepseek_v2' in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS) rather than asserting specific line positions or implementation details. An agent could add entries in different positions within the set literal and still pass. The sort_auto_mappings check constrains ordering but that's a valid repo constraint, not a gold-specific detail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import the actual module (from transformers.models.auto.tokenization_auto import MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS) and check runtime membership, run subprocess commands (ruff, python scripts), and execute actual code. They don't just grep file text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that 'deepseek_v2', 'deepseek_v3', and 'modernbert' are in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS and TOKENIZER_MAPPING_NAMES. At the base commit these entries don't exist, so a stub/no-op would fail. The agent must actually modify the code to add these entries."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers (accessible in the container via solution/solve.sh which is mounted or available). The agent could read /solution/solve.sh or the git patch directly. Additionally, the test fixture values ('deepseek_v2', 'deepseek_v3', 'modernbert') could be discovered by grepping test files in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires adding deepseek_v2, deepseek_v3, modernbert to the override set and preserving existing entries. All of these are tested: individual membership tests for new entries, preservation test for existing entries."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Additional), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the concept (override set for incorrect Hub tokenizer classes) and lists model identifiers to add, but does not name the exact file (tokenization_auto.py) or variable name (MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS). The agent must locate these."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

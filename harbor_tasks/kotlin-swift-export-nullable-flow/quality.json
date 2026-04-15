@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests check for specific details not fully specified in instruction.md. For example, test_f2p_header_callback_has_bool_parameter checks for 'bool' in the callback signature, test_f2p_kotlin_has_value_wrapper checks for 'inner class Value' or 'class Value', test_f2p_kotlin_next_returns_value_wrapper checks that next() returns 'Value?', and test_f2p_swift_next_handles_nullable checks for 'hasValue' or 'is_value' or similar boolean flag patterns. The instruction describes the symptom and expect"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (ambiguity between null-as-value and null-as-completion) and expected behavior, but does not prescribe the specific fix (adding a bool parameter, wrapping in a Value class, etc.). A developer would still need to design the solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_f2p_kotlin_has_value_wrapper assert on 'class Value' specifically, test_f2p_header_callback_has_bool_parameter checks for 'bool' in the callback, and test_f2p_kotlin_next_returns_value_wrapper checks for 'Value?' return type. Alternative correct fixes (e.g., using a sealed class with Done/Element variants, using a separate hasNext() method, using a sentinel object) would fail these tests despite correctly solving the problem."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are almost entirely text-matching: e.g., test_f2p_kotlin_has_value_wrapper does `assert 'class Value' in content`, test_f2p_header_callback_has_bool_parameter checks `'bool' in content`, test_f2p_swift_test_nullable_structure checks for string patterns in file content. No tests actually compile or execute the code to verify behavioral correctness."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests check for text patterns in source files. An agent could simply add 'inner class Value(val value: T)' text and 'bool' to the header without implementing a working solution, and many f2p tests would pass. For example, test_f2p_test_data_has_nullable_test just checks that 'testNullable' appears in the file, which could be satisfied by adding a stub function."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is in /workspace/kotlin accessible via solve.sh. An agent could read the gold patch from the solution directory or from the git history. Additionally, since tests are purely text-matching, the agent could grep test files (if accessible) and reverse-engineer exactly what strings to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies that nullable Flow iteration should work correctly at runtime (emitting [Element1, nil, Element2, nil, Element3]), but no test actually executes this behavior. Tests only check for text patterns in source files."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear naming conventions (test_p2p_ for pass-to-pass, test_f2p_ for fail-to-pass), grouped by functionality, and have docstrings explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in instruction.md appear correct and consistent with the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the three specific interop files (.h, .kt, .swift) that need changes, describes the exact callback protocol issue, and states 'All three interop files (.h, .kt, .swift) participate in this callback protocol and must be updated.' While it doesn't specify exact line numbers, it significantly narrows the search space for a task where localization should be part of the challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

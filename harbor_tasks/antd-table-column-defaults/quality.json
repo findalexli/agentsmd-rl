@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific string patterns like 'col === SELECTION_COLUMN || col === EXPAND_COLUMN', 'if (!column)', \"'children' in col\", 'Array.isArray(col.children)', 'fillColumns(col.children)', and exact import strings like \"import useFilledColumns from './hooks/useFilledColumns'\". While instruction.md mentions these concepts, it does not specify these exact literal strings (e.g., the exact identity check format, the exact function name 'fillColumns', the exact conditional 'if (!column)'). A"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'Rename the existing baseColumns memo to rawColumns', 'create a new baseColumns using useFilledColumns(rawColumns, column)', 'Add column to the omit() call', and the exact hook signature. This goes beyond describing what's broken and prescribes the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_special_columns_preserved assert the exact string 'col === SELECTION_COLUMN || col === EXPAND_COLUMN', test_column_default_inheritance_logic asserts 'if (!column)', test_nested_column_groups asserts 'fillColumns(col.children)', and test_useFilledColumns_imported asserts the exact import string. Alternative correct implementations using different variable names, guard clauses, or iteration patterns would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many fail-to-pass tests (test_column_prop_types_exist, test_useFilledColumns_hook_exists, test_useFilledColumns_imported, test_column_prop_passed_to_hook, test_column_omitted_from_table_props, test_column_default_inheritance_logic, test_special_columns_preserved, test_nested_column_groups, test_children_omitted_from_merge) are purely text-matching with 'assert X in open(path).read()'. While pass-to-pass tests do run the code, most f2p tests only check file content strings."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The text-matching f2p tests could be passed by writing files containing the expected strings without implementing actual logic. For example, test_useFilledColumns_hook_exists just checks that certain strings appear in the file, which could be satisfied by comments containing those strings. Only the behavioral pass-to-pass tests (like test_repo_table_tests) would catch a non-functional stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is present at /workspace/ant-design after solve.sh runs, and the agent could read solution/solve.sh or the test file itself (test_outputs.py) to see exactly what strings are being asserted. The text-matching tests make it trivial to game by inserting the expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The tests cover all major behaviors described in instruction.md: prop type definition, hook creation, hook integration, special column handling, nested groups, demo creation, and the behavioral test in test_repo_table_tests exercises the actual rendering."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Static checks, Pass-to-pass tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces React components and hooks, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'Rename the existing baseColumns memo to rawColumns', exact hook call 'useFilledColumns(rawColumns, column)', 'Add column to the omit() call', and the exact merge strategy. This is excessive implementation guidance."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

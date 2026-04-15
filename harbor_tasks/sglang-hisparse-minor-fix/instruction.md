@@ -2,32 +2,28 @@
 
 ## Problem
 
-The HiSparse memory management system in SGLang has three related issues:
+The HiSparse memory management system in SGLang has three bugs:
 
-1. **CUDA kernel alignment bug**: The `transfer_item_warp` function in `hisparse.cuh` uses 64-bit transfers for data that is 128-bit aligned. This can cause memory alignment issues and inefficient memory access patterns.
+### 1. Inefficient CUDA memory transfer width
 
-2. **Incorrect retraction location**: When requests are retracted from a batch, `hisparse_coordinator.retract_req()` is called in `scheduler.py`'s `update_running_batch` method instead of in `schedule_batch.py`'s `release_req` method. This causes incorrect cleanup timing.
+The `transfer_item_warp` device function in `python/sglang/jit_kernel/csrc/hisparse.cuh` transfers data using individual 64-bit memory operations. However, the data it handles is 128-bit aligned, making this approach inefficient.
 
-3. **Missing batch state reset**: After assigning `hisparse_coordinator` to a running batch, the `batch_is_full` flag is not reset to `False`, preventing the scheduler from scheduling more prefills.
+The correct implementation uses 128-bit bulk PTX transfers:
+- Load instruction: `ld.global.nc.v2.b64` (loads a pair of 64-bit values as one 128-bit operation)
+- Store instruction: `st.global.cg.v2.b64` (stores a pair of 64-bit values as one 128-bit operation)
 
-## Expected Behavior
+The transfer operates on 16-byte chunks, where the number of chunk pairs is `item_size_bytes / 16`. For data sizes not evenly divisible by 16 bytes, a tail handler is needed — it uses `ld.global.nc.b64` to transfer the remaining 8-byte portion.
 
-1. `transfer_item_warp` should use 128-bit (16-byte) bulk transfers via paired 64-bit loads/stores with proper tail handling for sizes not divisible by 16.
+### 2. Request retraction in wrong code path
 
-2. `hisparse_coordinator.retract_req(req)` should be called inside `release_req()` in `schedule_batch.py` when releasing a request, with a None check.
+The `hisparse_coordinator.retract_req()` call currently lives in `scheduler.py` alongside batch-update logic. However, request retraction is semantically part of request release, which is handled in `schedule_batch.py`. Since `hisparse_coordinator` can be `None`, any retraction call must guard against this with an `is not None` check.
 
-3. After `self.running_batch.hisparse_coordinator = self.hisparse_coordinator` in `scheduler.py`, `batch_is_full` should be reset to `False` so the scheduler can continue scheduling prefills.
+### 3. batch_is_full flag never clears
 
-4. The `retract_req` call should be removed from `scheduler.py`'s `update_running_batch` method.
+In `scheduler.py`, after a `hisparse_coordinator` is assigned to a running batch, the `batch_is_full` flag stays stuck at its previous value. This prevents the scheduler from scheduling additional prefills even when capacity is available.
 
-## Files to Look At
+## Files
 
-- `python/sglang/jit_kernel/csrc/hisparse.cuh` — The `transfer_item_warp` CUDA device function
-- `python/sglang/srt/managers/schedule_batch.py` — The `release_req` method
-- `python/sglang/srt/managers/scheduler.py` — The `get_next_batch_to_run` and `update_running_batch` methods
-
-## Notes
-
-- The fix involves both CUDA kernel code and Python scheduler logic
-- Pay attention to the alignment requirements in the CUDA transfer function
-- The scheduler changes are about proper cleanup and state management
+- `python/sglang/jit_kernel/csrc/hisparse.cuh`
+- `python/sglang/srt/managers/schedule_batch.py`
+- `python/sglang/srt/managers/scheduler.py`

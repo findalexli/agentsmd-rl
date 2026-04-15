@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all the files tested (CMakeLists.txt, cmake/tools/SetupCcache.cmake, cmake/tools/SetupSccache.cmake, scripts/bootstrap.sh, scripts/build.mjs, scripts/build-cache/, CONTRIBUTING.md, docs/project/contributing.mdx, docs/project/building-windows.mdx) and describes the expected behaviors (remove sccache references, use ccache exclusively, gracefully skip missing ccache, remove build-cache directory, update docs). The specific string assertions like 'include(SetupCcache)', 'Optio"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change at a high level (remove sccache, use ccache only, remove build-cache directory, update docs) but does not specify exact line changes, replacement strings, or implementation details. A developer would still need to reason about how to modify each file."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_docs_use_ccache asserts the exact string 'Optional: Install `ccache`' must appear in CONTRIBUTING.md. An alternative correct fix might use a different heading like '### Optional: Install ccache' (without backticks) or '### Install `ccache` (optional)' and would fail. Similarly, test_ccache_not_required checks for the absence of the literal string 'if (CI AND NOT APPLE)' but an alternative fix that rewrites the guard differently (e.g., commenting it out with a note) might still contain that "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_cmake_uses_ccache_only, test_ccache_not_required, test_bootstrap_uses_ccache, test_build_cache_removed, test_docs_use_ccache, etc.) are almost entirely string-presence/absence checks on file contents (e.g., 'assert \"include(SetupCcache)\" in content', 'assert \"sccache\" not in content'). While there are some pass-to-pass tests that run syntax checks via subprocess, every core behavioral test is purely text-matching with no execution of the build system or any functiona"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific content changes (presence of 'include(SetupCcache)', absence of 'sccache' references, deletion of files/directories). A stub or no-op implementation would leave the original files unchanged, which would fail these tests since the original files contain sccache references."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/bun as the solve.sh modifies files in-place there. The agent could read solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). More critically, the agent could grep the test file at tests/test_outputs.py to discover exact expected strings like 'Optional: Install `ccache`' and match them without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors explicitly required by instruction.md are tested: ccache-only in CMake, graceful skip of missing ccache, removal of build-cache directory, bootstrap using ccache, documentation updates for CONTRIBUTING.md, contributing.mdx, and building-windows.mdx."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass core behavioral tests, pass-to-pass static validation, pass-to-pass repo tests), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing build system files and documentation, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists specific files to modify, which is appropriate for a build system migration task. It doesn't specify exact line numbers or replacement strings, just describes the high-level changes needed in each file."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold solution makes localized changes to specific sections of each file (replacing sccache blocks with ccache equivalents, removing specific functions, updating specific doc sections) rather than full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

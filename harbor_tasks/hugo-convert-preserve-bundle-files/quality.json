@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The instruction specifies 'copyContentDirsForOutput' and 'c.copyContentDirsForOutput(pagesBackedByFile)' and imports of '\"slices\"' and '\"github.com/gohugoio/hugo/common/hugio\"', which matches test_copy_content_dirs_function_exists. However, the test test_bundle_files_preserved_during_convert checks for files at specific paths like 'output/content/mybundle/data.txt' (note the 'content' subdirectory inside output), and the instruction says 'output alongside converted content files' without specify"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states the required method name 'copyContentDirsForOutput', the exact call signature 'c.copyContentDirsForOutput(pagesBackedByFile)', and the specific imports needed ('slices' and 'github.com/gohugoio/hugo/common/hugio'). This tells the agent exactly WHAT to write, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_copy_content_dirs_function_exists asserts on the exact function name 'copyContentDirsForOutput', exact call 'c.copyContentDirsForOutput(pagesBackedByFile)', and exact imports '\"slices\"' and '\"github.com/gohugoio/hugo/common/hugio\"'. An alternative correct fix using different function names (e.g., 'copyBundleResources'), different call signatures, or different utility packages (e.g., 'io/fs' instead of hugio) would fail these tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_copy_content_dirs_function_exists is purely textual: it reads convert.go and asserts substrings like 'copyContentDirsForOutput' and '\"slices\"' in content via string matching, with no execution or behavioral verification. While other tests do execute the binary, this test is purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_bundle_files_preserved_during_convert builds Hugo, runs 'hugo convert toJSON -o output', and checks that non-content files exist with correct contents. A stub/no-op implementation would not produce these files. test_copy_content_dirs_function_exists requires specific code to be present. These cannot be satisfied without real implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/hugo's solve.sh path pattern, and the gold patch is in solution/solve.sh. An agent could potentially read the solution directory or the Dockerfile to discover the expected changes. Additionally, the test fixture strings like 'bundle resource data' and 'nested resource data' are explicitly stated in instruction.md and could be matched without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) bundle files preserved - tested by test_bundle_files_preserved_during_convert, (2) output inside content tree handled - tested by test_convert_output_inside_content_tree, (3) required code structure - tested by test_copy_content_dirs_function_exists, (4) code quality - tested by go vet, gofmt, go mod verify, and existing test suite tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, grouped logically by concern (compilation, formatting, behavioral correctness, edge cases)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs; it modifies Go source code for a CLI tool."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies the exact method name 'copyContentDirsForOutput', the exact call signature 'c.copyContentDirsForOutput(pagesBackedByFile)', and exact package imports. This goes well beyond naming the buggy file/module and essentially dictates the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Go source files, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

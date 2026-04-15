@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like 'cachedThreshold <= threshold', 'new WeakRef(element)', 'cachedElement?.deref()', 'derefElement.version === element.version', 'cachedHit = result', 'return cachedHit', 'result = hitElement || hitFrameName'. While instruction.md mentions concepts like WeakRef, pointsEqual, cachedHit, it does not specify the exact string patterns tested (e.g., 'cachedThreshold <= threshold' vs 'threshold >= cachedThreshold', or 'const result = hitElement || hitFrameName')."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially dictates the exact implementation: use module-level variables cachedPoint/cachedElement/cachedThreshold/cachedHit, use WeakRef<ExcalidrawElement>, use pointsEqual, compare by id/version/versionNonce, check threshold >= cached threshold. Combined with the 'Key Considerations' section specifying exact variable names and patterns, this leaves very little reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string literals like 'cachedThreshold <= threshold', 'new WeakRef(element)', 'cachedElement?.deref()', 'cachedHit = result', 'return cachedHit', 'const result = hitElement || hitFrameName'. An alternative correct implementation using 'threshold >= cachedThreshold' instead of 'cachedThreshold <= threshold', or using a Map/object cache, or naming variables differently (e.g., 'lastHitResult' instead of 'cachedHit'), would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_collision_cache_implements_caching, test_cache_reuses_result_for_increased_threshold, test_cache_invalidates_on_version_change, test_uses_weakref_for_element_cache, and test_cache_stores_hit_result all exclusively read the source file and check for string patterns (e.g., '\"cachedPoint\" in content', '\"cachedThreshold <= threshold\" in content'). None of them actually execute the collision detection code or verify runtime behavior. The only behavioral tests are the pass-to-pass repo CI t"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_collision_cache_implements_caching through test_cache_stores_hit_result) only check for string presence in the source file. An agent could simply add comments containing the required strings (e.g., '// cachedThreshold <= threshold') without implementing any actual caching logic, and these tests would pass. The repo CI tests (test_repo_collision_tests etc.) are pass-to-pass and would pass without any changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/excalidraw and the solve.sh is in the container's solution/ directory. The agent could read solution/solve.sh to get the exact patch. Additionally, since tests only check for string patterns in the source file, the agent could grep the test files to discover exactly which strings need to be present."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires that cached results are actually returned (behavioral requirement), but tests only verify string patterns exist in source code, not that caching actually works at runtime. Cache invalidation behavior is also only tested via string matching, not actual execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named and grouped with clear docstrings explaining what each test verifies (e.g., test_cache_reuses_result_for_increased_threshold, test_cache_invalidates_on_version_change). Pass-to-pass tests are clearly separated with a comment header."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies the exact file (packages/element/src/collision.ts), exact function (hitElementItself), exact variable names to use (cachedPoint, cachedElement, cachedThreshold, cachedHit), exact type (WeakRef<ExcalidrawElement>), and exact method calls (.deref(), pointsEqual). This goes far beyond identifying the problem area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

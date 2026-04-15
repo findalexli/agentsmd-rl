@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (Dockerfile, Dockerfile.ci, scripts/docker/install_os_dependencies.sh, .github/workflows/additional-ci-image-checks.yml), the function name install_rustup, all SHA256 checksums, architecture mappings, environment variables (RUSTUP_HOME, CARGO_HOME, PATH), version 1.29.0, timeout values (25, 1320), and the secure download flags. The test for `install_additional_dev_dependencies\\n\\s*install_rustup` ordering is implied by 'integrated into the dev dependency inst"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact variable names (RUSTUP_VERSION), exact default values, exact environment variable paths, exact checksums, exact timeout values, exact curl flags, and the exact integration pattern. While it doesn't say 'change line X', it essentially dictates the complete implementation rather than describing what's broken. A developer reading it has almost no design decisions to make."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use very rigid text matching: e.g., test_dockerfile_calls_install_rustup asserts `re.search(r'install_additional_dev_dependencies\\s*\\n\\s*install_rustup', content)` requiring install_rustup to appear on the exact next line after install_additional_dev_dependencies. test_dockerfile_sets_rustup_env_vars checks for exact string 'RUSTUP_HOME=\"/usr/local/rustup\"' with specific quoting. An alternative correct fix using different quoting style (e.g., RUSTUP_HOME=/usr/local/rustup without quotes, o"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test is purely text-matching: `assert 'string' in content` or `re.search(pattern, content)`. No test builds the Docker image, runs rustup, executes any shell command to verify behavior, or imports/calls any code. This is entirely textual verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings (checksums, function definitions, environment variables) that would not be present in a stub or default file. A no-op or empty implementation would not contain 'function install_rustup()' or the SHA256 checksums."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't exclude it). An agent could read this file and apply the gold patch directly. Additionally, the tests check for exact literal strings (checksums, function names) that are all stated in instruction.md, so the agent could just grep for and insert those exact strings without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: version pinning, checksums, architecture mappings, secure download flags, environment variables, function definitions, integration calls, and CI timeout values are all covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'fail-to-pass' and 'pass-to-pass' sections with comments, descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Docker/shell/YAML configuration files, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or checksums across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies extremely detailed implementation guidance including exact variable names, exact values, exact patterns to follow ('follow the same secure pattern used for cosign installation'), and exact placement ('after install_additional_dev_dependencies'). This leaks the solution structure far beyond what domain knowledge would suggest."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized \u2014 it adds install_rustup functions and env vars at specific points in 4 files without full-file rewrites, and doesn't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

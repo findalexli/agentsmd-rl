@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests reference specific implementation details not mentioned in instruction.md: `app.iterators_to_reset` (test_cancel_removes_iterator_and_marks_reset), `safe_aclose_iterator` (test_repo_safe_aclose_iterator, test_not_stub checks for specific statement counts), `SyncToAsyncIterator` (test_repo_sync_to_async_iterator_aclose), specific test class names like `TestCancel`, `TestSafeAcloseIterator`, `TestSyncToAsyncIteratorAclose`. The instruction mentions `app.iterators` but not `iterators_to_reset"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (iterator deleted without being closed) and expected behavior (finally block must execute, handle cleanup errors gracefully) but does not specify the exact fix like 'call safe_aclose_iterator' or 'add try/except around aclose'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_repo_safe_aclose_iterator runs `TestSafeAcloseIterator` tests which likely only pass if `safe_aclose_iterator` exists in utils.py. test_repo_sync_to_async_iterator_aclose runs `TestSyncToAsyncIteratorAclose` tests. test_not_stub checks that cancel_event has specific AST structure (>=3 non-trivial statements). An alternative correct fix (e.g., directly calling `iterator.close()` with a try/except instead of using `safe_aclose_iterator`) might fail the repo tests that expect `safe_aclose_iter"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests create actual Gradio apps, register generators, POST to the /cancel endpoint via TestClient, and verify behavioral outcomes (closed[] list populated, resources cleaned up). Static tests also parse AST or run subprocesses. Tests are not mere text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_cancel_closes_generator, test_cancel_handles_error_in_cleanup, test_cancel_closes_resource_generator) assert that the generator's finally block actually fires (e.g., `assert closed`). A stub that just returns `{'success': True}` without closing the generator would fail because `closed` would remain empty."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio's solution/solve.sh path (if mounted), and the gold patch is a simple `git apply`. An agent could read the solve.sh or the patch directly. Additionally, the Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors from instruction.md are tested: (1) generator's finally block executes (test_cancel_closes_generator), (2) resources released (test_cancel_closes_resource_generator), (3) cancellation succeeds even if cleanup raises (test_cancel_handles_error_in_cleanup), (4) iterator removed from active tracking (test_cancel_removes_iterator_and_marks_reset)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Anti-stub, Config-derived, Repo CI/CD) and each test has descriptive names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a bug in route handler code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the buggy file (`gradio/routes.py`) and the specific endpoint (`/cancel`), and describes that the iterator is 'deleted from app.iterators without being properly closed first.' While the file is somewhat domain-obvious, naming `app.iterators` dict and the exact deletion behavior significantly narrows localization effort."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific behaviors not discoverable from instruction.md: test_distinct_on_aggregate_wildcard uses query 'from t1\\ngroup {id, name} (take 1)\\naggregate {c = count this}' which is not mentioned in the instruction. The instruction only gives one example with 'from tab1\\ngroup col1 (take 1)\\nderive {x = col1 + 1}'. The CLAUDE.md update requirements are vague ('update the project's CLAUDE.md to document the preferred testing approach') but tests may check for specific content. Also, the "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'The SQL generator should emit `*` (wildcard) instead of `NULL` in the `SELECT` list when the projection for a `DISTINCT ON` subquery is empty or contains only a `NULL` placeholder.' This tells the agent exactly what to change (replace NULL with *) and under what condition (empty projection or NULL placeholder in DISTINCT ON context)."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check behavioral output (DISTINCT ON projection should be *, not NULL) via the compiled SQL output. They don't assert on specific variable names, line positions, or internal helper functions. Alternative correct fixes (e.g., fixing the projection earlier in the pipeline, or using a different approach to detect and replace NULL) would all produce the same SQL output and pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_distinct_on_wildcard, test_distinct_on_aggregate_wildcard) actually compile PRQL queries using the built prqlc binary and inspect the SQL output. The pass-to-pass tests run cargo build/check/test/clippy/fmt. All tests execute code rather than just reading file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests compile actual PRQL queries and assert that the output contains '* ' after DISTINCT ON and does not contain NULL. A stub or default implementation would produce the buggy 'NULL' output and fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/prql's container at solution/solve.sh (or accessible from the Docker setup). The agent could read the gold patch from solve.sh. Additionally, the test checks specific SQL output patterns that could be matched by grepping the test file itself or the solution file for the expected fixture strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly requires updating CLAUDE.md to 'document the preferred testing approach for this kind of bug fix', but the test file has empty/commented-out config_edit tests (the two '[config_edit] fail_to_pass' sections have no test functions). This required behavior is not actually tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass, Fail-to-pass/pr_diff, Config-edit), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces SQL output, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file to modify: 'prqlc/prqlc/src/sql/gen_query.rs \u2014 the SQL code generation pipeline where DISTINCT ON and projections are assembled'. While pointing to the right file area, it also describes the exact fix (replace NULL with *), which combined makes the localization trivial."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold CLAUDE.md diff is a localized addition of a 'Test Strategy' section (~30 lines) inserted at a logical point in the existing file, not a full-file rewrite, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

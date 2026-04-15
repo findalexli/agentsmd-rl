@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings like 'Running in Dev Mode', 'Connecting to Local Dev Server', 'Step 4: Update Journal Tag', 'update the `tag` field', exact section headers and phrases in SKILL.md files. The instruction mentions these concepts loosely but does not specify the exact strings. For example, test_cli_skill_documents_dev_mode asserts 'Running in Dev Mode' and 'Connecting to Local Dev Server' as exact strings, and test_db_migrations_skill_has_journal_tag asserts 'Step 4: Update Journ"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix values: 'resolveMaxTokens should return 64000 (not 8192)', 'generateObject should use 64000', 'toolResultMaxLength default should be 25000 (not 6000)'. These are the exact replacement values, not just descriptions of what's broken. The agent doesn't need to reason about what the correct values should be."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_db_migrations_skill_has_journal_tag asserts exact string 'Step 4: Update Journal Tag' and 'update the `tag` field' \u2014 an alternative correct documentation could use different wording like 'Step 4: Update the Journal' or 'modify the tag entry'. test_cli_skill_documents_dev_mode asserts exact strings 'Running in Dev Mode' and 'Connecting to Local Dev Server' as section headers. These are gold-specific phrasings that alternative correct solutions wouldn't necessarily share."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests are a mix. test_resolve_max_tokens_normal_models and thinking/override tests actually import and call the function (behavioral). But test_tool_result_max_length_default_25000 is pure regex text matching on source code. test_trpc_router_skill_exists, test_cli_skill_documents_dev_mode, and test_db_migrations_skill_has_journal_tag are all pure text-in-file checks with no execution. The SKILL.md tests are entirely 'assert string in file.read_text()' pattern."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific non-default values (64000 instead of 8192, 25000 instead of 6000) and specific file contents that don't exist in the base repo. A stub implementation returning defaults would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/lobe-chat relative paths and solve.sh is in solution/solve.sh. The agent could potentially read the solution patch. Also, the exact expected values (64000, 25000) are stated in instruction.md, so the agent could just search-and-replace without understanding the bug. The test fixture values are literal in the instruction."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction mentions several behaviors not tested: 'generateObject should use 64000 as the default max_tokens' (no test for generateObject), 'LocalSystem tool should only be enabled when device is auto-activated' (test_repo_agent_tools_engine_tests runs repo tests but no specific f2p test), 'RemoteDevice tool should be disabled when device is auto-activated' (no specific test), 'Tool errors should be displayed by default in tracing viewer' (no test for agent-tracing viewer)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections with comments (fail-to-pass core behavioral, fail-to-pass config/SKILL.md, pass-to-pass regression, repo CI tests) and each test function has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction and tests appear correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names exact files like 'resolveMaxTokens.ts', 'generateObject.ts', 'chatConfig.ts', 'AgentToolsEngine/index.ts', 'viewer/index.ts' and gives exact current and target values (8192\u219264000, 6000\u219225000). This over-specifies the location and fix, reducing the localization challenge to zero."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch for SKILL.md files and config changes are localized edits (additions to specific sections, value changes) rather than full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

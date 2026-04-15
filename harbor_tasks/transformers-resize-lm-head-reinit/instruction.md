@@ -4,12 +4,10 @@
 
 When `tie_word_embeddings=False`, calling `resize_token_embeddings()` followed by `post_init()` overwrites the LM head weights with random values.
 
-This happens because `_get_resized_lm_head()` returns a new `nn.Linear` module without setting `_is_hf_initialized = True`. When `post_init()` runs, it sees the LM head as uninitialized and re-initializes all weights.
-
 ### Symptoms
 
 1. Create a model with `tie_word_embeddings=False`
-2. Call `resize_token_embeddings()` to expand vocabulary
+2. Call `resize_token_embeddings()` to expand or shrink the vocabulary
 3. Call `post_init()` (e.g., after loading or during model preparation)
 4. The LM head weights will be replaced with random values — any previously learned weights are lost
 
@@ -31,12 +29,10 @@ model.post_init()
 # BUG: LM head weights are now random!
 ```
 
+## Expected Behavior
+
+After `resize_token_embeddings()` is called, subsequent calls to `post_init()` must preserve the LM head weights exactly as they were after the resize operation. The weights should not be reinitialized to random values.
+
 ## Files to Look At
 
-- `src/transformers/modeling_utils.py` — Contains `_get_resized_lm_head()` and `_get_resized_embeddings()` methods
-
-## Expected Fix
-
-The fix should set `new_lm_head._is_hf_initialized = True` after all weight copying is done in `_get_resized_lm_head()`, similar to how `_get_resized_embeddings()` already preserves the original module object (which already has the flag set).
-
-The fix should be minimal — likely a single line addition.
+- `src/transformers/modeling_utils.py` — Contains `resize_token_embeddings()`, `_get_resized_lm_head()`, `_get_resized_embeddings()`, and `post_init()`

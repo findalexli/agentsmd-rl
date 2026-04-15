@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md explicitly names all asserted strings: 'statementNameGenerator', 'this.pgOptions?.statementNameGenerator?.(query)', 'StatementNameGenerator = (query: SqlQuery) => string', 'import type { SqlQuery }', both test case names, file paths, and the JSDoc requirement. The ESLint/Prettier/vitest tests check general repo health which is implicitly expected. All specific asserted values are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact implementation line 'this.pgOptions?.statementNameGenerator?.(query)' and the exact type alias 'StatementNameGenerator = (query: SqlQuery) => string', plus the exact test case names. This tells the agent precisely WHAT code to write rather than just describing the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'this.pgOptions?.statementNameGenerator?.(query)' via substring matching. An alternative correct implementation such as 'const name = this.pgOptions?.statementNameGenerator?.(query)' followed by passing `name` separately, or using a different optional chaining style, would fail the test despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The three f2p tests (test_statementNameGenerator_option_exists, test_statementNameGenerator_called_in_query, test_statementNameGenerator_type_defined) all use 'assert STRING in open(path).read()' \u2014 pure text matching with no code execution. The p2p tests for ESLint/vitest/prettier do execute subprocesses, but every fail-to-pass test is text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All three f2p tests check only for string presence in source files. An agent could simply append a comment like '// this.pgOptions?.statementNameGenerator?.(query) StatementNameGenerator = (query: SqlQuery) => string' to pg.ts and pass all f2p tests without implementing any actual functionality."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/prisma with solve.sh containing the exact patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover the exact strings being asserted and simply inject them as comments. The tests only check string presence, not behavior."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says the generator result should be passed as 'name' property to pg.Client#query() and that name should be absent when no generator is provided. These behavioral requirements are only checked as text patterns in source files, not actually tested by executing the code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (f2p vs p2p as noted in the module docstring), and each test function has a clear purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly provides the exact implementation expression 'this.pgOptions?.statementNameGenerator?.(query)' and the exact type definition 'StatementNameGenerator = (query: SqlQuery) => string', which are implementation details beyond what's needed to describe the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

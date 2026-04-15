@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both files (infer.rs and builder.rs), the field name 'all_definitely_bound', both structs (ExpressionInferenceExtra and TypeInferenceBuilder), and the expected outcome (compile cleanly, preserve behavior). All test assertions check for removal of 'all_definitely_bound' from those exact files, plus compilation/clippy/test passes on named crates, all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (dead code field 'all_definitely_bound' in two structs) and says to remove it and related logic, but does not specify exact line numbers, specific code changes, or the precise diff. A developer must still reason about which lines to remove and how to adjust surrounding code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for the absence of 'all_definitely_bound' in two files plus successful compilation/tests. Any correct removal of this dead field and its references would pass all tests regardless of exact implementation details (e.g., reformatting surrounding code differently, adjusting variable bindings differently)."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While 3 tests do grep for text absence (checking dead code removal), the majority of tests (10+) run cargo check, cargo clippy, cargo test, cargo fmt \u2014 actually compiling and executing the code. The text-based checks are complemented by behavioral verification through compilation and test execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that 'all_definitely_bound' is absent from the files. At the base commit, this string IS present, so a stub/no-op solution would fail these tests. The agent must actually modify the source files to remove the references."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ruff as a git apply patch in solve.sh (accessible in the container at the solution path). The agent could read /solution/solve.sh (if mounted) or inspect the hidden test file to discover exactly what grep patterns are checked. Additionally, the agent could simply grep for 'all_definitely_bound' in the test file to know exactly what strings to remove."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) removal of all_definitely_bound field and logic from both files, (2) clean compilation with no warnings, (3) preserved type inference behavior. All three are tested via grep checks, cargo check/clippy, and cargo test."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass vs pass-to-pass), descriptive function names (test_no_all_definitely_bound_in_infer_rs, test_cargo_check, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves removing dead code from Rust source files; no structured data output (JSON/CSV/API/DB) is produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths (crates/ty_python_semantic/src/types/infer.rs, crates/ty_python_semantic/src/types/infer/builder.rs), crate names (ty_python_semantic, ty, ty_project, ty_ide), and identifiers (all_definitely_bound, ExpressionInferenceExtra, TypeInferenceBuilder) are correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files and the two structs containing the dead field, which is appropriate for this task \u2014 the task is about removing a known dead field, not about localizing a bug. The exact lines to change and surrounding logic adjustments are left to the developer."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Rust source file modifications, not configuration file edits."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

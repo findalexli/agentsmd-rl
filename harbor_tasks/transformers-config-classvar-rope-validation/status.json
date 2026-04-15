@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:41:53.188433",
-  "total_time": 1471.01,
-  "sandbox_id": "ifepts0rl17u0h13tnzfv",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:11:46.527710",
+  "total_time": 1131.13,
+  "sandbox_id": "ifbqjdkdr5zfus0q00dgr",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.4,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: \".[quality]\", pyyaml, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.79,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 9060.09,
-      "at": "2026-04-10T00:30:08.073670"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 1471.01,
       "at": "2026-04-12T05:41:53.188433"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1131.13,
+      "at": "2026-04-15T06:11:46.527710"
     }
   ]
 }

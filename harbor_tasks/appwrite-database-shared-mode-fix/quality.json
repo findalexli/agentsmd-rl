@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific string patterns like 'DOCUMENTSDB => \\array_filter(\\explode(...))' and '$databaseHost !== $dsn->getHost()' and exact variable names like '$databaseSharedTables' and exact conditional patterns like 'if (!empty($dsn) && !empty($databaseSharedTables))'. The instruction.md describes these conceptually but does not specify these exact string patterns, variable names, or code structures. For example, the variable name '$databaseHost' and the exact match expression syntax are"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fixes: 'Remove the (int) cast', 'Wrap the explode() calls with array_filter()', 'Add adapter-based separate pool detection', 'Add array_filter() on explode() calls for specific env vars', 'Add !empty($databaseSharedTables) check before pool filtering', and 'Add explicit if (empty($databases)) check that throws Exception(...)'. These are detailed implementation instructions, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact string matching (e.g., assert '->setTenant($project->getSequence())' in content, assert '$databaseHost !== $dsn->getHost()' in content, assert exact 'DOCUMENTSDB => \\array_filter(...)' patterns). An alternative correct fix using different variable names (e.g., '$dbHost' instead of '$databaseHost'), different code structure, or different formatting would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all tests in TestSharedModeFixes are pure text matching: they read file contents and assert specific strings are present/absent. The TestPhpSyntax class does run 'php -l' for syntax checks, but the core behavioral tests are all 'assert X in content' style with no actual code execution or behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific patterns that don't exist in the original files (e.g., array_filter wrapping, removed (int) cast, $databaseHost variable, separate pool detection). A stub/no-op implementation wouldn't pass since the original code has the bugs that the tests check against."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/appwrite as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to get the exact patch, or could simply apply the gold patch. The tests are pure text-matching, so copying the exact strings from the test assertions into the files would pass without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four issues described in instruction.md (int cast removal, array_filter wrapping, separate pool detection, empty pool exception) are tested across the test classes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into classes (TestSharedModeFixes, TestPhpSyntax, TestRepoCI) with descriptive method names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves PHP code fixes, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, env var names, and PHP function names in instruction.md are consistent with the test assertions and gold solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files, exact method calls (setTenant with (int) cast), exact env var names, exact function wrappers (array_filter on explode), and exact exception patterns. It essentially provides a detailed implementation specification rather than a problem description."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

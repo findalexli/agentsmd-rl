@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_workflow_sets_insta_env_vars checks that INSTA_UPDATE value is exactly 'new' - instruction mentions this but OK. (2) test_script_rejects_invalid_action checks the script rejects 'badaction' with exit non-zero and error mentioning both 'accept' and 'review' - instruction mentions this. (3) test_insta_version_bumped checks Cargo.toml insta version >= 1.46.0 - instruction.md never mentions bumping the insta version or specifies"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what needs to change at a requirements level (env vars to set, artifact upload conditions, script behavior) but doesn't specify exact line numbers, exact YAML structure, or the complete implementation. The developer must figure out exact placement and implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties (env vars set on nextest steps, upload-artifact with 'pending-snapshots' in name, script exit codes, file existence) rather than exact line positions or specific variable names. Alternative implementations with different artifact names containing 'pending-snapshots', different step ordering, or different script implementations would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mix of approaches: YAML parsing (structural inspection of workflow), subprocess execution (running the script with mock binaries to test behavior), and file existence checks. The script test (test_script_rejects_invalid_action) actually executes the script and checks exit code and output. Not purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require substantive changes: test_workflow_sets_insta_env_vars requires INSTA_UPDATE=new and INSTA_PENDING_DIR in nextest step env; test_workflow_uploads_pending_snapshots requires upload-artifact steps with failure() condition; test_script_rejects_invalid_action requires a working script that exits non-zero with specific error text. A stub/empty file would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/uv after solve.sh runs, and the Dockerfile doesn't remove solution/ or tests/ from the container. The agent could potentially read the test file at the path referenced in the task or inspect git history. Additionally, the solve.sh is described as 'hidden' but may be accessible in the container filesystem depending on Harbor's mount setup."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires the script to: (1) auto-detect PR for current branch, (2) download artifacts, (3) merge snapshots from multiple platforms, (4) apply using cargo-insta, (5) support accept/review modes. Tests only check invalid action rejection and script existence/executability - they don't test the core download/merge/apply workflow or PR auto-detection."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass CI workflow changes, Fail-to-pass script behavior), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves CI workflow YAML and bash scripts, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md specifies requirements at a feature level (env var names, artifact naming convention, script behavior) without pointing to exact line numbers or giving the complete implementation. The file paths mentioned are necessary context for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff in solve.sh shows localized changes: adding env vars to existing steps, adding new upload-artifact steps, creating a new script file, and a small CONTRIBUTING.md addition. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
+}

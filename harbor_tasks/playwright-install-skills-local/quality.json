@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (commands.ts, program.ts, route.ts, config.d.ts, SKILL.md, request-mocking.md), the command names (install-skills, install-browser), the capability name ('network'), the target directory (.claude/skills/playwright/), and the documentation sections (### Network, ### Install, route-list, unroute). The tests check for these same specifics, all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change (rename command, add new command, move capability, update docs) but does not give exact code diffs, line numbers, or implementation details like function signatures. A developer must still reason about how to implement the copy logic, how to wire up the command handler, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_install_skills_implementation checks for very specific implementation details: the function must be named 'installSkills' (src.includes('installSkills')), must reference '.claude' and 'skill' as literal strings, and must use one of '.cp(', 'cpSync', or '.cp ('. An alternative correct implementation using e.g. 'copySkillFiles' as the function name, or using fs.readdir + fs.writeFile for copying, would fail these string-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests are pure text/string matching: reading file contents and checking for substrings (e.g., test_install_skills_implementation checks src.includes('installSkills'), test_route_capability_network uses regex on source text, test_skill_md_documents_network_commands checks for string presence in markdown). No test actually executes the install-skills command or verifies route tools are registered under the network capability at runtime."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or default implementation would not pass these tests. The tests require specific command names in declareCommand blocks, specific capability strings in defineTool blocks, specific function names and copy logic in program.ts, and specific section headers in documentation files. None of these exist in the base commit."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/playwright accessible in the container (solve.sh applies a git patch there). The agent could read the solution file or grep test_outputs.py (which contains the exact strings being checked like 'installSkills', '.cp(', 'cpSync') and simply insert those strings into the source files to pass all text-matching tests without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that install-skills 'copies the skill files from the package source directory into the user's local .claude/skills/playwright/ directory, including the SKILL.md and the references/ subdirectory.' No test actually verifies that running install-skills produces the correct files in the target directory. The copy behavior is only checked via string matching for 'cpSync' in source code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Config/documentation/agent_config), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, command names, and variable names in the instruction match what the tests expect. No typos found in the instruction that would mislead the agent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to look at which is appropriate for a task of this scope. It doesn't specify exact line numbers or exact code changes, just describes the logical reorganization needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies config.d.ts by adding a single line ('network' to the union type), SKILL.md with new sections, and other targeted changes. The diffs are localized and don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T18:01:44.675955",
-  "total_time": 1969.44,
-  "sandbox_id": "isbeknl9rehypic6d1x96",
+  "validated_at": "2026-04-15T05:01:07.477566",
+  "total_time": 2134.21,
+  "sandbox_id": "in5acu1gbddgjfwo4htnw",
   "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -54,17 +55,28 @@
       "backend": "fireworks",
       "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.37,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:346: test `test_no_broken_imports` has 1 assert(s), all pass on a stub', 'A:[A] test_not_tautological @ tests/test_outputs.py:407: test `test_repo_als_pattern` has 1 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:442: test `test_repo_edge_runtime_pattern` has 1 assert(s), all pass o']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.62,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6257.09,
-      "at": "2026-04-09T06:26:29.130012"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -96,6 +108,14 @@
       "backend": "fireworks",
       "time": 1969.44,
       "at": "2026-04-10T18:01:44.675955"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2134.21,
+      "at": "2026-04-15T05:01:07.477566"
     }
   ]
 }

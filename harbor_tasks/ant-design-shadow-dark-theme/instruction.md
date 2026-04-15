@@ -16,15 +16,42 @@ The shadow tokens in Ant Design's theme system don't properly adapt to dark them
 
 The theme system is located in `components/theme/`:
 
-1. **`components/theme/themes/dark/colors.ts`** - Dark theme color generation
-2. **`components/theme/themes/default/colors.ts`** - Light theme color generation
-3. **`components/theme/themes/ColorMap.ts`** - Color map type definitions
-4. **`components/theme/interface/maps/colors.ts`** - Color token interfaces
-5. **`components/theme/util/alias.ts`** - Shadow token generation
+1. **`components/theme/interface/maps/colors.ts`** - Contains the `ColorNeutralMapToken` interface
+2. **`components/theme/themes/ColorMap.ts`** - Contains the `GenerateNeutralColorMap` type definition
+3. **`components/theme/themes/dark/colors.ts`** - Dark theme color generation with `generateNeutralColorPalettes` function
+4. **`components/theme/themes/default/colors.ts`** - Light theme color generation with `generateNeutralColorPalettes` function
+5. **`components/theme/util/alias.ts`** - Shadow token generation with hardcoded `rgba(0, 0, 0, ...)` values
 
-## Key Insight
+## Required Changes
 
-The shadow tokens (like `boxShadow`, `boxShadowCard`, `boxShadowSecondary`) are currently hardcoded to use `rgba(0, 0, 0, ...)` values in `alias.ts`. You need to introduce a `colorShadow` token that derives from the theme (dark for light theme, white for dark theme) and use that as the base for all shadow generation.
+The following specific changes must be made to fix this issue:
+
+### 1. Interface Changes
+
+The `ColorNeutralMapToken` interface in `components/theme/interface/maps/colors.ts` must include a `colorShadow` property marked with `@internal`.
+
+### 2. Type Signature Changes
+
+The `GenerateNeutralColorMap` type in `components/theme/themes/ColorMap.ts` must accept a `shadowColor` parameter (optional).
+
+### 3. Color Generation Changes
+
+Both `generateNeutralColorPalettes` functions (in `components/theme/themes/dark/colors.ts` and `components/theme/themes/default/colors.ts`) must:
+- Accept a `shadowColor` optional parameter
+- Define a `colorShadow` constant that uses the `shadowColor` parameter or falls back to a default
+- Return `colorShadow` in the result object
+
+Default values:
+- Dark theme: `colorShadow` should default to `'rgba(255, 255, 255, 0.2)'`
+- Light theme: `colorShadow` should default to `'#000'`
+
+### 4. Shadow Token Generation Changes
+
+The `alias.ts` file must be updated to derive shadow colors dynamically from the `colorShadow` token:
+- Read `colorShadow` from `mergedToken`
+- Create a `FastColor` instance from `mergedToken.colorShadow`
+- Implement a `getShadowColor` helper function that takes an alpha multiplier and returns the appropriate color string
+- All shadow token definitions (`boxShadow`, `boxShadowSecondary`, `boxShadowTertiary`, `boxShadowCard`, `boxShadowDrawerRight`, `boxShadowDrawerLeft`, `boxShadowDrawerUp`, `boxShadowDrawerDown`, `boxShadowPopoverArrow`, `boxShadowTabsOverflowLeft`, `boxShadowTabsOverflowRight`, `boxShadowTabsOverflowTop`, `boxShadowTabsOverflowBottom`) must use `getShadowColor()` instead of hardcoded `rgba(0, 0, 0, ...)` values
 
 ## Reproduction
 
@@ -35,19 +62,11 @@ You can verify the issue by checking the shadow tokens in both themes:
 const lightToken = theme.useToken(); // default algorithm
 console.log(lightToken.token.boxShadow); // Should contain rgba(0,0,0,...)
 
-// Dark theme - should use light shadows  
+// Dark theme - should use light shadows
 const darkToken = theme.useToken({ algorithm: theme.darkAlgorithm });
 console.log(darkToken.token.boxShadow); // Currently contains rgba(0,0,0,...) but should contain rgba(255,255,255,...)
 ```
 
-## Requirements
+## Related Issue
 
-1. Add a `colorShadow` token to the theme that derives appropriate base colors for each theme
-2. Update the shadow token generation to use `colorShadow` as the base color
-3. Ensure the alpha values are preserved correctly for both themes
-4. The fix should work with custom `colorTextBase` values as well
-
-## References
-
-- Related issue: #57493
-- The fix involves modifying the color map types and the alias token generation
+- Issue #57493

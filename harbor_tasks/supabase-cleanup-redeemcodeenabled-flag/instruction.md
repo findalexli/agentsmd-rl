@@ -1,25 +1,24 @@
-# chore: cleanup redeemCodeEnabled flag
+# Cleanup redeemCodeEnabled Feature Flag
 
 ## Problem
 
-The Supabase Studio dashboard has a feature flag `redeemCodeEnabled` that controls whether the credit code redemption feature is visible to users. This feature flag is no longer needed as the feature is now fully launched and should be available to all users.
+The Supabase Studio dashboard has a feature flag `redeemCodeEnabled` that gates the credit code redemption feature. This flag is no longer needed as the feature is fully launched and should be available to all users.
 
-Currently, the code checks `useFlag('redeemCodeEnabled')` in two places:
-1. `CreditCodeRedemption.tsx` - conditionally renders the redemption UI based on the flag
-2. `redeem.tsx` - shows a "Code redemption coming soon" message when the flag is disabled
+Currently, when the flag is disabled:
+- The credit code redemption component is hidden entirely in billing settings
+- Users see a "Code redemption coming soon" message on the redeem credits page instead of the organization listing
 
-This creates a poor user experience where users might see a "coming soon" message or have the feature hidden when it should be available.
+This creates a poor user experience where users might see a "coming soon" message or have the feature hidden when it should always be available.
 
 ## Expected Behavior
 
-The credit code redemption feature should always be visible and available. The feature flag checks should be removed and the feature should render unconditionally.
+The credit code redemption feature should always be visible and available to all users. There should be no feature flag gating — the redemption UI should render unconditionally with no remaining references to `redeemCodeEnabled`. Any imports that become unused as a result of this cleanup should also be removed.
 
-## Files to Look At
+## Relevant Files
 
-- `apps/studio/components/interfaces/Organization/BillingSettings/CreditCodeRedemption.tsx` - Remove the `useFlag('redeemCodeEnabled')` hook call and the early return that hides the component when the flag is disabled
-- `apps/studio/pages/redeem.tsx` - Remove the `useFlag('redeemCodeEnabled')` hook call and the conditional rendering that shows "Code redemption coming soon"; the organization cards should always render
+- `apps/studio/components/interfaces/Organization/BillingSettings/CreditCodeRedemption.tsx`
+- `apps/studio/pages/redeem.tsx`
 
 ## Notes
 
-- Clean up the `useFlag` import from `common` in both files if it's no longer used
-- The feature should work the same way as it does when the flag is enabled - just without the flag check
+- The feature should work exactly as it does when the flag is enabled — the CreditCodeRedemption component must still render its Dialog UI, and the redeem page must still render the organization listing

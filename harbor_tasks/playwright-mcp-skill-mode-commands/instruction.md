@@ -2,28 +2,34 @@
 
 ## Problem
 
-The Playwright MCP terminal commands use hyphenated names for keyboard and mouse commands (`key-press`, `key-down`, `key-up`, `mouse-move`, `mouse-down`, `mouse-up`, `mouse-wheel`). When the CLI runs in daemon/skill mode, modal state messages (like dialog prompts or file chooser notifications) tell the user to use tool names like `browser_handle_dialog` — but in skill mode, the user should instead see human-friendly skill command names like `dialog-accept` or `upload`.
+The Playwright MCP terminal commands use hyphenated names (`key-press`, `key-down`, `mouse-move`, etc.) that feel unnatural in skill/daemon mode. Additionally, the `eval` command requires users to write full arrow function syntax even for simple expressions.
 
-Additionally, the `eval` command requires users to write full arrow function syntax (`() => document.title`) even for simple expressions.
+When the CLI runs in daemon/skill mode, modal state messages (dialog prompts, file chooser notifications) reference internal MCP tool names — users in skill mode should see human-friendly skill command names instead.
 
-## Expected Behavior
+## Goals
 
-1. **Rename terminal commands** to remove hyphens: `press`, `keydown`, `keyup`, `mousemove`, `mousedown`, `mouseup`, `mousewheel`. Update both the command declarations and the help text.
+1. **Commands should use skill-friendly names**: The terminal command declarations and CLI help text should use shorter, natural names without hyphens.
 
-2. **Make modal state messages skill-aware**: When running in skill/daemon mode, modal state messages should show the skill-friendly command name (e.g., `dialog-accept or dialog-dismiss`, `upload`) instead of the MCP tool name (e.g., `browser_handle_dialog`, `browser_file_upload`). The `clearedBy` field on modal states needs to carry both the tool name and the skill name.
+2. **Modal state messages must adapt to skill mode**: In skill/daemon mode, modal state messages should show skill-friendly command names rather than MCP tool names. The data structure backing modal states needs to carry both identifiers.
 
-3. **Auto-wrap eval expressions**: If the user passes an expression to `eval` that doesn't contain `=>`, automatically wrap it in `() => (...)`.
+3. **Simplify eval expressions**: The eval command should accept simple JavaScript expressions without requiring arrow function syntax; it should auto-detect and wrap plain expressions.
 
-4. **Create a SKILL.md file** for the terminal CLI that documents all available commands with examples. This file should live alongside the terminal command implementation and use the new command names. Don't forget to update the build script so it gets copied to the output directory.
+4. **Document the CLI commands**: Create a `SKILL.md` file in the terminal directory that documents all available commands with examples. Update the build script so it gets copied to the output directory.
 
-## Files to Look At
+## Requirements / Acceptance Criteria
 
-- `packages/playwright/src/mcp/terminal/commands.ts` — command declarations with names
-- `packages/playwright/src/mcp/terminal/help.json` — CLI help text
-- `packages/playwright/src/mcp/browser/tools/tool.ts` — ModalState type definitions
-- `packages/playwright/src/mcp/browser/tab.ts` — modal state creation and rendering
-- `packages/playwright/src/mcp/browser/response.ts` — response building that renders modal states
-- `packages/playwright/src/mcp/browser/config.ts` — FullConfig type
-- `packages/playwright/src/mcp/program.ts` — daemon mode setup
-- `packages/playwright/src/mcp/browser/tools/evaluate.ts` — eval command handler
-- `utils/build/build.js` — build script for copying assets
+The following specifics are verified by the test suite and must hold true:
+
+- **Command names in help.json**: The CLI help must use the non-hyphenated names — specifically: `press`, `keydown`, `keyup`, `mousemove`, `mousedown`, `mouseup`, `mousewheel`. The hyphenated variants (`key-press`, `key-down`, etc.) must NOT appear.
+
+- **Skill mode modal message format**: When running in skill mode, modal state messages should display skill-friendly names like `dialog-accept or dialog-dismiss` for dialogs and `upload` for file choosers. In non-skill mode, they should show the underlying tool names (e.g., `browser_handle_dialog`, `browser_file_upload`).
+
+- **Modal state clearedBy structure**: The `clearedBy` field on modal states must carry both the tool identifier and the skill-friendly identifier (e.g., `{ tool: "browser_handle_dialog", skill: "dialog-accept or dialog-dismiss" }`).
+
+- **Eval auto-wrap**: Expressions passed to `eval` that do not contain `=>` should be automatically wrapped in `() => (...)` before execution.
+
+- **SKILL.md requirements**: The file must exist in the terminal directory, include valid YAML frontmatter with `name:` and `description:` fields, and document the new command names.
+
+- **Build and lint must pass**: The project build and ESLint checks must complete successfully.
+
+- **Existing test compatibility**: Modified code must remain compatible with the existing MCP test suite (including tests in `tests/mcp/`).

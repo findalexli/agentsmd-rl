@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all four exact string patterns tested: 'openDelay?: number;', 'openDelay: 0,', 'const { children, closeDelay, openDelay, ...others }', and that openDelay variable (not hardcoded 0) must be passed to the hover delay hook. The file path under packages/@mantine/core/src/components/Menu/ is mentioned. The CI tests (conflict markers, package.json, prettier, eslint) are pass-to-pass checks on the repo that don't require specific instruction mention."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact code changes: 'openDelay?: number;' in the interface, 'openDelay: 0,' in default props, 'const { children, closeDelay, openDelay, ...others }' as the destructuring pattern, and that openDelay variable must be passed to the hook instead of hardcoded 0. This is essentially the complete solution spelled out line by line, leaving no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string matches like 'const { children, closeDelay, openDelay, ...others }' which would fail if a correct alternative ordered the destructuring differently (e.g., 'const { children, openDelay, closeDelay, ...others }'). The test in test_opendelay_destructured does an exact substring match on a specific destructuring order that is not the only correct way to implement this."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The four fail-to-pass tests (test_opendelay_prop_in_interface, test_opendelay_in_default_props, test_opendelay_destructured, test_opendelay_passed_to_useDelayedHover) are all pure text-matching assertions using 'assert X in open(path).read()'. They never import, compile, or execute the component code. The test_opendelay_values_vary test attempts TypeScript compilation but only checks that 'openDelay' doesn't appear in error output, which is weak. The core f2p tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not contain the required strings ('openDelay?: number;', 'openDelay: 0,', the specific destructuring pattern). The tests check for specific code additions that must actually be written into the file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mantine (solution/solve.sh contains the exact git patch). An agent could read solve.sh or the solution directory to extract the exact patch. Additionally, since tests are pure string matching, the agent could grep test files for the expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four acceptance criteria from the instruction are tested: interface declaration, default props, destructuring pattern, and variable reference in hook call."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_opendelay_prop_in_interface, test_opendelay_in_default_props, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact code patterns to implement (e.g., 'const { children, closeDelay, openDelay, ...others }'), which effectively reveals the exact lines to change and their exact content, going beyond describing the problem domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

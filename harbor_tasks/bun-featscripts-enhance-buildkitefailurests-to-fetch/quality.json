@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction documents all key specifics tested: --help/-h flag, --wait flag with polling, --flaky flag, --warnings flag, /tmp/bun-build-{number}-{platform}-{step}.log path pattern, supported input formats (build number, branch, PR URL, #number), buildkite.com API reference, CLAUDE.md update, and the script path scripts/buildkite-failures.ts. The test assertions for literals like '--wait', '/tmp/bun-build', 'poll', 'branch', 'build', 'pr' are all discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes desired behaviors (help text, wait mode, log fetching, CLAUDE.md updates) without specifying exact code changes, line numbers, or implementation details. A developer must reason about how to implement each feature."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for behavioral properties: exit code 0 on --help, presence of keywords like '--wait', 'poll'/'complete'/'wait', '/tmp/bun-build', 'build', 'pr'/'pull'/'#number', 'branch' in output. These are broad behavioral checks that any correct implementation would satisfy, not specific to variable names or internal structure."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The primary fail-to-pass tests execute the script via subprocess ('bun run scripts/buildkite-failures.ts --help') and check stdout/returncode. Pass-to-pass tests also execute subprocesses (bun test, bunx tsc, oxlint, prettier, bun build). test_existing_flags_preserved does read file content, but most tests verify execution behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation that does nothing would not exit 0 with >50 chars of stdout containing '--wait', '/tmp/bun-build', 'build', 'branch', and PR-related terms. The agent must actually implement --help handling with specific content. The pass-to-pass tests require the script to pass linting, type-checking, and building."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is stored at /workspace/bun as a git checkout. The solve.sh reveals the exact commit hash (7e9fa4ab08d9250c72795565c173cf7349de4018) and the agent could simply run 'git fetch origin 7e9fa4ab08d9250c72795565c173cf7349de4018 --depth=1 && git checkout FETCH_HEAD -- scripts/buildkite-failures.ts CLAUDE.md' to get the gold solution. The solution directory's solve.sh is visible if the agent can access /solution/. There's no protection against reading test files either."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Several behaviors required by instruction.md are not tested: --wait polling behavior, actual log fetching from BuildKite API, failure grouping by type (build/test/other), canceled/pending build handling, and the actual content of CLAUDE.md documentation updates (the test functions for CLAUDE.md appear to be empty/commented out in test_outputs.py)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass pr_diff, config_edit, pass_to_pass repo_tests), descriptive function names (test_help_flag_exits_zero, test_help_documents_wait_option), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces CLI output and log files, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify (scripts/buildkite-failures.ts and CLAUDE.md) which is appropriate since the task domain makes these obvious. No specific line numbers, function names, or implementation details are leaked."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "fail",
+      "reason": "The CLAUDE.md config edit tests appear to be empty (the test function bodies for config_edit fail_to_pass are missing in test_outputs.py - just comments with no code). This means the CLAUDE.md requirement described in instruction.md is not actually verified, creating a mismatch."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "config_edit_scope_bounded"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
+}

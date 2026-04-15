@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Multiple test-specific assertions are undiscoverable from instruction.md: (1) test_linker_defers_dynamic_import checks for the exact string 'import_record.kind == .require or import_record.kind == .require_resolve or import_record.kind == .dynamic' which instruction.md never specifies; (2) test_logger_fixes_use_after_poison checks for exact comment text 'Always dupe the line_text from the source to ensure the Location data' and 'outlives the source\\'s backing memory (which may be arena-allocated"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially describes exactly what to change: 'The linker should defer dynamic import() of unknown node: modules to runtime' (telling the agent the fix), 'the line_text field must be duplicated to outlive the source's backing memory' (telling the exact fix for logger.zig), 'use bun.strings instead of std.mem for string utilities' (telling the exact refactor), and the CLAUDE.md formatting changes are fully specified. These are implementation instructions, not just problem descripti"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact gold-patch strings: test_linker_defers_dynamic_import requires the exact string 'import_record.kind == .require or import_record.kind == .require_resolve or import_record.kind == .dynamic'; test_logger_fixes_use_after_poison requires exact comment wording; test_claude_md_table_formatting requires exact column widths with specific padding. An alternative correct fix (e.g., using a different condition structure, different comment wording, or slightly different table padding) "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test function uses only 'assert <string> in open(path).read()' pattern \u2014 pure text matching on file contents. No test compiles code, executes a subprocess, imports modules, or verifies any runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "For test_regression_test_file_created, the agent can create a file at the expected path containing the exact expected strings without implementing any actual bug fix \u2014 just writing a dummy test file with the right keywords. For the other tests, simply writing the exact expected strings into the source files (without understanding the bug) passes all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. The agent could read it directly or grep for expected test strings. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact strings being asserted and paste them into files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires that 'require() of a CJS file containing import(\"node:sqlite\") should NOT fail at load time' and 'the dynamic import should be deferred to runtime' \u2014 actual runtime behavior. But no test verifies this runtime behavior; all tests only check file contents."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-grouped by concern (linker, logger, credentials, CLAUDE.md, regression test), each has a descriptive name and docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files (src/linker.zig, src/logger.zig, src/s3/credentials.zig, src/CLAUDE.md) AND describes the exact changes needed (e.g., 'line_text field must be duplicated', 'defer dynamic import()', 'use bun.strings instead of std.mem'), plus specifies exact table formatting and whitespace changes for CLAUDE.md. This goes well beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The CLAUDE.md edit is localized to table formatting and adding blank lines after section headers \u2014 not a full-file rewrite, and it doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 8
+}

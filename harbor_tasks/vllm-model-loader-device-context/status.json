@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:30:29.540920",
-  "total_time": 1126.11,
-  "sandbox_id": "i27ey3gprg55cg3jrgpb1",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:19:14.217156",
+  "total_time": 735.86,
+  "sandbox_id": "i5wpy8kcx5swwr6j1anrz",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -71,6 +73,25 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.27,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:242: test `test_device_context_narrower_than_dtype` has 2 assert(s), a']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.13,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
@@ -97,6 +118,14 @@
       "backend": "fireworks",
       "time": 1126.11,
       "at": "2026-04-12T06:30:29.540920"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 735.86,
+      "at": "2026-04-15T06:19:14.217156"
     }
   ]
 }

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files (gradio/utils.py, gradio/cli/commands/skills.py), the root cause (from __future__ import annotations in utils.py causing CO_FUTURE_ANNOTATIONS to propagate via exec in watchfn), and the fix strategy (remove the future import, convert bare type annotations to strings). The tests check these same files, the watchfn function, forward ref names like App/Blocks/Component/BlockContext/Request/SessionState/Button, and the cast() import in skills.py \u2014 all discoverable"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'remove from __future__ import annotations and convert all bare type annotations in that file to string annotations (e.g., App -> \"App\", Blocks -> \"Blocks\")' and 'may need cast() import for type safety after the change'. This tells the agent exactly WHAT to change, leaving minimal reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties (CO_FUTURE_ANNOTATIONS flag absence on watchfn, annotations resolving correctly, forward refs being quoted strings in the AST, ruff passing, syntax validity) rather than exact line positions or specific helper function names. Alternative correct implementations (e.g., different quoting strategies, different orderings) would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests compile and execute code via subprocess (_run_python), inspect code objects for flags, exec user code and check type hints resolve, run pytest suites, and run ruff. test_forward_refs_are_quoted uses AST parsing (structural analysis) rather than raw text matching. This is behavioral verification, not mere text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_watchfn_no_future_annotations_flag, test_annotated_class_hints_resolve, test_annotations_not_stringified_after_exec, test_forward_refs_are_quoted) all require actual removal of 'from __future__ import annotations' and proper quoting of forward references. A stub or no-op would fail because the CO_FUTURE_ANNOTATIONS flag would still be present, annotations would still be stringified, and bare forward refs would cause NameErrors."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace with solve.sh containing the full git patch. An agent could read /solution/solve.sh (or solution/solve.sh relative to any accessible path) and apply it directly. No evidence of the solution directory being removed or made inaccessible in the Dockerfile."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) reload mode works with Annotated types \u2014 tested by test_annotated_class_hints_resolve; (2) watchfn doesn't carry CO_FUTURE_ANNOTATIONS \u2014 tested by test_watchfn_no_future_annotations_flag; (3) bare annotations converted to strings \u2014 tested by test_forward_refs_are_quoted. All explicitly required behaviors are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code fixes, not structured data output (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact line to remove ('from __future__ import annotations' from gradio/utils.py), specific type names to convert (App -> \"App\", Blocks -> \"Blocks\"), and even the specific import needed in skills.py (cast()). This goes well beyond identifying the buggy file/module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

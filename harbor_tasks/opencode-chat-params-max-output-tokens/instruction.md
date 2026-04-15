@@ -8,9 +8,25 @@ A plugin that tries to adjust `maxOutputTokens` via the `chat.params` hook has n
 
 ## Expected Behavior
 
-Plugins should be able to modify `maxOutputTokens` through the `chat.params` hook, just like they can modify `temperature`, `topP`, and `topK`. The hook's output type should include `maxOutputTokens`, and the value returned by the hook should be what's passed to the model.
+Plugins should be able to modify `maxOutputTokens` through the `chat.params` hook, just like they can modify `temperature`, `topP`, and `topK`.
 
-## Files to Look At
+Specifically:
 
-- `packages/opencode/src/session/llm.ts` — LLM streaming logic, where `maxOutputTokens` is computed and the `chat.params` hook is triggered
-- `packages/plugin/src/index.ts` — TypeScript type definitions for the `Hooks` interface including `chat.params`
+1. The `chat.params` hook output type must include `maxOutputTokens` with type `number | undefined` alongside the existing fields `temperature`, `topP`, `topK`, and `options`
+
+2. The `maxOutputTokens` value must be computed **before** the `Plugin.trigger("chat.params", ...)` call is made, so that it can be included in the output object passed to the hook
+
+3. The `chat.params` hook output object passed to plugins must contain `maxOutputTokens` alongside `temperature`, `topP`, `topK`, and `options`
+
+4. The `streamText` call must use `params.maxOutputTokens` (the value returned from the hook) rather than a bare local variable, so that plugins can override the value
+
+The hook's output type should be:
+```typescript
+output: {
+  temperature: number
+  topP: number
+  topK: number
+  maxOutputTokens: number | undefined
+  options: Record<string, any>
+}
+```

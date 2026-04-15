@@ -6,17 +6,13 @@ In the Next.js Pages Router, when serving `/_next/data/<buildId>/...json` respon
 
 This is a regression — these headers were present in earlier versions. The issue breaks CDN-side compression for self-hosted deployments (e.g., CloudFront requires `Content-Length` to compress origin responses on-the-fly).
 
-## Where to look
+## Key files
 
-The data response is constructed in:
-- `packages/next/src/server/route-modules/pages/pages-handler.ts`
+The relevant code paths span these files in the Next.js server:
 
-The response is sent via `sendRenderResult()` in:
-- `packages/next/src/server/send-payload.ts`
-
-The key mechanism: `sendRenderResult` checks `result.isDynamic` — when the response is considered "dynamic", it skips setting `Content-Length` and `ETag` and falls back to streaming/chunked transfer encoding.
-
-The `RenderResult` class determines whether a response is dynamic based on the type of its internal response value.
+- `packages/next/src/server/route-modules/pages/pages-handler.ts` — the pages route handler that constructs responses for `/_next/data/` requests and handles ISR fallback. Uses `CachedRouteKind.PAGES` for cached route entries and the `generateEtags` config flag.
+- `packages/next/src/server/send-payload.ts` — responsible for sending responses with header generation, including `Content-Length`, `ETag`, and `generateETag` for ETag computation.
+- `packages/next/src/server/render-result.ts` — the `RenderResult` class used to represent response payloads.
 
 ## Reproduction
 
@@ -25,8 +21,8 @@ The `RenderResult` class determines whether a response is dynamic based on the t
 3. Request `/_next/data/<buildId>/index.json`
 4. Observe: no `Content-Length` header, no `ETag` header, response uses `Transfer-Encoding: chunked`
 
-The same issue also affects the ISR fallback code path where a cached HTML entry is reconstructed.
+The same issue also affects the ISR fallback code path where a cached HTML entry is reconstructed and served.
 
 ## Expected behavior
 
-`/_next/data/` JSON responses (and ISR fallback HTML responses) should include `Content-Length` and `ETag` headers, matching the behavior of earlier versions.
+`/_next/data/` JSON responses and ISR fallback HTML responses should include `Content-Length` and `ETag` headers, matching the behavior of earlier versions. The responses should not use chunked transfer encoding for these static/known-length payloads.

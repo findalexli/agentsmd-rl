@@ -1,19 +1,18 @@
-# Fix: RoPE parameters in kwargs not handled when config lacks rope_parameters attribute
+# Fix: Legacy RoPE parameters ignored when passed as kwargs to configs without rope_parameters attribute
 
-## Problem
+## Symptom
 
-In the `PreTrainedConfig.__post_init__` method in `src/transformers/configuration_utils.py`, when a model config receives `rope_scaling` and `rope_theta` as kwargs (e.g., from a saved config JSON), the RoPE parameter conversion (`convert_rope_params_to_dict`) is only called if the config class has a `rope_parameters` attribute. If a config class does not define `rope_parameters` as a class attribute but receives these RoPE keys through kwargs, they are silently ignored and end up being set as arbitrary attributes via the generic `setattr` loop at the end of `__post_init__`.
+When a `PreTrainedConfig` subclass receives `rope_scaling` and `rope_theta` as constructor arguments (e.g., when loading a config JSON saved from an older model), those parameters are silently ignored unless the config class explicitly defines `rope_parameters` as a class attribute. This causes:
 
-After config validation was tightened to run after initialization, configs that rely on legacy-format RoPE keys in kwargs (like `rope_scaling` and `rope_theta`) now fail validation because these keys are never converted to the standardized `rope_parameters` dict format.
+- Configurations that rely on legacy-format RoPE keys to fail validation after config tightening
+- RoPE parameters set as arbitrary attributes instead of being normalized into the `rope_parameters` dict
 
-## Root Cause
+## Expected Behavior
 
-The `__post_init__` method only checks `if hasattr(self, "rope_parameters")` before calling `convert_rope_params_to_dict`. There is no fallback branch for configs that receive `rope_scaling` and `rope_theta` through kwargs without having defined `rope_parameters` as a dataclass field. The conversion method is never called for these configs, leaving the RoPE parameters in their legacy format.
+1. **Conversion**: When a config is constructed with `rope_scaling` and `rope_theta` in kwargs, these should be converted to the `rope_parameters` dict format (with `rope_theta` as a key inside `rope_parameters`), regardless of whether the class defines `rope_parameters` as an attribute.
 
-## Expected Fix
+2. **Warning**: A warning should be emitted so users are notified their config uses the legacy RoPE format. The warning message should reference `rope_scaling` or `rope_parameters`.
 
-When a config does not have a `rope_parameters` attribute but kwargs contain both `rope_scaling` and `rope_theta`, the code should still call `convert_rope_params_to_dict` to handle the legacy format. A deprecation warning should be emitted to inform users about the need to update their config to use `rope_parameters`.
+3. **Backward compatibility**: Configs that already define `rope_parameters` as a class attribute must continue to work unchanged.
 
-## File to Modify
-
-- `src/transformers/configuration_utils.py` -- the `__post_init__` method of `PreTrainedConfig`
+4. **Non-stub requirement**: The `__post_init__` method must contain at least 5 non-trivial statements (not counting `pass` or docstring-only expressions).

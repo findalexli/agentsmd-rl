@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three file paths (packages/react-router/src/useBlocker.tsx, packages/solid-router/src/useBlocker.tsx, packages/vue-router/src/useBlocker.tsx), the specific declaration to change (ShouldBlockFnLocation interface\u2192type), and the TS4023 error. The tests check these same files and this same transformation. The TS4023 regression test creates a temporary test file, but its logic follows directly from the described bug scenario (wrapping useBlocker in a custom hook). The tsconf"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly shows the exact before/after code transformation: change 'interface ShouldBlockFnLocation<...> {' to 'type ShouldBlockFnLocation<...> = {'. This is the complete solution with no reasoning required\u2014the agent just needs to do a mechanical find-and-replace."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fix is essentially unique\u2014changing interface to type alias is the only reasonable way to fix TS4023 for an unexported interface used in a public API return type. The regex `type ShouldBlockFnLocation\\s*<[^>]+>\\s*=\\s*\\{` is flexible enough to match any whitespace variation of this single correct approach."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The first three f2p tests (test_react_router_interface_to_type, test_solid_router_interface_to_type, test_vue_router_interface_to_type) are purely text-matching: they read file content and check for regex patterns. While test_useblocker_type_export_regression does run tsc compilation, three of the four f2p tests are string-in-file checks with no execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by a stub. The text-matching tests require the specific syntactic change from interface to type in the source files. The TS4023 regression test compiles actual TypeScript code and checks for zero errors. A no-op or stub would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/router with solve.sh containing the exact patch. The agent could read /solution/solve.sh (or the gold patch) to get the answer. Additionally, the text-matching tests (checking for 'type ShouldBlockFnLocation') could be satisfied by grepping the test file itself to discover exactly what string pattern to produce."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) converting interface to type in three files, (2) TypeScript type checking should pass, (3) TS4023 error should not occur. All three are tested via text checks, tsc compilation tests, and the TS4023 regression test."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass categories, and are logically grouped by package (react-router, solid-router, vue-router) and check type (interface-to-type, compilation, unit tests, eslint, publint, attw)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves source code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and TypeScript identifiers in the instruction are all correct and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact files to modify, the exact declaration (ShouldBlockFnLocation), and shows the precise before/after code. Since the task is supposedly about fixing a bug, this level of specificity eliminates any need for the agent to localize or diagnose the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TypeScript source files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

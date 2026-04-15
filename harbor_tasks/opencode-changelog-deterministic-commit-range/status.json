@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T01:58:19.854392",
-  "total_time": 2168.21,
-  "sandbox_id": "i9naxhw56tuo1lorklsf8",
+  "validated_at": "2026-04-15T05:00:10.962661",
+  "total_time": 1429.59,
+  "sandbox_id": "ihopbswtcg8dz98xe04gq",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -68,17 +70,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.39,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_no_any_type` has 1 assert(s), all pass on a stub impl ', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.26,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 225.97,
-      "at": "2026-04-09T15:01:37.442148"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -110,6 +124,14 @@
       "backend": "fireworks",
       "time": 2168.21,
       "at": "2026-04-12T01:58:19.854392"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1429.59,
+      "at": "2026-04-15T05:00:10.962661"
     }
   ]
 }

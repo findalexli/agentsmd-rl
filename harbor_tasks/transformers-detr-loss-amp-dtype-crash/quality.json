@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions check behaviors described in instruction.md: sync errors caught and passed to next() with message 'sync error', async errors still work with 'async error', return value preserved, no error escapes wrapper, and index.js exists. The instruction mentions all these requirements and the specific error messages used in examples."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (sync errors not caught) and requirements (catch sync errors, preserve async behavior, preserve return value) but does not specify the exact code change like 'add try-catch around fn call'. The developer must reason about the implementation approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (error passed to next, return value preserved, no error escapes) rather than implementation details. Alternative fixes like wrapping in try-catch, using Promise.resolve().then(), or other approaches would all pass as long as they exhibit correct behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All tests execute JavaScript code via Node.js subprocess calls, requiring the actual asyncHandler module, calling wrapped functions, and checking runtime behavior (capturedError values, return values, exit codes). No test merely inspects source text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_sync_error_caught, test_no_thrown_error_escapes) require the sync error to be caught by the wrapper and passed to next(). A stub or no-op implementation would let the error escape (caught by the try block in test code), causing the test to fail. The original buggy code demonstrably fails these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/express-async-handler could potentially be discovered. More critically, solve.sh is at /solution/solve.sh in the container (per the Dockerfile COPY pattern), and the agent could read it or grep for the expected test fixture strings like 'sync error' in test files at /tests/test_outputs.py. The tests are copied to /tests/test_outputs.py which the agent could read to reverse-engineer the exact expected behavior."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four explicit requirements from instruction.md are tested: (1) sync errors caught and passed to next - test_sync_error_caught, (2) async errors still work - test_async_error_still_works, (3) return value available - test_return_value_available, (4) no error escapes wrapper - test_no_thrown_error_escapes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_sync_error_caught, test_async_error_still_works, etc.), docstrings explaining purpose and fail_to_pass/pass_to_pass classification, and a module-level docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a JavaScript error handler wrapper, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames (index.js), paths (/workspace/express-async-handler), function names (asyncHandler), or variable names across instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names index.js as the file to modify, which is appropriate since it's the only file in this small package. It doesn't specify line numbers or the exact code change needed (like 'add try-catch')."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying index.js, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

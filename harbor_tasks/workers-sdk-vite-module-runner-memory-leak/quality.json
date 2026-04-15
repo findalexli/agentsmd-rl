@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts), the function (runInRunnerObject), the class (__VITE_RUNNER_OBJECT__), the method (executeCallback), and the module-scope variables (pendingCallbacks, callbackResults, nextCallbackId). All assert'd specifics in the tests \u2014 file path, function names, variable names, class name \u2014 are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (entries leak when executeCallback throws) and the expected behavior (cleanup regardless of success/failure within runInRunnerObject), but does not prescribe the exact fix (e.g., it doesn't say 'add try/finally' or 'move pendingCallbacks.delete from executeCallback to runInRunnerObject'). A developer must reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_error_handling_around_rpc_call asserts 'has_try and (has_finally or has_catch)', which rejects valid alternatives like using .then()/.catch() promise chaining or an async wrapper pattern. test_caller_cleans_up_pending_callbacks asserts 'pendingCallbacks.delete' must appear literally in runInRunnerObject's text, which would fail if someone used pendingCallbacks.clear() or a helper function that encapsulates the cleanup. These are implementation-specific assertions that reject correct alterna"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_cleanup_on_error extracts the function body, constructs a runnable JS script with mock environments, executes it via Node.js subprocess, and checks that Maps are empty after error/success paths. While test_caller_cleans_up_pending_callbacks and test_error_handling_around_rpc_call are text-based, the primary behavioral test does execute the code. The mix includes real behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub runInRunnerObject that just returns undefined or does nothing would fail: test_cleanup_on_error checks that the success path returns 42 and 'hello', and test_not_stub asserts that pendingCallbacks.set, callbackResults, nextCallbackId, and executeCallback are all referenced. A trivial stub cannot pass these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/workers-sdk (the solve.sh and its patch content). An agent could read solution/solve.sh if it's mounted in the container, or look at /solution/ directory. The Dockerfile doesn't explicitly prevent access to solution files, and the gold patch is available as a shell script."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires cleanup of both Maps on success and failure within runInRunnerObject. The tests verify: (1) cleanup on error path, (2) cleanup on success path, (3) pendingCallbacks.delete is in runInRunnerObject, (4) error handling wraps the RPC call, (5) the build and typecheck still pass. All required behaviors are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names (test_cleanup_on_error, test_caller_cleans_up_pending_callbacks, etc.), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a memory leak in TypeScript code; it does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correct and consistent with the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is appropriate since there's only one relevant file. It describes the bug conceptually (entries not cleaned up when executeCallback throws) without specifying exact line numbers or the exact code change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

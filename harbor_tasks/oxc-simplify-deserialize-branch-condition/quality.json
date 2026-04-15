@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', 'if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceByteLen;', 'for (; i < sourceByteLen && uint8[i] < 128; i++);', 'sourceStartPos, firstNonAsciiPos;' in the Rust file, and 'if (pos >= sourceStartPos && end <= firstNonAsciiPos)' for oxlint. The instruction.md does not specify these exact forms. It only vaguely says the condition 'can be reduced to a simpler form' and mentions r"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the old condition and that it 'can be reduced to a simpler form that doesn't require a separate ASCII flag variable', and says 'Reviewing the test file at tests/test_outputs.py will clarify what patterns the tests expect' \u2014 directly telling the agent to read the test file for the exact solution patterns."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', specific variable declaration patterns via regex, and exact loop forms. An alternative correct fix using e.g. 'if (pos + len <= firstNonAsciiPos)' without introducing an 'end' variable, or using different whitespace/formatting, would fail the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, test_napi_parser_no_sourceIsAscii_variable, test_oxlint_no_sourceIsAscii_variable) are entirely text-matching assertions like 'assert \"if (end <= firstNonAsciiPos)\" in content'. They never execute the deserializer or test its behavior. The cargo tests are pass-to-pass only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific new patterns AND absence of old patterns. A stub or no-op would not pass since the original files contain 'sourceIsAscii' and lack the new patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The instruction.md explicitly tells the agent to review 'tests/test_outputs.py' for expected patterns. The agent can read that file to discover exact strings to insert. Additionally, solution/solve.sh exists in the container and could be read directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md says the deserializer should 'correctly handle ASCII-only source text, non-ASCII characters, empty strings, UTF-8 decoding', but no tests verify these runtime behaviors \u2014 only text patterns are checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-grouped with descriptive names (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, etc.) and include docstrings explaining old vs new patterns and fail-to-pass vs pass-to-pass classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies source code files, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact function 'deserializeStr', the exact variables 'sourceIsAscii' and 'firstNonAsciiPos', the exact old condition 'pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos)', and says it 'can be reduced to a simpler form'. It also directly references the test file path for discovering the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

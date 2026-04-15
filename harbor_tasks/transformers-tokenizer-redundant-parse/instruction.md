@@ -13,7 +13,16 @@ For tokenizers with large vocabularies (e.g., CohereTokenizer with 256K entries)
 
 ## Expected behavior
 
-The file should only be parsed once. The `post_processor`, `padding`, and `truncation` objects can be obtained without parsing the full vocabulary.
+The file should be parsed once. The `post_processor`, `padding`, and `truncation` Rust objects can be obtained without parsing the full vocabulary. The result dict returned by `convert_to_native_format` must contain at minimum the following keys:
+
+- `vocab` — a dict mapping tokens to indices (BPE, WordPiece, WordLevel) or a list of token entries (Unigram)
+- `merges` — a list of merge strings (BPE only)
+- `post_processor` — the post-processor object
+- `tokenizer_padding` — the padding configuration object
+- `tokenizer_truncation` — the truncation configuration object
+- `tokenizer_object` — the full tokenizer object (returned when the base class path is taken, i.e., no custom `__init__`)
+
+The optimized path must avoid calling `TokenizerFast.from_file()` for model types where a lighter-weight alternative suffices. The model type is declared in the `model.type` field of `tokenizer.json`: `BPE`, `WordPiece`, `WordLevel`, and `Unigram` are the recognized types. Older `tokenizer.json` files may omit the `type` field entirely — in that case a fallback to the original (non-optimized) behavior is acceptable.
 
 ## Relevant files
 
@@ -21,6 +30,6 @@ The file should only be parsed once. The `post_processor`, `padding`, and `trunc
 
 ## Hints
 
-- The `post_processor`, `padding`, and `truncation` fields don't depend on the vocabulary — they can be extracted from a much lighter representation of the tokenizer.
-- Not all tokenizer model types (BPE, WordPiece, WordLevel, Unigram) behave the same when constructed with minimal data — some require a real vocabulary.
-- Some older `tokenizer.json` formats omit the `"type"` field in the `"model"` section, so a fallback path is needed.
+- The `post_processor`, `padding`, and `truncation` Rust objects don't depend on the vocabulary — they can be extracted from a much lighter representation of the tokenizer.
+- Not all tokenizer model types behave the same when constructed with minimal data — some require a real vocabulary to initialize correctly.
+- Some older `tokenizer.json` formats omit the `"type"` field in the `"model"` section, so a fallback path is needed for those cases.

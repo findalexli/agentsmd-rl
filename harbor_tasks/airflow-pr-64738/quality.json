@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (airflow-core/src/airflow/models/dag.py), class (DagModel), method (dags_needing_dagruns), variable names (ser_dag_ids, missing_from_serialized, adrq_by_dag, dag_statuses), the specific string 'not found in the serialized_dag table', sorted() usage, set difference expression, and del operations \u2014 all of which are checked by the tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: variable names (ser_dag_ids, missing_from_serialized), exact expressions (set(adrq_by_dag.keys()) - ser_dag_ids), use of walrus operator, sorted(missing_from_serialized), and exact deletion statements (del adrq_by_dag[dag_id], del dag_statuses[dag_id]). This is not describing what's broken \u2014 it's prescribing the exact code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests grep for exact variable names like 'ser_dag_ids', 'missing_from_serialized', exact expressions like 'set(adrq_by_dag.keys())', '- ser_dag_ids', 'sorted(missing_from_serialized)', 'del adrq_by_dag[dag_id]', 'del dag_statuses[dag_id]'. An alternative correct fix using different variable names (e.g., 'serialized_ids', 'orphaned_dags') or different but equivalent logic (e.g., filtering with a list comprehension, using .pop() instead of del) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail_to_pass test reads the source file and checks for string patterns (e.g., 'ser_dag_ids = ' in dag_code, 'missing_from_serialized' in dag_code, 'del adrq_by_dag[dag_id]' in section). No test imports the module, calls dags_needing_dagruns, or verifies runtime behavior. They are pure text/pattern matching tests."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are string-matching against the source file, a stub implementation is irrelevant \u2014 any agent that writes the exact prescribed string patterns into dag.py passes, regardless of whether the code actually fixes the bug. The tests don't verify any runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/airflow as a git repo, and solve.sh applies a patch. The agent could read solution/solve.sh (which contains the exact gold patch) or simply grep for the expected string patterns from the test file. The tests only check for text patterns in the source, so matching fixture strings without understanding the bug suffices."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six requirements from instruction.md are tested: ser_dag_ids variable, missing_from_serialized with set difference, log message with 'not found in the serialized_dag table', deletion from both dicts, no database deletion, and sorted logging. Syntax and method existence are also verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_missing_serialized_dag_handling, test_fix_removes_orphan_dags_from_both_dicts, etc.), each has a docstring explaining what it verifies, and they're logically grouped by aspect of the fix."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, method names, and commands in the instruction are all correct and consistent with the codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (airflow-core/src/airflow/models/dag.py), exact method (dags_needing_dagruns), exact variable names to create, exact expressions to use, and exact deletion statements \u2014 this goes far beyond identifying the buggy location and essentially dictates the solution line by line."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions reference file paths (cmake/tools/SetupSccache.cmake, cmake/tools/SetupCcache.cmake, scripts/build-cache/, CONTRIBUTING.md, docs/project/contributing.mdx, docs/project/building-windows.mdx), literal strings ('ccache', 'sccache', 'REQUIRED', 'find_command', 'brew install ccache', 'ccache --show-stats', 'AWS', 'S3', 'scoop install'), and behaviors (file deletion, content checks) that are all explicitly described in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to do: 'Remove the REQUIRED flag from the find_command() call', 'Delete this file entirely', 'Remove the line that includes SetupSccache.cmake', specific brew install command changes, specific scoop install command changes. This is a complete specification of the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for absence of files, absence of strings like 'sccache'/'REQUIRED'/'AWS'/'S3', and presence of strings like 'ccache'/'brew install ccache'/'ccache --show-stats'. These are behavioral constraints that any correct implementation would satisfy, not gold-specific implementation details. Alternative correct fixes (different wording of ccache instructions, different file organization) would pass as long as they meet the behavioral requirements."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test is purely text-matching: checking file existence and asserting string presence/absence in file contents (e.g., 'assert \"ccache\" in content.lower()', 'assert \"sccache\" not in content.lower()', 'assert \"REQUIRED\" not in content'). No test imports code, executes cmake, runs a build, or verifies any runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific transformations from the pre-fix state: the original repo has SetupSccache.cmake (test checks it's gone), has 'sccache' in docs (tests check it's replaced with 'ccache'), has REQUIRED in SetupCcache.cmake (test checks it's removed), has scripts/build-cache/ (test checks it's gone). A stub/no-op would fail because the original files exist with the old content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace as solve.sh (copied into container). An agent could potentially read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings and assertions. The Dockerfile doesn't show any measures to prevent reading these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: SetupSccache.cmake deletion, SetupCcache.cmake REQUIRED removal, scripts/build-cache/ deletion, CMakeLists.txt update (implicitly via sccache removal), all three documentation files updated with ccache references, AWS/S3 removal, platform-specific install instructions, and ccache --show-stats mention."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_setup_sccache_removed, test_contributing_md_uses_ccache, etc.), have docstrings explaining what each test verifies, and are logically grouped by file/concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves file deletion and text editing of build system/documentation files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, commands, and variable names in instruction.md match those referenced in tests and the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names 'Remove the REQUIRED flag from the find_command() call for ccache' which is a specific line-level change. It also specifies exact brew/scoop command replacements. This goes beyond describing what's broken to specifying the exact fix at the code level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes: deleting specific files, modifying specific lines in SetupCcache.cmake and CMakeLists.txt, and making targeted text replacements in documentation files. These are bounded, non-contradictory edits."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

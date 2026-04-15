@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path `code/core/src/manager-api/lib/filter-param.ts`, the function `parseFilterParam`, the return shape `{ included: string[], excluded: string[] }`, the semicolon splitting, `!`-prefix detection, null/undefined skipping, transform function parameter, and the refactoring of both `parseTagsParam` and `parseStatusesParam`. All test assertions reference these same paths, function names, and behaviors which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the shared helper should do and where it should live, but does not give exact code, line numbers to change, or the specific implementation. A developer must still reason about how to implement the generic function and refactor the callers."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests `test_tags_uses_shared_helper` and `test_statuses_uses_shared_helper` assert that both files must contain `import { ... parseFilterParam ...}` via regex, and that `split(';').forEach` must NOT appear. This forces one specific implementation pattern \u2014 an alternative correct fix that, e.g., names the helper `parseFilter` instead of `parseFilterParam`, or uses a different internal approach while still importing from the correct module, would fail. The tests also mandate the exact function nam"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests (test_filter_param_basic_inclusion, test_filter_param_exclusion_handling, test_filter_param_transform_and_null_skip, test_filter_param_empty_and_edge_cases, test_repo_tags_module, test_repo_vitest_tags, test_repo_vitest_statuses) actually import and execute the code via tsx or vitest. While test_tags_uses_shared_helper and test_statuses_uses_shared_helper are text-based checks, the majority of tests verify behavior through execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_filter_param_basic_inclusion assert specific non-empty return values (e.g., `{ included: ['alpha', 'beta', 'gamma'], excluded: [] }`), which cannot be satisfied by a stub returning empty arrays. Similarly, exclusion and transform tests check for specific non-trivial results."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/storybook` as `solve.sh` would be applied there, and the test file `_test_runner_tmp.mts` is written to the repo root. More critically, the agent could potentially read the test file at `/tests/test_outputs.py` or the solution at `/solution/solve.sh` if those paths are mounted in the container, then simply apply the gold patch. The Dockerfile doesn't show any measures to prevent reading these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: semicolon splitting, empty-string guarding, !-prefix detection, transform application, null/undefined skipping, return shape, refactoring of both modules, and unchanged public API (via vitest and tsx tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, clear section comments (Gates, Fail-to-pass behavioral, Fail-to-pass integration), and each test function has a docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The return shape `{ included: string[], excluded: string[] }` is explicitly documented in the instruction and verified in the tests with deepStrictEqual checks."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and variable names in the instruction are consistent and correctly spelled, matching the test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify and the new file to create, which is appropriate for a refactoring task. It doesn't specify exact line numbers or give the implementation code. The file paths are natural for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

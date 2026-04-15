@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific file paths and names not mentioned in instruction.md: 'openhands.integrations.service_types' (module path for UserGitInfo), 'openhands.app_server.user.user_router' (for get_current_user_git_info), 'openhands.app_server.user.user_context' (for UserContext), 'openhands.app_server.user.specifiy_user_context' (for SpecifyUserContext - note the typo), 'openhands.app_server.user.auth_user_context' (for AuthUserContext), 'openhands.server.user_auth.user_auth' (for UserAuth). The i"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be built (new endpoint, model, deprecation) but does not specify exact code changes, line numbers, or specific implementation details like which exact files to modify."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific details: the exact function name 'get_current_user_git_info' in 'openhands.app_server.user.user_router', the exact module 'openhands.integrations.service_types' for UserGitInfo, the exact class name 'UserGitInfo', abstract method named exactly 'get_user_git_info' on UserContext, and implementations in specific classes like SpecifyUserContext and AuthUserContext. An alternative correct implementation placing the model or endpoint in different modules/with different n"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use _run_python_code to execute actual Python code that imports modules, instantiates objects, calls async functions, checks return types, and verifies runtime behavior. The deprecated flag test inspects route objects at runtime. Tests are behavioral, not text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests verify non-trivial behavior: UserGitInfo must be a Pydantic model with specific fields and defaults, get_current_user_git_info must be async and raise HTTPException(401) when user context returns None, the User alias must be identical to UserGitInfo, and abstract methods must exist. A stub returning None or pass would not satisfy these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /solution/solve.sh and /solution/pr13787.diff which are accessible in the container. The agent could simply run 'cat /solution/solve.sh' or 'git apply /solution/pr13787.diff' to get the exact gold patch without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: new endpoint returning user git info, 401 for unauthenticated users, Pydantic model with required/optional fields, User alias for backwards compatibility, and deprecated flag on old endpoint."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with a module docstring, grouped into FAIL-TO-PASS sections, each test has a descriptive name and docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The Pydantic model schema (UserGitInfo with fields id, login, avatar_url, company, name, email and their types/optionality) is documented in instruction.md under 'Model requirements'."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "The test file references 'openhands.app_server.user.specifiy_user_context' with 'specifiy' which appears to be a typo for 'specify'. This is a pre-existing typo in the codebase that the instruction doesn't mention, making it impossible for the agent to discover the correct module path."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md mentions the old endpoint file 'openhands/server/routes/git.py' which is reasonable domain context, but does not specify exact line numbers or internal implementation details of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

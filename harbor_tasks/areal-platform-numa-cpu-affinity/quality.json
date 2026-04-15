@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all five files, the method name `set_numa_affinity`, the base class `Platform`, the subclass `CudaPlatform`, the three engine files/methods, `pynvml`, `os.sched_getaffinity`, NVML init/shutdown, and defensive error handling. The tests check exactly these things. The only items not literally named are mock internals (e.g., `nvmlDeviceGetHandleByIndex`), but these are standard pynvml API calls discoverable from the instruction's mention of 'use pynvml for NVML access'."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior to implement (a method with certain properties, defensive handling, engine integration) but does not specify exact code, line numbers to change, or specific implementation details like variable names or control flow."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for: (1) a callable `set_numa_affinity` on Platform that returns None, (2) CudaPlatform handling missing pynvml, (3) CudaPlatform calling nvml functions (init, getHandle, affinity), (4) nvmlShutdown being called, (5) error handling, (6) AST presence of `set_numa_affinity` call in engines. These are behavioral checks. Alternative implementations (e.g., using `nvmlDeviceGetCpuAffinityWithinScope` instead of `nvmlDeviceSetCpuAffinity`, different variable names, different try/except stru"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests import and call the actual code (Platform.set_numa_affinity, CudaPlatform.set_numa_affinity) with mock pynvml modules and verify behavior via call tracking. The engine test uses AST parsing (not raw text search) which is reasonable given the distributed setup requirements. Only the engine test is AST-based; the rest are execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_platform_base_set_numa_affinity can be satisfied by simply adding `set_numa_affinity = classmethod(lambda cls, rank: None)` or `def set_numa_affinity(cls, local_rank): return None` \u2014 essentially a stub that returns None. However, test_cuda_uses_nvml requires actual NVML calls (nvmlInit, getHandle, affinity calls) which cannot be satisfied by a stub. But the base class test (test_platform_base_set_numa_affinity) is specifically testing for a no-op, so a stub IS the correct implementation the"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /repo after `solve.sh` runs via `git apply`, but the gold patch is in solution/solve.sh which the agent could potentially read if it exists in the container. The Dockerfile does not explicitly remove the solution directory. An agent could `cat /solution/solve.sh` or similar to get the exact patch."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: base class no-op method, CUDA NVML implementation, defensive handling of missing pynvml, catching NVML errors, NVML shutdown in finally block, and engine integration calls."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, method names, and variable names in the instruction are correct and match the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files and methods but doesn't specify exact line numbers or exact code changes. The files listed are the natural scope of the task, and the hints describe patterns to follow rather than exact fixes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

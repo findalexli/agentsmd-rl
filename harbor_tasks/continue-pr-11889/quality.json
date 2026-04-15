@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the conditions (api.deepseek.com in base URL, deepseek-reasoner in model name), the parameter mapping (max_tokens \u2192 max_completion_tokens), the no-spurious-params behavior, and the non-DeepSeek unchanged behavior. All tested behaviors are discoverable from the instruction, including the package name (openai-adapters), the provider pattern, and the hint about o-series models."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (max_tokens not converted) and the expected behavior, but does not specify the exact file, line number, or code to write. It hints that a similar pattern exists for o-series models, which is a reasonable hint, not a direct solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (presence/absence of max_tokens and max_completion_tokens in the request body) via mock fetch interception. They don't assert on specific variable names, line positions, or internal helper functions. Alternative implementations (e.g., using delete instead of undefined, doing conversion in a different method, using a middleware) would all pass as long as the request body is correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests construct actual API instances, mock fetch, call chatCompletionNonStream, and inspect the captured request body at runtime. They execute the code rather than just checking file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Without the fix, the code sends max_tokens unchanged for DeepSeek models, so the tests checking that max_tokens is undefined and max_completion_tokens equals the provided value would fail. A stub/no-op implementation would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/continue (solution/solve.sh shows the exact patch). The agent could read the gold patch by examining files in the container, e.g., `cat /solution/solve.sh` or similar. There's no evidence the solution directory is removed or made inaccessible in the Dockerfile."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors from the instruction are tested: (1) max_tokens\u2192max_completion_tokens for DeepSeek API base and model name, (2) no spurious parameters when max_tokens not provided, (3) non-DeepSeek models keep max_tokens unchanged. Streaming is not explicitly tested but the instruction doesn't specifically require it as a separate behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (e.g., 'F2P: max_completion_tokens mapping for DeepSeek apiBase'), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves API parameter transformation, not producing structured data output with a defined schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the package name (openai-adapters) and that there's a similar pattern for o-series models, but doesn't name the specific file (OpenAI.ts) or line numbers. The package name is the natural scope of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

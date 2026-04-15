@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths, helper function names (worker.kubernetes.serviceAccountName, _serviceAccountNameGen, _serviceAccountName), schema keys (workers.celery.serviceAccount, workers.kubernetes.serviceAccount), template files, and deprecation field names that the tests assert on. The specific items like subKey, newsfragment path 64730.significant.rst, and all four deprecated fields are explicitly mentioned."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact implementation details including the precise helper template definition (the full YAML for worker.kubernetes.serviceAccountName), exact conditional logic to use in pod-template-file, exact fallback behavior, and specific helper function names (_serviceAccountNameGen). This goes beyond describing what's broken and tells the agent exactly what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_serviceaccountnamegen_helper_exists checks for the exact string '_serviceAccountNameGen' helper name, test_helpers_supports_subkey checks for '.subKey' in helpers. An alternative correct implementation could use different helper names or a different parameter pattern and still correctly implement the feature but would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are pure text/string searches: test_worker_kubernetes_serviceaccount_helper_exists checks 'define \"worker.kubernetes.serviceAccountName\"' in file text, test_helpers_supports_subkey checks '.subKey' in file text, test_pod_template_uses_conditional_serviceaccount checks strings in template file. While test_helm_lint and test_helm_template_basic do execute helm, the core feature tests are text-matching only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests require substantive file creation and modification - creating worker-kubernetes-serviceaccount.yaml, adding helpers with specific definitions, modifying values.yaml with new sections containing specific fields, updating schema JSON, creating a newsfragment. A stub/no-op implementation would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is stored at /workspace/airflow accessible via solve.sh which uses curl to fetch a GitHub PR diff. The agent could potentially read solve.sh or the solution directory. Additionally, the tests are purely text-matching, so the agent could grep for expected strings from the test file and insert them without understanding the feature."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction mentions backward compatibility (fallback from new fields to old workers.serviceAccount values) as a key requirement, but no fail-to-pass test verifies this fallback behavior with actual helm template rendering using old-style values. The instruction also mentions workers.celery.serviceAccount rendering correctly, but there's no test for celery service account template rendering."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass vs pass-to-pass), descriptive function names indicating what each tests, and docstrings/assertion messages explaining failures."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task involves JSON schema (values.schema.json) and YAML structured data, and the instruction documents the expected schema structure with field names and types for both celery and kubernetes serviceAccount sections."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact code snippets (the full template definition for worker.kubernetes.serviceAccountName helper), exact internal helper names (_serviceAccountNameGen), and exact parameter names (subKey, nameSuffix). This is implementation-level detail, not just task-domain description."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a GitHub PR diff applied via git apply, which represents localized changes to specific files rather than full-file rewrites. The changes are scoped to the listed files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 6
+}

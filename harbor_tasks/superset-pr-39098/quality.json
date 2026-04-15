@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact attribute names (register_superset_auth_view, register_superset_registeruser_view), their default values (True), their exact docstrings, the exact conditional checks (self.register_superset_auth_view, self.register_superset_registeruser_view), the file path (superset/security/manager.py), and the method (register_views). All literal strings and identifiers asserted in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: add two specific class attributes with specific values and docstrings, wrap specific calls in specific conditionals. It tells the agent exactly WHAT to change and HOW, e.g., 'The call self.appbuilder.add_view_no_menu(SupersetAuthView) and its assignment to self.auth_view should only execute when self.register_superset_auth_view is True.' This is a complete specification of the solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex patterns that enforce exact code structure, e.g., test_auth_view_registration_is_indented_under_conditional uses a regex requiring 'if self.register_superset_auth_view:\\s*\\n\\s+self.auth_view = self.appbuilder.add_view_no_menu(SupersetAuthView)'. An alternative correct fix using, e.g., a guard clause with early return, a different variable name pattern, or a helper method would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every fail-to-pass test is pure text matching: reading the source file and asserting substrings or regex patterns exist in the content (e.g., 'assert \"register_superset_auth_view = True\" in content'). No test instantiates the class, calls register_views(), or verifies actual runtime behavior. The only behavioral tests are syntax compilation and ruff checks, which are pass-to-pass."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings and patterns that do not exist in the original codebase (e.g., 'register_superset_auth_view = True', 'if self.register_superset_auth_view:'). A stub or no-op implementation would not pass these tests; the specific code changes must be made."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/superset accessible to the agent via solve.sh. The agent could read solution/solve.sh to see the exact patch. Additionally, since tests are pure text-matching, the agent could simply grep the test file for the expected strings and insert them into the source file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: both class attributes exist and default to True, both have correct docstrings, both conditionals exist in register_views, proper nesting is verified, ruff check passes, and syntax validity is confirmed."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and detailed docstrings explaining what each test verifies and why (e.g., 'fail_to_pass' vs 'pass_to_pass' annotations)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (superset/security/manager.py), the exact method (register_views()), the exact attribute names, their exact values, their exact docstrings, and the exact conditional patterns. This goes well beyond identifying the buggy component \u2014 it provides the complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

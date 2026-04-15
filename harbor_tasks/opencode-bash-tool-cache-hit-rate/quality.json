@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Several test-specific details are not discoverable from instruction.md: test_no_any_type checks for `: any` type annotations in bash.ts (not mentioned); test_not_stub requires 20+ lines, 100+ words, and 5+ unique concepts from a specific regex list; test_preserves_guidance_sections checks for specific regex patterns (quoting, specialized tool, timeout/truncation); test_describes_directory_behavior requires specific phrasing like 'working directory' or 'current directory'. The AGENTS.md-related t"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (directory placeholder breaks caching) and gives hints about what area to look at, but does not prescribe the exact replacement text ('current working directory') or the exact code changes needed. The agent still needs to reason about the specific fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that ${directory} is removed from bash.txt, that no dynamic placeholders remain after maxLines/maxBytes substitution, and that bash.ts doesn't substitute directory into the description. These are behavioral constraints, not implementation-specific. An agent could replace ${directory} with 'project directory', 'current working directory', 'the project root', etc., and all would pass. The test_describes_directory_behavior regex is broad enough to match many phrasings."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_no_directory_placeholder_in_template, test_ts_no_directory_injection) are purely text-matching: they read file contents and check for string presence/absence. test_template_static_after_substitutions runs a Node subprocess but only does string replacement and regex matching on file content, not actual code execution. No test imports or calls BashTool to verify runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty file would fail test_not_stub (requires 20+ lines, 100+ words, 5+ concepts), test_retains_global_placeholders (requires ${maxLines} and ${maxBytes}), and test_describes_directory_behavior (requires mention of working/current/default directory). The f2p tests require actual removal of ${directory} from the real template while preserving substantial content, so a trivial stub won't pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/opencode's git history or potentially at a predictable path. More critically, the agent could read the test file at tests/test_outputs.py to discover exact assertions (regex patterns, required word counts, etc.) and craft a solution to match. The solution/solve.sh is described as 'hidden' but may be accessible in the container depending on how it's mounted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires removing ${directory} from the template and keeping the description project-independent while retaining ${maxLines}/${maxBytes}. All these behaviors are tested: removal of ${directory} (test_no_directory_placeholder_in_template, test_ts_no_directory_injection), static after substitution (test_template_static_after_substitutions), retention of global placeholders (test_retains_global_placeholders), and describing directory behavior (test_describes_directory_behavior)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI gates), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [repo_tests], [agent_config] categorize tests clearly."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing source code and template files, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (packages/opencode/src/tool/bash.ts, packages/opencode/src/tool/bash.txt), variable names (${directory}, ${maxLines}, ${maxBytes}), and function/export names (BashTool, Instance.directory) are all consistent between instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names 'the `description` field in the return object around line 59' in bash.ts, which is overly specific localization. It also says 'The `workdir` parameter's `.describe()` already mentions the directory' which directly hints at the solution approach of relying on the workdir parameter instead."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task. While the solution touches AGENTS.md, the instruction.md does not frame this as an AGENTS.md editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

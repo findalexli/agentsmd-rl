@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:42:11.468436",
-  "total_time": 1134.73,
-  "sandbox_id": "ib9fy1s7nkzvhjccpe4cd",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T04:01:04.371341",
+  "total_time": 2853.26,
+  "sandbox_id": "iynlz9a65ppvcd95xzpag",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -47,17 +48,28 @@
       "backend": "fireworks",
       "time": 1.32,
       "notes": "ICR=0.50"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.47,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:162: test `test_ppo_rejects_negative_sapo_temperature` has 1 assert(s)', 'A:[A] test_not_tautological @ tests/test_outputs.py:189: test `test_ppo_rejects_sapo_with_decoupled_loss` has 1 assert(s),', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_base_experiment_rejects_bad_epochs` has 1 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:354: test `test_postinit_methods_have_docstrings` has 1 assert(s), all', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.33,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 465.49,
-      "at": "2026-04-09T20:26:14.093304"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +101,14 @@
       "backend": "fireworks",
       "time": 1134.73,
       "at": "2026-04-10T01:42:11.468436"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2853.26,
+      "at": "2026-04-15T04:01:04.371341"
     }
   ]
 }

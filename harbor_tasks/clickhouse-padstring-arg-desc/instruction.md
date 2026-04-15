@@ -1,32 +1,23 @@
-# Task: Fix Argument Descriptions in leftPad/rightPad Functions
+# Task: Fix Incorrect Argument Descriptions in leftPad/rightPad Functions
 
 ## Problem
 
-The `leftPad` and `rightPad` SQL functions have incorrect argument descriptions in their `getReturnTypeImpl` method. These descriptions appear in error messages when users pass wrong argument types to the functions.
+The `leftPad` and `rightPad` SQL functions in ClickHouse have incorrect argument descriptions in their `FunctionArgumentDescriptors`. When a user passes the wrong type to one of these functions, the error message displays an incorrect type description, misleading users about what types are actually accepted.
 
-## Current (Incorrect) Descriptions
+The function argument validation is implemented using `validateFunctionArguments` with `FunctionArgumentDescriptors` that define each argument's name, type validator, and a human-readable description string. The description strings currently do not accurately reflect the types that the corresponding validators accept.
 
-In `src/Functions/padString.cpp`, the `FunctionArgumentDescriptors` define:
+## Correct Argument Descriptions
 
-1. **"string" argument**: described as `"Array"` but should be `"String or FixedString"`
-2. **"length" argument**: described as `"const UInt*"` but should be `"UInt*"`  
-3. **"pad_string" argument (optional)**: described as `"Array"` but should be `"String"`
+The `FunctionArgumentDescriptors` for these functions define three arguments. Their description strings should be corrected to match the actual types their validators accept:
 
-## What to Fix
+1. The mandatory **"string"** argument — validated by `isStringOrFixedString`. The description string should read `"String or FixedString"`.
 
-Update the argument descriptions in the `getReturnTypeImpl` method of `padString.cpp` to correctly describe the expected types:
+2. The mandatory **"length"** argument — validated by `isInteger`. The description string should read `"UInt*"`.
 
-- The first argument (`string`) should accept `String or FixedString`
-- The second argument (`length`) should accept any `UInt*` (unsigned integer of any size)
-- The third optional argument (`pad_string`) should accept `String`
+3. The optional **"pad_string"** argument — validated by `isString`. The description string should read `"String"`.
 
-## Code Location
+## Context
 
-The relevant code is in `src/Functions/padString.cpp` around the `getReturnTypeImpl` method where `FunctionArgumentDescriptors` are defined.
-
-## Notes
-
-- This is a follow-up fix to PR #101951
-- The change only affects the descriptive strings used in error messages
+- This is a follow-up to a prior PR that introduced argument validation for these functions
+- The change only affects the descriptive strings used in error messages — no logic changes are needed
 - Follow the existing code style in the file (Allman brace style)
-- Use the `FunctionArgumentDescriptors` and `validateFunctionArguments` pattern already present in the code

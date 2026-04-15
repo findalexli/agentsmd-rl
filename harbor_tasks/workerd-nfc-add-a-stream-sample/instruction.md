@@ -6,23 +6,48 @@ The `samples/` directory has examples for various workerd features (async contex
 
 ## What's Needed
 
-Create a new `samples/web-streams/` directory with a complete working sample that demonstrates:
+Create a new `samples/web-streams/` directory with a complete working sample that demonstrates Web Streams API patterns using lorem ipsum-style text generation.
 
-1. **ReadableStream** — generating text content with both synchronous and asynchronous `pull` callbacks
-2. **Byte streams** — using `type: "bytes"` for ReadableStream with BYOB support
-3. **TransformStream** — piping a readable stream through a transform (e.g., uppercase conversion)
-4. **Sync vs async variants** — showing how both synchronous and asynchronous stream sources/transforms work
-
-The sample should expose these as different HTTP endpoints so users can `curl` each variant.
-
-## Files to Create
+### Files to Create
 
 - `samples/web-streams/streams-util.js` — stream factory functions (readable, byte, transform)
 - `samples/web-streams/worker.js` — worker that routes requests to different stream demos
 - `samples/web-streams/config.capnp` — workerd configuration declaring the modules
 - `samples/web-streams/README.md` — documentation covering what the sample does, how to run it, and what endpoints are available
 
-After creating the code files, make sure to document the sample thoroughly in a README. The project's CLAUDE.md notes that README.md files provide package/directory-level information, so the README should describe the endpoints, how to run the sample, and how to test it.
+### Required Exports from `streams-util.js`
+
+The module must export the following six functions using `export function` declarations:
+
+- **`createSyncLoremStream(numChunks)`** — Creates a `ReadableStream` that generates lorem ipsum-style text synchronously. When called with `N`, it must yield exactly `N` chunks, each a non-empty `Uint8Array`. For example, `createSyncLoremStream(5)` must produce exactly 5 chunks with a total byte length greater than 100.
+
+- **`createAsyncLoremStream(numChunks)`** — Same as `createSyncLoremStream` but uses an asynchronous `pull` callback (e.g., with `await` / promises).
+
+- **`createSyncLoremByteStream(numChunks)`** — Creates a byte-type `ReadableStream` (constructed with `type: "bytes"`) that supports BYOB (Bring Your Own Buffer) reads via `reader.read(new Uint8Array(...))`. Calling with `N` must produce at least 1 chunk with total content exceeding 50 bytes for `N=3`.
+
+- **`createAsyncLoremByteStream(numChunks)`** — Same as `createSyncLoremByteStream` but uses an asynchronous `pull` callback.
+
+- **`createSyncUppercaseTransform()`** — Creates a `TransformStream` that converts all alphabetic characters to uppercase when a readable stream is piped through it via `pipeThrough()`. After transformation, the output must contain no lowercase letters (`/[a-z]/` must not match) and must contain uppercase letters (`/[A-Z]/` must match).
+
+- **`createAsyncUppercaseTransform()`** — Same as `createSyncUppercaseTransform` but uses asynchronous `transform` and `flush` callbacks.
+
+### `worker.js` Requirements
+
+- Must be a valid ES module
+- Must import from the `"streams-util"` module
+- Must export a default object with an `async fetch(request)` handler
+- Should route requests to different stream demo endpoints (e.g., `/sync`, `/async`, `/bytes/sync`, `/bytes/async`)
+
+### `config.capnp` Requirements
+
+- Must use the Workerd schema (i.e., `using Workerd = import "/workerd/workerd.capnp"`)
+- Must declare both the `worker` and `streams-util` modules as ES modules
+
+### `README.md` Requirements
+
+- Must have a markdown title header (line starting with `#`)
+- Must reference `config.capnp` in running instructions
+- Should document the available endpoints and how to test them
 
 ## Files to Look At
 

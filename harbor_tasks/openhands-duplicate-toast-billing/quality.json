@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the four test cases by exact name, the file to modify (billing.tsx), and all verification commands. The hidden tests check those named tests, lint/build/typecheck, translation completeness, and related test files\u2014all of which are mentioned in instruction.md. The structural checks (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) assert on specific variable names like 'amount' and 'sessionId' which are NOT mentioned in instruction.md, but this is co"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptom (duplicate toasts) and expected behavior (toasts appear exactly once) but does not prescribe the specific fix (extracting primitives from searchParams, changing useEffect dependencies). The developer must diagnose the root cause themselves."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_useeffect_dependency_structure asserts exact variable names and extraction patterns: 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' must appear before useEffect. A valid alternative fix (e.g., using a useRef to track if the effect already ran, or using a different variable name like 'purchaseAmount') would fail these text-matching tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_useeffect_dependency_structure and test_no_searchparams_in_dependencies are pure text-inspection tests that read billing.tsx and assert on string patterns (e.g., 'const amount = searchParams.get(\"amount\");' in before_useeffect). They do not execute the code or test behavior. While other tests do run subprocess commands, these two f2p tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) check for specific code patterns that differ from the base commit. The billing test cases (success/cancel/track) run actual test suites that would fail on the unpatched code. A stub or no-op would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/OpenHands with solve.sh containing the exact gold patch. The agent could read /tmp/billing.test.patch or inspect the solution directory. Additionally, test_useeffect_dependency_structure contains the exact expected strings, which the agent could grep from the test file to produce a matching solution without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four named test cases from instruction.md are tested (renders payment form, success toast once, error toast once, track credits once). Lint, build, typecheck, translation completeness, and related test suites are also verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with descriptive docstrings (e.g., 'Success toast displays exactly once on checkout success (regression test)') and logically grouped by category (behavioral tests, structural tests, pass-to-pass tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a UI bug in a React component, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, command names, test names, and variable names in instruction.md are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names only the file (billing.tsx) which is the obvious target for a billing bug. It does not mention specific lines, the useEffect dependency array, searchParams, or the extraction of primitive values."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

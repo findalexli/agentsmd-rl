@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all file paths (list_charts.py, list_dashboards.py, list_datasets.py, schema_discovery.py, chart/schemas.py, dataset/schemas.py), all variable names (DEFAULT_CHART_COLUMNS, DEFAULT_DATASET_COLUMNS, CHART_DEFAULT_COLUMNS, DATASET_DEFAULT_COLUMNS, DASHBOARD_DEFAULT_COLUMNS, CHART_EXTRA_COLUMNS, DATASET_EXTRA_COLUMNS), all class names (ChartInfo, DatasetInfo), all function names (serialize_chart_object, serialize_dataset_object), and all field names (certified_by, certifica"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: e.g., 'serialize_chart_object must include certified_by=getattr(chart, \"certified_by\", ...)' and 'CHART_EXTRA_COLUMNS must include \"certified_by\" and \"certification_details\" as keys'. This prescribes the exact implementation rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_chart_serializer_includes_certification assert exact string patterns like 'certified_by=getattr(chart, \"certified_by\"' in file content. An alternative correct fix using dictionary unpacking, direct attribute access (chart.certified_by), or a different variable name in getattr would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test uses AST parsing of file content or string-in-file checks (e.g., 'assert '\"certified_by\"' in content'). No test imports any module, calls any function, or executes any code. Tests like test_chart_serializer_includes_certification literally do 'assert 'certified_by=getattr(chart, \"certified_by\"' in content' which is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings and AST structures that don't exist in the base commit files. A stub or no-op implementation wouldn't add 'certified_by' to DEFAULT_CHART_COLUMNS or ChartInfo class, so these tests would fail without actual changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests are purely text-matching, an agent could grep test files to discover exact expected strings and insert them mechanically."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are covered by tests: schema_discovery default columns, list tool default columns, Pydantic schema fields, extra columns dicts, and serializer getattr patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_chart_default_columns_include_certification, test_chartinfo_schema_has_certification_fields, etc.), have docstrings indicating fail_to_pass status, and are grouped by category with a section header comment."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data output like JSON/CSV/API responses; it modifies Python source code."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, class names, and field names in the instruction match those used in the tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact variable names (DEFAULT_CHART_COLUMNS, CHART_EXTRA_COLUMNS), exact function signatures (certified_by=getattr(chart, \"certified_by\", ...)), and exact file paths. This goes well beyond describing the bug and effectively prescribes the complete solution structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

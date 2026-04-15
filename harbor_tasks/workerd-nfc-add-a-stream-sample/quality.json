@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (samples/web-streams/streams-util.js, worker.js, config.capnp, README.md), all six export function names (createSyncLoremStream, createAsyncLoremStream, etc.), the `export function` declaration pattern, chunk counts/byte thresholds (5 chunks >100 bytes, 3 chunks >50 bytes), uppercase transform behavior (/[a-z]/ must not match, /[A-Z]/ must match), config.capnp referencing Workerd schema and both modules, README requirin"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to create (a web streams sample with specific exports and behavior) but does not prescribe exact implementation code, line-by-line changes, or the specific algorithm. The developer must reason about how to implement ReadableStream, TransformStream, byte streams, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties (chunk counts, byte lengths, uppercase transformation, BYOB read support, file existence, export presence) rather than implementation-specific details. Alternative implementations using different lorem ipsum generators, different chunking strategies, or different internal helper functions would all pass as long as they meet the behavioral contracts. The one strict requirement is `export function <name>` syntax, which is explicitly required by the instruction"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Core f2p tests (test_sync_stream_produces_chunks, test_uppercase_transform, test_byte_stream_supports_byob) actually import and execute the module in Node.js, reading streams and checking behavioral output. While some tests (test_streams_util_exports, test_config_references_modules, test_sample_structure) do text checks, these are supplementary and the critical behavioral tests execute real code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Stub implementations would fail: createSyncLoremStream must produce exactly 5 chunks with >100 total bytes (a no-op stream yields 0 chunks), createSyncUppercaseTransform must transform text so no lowercase remains (pass-through would fail), createSyncLoremByteStream must support BYOB mode reads (a default ReadableStream would throw on getReader({mode:'byob'})). These require genuine implementations."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/workerd (the solve.sh creates files in that path), and the Dockerfile does not remove /solution/ or prevent access. The agent could read the test file at tests/test_outputs.py or the solution/solve.sh to extract exact implementations. The hidden test file contains complete Node.js scripts with exact behavioral expectations that could be reverse-engineered."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: sync/async stream chunk production, uppercase transform, byte stream BYOB support, file structure, exports, config contents, README contents, worker.js imports and default export, prettier formatting, and Node syntax checks. The async variants (createAsyncLoremStream, createAsyncLoremByteStream, createAsyncUppercaseTransform) are checked for export existence but not behaviorally tested, which is a minor gap but acceptable since the sync version"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_sync_stream_produces_chunks, test_uppercase_transform, etc.), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces JavaScript source files, a Cap'n Proto config, and a README \u2014 not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (streams-util.js, worker.js, config.capnp, README.md), function names (createSyncLoremStream, etc.), paths (samples/web-streams/), and commands are consistently spelled across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create at a specification level without naming specific buggy lines or providing implementation code. It references existing samples (samples/eventsource/) for structural guidance, which is appropriate context, not solution leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-creation task (new files), not a config edit task. There is no existing config being modified."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

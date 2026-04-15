@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact variable name 'is_refreshable_view' (test_logic_condition_includes_refreshable_check), exact cast syntax 'dynamic_cast<StorageMaterializedView *>(table.get())' (test_refreshable_view_check_present), and exact condition pattern '!secondary_query && !is_refreshable_view' (test_logic_condition_includes_refreshable_check). While the instruction mentions dynamic_cast, is"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'You can use dynamic_cast to check if a table is a materialized view', 'The StorageMaterializedView class has an isRefreshable() method', 'The condition that checks ignore_drop_queries_probability needs an additional guard', and points to 'Around line 199'. This essentially describes the exact fix rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce gold-specific implementation details: exact variable name 'is_refreshable_view' (test_logic_condition_includes_refreshable_check uses regex '!is_refreshable_view'), exact comment text 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact cast syntax 'dynamic_cast<StorageMaterializedView *>(table.get())'. An alternative correct fix using e.g. 'skip_truncate_for_refreshable' as variable name, or a different comment, or using std::dynamic_"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p tests (test_refreshable_view_check_present, test_logic_condition_includes_refreshable_check, test_comment_explains_rationale) are purely text-matching: they read the file and assert specific strings/regexes are present. There is no compilation, execution, or behavioral verification of the actual fix. test_code_compiles_with_clang only checks for syntax errors, not behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code additions (include directive, dynamic_cast, is_refreshable_view variable, modified condition) that would not be present in the original unmodified file. A stub/no-op would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/ClickHouse accessible via solve.sh. The agent could read solution/solve.sh to see the exact patch and apply it. Additionally, the test file itself (tests/test_outputs.py) contains the exact strings being asserted, so grepping for them would reveal the expected implementation."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (detect refreshable MV, skip conversion, add comment) are tested via the various test functions checking for the include, dynamic_cast, isRefreshable(), condition modification, and comment."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_storage_materialized_view_include, test_refreshable_view_check_present, etc.), have docstrings, and are logically grouped from basic file existence to style checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces a C++ code fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the file (InterpreterDropQuery.cpp), the function (executeToTableImpl), and the approximate line number ('Around line 199'), plus specifies exact implementation approach (dynamic_cast, isRefreshable()). This goes well beyond describing the bug and effectively gives the solution location and approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

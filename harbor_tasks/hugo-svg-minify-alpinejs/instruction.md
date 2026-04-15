@@ -6,39 +6,33 @@ Hugo's SVG minifier is incorrectly stripping Alpine.js directives from SVG eleme
 
 ## Symptoms
 
-When minifying SVG content that contains Alpine.js directives:
-- `x-bind:href="myicon"` gets stripped or modified
-- `:href="myicon"` (the shorthand) gets stripped or modified
+When minifying SVG content that contains Alpine.js directives, the following inputs are incorrectly modified (the directives get stripped or altered):
 
-This causes Alpine.js applications to break because the dynamic bindings are removed during the minification process.
+- `<use x-bind:href="icon">` - the `x-bind:href` directive gets stripped
+- `<use :href="icon">` - the `:href` shorthand gets stripped
+- `<circle x-bind:r="radius">` - the `x-bind:r` directive gets stripped
+- `<circle :cx="x">` - the `:cx` shorthand gets stripped
 
-## Files to Examine
+The minifier should preserve these attributes unchanged (input should equal output after minification).
 
-- `minifiers/config.go` - The minifier configuration
-- `minifiers/minifiers_test.go` - Existing tests for reference
+## Technical Context
 
-## Expected Behavior
+The underlying minification is done by the `github.com/tdewolff/minify/v2` library. Version `v2.24.11` of this library added support for preserving custom XML namespaces in SVG via a new configuration option that accepts a list of namespace strings to keep.
 
-Alpine.js directives should be preserved in SVG minification:
-- The `x-bind` namespace should be kept
-- The empty namespace (for shorthand like `:href`) should be kept
+Two namespace values need to be preserved:
+- `""` (empty string) - for shorthand directives like `:href`, `:cx`, etc.
+- `"x-bind"` - for explicit x-bind directives like `x-bind:href`, `x-bind:r`, etc.
 
-## Context
+The Hugo project uses this library for SVG minification in the `minifiers/` package. You will need to:
+1. Update the `github.com/tdewolff/minify/v2` dependency to version `v2.24.11` or later
+2. Configure the SVG minifier in Hugo to keep both `""` and `"x-bind"` namespaces
 
-This issue affects users who use Alpine.js with SVG elements. The underlying minification is done by `tdewolff/minify` library, which recently added support for preserving specific namespaces via a `KeepNamespaces` configuration option.
+## Verification
 
-The fix involves:
-1. Updating the `tdewolff/minify` dependency to a version that supports `KeepNamespaces`
-2. Configuring the SVG minifier to keep both `""` (empty namespace for shorthand) and `"x-bind"` namespaces
-
-## Relevant Code
-
-Look at how the SVG minifier is configured in `minifiers/config.go`. The `defaultTdewolffConfig` struct contains the SVG minifier settings. Compare with how the HTML minifier handles similar attribute preservation.
-
-## Testing
-
-You can verify the fix works by:
-1. Creating a test that minifies `<use x-bind:href="myicon">` and verifies it remains unchanged
-2. Creating a test that minifies `<use :href="myicon">` and verifies it remains unchanged
-
-Both should pass through minification without modification.
+After implementing the fix, verify:
+1. `<use x-bind:href="icon">` minifies unchanged (input equals output)
+2. `<use :href="icon">` minifies unchanged (input equals output)
+3. `<circle x-bind:r="radius">` minifies unchanged (input equals output)
+4. `<circle :cx="x">` minifies unchanged (input equals output)
+5. The Hugo project compiles successfully
+6. All existing minifier tests continue to pass

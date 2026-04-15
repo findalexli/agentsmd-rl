@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both file paths (modeling_nemotron_h.py and modular_nemotron_h.py), the classes (NemotronHBlock, NemotronHMamba2Mixer), the sentinel variable (is_fast_path_available), the requirement to remove contextlib, and the need for compile guards and stream management. All test-specific checks (class names, method names, patterns) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be achieved (e.g., 'remove contextlib', 'guard stream management with compile check', 'define sentinel') but does not specify exact line numbers, exact code to write, or the precise implementation. The 'Approach Hints' section gives directional guidance but still requires the developer to reason about the actual code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests use AST pattern matching for structural properties (presence of stream attrs, compile guard calls, absence of nullcontext/contextlib, presence of sentinel assignment) rather than exact line positions or specific helper function names. Alternative implementations that achieve the same structural goals (e.g., different variable names for streams, different placement of guards within the method) would pass as long as they have the required patterns."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All tests use AST parsing (ast.parse, ast.walk) to check structural code patterns rather than importing/executing the code or testing runtime behavior. No test actually runs the model, calls torch.compile, or verifies the segfault is fixed. Every test is essentially a sophisticated form of text/structure inspection, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific structural changes: test_block_forward_no_stream_context verifies removal of cuda.stream/nullcontext from NemotronHBlock.forward, test_mixer_stream_with_compile_guard checks that stream management and compile guards exist in NemotronHMamba2Mixer, test_no_contextlib_import checks contextlib is removed, test_is_fast_path_available_sentinel checks for module-level assignment. A stub/no-op implementation would not pass these since the original code has the o"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/transformers via the gold patch in solution/solve.sh. An agent could read the solve.sh script or look at the test file at tests/test_outputs.py to understand exactly what structural patterns are checked and craft minimal changes to satisfy them. The Dockerfile doesn't restrict access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five structural requirements from instruction.md are tested: (1) is_fast_path_available sentinel (test_is_fast_path_available_sentinel), (2) contextlib removal (test_no_contextlib_import), (3) NemotronHBlock.forward no stream/nullcontext (test_block_forward_no_stream_context), (4) mixer compile guard (test_mixer_stream_with_compile_guard), (5) modular mixer forward override (test_modular_mixer_has_forward_override)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining the rationale for each check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, class names, and commands in the instruction are all correctly spelled and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact classes and methods to modify (NemotronHBlock.forward, NemotronHMamba2Mixer.forward/cuda_kernels_forward), specifies the exact sentinel name (is_fast_path_available = False), and tells the agent to remove contextlib and nullcontext. This goes beyond describing what's broken and prescribes the structural solution in detail, reducing the localization challenge significantly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

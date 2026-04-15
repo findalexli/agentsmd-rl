@@ -13,15 +13,25 @@ The relevant code is in `crates/uv/src/commands/project/audit.rs`. The `audit()`
 
 - `uv audit` should accept a `--service-format` flag that selects the vulnerability service protocol (currently only `osv`, but the architecture should support future additions).
 - `uv audit` should accept a `--service-url` flag that overrides the default API endpoint for the selected service.
-- When `--service-url` is not provided, the default URL for the selected format should be used (e.g., `https://api.osv.dev/` for OSV).
-- The `VulnerabilityServiceFormat` enum should live in `crates/uv-audit/src/service/mod.rs` and be usable as a clap `ValueEnum`.
+- When `--service-url` is not provided, the default URL for the selected format should be used.
+- The format selection enum should be usable as a clap `ValueEnum` so it automatically works with clap's argument parsing.
 
-## Files of Interest
+## Requirements Summary
 
-- `crates/uv-audit/src/service/mod.rs` — service module, currently only re-exports `osv`
-- `crates/uv-audit/Cargo.toml` — dependencies for the audit crate
-- `crates/uv-cli/src/lib.rs` — CLI argument definitions (`AuditArgs` struct)
-- `crates/uv-cli/Cargo.toml` — CLI crate dependencies
-- `crates/uv/src/commands/project/audit.rs` — the `audit()` function implementation
-- `crates/uv/src/settings.rs` — `AuditSettings` struct and construction
-- `crates/uv/src/lib.rs` — wiring of settings to the audit command
+The implementation must satisfy all of the following:
+
+1. A public enum representing vulnerability service formats must exist in the `uv-audit` crate's service module. It must have an `Osv` variant and derive `Copy`, `Clone`, and `Debug`.
+
+2. The CLI must accept `--service-format` with value enum semantics, defaulting to the OSV format.
+
+3. The CLI must accept `--service-url` with URL hinting for shell completion.
+
+4. The audit command function must accept both the format and URL parameters, using a constant from the OSV module as the fallback URL when no override is provided.
+
+5. The settings structure for audit must include fields for both the format and URL.
+
+6. The uv-cli crate must depend on uv-audit with clap support enabled.
+
+7. No bare `.unwrap()` calls may be introduced in the new service-handling code.
+
+8. The format enum must be imported at the top of files that use it.

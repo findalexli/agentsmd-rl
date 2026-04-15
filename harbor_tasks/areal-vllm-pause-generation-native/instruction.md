@@ -2,35 +2,74 @@
 
 ## Context
 
-The AReaL vLLM server (`areal/engine/vllm_ext/areal_vllm_server.py`) manages request pausing and weight update flows during RL training. Currently, it patches `EngineCore` internals at module load time — injecting custom `abort_all_reqs`, `areal_injected_update_weight`, and related methods via `setattr`. These monkey-patched methods manually abort requests by walking the scheduler's `running` and `waiting` queues, constructing `EngineCoreOutput` objects with `FinishReason.ABORT`, and pushing them into the output queue.
+The AReaL vLLM server (`areal/engine/vllm_ext/areal_vllm_server.py`) manages request pausing and weight update flows during RL training. Currently, it patches `EngineCore` internals at module load time via a `hook()` function. This monkey-patches methods like `abort_all_reqs`, `areal_injected_update_weight`, and related functions onto `EngineCore` using `setattr`.
+
+The monkey-patched methods manually abort requests by walking the scheduler's `running` and `waiting` queues, constructing `EngineCoreOutput` objects with `FinishReason.ABORT`, and pushing them into the output queue.
 
 ## Problem
 
-This custom abort-and-update approach has several issues:
+This custom approach has several issues:
 
-1. **Multi-node breakage**: In multi-node deployments (e.g., large models like Qwen3-235B), the injected hook only executes on the head node. Other nodes never receive the abort/pause signal, causing weight update failures.
+1. **Multi-node breakage**: In multi-node deployments, the injected hook only executes on the head node. Other nodes never receive the abort/pause signal, causing weight update failures.
 
 2. **Occasional hangs**: The custom abort path can deadlock when interacting with vLLM's internal scheduling, particularly under concurrent request load.
 
-3. **Maintenance burden**: The monkey-patching relies on vLLM v1 internals (`EngineCore`, `EngineCoreOutput`, `EngineCoreOutputs`, `FinishReason`, `RequestStatus`, `LoRARequestStates`). These are fragile across vLLM version upgrades.
+3. **Maintenance burden**: The monkey-patching relies on these vLLM v1 internals which are fragile across vLLM version upgrades:
+   - `EngineCore`
+   - `EngineCoreOutput`
+   - `EngineCoreOutputs`
+   - `FinishReason`
+   - `RequestStatus`
+   - `LoRARequestStates`
 
-4. **Incomplete continue_generation**: The `areal_continue_generation` endpoint only sets the internal event flag but never tells the engine client to actually resume, so the engine stays paused from its perspective.
+4. **Incomplete pause/resume handling**: The weight update endpoints call `llm.engine_core.call_utility_async()` to invoke injected methods, but this bypasses the proper pause/resume lifecycle. When weight updates occur while requests are in flight, the scheduler state becomes inconsistent.
 
-## What needs to change
+5. **Continue endpoint doesn't resume**: The `areal_continue_generation` endpoint sets an internal event flag but never tells the engine client to actually resume generation.
 
-vLLM now provides native APIs on the engine client for pausing and resuming generation that handle request draining and prefix cache reset across all nodes. The weight update endpoints and the pause/continue endpoints should use these upstream mechanisms instead of the custom monkey-patched approach.
+## Symptoms to fix
 
-The legacy `hook()` function and all the functions it patches onto `EngineCore` are no longer needed and should be removed, along with the imports they require.
+- The file contains a `hook()` function and `setattr(EngineCore, ...)` calls that should be removed
+- The file contains a standalone `abort_all_reqs()` function that should be removed
+- The file imports these vLLM v1 internals that should be removed:
+  - `EngineCore`
+  - `EngineCoreOutput`
+  - `EngineCoreOutputs`
+  - `FinishReason`
+  - `RequestStatus`
+  - `LoRARequestStates`
+- Weight update endpoints (`areal_update_weight`, `areal_update_weight_lora`, `areal_update_weight_xccl`, `areal_update_weight_lora_xccl`) call `llm.engine_core.call_utility_async()` without properly pausing and resuming generation
+- The `areal_pause_generation` endpoint calls `llm.engine_core.call_utility_async("abort_all_reqs")` instead of using the engine client's native pause capability
+- The `areal_continue_generation` endpoint never calls the engine client's resume method
 
-## Files to modify
+## Required API routes and models to preserve
 
-- `areal/engine/vllm_ext/areal_vllm_server.py`
+The following API route paths must remain declared:
+- `/areal_update_weights`
+- `/areal_update_weights_lora`
+- `/areal_update_weights_xccl`
+- `/areal_update_weights_lora_xccl`
+- `/areal_init_weights_update_group`
+- `/areal_set_update_weight_meta`
+- `/areal_set_update_weight_meta_lora`
+- `/areal_pause_generation`
+- `/areal_continue_generation`
+- `/v1/completions`
+
+The following Pydantic request model classes must remain defined:
+- `UpdateWeightsRequest`
+- `UpdateWeightsRequestLora`
+- `UpdateGroupRequest`
+- `UpdateWeightsFromXcclRequest`
+- `UpdateWeightsFromXcclRequestLora`
 
 ## Acceptance criteria
 
-- Weight update endpoints (`areal_update_weights`, `areal_update_weights_lora`, `areal_update_weights_xccl`, `areal_update_weights_lora_xccl`) pause generation before the RPC and resume it afterward (even on failure)
-- `areal_pause_generation` uses the native pause API
-- `areal_continue_generation` calls the native resume API
-- No monkey-patching of `EngineCore` remains
-- Unused imports related to the removed code are cleaned up
-- All existing endpoint routes and external behavior are preserved
+1. The `hook()` function is removed
+2. All `setattr(EngineCore, ...)` calls are removed
+3. The standalone `abort_all_reqs()` function is removed
+4. The imports of `EngineCore`, `EngineCoreOutput`, `EngineCoreOutputs`, `FinishReason`, `RequestStatus`, and `LoRARequestStates` are removed
+5. The weight update endpoints properly pause generation before performing RPC calls and resume generation afterward (even when the RPC fails)
+6. The `areal_pause_generation` endpoint uses `llm.pause_generation(wait_for_inflight_requests=False, clear_cache=True)` instead of calling `llm.engine_core.call_utility_async("abort_all_reqs")`
+7. The `areal_continue_generation` endpoint calls `llm.resume_generation()` in addition to setting the event flag
+8. All existing API route paths and Pydantic request model classes are preserved
+9. The modified file passes linting, type checking, and formatting requirements

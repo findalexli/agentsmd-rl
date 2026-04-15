@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_resolvedlocation_fix_in_source asserts the non-SPA block must contain a comment with one of 'later load cycles', 'preloads', or 'invalidations'. The instruction.md never specifies that a comment with these exact strings is required. Also test_spa_mode_path_unchanged checks for 'if (isSpaMode)' and 'loadPromise.then' literals which are not mentioned in instruction.md. test_ssr_client_file_has_no_tabs checks for no tab characters, which is not mentioned in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md step 2 literally says 'Add router.stores.resolvedLocation.setState(() => router.stores.location.state) before the return routeChunkPromise' \u2014 this is the exact code to add, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_resolvedlocation_fix_in_source requires a comment containing 'later load cycles' or 'preloads' or 'invalidations' in the non-SPA block. A correct alternative fix that uses a different comment wording (e.g., 'prevents false location change detection') would fail. The test enforces gold-specific comment text."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p test (test_resolvedlocation_fix_in_source) is purely text-matching: it reads ssr-client.ts and asserts specific strings like 'resolvedLocation.setState' and comment keywords. While there are also build/test/lint execution tests, the primary fix verification is entirely text-based pattern matching, not behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_resolvedlocation_fix_in_source only checks that the string 'resolvedLocation.setState' appears in a certain code block and that a comment with specific keywords exists. An agent could add a no-op line like 'resolvedLocation.setState(() => ({}))' with a matching comment and pass the test without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router as solve.sh in the solution/ directory. The agent could read solution/solve.sh to see the exact patch. Also, the test assertions check for specific literal strings ('resolvedLocation.setState', comment keywords) that could be pattern-matched from the test file itself if the agent reads tests/test_outputs.py."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The tests cover the core fix (resolvedLocation in non-SPA block), SPA path preservation, build, types, unit tests, lint, and no-tabs formatting. The instruction's required behavior is tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named individual functions with docstrings explaining their purpose and categorization (e.g., 'CORE FIX TEST (f2p)', 'pass_to_pass')."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves a code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_outputs.py line 'except AssertionError' should be 'except AssertionError' \u2014 wait, checking again: it says 'AssertionError' which is missing the 'r' \u2014 should be 'AssertionError'. Actually looking more carefully at the code: 'except AssertionError' \u2014 no, the Python built-in is 'AssertionError'. Let me re-read: the code says 'AssertionError' which is actually a typo for 'AssertionError'... Actually Python's exception is 'AssertionError' \u2014 no, it's 'AssertionError'. The correct spelling is '"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md gives the exact file (ssr-client.ts), the exact code block condition ('if (!hasSsrFalseMatches && !isSpaMode)'), the exact line of code to add ('router.stores.resolvedLocation.setState(() => router.stores.location.state)'), and where to add it ('before the return routeChunkPromise'). This is complete solution leakage, not just file/module identification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

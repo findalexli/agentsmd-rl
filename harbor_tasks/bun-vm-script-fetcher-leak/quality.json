@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics: the file path pattern (NodeVMScriptFetcher extending ScriptFetcher), the Weak<>/Strong<> types, the required headers (Weak.h, WeakInlines.h), the m_owner field, the owner() getter with null check and fallback (jsUndefined/jsNull/JSValue()), the isCell/isObject guards, and the regression test requirement. The test checks for these same elements. The exact header path (src/bun.js/bindings/NodeVMScriptFetcher.h) is discoverable from the 'Where to look' secti"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: use Weak<> instead of Strong<> for m_owner, add specific #include headers, add isCell/isObject guards in setter/constructor, and add null check with jsUndefined()/jsNull()/JSValue() fallback in getter. This is not just describing what's broken \u2014 it prescribes exactly WHAT to change and HOW (Implementation Requirements 1-4). A developer doesn't need to reason about the fix at all."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details: test_m_owner_uses_weak requires regex pattern 'Weak<...> m_owner', test_owner_getter_null_check_and_fallback requires specific conditional patterns and specific fallback tokens, test_owner_setter_or_ctor_guards_iscell requires isCell/isObject near Weak<. An alternative correct fix using e.g. raw pointers with custom release tracking, or a weak callback mechanism, or renaming the field, would all fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_m_owner_not_strong, test_m_owner_uses_weak, test_owner_getter_null_check_and_fallback, test_owner_setter_or_ctor_guards_iscell, test_weak_header_included) are all text/regex pattern matching on the header file content. None of them compile, execute, or test actual runtime behavior. The pass-to-pass tests do run some subprocesses (clang-format, g++ syntax check, git ls-files) but these don't verify the bug fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that don't exist in the original file (the original uses Strong<>, not Weak<>, and lacks the null checks and guards). A stub or no-op change would fail test_m_owner_not_strong (original has Strong<> m_owner) and test_m_owner_uses_weak (original lacks Weak<>)."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo/../solution/solve.sh (or wherever mounted), and contains the exact git patch. An agent could read solution/solve.sh to get the exact patch. Additionally, the tests are pure text matching on a header file, so an agent could grep test_outputs.py for the expected regex patterns and craft the file to match them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement 5 explicitly requires a regression test verifying vm.Script, vm.compileFunction, and vm.SourceTextModule are properly GC'd. The test suite does not test for the existence or content of such a regression test file (the truncated tests may check this but it's not visible in the provided test code, and the gold patch doesn't add one either)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining each test's purpose and category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a C++ header file, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly says 'Look for classes that extend JSC::ScriptFetcher and hold back-references to script/function/module wrapper objects' which directly identifies the NodeVMScriptFetcher class and the m_owner field. Combined with the extremely specific Implementation Requirements, this is significant hint leakage about the exact file and fix location."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a C++ header file, not a config edit."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

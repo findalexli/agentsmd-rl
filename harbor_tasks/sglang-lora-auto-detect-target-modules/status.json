@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:58:42.188500",
-  "total_time": 1735.21,
-  "sandbox_id": "i6e44gci7yioxwqat0ddc",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:58:47.585302",
+  "total_time": 1605.07,
+  "sandbox_id": "i778l8g29nvex2iddgyu0",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,6 +59,25 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:124: test `test_repo_lora_manager_structure` has 2 assert(s), all pass', 'A:[A] test_not_tautological @ tests/test_outputs.py:420: test `test_init_lora_modules_none_guard` has 2 assert(s), all pas', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pybase64']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.33,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
@@ -91,6 +112,14 @@
       "backend": "fireworks",
       "time": 1735.21,
       "at": "2026-04-12T03:58:42.188500"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1605.07,
+      "at": "2026-04-15T05:58:47.585302"
     }
   ]
 }

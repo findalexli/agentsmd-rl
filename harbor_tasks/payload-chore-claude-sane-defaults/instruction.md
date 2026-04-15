@@ -14,13 +14,67 @@ Specifically:
 
 ## Expected Behavior
 
-1. **Post-edit hook** (`.claude/hooks/post-edit.sh`): A bash script that auto-formats files after Edit/Write operations. It should read JSON from stdin to get the file path, then run the appropriate formatter based on file type (prettier for most files, sort-package-json for package.json, eslint for JS/TS files, markdownlint for markdown).
+### 1. Post-edit hook (`.claude/hooks/post-edit.sh`)
 
-2. **Settings** (`.claude/settings.json`): Configure the post-edit hook to trigger on Edit and Write tool use. Set up a permissions allowlist for common read-only commands (git, gh, pnpm) and web fetching from relevant domains.
+Create a bash script at `.claude/hooks/post-edit.sh` that:
+- Reads JSON from stdin (e.g. `{"tool_input": {"file_path": "/path/to/file"}}`)
+- Exits 0 gracefully when `file_path` is null, missing, or the JSON is empty
+- Uses a `case`/`esac` construct to route files by extension/type to the correct formatter:
+  - `*.ts` files → run `eslint --fix`
+  - `*.md` files → run `prettier --write`
+  - `package.json` → run `sort-package-json`
+  - all other files → run `prettier --write`
 
-3. **CLAUDE.md updates**: Add missing packages to the key directories listing, add a Quick Start section, standardize all pnpm commands to use `pnpm run` prefix (matching what the permissions allow), and add a note about using `pnpm turbo` instead of bare `turbo`.
+The script must contain the literal strings: `case`, `esac`, `*.ts`, `*.md`, `package.json`, `prettier`, `eslint`.
 
-## Files to Look At
+### 2. Settings (`.claude/settings.json`)
+
+Create `.claude/settings.json` with this schema:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "command": "bash .claude/hooks/post-edit.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "<list of at least 10 commands>",
+      "pnpm run <cmd>",
+      "pnpm turbo <cmd>",
+      "git log",
+      "git diff"
+    ]
+  }
+}
+```
+
+Key requirements:
+- `hooks.PostToolUse` must be an array with at least one entry
+- The entry's `matcher` field must contain both the strings "Edit" and "Write" (e.g. `"Edit|Write"`)
+- The `hooks` array within that entry must contain an object with a `command` field referencing "post-edit"
+- `permissions.allow` must be a list with **at least 10 entries**
+- The allowlist must include the exact substrings `pnpm run`, `pnpm turbo`, and either `git log` or `git diff`
+
+### 3. CLAUDE.md updates
+
+Update `CLAUDE.md` to add:
+
+1. **Missing packages in key directories**: Add `kv-redis` to the packages listing
+2. **R2 storage adapter**: Add `R2` alongside the storage adapters entry (e.g. `storage-* adapters (S3, R2, etc.)`)
+3. **Quick Start section**: Add a `## Quick Start` (or `### Quick Start`) section that includes at least one `pnpm` command
+4. **Standardized pnpm commands**: All `pnpm build`, `pnpm dev`, `pnpm test`, and `pnpm lint` commands must use the `pnpm run` prefix (i.e. `pnpm run build` not `pnpm build`). At least 3 such commands must use the prefix.
+5. **Turbo guidance**: Include the phrase `pnpm turbo` and a warning that turbo must not be run directly (e.g. "use `pnpm turbo` not bare `turbo`")
+
+## Files to Create/Modify
 
 - `.claude/hooks/post-edit.sh` — new hook script for auto-formatting
 - `.claude/settings.json` — new settings with hooks and permissions

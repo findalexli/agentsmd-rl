@@ -1,13 +1,12 @@
 # Fix Division by Zero Bug
 
-The `divide` function in `calculator.py` doesn't handle division by zero properly. When `b` is 0, it should raise a `ValueError` with the message "Cannot divide by zero" instead of letting Python raise a `ZeroDivisionError`.
+The `divide` function in `calculator.py` currently raises a `ZeroDivisionError` when the second argument is 0. This behavior is incorrect.
 
 ## Task
 
-Modify the `divide` function in `calculator.py` to:
-1. Check if `b` is 0 before performing the division
-2. Raise a `ValueError` with the exact message "Cannot divide by zero" when `b` is 0
-3. Otherwise, return `a / b` as before
+Modify the `divide` function in `calculator.py` such that:
+- Calling `divide(a, 0)` for any value of `a` raises `ValueError` with the exact message `"Cannot divide by zero"`
+- Calling `divide(a, b)` where `b` is non-zero continues to return the correct quotient
 
 ## Files to modify
 

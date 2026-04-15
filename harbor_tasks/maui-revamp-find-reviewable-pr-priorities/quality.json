@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all critical specifics tested: file paths (.github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1, SKILL.md), function names (Write-PREntry, Get-ReadyToReviewPRNumbers, Invoke-GitHubWithRetry, etc.), parameter defaults ($Category='default', $Limit=100), ValidateSet values ('default', 'approved', 'ready-to-review', 'agent-reviewed'), labels (s/agent-reviewed, s/agent-approved), variable name ($defaultPRs), Assignees field, section headers (## Priority Categories,"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like: variable must be named '$defaultPRs', function must be named 'Write-PREntry' and 'Get-ReadyToReviewPRNumbers', exact label strings 's/agent-reviewed' and 's/agent-approved', exact ValidateSet values, exact default values, and 'Assignees' field name. While some of this is requirements specification, telling the agent the exact function names, variable names, and implementation structure goes beyond describing what's broken and tells the"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_script_new_functions_and_fields checks for exact function names 'Write-PREntry' and 'Get-ReadyToReviewPRNumbers'; test_script_default_category_behavior checks for exact variable name '$defaultPRs' and exact string 'CHANGES_REQUESTED'; test_script_new_functions_and_fields checks for 'Assignees =' with regex. An alternative correct implementation using different function/variable names (e.g., 'Format-PROutput' instead of 'Write-PREntry', '"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test uses regex/string matching on file contents (e.g., re.search, 'in content' checks). No test actually executes the PowerShell script, imports any module, or checks runtime behavior. All tests are purely textual pattern matching on source files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for content that doesn't exist in the base commit (e.g., Write-PREntry function, Get-ReadyToReviewPRNumbers function, $Category='default', $Limit=100, 'approved' in ValidateSet, $defaultPRs variable, agent labels). A stub/empty file or the unmodified base file would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/maui (the solve.sh is hidden but the gold patch is applied in the container environment). The agent could potentially read the solution/solve.sh if it exists in the container, or could grep test files in tests/ directory to find exact expected strings like '$defaultPRs', 'Write-PREntry', etc. The tests themselves contain all the specific strings needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from the instruction are tested: param defaults (test_script_param_defaults), ValidateSet categories (test_script_validate_set_has_new_categories), new functions and fields (test_script_new_functions_and_fields), default category behavior (test_script_default_category_behavior), SKILL.md sections and content (test_skill_md_new_categories, test_skill_md_parameter_table, test_repo_skill_md_structure)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (test_script_param_defaults, test_script_validate_set_has_new_categories), and docstrings explaining each check's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves editing PowerShell scripts and Markdown documentation, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and parameter names in the instruction are consistent with those checked in tests. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact internal implementation details: variable name '$defaultPRs', function names 'Write-PREntry' and 'Get-ReadyToReviewPRNumbers', that results must use 'Assignees =' field syntax, and the exact 'CHANGES_REQUESTED' filter string. These are implementation-level hints rather than behavioral requirements."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/documentation editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

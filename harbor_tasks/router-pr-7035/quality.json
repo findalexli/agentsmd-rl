@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) tests check for existence of 'tsconfig.server-entry.json' files with exact content '\"rootDir\": \"./src/default-entry\"', (2) tests check vite configs contain 'tsconfigPath:' and 'tsconfig.server-entry.json', (3) tests check exact file paths like 'dist/default-entry/esm/server.d.ts' and the wrong path 'dist/default-entry/esm/src/default-entry/server.d.ts'. While the instruction mentions the correct path, it never ment"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptom (declaration files at wrong path) and gives investigation hints (look at vite-plugin-dts, compare with working configs) but does not specify the exact fix of creating tsconfig.server-entry.json with rootDir or adding tsconfigPath to vite configs."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_tsconfig_server_entry_exists_react assert exact string '\"rootDir\": \"./src/default-entry\"' in a file named tsconfig.server-entry.json, and test_vite_config_references_tsconfig_react asserts both 'tsconfigPath:' and 'tsconfig.server-entry.json' appear in the vite config. An alternative correct fix (e.g., setting rootDir directly in the existing tsconfig.json, or using a different tsconfig filename, or configuring vite-plugin-dts differently) would fail these tests even if it correc"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "6 out of 12 fail-to-pass tests (test_tsconfig_server_entry_exists_*, test_vite_config_references_tsconfig_*) are pure text-matching tests that only read file contents and check for string presence. While the build tests (test_*_server_entry_dts_path) do execute builds and check file existence, the majority of f2p tests are text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The build tests (test_react/solid/vue_start_server_entry_dts_path) execute actual builds and check that .d.ts files appear at the correct path. A stub/no-op solution would not produce these files. The text-checking tests require specific file content that doesn't exist by default."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router and solve.sh is accessible in the container. An agent could read /solution/solve.sh (if mounted) or inspect the test file at tests/test_outputs.py to discover the exact expected file contents and paths, then create them directly without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes fixing broken TypeScript declaration files for server-entry exports across three packages, and the tests verify exactly this: correct .d.ts paths after building each package, plus configuration file correctness."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_*_server_entry_dts_path, test_tsconfig_server_entry_exists_*, test_vite_config_references_tsconfig_*), docstrings explaining fail_to_pass vs pass_to_pass, and a module-level docstring explaining the bug."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing build configuration files, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions relevant files (vite.config.server-entry.ts, tsconfig.json) which are natural for the task domain, and provides investigation hints without naming the exact fix (tsconfig.server-entry.json, rootDir, tsconfigPath)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized: it creates 3 new small tsconfig files and adds a single line to 3 existing vite config files. No full-file rewrites or contradictions with other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 4
+}

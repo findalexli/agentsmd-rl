@@ -21,10 +21,35 @@ from transformers.video_processing_utils import BaseVideoProcessor
 
 ## Relevant Files
 
-- `src/transformers/video_processing_utils.py` — the top-level imports section (around lines 28–34)
+- `src/transformers/video_processing_utils.py` — the top-level imports section where the unconditional PIL import occurs
 - `src/transformers/image_utils.py` — defines the symbol that fails to import when PIL is absent
 - `src/transformers/utils/import_utils.py` — utility functions for checking optional dependency availability
 
 ## Expected Behavior
 
 The module should be importable regardless of whether Pillow is installed. Symbols that depend on PIL should only be imported when the dependency is actually available, consistent with how other optional dependencies (torch, torchvision) are already handled elsewhere in this file.
+
+## Required Class Attributes
+
+When imported without PIL present, the `BaseVideoProcessor` class must still have all of the following correct attributes:
+
+- `rescale_factor` must equal `1/255`
+- `model_input_names` must equal `['pixel_values_videos']`
+- `default_to_square` must be `True`
+- `return_metadata` must be `False`
+
+## Required Methods
+
+`BaseVideoProcessor` must have all of these methods: `preprocess`, `_preprocess`, `sample_frames`, `to_dict`, `from_dict`, `from_pretrained`, `save_pretrained`, `to_json_string`. The `__call__` method must delegate to `preprocess`.
+
+## Required Constants
+
+- `BASE_VIDEO_PROCESSOR_DOCSTRING` must be a string containing `do_resize`, `do_normalize`, and `resample`, with length greater than 500 characters.
+
+## PIL Availability
+
+When Pillow **is** installed, `PILImageResampling` must be accessible as an attribute of the `video_processing_utils` module (i.e., `from transformers import video_processing_utils; assert hasattr(video_processing_utils, 'PILImageResampling')`).
+
+## File Content
+
+The file must retain substantial content (more than 8000 characters), including the `class BaseVideoProcessor` definition, `def preprocess`, `def _preprocess`, `def sample_frames`, and `BASE_VIDEO_PROCESSOR_DOCSTRING`.

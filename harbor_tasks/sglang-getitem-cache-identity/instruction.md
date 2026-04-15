@@ -12,15 +12,9 @@ A specific case occurs in the LoRA path resolution: when `_resolve_lora_path` as
 
 1. Repeated calls to `req[i]` should return the **same object instance** (identity check: `req[0] is req[0]` should be True)
 2. The cache should be stored in a way that survives across multiple accesses
-3. When `lora_id` is assigned after sub-objects have been accessed, those cached sub-objects should reflect the update (handled in tokenizer_manager.py)
+3. When `lora_id` is assigned after sub-objects have been accessed, those cached sub-objects should reflect the update
 
 ## Files to Look At
 
-- `python/sglang/srt/managers/io_struct.py` — Contains `GenerateReqInput` and `EmbeddingReqInput` classes with `__getitem__` methods that need caching
-- `python/sglang/srt/managers/tokenizer_manager.py` — The `_resolve_lora_path` method needs to propagate `lora_id` to cached sub-objects
-
-## Hints
-
-- Use `self.__dict__.setdefault("_sub_obj_cache", {})` to store the cache
-- Check if the index is already in the cache before creating a new sub-object
-- In tokenizer_manager.py, after setting `obj.lora_id`, iterate over `obj.__dict__.get("_sub_obj_cache", {}).items()` to propagate the change
+- `python/sglang/srt/managers/io_struct.py` — Contains `GenerateReqInput` and `EmbeddingReqInput` classes with `__getitem__` methods
+- `python/sglang/srt/managers/tokenizer_manager.py` — The `_resolve_lora_path` method

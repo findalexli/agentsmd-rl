@@ -12,7 +12,10 @@ The CI wheel-tag validation script at `.ci/pytorch/smoke_test/check_wheel_tags.p
 
 ### Expected Behavior
 
-The validator should recognize that free-threaded Python uses a `t` ABI suffix and compute the expected ABI tag accordingly, even when `sys.abiflags` is empty.
+The validator should recognize that free-threaded Python uses a `t` ABI suffix and compute the expected ABI tag accordingly, even when `sys.abiflags` is empty. The detection mechanism must check three sources:
+- `sysconfig.get_config_var('Py_GIL_DISABLED')` returning a truthy value
+- Environment variable `MATRIX_PYTHON_VERSION` ending with the letter 't' (e.g., "3.13t")
+- `sys._is_gil_enabled()` returning `False` when the function exists
 
 ### Observed Behavior
 
@@ -20,9 +23,9 @@ The validator should recognize that free-threaded Python uses a `t` ABI suffix a
 
 ### Additional Issues
 
-There is also unreachable dead code in the tag validation loop — a `continue` statement after a `raise RuntimeError(...)` that can never execute.
+There is unreachable dead code in the tag validation loop — a `continue` statement after a `raise RuntimeError(...)` that can never execute.
 
-Additionally, the `check_mac_wheel_minos()` function only works when `PYTORCH_FINAL_PACKAGE_DIR` is set (Mode 1: reading from .whl files). Unlike `check_wheel_platform_tag()`, it has no Mode 2 fallback to check minos on an already-installed torch package. This means the minos verification is silently skipped in post-install validation scenarios on macOS.
+Additionally, the `check_mac_wheel_minos()` function only works when `PYTORCH_FINAL_PACKAGE_DIR` is set (Mode 1: reading from .whl files). Unlike `check_wheel_platform_tag()`, it has no Mode 2 fallback to check minos on an already-installed torch package. When `PYTORCH_FINAL_PACKAGE_DIR` is not set, the function should attempt to read wheel metadata from the installed torch package and check dylib minos values against it, rather than silently skipping. The output must not contain the message "skipping wheel minos" when Mode 2 is attempted.
 
 ### Relevant Files
 

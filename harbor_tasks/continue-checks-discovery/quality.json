@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions check for strings/patterns explicitly mentioned in instruction.md: '.continue/checks' path, Set patterns ('seen = new Set<string>()', 'seen.has(file)', 'seen.add(file)'), try/catch blocks, JSDoc references to '.continue/checks/*.md' and '.continue/agents/*.md', precedence comment phrases, file paths, ESLint and Vitest commands. Every asserted literal is discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: use a Set with specific patterns like 'seen = new Set<string>()', 'seen.has(file)', 'seen.add(file)'; exact precedence comment phrases like 'Agents take precedence'; exact path construction patterns like 'path.join(cwd, \".continue\", \"checks\")'. This goes beyond describing what's broken and prescribes HOW to implement the fix at a very specific code level."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string patterns like 'seen = new Set<string>()', specific path construction patterns like '\".continue\", \"checks\"', exact comment phrases like 'Agents take precedence'. An alternative correct fix using a Map for dedup, or using 'filter' with 'indexOf', or different variable names, or different comment phrasing would fail these text-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_resolveFromLocal_checks_directory, test_resolveFromLocal_deduplication, test_resolveFromLocal_error_handling, test_comments_updated, and test_agents_precedence_comment ALL exclusively use 'Path(TARGET_FILE).read_text()' and string matching (assert '...' in content). None import, call, or execute the actual function. Only test_repo_review_linting and test_repo_vitest_version run subprocesses, but those are pass-to-pass tests."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All f2p tests are pure text-matching against file content. An agent could write a file containing all the required string literals as dead code comments without implementing any actual functionality, and all f2p tests would pass. For example, adding '// .continue/checks/*.md seen = new Set<string>() try { catch Agents take precedence' as a comment block would satisfy every f2p assertion."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution files exist at /solution/resolveReviews.ts and /solution/resolveReviews.test.ts in the container (per solve.sh). An agent could simply 'cat /solution/resolveReviews.ts' and copy it. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact expected strings and insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires 5 unit test cases (discovery from agents/ only, checks/ only, both with dedup, empty result, error handling) and that 'npm test -- resolveReviews.test.ts --run' passes. The hidden tests never execute the unit tests or verify they exist with correct content, only checking that the implementation file has certain strings and ESLint/Vitest work generically."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each tests (e.g., 'Fail-to-pass: Implementation must scan .continue/checks/ directory'), grouped by concern (structural, linting, file existence), and clearly commented at the top of the file."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript source code and doesn't produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and string literals in instruction.md are consistent and correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact function ('resolveFromLocal()'), exact file path ('extensions/cli/src/commands/review/resolveReviews.ts'), exact code patterns to use ('seen = new Set<string>()', 'path.join(cwd, \".continue\", \"checks\")'), and exact comment phrases. This prescribes the solution at implementation detail level rather than describing behavior."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TypeScript source files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

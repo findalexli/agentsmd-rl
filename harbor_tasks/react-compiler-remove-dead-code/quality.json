@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant files (BabelPlugin.ts, Imports.ts, Options.ts, Program.ts, ValidateNoUntransformedReferences.ts, Environment.ts), the specific dead code elements (ValidateNoUntransformedReferences, CompileProgramMetadata, retryErrors, 'client-no-memo', compileProgram return value), and the classes/functions involved (ProgramContext, compileProgram, BabelFn). All test assertions reference items discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (dead code, unused abstractions, obsolete options) but does not prescribe exact code changes like 'delete line X' or 'change return type to void'. A developer must reason about what specifically to remove."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for behavioral/structural properties (file deleted, type alias absent, property removed, return type is void, no import references) rather than gold-specific implementation details. Any correct dead code removal approach would pass these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mix of approaches: TypeScript AST parsing via Node.js (test_compileprogram_returns_void, test_retryerrors_removed_from_class, test_schema_rejects_client_no_memo), file existence checks (test_validate_file_deleted), text searches for imports (test_validate_not_imported), and actual build/typecheck/test execution (test_repo_typecheck, test_repo_build, test_repo_jest_unit). The AST-based tests and subprocess execution tests go well beyond simple text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for the absence of specific code elements that exist in the original codebase (ValidateNoUntransformedReferences.ts file exists, CompileProgramMetadata type is declared, retryErrors property exists, 'client-no-memo' is in the enum, compileProgram returns non-void). A stub or no-op would not pass these tests since the original code must be actively modified."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to discover exactly what changes to make. The Dockerfile doesn't remove /solution/ or restrict access to it."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: unused ValidateNoUntransformedReferences (test_validate_file_deleted, test_validate_not_imported), compileProgram return value (test_compileprogram_returns_void, test_compile_result_not_captured), retryErrors field (test_retryerrors_removed_from_class), BabelFn import (test_babel_fn_import_removed), 'client-no-memo' option (test_schema_rejects_client_no_memo, test_client_no_memo_removed_environment)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass behavioral, fail-to-pass structural, pass-to-pass static, pass-to-pass repo CI), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves dead code removal, not structured data production."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, function names, and variable names in instruction.md and tests match correctly (ValidateNoUntransformedReferences, CompileProgramMetadata, ProgramContext, retryErrors, client-no-memo, compileProgram, BabelFn, etc.)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify ('Files to Look At' section lists all 6 files), specific type names (CompileProgramMetadata), class fields (retryErrors), function names (compileProgram), and the exact obsolete option ('client-no-memo'). This goes beyond describing what's broken and significantly narrows the search space, especially listing ValidateNoUntransformedReferences.ts as a file to look at when part of the task is discovering it should be deleted."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

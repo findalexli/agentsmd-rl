@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check specific details not mentioned in instruction.md: test_num_tokens_propagation calls set_forward_context with positional args (None, None, None, [], []) matching its exact signature; test_replay_passes_num_tokens and test_init_forward_metadata_called_inside_context check specific internal implementation details like 'raw_bs', 'raw_num_tokens', 'static_num_tokens' attributes on forward_batch, and the exact call pattern of init_forward_metadata inside set_forward_context. The instructio"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug symptom (qo_indptr[-1] mismatch) and the expected API surface but does not specify exact code changes like 'add self.num_tokens on line X' or 'replace foo with bar'. A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable names like 'num_tokens' attribute on ForwardContext, and the exact keyword argument name 'num_tokens' in set_forward_context signature. An alternative correct fix that uses a different attribute name (e.g., 'token_count' or 'padded_size') or passes the information differently would fail these tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests actually import modules, instantiate ForwardContext, call set_forward_context, inspect signatures, and execute code via subprocess. The pass-to-pass tests run linters and compilers. Tests verify behavior through execution, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_forward_context_has_num_tokens checks that ForwardContext has a num_tokens attribute and set_forward_context accepts num_tokens keyword - neither exists in the original code. test_num_tokens_propagation verifies the value propagates correctly. A stub/no-op wouldn't pass since the original code lacks these features entirely."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sglang/_eval_ctx_mgr_test.py (written by test helper) and solve.sh is described as hidden but the Dockerfile doesn't prevent reading /solution/ if mounted. More importantly, the agent could grep test_outputs.py (if accessible) or solution files for the exact patch to apply."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction lists expected API surface items (ForwardContext.num_tokens, set_forward_context num_tokens kwarg, replay passing token count, call_begin_forward using token count), and all of these are tested in the fail-to-pass tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments (Gates/static checks vs fail-to-pass behavioral tests), named descriptively (test_forward_context_has_num_tokens, test_num_tokens_propagation, etc.), and have docstrings explaining what they verify."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to fix a bug, not producing structured data outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md are consistent and correct (flashinfer_backend.py, piecewise_context_manager.py, piecewise_cuda_graph_runner.py, ForwardContext, set_forward_context, etc.)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names all three files to modify and specifies detailed API changes needed (e.g., 'ForwardContext must have a num_tokens attribute', 'set_forward_context must accept a num_tokens keyword argument', 'Must guard the extension logic with a conditional'). This goes beyond describing what's broken and substantially localizes and specifies the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (framework-helpers.ts, workers-helpers.ts, mocks.ts, to-exist.ts, frameworks.test.ts, workers.test.ts), all function names (runC3ForFrameworkTest, verifyDeployment, etc.), the type ExpectStatic, the eslint-disable comment pattern, and the expect.fail -> throw new Error replacement. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: add 'expect: ExpectStatic' parameter to specific functions, use 'type-only import for ExpectStatic', replace 'expect.fail()' with 'throw new Error()', add justification after '--' in to-exist.ts, and pass 'expect' at call sites. This is not just describing what's broken \u2014 it's prescribing the exact implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for 'expect' as a parameter name with a type annotation (regex \\bexpect\\s*:), eslint-disable comment patterns, throw new Error counts, and call-site argument passing patterns. These are flexible enough that different orderings, formatting, or exact type annotations would still pass. The parameter just needs to be named 'expect' with a type annotation."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_eslint_disable_comments_resolved, test_helpers_accept_expect_param, test_mocks_throw_error, test_call_sites_pass_expect) are entirely text/regex-based \u2014 they read file contents and pattern-match. However, the pass-to-pass tests (test_c3_typecheck, test_c3_unit_tests, test_c3_build, test_c3_type_tests) do execute real builds/typechecks/tests. Since the f2p tests are all text-matching, this is a partial fail, but the p2p tests provide behavioral verification. Still, th"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require actual code changes: removing eslint-disable comments, adding expect parameters to function signatures, replacing expect.fail with throw new Error, and updating call sites. A stub/no-op implementation would fail because the original files contain the patterns being checked against. The pass-to-pass typecheck/unit tests also ensure the changes compile and work correctly."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/workers-sdk in the container, and the agent could read the solve.sh or the gold patch. The Dockerfile doesn't remove any solution files. Also, since tests are purely text-based regex checks on file contents, the agent could just pattern-match the expected strings without understanding the underlying problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: eslint-disable comment removal/justification, expect parameter injection in all listed functions, mocks.ts throw new Error replacement, call-site updates, plus typecheck/build/unit tests as pass-to-pass checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (pass-to-pass vs fail-to-pass), descriptive function names and docstrings, and logical grouping by concern (eslint comments, expect params, mocks, call sites)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and variable names in the instruction match those used in the tests and the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names every specific file, every specific function, the exact type name (ExpectStatic), the exact replacement pattern (expect.fail -> throw new Error), and even the exact parameter signature pattern (expect: ExpectStatic). This goes well beyond describing the bug domain and into specifying the exact solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

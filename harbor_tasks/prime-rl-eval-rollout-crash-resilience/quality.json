@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files (vf_utils.py, eval_utils.py), the functions (generate(), run_group_with_progress(), evaluate_env()), and describes the behaviors (try/except around run_group, empty outputs check). The tests check these same files, functions, and behaviors. Specific details like ruff config path and orchestrator test file paths are standard repo artifacts discoverable from the repo structure."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (no error isolation in run_group_with_progress, no empty-outputs guard in evaluate_env) but does not prescribe the exact fix (e.g., it doesn't say 'wrap in try/except and return None' or 'add if not outputs: return'). A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The hidden tests include checks like test_vf_generate_exception_handling which runs the actual generate() function with a mock that raises exceptions and checks that results are returned without raising. However, test_vf_run_group_with_progress_tryCatch (from the truncated portion likely) and test_vf_generate_return_type_annotation check for specific implementation details like the return type annotation 'list[vf.RolloutOutput] | None' on run_group_with_progress. An alternative correct fix (e.g."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include behavioral checks: test_vf_generate_exception_handling actually imports and calls generate() with mocked dependencies that raise exceptions, verifying the function doesn't crash. The repo_tests run actual subprocess commands (ruff, py_compile). While some tests do AST inspection, they check structural properties, and there are genuine behavioral execution tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like the exception handling test would fail on the original code (which doesn't catch exceptions in run_group_with_progress), and the empty outputs test would fail on original evaluate_env (which doesn't check for empty outputs). A stub/no-op implementation wouldn't pass since the tests call the actual functions and verify specific behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace as solve.sh could be accessed, and the gold patch in solution/solve.sh is present in the container. An agent could read /solution/solve.sh or the PATCH content directly to obtain the exact fix without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies three behaviors: (1) single group failure shouldn't crash evaluation, (2) failed groups logged as warnings and excluded, (3) empty outputs should return early. The tests verify exception resilience of generate(), warning logging, and the empty outputs guard in evaluate_env()."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Pass-to-pass repo_tests, Gates static, behavioral tests), descriptive function names, and docstrings explaining what each test validates."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction are all correct and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the inner coroutine 'run_group_with_progress()' and states it 'calls run_group() directly without any error isolation' and that 'evaluate_env() doesn't handle the case where the outputs list is empty'. This precisely localizes both bugs, reducing the task to pure implementation rather than requiring any debugging or localization reasoning."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

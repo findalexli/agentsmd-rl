@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings not fully specified in instruction.md. For example, test_program_uses_vendored_minimist checks for exact import syntax `import { minimist } from './minimist'` and `import type { MinimistArgs } from './minimist'` (named vs type imports), test_boolean_option_with_equals_throws checks for the exact error message substring \"should not be passed with '=value'\", and test_claude_md_updated_with_new_rule checks for the exact string 'Never add \"Generated with\" i"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, essentially describing the exact solution: it tells the agent exactly which files to create/modify, what exports to define, what import syntax to use, what to remove, and even specific implementation details like 'Throw an error if a boolean option is passed with =value format'. This is not describing what's broken but dictating the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact import syntax strings like `import { minimist } from './minimist'` and `import type { MinimistArgs } from './minimist'` in test_program_uses_vendored_minimist. A valid alternative using `import { minimist, MinimistArgs }` or `import { minimist, type MinimistArgs }` would fail. Similarly, test_session_uses_vendored_minimist checks for exact `import type { MinimistArgs } from './minimist'` syntax."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are purely text-matching: test_minimist_ts_exists checks for string 'export function minimist' in file content, test_program_uses_vendored_minimist checks for exact import strings, test_session_uses_vendored_minimist checks file text, test_deps_list_updated uses regex on file content, test_claude_md_updated_with_new_rule checks string presence. Only test_typescript_compiles and test_boolean_option_with_equals_throws attempt execution, but the latter falls back to text matching if tsx "
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass all tests - for example test_boolean_option_with_equals_throws requires actual error-throwing behavior (or at minimum the error message string in the source), and test_typescript_compiles requires valid TypeScript compilation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory is present at /workspace/repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact gold patch. Also, test fixture values like exact import strings and error messages could be discovered by reading test_outputs.py if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires 'Remove the manual post-processing of arguments' from program.ts and 'Update the run() method signature to remove the optional cwd parameter' in session.ts, but no tests verify these behaviors. The instruction also says 'Update package-lock.json accordingly (run npm install)' but test_types_minimist_dependency_removed only checks package.json, not package-lock.json changes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear category comments (Category 1: Code Behavior Tests, Category 2: Config/Documentation, Category 3: Pass-to-Pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact function signatures, exact export names, and specific implementation details like 'Throw an error if a boolean option is passed with =value format' and exact DEPS.list section structure. This goes beyond localization hints into solution specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The CLAUDE.md gold diff is a single line addition, well-localized and consistent with the instruction's description."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all key requirements tested: file paths (server.crt, server.key), RSA 2048-bit, sha256WithRSAEncryption, CN=localhost, SAN DNS:localhost, self-signed, 5+ year validity, X.509 v3, PEM format, and references to redis.conf and Dockerfile. All test assertions map to explicitly stated requirements in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (expired TLS certificate) and what the replacement must satisfy (a list of properties), but does not specify exact commands, exact certificate content, or line-by-line changes. The agent must determine how to generate the certificate."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties of the certificate (not expired, 5+ year validity, CN=localhost, SAN, RSA 2048, sha256, self-signed, key matches cert, PEM format, v3). Any correctly generated self-signed certificate meeting these specs would pass. No gold-specific strings, line positions, or implementation details are asserted."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute openssl subprocess commands to verify certificate properties (expiry, CN, SAN, modulus matching, key validity, signature algorithm, etc.). While some tests do read file contents (redis.conf, Dockerfile), those are pass-to-pass regression checks on pre-existing files, and the core f2p tests use actual openssl execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_cert_not_expired, test_cert_long_validity) require a valid, non-expired certificate with 5+ year validity. A stub/empty file or the existing expired certificate would fail these tests. The agent must actually generate a new certificate."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container (it's part of the task setup) and contains the exact certificate and key content as a git patch. An agent could read /solution/solve.sh (or the truncated content) to extract the exact certificate bytes. Additionally, the agent could grep for the gold certificate fingerprint 'AulvwBjtit0+4zSc1QGePy6oR7Y' mentioned in solve.sh's idempotency check. While the tests don't assert on specific certificate content, the solution file is accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from the instruction are tested: file existence, PEM format, RSA 2048, sha256 signature, CN=localhost, SAN DNS:localhost, self-signed, 5+ year validity, X.509 v3, key matches cert, and that redis.conf/Dockerfile remain intact."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (fail-to-pass, pass-to-pass categories), descriptive function names (test_cert_not_expired, test_cert_long_validity, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces binary/PEM certificate files, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the certificate files (server.crt, server.key) which is necessary context for the task, not excessive leakage. It doesn't reveal specific openssl commands or certificate content."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agent config-editing task; the gold patch replaces certificate/key file contents only."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

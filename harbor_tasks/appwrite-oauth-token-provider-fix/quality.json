@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact variable names like '$jwtEncoder', '$jwtDecoder', '$oauthProvider', '$payload', specific JWT constructor patterns like 'new JWT(.*System::getEnv(\\'_APP_OPENSSL_KEY_V1\\'))', specific validation patterns like 'empty($payload[\\'provider\\'])'. The instruction mentions JWT as a hint but doesn't specify these exact variable names or patterns."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially describes the full solution: 'JWT encoding/decoding could be useful for passing structured data through the secret parameter', 'The secret passed to createSession in token flow may need to carry additional metadata', specific line numbers (1921, 209, 245-252), and exactly what to change at each location. This is a step-by-step implementation guide, not a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact regex patterns matching gold-specific variable names: '$jwtEncoder', '$jwtDecoder', '$oauthProvider', '$payload'. Alternative correct fixes using different variable names (e.g., '$tokenEncoder', '$decodedData', '$providerName') or different approaches (e.g., storing provider in DB, using a different encoding scheme) would all fail these regex-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail_to_pass tests (test_jwt_encoding_in_callback, test_jwt_decoding_in_create_session, test_oauth_provider_variable_mapping, test_oauth_token_requires_provider, test_provider_payload_validation) are purely text-matching with regex on file content using 're.search(pattern, content)'. None execute the code, call functions, or test actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The regex patterns are specific enough that a stub/default implementation wouldn't match them. The patterns require specific JWT encoding/decoding code, variable assignments, and validation logic that wouldn't exist without making changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/appwrite and solve.sh is available. The agent could read the gold patch from the solution directory. Additionally, since tests are pure text matching, the agent could simply insert the exact text patterns the regexes expect without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md says 'Ensure OAuth2 token flow sessions include the correct provider name' and 'Pass the repo's linting rules (composer lint)', but no test actually verifies the runtime behavior of OAuth2 sessions having the correct provider, and there's no composer lint test."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining what each test checks, and clear separation between pass_to_pass and fail_to_pass tests with comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact line numbers ('around line 1921', 'around line 209', 'around line 245-252') and the exact file path, plus detailed descriptions of what to change at each location, effectively serving as a solution guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

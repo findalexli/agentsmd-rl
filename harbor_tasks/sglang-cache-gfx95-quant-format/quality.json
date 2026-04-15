@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on the exact attribute name `_gfx95_quant_format` and exact method name `_detect_gfx95_quant_format`. While the instruction mentions 'cached instance attribute' and 'dedicated method', it does not explicitly name `_gfx95_quant_format` or `_detect_gfx95_quant_format`. The instruction says 'Factor the detection logic out of forward() into a dedicated method' but doesn't specify the exact name. The PR reference (22143) is cited but not an authoritative external spec \u2014 the agent would n"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact fix: 'Factor the detection logic out of forward() into a dedicated method on DeepseekV2DecoderLayer with a str return type annotation', 'Store the computed result as a cached instance attribute during __init__', 'Replace the inline computation in forward() with the cached value'. This tells the agent exactly WHAT to change and HOW, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific names: test_cached_quant_format_attribute checks for `_gfx95_quant_format` attribute assigned from `_detect_gfx95_quant_format()`, test_detect_gfx95_quant_format_method checks for exact method name `_detect_gfx95_quant_format`, test_forward_uses_cached_quant_format checks for `self._gfx95_quant_format` string. An alternative correct fix using different names (e.g., `_cached_quant_format`, `_compute_quant_format`) would fail all f2p tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All core f2p tests (test_cached_quant_format_attribute, test_detect_gfx95_quant_format_method, test_forward_uses_cached_quant_format) use AST parsing and string matching on source code. They never import the module, instantiate DeepseekV2DecoderLayer, or call the method. test_forward_uses_cached_quant_format does `assert 'self._gfx95_quant_format' in src` which is pure text inspection. No behavioral execution occurs."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_not_stub requires at least 3 non-trivial statements, test_detect_method_has_proper_logic checks for 'torch.uint8', 'mxfp4', 'fp8' in the method source, and test_cached_quant_format_attribute verifies it's a Call to _detect_gfx95_quant_format. A simple stub (pass/return '') would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sglang as solve.sh could be read. Also, test_outputs.py is at a predictable path and contains the exact attribute/method names needed. An agent could read /solution/solve.sh or the test file to extract the exact patch without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) a dedicated method with str return annotation \u2014 tested by test_detect_gfx95_quant_format_method, (2) cached attribute in __init__ \u2014 tested by test_cached_quant_format_attribute, (3) forward uses cached value \u2014 tested by test_forward_uses_cached_quant_format, (4) real logic not stub \u2014 tested by test_not_stub and test_detect_method_has_proper_logic."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining each test's purpose, and tags like [static], [pr_diff], [repo_tests]."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (`python/sglang/srt/models/deepseek_v2.py`), exact class (`DeepseekV2DecoderLayer`), exact methods (`forward`, `__init__`), and describes the exact implementation pattern (dedicated method with str return, cached instance attribute). It also references the specific PR number 22143 which can be fetched to see exact naming."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

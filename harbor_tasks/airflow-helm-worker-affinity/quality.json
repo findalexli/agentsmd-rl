@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all key behavioral requirements tested: workers.kubernetes.affinity precedence over workers.affinity in pod-template-file, deprecation warning in NOTES.txt mentioning workers.celery.affinity and workers.kubernetes.affinity, and JSON schema updates for both new fields. The specific values paths, field names, and file types (NOTES.txt, values.schema.json, pod-template-file) are all mentioned or discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (precedence, deprecation warnings, schema updates) without specifying exact code changes. It doesn't say 'change line X' or 'add workers.kubernetes.affinity to the or chain in pod-template-file.kubernetes-helm-yaml'. The developer must figure out what files to modify and how."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "TestDeprecationWarning.test_deprecation_warning_in_notes checks for exact literal strings in NOTES.txt source code (e.g., '.Values.workers.affinity', 'workers.celery.affinity', 'workers.kubernetes.affinity'). An alternative correct implementation that uses different template syntax (e.g., checking `.Values.workers.affinity` via a different Go template pattern or using different warning text) could fail these string-matching assertions. Similarly, TestSchemaValidation checks that the description "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "TestDeprecationWarning.test_deprecation_warning_in_notes is purely text-matching: it reads NOTES.txt as a file and asserts literal strings are present with no execution. TestSchemaValidation tests also just parse JSON and check for key/description presence. While TestKubernetesWorkerAffinityPrecedence and TestHelmTemplateBasic actually execute helm template, the deprecation and schema tests are pure text inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The core fail_to_pass tests (TestKubernetesWorkerAffinityPrecedence) render the actual helm chart and verify that workers.kubernetes.affinity takes precedence over workers.affinity. On the base commit, this fails because the pod-template-file doesn't check workers.kubernetes.affinity. A stub/no-op implementation would not pass these tests since the helm template rendering produces real output from the actual chart files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (accessible in the container after the Dockerfile clones the repo), and solve.sh is at a predictable path. The agent could read /solution/solve.sh or the test file at /tests/test_outputs.py to extract exact fixture values like 'kubernetes-specific-key' and 'deprecated-affinity-key'. The tests also contain the exact patch description in the docstring comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five requirements from the instruction are tested: (1) kubernetes affinity precedence via TestKubernetesWorkerAffinityPrecedence, (2) celery worker affinity support implied by schema tests, (3) backward compatibility via TestHelmTemplateBasic, (4) deprecation warning via TestDeprecationWarning, (5) JSON schema via TestSchemaValidation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into named classes (TestKubernetesWorkerAffinityPrecedence, TestDeprecationWarning, TestSchemaValidation, TestHelmTemplateBasic) with descriptive docstrings and method names explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the JSON schema structure required (workers.kubernetes.affinity and workers.celery.affinity properties with appropriate descriptions), and the values.schema.json is the structured data being modified."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem at a behavioral level without naming exact buggy files or lines. It mentions 'pod-template-file' which is a standard Helm chart concept, and 'NOTES.txt' which is the standard post-install notes file. These are domain-appropriate references, not implementation hints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized: one line change in pod-template-file.kubernetes-helm-yaml, additions to NOTES.txt, schema additions in values.schema.json, and comments in values.yaml. All changes are scoped and don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

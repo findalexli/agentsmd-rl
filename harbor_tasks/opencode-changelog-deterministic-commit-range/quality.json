@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the key files (script/changelog.ts, script/version.ts, .opencode/command/changelog.md, .gitignore), the packages to remove (@opencode-ai/sdk, @opencode-ai/script), the 'non-draft' help text requirement, GITHUB_SHA and --to flag for version.ts, UPCOMING_CHANGELOG.md in .gitignore, and all the AGENTS.md coding constraints (no try/catch, single-word function names, no camelCase locals, no any type). Every assert'd literal string and file path in the tests is discoverable from "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (off-by-one changelogs, non-deterministic commit range, missing upper bound) and expected behavior, but does not specify exact code changes, line numbers, or the precise implementation. The agent must still reason about how to restructure the changelog script, what function names to use, and how to wire everything together."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_single_word_function_names and test_no_camelcase_locals enforce a very specific coding style (no camelCase function names, no camelCase local variables) that constrains the solution heavily. However, the more critical issue is test_command_prompt_consumes_structured_data which asserts `re.search(r'script/changelog|changelog\\.ts', content)` \u2014 requiring the prompt file to reference the changelog script by a specific pattern. Additionally, test_changelog_help_deterministic asserts the exact st"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are purely textual/structural: test_version_pins_upper_bound reads source and checks for strings 'GITHUB_SHA' and '--to'; test_command_prompt_consumes_structured_data reads a markdown file for regex patterns; test_gitignore_upcoming_changelog reads .gitignore for a string; test_single_word_function_names and test_no_camelcase_locals regex-scan source. Only test_changelog_help_deterministic and test_changelog_transpile_no_llm_sdk actually execute code. The majority of fail-to-pass test"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty file implementation would fail: test_changelog_help_deterministic runs the script and checks for 'non-draft' in output (a stub wouldn't produce this); test_changelog_transpile_no_llm_sdk requires successful transpilation of a non-trivial file; test_repo_typecheck requires type-correct code. The structural tests require specific content that wouldn't appear in empty/stub files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/opencode's git history or could be accessed via the solve.sh patch. More critically, the agent could read the test file at tests/test_outputs.py to discover every exact assertion (e.g., 'non-draft' string, 'GITHUB_SHA', '--to' pattern) and craft files that pass all regex checks without understanding the bug. The tests are largely string-matching on file contents, making it easy to reverse-engineer the expected output from the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five explicit expected behaviors from the instruction are tested: no LLM SDK imports (test_changelog_transpile_no_llm_sdk), 'non-draft' help text (test_changelog_help_deterministic), command prompt consuming structured data (test_command_prompt_consumes_structured_data), GITHUB_SHA/--to in version.ts (test_version_pins_upper_bound), and UPCOMING_CHANGELOG.md in .gitignore (test_gitignore_upcoming_changelog). AGENTS.md constraints are also tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into clearly labeled sections (Gates, Fail-to-pass behavioral, Fail-to-pass structural, Config-derived, Pass-to-pass), each with descriptive docstrings explaining the base vs. fixed behavior and why the check is structural vs. behavioral."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces markdown changelog output, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem domain and constraints without naming specific buggy lines. It mentions files like script/changelog.ts and script/version.ts which are natural given the task domain, not gratuitous localization hints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it involves code and config file modifications across multiple files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

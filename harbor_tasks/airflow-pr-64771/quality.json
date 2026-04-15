@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'useDagRunServiceGetDagRun' (test_component_imports_dag_run_hook), 'runData' and 'dag_versions' (test_component_filters_versions), 'runId' (test_component_extracts_runid). The instruction mentions 'API provides endpoints' and 'URL parameters' but never names these specific function/variable names."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the broken behavior (all versions shown regardless of selected DagRun) and expected behavior (filter by selected run) but does not specify exact code changes, line numbers, or specific function calls to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_component_imports_dag_run_hook assert 'useDagRunServiceGetDagRun' in content, test_component_extracts_runid asserts 'runId' in content, and test_component_filters_versions asserts both 'runData' and 'dag_versions' in content. An alternative correct fix using different variable names (e.g., 'dagRunResponse' instead of 'runData') or a different API hook would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_component_imports_dag_run_hook, test_component_extracts_runid, and test_component_filters_versions are purely text-based: they read the file and assert string presence (e.g., assert 'useDagRunServiceGetDagRun' in content). While test_dagversionselect_vitest does run vitest (behavioral), 3 of the 5 fail_to_pass tests are text-only grep checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The vitest test (test_dagversionselect_vitest) renders the component and checks that version items are filtered from 3 to 2 when a DagRun is selected. A stub or no-op implementation would still show all 3 versions and fail. The text-based tests also require non-trivial additions to pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (after solve.sh runs) or can be read from the container's solve.sh. The agent could read /solution/solve.sh to see the exact gold patch, including the test file content and the component changes. No measures prevent this."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies two behaviors: (1) show all versions when no DagRun selected, (2) show only associated versions when a DagRun is selected. Both are tested in the vitest file's two test cases."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized: separate functions for vitest execution, TypeScript checking, ESLint, Prettier, build, and component-level checks. The vitest test file uses describe/it blocks with clear names like 'shows all versions when no DagRun is selected'."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves UI component behavior, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names only the component file (DagVersionSelect.tsx) which is the obvious target. It doesn't mention specific line numbers, variable names, or exact API hooks to use. The hints are general guidance about URL params and API endpoints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

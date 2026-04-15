@@ -2,19 +2,19 @@
 
 ## Bug Report
 
-When a user requests `attn_implementation="flash_attention_4"` but does not have the native `flash_attn` package installed, the library is supposed to fall back to a community kernel implementation via the `kernels` library. This fallback mechanism works correctly for Flash Attention 2 and 3, but Flash Attention 4 is explicitly skipped in the fallback loop.
-
-There are two issues:
-
-1. In `src/transformers/modeling_utils.py`, the method `_check_and_adjust_attn_implementation` iterates over all known Flash Attention versions to check if a kernel fallback is needed. However, version 4 is explicitly skipped with a `continue` statement, preventing the fallback logic from ever activating for FA4.
-
-2. In `src/transformers/modeling_flash_attention_utils.py`, the `FLASH_ATTN_KERNEL_FALLBACK` dictionary maps Flash Attention implementation names to their kernel community package names. The entry for `"flash_attention_4"` is missing, so even if the skip were removed, the fallback lookup would fail with a `KeyError`.
-
-## Relevant Files
-
-- `src/transformers/modeling_utils.py` — see the `_check_and_adjust_attn_implementation` classmethod, specifically the loop over `FLASH_ATTENTION_COMPATIBILITY_MATRIX.keys()` (around line 1817)
-- `src/transformers/modeling_flash_attention_utils.py` — see the `FLASH_ATTN_KERNEL_FALLBACK` dictionary (around line 62)
+When a user requests `attn_implementation="flash_attention_4"` but does not have the native `flash_attn` package installed, the library should automatically fall back to a community kernel implementation via the `kernels` library, just as it does for Flash Attention 2 and 3. Currently, this fallback mechanism does not work for Flash Attention 4.
 
 ## Expected Behavior
 
-When `flash_attention_4` is requested but not natively available, the library should automatically fall back to the corresponding community kernel package, just as it does for FA2 and FA3.
+The library uses the `FLASH_ATTENTION_COMPATIBILITY_MATRIX` to track supported Flash Attention versions, which includes versions 2, 3, and 4. When a native Flash Attention implementation is not available, the library should look up the corresponding community kernel package in `FLASH_ATTN_KERNEL_FALLBACK` and use that instead.
+
+The existing fallback entries follow this naming convention:
+- `"flash_attention_2"` maps to `"kernels-community/flash-attn2"`
+- `"flash_attention_3"` maps to `"kernels-community/vllm-flash-attn3"`
+
+When `flash_attention_4` is requested but not natively available, the library should similarly fall back to a `kernels-community/` package with an appropriate flash/attention-related name, following the same pattern as FA2 and FA3.
+
+## Files to Investigate
+
+- `src/transformers/modeling_utils.py` — contains the `_check_and_adjust_attn_implementation` method that iterates over `FLASH_ATTENTION_COMPATIBILITY_MATRIX.keys()` to handle kernel fallbacks
+- `src/transformers/modeling_flash_attention_utils.py` — contains the `FLASH_ATTN_KERNEL_FALLBACK` dictionary that maps Flash Attention implementation names to their kernel community package names

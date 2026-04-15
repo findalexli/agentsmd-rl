@@ -10,14 +10,50 @@ The `ty` type checker does not properly validate the `extra_items` keyword argum
 
 ## Expected Behavior
 
-- `extra_items` should be treated as an annotation expression (not a regular expression) when the class is a real `typing.TypedDict`.
-- Invalid qualifiers (`Required`, `NotRequired`, `ClassVar`, `Final`, `InitVar`) in `extra_items` should produce an `invalid-type-form` diagnostic.
-- `ReadOnly` should remain valid in `extra_items`.
-- Forward references (stringified in `.py`, bare in `.pyi`) should be properly resolved.
+When the `ty` checker validates a class-based TypedDict definition:
+
+- The `extra_items` keyword should be treated as a **type annotation expression** (not a regular expression).
+- Invalid type qualifiers in `extra_items` must produce an `invalid-type-form` diagnostic. Specifically, these qualifiers are NOT valid in `extra_items`:
+  - `Required[...]`
+  - `NotRequired[...]`
+  - `ClassVar[...]`
+  - `Final[...]`
+  - `InitVar[...]`
+- `ReadOnly[...]` should remain valid in `extra_items` and must NOT produce an `invalid-type-form` diagnostic.
+- Plain type annotations (e.g., `extra_items=int`) should also be accepted without producing an `invalid-type-form` diagnostic.
+- Forward references (stringified in `.py` files, bare in `.pyi` stub files) should be properly resolved.
 - For non-`typing.TypedDict` classes that happen to accept an `extra_items` keyword, the value should continue to be treated as a regular expression, not a type annotation.
 
-## Files to Look At
+## How to Verify
 
-- `crates/ty_python_semantic/src/types/infer/builder/class.rs` — handles class definition inference, including keyword argument processing
-- `crates/ty_python_semantic/src/types/infer/builder/typed_dict.rs` — contains TypedDict-specific inference logic including `infer_extra_items_kwarg`
-- `crates/ty_python_semantic/resources/mdtest/typed_dict.md` — mdtest cases for TypedDict behavior (update existing `extra_items` section)
+Run `ty check` on code like:
+
+```python
+from typing_extensions import TypedDict, Required, NotRequired, ClassVar, Final, ReadOnly
+
+# Should produce 'invalid-type-form' error
+class Bad1(TypedDict, extra_items=Required[int]):
+    name: str
+
+# Should produce 'invalid-type-form' error
+class Bad2(TypedDict, extra_items=NotRequired[str]):
+    x: int
+
+# Should produce 'invalid-type-form' error
+class Bad3(TypedDict, extra_items=ClassVar[int]):
+    label: str
+
+# Should produce 'invalid-type-form' error
+class Bad4(TypedDict, extra_items=Final[int]):
+    key: str
+
+# Should NOT produce 'invalid-type-form' error (plain type)
+class Good1(TypedDict, extra_items=int):
+    name: str
+
+# Should NOT produce 'invalid-type-form' error (ReadOnly is valid)
+class Good2(TypedDict, extra_items=ReadOnly[int]):
+    name: str
+```
+
+Additionally, update the TypedDict markdown test cases to reflect the new behavior for `extra_items` validation, including tests for `ClassVar` and `InitVar` which should also trigger `invalid-type-form` errors.

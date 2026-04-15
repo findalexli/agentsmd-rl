@@ -2,21 +2,47 @@
 
 ## Problem
 
-The Playwright MCP server supports video recording through the browser tools layer (`browser_start_video`, `browser_stop_video`), but these tools are not yet implemented or exposed. Additionally, the tracing tools currently use a `'tracing'` capability name, but they should be grouped under a broader `'devtools'` capability alongside the new video tools.
+The Playwright MCP server supports video recording through the browser tools layer, but these tools are not yet implemented or exposed. Additionally, the tracing tools currently use a `'tracing'` capability name, but they should be grouped under a broader `'devtools'` capability alongside the new video tools.
 
 The terminal CLI (`playwright-cli`) also has no `video-start` / `video-stop` commands, meaning users cannot start or stop video recording from the CLI.
 
 ## Expected Behavior
 
-1. **New video browser tools**: Create a `video.ts` module in `packages/playwright/src/mcp/browser/tools/` that defines `browser_start_video` and `browser_stop_video` tools under the `'devtools'` capability. Import and register these tools in `browser/tools.ts`.
+### 1. New video browser tools
 
-2. **Rename `tracing` capability to `devtools`**: The existing tracing tools in `tracing.ts` should use `capability: 'devtools'` instead of `capability: 'tracing'`. Update the `ToolCapability` type in `config.d.ts` accordingly — replace `'tracing'` with `'devtools'`. Add backward compatibility so that `--caps=tracing` still works (by mapping it to `devtools`).
+Create a `video.ts` module in `packages/playwright/src/mcp/browser/tools/` that defines two tools:
 
-3. **New terminal CLI commands**: Add `video-start` and `video-stop` commands in `packages/playwright/src/mcp/terminal/commands.ts`, wired to the corresponding browser tools. The `video-stop` command should accept an optional `--filename` option.
+- `browser_start_video` — starts video recording; exported as `startVideo` (or `start_video`)
+- `browser_stop_video` — stops video recording; exported as `stopVideo` (or `stop_video`)
 
-4. **CLI help update**: Update the `--caps` help text in `program.ts` to list `devtools` as a possible capability value.
+Both tools must use the capability name `'devtools'`.
 
-5. **Update the SKILL.md documentation**: The terminal CLI skill documentation at `packages/playwright/src/mcp/terminal/SKILL.md` should be updated to include the new `video-start` and `video-stop` commands in the DevTools section.
+Import the video module in `packages/playwright/src/mcp/browser/tools.ts` and spread its exports into the `browserTools` array (e.g., `...video`).
+
+### 2. Rename `tracing` capability to `devtools`
+
+The existing tracing tools in `packages/playwright/src/mcp/browser/tools/tracing.ts` should use `capability: 'devtools'` instead of `capability: 'tracing'`.
+
+Update the `ToolCapability` type in `packages/playwright/src/mcp/config.d.ts` — replace `'tracing'` with `'devtools'` in the union type.
+
+Add backward compatibility so that `--caps=tracing` still works by mapping it to `devtools`. Specifically, `program.ts` must contain a check that looks for `'tracing'` in the capabilities list (using `.includes('tracing')`) and maps it to `'devtools'`.
+
+### 3. New terminal CLI commands
+
+Add commands in `packages/playwright/src/mcp/terminal/commands.ts` using `declareCommand`:
+
+- `video-start` — maps to tool name `browser_start_video`, no arguments
+- `video-stop` — maps to tool name `browser_stop_video`, accepts an optional `--filename` option
+
+These must be declared with the exact pattern `declareCommand({ name: 'video-start', ... toolName: 'browser_start_video' ... })` and included in the `commandsArray` export with the variable names `videoStart` and `videoStop`.
+
+### 4. CLI help update
+
+In `packages/playwright/src/mcp/program.ts`, the `--caps` option help text (the line containing `--caps` and "possible values") must list `devtools` as a possible capability value.
+
+### 5. Update SKILL.md documentation
+
+The terminal CLI skill documentation at `packages/playwright/src/mcp/terminal/SKILL.md` must include `video-start` and `video-stop` commands in the DevTools section (after the "DevTools" heading).
 
 ## Files to Look At
 

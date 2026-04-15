@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the target file path, function signature (asyncSequence<T>(for flow: any KotlinTypedFlow<T>) -> KotlinFlowSequence<T>), exact deprecation message ('Use `asAsyncSequence()` from Swift Export'), implementation details (delegate to asAsyncSequence()), and documentation requirements (KMP-NativeCoroutines, migration to Swift Export). The pass-to-pass tests check directory structure and syntax of files that exist in the repo already. All test-asserted specifics are discoverab"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to write: the exact function signature, the exact deprecation message, the exact implementation body (delegate to asAsyncSequence()), and even which file to edit. This is not describing what's broken \u2014 it's prescribing the complete solution. However, this is a feature-addition task, so describing what to build is expected. The instruction does essentially dictate the entire implementation, but that's the nature of the task."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests use regex patterns that allow flexibility in whitespace and formatting. Alternative correct implementations (e.g., different indentation, 'return flow.asAsyncSequence()' vs 'flow.asAsyncSequence()', different doc comment wording as long as it mentions KMP-NativeCoroutines) would all pass. The tests don't assert exact line positions or specific internal helpers."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_swift_syntax_valid runs swiftc -parse which is behavioral, but the fail-to-pass tests (test_asyncsequence_function_exists, test_asyncsequence_deprecation_annotation, test_asyncsequence_documentation_comment, test_asyncsequence_implementation_correct, test_asyncsequence_generic_constraint) all use regex on file content \u2014 they are pure text matching with no execution or import of the code. The syntax check is pass-to-pass only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (empty file, pass, return None) would not pass the fail-to-pass tests since they check for specific function signatures, deprecation annotations, documentation comments, and implementation body via regex. The function must actually be written with the correct structure."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin and solve.sh is accessible in the container. The agent could read solution/solve.sh to see the exact git patch, or grep for the expected test fixture strings. The Dockerfile doesn't remove these files from the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from the instruction are tested: function signature (test_asyncsequence_function_exists), deprecation annotation with exact message (test_asyncsequence_deprecation_annotation), documentation mentioning KMP-NativeCoroutines and migration (test_asyncsequence_documentation_comment), implementation delegating to asAsyncSequence() (test_asyncsequence_implementation_correct), and generic type parameter usage (test_asyncsequence_generic_constraint)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names, have docstrings explaining what they verify, and are logically grouped into pass-to-pass (existing functionality) and fail-to-pass (new functionality) categories with clear comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces Swift source code, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, type names (KotlinTypedFlow, KotlinFlowSequence, asAsyncSequence), and commands are consistent and correctly spelled across instruction.md, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file, which is appropriate since it's a feature addition task with a single obvious location. It doesn't reveal line numbers or internal implementation details of the existing file beyond what's needed to understand the API surface."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

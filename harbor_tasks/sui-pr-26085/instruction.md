@@ -45,11 +45,20 @@ Apply a function to the mutably borrowed value if `Some`, otherwise return a def
    - The `Some` case for each function
    - The `None` case for each function
    - Mutation side effects for `map_mut` and `fold_mut`
+   - **For `map_mut` tests**: Use mutation pattern `*x = 100` to verify the mutable reference works. Example: `opt.map_mut!(|x| { *x = 100; vector[*x] })`
+   - **For `is_none_or` tests**: Test both matching and non-matching predicates using `*x == 5` (matching) and `*x == 6` (non-matching)
+   - **For `fold` tests**: Use `option::some(5u64).fold!` and `option::none<u64>().fold!` with a value like `0` for the `$none` parameter
 
 ## Files to modify
 
 - `crates/sui-framework/packages/move-stdlib/sources/option.move` - Add the 5 new macro functions
 - `crates/sui-framework/packages/move-stdlib/tests/option_tests.move` - Add tests for the new functions
+
+## Implementation notes
+
+- `fold_ref` implementation must use `o.borrow()` (not `destroy_some()`) to borrow the option value
+- `fold_mut` implementation must use `o.borrow_mut()` for mutable borrow
+- `map_mut` should return `Some(f(value))` if the option is `Some`, otherwise `None`
 
 ## Hints
 

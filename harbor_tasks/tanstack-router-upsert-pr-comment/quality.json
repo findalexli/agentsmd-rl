@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_githubRequest_structure checks for 'async function githubRequest' as an exact string; test_listIssueComments_pagination checks for 'async function listIssueComments', 'let page = 1', 'per_page', 'page++' or 'page += 1', and 'break'; test_marker_logic_works checks for 'DEFAULT_MARKER' or 'rawBody.includes'. The instruction says to handle pagination and markers but doesn't specify these exact function names or varia"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the script should do (requirements, behavior) but does not give the exact code or line-by-line implementation. A developer still needs to reason about how to implement it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_githubRequest_structure requires 'async function githubRequest' as exact text; test_listIssueComments_pagination requires 'async function listIssueComments' and 'let page = 1'; test_marker_logic_works requires 'rawBody.includes(args.marker)' or 'includes(args.marker)'. An alternative correct implementation using different function names (e.g., 'async function makeGithubApiCall') or different variable names (e.g., 'bodyContent.includes') wou"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_githubRequest_structure, test_marker_logic_works, and test_listIssueComments_pagination are purely text-matching tests (assert 'string' in content) with no execution. While some tests like test_parseArgs_function_works and test_required_args_validated do execute the code, a significant portion of f2p tests are text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral tests (test_parseArgs_function_works, test_required_args_validated, test_env_fallback_works) actually execute the code and check return values/exit codes. A stub that always returns None or empty would fail these tests. The text-matching tests are weak but not tautological per se."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/router after solve.sh runs, and the agent could read solution/solve.sh which contains the complete gold patch. The Dockerfile doesn't remove the solution directory. An agent could also grep for the exact strings the text-matching tests look for (e.g., 'async function githubRequest') from the test file if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires create-or-update logic (PATCH vs POST), proper error handling with process.exit(1), and output to stdout indicating created/updated status. None of these behaviors are tested with actual execution \u2014 the create/update logic is never tested at all (no mock server or similar)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'F2P: parseArgs function correctly parses CLI arguments'), clearly grouped by functionality."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a CLI script, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the file to create and its behavior but doesn't leak specific internal implementation details like exact function names or variable names that would bypass the design challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-creation task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

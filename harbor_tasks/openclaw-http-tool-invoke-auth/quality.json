@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific function names like 'resolveGatewayRequestedOperatorScopes', 'authorizeOperatorScopesForMethod', 'applyOwnerOnlyToolPolicy', specific import sources like './method-scopes', specific tool names like 'exec', 'spawn', 'shell', 'fs_write', 'fs_delete', 'fs_move', 'apply_patch', 'nodes', specific string literals like 'forbidden' and 'missing scope', the number 403, calling with argument 'agent', and calling with 'false' as second argument. The instruction mentions 'operator.writ"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the security gaps (no scope verification, owner-only tools exposed, incomplete deny list) and names relevant files, but does not specify exact code changes like 'add line X' or 'replace Y with Z'. It describes what's broken, not the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact function names ('resolveGatewayRequestedOperatorScopes', 'authorizeOperatorScopesForMethod', 'applyOwnerOnlyToolPolicy'), exact variable naming patterns (regex for 'const (\\w+) = applyOwnerOnlyToolPolicy'), exact call signatures ('applyOwnerOnlyToolPolicy(subagentFiltered, false)'), exact import paths, and exact string argument 'agent'. An alternative correct fix using different helper functions or inline scope checking would fail these te"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are pure text/regex assertions: test_scope_authorization_imports, test_scope_authorization_called, test_scope_authorization_returns_403, test_owner_only_filtering_import, test_owner_only_filtering_called, test_owner_only_filtering_order all use Path.read_text() and regex/string matching with no execution. Only the deny list tests and test_repo_check actually execute code. The majority of fail-to-pass tests are 'assert X in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The deny list tests check for specific tool names that aren't in the original code, and the text-matching tests check for functions/patterns that don't exist in the pre-patch code. A stub or no-op wouldn't pass these since the original files lack these elements."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/openclaw as a git repo where the agent could inspect the PR diff or solution directory. The agent could also read test_outputs.py (if accessible) to discover exact expected strings. The text-matching tests make it trivial to pass by just inserting the literal strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies 'operator.write scope' requirement but no test verifies that 'operator.write' is the required scope. The tests check for 'agent' method argument to authorizeOperatorScopesForMethod but don't verify the actual scope enforcement behavior. The 403 response behavior is only checked via text matching, not actual HTTP request testing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass deny list, Fail-to-pass handler authorization, Pass-to-pass regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves security code fixes, not structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the variable 'gatewayFiltered' and 'subagentFiltered' and describes the exact filtering order issue ('gatewayFiltered operates on subagentFiltered directly without first removing owner-only tools'). It also names the exact constant 'DEFAULT_GATEWAY_HTTP_TOOL_DENY' and references 'DANGEROUS_ACP_TOOL_NAMES'. This goes beyond describing the bug to localizing the exact code location and variable names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (database.ts, auth.ts, context.db.ts, all route handlers), the Database import from 'remix/data-table', context.set(Database,...) and get(Database) patterns, removal of context.db.ts, README.md updates with context.set(Database) and get(Database). The instruction names every file and pattern the tests check."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'stored using context.set(Database, db) instead of assigning context.db directly', 'retrieved using get(Database) instead of destructuring db', lists every file to change and exactly what to do in each. This is a complete implementation specification, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for specific patterns like 'context.set(Database' and 'get(Database)' which are the only correct way to implement the typed context key pattern described. Alternative correct implementations would all use the same API (context.set/get with Database key), so the string-matching tests are appropriate for this single canonical solution pattern."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_database_middleware_uses_context_set, test_handlers_use_get_database, test_type_augmentation_removed, test_auth_middleware_uses_get_database, test_readme_documents_context_set_pattern) are ALL pure text-matching: they open files and check for string patterns like 'context.set(Database' in content. None import, call, or execute the actual code. The pass-to-pass tests do run lint/typecheck/test suites, but the f2p tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass these tests. test_database_middleware_uses_context_set checks that context.db is NOT present AND context.set(Database is present. test_type_augmentation_removed checks file deletion. test_handlers_use_get_database requires at least 8/10 files to contain get(Database). The pass-to-pass tests (typecheck, lint, router tests, etc.) also constrain the solution to be functionally correct."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/remix/_eval_tmp.py (written dynamically) but more importantly solve.sh is at /solution/solve.sh in the container. An agent could read /solution/solve.sh to get the exact gold patch and apply it directly. There's no evidence the solution directory is excluded from the agent's filesystem access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: database middleware uses context.set(Database), auth middleware uses get(Database), route handlers use get(Database), context.db.ts is removed, README is updated. The pass-to-pass tests verify the code still works (typecheck, lint, existing test suites)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly organized into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with descriptive docstrings and function names like test_database_middleware_uses_context_set, test_handlers_use_get_database, etc."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, and commands in instruction.md and tests match correctly. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names every exact file to modify (app/middleware/database.ts, app/middleware/auth.ts, all 10 route handlers), the exact file to delete (app/types/context.db.ts), and the exact code patterns to use (context.set(Database, db), get(Database)). This eliminates all localization and implementation reasoning."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

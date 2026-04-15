@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:28:58.354624",
-  "total_time": 1786.14,
-  "sandbox_id": "i6t6pziblvg6wjscfi5m6",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:45:36.326485",
+  "total_time": 1156.18,
+  "sandbox_id": "iqpmlys3ewi6rzw1a2kdr",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -43,6 +45,26 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.66,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:23: test `test_repo_node_available` has 1 assert(s), all pass on a stu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.89,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
@@ -69,6 +91,14 @@
       "backend": "fireworks",
       "time": 1786.14,
       "at": "2026-04-12T00:28:58.354624"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1156.18,
+      "at": "2026-04-15T04:45:36.326485"
     }
   ]
 }

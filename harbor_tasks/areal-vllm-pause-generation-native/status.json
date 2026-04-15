@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:39:21.794318",
-  "total_time": 795.07,
-  "sandbox_id": "ilon6vbs9u4ordrc0nrin",
+  "validated_at": "2026-04-15T03:40:39.507853",
+  "total_time": 1597.64,
+  "sandbox_id": "idfeucctvxr5c4j6y1565",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -70,17 +72,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.63,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:277: test `test_no_monkey_patching` only reads file text; inv', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:301: test `test_no_abort_all_reqs_function` only reads file t', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:318: test `test_removed_vllm_internals_imports` only reads fi', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: pytest, pytest-json-ctrf, pyyaml, ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.5,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3014.63,
-      "at": "2026-04-10T02:13:31.327785"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -112,6 +126,14 @@
       "backend": "fireworks",
       "time": 795.07,
       "at": "2026-04-11T18:39:21.794318"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1597.64,
+      "at": "2026-04-15T03:40:39.507853"
     }
   ]
 }

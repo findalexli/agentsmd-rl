@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like 'export default function virtualModulePlugin({ settings }' , 'const config = settings.config;', 'const clientConfigCode =', 'return { code: clientConfigCode };', 'applyToEnvironment(environment)', 'ASTRO_VITE_ENVIRONMENT_NAMES.astro', 'ASTRO_VITE_ENVIRONMENT_NAMES.ssr', 'astroVirtualManifestPlugin({ settings })', 'JSON.stringify(config.base)', 'JSON.stringify(config.site)'. While the instruction hints at many of these, some exact forms (e.g., 'retu"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details: 'The plugin function must receive an object containing settings', 'must access settings.config', 'pre-computed and stored in a variable', 'handler must return an object containing a code property set to this pre-computed code', 'Config values must be serialized using JSON.stringify', 'function receives an environment object and checks if the environment name matches one of: the astro environment, the ssr environment, or the prerender envi"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string matches like 'const clientConfigCode =' (test_client_config_inlines_values), 'return { code: clientConfigCode };' (same test), 'const config = settings.config;' (test_virtual_module_accepts_settings), 'applyToEnvironment(environment)' (test_serialized_manifest_restricted_to_server). An alternative correct fix using different variable names (e.g., 'precomputedClientCode' or 'clientCode') or different structure (e.g., returning code inline without a variable) would fail t"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_virtual_module_accepts_settings, test_client_config_inlines_values, test_serialized_manifest_restricted_to_server, test_create_vite_passes_settings, test_client_config_exports_correct_properties) are ALL pure text-matching tests using 'assert STRING in file.read_text()'. None of them import, call, or execute the code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string presence in source files. An agent could pass them by simply inserting the exact expected strings as comments or dead code without actually implementing the fix. For example, adding '// const clientConfigCode =' and '// return { code: clientConfigCode };' as comments would pass test_client_config_inlines_values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/astro after applying solve.sh, and the agent could read solution/solve.sh if accessible. Additionally, since all f2p tests are pure string-matching, the agent could grep the test file to discover the exact strings expected and insert them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction says 'Using astro:config/client in a client <script> tag should work without build errors' and 'The client script should have access to the config values at runtime'. No test actually builds an Astro project with a client script importing astro:config/client to verify these behavioral requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names, docstrings explaining fail-to-pass vs pass-to-pass, and clear assertions with messages."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names files (virtual-module.ts, serialized.ts, create-vite.ts), exact variable names ('clientConfigCode'), exact function signatures ('virtualModulePlugin({ settings })'), and exact implementation patterns ('return an object containing a code property set to this pre-computed code'). This goes far beyond describing the bug domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

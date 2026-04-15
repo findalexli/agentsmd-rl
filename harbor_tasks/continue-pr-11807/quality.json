@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (packages/config-yaml/src/schemas/models.ts, packages/config-yaml/src/validation.ts, gui/src/redux/slices/configSlice.ts, core/config/yaml/models.ts), the specific fields (contextLength, baseModelFields, defaultCompletionOptions), the constants (DEFAULT_MAX_TOKENS, DEFAULT_CONTEXT_LENGTH), and the schema detail (z.number().optional()). All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix in multiple places: 'The schema must accept contextLength: z.number().optional() as a valid model-level field', 'The validation should compute an effective context length (preferring model-level value, falling back to defaultCompletionOptions.contextLength)', 'should use DEFAULT_CONTEXT_LENGTH (32768) instead', and 'reads contextLength only from defaultCompletionOptions.contextLength, not from the model level.' These are implementation-level prescr"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names like 'effectiveContextLength' and 'effectiveMaxTokens' (test_validation_uses_effective_context_length, test_validation_warning_uses_effective_values) and exact patterns like 'const contextLength =' (test_core_models_reads_contextlength_from_model_level). An alternative correct fix using different variable names (e.g., 'resolvedContextLength', 'ctxLen', or inline expressions without named variables) would fail these regex-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all f2p tests (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml) are purely text/regex searches on source files (e.g., re.search on file content). None of them import, call, or execute the code to verify behavior. The TypeScript compilation test and vitest tests are pass_to_pass, not f2p."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All f2p tests are regex-based source code inspections, not behavioral tests. An agent could simply insert the exact expected string patterns (e.g., 'const effectiveContextLength = model.contextLength ?? model.defaultCompletionOptions') as dead code or comments in the target files without actually implementing the fix, and all tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory contains solve.sh and gold.patch at /solution/. The agent could read /solution/gold.patch to see the exact fix. The Dockerfile and environment don't restrict access to /solution/. Additionally, since tests are pure regex matches, the agent could grep test files or solution files for expected patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four symptoms described in instruction.md (Zod schema stripping, validation ignoring model-level contextLength, GUI wrong fallback constant, core config ignoring model-level contextLength) have corresponding test classes that check for the fix."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestContextLengthYamlSchema, TestContextLengthValidation, TestConfigSliceConstants, TestCoreConfigYaml, TestRepoLint, TestRepoTests) with detailed docstrings explaining what each test checks and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing source code configuration handling, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent (e.g., contextLength, baseModelFields, defaultCompletionOptions, DEFAULT_CONTEXT_LENGTH, DEFAULT_MAX_TOKENS)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact file locations and exact code patterns: 'z.number().optional() in baseModelFields' in 'packages/config-yaml/src/schemas/models.ts', 'DEFAULT_CONTEXT_LENGTH (32768)' vs 'DEFAULT_MAX_TOKENS (4096)' in the GUI, and the precise fallback logic 'model.contextLength ?? defaultCompletionOptions.contextLength'. This goes well beyond describing symptoms and into prescribing the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: variable name `needs_full_model`, class name `_SchemaFieldNormalizer`, `@model_serializer`, `populate_by_name=True`, file paths, `database_name` and `database` in `DEFAULT_DATASET_COLUMNS`, the condition `if relationship_loads or needs_full_model`, and the `@property`/descriptor comment requirement are all explicitly mentioned."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates implementation details like 'Introduce a boolean flag variable named `needs_full_model`', 'Create a `_SchemaFieldNormalizer` mixin class', 'the condition `if relationship_loads or needs_full_model` should trigger full model loading', and 'Uses a `@model_serializer` decorator (with `mode=\"wrap\"`)'. These are exact implementation prescriptions, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable name `needs_full_model` (test_dao_handles_property_descriptors), exact class name `_SchemaFieldNormalizer` (test_schema_field_normalizer_exists), exact string `if relationship_loads or needs_full_model` (test_dao_uses_needs_full_model_in_query), and inheritance checks for `_SchemaFieldNormalizer`. An alternative correct fix using different variable names, a different mixin name, or a decorator-based approach would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test uses only text/AST inspection (`assert 'needs_full_model' in content`, `assert '_SchemaFieldNormalizer' in class_names`, regex matching on file content). No test imports modules, instantiates objects, calls methods, or verifies runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings, class names, inheritance relationships, and config settings that don't exist in the original codebase. A stub or no-op implementation would not add these specific strings to the files, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset as a git repo where solve.sh is applied. The agent could read the test file at tests/test_outputs.py to see exactly what strings are asserted (e.g., `needs_full_model`, `_SchemaFieldNormalizer`) and simply insert those strings into the files. Also, /solution/solve.sh may be accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: the `needs_full_model` flag, the `_SchemaFieldNormalizer` mixin with `@model_serializer`, inheritance by `SaveSqlQueryResponse` and `SqlLabResponse`, `populate_by_name=True` in both request/response models, and `database_name`/`database` in `DEFAULT_DATASET_COLUMNS`."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped by file/component with section headers (comments like '# Tests for sql_lab/schemas.py', '# Tests for list_datasets.py', '# Tests for daos/base.py'), have descriptive names, and include docstrings with fail_to_pass/pass_to_pass annotations."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves code fixes, not structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, class names, and commands in instruction.md are all consistent with the test expectations and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names exact variable names (`needs_full_model`), exact class names (`_SchemaFieldNormalizer`), exact conditions (`if relationship_loads or needs_full_model`), and exact method decorator patterns (`@model_serializer(mode='wrap')`). This goes beyond identifying buggy files/areas and prescribes the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

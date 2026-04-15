@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (schema.ts, repo.ts, service.ts, account.sql.ts, account.ts, AGENTS.md), all required string patterns (e.g., 'export const RefreshToken', 'Schema.brand(\"RefreshToken\")', 'Layer.effect(', 'Effect.gen(function* ()', 'AccountRepo.of({', 'HttpClient.filterStatusOk', 'Effect.fnUntraced', 'Effect.fn(', 'Duration.Duration', 'Duration.sum', '# opencode Effect guide', '## Schemas', '## Services', '## Effects'), and all specific behavioral requirements th"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction effectively tells the agent exactly WHAT to write: specific string patterns like 'export const RefreshToken' with 'Schema.brand(\"RefreshToken\")', 'Layer.effect(', 'AccountRepo.of({', 'Effect.fnUntraced', etc. The tests are pure string-matching, so the instruction is essentially dictating the exact code tokens to include. There is minimal reasoning required about what to change \u2014 the agent just needs to ensure these exact strings appear in the files."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Many tests check for exact string patterns like 'Effect.fnUntraced', 'HttpClient.filterStatusOk', 'Effect.fn(' which are highly specific implementation details. An alternative correct implementation might use different helper patterns (e.g., wrapping functions differently, using pipe instead of gen in some places) but would fail the string-matching tests. For example, test_service_uses_fn_patterns asserts 'Effect.fnUntraced' must appear, but a correct alternative might use Effect.fn everywhere."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of fail-to-pass tests are pure text-matching: test_schema_has_branded_types, test_service_uses_layer_effect, test_repo_uses_layer_effect, test_service_has_namespace, test_schema_uses_class_for_data_types, test_sql_uses_branded_types, test_service_uses_fn_patterns, test_agents_md_has_guide, test_cli_uses_duration all use `assert 'X' in content` with no execution. While test_repo_passes_account_tests and test_repo_typecheck do run subprocesses, the core fail-to-pass tests are predomin"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "For text-matching tests like test_schema_has_branded_types, test_agents_md_has_guide, etc., a stub that simply writes the exact expected strings into the files (without any real implementation logic) would pass. For example, appending '# opencode Effect guide\\n## Schemas\\n## Services\\n## Effects' to AGENTS.md passes test_agents_md_has_guide. The typecheck and repo test execution tests provide some protection, but individual f2p string-matching tests are trivially satisfiable by stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is literally `curl -sL 'https://github.com/anomalyco/opencode/pull/17072.diff' | git apply -`. The agent could read /workspace/opencode/solution/solve.sh (if accessible), see the PR URL, and apply the same patch. Additionally, since tests are pure string-matching, the agent could grep test files for expected patterns and insert them verbatim without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (branded types, Layer.effect patterns, Effect.gen patterns, SQL branded types, Duration usage, AGENTS.md documentation sections) have corresponding test functions that check for them."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_schema_has_branded_types, test_service_uses_layer_effect), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring and documentation, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and pattern strings in the instruction and tests are consistent and free of typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact string patterns that must appear in each file (e.g., 'Effect.fnUntraced', 'AccountRepo.of({', 'HttpClient.filterStatusOk'), which are highly specific implementation details rather than behavioral requirements. This leaks the exact solution rather than describing the desired behavior."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code refactoring task, not primarily a config-edit task. While AGENTS.md is edited, it's a documentation file being created/extended, not a configuration file."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

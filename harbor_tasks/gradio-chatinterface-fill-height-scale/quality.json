@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four affected files (chat_interface.py, init.svelte.ts, Blocks.svelte, types.ts), describes the fill_height property, the scale propagation, the AppConfig interface, and the root column context. The tests check these same files and properties. The specific details like 'height=400' conditional, scale from fill_height, AppConfig interface, and config forwarding in Blocks.svelte are all discoverable from the instruction's description of the bug and expected behavior."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'the root column should have scale set to expand', 'setting scale when fill_height was true', 'The frontend TypeScript AppConfig interface must include fill_height as a property', and 'The config object passed to AppTree and its reload() method must include the fill_height property.' These are specific fix instructions, not just descriptions of what's broken. A developer reading this knows exactly WHAT to change in each file."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_init_svelte_scale_from_fill_height checks for 'scale' and 'fill_height' on the same line with 'column' in context \u2014 this is very specific to the gold patch's approach. An alternative fix (e.g., using a CSS class, or setting a different property like 'flex' instead of 'scale') would fail. test_blocks_svelte_forwards_fill_height checks for 'fill_height' appearing in exactly >=2 config contexts with specific keyword co-occurrence, tightly matching the gold patch pattern."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_init_svelte_scale_from_fill_height, test_blocks_svelte_forwards_fill_height, and test_types_ts_fill_height_in_appconfig are purely text-matching tests (reading file content and searching for strings). They do not execute, import, or call any code. Only the Python-side tests (test_fill_height_no_hardcoded_400, etc.) actually import and execute code. Since not EVERY test is text-only, but the rubric says 'FAIL if every test is assert foo in open(path).read()', the majority of f2p tests "
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_fill_height_no_hardcoded_400 creates a ChatInterface(fill_height=True) and asserts chatbot.height equals Chatbot's default height, not 400. The buggy code sets height=400, so a stub or unpatched code fails. test_fill_height_height_not_conditional checks that height is the same regardless of fill_height value, which also fails on the buggy code. The frontend text-matching tests require specific content that doesn't exist in the base commit."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/gradio as a git repo, and solve.sh is in /solution/solve.sh. The agent could potentially read /solution/solve.sh or the gold patch. Also, the test file itself contains detailed hints about what strings to add where (e.g., 'scale' and 'fill_height' on same line in init.svelte.ts), making it possible to reverse-engineer the solution from test expectations if the agent can access test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors listed in the instruction are tested: (1) no hardcoded 400 height, (2) fill_height propagation to root column scale, (3) AppConfig interface includes fill_height, (4) config passed to AppTree and reload() includes fill_height."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a UI layout bug, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact buggy mechanism ('height=400 if self.fill_height' pattern implied by 'The old initialization code propagated the fill_height configuration to the root column by setting scale'), names the exact class 'AppTree' in 'init.svelte.ts' that dropped propagation, and specifies exactly what property to add to 'AppConfig interface'. This goes beyond naming files obvious from the domain \u2014 it pinpoints the exact code patterns and fixes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

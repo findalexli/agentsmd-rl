@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both file paths (CreditCodeRedemption.tsx, redeem.tsx), the feature flag name 'redeemCodeEnabled', the useFlag hook, the 'Code redemption coming soon' string, the requirement to remove unused imports, and the requirement that Dialog UI and organization listing must still render. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired end state (remove feature flag, make feature always available, clean up unused imports) but does not specify exact line numbers, exact code changes, or the specific conditional structure to modify. A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for absence of 'redeemCodeEnabled', absence of useFlag in relevant import lines, absence of 'Code redemption coming soon', and presence of 'Dialog' and 'OrganizationCard'/'organizations'. Any correct cleanup approach that removes the flag and its references would pass. Tests don't assert on gold-specific variable names or exact line positions beyond what the task requires."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_feature_flag_removed_from_credit_code_redemption, test_feature_flag_removed_from_redeem_page, test_useflag_import_cleaned_up, test_not_stub) are purely text-based: they read file contents and assert on string presence/absence. However, there are also pass-to-pass tests (test_repo_typecheck, test_repo_lint, test_repo_unit_tests) that actually execute subprocesses. Since the f2p tests are all text-matching, this is a mixed case, but the core behavioral verification of "
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that specific strings ('redeemCodeEnabled', 'useFlag', 'Code redemption coming soon') are ABSENT from files that currently contain them. A stub or no-op implementation would leave these strings in place, failing the tests. The agent must actually remove these references."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/supabase's sibling path or container path. The solve.sh is at solution/solve.sh and could potentially be read by the agent. Additionally, the test file at tests/test_outputs.py reveals exactly what strings to remove/keep, making it trivial to reverse-engineer the solution by reading test assertions."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) removing redeemCodeEnabled flag references - tested, (2) removing unused imports - tested, (3) feature still renders Dialog UI - tested via test_not_stub checking 'Dialog', (4) redeem page still renders org listing - tested via test_not_stub checking 'OrganizationCard'/'organizations'. All explicit behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves removing a feature flag from UI code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, function names, and commands in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files, which is appropriate since localization is not the core challenge. It describes what to remove (the feature flag) but doesn't specify exact lines or the precise code structure to modify."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path, method name `beforeCreateGitDeployment`, the parameters (Document $project, Document $repository, Database $dbForPlatform, Authorization $authorization), the placement (after PROJECT_NOT_FOUND check, before DSN/database operations), the visibility (protected), and the no-op implementation. The test checks for `getBuildQueueName` as a boundary marker, which isn't explicitly mentioned in the instruction, but the instruction says 'before any database operations "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially describes exactly what to implement: add a protected method `beforeCreateGitDeployment` with specific parameters, empty body, called after PROJECT_NOT_FOUND and before DSN operations. This is not describing a bug \u2014 it's prescribing the exact solution with method name, signature, placement, and implementation details. A competent developer doesn't need to reason about WHAT to change; the instruction tells them everything."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string matches like `$this->beforeCreateGitDeployment($project, $repository, $dbForPlatform, $authorization)` in test_method_is_called_in_createGitDeployments. They also use regex patterns matching exact formatting like `protected function beforeCreateGitDeployment\\(\\s*Document \\$project,\\s*Document \\$repository,\\s*Database \\$dbForPlatform,\\s*Authorization \\$authorization\\s*\\):\\s*void\\s*\\{\\s*\\}` for the no-op check. While there's limited alternative for this specific task, the"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core tests (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, test_method_has_noop_implementation, test_method_is_protected) are all purely text-matching via regex or string search on the source file. They never import, instantiate, or call the PHP code. The only behavioral tests are `php -l` syntax checks, composer validate, and git fsck \u2014 which are pass-to-pass infrastructure tests. The f2p tests are entirely `assert 'foo' in open(path).read()` style"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty file would not pass these tests. The tests check for specific method signatures, call sites with exact parameter lists, and placement relative to existing code landmarks (PROJECT_NOT_FOUND, DSN). An agent must actually add the method definition and call in the correct location."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/appwrite relative path accessible from the container. The solve.sh script is at solution/solve.sh and contains the exact git patch. An agent could read this file and apply the patch directly. There's no evidence of solution directory being removed or restricted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (correct parameters, protected visibility, correct placement after PROJECT_NOT_FOUND and before DSN, no-op implementation, overridability by subclasses via protected) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, etc.), have docstrings, and are logically grouped by concern. Pass-to-pass tests are clearly separated from f2p tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies PHP source code and does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, method names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify, the exact method name, exact parameter signature, exact placement ('After the PROJECT_NOT_FOUND validation check but before any database operations (DSN/database setup)'), and exact implementation (empty body). This goes well beyond naming the file \u2014 it prescribes the complete implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

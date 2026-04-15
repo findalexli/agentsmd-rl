@@ -23,14 +23,6 @@ React's performance tracking tries to diff the props to show what changed betwee
 
 React should gracefully handle cross-origin objects during prop diffing without crashing. The performance track should be able to diff these objects and display their properties (like `nodeType`, `textContent`, `contentWindow`) in the DevTools timeline.
 
-## Where to Look
-
-The crash happens in `packages/shared/ReactPerformanceTrackProperties.js` during the prop diffing process. This file contains logic for adding values and object diffs to performance properties.
-
-## Files Likely Involved
-
-- `packages/shared/ReactPerformanceTrackProperties.js` - Contains `addValueToProperties` and `addObjectDiffToProperties` functions
-
 ## Reproduction
 
 The issue manifests when:
@@ -38,6 +30,13 @@ The issue manifests when:
 2. React tries to diff those props for performance tracking
 3. Accessing certain properties on the cross-origin window throws a security error
 
-## Hint
+## Requirements
 
-The fix needs to safely check for the existence of a special React property before accessing it on arbitrary objects. This property is used to identify React elements. Consider how to safely read properties that might throw on security-restricted objects.
+The fix must:
+1. Introduce a helper function with a name matching the pattern `readReactElementTypeof` (the exact name is verified by tests)
+2. Use the `in` operator to check for the `$$typeof` property without triggering getter traps on cross-origin objects
+3. Use `hasOwnProperty.call` to ensure only own properties are checked (not inherited ones)
+4. The helper must be defined before the `addValueToProperties` function uses it
+5. Replace all direct `$$typeof` accesses in `addValueToProperties` and `addObjectDiffToProperties` with calls to this helper
+
+The target file is `packages/shared/ReactPerformanceTrackProperties.js`.

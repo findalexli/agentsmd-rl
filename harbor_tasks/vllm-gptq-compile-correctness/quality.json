@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to fix (weight_utils.py and test_basic_correctness.py), the function names (initialize_single_dummy_weight, test_compile_correctness), describes the integer parameter zeroing issue on ROCm, the list construction bug with all_args/all_envs mismatch, and the dead inductor code \u2014 all of which correspond to what the tests check."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (integer params not initialized, duplicate append, all_args*3 mismatch, inductor section dead code) but does not prescribe exact code changes like 'add param.zero_()' or 'remove the duplicate all_envs.append'. A developer must still reason about the specific fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_not_stub (truncated but visible in structure) likely performs AST-level checks on function body size/structure. More critically, test_list_construction_matching_lengths and test_inductor_comparison_not_dead_code use AST extraction and exec of the test function, then check for specific patterns like '-cc.mode=' flags and 'inductor' in arg strings. An alternative correct fix that uses different argument formatting (e.g., '--compile-mode' instead of '-cc.mode=') would fail. The test also requi"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract functions via AST, compile and execute them with mocked dependencies, then check behavioral outputs (tensor values, call argument lists). They don't just grep for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_int_params_zeroed_on_rocm creates non-zero int tensors and asserts they become zero after calling the function \u2014 a stub (pass/return None) would leave them non-zero and fail. test_list_construction_matching_lengths requires len(args)==len(envs) and >=2 distinct modes \u2014 the buggy code produces mismatched lengths. test_inductor_comparison_not_dead_code requires >=2 calls with inductor args \u2014 the buggy code produces 0 inductor calls."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo at the base commit). The test file is at tests/test_outputs.py which is hidden from the agent. The agent cannot trivially grep for fixture values since tests execute code behaviorally."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three described bugs are tested: (1) integer param initialization on ROCm, (2) list length mismatch in eager section, (3) inductor section being dead code. Regression tests also verify float params still work and non-ROCm int params are unchanged."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names, and docstrings explaining each check's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction match those in the actual codebase and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact function (initialize_single_dummy_weight), approximate line number (~line 1345), the exact file paths, and detailed descriptions of exactly what's wrong (duplicate append call, all_args*3, inductor section never populates all_envs). This goes well beyond describing symptoms \u2014 it's a complete root cause analysis that eliminates the need for the agent to localize the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

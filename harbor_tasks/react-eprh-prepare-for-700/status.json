@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:32:38.566756",
-  "total_time": 679.22,
-  "sandbox_id": "i8k8lnstjlf2z7b3iojff",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:25:59.308096",
+  "total_time": 812.61,
+  "sandbox_id": "i0fwpx0ozx39n983ihvys",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -65,17 +67,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.42,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:56: test `test_plugin_meta_version_field` has 2 assert(s), all pass on']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.15,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-10T19:45:00.000000"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -108,6 +122,14 @@
       "backend": "fireworks",
       "time": 679.22,
       "at": "2026-04-12T06:32:38.566756"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 812.61,
+      "at": "2026-04-15T05:25:59.308096"
     }
   ]
 }

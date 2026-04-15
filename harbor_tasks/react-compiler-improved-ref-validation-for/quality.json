@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for very specific string patterns like \"case 'ImmutableCapture':\" , \"visitedEffects\", \"hookKind == null\", \"instr.effects\", \"isRefLValue\", \"interpolatedAsJsx\", \"validateNoDirectRefValueAccess\", \"validateNoRefPassedToFunction\", \"validateNoRefValueAccess\", exact regex patterns like /import\\s*\\{\\s*mutate\\s*\\}\\s*from\\s*'shared-runtime'/, and specific function/variable names. While instruction.md mentions many of these (ImmutableCapture, visitedEffects, hookKind == null, instr.effects, isR"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md essentially describes the exact implementation: it specifies exact variable names (visitedEffects), exact case labels (ImmutableCapture, Mutate, MutateTransitive, MutateConditionally), exact conditional checks (hookKind == null && instr.effects), exact pattern names (isRefLValue, interpolatedAsJsx). It also specifies the exact PanResponder.create implementation ('returns its input argument') and exact type effects (Freeze, Create, ImmutableCapture with Frozen return). This goe"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'case \\'ImmutableCapture\\':' (test_validation_handles_immutable_capture), exact variable name 'visitedEffects' (same test), exact strings 'hookKind == null' and 'instr.effects'. An alternative correct implementation using different variable names (e.g., 'processedEffects' instead of 'visitedEffects') or different control flow (if/else instead of switch/case) would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests (test_validation_handles_immutable_capture, test_panresponder_type_has_freeze_aliasing, test_mutate_ref_fixture_uses_mutate, test_panresponder_fixture_exists, test_validation_preserves_ref_lvalue_branch, test_shared_runtime_exports_typedlog) are purely text-matching: they read file contents and check for string inclusion. Only test_panresponder_runtime_works actually executes code (eval), and test_repo_compiler_lint/test_repo_compiler_jest run actual tools. The majority are 'assert st"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific new content (ImmutableCapture case, visitedEffects, PanResponder export, mutate import in fixture, new fixture file) that doesn't exist in the base repo. A stub/no-op implementation would not pass these checks since the base files lack these patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/react/_eval_tmp.mjs area and solve.sh is at solution/solve.sh. The agent could read the solution file directly. Additionally, since tests are purely text-matching, the agent could grep the test file (tests/test_outputs.py) to find exact strings being checked and insert them verbatim without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md's Verification Criteria are tested: ValidateNoRefAccessInRender.ts patterns, shared-runtime.ts exports, type-provider PanResponder type, fixture files, and CLAUDE.md documentation (implicitly via lint test)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_panresponder_runtime_works, test_validation_handles_immutable_capture, etc.) with docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact implementation details: specific variable names (visitedEffects), specific case labels (ImmutableCapture, Mutate, MutateTransitive, MutateConditionally), specific conditional patterns (hookKind == null && instr.effects), and specific check names (isRefLValue, interpolatedAsJsx). This is far beyond naming files and goes into specifying exact code patterns."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

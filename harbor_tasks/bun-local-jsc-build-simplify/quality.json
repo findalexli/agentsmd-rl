@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four files (SetupWebKit.cmake, BuildBun.cmake, CONTRIBUTING.md, contributing.mdx), specifies exact variable/string requirements (JSC_CMAKE_ARGS, -DPORT=JSCOnly, option(WEBKIT_BUILD_TYPE ...), add_custom_target(jsc ...), add_dependencies with TARGET jsc, find_package(ICU ...)), and specifies documentation phrases ('configuring jsc', 'handles everything', 'incrementally rebuild', 'incremental rebuild') and removals ('jsc:build:debug', 'InspectorProtocolObjects.h'). All te"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to add: 'A JSC_CMAKE_ARGS variable', 'An execute_process call to configure JSC with -DPORT=JSCOnly flag', 'An option(WEBKIT_BUILD_TYPE ...) definition', 'An add_custom_target(jsc ...) target', 'add_dependencies(...) with TARGET jsc', 'find_package(ICU ...)'. This is essentially dictating the implementation rather than describing the problem/behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for exact strings like 'option(WEBKIT_BUILD_TYPE', 'add_custom_target(jsc', 'JSC_CMAKE_ARGS', 'TARGET jsc', 'find_package(ICU'. An alternative correct implementation could use different variable names (e.g., WEBKIT_CMAKE_ARGS instead of JSC_CMAKE_ARGS), use ExternalProject_Add instead of add_custom_target, or use a different mechanism to find ICU. These would all be valid solutions that would fail the string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every test is string-matching on file content: string(FIND ...) in CMake scripts, or 'assert X in content.lower()' in Python. No test actually runs cmake configure, builds anything, or verifies behavior. The CMake tests use 'file(READ ...)' and 'string(FIND ...)' which is textual matching, not behavioral verification. test_cmake_files_parse just reads file content without parsing CMake syntax."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for strings that don't exist in the original files (e.g., 'option(WEBKIT_BUILD_TYPE', 'add_custom_target(jsc', 'TARGET jsc', 'find_package(ICU', specific documentation phrases). A stub/empty implementation would not contain these strings and would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun/_eval_cmake_check.cmake (transiently) but more importantly, solve.sh is at /solution/solve.sh which the agent could read. The Dockerfile doesn't remove /solution/. Also, since tests are pure string matching, the agent could grep test files or simply insert the exact required strings without understanding the build system."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: JSC configure integration, WEBKIT_BUILD_TYPE option, jsc custom target, jsc dependency in BuildBun, system ICU for local builds, documentation updates with specific phrases, removal of old manual steps, and retention of prebuilt WebKit support."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections with clear comments (Gates, Fail-to-pass CMake changes, Fail-to-pass Documentation, Pass-to-pass regression checks, Pass-to-pass repo tests) and each test has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CMake build files and documentation, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact CMake constructs to use: 'A JSC_CMAKE_ARGS variable', 'An execute_process call', 'option(WEBKIT_BUILD_TYPE ...)', 'add_custom_target(jsc ...)', 'add_dependencies(...) with TARGET jsc', 'find_package(ICU ...)'. This goes beyond identifying the relevant files and specifies exact implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes to four files (SetupWebKit.cmake, BuildBun.cmake, CONTRIBUTING.md, contributing.mdx) with targeted additions/modifications rather than full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant file paths (js/utils/src/utils.svelte.ts, js/tootils/src/render.ts, js/textbox/shared/Textbox.svelte, js/spa/vite.config.ts, js/tootils/src/index.ts), the Gradio class, __GRADIO_BROWSER_TEST__, register_component, handle_copy, clipboard API, IconButtonWrapper prop mismatch, contextOptions vs instances permissions, and the render() function's return type. All asserted specifics in tests (file paths, function names like handle_copy, listen, register_component, co"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (e.g., 'event dispatcher overridden to no-op', 'clipboard copy crashes without error handling', 'prop name mismatch', 'permissions in wrong location') but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'. A developer must still reason about the specific implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_listener_registry requires a 'function listen(' declaration and a Map with specific naming patterns; test_dispatcher_notifies_listeners checks for specific variable naming patterns like 'notify|listener|emit|callback|fn'; test_render_returns_event_helpers requires >=5 return fields; test_register_component_wired checks for specific parameter patterns. An alternative correct fix using different internal names (e.g., 'on' instead of 'listen',"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test uses only file reading and regex matching (e.g., `re.search(r'function\\s+listen', stripped)`, `'__GRADIO_BROWSER_TEST__' not in stripped`). No test imports, executes, or calls any code. All tests are purely textual/structural analysis with no behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for absence of buggy patterns (e.g., __GRADIO_BROWSER_TEST__ must not be present, register_component must not be a no-op) and presence of fix patterns (listener Map, listen function, try/catch around clipboard, contextOptions). A stub or no-change would fail because the original buggy code contains __GRADIO_BROWSER_TEST__ and no-op register_component."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/gradio as solve.sh and the gold patch is in solution/solve.sh. An agent could read the solution directory or simply run the solve script. The Dockerfile doesn't remove solution files, and tests only check file contents structurally, so copying the gold patch would trivially pass all tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five bugs described in instruction.md are tested: noop dispatcher (test_noop_dispatcher_removed), missing event helpers in render (test_listener_registry, test_render_returns_event_helpers, test_dispatcher_notifies_listeners), register_component wiring (test_register_component_wired), clipboard error handling (test_clipboard_error_handling), and vitest permissions config (test_vitest_browser_permissions). The IconButtonWrapper prop mismatch is not explicitly tested but is part of the Textbox"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_noop_dispatcher_removed, test_listener_registry, etc.), grouped with comments distinguishing 'pass_to_pass' gates from 'fail_to_pass' behavioral checks, and each has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing JavaScript/Svelte source code and configuration files, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and function names in the instruction match those in the actual codebase (including the intentionally-named 'tootils' directory)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files and describes the nature of bugs but doesn't specify exact line numbers or exact code to write. Mentioning 'the constructor of the Gradio class' or 'handle_copy function' is reasonable domain-level guidance, not line-level leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff in vite.config.ts is localized to the browser/provider section, changing where permissions are specified. It doesn't rewrite the entire file or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

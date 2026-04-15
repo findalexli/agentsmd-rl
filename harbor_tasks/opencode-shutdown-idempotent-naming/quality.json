@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literals not mentioned in instruction.md: 'let stopped = false', 'if (stopped) return', 'stopped = true' (test_stop_function_is_idempotent); exact variable names 'root', 'file', 'network', 'external' replacing 'baseCwd', 'workerPath', 'networkOpts', 'shouldStartServer' (test_short_variable_names); exact function signatures 'async function target()' and 'async function input(' (test_helper_functions_extracted); exact AGENTS.md strings like 'THIS RULE IS MANDATORY FOR AG"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation details: 'Add idempotent stop() function', 'Extract helper functions' named target() and input(), specific variable renames (baseCwd\u2192root, workerPath\u2192file, networkOpts\u2192network, shouldStartServer\u2192external), 'Add withTimeout import from @/util/timeout, remove unused iife import', 'Use try/finally to ensure stop() is called'. This tells the agent exactly WHAT to change rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'stopped' (test_stop_function_is_idempotent), exact helper function names 'target()' and 'input()' (test_helper_functions_extracted), exact variable rename mappings like 'root' for 'baseCwd' and 'file' for 'workerPath' (test_short_variable_names), exact AGENTS.md bullet point text like 'Use single word names by default' (test_agents_md_naming_rules_bullet_points). An alternative correct fix using e.g. 'halted' instead of 'sto"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests are pure text-matching: test_stop_function_is_idempotent checks 'let stopped = false' in file content, test_short_variable_names checks string presence/absence, test_agents_md_has_naming_enforcement checks literal strings in markdown. The only behavioral tests are the pass-to-pass compilation/typecheck tests. No f2p test imports, calls, or executes the modified code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All f2p tests are string-in-file checks. An agent could satisfy them by inserting the exact expected strings as dead code or comments without implementing any actual shutdown fix. For example, adding 'let stopped = false' and '// if (stopped) return' as comments would pass test_stop_function_is_idempotent without any real idempotent behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /solution/solve.sh in the container and contains the complete gold patch. The agent could read it directly. Additionally, since all f2p tests are string-matching, the agent could grep test_outputs.py for the exact expected strings and inject them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md (idempotent stop, listener cleanup, worker terminate, helper extraction, variable renames, AGENTS.md update, worker.ts simplification) have corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped into clear sections with comments (Gates/pass_to_pass, Pass-to-pass/repo_tests, Fail-to-pass/pr_diff, Fail-to-pass/agent_config) and have descriptive names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_agents_md_naming_rules_bullet_points, the assertion message says 'Missin' (truncated) instead of 'Missing', though this appears to be truncation in the provided text rather than the actual test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files (thread.ts, worker.ts, AGENTS.md), exact function names to create (target(), input(), stop()), exact variable renames (baseCwd\u2192root, workerPath\u2192file), exact imports to add/remove (withTimeout, iife), and exact section header ('Naming Enforcement (Read This)'). This goes far beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md edit adds a localized new subsection under the existing Naming section, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 8
+}

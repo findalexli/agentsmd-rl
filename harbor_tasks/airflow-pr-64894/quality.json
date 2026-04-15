@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific internal details not mentioned in instruction.md: _ResponseFrame, _RequestFrame, VariableResult types, the _thread_lock and _async_lock attributes, the specific method signature 'def send(self, msg:', the 'async def asend' boundary, and the exact pattern 'return self._get_response()'. The instruction only mentions send() and CommsDecoder but none of these specific internals."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptom (wrong thread gets wrong response) and hints the lock usage is problematic, but does not say 'indent _get_response inside the with block' or specify the exact fix. A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests in TestCodeStructure specifically assert that 'return self._get_response()' exists at a greater indentation than 'with self._thread_lock:'. An alternative correct fix (e.g., using a per-thread lock, using a condition variable, restructuring to eliminate _get_response, or renaming the method) would fail these structural tests even if functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "TestCodeStructure (test_get_response_inside_lock_block, test_lock_context_spans_get_response) are purely text/indentation checks reading the source file \u2014 they never import or execute the send() method under concurrent conditions. While TestCommsDecoderBasic does execute code, the primary thread-safety tests are structural text assertions only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_single_send_receive, test_multiple_sequential_sends) actually create socket pairs, send framed messages, and assert on received values. A stub send() returning None would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow's container as solution/solve.sh. The agent could read it directly (cat /solution/solve.sh or similar) to see the exact patch. No evidence of solution directory being removed or protected."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes concurrent multi-threaded behavior where Thread A and Thread B get swapped responses. No test actually runs concurrent threads calling send() simultaneously to verify this core requirement \u2014 TestCommsDecoderBasic only tests sequential and single-threaded scenarios."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into classes (TestCodeStructure, TestCommsDecoderBasic, TestRepoTests) with descriptive names and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is a code bug fix, not a structured data production task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and method (send() in CommsDecoder in comms.py) and mentions _thread_lock, but for a thread-safety bug in a specific method this level of localization is reasonable. It doesn't specify the exact line or the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

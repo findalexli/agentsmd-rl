@@ -1,33 +1,30 @@
-# Fix useStore Re-renders in Head and Scripts Components
+# Fix Use-Store Re-renders in Head and Scripts Components
 
 ## Problem
 
-The React Router's `Scripts` component and the `useTags` hook in `headContentUtils.tsx` are experiencing unnecessary re-renders due to how `useStore` from `@tanstack/react-store` is being used. 
+The React Router's `Scripts` component (`packages/react-router/src/Scripts.tsx`) and the `useTags` hook in `packages/react-router/src/headContentUtils.tsx` experience unnecessary re-renders.
 
-When `useStore` is called without an equality comparator, it uses reference equality by default. This causes components to re-render even when the actual data hasn't changed semantically - for example, when a new array with the same contents is returned from the selector function.
+When `useStore` from `@tanstack/react-store` is called with a selector that returns a new array or object on each call, the component re-renders even when the underlying data hasn't changed. This is because `useStore` uses reference equality by default (same as `===`).
 
-## Files to Fix
+## Specific Files
 
-1. `packages/react-router/src/Scripts.tsx` - The `Scripts` component that loads script assets
-2. `packages/react-router/src/headContentUtils.tsx` - The `useTags` hook that manages head/meta content
+- `packages/react-router/src/Scripts.tsx` — The `Scripts` component that renders script tags
+- `packages/react-router/src/headContentUtils.tsx` — Contains the `useTags` hook that manages head/meta content
 
-## What You Need to Do
+Both files call `useStore` with selectors that return newly-constructed arrays on every invocation, even when the matched route data is semantically identical.
 
-1. Import `deepEqual` from `@tanstack/router-core` in both files
-2. Add `deepEqual` as the third argument to all `useStore` calls in these components
+## Hint
 
-The `useStore` hook accepts an optional equality comparator as its third argument. Using `deepEqual` will ensure components only re-render when the actual data content changes, not just when object references differ.
+The `@tanstack/react-store` package's `useStore` hook accepts an optional third argument: a comparison function. Using a deep-equality comparator in this argument prevents unnecessary re-renders when the selector produces a new object reference but the actual content is the same.
 
-## Expected Behavior
+The `@tanstack/router-core` package exports comparison utilities that may be useful.
 
-After the fix:
-- The `Scripts` component should not re-render when the active matches snapshot produces new arrays with the same content
-- The `useTags` hook should not cause unnecessary head content updates when route metadata hasn't meaningfully changed
-- All existing tests should continue to pass
+## Verification
 
-## Development Guidelines
-
-- Use workspace protocol for internal dependencies (`workspace:*`)
-- Run `pnpm test:eslint`, `pnpm test:types`, and `pnpm test:unit` before completing
-- Use `pnpm nx run @tanstack/react-router:test:unit` for targeted testing
-- Use `pnpm nx run @tanstack/react-router:build` to verify the build succeeds
+After fixing, run the following commands to verify correctness:
+- `pnpm nx run @tanstack/react-router:test:unit -- --run` — Unit tests should pass
+- `pnpm nx run @tanstack/react-router:test:types` — TypeScript check should pass
+- `pnpm nx run @tanstack/react-router:build` — Build should succeed
+- `pnpm nx run @tanstack/react-router:test:build` — Build validation should pass
+- `pnpm prettier --experimental-cli --check 'packages/react-router/src/**/*.tsx'` — Formatting should be valid
+- `pnpm test:docs` — Docs links should be valid

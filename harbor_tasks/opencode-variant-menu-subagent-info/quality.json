@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific implementation details not mentioned in instruction.md. For example, test_cycle_direction_fixed extracts and evaluates the cycling arithmetic expression from the source code. test_task_content_format checks for a specific format like '${...titlecase(...subagent_type ?? \"General\")} Task \u2014 ${...description}' with an em-dash, but instruction.md only says 'capitalized prefix before the description' without specifying the exact template format or em-dash separator. test_dead_"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states the fix for the cycling direction: 'the arithmetic sign is wrong', 'advancing with direction=1 must decrease the index by 1', and gives concrete examples like 'at index 2 in a list of 5, direction=1 should produce index 1'. It also specifies exact regex format '@typename subagent', exact display format 'X of Y', use of 'nullish coalescing operator (??) or logical OR (||)', and 'functional array methods (filter, findIndex, etc.)'. This goes well beyond describing "
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details. test_task_content_format uses regex to check for the exact template pattern with Locale.titlecase, nullish coalescing '??', 'General' fallback, and em-dash separator. test_dead_code_removed checks for removal of specific function 'ToolTitle' and specific variable 'useSync' from UserMessage context. test_subagent_footer_shows_label checks for specific patterns like 'Locale.titlecase' and '@(\\w+) subagent' regex in source. An alternative correc"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many fail-to-pass tests are primarily source text inspection: test_dead_code_removed uses regex to check source text for absence of 'ToolTitle' and 'useSync'; test_subagent_footer_shows_label reads source and checks for string patterns; test_task_content_format reads source and checks regex patterns. While test_cycle_direction_fixed does execute extracted code via node subprocess, and the pass_to_pass tests run typecheck/unit tests, the core f2p tests are mostly 'assert pattern in open(path).rea"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code changes (direction subtraction, ToolTitle removal, specific footer patterns, task content format) that cannot be satisfied by a stub or no-op implementation. The base code would fail these tests, and meaningful changes are required."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/opencode (solve.sh references it) and the agent could potentially read the test file at tests/test_outputs.py to see exact patterns being checked (like the em-dash format, 'ToolTitle' function name, specific regex patterns). The tests check for literal source patterns that could be reverse-engineered from the test file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behavioral requirements from instruction.md are tested: cycling direction (test_cycle_direction_fixed), subagent footer info (test_subagent_footer_shows_label, test_subagent_footer_sibling_position), task description format (test_task_content_format), and dead code removal (test_dead_code_removed)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)'), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves UI/TUI code changes, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides extremely specific implementation guidance: exact regex format '@typename subagent', exact arithmetic fix direction (direction=1 decreases index), specific operators to use (?? or ||), specific methods (filter, findIndex), and even the display format 'X of Y'. While it doesn't name exact line numbers, it essentially prescribes the solution rather than just the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

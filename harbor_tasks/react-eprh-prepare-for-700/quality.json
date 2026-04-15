@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable name 'allRuleConfigs' (test_recommended_config_rules checks config_map['recommended'] == 'allRuleConfigs'), but instruction.md only vaguely says 'this config must reference the variable that contains all rule configurations'. The exact variable name 'allRuleConfigs' is not explicitly stated in the instruction. Also, test_repo_git_log asserts commit SHA '9724e3e' which is not mentioned in instruction.md. test_repo_no_patents_references checks for 'scripts/ci/chec"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to use 'the variable that contains all rule configurations' for the recommended config, names specific presets to remove ('recommended-legacy', 'recommended-latest-legacy', 'flat/recommended'), specifies meta must include 'version: X.Y.Z', specifies exact section headers '## Flat Config' and '## Legacy Config', and lists exact rule names to include. This is essentially dictating the implementation rather than describing the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_recommended_config_rules asserts config_map['recommended'] == 'allRuleConfigs' \u2014 this is a gold-specific internal variable name. An alternative correct implementation could use a different variable name (e.g., 'allConfigs', 'compilerAndBasicRules', or inline the rules object) and would fail this test despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_recommended_config_rules, test_legacy_configs_not_in_configs_object, test_plugin_meta_version_field, test_package_json_version_bumped) all use regex/string matching on file contents rather than importing/executing the TypeScript module. They never actually load the ESLint plugin or verify its runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific changes: 'allRuleConfigs' variable assignment, removal of legacy config keys, presence of version in meta block, and package.json version >= 7.0.0. The original code wouldn't pass these (e.g., recommended uses 'basicRuleConfigs', legacy configs exist, no version in meta, version is 6.x). A stub/no-op wouldn't pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/react as solve.sh mentions 'cd /workspace/react'. The agent could potentially read the test file at the test path or grep for expected values. Also, the instruction itself essentially provides the solution details (variable names, exact configs to keep/remove), making it trivial to pattern-match without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires updating fixture files (eslint-v6/v7/v8 .eslintrc.json), updating ReactVersions.js, and specific README content (compiler rule names listed, consolidated installation instructions). None of these are tested \u2014 no test checks fixture file contents, ReactVersions.js changes, or specific README content beyond section headers."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff)', 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)'), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves editing configuration files and documentation, not producing structured data output like JSON/CSV/API responses."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the exact file (packages/eslint-plugin-react-hooks/src/index.ts), tells the agent exactly which config names to remove, what variable to reference ('the variable that contains all rule configurations'), exact section headers to add to README, and exact version string format. This goes well beyond describing the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes to specific files (index.ts config object, package.json version, README sections, CHANGELOG entry, fixture files) without full-file rewrites, and changes are consistent with the instruction."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

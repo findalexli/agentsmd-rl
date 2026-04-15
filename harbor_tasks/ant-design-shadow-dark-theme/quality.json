@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details not mentioned in instruction.md: the helper function name 'getShadowColor' (test_alias_uses_colorShadow), the exact string 'new FastColor(mergedToken.colorShadow)' (test_alias_uses_colorShadow), the parameter name 'shadowColor?:' in ColorMap.ts and color files (test_generateNeutralColorMap_signature, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors), and the exact pattern 'colorShadow = shadowColor ||' (test_colorShadow_in_d"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's 'Key Insight' section explicitly states the implementation approach: 'introduce a colorShadow token that derives from the theme... and use that as the base for all shadow generation.' It also specifies which files to modify and the exact token name to introduce, which is essentially the solution design rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_alias_uses_colorShadow requires 'new FastColor(mergedToken.colorShadow)' and 'getShadowColor' helper function name. test_colorShadow_in_dark_colors requires 'shadowColor?:' parameter and 'colorShadow = shadowColor ||' pattern. An alternative correct fix using a different helper name, different parameter pattern, or different color derivation approach would fail these tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests (test_colorShadow_token_exists_in_interface, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors, test_generateNeutralColorMap_signature, test_alias_uses_colorShadow, test_shadow_tokens_use_dynamic_color) only do string matching on source files via 'assert X in content'. While there are execution-based tests (test_repo_theme_unit_tests, test_repo_theme_all_tests, etc.), the majority of fail-to-pass tests are pure text assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings and patterns that don't exist in the original codebase (e.g., 'colorShadow', 'getShadowColor', 'shadowColor?:'), so a stub or no-op implementation would not pass them. The execution-based tests (test_repo_theme_unit_tests) run actual Jest tests that verify shadow token values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/ant-design (the repo root) and the solve.sh is in /solution/solve.sh. An agent could read the solution file or the patch directly. Additionally, since tests are pure string-matching on source files, the agent could reverse-engineer exact expected patterns from test files if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements from instruction.md are tested: (1) colorShadow token existence, (2) shadow token generation using colorShadow, (3) alpha value preservation (test_shadow_tokens_use_dynamic_color checks shadow definitions), (4) custom colorTextBase support (the Jest test includes darkCustomTextBaseToken)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They cover structural checks, behavioral checks, and pass-to-pass regression checks in a logical grouping."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript theme token generation code, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files to modify (alias.ts, ColorMap.ts, colors.ts for both themes, colors.ts interface), the exact token name to introduce ('colorShadow'), and the exact approach ('use that as the base for all shadow generation'). The 'Key Insight' section essentially provides the solution architecture."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TypeScript source files, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

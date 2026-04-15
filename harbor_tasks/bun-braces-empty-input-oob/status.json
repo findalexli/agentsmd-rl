@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T19:05:44.109481",
-  "total_time": 1323.58,
-  "sandbox_id": "ia5ekplbldb1blzds7rfc",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:33:29.542418",
+  "total_time": 1020.58,
+  "sandbox_id": "iinndnnpg4jh2i8kso6uu",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -49,17 +51,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.63,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:132: test `test_flatten_tokens_empty_guard` has 3 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:188: test `test_advance_prev_no_underflow` has 4 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:522: test `test_no_inline_imports` has 1 assert(s), all pass on a stub']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.9,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 455.96,
-      "at": "2026-04-09T20:26:04.578663"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +104,14 @@
       "backend": "fireworks",
       "time": 1323.58,
       "at": "2026-04-11T19:05:44.109481"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1020.58,
+      "at": "2026-04-15T03:33:29.542418"
     }
   ]
 }

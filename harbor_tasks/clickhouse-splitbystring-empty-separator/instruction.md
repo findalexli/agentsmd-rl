@@ -2,31 +2,23 @@
 
 ## Problem
 
-The `splitByString` tokenizer in ClickHouse does not properly validate its input parameters. When users pass an empty string as one of the separators in the array argument, the tokenizer should reject it with a clear error message, but currently it doesn't.
+The `splitByString` tokenizer in ClickHouse does not properly validate its input parameters. When users pass an empty string as one of the separators in the array argument, the tokenizer should reject it with a clear error message, but currently it accepts it silently.
 
-For example, the following queries should be rejected with an error:
+For example, the following queries should be rejected with an error but are not:
 ```sql
 SELECT tokens('  a  bc d', 'splitByString', ['']);
 SELECT tokens('  a  bc d', 'splitByString', [' ', '']);
 ```
 
+## Expected Behavior
+
+The tokenizer should reject invalid separator inputs with `BAD_ARGUMENTS` errors and produce the following messages:
+
+1. When an empty string is encountered as a separator: `"Incorrect parameter of tokenizer '{}': the empty string cannot be used as a separator"`
+2. When the separators argument results in an empty array of valid separators: `"Incorrect parameter of tokenizer '{}': the separators argument cannot be empty"`
+
+The old error message text `"separators cannot be empty"` must no longer appear anywhere in the tokenizer implementation — it should be replaced by message (2) above.
+
 ## Task
 
-Modify `src/Interpreters/TokenizerFactory.cpp` to add proper validation in the `split_by_string_creator` lambda function.
-
-The fix should:
-1. Check each separator string in the array to ensure it's not empty
-2. Throw an exception with `ErrorCodes::BAD_ARGUMENTS` if an empty string is found
-3. Update the existing error message for consistency (the message about empty separators array)
-
-## Hints
-
-- Look for the `split_by_string_creator` lambda in `TokenizerFactory.cpp`
-- The lambda receives a `FieldVector` and processes it as an array of separators
-- There's already a check for `values.empty()` - you'll need to add a similar check inside the loop
-- Follow the existing code style (Allman braces, exception handling patterns)
-- The error message format should follow the pattern: `"Incorrect parameter of tokenizer '{}': ..."`
-
-## Files to Modify
-
-- `src/Interpreters/TokenizerFactory.cpp` - Add validation in the `split_by_string_creator` lambda
+Fix the splitByString tokenizer's input validation so that empty separator strings are properly rejected and the correct error messages are produced.

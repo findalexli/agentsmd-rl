@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:40:50.444574",
-  "total_time": 1902.73,
-  "sandbox_id": "iahsbpjqhakf7fd0tysra",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:18:29.438444",
+  "total_time": 1536.22,
+  "sandbox_id": "i96tans0ijp9quxiuz3ff",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,27 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.45,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:106: test `test_yaml_syntax` has 1 assert(s), all pass on a stub impl ', 'A:[A] test_not_tautological @ tests/test_outputs.py:118: test `test_partition_across_runners` has 1 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:165: test `test_partition_with_different_runner_counts` has 1 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:589: test `test_utils_scripts_py_compile` has 1 assert(s), all pass on', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:17: unpinned pip deps: pyyaml, gitpython, requests']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 31.18,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T06:58:12.971372"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 1902.73,
       "at": "2026-04-12T05:40:50.444574"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1536.22,
+      "at": "2026-04-15T06:18:29.438444"
     }
   ]
 }

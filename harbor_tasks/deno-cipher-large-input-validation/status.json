@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T20:42:39.149225",
-  "total_time": 1721.34,
-  "sandbox_id": "iv6smrmdss627q54rprcp",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:59:07.805371",
+  "total_time": 1019.12,
+  "sandbox_id": "isb5qec5ysvzt8pp4kv6y",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -52,17 +54,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:688: test `test_cipher_utf8_encoding_valid` has 1 assert(s), all pass ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.76,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 6788.93,
-      "at": "2026-04-10T03:16:25.429664"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -94,6 +108,14 @@
       "backend": "fireworks",
       "time": 1721.34,
       "at": "2026-04-11T20:42:39.149225"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1019.12,
+      "at": "2026-04-15T03:59:07.805371"
     }
   ]
 }

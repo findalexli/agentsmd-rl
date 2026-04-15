@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: the authentication type mappings (e.g., 'azure-active-directory-default', 'azure-active-directory-password', 'azure-active-directory-service-principal-secret', 'azure-active-directory-msi-app-service'), the schema keys (authentication.type, authentication.options with userName, password, clientId, clientSecret, msiEndpoint, msiSecret), the file path (packages/adapter-mssql/src/connection-string.ts), the function name (parseConnect"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT behavior is expected (authentication parsing, type mappings, validation) but does not specify HOW to implement it (no specific code changes, line numbers, or implementation patterns like helper function names)."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests assert on behavioral outputs (authentication.type values, authentication.options keys/values, error throwing behavior) rather than implementation details. An agent could use switch/case, if/else, lookup tables, or any internal structure and still pass. No specific helper function names, variable names, or internal implementation details are asserted."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use _run_tsx() to actually execute TypeScript code that imports and calls parseConnectionString, then inspect the runtime output via JSON parsing. The test_syntax_check also verifies the module can be imported and the function is callable. This is behavioral testing, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass these tests. test_runtime_default_azure_credential asserts authType equals 'azure-active-directory-default'; test_runtime_ad_password asserts specific option values; test_runtime_ad_password_validation asserts an error is thrown for missing clientId; test_runtime_duplicate_param_rejected asserts an error for duplicates. A default/empty return would fail all of these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/prisma as part of the solve.sh script content visible in the task definition. While solve.sh is described as 'hidden', the Dockerfile clones the repo and the agent could potentially read the test file at tests/test_outputs.py or attempt to find solution artifacts. More critically, the agent could grep for expected test fixture strings (like 'azure-active-directory-default') in the test probe files that _run_tsx writes to disk, though these are cleaned up. "
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: DefaultAzureCredential mapping, ActiveDirectoryPassword with options, ActiveDirectoryPassword validation (missing clientId), ActiveDirectoryServicePrincipal with userName\u2192clientId/password\u2192clientSecret mapping, ActiveDirectoryManagedIdentity, duplicate parameter rejection, and existing parameter backward compatibility."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_runtime_default_azure_credential, test_runtime_ad_password_validation, etc.), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction.md includes a detailed config object schema showing the exact structure of the returned object including authentication.type, authentication.options, and all nested fields with their types."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or authentication type strings in instruction.md. All connection string parameter names and tedious type strings are correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (connection-string.ts) and function (parseConnectionString) which is appropriate given the task domain. It doesn't specify line numbers or exact code changes, only the behavioral requirements."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-only edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

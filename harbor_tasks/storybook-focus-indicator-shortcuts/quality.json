@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four files, describes the exact function signatures (showPanel/showSidebar with forceFocus: boolean), the constants (focusableUIElements.addonPanel, sidebarRegion, storyPanelRoot), the API options (forceFocus, poll), the removal of useRegionFocusAnimation, the onClick(false)/onKeyDown(true) pattern, and the conditional checks (!wasPanelShown, !wasNavShown) are implied by 'when the panel becomes visible'. The test for `if (!wasPanelShown)` and `if (!wasNavShown)` exact v"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: 'showPanel function should accept a forceFocus parameter of type boolean', 'onClick handler should call the show function with false', 'onKeyDown handler should call the show function with true', 'Remove any imports or usage of useRegionFocusAnimation'. This is not describing what's broken but prescribing the exact code changes, leaving virtually no reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like 'showPanel: async (forceFocus: boolean)', 'onClick={() => showPanel(false)}', 'showSidebar: async (forceFocus: boolean)', 'onClick={() => showSidebar(false)}'. An alternative correct fix using different parameter names (e.g., 'force' instead of 'forceFocus'), different function signatures, or inline logic would fail these text-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every fail-to-pass test uses `assert 'some string' in open(path).read()` pattern \u2014 pure text matching against file contents. No tests import modules, execute code, or verify runtime behavior. The only execution-based test is test_typescript_compiles which runs `yarn nx run-many`."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings that don't exist in the base commit (e.g., 'if (!wasPanelShown)' near 'focusableUIElements.addonPanel' with 'forceFocus: true', 'showPanel: async (forceFocus: boolean)'). A stub/no-op implementation wouldn't add these strings to the files, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace with solve.sh containing the exact gold patch. The agent could read /solution/solve.sh or the test file itself (test_outputs.py) to discover the exact strings being asserted. The tests are pure string-matching, so copying the expected patterns directly into files would pass without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: shortcuts focus calls for panel and sidebar, Panel.tsx constant usage, forceFocus parameter in addons.tsx and menu.tsx, onClick(false)/onKeyDown(true) patterns, and removal of useRegionFocusAnimation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names (e.g., test_shortcuts_module_has_focus_call_for_panel), docstrings explaining what they verify including FAIL-TO-PASS labels, and are logically grouped by component/file."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction are all correct and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact files to modify, exact function signatures ('showPanel: async (forceFocus: boolean)'), exact handler behaviors ('onClick handler should call the show function with false'), and exact cleanup steps. This goes far beyond naming the buggy module \u2014 it prescribes the complete implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific function names like 'get_all_compilation_issues_inner_operation' (in test_compilation_issues_uses_whole_app_graph and test_no_endpoint_group_iteration) and 'whole_app_module_graphs' (exact name in test_original_whole_app_module_graphs_preserved), as well as specific file paths like 'crates/next-api/src/project.rs' and 'crates/next-napi-bindings/src/next_api/project.rs'. While the instruction mentions the crate names ('next-api' and 'next-napi-bindings') and that each con"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is essentially a step-by-step implementation guide: it specifies to add a new method with '#[turbo_tasks::function]', call 'whole_app_module_graph_operation', call '.connect()', NOT call 'drop_issues', extract scale-down logic to a free async function handling 'scale_down' and 'scale_zero', and modify the compilation issues function to call '.whole_app_module_graph' instead of 'get_all_endpoint_groups'. This describes exactly WHAT to change rather than merely describing what's br"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_scale_down_logic_deduplicated requires a free async function (not in impl block) containing both 'scale_down' and 'scale_zero' strings. An alternative correct fix could inline the scale logic differently, use a different helper structure (e.g., a trait method, a macro), or name things differently. test_non_dropping_whole_app_method requires '.connect()' literally in the body and 'whole_app_module_graph_operation' \u2014 an alternative could u"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_non_dropping_whole_app_method, test_scale_down_logic_deduplicated, test_compilation_issues_uses_whole_app_graph, test_no_endpoint_group_iteration, test_new_method_is_turbo_tasks_function) are purely text/pattern-matching on source files using regex and string searches. None compile or execute the Rust code. Even test_compilation_issues_uses_whole_app_graph just runs grep. No test actually calls the code or checks runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for structural code changes that don't exist in the base commit (e.g., a new whole_app method without drop_issues, scale-down extraction to a free function, removal of endpoint_group iteration). A stub/no-op wouldn't pass since the tests check the original code structure which explicitly fails these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, since all tests are pure text-matching on source files, the agent could simply read the test file to discover exact patterns being checked and write minimal code changes to satisfy the regex patterns without understanding the actual problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behavioral requirements from instruction.md are tested: (1) new whole-app method without issue suppression (test_non_dropping_whole_app_method), (2) compilation issues uses whole-app graph (test_compilation_issues_uses_whole_app_graph), (3) scale-down extracted to free helper (test_scale_down_logic_deduplicated), (4) original method preserved (test_original_whole_app_module_graphs_preserved)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and comments categorizing them as '[pr_diff] fail_to_pass', '[pr_diff] pass_to_pass', '[static] pass_to_pass', and '[repo_tests] pass_to_pass'."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves Rust code modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact methods ('whole_app_module_graphs', 'whole_app_module_graph_operation', 'get_all_endpoint_groups', 'drop_issues'), exact annotations ('#[turbo_tasks::function]'), exact method calls ('.connect()'), and exact patterns to use/avoid. It also specifies the exact crates and file names. This goes well beyond describing the problem domain and essentially provides localization and implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Rust source files, not configuration edits."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

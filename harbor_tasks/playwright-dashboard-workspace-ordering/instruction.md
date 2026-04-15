@@ -8,10 +8,25 @@ The `/api/sessions/list` API endpoint in the dashboard backend does not provide 
 
 ## Expected Behavior
 
-The dashboard should:
-1. Determine the current workspace from the client's working directory
-2. Show that workspace's sessions first in the list, with its group expanded
-3. Fall back to the "Global" workspace group when no specific workspace directory is identified
+### 1. API must include client workspace info in session list response
+
+The `/api/sessions/list` endpoint currently sends only `{ sessions }`. It must be updated to also include client information:
+
+- The backend handler must import the `createClientInfo` function from `'../cli-client/registry'`.
+- Inside the `/api/sessions/list` handler, call `createClientInfo()` to obtain the client info.
+- The response must use `sendJSON(response, { sessions, clientInfo })` to send both fields.
+
+### 2. Grid must sort current workspace group first, defaulting to `'Global'`
+
+The grid component must use the `clientInfo` from the API to determine and prioritize the current workspace:
+
+- Define a derived variable named `currentWorkspace` that resolves to `clientInfo?.workspaceDir` when present, falling back to the string `'Global'` when it is undefined (i.e., `clientInfo?.workspaceDir || 'Global'`).
+- Use `currentWorkspace` (not the raw `clientInfo?.workspaceDir`) when filtering workspace groups with the comparison `key === currentWorkspace`.
+- Current workspace groups should be listed first; all other groups remain sorted alphabetically via `localeCompare`.
+
+### 3. Declare the new import in DEPS.list
+
+Per the project's CLAUDE.md rules ("When creating or moving files, update the relevant DEPS.list to declare allowed imports"), the new import path `../cli-client/registry.ts` must be added to `packages/playwright-core/src/tools/dashboard/DEPS.list`.
 
 ## Files to Look At
 

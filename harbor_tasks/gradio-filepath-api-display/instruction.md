@@ -10,15 +10,19 @@ dict(path: str | None, url: str | None, orig_name: str | None, mime_type: str | 
 
 This is confusing for users trying to understand the API — they just need to know they should provide a filepath.
 
-Additionally, the Gradio CLI now supports `info` and `predict` commands (via the `hf-gradio` extension) for interacting with Gradio apps and Spaces programmatically. These are particularly useful for coding agents that need to discover endpoints and send predictions. The project's agent skill documentation should be updated to cover these commands.
-
 ## Expected Behavior
 
-1. **API info display**: File-type schemas (those with a `path` property and `meta` containing `gradio.FileData`) should display as simply `filepath` instead of the full dict representation. Non-file objects should continue showing the dict format.
+File-type JSON schemas should display as simply `filepath` instead of the full dict representation. Non-file objects should continue showing the dict format.
 
-2. **Skill documentation**: The `.agents/skills/gradio/SKILL.md` file should document the new CLI prediction commands so that coding agents know how to use them.
+A file-type schema has these characteristics:
+- Contains a `path` property (typically with `anyOf` allowing string or null)
+- Has a `meta` property where either:
+  - The `meta` definition contains `_type` with `const: "gradio.FileData"` (resolved via `$ref` to `$defs/Meta`), OR
+  - The `meta` property has a `default` dict containing `"_type": "gradio.FileData"`
+- Uses `$defs` to define the `Meta` schema structure
 
-## Files to Look At
+When such a schema is detected, the display should return the literal string `"filepath"`. For nested file schemas within other objects, the outer structure should still show as `dict(...)` but with the file field rendered as `filepath`.
 
-- `client/python/gradio_client/utils.py` — contains `_json_schema_to_python_type` which converts JSON schemas to human-readable Python type strings. The logic for `type == "object"` needs to detect file schemas and return `"filepath"` early.
-- `.agents/skills/gradio/SKILL.md` — the agent skill file that documents how to use Gradio. Should be updated to document the `gradio info` and `gradio predict` CLI commands, including usage examples.
+For plain objects without file characteristics (no `path` property, no `gradio.FileData` meta), continue displaying as `dict(...)` with the property names.
+
+There is also a helper function `value_is_file` that should correctly identify whether a schema represents a file type for API info purposes.

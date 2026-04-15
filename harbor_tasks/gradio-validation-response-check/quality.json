@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file (gradio/queueing.py), the function (process_validation_response), the dict structure with 'is_valid' and 'message' keys, and the expected behavior (all_valid=False, validation_data list). All test-asserted specifics (function name, parameter schema, return tuple structure) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the broken behavior (dict responses silently treated as valid) and expected behavior, but does not specify the exact code change (e.g., changing 'validation_data' to 'validation_response' on specific lines). A developer must still reason about the root cause."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests call process_validation_response with dict inputs and check behavioral outputs (all_valid boolean and data list contents). They don't assert on specific line numbers, variable names internal to the function, or implementation details. Alternative correct fixes (e.g., restructuring the conditional differently) would pass as long as they produce the correct return values."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests extract and execute the actual process_validation_response function via AST parsing, then call it with inputs and assert on return values. Linting/syntax tests run subprocesses. No test relies solely on string matching in source files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning default values (e.g., True, []) would fail test_dict_invalid_response_detected which asserts all_valid is False. The tests require the function to actually detect invalid dict responses, which the buggy code doesn't do."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio's container environment as solution/solve.sh (mounted or accessible). The agent could read /solution/solve.sh (if accessible in the container) to see the exact patch. The Dockerfile doesn't explicitly remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies two behaviors: (1) dict with is_valid=False should return all_valid=False, tested by test_dict_invalid_response_detected; (2) invalid response included in validation_data list, tested by test_dict_invalid_response_data_preserved. Both are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI tests) and each test function has a descriptive docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a Python function's behavior, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (gradio/queueing.py), function names (process_validation_response), and key names (is_valid, message, all_valid, validation_data) are all consistent between instruction.md and the test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (gradio/queueing.py) and function (process_validation_response) which is appropriate for the task domain. It does not mention specific line numbers or the exact variable name bug (validation_data vs validation_response)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task involving configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

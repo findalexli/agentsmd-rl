@@ -1,33 +1,49 @@
-# Token Usage Double-Counting for Anthropic/Bedrock Providers
+# Token Usage Reporting Bug
 
 ## Bug Description
 
-After the AI SDK v6 upgrade (merged in v1.3.4), token usage reporting is broken for Anthropic and Bedrock providers. The reported `total` token count and `tokens.input` are inflated — cached tokens are being counted twice.
+After the AI SDK v6 upgrade, token usage reporting is incorrect for some providers. The reported `total` token count and `input` token count are inflated — cached tokens appear to be counted twice in some cases.
 
-## Root Cause Area
+## Observed Symptoms
 
-The token accounting logic lives in `packages/opencode/src/session/index.ts`, in the `getUsage` function within the `Session` namespace (around line 265–295).
-
-AI SDK v6 changed how `inputTokens` is reported: it now includes cached tokens for **all** providers, including Anthropic and Bedrock. Previously, those two providers excluded cached tokens from `inputTokens`.
-
-The current code has a provider-specific check (`excludesCachedTokens`) that skips the cache subtraction for Anthropic/Bedrock. Since v6 now includes cache in `inputTokens` for those providers too, the subtraction should always happen. The current logic causes:
-
-1. `tokens.input` to be too high (cache tokens counted once in `inputTokens`, not subtracted)
-2. `tokens.total` to be too high (a provider-specific branch manually recomputes total from components, double-adding cache)
+- For some providers, `tokens.input` values are higher than expected
+- For some providers, `tokens.total` values do not match the SDK's reported total
+- Downstream cost calculations may be incorrect due to inflated token counts
 
 ## Expected Behavior
 
-- `tokens.input` should always equal `inputTokens - cacheRead - cacheWrite` (the non-cached portion)
-- `tokens.total` should use the SDK-provided `totalTokens` uniformly across all providers
-- Cost calculations downstream should reflect correct token counts
+The `Session.getUsage` function should:
 
-## Relevant Files
+1. Return accurate non-cached input token counts in `tokens.input`
+2. Return accurate cache token breakdowns via `tokens.cache.read` and `tokens.cache.write`
+3. Return accurate totals in `tokens.total` that match SDK-provided values
+4. Return accurate reasoning token counts in `tokens.reasoning`
+5. Produce correct dollar amounts in the `cost` field
 
-- `packages/opencode/src/session/index.ts` — the `getUsage` function
-- `packages/opencode/test/session/compaction.test.ts` — existing tests for `getUsage`
+## Return Value Schema
 
-## Hints
+The function returns an object with:
+- `tokens.input` — non-cached input tokens (integer)
+- `tokens.output` — output tokens (integer)
+- `tokens.cache.read` — cached read tokens (integer)
+- `tokens.cache.write` — cached write tokens (integer)
+- `tokens.total` — total tokens (integer)
+- `tokens.reasoning` — reasoning tokens (integer)
+- `cost` — computed cost in dollars (float)
 
-- Look at how `adjustedInputTokens` is computed and whether the provider check is still valid after v6
-- Look at how `total` is computed — there's a provider-specific branch that should no longer be needed
-- The fix should make token handling uniform across all providers
+## Provider Context
+
+The `metadata` parameter accepts provider-specific structures:
+- Anthropic provider: `metadata: { anthropic: { cacheCreationInputTokens?: number } }`
+- Amazon Bedrock provider: `metadata: { bedrock: { usage: { cacheWriteInputTokens: number } } }`
+- Other providers: metadata may be omitted or empty
+
+The provider is identified by the `model.api.npm` field (e.g., `"@ai-sdk/anthropic"`, `"@ai-sdk/amazon-bedrock"`, `"@ai-sdk/google-vertex/anthropic"`, `"@ai-sdk/openai"`).
+
+## Relevant File
+
+The token accounting logic is in `packages/opencode/src/session/index.ts`.
+
+## Testing
+
+Existing tests for session token handling are in `packages/opencode/test/session/compaction.test.ts`.

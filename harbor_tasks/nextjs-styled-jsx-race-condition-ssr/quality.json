@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific function names like `extract_added_lines`, `is_agent_instruction_file`, `is_code_file`, `is_doc_file`, `gh_json`, and specific pattern variables like `AGENT_INSTRUCTION_PATTERNS`, `CONFIG_RE`, etc. The instruction.md only mentions `extract_config_hunks` and `is_config_file` (implicitly via 'config files'). Functions like `extract_added_lines`, `is_agent_instruction_file`, `is_code_file`, `is_doc_file`, `gh_json`, and exports like `AGENT_INSTRUCTION_PATTERNS` are not ment"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (old filename used instead of new, 'rename to' directive not handled) and what the fix should achieve (use new filename), but doesn't specify exact code changes like 'add a rename_to variable' or 'change line X'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes (keys in returned dicts, counts, boolean membership checks) rather than implementation details. Alternative implementations that correctly parse 'rename to' directives would pass regardless of internal variable names or approach."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All tests execute Python code via subprocess, import modules, call functions, and check return values. No test reads source files and checks for string patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_renamed_config_file_extracted requires extracting 'CLAUDE.md' from a diff where b/ path is 'random.txt' - a stub returning empty dict or using only b/ path would fail. test_extract_added_lines_from_renamed_hunk requires both correct rename handling AND content extraction. These cannot be satisfied by trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/taskforge/../solution/solve.sh (or similar path in the container). The Dockerfile copies taskforge/ but solve.sh and tests/ may be accessible. An agent could potentially read the solution directory or the test file to extract expected behavior. The tests also pass specific diff strings that could be pattern-matched without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: handling renamed files with new filename, identifying config files after rename, and preserving non-rename functionality. All three are tested (test_renamed_config_file_extracted, test_renamed_non_config_file_ignored, test_regular_config_file_still_works, etc.)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped into sections with comments ('Fail-to-pass tests', 'Pass-to-pass tests', 'Module imports correctly'), have descriptive names, and include docstrings explaining each test case."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces dict[str, str] return values from functions, not a formal structured data output like JSON API or CSV. The return type is implicitly documented through examples."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the function (`extract_config_hunks`) and file (`taskforge/config.py`) which is appropriate for the task scope. It describes the bug conceptually (uses old filename instead of new) without pointing to specific lines or exact variable names to change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (fixing a Python function), not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

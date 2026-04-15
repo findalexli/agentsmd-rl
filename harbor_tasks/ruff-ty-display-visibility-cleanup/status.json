@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T08:25:58.395286",
-  "total_time": 3395.3,
-  "sandbox_id": "inoa6i2i7cd0n8vy018x6",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:59:52.989744",
+  "total_time": 2206.39,
+  "sandbox_id": "iix71oafmxiu9l1nevu7u",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -68,17 +70,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:34: test `test_specialization_display_removed` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.6,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 9234.01,
-      "at": "2026-04-10T00:33:01.970592"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -110,6 +123,14 @@
       "backend": "fireworks",
       "time": 3395.3,
       "at": "2026-04-12T08:25:58.395286"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2206.39,
+      "at": "2026-04-15T05:59:52.989744"
     }
   ]
 }

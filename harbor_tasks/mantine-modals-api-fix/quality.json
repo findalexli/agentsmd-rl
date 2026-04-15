@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all 7 behavioral changes tested: two-argument openContextModal signature, closeAll vs closeAllModals naming, updateContextModal without modalKey, removal of ContextModalInnerProps, closeContextModal aliasing closeModal, MantineModalsOverwritten pattern, and generic parameter. Tests check these same behaviors. File paths (context.ts, ModalsProvider.tsx, events.ts, index.ts) are discoverable from the package structure mentioned. Specific patterns like `({ modal, ...payloa"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction point #1 says 'The events layer sends payloads with a `modal` property to identify the modal, so the provider must adapt between the event payload format and the two-argument function call' \u2014 this essentially prescribes the exact adapter pattern `({ modal, ...payload }) => openContextModal(modal, payload)` that test_open_context_modal_in_events asserts. Point #5 says 'closeContextModal should directly reference the same function as closeModal' which prescribes the exact `closeContext"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_open_context_modal_in_events asserts the exact regex pattern `openContextModal:\\s*\\(\\{\\s*modal,\\s*\\.\\.\\.payload\\s*\\}:\\s*any\\)\\s*=>\\s*openContextModal\\(modal,\\s*payload\\)` \u2014 an alternative correct implementation using a different variable name (e.g., `rest` instead of `payload`, or `key` instead of `modal`) or a non-inline adapter function would fail. test_close_context_modal_uses_close_modal asserts the exact pattern `closeContextModal:\\s*closeModal` \u2014 a correct alternative like `closeConte"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All F2P tests (test_open_context_modal_signature, test_context_has_close_all, test_update_context_modal_no_modal_key, etc.) use `read_file()` and regex/string matching on source code text. None import or call the actual code. The P2P tests (jest, eslint, prettier, tsc) do execute subprocesses, but every F2P test is purely text-matching with `assert 'X' in open(path).read()` style checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific patterns that are NOT present in the buggy base commit (e.g., two-argument openContextModal signature, closeAll instead of closeAllModals, absence of ContextModalInnerProps). A stub/no-op would not produce these patterns in the source files, so actual code changes are required."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mantine (the solve.sh writes files there). The agent could read the test file at tests/test_outputs.py to see exact regex patterns expected, or read /solution/solve.sh if accessible. Since the tests are pure text-matching on source files, the agent could simply grep the test file for the expected patterns and write them verbatim without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction point #7 ('Missing generic parameter in reducer \u2014 should use OpenContextModal<any>') is not tested by any F2P test. No test checks for `OpenContextModal<any>` usage in reducer logic specifically."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, descriptive function names, and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing TypeScript source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Point #6 names the exact helper type 'MantineModalsOverwritten' and 'MantineModalsOverride' \u2014 these are implementation-specific names that the agent should discover, not be told. Point #1 describes the exact event payload adaptation mechanism. Point #5 specifies that closeContextModal 'should directly reference the same function as closeModal' which is an implementation detail."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

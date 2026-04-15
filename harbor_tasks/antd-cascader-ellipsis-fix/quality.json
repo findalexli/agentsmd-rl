@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_item_has_maxWidth checks for 'maxWidth: 400' (the value 400 is never mentioned in instructions), test_content_has_minWidth_zero checks for 'minWidth: 0' (only vaguely hinted at in 'Flex items need special handling'), and tests use regex patterns matching specific code structure like '&-keyword' and '[iconCls]' anchors that are not described in the instructions."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (ellipsis not working in flex layout) and hints at the area (textEllipsis utility, &-item vs &-content) but does not explicitly state to move textEllipsis to &-content, add minWidth:0, or add maxWidth:400."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_item_has_maxWidth requires exactly 'maxWidth: 400' (an alternative fix might use maxWidth: 300 or a token-based value), test_content_has_minWidth_zero requires exactly 'minWidth: 0' as a string, and regex patterns anchor on specific neighboring elements like '&-keyword' and '[iconCls]'. An alternative correct fix using different maxWidth values or overflow:hidden instead of minWidth:0 would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_text_ellipsis_moved_to_content, test_content_has_minWidth_zero, test_content_has_text_ellipsis, test_item_has_maxWidth) are all pure text/regex searches on file content using patterns like '...textEllipsis' in content_block and 'maxWidth: 400' in item_before_content. No test actually renders the component or checks visual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns (textEllipsis moved from &-item to &-content, minWidth:0, maxWidth:400) that are not present in the original file. A stub or no-op would not pass since the original file has textEllipsis in &-item and lacks minWidth:0 and maxWidth:400."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ant-design (accessible in the container via solve.sh), and the agent could read solution/solve.sh which contains the exact git diff patch. Additionally, since tests are pure string matching, the agent could grep test files for the expected patterns and apply them directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires ellipsis styles to work in flex layout, not break existing functionality, and follow existing patterns. Tests verify the structural changes (textEllipsis placement, minWidth, maxWidth), TypeScript compilation, linting, and formatting \u2014 covering the described requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_text_ellipsis_moved_to_content, test_content_has_minWidth_zero, etc.), have docstrings explaining what each tests and why, and are organized into fail-to-pass and pass-to-pass categories with clear comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CSS-in-JS style modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands are consistent and correct across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (components/cascader/style/columns.ts), identifies the specific CSS properties involved (&-item, &-content, textEllipsis), and explains the mechanism (flex items need special handling for ellipsis). While the file is somewhat obvious, the level of detail about &-content vs &-item strongly hints at the exact fix location and approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript style file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

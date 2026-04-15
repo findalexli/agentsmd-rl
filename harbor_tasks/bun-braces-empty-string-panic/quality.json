@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file path `src/shell/braces.zig`, function names `flattenTokens` and `advance`, the exact guard strings `self.tokens.items.len == 0` and `if (self.current > 0) self.prev() else self.peek()`, the test file `test/js/bun/shell/brace.test.ts`, `$.braces('')`, and key struct/function names like `NewLexer`, `Parser`, `fn advance(`, `fn flattenTokens(`."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix code: 'the exact string `if (self.current > 0) self.prev() else self.peek()` must be present in the function' and 'The guard expression must contain the substring `self.tokens.items.len == 0`'. This tells the agent precisely WHAT to change and HOW, leaving no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like `if (self.current > 0) self.prev() else self.peek()` in test_advance_has_underflow_guard. An alternative correct fix (e.g., `if (self.current == 0) return self.peek(); return self.prev();`) would fail. The tests enforce gold-specific implementation details rather than behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two fail-to-pass tests (test_flatten_tokens_has_empty_guard, test_advance_has_underflow_guard) exclusively do `assert 'exact string' in file.read_text()` \u2014 pure text matching with no execution or behavioral verification. The pass-to-pass tests only run `zig fmt` and `zig ast-check` (syntax checks), never actually calling `$.braces('')`."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for substring presence in the source file. An agent could simply insert the two exact strings as dead code comments (e.g., `// if (self.tokens.items.len == 0) return`) anywhere in braces.zig without actually fixing the bug, and both f2p tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun accessible to the agent via `git log` or by reading solution/solve.sh if mounted. Additionally, the exact fixture strings are stated verbatim in instruction.md itself, so the agent can just insert them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: the empty guard in flattenTokens, the underflow guard in advance, zig fmt/ast-check compliance, regression test existence in brace.test.ts, and no-regression checks for key functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (fail-to-pass, pass-to-pass static, pass-to-pass repo CI, pass-to-pass pr_diff) with descriptive function names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact functions (`flattenTokens`, `Parser.advance`), the exact file, and provides the exact code strings to insert. The 'Constraints on the Solution' section specifies verbatim implementation: `if (self.current > 0) self.prev() else self.peek()` and `self.tokens.items.len == 0`. This goes far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

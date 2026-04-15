@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all five files tested (router.ts, router.test.ts, README.md, minor.router-run.md, demos/bookstore/README.md), mentions removing the run() method, removing tests, removing the change file, and updating documentation. The specific strings checked in tests (e.g., 'run<result>(', 'createStorageKey', 'Running Code In Request Context', 'router.run()') are all discoverable from the instruction's description of removing the run() API and its references. The instruction also mention"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to remove (the run() method, related tests, change file, documentation references) but doesn't specify exact line numbers, exact code to delete, or replacement text. A developer still needs to reason about which specific lines to modify and how to clean up imports."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for absence of specific API-related strings (run<result>(, router.run(, createStorageKey, 'Running Code In Request Context') and file deletion. Any correct implementation that removes the run() method and its references would pass these checks. The tests don't assert on gold-specific variable names or exact line positions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_run_method_removed, test_run_tests_removed, test_fetch_router_readme_updated, test_bookstore_readme_updated, test_change_file_deleted) are ALL pure text/file-existence checks using 'assert X not in open(path).read()' or 'assert not path.exists()'. While pass-to-pass tests do run subprocesses (typecheck, test, lint), the actual fail-to-pass tests that verify the core task never execute or import any code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that specific strings/files are ABSENT from the codebase. These would fail on the original repo (which contains router.run() code). A stub or no-op solution would fail because the original files still contain the strings being checked against."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/remix and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact git patch. Additionally, since all f2p tests are string-absence checks, the agent could simply delete the checked strings without understanding the code structure, or even delete entire files and replace them with empty content (though this would fail pass-to-pass tests)."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: removal of run() from interface/implementation, removal of test suite, deletion of change file, and documentation cleanup in both README files. Pass-to-pass tests also verify the project still compiles and existing tests pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass code removal, fail-to-pass documentation updates, pass-to-pass regression/compilation), descriptive function names, and docstrings explaining each check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code/documentation removal, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and commands in the instruction and tests are correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly lists all 5 exact file paths to modify, including the specific change file path 'packages/fetch-router/.changes/minor.router-run.md' and 'demos/bookstore/README.md'. It even names the specific section 'Running Code In Request Context' implicitly by describing the documentation. This removes the localization challenge from the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/documentation removal task, not an agentmd-edits or config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

@@ -2,15 +2,26 @@
 
 ## Problem
 
-The telemetry test suite relies on `ParseErrorOrigins` to extract error origin information from error messages. However, `ExitError` in `dagql/idtui/exit.go` only returns a generic "exit code N" message from its `Error()` method — it never includes the message from its `Original` error field. This means when an `ExitError` wraps an underlying error, `ParseErrorOrigins` cannot find or extract the original error details, causing telemetry tests to miss error origin data.
+The telemetry test suite captures error origin information by parsing error messages. However, when errors are wrapped in a type that only returns generic exit code information, the original error details are lost. This causes telemetry tests to miss error origin data because the underlying error message is not preserved in the wrapped error's string representation.
+
+## Task
+
+1.  **Fix Error Message Propagation**
+
+    Locate the error type that wraps underlying errors with an exit code but fails to include the wrapped error's message in its `Error()` string representation. Modify the code so that when this error type wraps an original error, the original error's message is included in the returned string from `Error()`. The fix should handle the case where no original error is set (to avoid nil pointer issues) and must not change behavior for errors without an original cause.
+
+2.  **Update Skill Documentation**
+
+    Add a new section to the skill documentation file at `skills/dagger-chores/SKILL.md` with the following exact content:
+
+    -   Section header: `## Regenerate Golden Tests`
+    -   Followed by two blank lines
+    -   Then the text: `Use this checklist when asked to regenerate telemetry golden tests.`
+    -   Followed by two blank lines
+    -   Then a numbered step: `1. From the Dagger repo root, run \`dagger -c 'engine-dev | test-telemetry --update | export .'\``
+
+    The exact format (including spacing and command) must match for the test to pass.
 
 ## Expected Behavior
 
-`ExitError.Error()` should include the original error's message (when one is set) so that code parsing error messages — like `ParseErrorOrigins` — can still find the underlying error information. Since this message is noted as "not actually printed anywhere", including the original error is safe and does not change user-visible output.
-
-After fixing the code, update the relevant skill documentation to include instructions for regenerating telemetry golden tests. The `skills/dagger-chores/SKILL.md` file documents repeatable chore workflows and should cover this regeneration process.
-
-## Files to Look At
-
-- `dagql/idtui/exit.go` — defines `ExitError` and its `Error()` method
-- `skills/dagger-chores/SKILL.md` — chore checklists for common maintenance tasks
+After the fix, error messages should contain both the exit code information and the original underlying error message (when present), allowing telemetry parsing code to extract error origins. The separator between the exit code and original message should be two newline characters (`\n\n`).

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction documents all file paths (scripts/docker-image-cache.js, scripts/turbo-cache.mjs, scripts/docker-native-build.js, packages/next-swc/package.json, packages/next-swc/turbo.jsonc, .github/workflows/build_and_deploy.yml), all required export names (exists, get, getStream, put, artifactUrl, healthCheck), the URL format rules (vercel.com /api/v8/artifacts/{key} with teamId vs self-hosted /v8/artifacts/{key} with slug), the buildImage() function requirement, parseArgs/force flag, sheban"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT the solution should achieve (bypass turbo task caching, use direct cache API, specific exports and URL formats) but does not provide exact code, line numbers, or copy-paste patches. A developer must still reason about how to implement the turbo-cache.mjs module, rewrite docker-image-cache.js, and modify the other files."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_build_image_preserved asserts 'function buildImage()' as an exact string match, requiring a non-arrow function declaration with that exact name and parentheses pattern. An alternative correct implementation using e.g. 'async function buildImage()' or 'function buildImage(opts)' would fail the 'function buildImage()' in src check. Also test_docker_image_cache_has_parseargs checks for the literal string 'parseArgs' and 'force', which are fairly constrained but reasonable. The buildImage() exa"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "While some tests do execute code (test_artifact_url_vercel, test_artifact_url_selfhosted, test_turbo_cache_exports run node subprocesses), many critical tests are purely text-matching: test_build_image_preserved checks 'function buildImage()' and 'docker build' as strings in source; test_docker_image_cache_has_parseargs checks 'parseArgs' and 'force' strings; test_native_build_direct_invocation checks for string presence/absence; test_docker_image_cache_builtin_modules uses regex on source text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests cannot be satisfied by stubs. test_artifact_url_vercel requires artifactUrl() to return a URL containing '/api/v8/artifacts/deadbeef1234' and 'vercel.com'. test_artifact_url_selfhosted requires no '/api/' prefix. test_turbo_cache_exports requires all 6 functions to be typeof 'function'. test_no_build_docker_script requires removal from package.json. test_turbo_jsonc_no_docker_task requires removal from turbo.jsonc. These require actual implementation, not empty stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js during the agent's execution (the Dockerfile clones the repo and the solve.sh operates on it). While solve.sh is described as 'hidden', the agent could potentially read /solution/solve.sh if it exists in the container, or could examine the test file at tests/test_outputs.py to reverse-engineer exact requirements. The Dockerfile doesn't show explicit measures to prevent reading these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction's key behavioral requirements are tested: URL format for vercel vs self-hosted (test_artifact_url_vercel, test_artifact_url_selfhosted), team parameter (test_artifact_url_team_param), required exports (test_turbo_cache_exports), removal of turbo task (test_no_build_docker_script, test_turbo_jsonc_no_docker_task), direct invocation (test_native_build_direct_invocation), parseArgs usage, buildImage function, shebangs, and builtin-only modules."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining what each test checks, and annotations like [static], [pr_diff], [repo_tests] mapping to eval categories."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The API contract table in instruction.md documents the exact export names and their signatures. The URL format requirements section specifies the exact path patterns and query parameter names (teamId vs slug). This constitutes the structured API schema for the turbo-cache.mjs module."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction are consistent with the test assertions. No typos detected in paths like scripts/turbo-cache.mjs, packages/next-swc/package.json, etc."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the architectural change needed (bypass turbo task caching, use direct API) and names the files to modify, but doesn't specify exact line numbers or provide the patch content. The file references are natural for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized config edits: removing a single script entry from package.json, removing a single task block from turbo.jsonc, and changing a few lines in the CI workflow. These are bounded, non-contradictory changes."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

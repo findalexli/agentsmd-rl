@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three config classes (GraniteConfig, GraniteMoeConfig, GraniteMoeSharedConfig), all four multiplier fields, the three affected files, the requirement for int acceptance, float acceptance, None acceptance, roundtrip persistence, and ruff/CI gates. The tests use exactly these classes, fields, and behaviors. The specific parametrized integer values (12, 8, 4, 2, etc.) don't need to be in the instruction since they're just test inputs for the described behavior."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact three files to modify and states the fields only accept 'float' not 'int'. Combined with the type annotation pattern visible in the codebase (dataclass strict validation), the fix is essentially spelled out: change the type annotations from 'float' to 'float | int'. The 'Affected Files' section with exact file paths makes localization trivial, and the problem description makes the solution obvious."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties (constructor accepts ints, roundtrip works, floats still work, None still works, ruff passes) rather than implementation details. Alternative fixes like using Union[float, int], adding a __post_init__ coercion, or using a custom validator would all pass the tests as long as they accept int values and preserve them through roundtrips."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and instantiate GraniteConfig/GraniteMoeConfig/GraniteMoeSharedConfig, call constructors with int values, perform save_pretrained/from_pretrained roundtrips, and run subprocess commands for ruff and pytest. No tests rely solely on reading source text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests construct config objects with specific integer values (e.g., embedding_multiplier=12) and assert the stored value equals 12. A stub that always returns default 1.0 would fail these assertions. The strict dataclass validation in the original code actively rejects int inputs, so the tests genuinely verify the bug fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The /solution/solve.sh file exists in the container and contains the exact git patch with the fix. An agent could simply read /repo/../solution/solve.sh or /solution/solve.sh (depending on mount) and apply the patch directly. No evidence of restrictions preventing access to this file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five required behaviors from the instruction are tested: (1) int acceptance for all fields across all three classes, (2) roundtrip persistence via save/from_pretrained, (3) float values still work (test_granite_config_float_defaults, test_granite_config_explicit_float_roundtrip), (4) None values accepted where applicable (test_granitemoe_config_none_multipliers, test_granitemoeshared_config_none_multipliers), (5) ruff check/format and existing repo tests pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, docstrings, and category annotations like [pr_diff] fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing type annotations in Python dataclass config classes, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, class names, field names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's 'Affected Files' section names the exact three files with full paths. While this is borderline acceptable for a bug fix task, combined with the explicit statement that 'dataclass fields only accept float, not int', the localization and nature of the fix are fully revealed. The agent doesn't need to reason about where or what to change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Python source files, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

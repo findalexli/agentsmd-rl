@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T22:49:22.250562",
-  "total_time": 1975.08,
-  "sandbox_id": "izdoar422f82u899n9gsp",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:24:01.429459",
+  "total_time": 1323.04,
+  "sandbox_id": "i3l5pq4ojipt923k4l4ly",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.41,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:64: test `test_submit_btn_false_in_example_chain` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:94: test `test_events_to_cancel_conditional` has 1 assert(s), all pass', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: ruff, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.95,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "fireworks",
-      "time": 703.98,
-      "at": "2026-04-09T14:39:55.059693"
-    },
     {
       "verdict": "pass",
       "nop": 0,
@@ -98,6 +112,14 @@
       "backend": "fireworks",
       "time": 1975.08,
       "at": "2026-04-11T22:49:22.250562"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1323.04,
+      "at": "2026-04-15T04:24:01.429459"
     }
   ]
 }

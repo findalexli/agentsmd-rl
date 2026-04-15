@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific patterns like 'getTruthy' and 'port' (test_options_parsing_intact), check for banned words like 'std.debug.assert' (test_no_banned_words_in_dns_zig), reference specific JS files like 'src/js/node/dns.ts' and test files like 'test/js/node/dns/node-dns.test.js' (test_oxlint_dns_js, test_prettier_dns_test_files), and check for specific methods like 'isObject' vs 'isCell' (test_non_object_guard_on_second_arg). The instruction.md does not mention getTruthy, port, banned words, t"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (crash with non-object second argument) and points to the file and struct, but does not state the specific fix of changing isCell() to isObject(). The developer must discover this themselves."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_non_object_guard_on_second_arg uses a specific regex pattern 'if\\s*\\(arguments\\.len\\s*>\\s*1\\s+and\\s+arguments\\.ptr\\[1\\]\\.(is\\w+)\\(\\)' and asserts the method is not 'isCell'. An alternative correct fix (e.g., using a try/catch pattern, checking with a different conditional structure, or restructuring the logic entirely) would fail this regex-based test even if it correctly fixes the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_non_object_guard_on_second_arg, test_guard_uses_valid_object_method) and most pass-to-pass tests use only text/regex matching on source files (e.g., 'content = Path(TARGET).read_text()' followed by regex searches). No test actually compiles or executes the Zig code to verify runtime behavior. The tests explicitly note 'AST-only because: Zig requires full Bun compilation'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that the guard method is NOT 'isCell' (the original buggy value) and IS a valid object-discriminating method. A stub/no-op change would leave 'isCell' in place, failing test_non_object_guard_on_second_arg. The agent must actually modify the code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun's solution/solve.sh (or could be found via the container). The agent could read the gold patch directly. Additionally, the tests are purely text-matching, so the agent could grep test files or reverse-engineer the expected pattern from the regex in the test to produce a matching change without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says the lookup should 'proceed normally and return results' when given a non-object second argument. No test actually verifies that dns.lookup('127.0.0.1', 'cat') succeeds and returns results - all tests are static text analysis only."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in DNS resolver code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction points to 'src/bun.js/api/bun/dns.zig' and the 'Resolver' struct, which is appropriate given the task domain. It does not name the specific line or the isCell/isObject change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

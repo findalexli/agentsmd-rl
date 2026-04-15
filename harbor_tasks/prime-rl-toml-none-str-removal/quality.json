@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific implementation details not mentioned in instruction.md: the exact function names 'none_to_none_str' and '_convert_none' that must be removed (test_none_helpers_removed), and the exact string 'exclude_none=True' that must appear in entrypoint files (test_sft_write_config_excludes_none, test_rl_write_config_excludes_none, test_inference_write_config_excludes_none). The instruction describes the problem but never names these specific functions or the required parameter."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (None values serialized as 'None' strings) and the expected behavior (omit None fields), but does not prescribe the exact fix like 'use exclude_none=True' or 'remove none_to_none_str'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_sft/rl/inference_write_config_excludes_none check for the literal string 'exclude_none=True' in source code. An alternative correct fix (e.g., filtering None values with a custom dict comprehension before calling model_dump, or using a custom serializer) would fail these tests despite being behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_sft_write_config_excludes_none, test_rl_write_config_excludes_none, test_inference_write_config_excludes_none) are purely text-matching: they check if 'exclude_none=True' appears in source files. test_none_helpers_removed and test_entrypoints_no_import_none_helper also only do AST/text inspection. Only test_rl_write_subconfigs_excludes_none actually tests behavior by running code, but even that simulates behavior independently rather than importing the actual wr"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass: the tests check for removal of specific functions (none_to_none_str, _convert_none) and presence of 'exclude_none=True' in source. The original code has these functions and lacks exclude_none=True, so doing nothing fails."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/prime-rl as a git repo, and the agent could read the solve.sh or solution directory if accessible. More critically, the tests check for literal string 'exclude_none=True' in source files, so an agent could simply grep for the expected strings in test files and insert them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that None-valued fields are omitted from TOML output and no 'None' string literals appear. The tests cover this: checking removal of the problematic helper functions, checking entrypoints use exclude_none=True, and verifying TOML output has no None strings."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves TOML config serialization but doesn't produce a structured data output with a defined schema; it's about fixing serialization behavior."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the affected files (config.py, rl.py, sft.py, inference.py) and mentions 'helper functions used during TOML serialization' but doesn't name the exact functions to remove or the exact fix to apply. The file listing is appropriate since this is a targeted bug fix task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

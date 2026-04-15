@@ -1,64 +1,49 @@
-# webview: skip rendering-dependent tests on macOS CI
+# bun-webview-test-async-fix
 
-## Problem
+## Problem Statement
 
-The Bun WebView test suite has multiple issues causing CI failures:
+The Bun WebView test suite has multiple issues causing CI failures on macOS.
 
-1. **Async/await bug in webview-chrome.test.ts**: A test checking that `click(selector)` rejects on invalid selector syntax has a stray inner `await` that causes the rejection to throw before the test framework can catch it. The test at line ~668 has:
-   ```typescript
-   await expect(await view.click(":::invalid")).rejects.toThrow();
-   ```
-   This pattern causes the promise rejection to happen before `.rejects.toThrow()` can intercept it.
+### Issue 1: Async rejection handling
 
-2. **rAF-dependent tests hang on macOS CI**: Tests using `click(selector)` and `scrollTo(selector)` poll for actionability by waiting on `requestAnimationFrame` between checks. On macOS CI, the headless `WKWebView` gets no `CVDisplayLink` callbacks (no display attached), so rAF never fires and these tests hang until timeout.
+A test verifying that `click()` rejects on invalid selector syntax is not catching the rejection properly. The rejection fires before the test framework can intercept it, causing an unhandled promise rejection instead of a clean assertion failure.
 
-3. **Inconsistent test skipping patterns**: There are multiple inconsistent patterns for conditionally skipping tests on macOS CI:
-   - `(isMacOS ? test.todoIf(isCI) : test.skip)("test name", ...)`
-   - `it.todoIf(isCI)("test name", ...)`
-   - `it("test name", ...)` for tests that should be conditional
+### Issue 2: rAF-dependent tests hang on macOS CI
 
-   The second pattern (`it.todoIf(isCI)`) is particularly problematic because it becomes `test.skip.todoIf()` on non-macOS platforms, which throws at file load time.
+Tests using `click(selector)` and `scrollTo(selector)` poll for actionability by waiting on `requestAnimationFrame`. On macOS CI, the headless `WKWebView` has no display attached, so rAF never fires and these tests hang.
 
-4. **Missing version check for persistent dataStore tests**: The `localStorage` persistence test requires macOS 15.2+ (`_WKWebsiteDataStoreConfiguration initWithDirectory:`), but this version check is missing.
+Existing code uses inconsistent patterns for conditional test skipping:
+- `test.todoIf(isCI)` in some places
+- `it.todoIf(isCI)` in others (becomes `test.skip.todoIf()` on non-macOS, throwing at file load time)
+- Plain `it(...)` in others
 
-5. **Minor issues in WebView.closeAll() test**: The test uses raw HTML in a data URL without encoding, and unnecessarily captures stderr.
+### Issue 3: Platform version compatibility
+
+The localStorage persistence test relies on functionality available only in macOS 15.2+ (specifically `_WKWebsiteDataStoreConfiguration initWithDirectory:`). Tests requiring this version check are not properly guarded.
+
+### Issue 4: WebView.closeAll() test issues
+
+The `WebView.closeAll()` test uses raw HTML in a data URL without proper encoding and uses `stderr: 'pipe'` unnecessarily.
 
 ## Expected Behavior
 
-1. The `click(selector)` rejection test should properly catch the rejection using `await expect(view.click(...)).rejects.toThrow()` (without the inner await).
+1. Rejection tests should properly catch rejections so the test framework's `.rejects.toThrow()` works correctly.
 
-2. All rAF-dependent tests should use a consistent `itRendering` helper that:
-   - On macOS: uses `test.todoIf(isCI)` to skip on CI (where rAF doesn't fire)
-   - On non-macOS: uses `test.skip` since WebView only works on macOS
+2. All rAF-dependent tests should be conditionally skipped on macOS CI (where rAF doesn't fire) and on non-macOS platforms (where WebView only works on macOS).
 
-3. The `itRendering` helper should be applied to all tests that depend on rendering/animation:
-   - `document.visibilityState is visible and rAF fires`
-   - `click(selector) waits for actionability, clicks center`
-   - `click(selector) waits for element to appear`
-   - `click(selector) waits for element to stop animating`
-   - `click(selector) rejects on timeout when obscured`
-   - `click(selector) with options`
-   - `scrollTo(selector) waits for element to appear`
-   - `scrollTo(selector) rejects on timeout`
-   - `scroll dispatches native wheel event with isTrusted`
-   - `scroll: sequential calls in same view`
-   - `scroll: horizontal`
-   - `scroll: interleaved with click in same view`
-   - `scroll: survives navigate (fresh scrolling tree)`
-   - `scroll: targets inner scrollable under view center`
+3. Tests requiring specific macOS versions should use appropriate version guards via `isMacOSVersionAtLeast` from harness.
 
-4. A new `itPersistentDataStore` helper should be defined for macOS 15.2+ only tests.
+4. The `WebView.closeAll()` test should properly encode HTML in data URLs and avoid unnecessary stderr configuration.
 
-5. The `isMacOSVersionAtLeast` utility should be imported from `harness`.
+## Files to Investigate
 
-## Files to Look At
+- `test/js/bun/webview/webview-chrome.test.ts` - Contains the async rejection handling issue
+- `test/js/bun/webview/webview.test.ts` - Contains rAF-dependent tests and conditional skipping patterns
 
-- `test/js/bun/webview/webview-chrome.test.ts` - Contains the async/await bug in the Chrome WebView tests
-- `test/js/bun/webview/webview.test.ts` - Contains the rAF-dependent tests and inconsistent skipping patterns
+## Guidance
 
-## Hints
-
-- Look for the pattern `await expect(await view.click` - this is the bug
-- Look for tests using `isCI` checks with rendering-dependent operations
-- The `isMacOSVersionAtLeast` function is available in the `harness` module
-- The fix should consolidate all rendering-dependent tests under a single helper
+- Harness provides `isMacOS`, `isCI`, and `isMacOSVersionAtLeast` for platform detection
+- A helper similar to `const it = isMacOS ? test : test.skip;` could consolidate CI-skipping logic for rendering-dependent tests
+- Tests for `document.visibilityState`, `click(selector)`, `scrollTo(selector)`, and `scroll` operations depend on animation frames firing
+- The localStorage persistence test has platform version requirements
+- Data URLs containing HTML should use proper encoding

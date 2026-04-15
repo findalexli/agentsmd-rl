@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: raise ValueError with exact message 'Cannot divide by zero' when b=0, file calculator.py, function divide. The hidden tests check exactly these specifics (ValueError, message string, function name, file path), all of which are stated in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the broken behavior (ZeroDivisionError) and the desired behavior (raise ValueError with specific message) but does not give the exact code fix like 'add if b == 0: raise ValueError(...)'. A developer still needs to reason about how to implement the check."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests only check that divide(5,0) raises ValueError with message 'Cannot divide by zero' and that existing functions still work. Any correct implementation (e.g., using try/except, if-check, match statement) would pass. No gold-specific variable names, line positions, or internal helpers are asserted."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test actually imports and calls divide(5, 0), checking the exception type and message at runtime. Pass-to-pass tests run pytest, ruff, and mypy as subprocesses. No test merely reads source text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub divide function (e.g., returning None or pass) would not raise ValueError with the correct message, so the f2p test test_divide_by_zero_fix would fail. The test requires actively implementing the zero-check logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/calculator/../solution/solve.sh (or wherever mounted). The agent could potentially read files in the container to find the gold patch. The Dockerfile copies repo files but doesn't explicitly prevent access to /solution/. Additionally, the agent could grep test files (tests/test_outputs.py or tests/test_calculator.py) to discover the exact expected string 'Cannot divide by zero' without understanding the bug, though the instruction already provides this stri"
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) divide(a, 0) raises ValueError with message 'Cannot divide by zero', and (2) divide(a, b) with b!=0 returns correct quotient. Both are tested: test_divide_by_zero_fix for (1), test_repo_unit_test_divide for (2)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into FAIL_TO_PASS and PASS_TO_PASS sections with descriptive docstrings and meaningful function names like test_divide_by_zero_fix, test_repo_unit_test_add, etc."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or error messages across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (calculator.py) and function (divide), which is appropriate for the task scope. It doesn't specify exact line numbers or implementation details beyond the required behavior."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

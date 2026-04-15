@@ -2,7 +2,7 @@
 
 ## Problem
 
-When two direct URLs point to the exact same package archive but carry different hash fragments (e.g., one uses `#sha256=...` and the other uses `#sha512=...`), they are incorrectly treated as two distinct "versions" by the `VersionId` type in `crates/uv-distribution-types/src/id.rs`.
+When two direct URLs point to the exact same package archive but carry different hash fragments (e.g., one uses `#sha256=...` and the other uses `#sha512=...`), they are incorrectly treated as two distinct "versions" by the `VersionId` type in the distribution-types crate.
 
 For example, these two URLs refer to the same artifact but produce different `VersionId` values:
 
@@ -23,10 +23,12 @@ The same class of issue affects Git URLs: irrelevant fragments like `egg=pkg` in
 
 Two URLs that refer to the same source should always produce equal `VersionId` values regardless of which verification hash is attached.
 
-## Files to Look At
+## Implementation Notes
 
-- `crates/uv-distribution-types/src/id.rs` — defines `VersionId` and its constructors (`from_url`, `from_name_version`) and `Display` implementation
-- `crates/uv-distribution-types/src/lib.rs` — `DistributionMetadata` trait implementations that produce `VersionId` values
-- `crates/uv-distribution-types/src/cached.rs` — cached distribution metadata
-- `crates/uv-distribution-types/src/requested.rs` — requested distribution metadata
-- `crates/uv-distribution-types/src/resolved.rs` — resolved distribution metadata
+- The `VersionId` type is defined in `crates/uv-distribution-types/src/id.rs`.
+- `VersionId::from_url` accepts a `DisplaySafeUrl` argument (from the `uv_redacted` crate).
+- Code in `id.rs` should not use `.unwrap()` in production code; prefer `.expect()` with a descriptive message. See AGENTS.md line 7 for the project's convention on this.
+
+## API Under Test
+
+The test suite calls `VersionId::from_url` with URLs parsed via `DisplaySafeUrl::parse(url).unwrap()`. Your implementation must ensure this API produces equal `VersionId` values for archive URLs that differ only in hash fragments, while preserving subdirectory semantics.

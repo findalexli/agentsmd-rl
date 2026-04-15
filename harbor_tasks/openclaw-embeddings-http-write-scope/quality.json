@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert that requiredOperatorMethod must be set to the literal string 'chat.send' (test_scope_method_is_chat_send), but instruction.md never mentions 'chat.send'. It only says to 'align with other write endpoints' and references method-scopes.ts. An agent would need to inspect that file to discover the exact string, but it's not named in the instruction. Additionally, the instruction says to update test files in embeddings-http.test.ts but the actual tests don't check that file's conten"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (missing scope enforcement) and points to relevant files and the helper pattern, but does not state the exact fix (e.g., 'add requiredOperatorMethod: chat.send'). A developer must reason about what option to pass and what value to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_scope_method_is_chat_send asserts the exact regex pattern requiredOperatorMethod:\\s*[\"']chat\\.send[\"'], and test_embeddings_handler_enforces_scope asserts the literal string 'requiredOperatorMethod' appears in the handler body. An alternative correct fix that uses a different mechanism (e.g., a separate middleware, a different scope-checking approach, or a wrapper function that internally checks the scope) would fail these text-matching tests even if it correctly enforces write scope."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_embeddings_handler_enforces_scope, test_scope_method_is_chat_send) are purely text/regex assertions on source code content \u2014 they check for string patterns like 'requiredOperatorMethod' and 'chat.send' in the file, not actual behavior. However, there are also repo test runners (test_repo_embeddings_tests, test_repo_typecheck, test_repo_lint) that execute subprocesses, so it's a mix \u2014 but the primary behavioral check is text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for 'requiredOperatorMethod' and 'chat.send' in the source, which are not present in the base commit. A stub or no-op change would not introduce these strings. Additionally, test_repo_embeddings_tests runs the repo's actual test suite which would catch regressions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openclaw (accessible via solve.sh in the container's solution/ directory if it's mounted or accessible). The agent could read the gold patch from solution/solve.sh or inspect the git history. The tests check for specific strings ('requiredOperatorMethod', 'chat.send') that could be discovered by reading the test file or solution file."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'existing tests in src/gateway/embeddings-http.test.ts should be updated to declare write scope for successful requests and to add coverage for rejected scope scenarios.' No test checks whether embeddings-http.test.ts was modified. The tests only verify the source handler file, not the test file updates."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, and docstrings explaining each check's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a code bug fix, not structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names relevant files (embeddings-http.ts, http-endpoint-helpers.ts, method-scopes.ts) which is appropriate for a bug report. It mentions the helper 'supports scope enforcement via an option' but doesn't name the exact option key 'requiredOperatorMethod' or the value 'chat.send'."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

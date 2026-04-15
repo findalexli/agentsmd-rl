@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:41:38.473884",
-  "total_time": 1207.96,
-  "sandbox_id": "ijj00tgeopkpa9k9qs1jq",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:29:55.107218",
+  "total_time": 983.36,
+  "sandbox_id": "iebvc8golq258q1ely4da",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,17 +59,27 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:350: test `test_rl_exit_calls_close` has 2 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:378: test `test_sft_exit_calls_close` has 2 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 20.48,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 418.36,
-      "at": "2026-04-09T20:25:26.976996"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +111,14 @@
       "backend": "fireworks",
       "time": 1207.96,
       "at": "2026-04-11T18:41:38.473884"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 983.36,
+      "at": "2026-04-15T03:29:55.107218"
     }
   ]
 }

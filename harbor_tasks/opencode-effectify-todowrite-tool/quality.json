@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific literal strings like 'yield* Todo.Service' (test_todowrite_yields_service), 'Todo.defaultLayer' in registry.ts (test_registry_provides_todo_layer), 'export const defaultLayer' in session/todo.ts (test_todo_default_layer_exported), and 'Effect.gen(function*' pattern (test_effect_gen_composition). While the instruction mentions using Tool.defineEffect, yielding the service, and providing Todo.Service via defaultLayer, the exact literal strings like 'yield* Todo.Service' and t"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the tool should do (use defineEffect, declare Todo.Service as dependency, yield the service, provide it in registry) but doesn't specify exact code changes like line numbers or specific syntax. A developer must still reason about how to implement the conversion."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_todowrite_yields_service asserts the exact string 'yield* Todo.Service' must appear in todo.ts. An alternative correct implementation could use 'yield* _(Todo.Service)' or assign it differently (e.g., 'const todoService = yield* Todo.Service' would pass, but 'yield* context.get(Todo.Service)' would not). test_effect_gen_composition requires 'Effect.gen(function*' which rules out other valid Effect composition patterns like Effect.flatMap chains. These are implementation-specific assertions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several core fail-to-pass tests are purely text-matching: test_todo_default_layer_exported checks regex in source, test_registry_provides_todo_layer checks string 'Todo.defaultLayer' in source, test_todowrite_yields_service checks string 'yield* Todo.Service' in source, test_effect_gen_composition checks regex pattern. While test_todowrite_is_effect actually runs code (imports and checks Effect.isEffect), and test_typecheck/test_repo_* run subprocesses, the fail-to-pass tests are mostly text-bas"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests cannot be satisfied by stub implementations. test_todowrite_is_effect actually imports and checks that TodoWriteTool is an Effect (not a plain object), requiring real code changes. The text-matching tests require specific patterns in the source that aren't present in the base commit. A no-op or empty implementation would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/opencode as a git repo where solve.sh applies a patch. The agent could potentially read the solve.sh from the solution directory if it exists in the container, or inspect the test file at tests/test_outputs.py to discover exact string patterns to match. The text-based tests (checking for 'yield* Todo.Service', 'Todo.defaultLayer', etc.) make it trivial to game by inserting those exact strings without understanding the actual pattern."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors listed in instruction.md (declares Todo.Service as dependency, yields service inside Effect.gen, ToolRegistry provides Todo.Service, existing tests pass) are tested via test_todowrite_is_effect, test_todowrite_yields_service, test_registry_provides_todo_layer, test_typecheck, and the various repo test runners."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify (packages/opencode/src/tool/todo.ts, packages/opencode/src/tool/registry.ts, packages/opencode/src/session/todo.ts) and specifies exact API names (Tool.defineEffect, Todo.Service, Effect.gen). It also names the specific test files that may need updating. This significantly reduces the localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

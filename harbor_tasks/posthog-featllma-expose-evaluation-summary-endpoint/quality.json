@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key paths (products/llm_analytics/mcp/tools.yaml, products/llm_analytics/skills/README.md, products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md), the tool name (llm-analytics-evaluation-summary-create), schema keys (enabled, title, description, scopes, annotations with readOnly/destructive/idempotent), skill naming (exploring-llm-evaluations), frontmatter fields (name, description), and README section headers (## Skills, ## Adding a new skill). All test asse"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be enabled and what schema to follow, but does not specify exact YAML content values like the title string, description string, specific scopes, or annotation boolean values. The agent must reason about appropriate values for these fields."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests validate schema structure (kebab-case names, required fields exist, frontmatter format) rather than exact field values. Different valid title strings, description strings, scope lists, and annotation boolean combinations would all pass. The skill SKILL.md content beyond frontmatter is unconstrained."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are essentially text/structure inspection: test_yaml_valid_syntax parses YAML but just checks it's a dict with 'tools' key; test_tools_yaml_schema checks field presence in parsed YAML; test_skills_readme_structure does 'assert skill_dir.name in readme_content'; test_existing_skills_have_frontmatter checks string patterns in file content. No test actually invokes an MCP tool, calls an API endpoint, or executes any application behavior. They are all file content inspection tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests require specific structural changes: the evaluation summary tool must be enabled with scopes and annotations (test_tools_yaml_schema), the exploring-llm-evaluations directory must exist with SKILL.md containing frontmatter (test_existing_skills_have_frontmatter, test_existing_skills_valid_structure), and README must reference all skill directories (test_skills_readme_structure). A stub/no-op wouldn't pass since the files don't exist or aren't configured in the base commit."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container at /workspace and contains the exact git checkout command with the commit SHA (30f37cacc13303efa00c346122805352deb049ff) and file paths. An agent could read this file or simply execute it. Additionally, the agent could grep for the expected fixture values in the test file at tests/test_outputs.py."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: tool enablement with schema validation, skill document creation with frontmatter, README updates referencing all skills, and directory structure requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_yaml_valid_syntax, test_tools_yaml_schema, test_skills_readme_structure, etc.), grouped with section comments (Gates, Pass-to-pass repo tests), and each has a docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact YAML schema for both MCP tools (required fields: enabled, title, description, scopes, annotations with readOnly/destructive/idempotent) and skill documents (frontmatter with name and description). All structured data schemas are fully specified."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, tool names, field names, and directory names are consistent between instruction.md and the test file with no typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction identifies files to modify (which is necessary for the task domain) but doesn't specify exact line numbers, exact content to write, or implementation details like specific scope values or description text."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch (solve.sh) checks out exactly 3 files from a specific commit \u2014 it's a localized config edit to tools.yaml, README.md, and a new SKILL.md file. No full-file rewrites or contradictions with other files."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 2
+}

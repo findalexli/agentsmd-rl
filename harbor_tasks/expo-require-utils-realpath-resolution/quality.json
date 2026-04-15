@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the function `toRealDirname`, the variable `basePath`, the use of `fs.realpathSync`, `_nodeModulePaths(basePath)`, ENOENT handling, the file `packages/@expo/require-utils/src/load.ts`, and the `compileModule` function signature \u2014 all of which are checked in the tests. The test for `compileModule` signature (`function compileModule(code: string, filename: string, opts: ModuleOptions)`) is also visible from the example code structure in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides the near-complete implementation of `toRealDirname` and the exact changes to `compileModule` including variable names, error handling logic, and code structure. The 'Example of expected code structure' section essentially gives the solution. A developer doesn't need to reason about what to change \u2014 it's spelled out."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: the exact function name `toRealDirname`, the exact variable name `basePath`, the exact string `_nodeModulePaths(basePath)`, and require `ENOENT` to appear within the `toRealDirname` function with a try block. An alternative correct fix (e.g., using a different function name like `resolveRealDir`, or inlining the logic, or using a different variable name) would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_toRealDirname_exists, test_compileModule_uses_basePath, test_nodeModulePaths_uses_resolved_path, test_realpath_called_before_nodeModulePaths, test_enoent_error_handling) are ALL `assert 'string' in open(path).read()` pattern \u2014 pure text matching with no execution of the actual module resolution behavior. test_package_exports runs a subprocess but is pass-to-pass. No f2p test actually creates a symlink and verifies resolution works."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests are text-matching tests that check for string presence in source code. An agent could simply insert a dead-code comment block containing all required strings (`function toRealDirname`, `fs.realpathSync`, `basePath`, `_nodeModulePaths(basePath)`, `ENOENT`, `try {`) without implementing any actual fix, and all f2p tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/expo (the solve.sh contains the full git diff patch). An agent could read `/solution/solve.sh` or the tests themselves to see exactly what strings to insert. Additionally, since tests are pure text-matching, the agent could grep the test file for the expected strings and insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that symlinked path resolution actually works (the core behavior: resolving symlinks before computing node_modules paths). No test actually creates a symlink and verifies that module resolution succeeds through it. The behavioral requirement is untested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_toRealDirname_exists, test_enoent_error_handling, etc.), have docstrings explaining purpose, and are labeled as 'Fail-to-pass' or 'Pass-to-pass'."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file to modify (`packages/@expo/require-utils/src/load.ts`), provides the exact function name to create (`toRealDirname`), exact variable names (`basePath`), and a near-complete code template. This goes well beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

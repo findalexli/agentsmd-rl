@@ -1,33 +1,32 @@
-# React Compiler Minimization Tool Bug
+# React Compiler Snapshot Minimizer Bug
 
 ## Problem
 
-The React Compiler's snapshot minimization tool (`compiler/packages/snap/src/minimize.ts`) is not correctly preserving error equivalence when minimizing failing test cases. Specifically, the tool compares compiler errors by their `category` and `reason` fields only, but ignores the `description` field. This can cause the minimizer to produce reduced test cases that have different error descriptions than the original, making debugging misleading.
+The React Compiler's snapshot minimizer (in the compiler's `snap` package, run via `yarn snap minimize`) has a bug in how it handles error descriptions during test case reduction. The tool reduces failing compiler test cases to their smallest form that still reproduces the original error, applying simplification strategies iteratively and checking whether the error signature is preserved after each transformation.
+
+The bug manifests in two areas:
+
+1. **Error comparison ignores descriptions.** When the minimizer checks whether a reduced test case still reproduces the original error, its comparison function considers only the `category` and `reason` fields of each error but ignores the `description` field. For example, an error with description `"Cannot call hook inside condition"` and another with description `"Cannot call hook inside loop"` are treated as matching when they share the same category and reason, even though their descriptions differ. This causes the minimizer to accept reduced test cases whose error descriptions differ from the original.
+
+2. **Description is not preserved through the pipeline.** The `description` field is absent from the minimizer's error type definitions, is not carried through when error details are extracted and mapped for comparison, and is not checked during the error equivalence comparison. The field is silently dropped at every stage of the error-handling pipeline.
+
+Additionally, the minimizer is missing reduction strategies for three common AST patterns.
 
 ## Expected Behavior
 
-The minimization tool should consider `description` as part of error identity when determining if two errors "match" during the reduction process. Additionally, the minimizer should support more aggressive reduction strategies for function parameters and destructuring patterns (both array and object patterns).
+After the fix:
 
-## Files to Modify
+1. **Full error comparison.** Two errors should be considered equivalent only when they match on `category`, `reason`, AND `description`. For example, an error with description `"Cannot call hook inside condition"` must NOT match an error with description `"Cannot call hook inside loop"`, even if category and reason are identical.
 
-- `compiler/packages/snap/src/minimize.ts`
+2. **Description preserved end-to-end.** The `description` field (typed as `string | null`) must be included in the minimizer's error type definitions — it should appear as a typed property in at least two separate type annotations (one for the top-level error collection type, and one for the individual error detail type). When error details are mapped to error objects for comparison, each mapped error must explicitly carry over the `description` value from its source detail. The error equivalence comparison must also check the `description` field.
 
-## Key Areas to Update
+3. **Three new generator strategies.** Three new simplification strategies must be implemented as generator functions and registered in the `simplificationStrategies` array alongside existing ones (e.g., `removeStatements`, `removeCallArguments`). The strategies must be named exactly:
+   - `removeFunctionParameters` — yields ASTs with function parameters removed one at a time
+   - `removeArrayPatternElements` — yields ASTs with array destructuring pattern elements removed one at a time
+   - `removeObjectPatternProperties` — yields ASTs with object destructuring pattern properties removed one at a time
 
-1. **Error type definitions**: The `CompileErrors` type and `error.details` type need to include `description` as a `string | null` field
-2. **Error extraction**: When mapping error details, the `description` field should be preserved
-3. **Error comparison**: The `errorsMatch` function needs to compare the `description` field in addition to `category` and `reason`
-4. **New minimization strategies**: Add generators for removing function parameters, array pattern elements, and object pattern properties
+   These should follow the same implementation pattern as existing strategies in the minimizer.
 
-## Background on the Minimizer
+## Context
 
-The snapshot minimizer (`yarn snap minimize`) reduces failing compiler test cases to their smallest form that still reproduces the original error. It works by applying various simplification strategies iteratively, checking if the error signature remains the same after each transformation.
-
-The existing strategies include removing statements, call arguments, array elements, object properties, JSX attributes, etc. The fix should add three new strategies to handle function parameters and destructuring patterns.
-
-## Output
-
-After the fix, the minimizer should:
-- Preserve `description` when extracting error details
-- Only accept minimized versions that match the original error including description
-- Support additional reduction strategies for function parameters and destructuring
+The relevant code is in the compiler's `snap` package. Existing strategies follow the naming pattern `remove<Structure>` (e.g., `removeStatements`, `removeCallArguments`, `removeArrayElements`, `removeObjectProperties`, `removeJSXAttributes`).

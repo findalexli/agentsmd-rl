@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:59:56.577756",
-  "total_time": 869.83,
-  "sandbox_id": "iah7w9sd7ban32hapr576",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:16:03.863004",
+  "total_time": 1159.67,
+  "sandbox_id": "iav62179wimhmwo2khhgq",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,29 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.86,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:60: test `test_syntax` has 1 assert(s), all pass on a stub impl (is no', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: \".[quality]\", 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.53,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15317.09,
-      "at": "2026-04-09T13:27:09.415498"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +112,14 @@
       "backend": "fireworks",
       "time": 869.83,
       "at": "2026-04-12T05:59:56.577756"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1159.67,
+      "at": "2026-04-15T06:16:03.863004"
     }
   ]
 }

@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T11:50:19.871151",
-  "total_time": 2182.93,
-  "sandbox_id": "i04orobkpbpvmuoshgx4p",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "validated_at": "2026-04-15T05:05:26.220069",
+  "total_time": 2498.92,
+  "sandbox_id": "i6870368dgi5lzfxaso5u",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -49,6 +50,27 @@
       "backend": "fireworks",
       "time": 9.41,
       "notes": "ICR=1.00"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.62,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:6', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:206: test `test_script_param_defaults` only reads file text; ', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:236: test `test_script_validate_set_has_new_categories` only ', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:262: test `test_script_new_functions_and_fields` only reads f', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:297: test `test_script_default_mode_logic` only reads file te']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 29.49,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 3,
+      "fail_count": 8
     }
   },
   "history": [
@@ -83,6 +105,14 @@
       "backend": "fireworks",
       "time": 2182.93,
       "at": "2026-04-10T11:50:19.871151"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2498.92,
+      "at": "2026-04-15T05:05:26.220069"
     }
   ]
 }

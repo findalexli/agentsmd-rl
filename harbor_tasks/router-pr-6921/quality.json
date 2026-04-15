@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key identifiers tested: LoaderStaleReloadMode (exported from index.ts), RouteLoaderObject (in route.ts), defaultStaleReloadMode (in router.ts), object-form loader syntax, and the files to modify (load-matches.ts, route.ts, router.ts, index.ts). The test for 'shouldReloadInBackground' and 'routeLoader?.handler' are implementation-specific variable names not mentioned in the instruction, but the instruction does describe the blocking vs background behavior and object-form"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired feature behavior and which files to modify, but does not specify exact code changes, line numbers, or specific variable names like 'shouldReloadInBackground'. It describes what to build, not how to build it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. An alternative correct implementation using different variable names (e.g., 'isBackgroundReload', 'loaderConfig?.handler', 'loader.handler') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are almost entirely grep-based text searches (test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep). Only the pass-to-pass tests actually build/execute code. No f2p test imports, calls, or executes the implemented code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests can be satisfied by simply adding the grepped strings as comments or dead code. For example, adding '// LoaderStaleReloadMode' to index.ts, '// RouteLoaderObject' to route.ts, '// defaultStaleReloadMode' to router.ts, '// routeLoader?.handler shouldReloadInBackground blocking' to load-matches.ts would pass all f2p tests without implementing any actual feature."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router's solve.sh which references a specific merge commit (6f297a249424c0fd1c1a56aa4fc12c8217be7b6a) and downloads files from GitHub. The agent could read solution/solve.sh to get the exact commit and files. Additionally, since f2p tests are pure grep checks, the agent could trivially pass by inserting the expected strings as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that 'Navigation waits for stale loader reloads to complete before resolving' in blocking mode, but no test actually verifies this runtime blocking behavior. Tests only check for string presence in source files, not actual blocking vs background behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections with descriptive function names and comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves adding TypeScript types and behavior to a router library, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to modify which is appropriate for a feature implementation task. It doesn't specify exact line numbers or precise code changes, only the files and concepts."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code implementation task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

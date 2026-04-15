@@ -19,8 +19,8 @@ output_tensors = [torch.empty(5, 3), torch.empty(4, 3)]  # uneven sizes
 dist.all_gather(output_tensors, input_tensor)  # CRASH: shape mismatch in copy_
 ```
 
-The operation should succeed without error. Output tensors whose first dimension matches the input should be filled with the input data. Output tensors with mismatched first dimensions should be left unchanged (skipped).
+The operation should succeed without error.
 
-## Files to Modify
+## Required Fix
 
-- `torch/csrc/distributed/c10d/FakeProcessGroup.hpp`
+The allgather method loops over `outputTensors[0]` and calls `copy_` on each tensor. To handle tensors with mismatched first-dimension sizes, the loop body must guard the `copy_` call with a size comparison on the first dimension. If the sizes don't match, execution should continue to the next tensor without attempting the copy.

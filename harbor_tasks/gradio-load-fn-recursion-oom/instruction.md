@@ -14,13 +14,13 @@ result = demo("Some text to summarize")
 # -> RecursionError: maximum recursion depth exceeded
 ```
 
-## Relevant Files
-
-- `gradio/external.py` — The `from_model()` function constructs an inference wrapper and then builds a `gr.Interface` from it. The wrapper closure captures a variable from its enclosing scope, but that variable gets reassigned later in the same scope, causing the closure to call itself recursively.
-
-- `gradio/external_utils.py` — The `handle_hf_error()` function doesn't handle `StopIteration` exceptions (raised when no inference provider supports the model). It also produces empty error messages when an exception has no string representation.
-
 ## Expected Behavior
 
 - `gr.load()` should return a working `gr.Interface` that correctly delegates to the HuggingFace inference endpoint without recursion.
-- Error messages from unsupported models should be informative, not empty strings.
+- The code should include a `kwargs.pop("fn", ...)` pattern to extract a function from keyword arguments.
+- Error handling must satisfy all of the following:
+  - `StopIteration` exceptions must be caught and converted to informative error messages (not leaked through).
+  - Error messages for exceptions with no string representation (e.g., bare `Exception()`, `RuntimeError()`, `ValueError()`, `OSError()`) must be non-empty and contain the exception type name.
+  - The error handler should contain at least 2 if-branches and at least 3 raise statements.
+  - Errors containing "401" or "You must provide an api_key" must produce messages matching the regex `(?i)(unauthorized|signed in)`.
+  - HTTP 429 errors must raise a `TooManyRequestsError`.

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:44:32.695244",
-  "total_time": 1456.09,
-  "sandbox_id": "iydd257e15q4mlngh2xpa",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:23:00.375957",
+  "total_time": 1288.15,
+  "sandbox_id": "i7dmhyp011m0yzrrnt4t5",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -63,17 +65,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pytest, ruff', 'B:[B] pinned_dependencies @ environment/Dockerfile:29: unpinned pip deps: msgspec, loguru, tomli, tomli-w, pydantic']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.77,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6326.21,
-      "at": "2026-04-09T23:44:34.289959"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -105,6 +119,14 @@
       "backend": "fireworks",
       "time": 1456.09,
       "at": "2026-04-12T05:44:32.695244"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1288.15,
+      "at": "2026-04-15T05:23:00.375957"
     }
   ]
 }

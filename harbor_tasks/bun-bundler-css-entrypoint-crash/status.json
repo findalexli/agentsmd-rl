@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T19:12:24.252159",
-  "total_time": 1452.97,
-  "sandbox_id": "ipgq6r1kkq7hg966p3591",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:34:22.565318",
+  "total_time": 636.38,
+  "sandbox_id": "ideqf6cgk6vcaoftorkwv",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -55,17 +57,29 @@
       "quality_verdict": "",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:323: test `test_repo_json_valid` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:379: test `test_prettierrc_valid` has 1 assert(s), all pass on a stub ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.07,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 764.41,
-      "at": "2026-04-09T20:31:13.100528"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -96,6 +110,14 @@
       "backend": "fireworks",
       "time": 1452.97,
       "at": "2026-04-11T19:12:24.252159"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 636.38,
+      "at": "2026-04-15T03:34:22.565318"
     }
   ]
 }

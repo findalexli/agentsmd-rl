@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:13:56.363909",
-  "total_time": 2466.03,
-  "sandbox_id": "iq0269uke16jllfk45wse",
+  "validated_at": "2026-04-15T03:26:05.112240",
+  "total_time": 753.06,
+  "sandbox_id": "i8d92l98wi2zlg29fxad1",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -50,17 +52,27 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.31,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:501: test `test_no_bare_print` has 1 assert(s), all pass on a stub imp', 'A:[A] test_not_tautological @ tests/test_outputs.py:672: test `test_repo_precommit_nbstripout` has 1 assert(s), all pass o', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 29.34,
+      "tier_a_fails": [
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 412.08,
-      "at": "2026-04-09T20:25:25:20.800181"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -91,6 +103,14 @@
       "backend": "fireworks",
       "time": 2466.03,
       "at": "2026-04-11T18:13:56.363909"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 753.06,
+      "at": "2026-04-15T03:26:05.112240"
     }
   ]
 }

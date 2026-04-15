@@ -6,24 +6,31 @@ The `docker/patch/latest/sglang.patch` file contains patches applied to sglang d
 
 ## Problem
 
-When running Qwen3.5 **dense** (non-MoE) models with `TP_SIZE > 1`, the model produces incorrect results due to a precision bug in the forward pass of both `Qwen3_5LinearDecoderLayer` and `Qwen3_5AttentionDecoderLayer`.
+When running Qwen3.5 **dense** (non-MoE) models with `TP_SIZE > 1`, the model produces incorrect numerical results due to a bug in how allreduce communication is handled in the forward pass of `Qwen3_5LinearDecoderLayer` and `Qwen3_5AttentionDecoderLayer`.
 
-The issue is in how the MLP output and allreduce communication are handled in the `forward` methods of these two decoder layer classes. Currently, both classes unconditionally call `self.mlp(hidden_states, forward_batch, use_reduce_scatter)` and then immediately run `self.layer_communicator.postprocess_layer(...)`. This calling convention is correct for MoE layers (`Qwen2MoeSparseMoeBlock`) but wrong for dense MLP layers.
+The issue is that dense MLP layers and MoE layers have different communication requirements during the MLP forward pass. Currently, both layer types unconditionally call the MLP and then immediately run `postprocess_layer`, without checking whether the MLP is dense (which requires special allreduce fusion handling) or MoE (which uses a different path).
 
-Dense MLP layers need to:
-1. Check whether allreduce fusion with the next layer should be used (via `self.layer_communicator.should_fuse_mlp_allreduce_with_next_layer`)
-2. Call the MLP with the fusion flag instead of `forward_batch`
-3. Conditionally skip `postprocess_layer` when fusion is active (setting `_sglang_needs_allreduce_fusion` on the tensor instead)
+## Expected Behavior
 
-Additionally, the `allow_allreduce_fusion=True` parameter is missing from the `LayerCommunicator` initialization in both decoder classes' `__init__` methods.
+After the fix, both `Qwen3_5LinearDecoderLayer` and `Qwen3_5AttentionDecoderLayer` should:
+
+1. Correctly distinguish between dense MLP layers and MoE layers during the forward pass
+2. For dense MLP layers: use allreduce fusion with the next layer when tensor parallelism is enabled
+3. For MoE layers: maintain the existing calling convention
+4. Produce correct numerical results when using tensor parallelism with dense Qwen3.5 models
 
 ## Files to modify
 
 - `docker/patch/latest/sglang.patch` — the patch hunks targeting `python/sglang/srt/models/qwen3_5.py`
 
-## Expected behavior
+## Required changes
 
-After the fix, both `Qwen3_5LinearDecoderLayer` and `Qwen3_5AttentionDecoderLayer` should:
-- Pass `allow_allreduce_fusion=True` to the layer communicator in `__init__`
-- In `forward`, branch on whether the MLP is a MoE block (`isinstance(self.mlp, Qwen2MoeSparseMoeBlock)`) — if so, use the existing calling convention; if dense, use the allreduce fusion path
-- Produce correct numerical results when using tensor parallelism with dense Qwen3.5 models
+Both `Qwen3_5LinearDecoderLayer` and `Qwen3_5AttentionDecoderLayer` must be fixed:
+
+- In the `__init__` method, pass the appropriate parameters to enable allreduce fusion in the LayerCommunicator
+- In the `forward` method:
+  - Check the layer communicator to determine whether allreduce fusion with the next layer should be used
+  - Branch based on whether the MLP is a MoE block or dense
+  - For dense MLPs, call the MLP with the fusion flag instead of the batch parameter
+  - When fusion is active, mark the hidden states tensor appropriately and skip the regular postprocessing
+  - When fusion is not active, proceed with the normal postprocess_layer call

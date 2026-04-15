@@ -18,19 +18,27 @@ This creates a security bypass scenario:
 2. The awk executable path gets persisted to the allowlist
 3. Later, `awk 'BEGIN{system("rm -rf /")}'` is auto-approved because `awk` is on the allowlist
 
-## Affected Files
-
-- `src/infra/exec-inline-eval.ts` — Contains `detectInterpreterInlineEvalArgv()` which identifies interpreters with inline code execution, and `isInterpreterLikeAllowlistPattern()` which checks if an executable path is an interpreter. Neither handles the awk family.
-- `src/infra/exec-approvals-allowlist.ts` — Contains `collectAllowAlwaysPatterns()` which decides what to persist. It needs to filter out awk interpreters using the detection from `exec-inline-eval.ts`.
-
 ## Expected Behavior
 
-1. `detectInterpreterInlineEvalArgv` should detect awk inline programs passed as positional arguments (but NOT flag-based file references like `awk -f script.awk`)
-2. `isInterpreterLikeAllowlistPattern` should recognize awk/gawk/mawk/nawk executable paths as interpreter-like
-3. `collectAllowAlwaysPatterns` should not persist awk-family executable paths to the allow-always list
+1. **Inline program detection** — The system must detect when awk/gawk/mawk/nawk is invoked with an inline program passed as a positional argument (not via `-f`/`--file`). Value flags like `-F` (field separator), `-v` (variable assignment), `-i`, `-l`, `-W` and their long-form equivalents should be skipped when scanning for the positional program argument. The `--` double-dash separator marks the end of options; anything after it should be treated as a positional argument.
 
-## Notes
+2. **Interpreter recognition** — Awk-family executables must be recognized as interpreter-like, so they are not persisted to the allow-always allowlist. This includes bare names (`awk`, `gawk`, `mawk`, `nawk`) and paths (e.g., `/usr/bin/awk`, `/usr/local/bin/awk`). Wildcard patterns like `**/gawk` should also be recognized.
 
-- awk uses `-f` / `--file` to specify a script file — this is NOT inline eval and should not be flagged
-- awk also accepts value flags like `-F` (field separator), `-v` (variable assignment) that take arguments and should be skipped when scanning for the positional program argument
-- The existing interpreter detection uses a flag-based approach (looking for `-c`, `-e`, `--eval`); awk needs a different strategy since the program is positional
+3. **Allowlist filtering** — The allow-always persist logic must not store awk-family executable paths.
+
+### Return Value Schema
+
+`detectInterpreterInlineEvalArgv` returns a hit object (a dictionary) with these keys:
+- `executable` (string): the executable name as invoked
+- `normalizedExecutable` (string): normalized lowercase executable name
+- `flag` (string): for flag-based interpreters this is the flag (e.g., `-c`); for awk-style positional programs this is the literal string `'<program>'`
+- `argv` (array): the full argument vector
+
+When the hit describes an awk inline program, `describeInterpreterInlineEval` returns a string in the format `'<variant> inline program'`, e.g., `"awk inline program"`, `"gawk inline program"`.
+
+### Edge Cases
+
+- `awk -f script.awk` is file-based execution, NOT inline eval — must NOT be detected
+- `awk -F "," '{print $1}' data.csv` — the `-F ","` value flag should be skipped; the positional `{print $1}` is the inline program
+- `awk -- '{print $1}'` — the `--` separator means `{print $1}` is a positional program
+- `awk --` with nothing following — should NOT detect anything (no inline program present)

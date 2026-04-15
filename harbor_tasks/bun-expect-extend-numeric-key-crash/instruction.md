@@ -15,10 +15,21 @@ Running this code crashes the process.
 
 ## Details
 
-In `src/bun.js/test/expect.zig`, the `expect.extend` implementation iterates over the matchers object and registers each property. The current property-setting method asserts that the property name is not a valid array index, but numeric keys like `1073741820` are valid array indices, causing the assertion to fail.
+In `src/bun.js/test/expect.zig`, the `expect.extend` implementation iterates over the matchers object and registers each custom matcher. Registration sets properties on three target objects within the `extend` function:
 
-The property iterator needs to be configured to skip index properties, or the property-setting calls need to use a method that can handle index properties.
+- `expect_proto`
+- `expect_constructor`
+- `expect_static_proto`
+
+The current registration uses `.put()` calls on each target. This method internally asserts the property name is not a valid array index. When a matcher object contains numeric keys like `1073741820`, the assertion fails and the process crashes.
+
+The `extend` function body must also continue to:
+- Create wrapper functions via `Bun__JSWrappingFunction__create`
+- Set up the `applyCustomMatcher` callback
+- Iterate over matcher properties
+
+The fix must update property registration on all three targets to handle index properties safely, either by skipping index properties during iteration or by using a property-setting approach that supports index keys.
 
 ## Relevant files
 
-- `src/bun.js/test/expect.zig` — the `expect.extend` registration logic (look for the property iteration loop around the `JSPropertyIterator`)
+- `src/bun.js/test/expect.zig` — the `expect.extend` registration logic

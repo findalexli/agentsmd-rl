@@ -6,23 +6,13 @@ When debugging a failing Playwright test, developers currently have to set `PWPA
 
 ## What Needs to Change
 
-When the environment variable `PWPAUSE` is set to the string `cli` (not just any truthy value), the test runner should:
+When the environment variable `PWPAUSE` is set to the string `cli`, the test runner should:
 
 1. **Not treat it as the old pause mode** — the existing `PWPAUSE` (truthy) behavior should still work for non-`cli` values, but `PWPAUSE=cli` should NOT set `pause: true` or force `headless: false`.
-2. **Set appropriate timeouts** — `PWPAUSE=cli` should set the test timeout to 0 (infinite) and a short action timeout (e.g., 5 seconds) so the test pauses on failure but individual actions fail quickly.
-3. **Start a daemon server** — After the test function finishes (on error or completion), expose the browser context as a `playwright-cli` daemon session so the CLI can connect to it and inspect the page.
-4. **Support multiple callbacks** — The `_onDidFinishTestFunctionCallback` mechanism currently only supports a single callback. It needs to support multiple callbacks (e.g., a Set) so both the artifacts recorder and the new daemon launcher can register.
-5. **Export necessary utilities** — The `decorateServer` function in `network.ts` and `sessionConfigFromArgs` in `cli/client/program.ts` need to be exported so the new daemon integration can use them.
-
-## Files to Look At
-
-- `packages/playwright/src/program.ts` — CLI override logic for PWPAUSE handling
-- `packages/playwright/src/worker/testInfo.ts` — TestInfoImpl class with finish callback
-- `packages/playwright/src/mcp/test/browserBackend.ts` — where the daemon launch function should be added
-- `packages/playwright/src/cli/daemon/daemon.ts` — daemon server that needs a `noShutdown` option
-- `packages/playwright/src/index.ts` — test fixture wiring
-- `packages/playwright-core/src/server/utils/network.ts` — `decorateServer` function
-- `packages/playwright/src/cli/client/program.ts` — `sessionConfigFromArgs` function
+2. **Set appropriate timeouts** — `PWPAUSE=cli` should set the test timeout to 0 (infinite) and a short action timeout so the test pauses on failure but individual actions fail quickly.
+3. **Start a daemon server after the test finishes** — After the test function finishes (on error or completion), expose the browser context as a `playwright-cli` daemon session so the CLI can connect to it and inspect the page. The daemon should remain running until the test run is explicitly stopped.
+4. **Support multiple finish handlers** — The current callback mechanism for when a test finishes only supports a single handler. It needs to support multiple handlers so that both the artifacts recorder and the new daemon launcher can be notified.
+5. **Expose internal utilities** — Some internal functions used by the daemon server and CLI client configuration need to be made accessible from other packages.
 
 ## Agent Config Update
 

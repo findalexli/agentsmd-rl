@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both files (MountCustomComponent.svelte, MountComponents.svelte), the specific issues (onDestroy vs $effect cleanup, umount typo, $inspect debug call, module-level comp variable preventing re-triggering), and the expected behavior. All test assertions check for concepts explicitly described in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details: 'cleanup is handled via onDestroy instead of returning a cleanup function from $effect', 'runtime type uses umount instead of unmount', 'module-level variable that prevents it from re-triggering', and 'stale $inspect(node) debug call'. These are not just descriptions of what's broken but prescribe the exact code changes needed (replace onDestroy with $effect return, fix umount->unmount, remove module-level guard variable, remove $inspect)"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation patterns: test_effect_returns_cleanup checks for 'return () =>' literal string and '.unmount(' and absence of 'onDestroy'; test_effect_remounts_on_rerun checks for absence of 'let comp' and '&& !comp'. An alternative correct fix using different variable names or a different cleanup pattern (e.g., using a different unmount approach or naming conventions) would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All four fail-to-pass tests (test_effect_returns_cleanup, test_effect_remounts_on_rerun, test_no_inspect_debug, test_unmount_spelling) exclusively use string/regex matching on file contents (e.g., 'assert \"onDestroy\" not in content', 'assert \"return () =>\" in content'). None import, compile, or execute the Svelte components to verify actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The original (buggy) files contain 'onDestroy', 'umount', '$inspect', and 'let comp' / '&& !comp' patterns. A stub or the unmodified file would fail these tests since they check for the absence of old patterns and presence of new ones. The tests require actual meaningful changes to the files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/gradio as a git repo, and solve.sh with the exact patch is in /solution/solve.sh. An agent could read the solution file directly. Additionally, since tests are pure text-matching, the agent could grep test files or the solution to find exact expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behaviors listed in 'Expected Behavior' are tested: re-mounting on reload (test_effect_remounts_on_rerun), proper unmounting via cleanup (test_effect_returns_cleanup), unmount spelling (test_unmount_spelling), and no $inspect calls (test_no_inspect_debug)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Svelte component code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's 'Root Cause' section names exact implementation details: 'module-level variable', 'onDestroy instead of returning a cleanup function from $effect', 'umount instead of unmount', and '$inspect(node)'. These go beyond describing symptoms and effectively prescribe the exact code changes, making localization and reasoning trivial."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Svelte component files, not configuration editing."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

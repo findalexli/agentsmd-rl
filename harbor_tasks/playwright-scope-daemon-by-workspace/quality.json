@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all relevant file paths (program.ts, commands.ts, SKILL.md, session-management.md), function names (findWorkspaceDir, createClientInfo, daemonProfilesDir, daemonSocketPath), variable names (workspaceDirHash, installationDirHash), command names (session-kill-all, install, install-browser, install-skills), string literals (.playwright/cli.config.json, 'Open the browser', 'Close the browser'), and structural changes that the tests assert on. Each test's asserted specifics a"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact changes like 'Replace installationDir and installationDirHash with workspaceDir and workspaceDirHash in ClientInfo type', 'Rename kill-all command to session-kill-all', 'Update default config file path from playwright-cli.json to .playwright/cli.config.json', and 'Update open command description to \"Open the browser\"'. These are not descriptions of what's broken but exact prescriptions of what to change to what."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'function findWorkspaceDir' (test_find_workspace_dir_function_exists), exact string 'path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash)' (test_daemon_profiles_dir_scoped), exact string 'if (args.skills)' (test_install_function_handles_skills_flag), exact string 'description: \\'Open the browser\\'' (test_open_description_updated). An alternative correct implementation using different variable names or code struc"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads file content and asserts on string presence (e.g., 'assert \"workspaceDirHash\" in content', 'assert \"function findWorkspaceDir\" in content'). The only behavioral test (test_typescript_syntax_valid) runs tsc but only checks for syntax errors. No test actually executes the CLI, imports modules, or verifies runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings that don't exist in the original codebase (e.g., 'workspaceDirHash', 'function findWorkspaceDir', 'session-kill-all', '.playwright/cli.config.json'). A stub or unchanged file would fail these assertions, so the agent must actually make code changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright's solution/solve.sh path (or wherever mounted), and the tests only check file content via string matching. An agent could read the test file at tests/test_outputs.py to discover exact expected strings, or read solution/solve.sh to get the exact patch. The tests are pure text-matching so the agent could just write the expected strings without understanding the code."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires '.playwright folder creation during install command' and 'isolate sessions between different workspaces', but no test verifies actual .playwright folder creation or session isolation behavior. test_close_description_updated has a syntax error (mismatched brackets in slice) and would likely fail or not test properly."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_workspace_dir_hash_used, test_find_workspace_dir_function_exists, etc.), have docstrings explaining what they check, and are logically grouped by concern (type changes, function existence, command restructuring, documentation updates)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code and documentation changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "test_close_description_updated has a Python syntax error: 'close_section = content[content.find(\"const close = declareCommand\"):content[content.find(\"const close = declareCommand\") + 300]' uses incorrect bracket nesting (content[...] inside a slice), which would cause a runtime error."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact function names to create/modify (findWorkspaceDir, createClientInfo, daemonProfilesDir, daemonSocketPath), exact type field replacements (installationDir -> workspaceDir), exact command renames, and exact string values. This goes far beyond identifying the problem area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-change task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "no_typos",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

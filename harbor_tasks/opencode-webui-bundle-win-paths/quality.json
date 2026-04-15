@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md never names the target file 'packages/opencode/script/build.ts' or the function 'createEmbeddedWebUIBundle' \u2014 tests extract and assert on this exact function name and file path. Also, specific AGENTS.md line numbers (70, 17, 13, 12, 84, 15) are referenced in tests but instruction.md only paraphrases the rules without citing line numbers. The test dist file paths (index.html, assets/style.css, assets/sub/deep.js, assets/logo.png) are not mentioned in the instruction. An agent readi"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (backslash paths, absolute imports, non-deterministic order) and what properties the fix should have, but does not prescribe the exact code change, line numbers, or specific implementation approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_backslash_normalization checks for specific pattern strings like 'replaceAll', 'split(\"\\\\\")', 'path.posix.', or specific helper function names ('toForwardSlash', 'normalizePath', 'normalizeSlash'). An alternative correct fix using a different approach (e.g., a regex replace with a different pattern, or using URL/posix APIs differently) might not match any of these patterns and would fail the test. The instruction does list acceptable approaches, but the regex patterns in the test are strict"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests actually execute the function via `bun run` subprocess (_run_bundle_function), parse its output, and verify behavioral properties (relative imports, sorted keys, all files present, valid module structure). While some tests are AST-only (checking source patterns), the core behavioral tests do execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_import_specifiers_relative, test_export_keys_sorted, test_backslash_normalization) cannot be satisfied by a stub. A stub returning empty string would fail the assert on number of imports >= 2, number of keys >= 2, and the source code pattern check. The test_not_stub check also ensures >= 5 meaningful lines."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/opencode with solve.sh containing the exact gold patch. An agent could read solution/solve.sh (if accessible in the container) or simply run `cat /solution/solve.sh` to obtain the exact fix. The Dockerfile doesn't appear to remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from instruction.md are tested: forward slashes (test_backslash_normalization + import/export checks), relative imports (test_import_specifiers_relative), sorted output (test_export_keys_sorted), all files present (test_all_dist_files_present), valid module structure (test_valid_module_structure). Coding style rules are also tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config-derived), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a TypeScript module string, not structured data like JSON/CSV/API/DB. The output format is described in instruction.md in terms of required properties."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md does not name the exact file or function. It describes the problem domain (build script, web UI bundle) without specifying 'packages/opencode/script/build.ts' or 'createEmbeddedWebUIBundle'. The agent must locate the relevant code themselves."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

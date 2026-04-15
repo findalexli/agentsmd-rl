@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path `packages/react-devtools-extensions/src/contentScripts/reactBuildType.js`, both exported function names (`reduceReactBuild`, `createReactRendererListener`), all five `ReactBuildType` literal values, the `types.js` export location, the `installHook.js` integration requirement, the `postMessage` payload structure (`type: 'react-renderer-attached'`, `reactBuildType`), and the priority rules. All asserted specifics in the tests (file paths, function names, b"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies the exact implementation logic: `reduceReactBuild(null, x)` returns `x`, `reduceReactBuild('production', x)` returns `x` for non-production, `reduceReactBuild(x, 'production')` returns `x` when non-production, and `reduceReactBuild(x, y)` returns the worse build type. It also specifies `createReactRendererListener` must maintain internal state, call `window.postMessage` with exact payload structure. It prescribes exact function signatures, exact file to creat"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific function names (`reduceReactBuild`, `createReactRendererListener`), specific file path, and specific export structure. An alternative correct fix (e.g., a single function with different name, or a class-based approach, or integrating the logic directly in installHook.js without a separate file) would fail the tests even if it correctly implements the priority behavior. The tests also check `w1.msgs` accessing `m.payload.reactBuildType` with exact payload structure, thoug"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests use `subprocess.run(['node', '-e', test_code])` to actually execute the JavaScript code, calling `reduceReactBuild` and `createReactRendererListener` with various inputs and checking return values/behavior. While `test_new_reactbuildtype_file_exists` does check for string presence, it also executes the code behaviorally. The pass-to-pass tests run Flow, ESLint, and other tooling via subprocess."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check specific behavioral outcomes: `reduceReactBuild('production', 'development')` must return `'development'`, `reduceReactBuild('development', 'production')` must return `'development'`, listener state must persist across calls. A stub returning a default value (e.g., always returning `null` or `'production'`) would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is present at `/workspace/react` accessible path through the solve.sh script (hidden but the Dockerfile doesn't remove it). More critically, the test file itself at `tests/test_outputs.py` contains complete behavioral specifications that could be read. However, the instructions say the agent sees ONLY instruction.md. The `/solution/solve.sh` file exists in the container and could potentially be read by the agent to get the exact gold patch."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: reduceReactBuild priority logic (null case, production override, non-production preservation, non-production upgrade), createReactRendererListener state management, independent listener instances, installHook.js integration (via ESLint/Flow checks), and ReactBuildType export in types.js."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (e.g., `test_reduce_react_build_worst_build_wins`, `test_listener_maintains_state_across_renderers`), clear docstrings, and comments separating 'Gates (pass_to_pass)' from 'Fail-to-pass (pr_diff)' sections."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact postMessage payload structure (`type: 'react-renderer-attached'`, `reactBuildType`) and the `ReactBuildType` union type with all five literal values."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and type names in the instruction match those used in the tests and solution. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact new file to create (`packages/react-devtools-extensions/src/contentScripts/reactBuildType.js`), exact function signatures, exact integration point in `installHook.js` ('The old inline postMessage... must be replaced by the factory'), and the exact type export location in `types.js`. This goes well beyond describing the bug domain and effectively prescribes the entire solution structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

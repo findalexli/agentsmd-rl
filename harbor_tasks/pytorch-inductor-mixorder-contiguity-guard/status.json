@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:22:13.829559",
-  "total_time": 1862.49,
-  "sandbox_id": "ieukp424hzhihatib65ew",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:21:08.921234",
+  "total_time": 687.84,
+  "sandbox_id": "i1kda0izya1v0k683o4rb",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -67,17 +69,27 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.5,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] test_not_tautological @ tests/test_outputs.py:272: test `test_both_contiguous_fusion_allowed` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:284: test `test_noncontiguous_node1_contiguous_node2_allowed` has 1 as', 'A:[A] test_not_tautological @ tests/test_outputs.py:296: test `test_both_noncontiguous_allowed` has 1 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:387: test `test_repo_inductor_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.04,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 328.5,
-      "at": "2026-04-09T15:03:20.008270"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -109,6 +121,14 @@
       "backend": "fireworks",
       "time": 1862.49,
       "at": "2026-04-12T06:22:13.829559"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 687.84,
+      "at": "2026-04-15T05:21:08.921234"
     }
   ]
 }

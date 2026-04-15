@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:57:29.664614",
-  "total_time": 4212.48,
-  "sandbox_id": "i7oi3gfqk5hc6idw4syaw",
+  "validated_at": "2026-04-15T05:17:15.106258",
+  "total_time": 1903.4,
+  "sandbox_id": "imbuknmoes7as9lpoybg7",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -60,17 +62,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.42,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:118: test `test_repo_service_py_syntax` has 1 assert(s), all pass on a', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: fastapi, pydantic, pytest, pytest-asyncio, httpx', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.04,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 205.98,
-      "at": "2026-04-09T15:01:17.451610"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -102,6 +116,14 @@
       "backend": "fireworks",
       "time": 4212.48,
       "at": "2026-04-12T03:57:29.664614"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1903.4,
+      "at": "2026-04-15T05:17:15.106258"
     }
   ]
 }

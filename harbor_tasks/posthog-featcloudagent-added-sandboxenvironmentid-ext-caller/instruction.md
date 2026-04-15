@@ -4,14 +4,27 @@
 
 The `Task.create_and_run()` method in `products/tasks/backend/models.py` does not accept a `sandbox_environment_id` parameter. This means callers outside the internal agent-server flow cannot apply network restrictions (sandbox environments) when spawning tasks. The feature is tightly coupled to internal ph-code logic and unavailable to external products.
 
-## Expected Behavior
+## Required Implementation
 
-The `create_and_run()` method should accept an optional `sandbox_environment_id` parameter. When provided, it should:
-1. Validate that the `SandboxEnvironment` exists and belongs to the correct team
-2. Raise a descriptive `ValueError` if the ID is invalid
-3. Store the environment ID in the task run's `extra_state` so downstream workflows can enforce network restrictions
+Modify `products/tasks/backend/models.py` in the `Task.create_and_run()` method to accept an optional `sandbox_environment_id` parameter with type `str | None` and default value `None` as a keyword-only argument.
 
-After updating the code, the relevant engineering documentation should be updated to reflect this new capability. The handbook doc at `docs/published/handbook/engineering/ai/sandboxed-agents.md` should document the new parameter in the parameters table and include a usage example showing how external callers can create a `SandboxEnvironment` and pass its ID to `create_and_run`.
+When `sandbox_environment_id` is provided, the implementation must:
+
+1. **Validate the SandboxEnvironment exists and belongs to the team**: Look up the environment using `SandboxEnvironment.objects.filter(id=sandbox_environment_id, team=team)`. Assign the query result to a variable named `sandbox_env`. Use the `.first()` method on the queryset to retrieve the environment.
+
+2. **Raise ValueError with specific message**: If the lookup returns `None` (environment not found), raise a `ValueError` with the exact message: `Invalid sandbox_environment_id: {sandbox_environment_id}`
+
+3. **Store in extra_state**: Before storing, ensure `extra_state` is initialized using the pattern `extra_state = extra_state or {}`. Store the sandbox environment ID in `extra_state` using bracket notation with the key `'sandbox_environment_id'` and the value `str(sandbox_env.id)`.
+
+## Documentation Update
+
+After updating the code, update `docs/published/handbook/engineering/ai/sandboxed-agents.md`:
+
+1. Add `sandbox_environment_id` to the Parameters table, documenting it as an optional string parameter that accepts a `SandboxEnvironment` ID
+2. Include a usage example showing:
+   - Creating a `SandboxEnvironment` with `SandboxEnvironment.objects.create()`
+   - Configuring `network_access_level` and `allowed_domains`
+   - Passing `sandbox_environment_id=str(env.id)` to `create_and_run()`
 
 ## Files to Look At
 

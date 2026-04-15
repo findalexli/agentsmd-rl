@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all four host memory keys (host_total_GB, host_available_GB, host_used_GB, host_free_GB), all six GPU keys, the function name available_memory(), the file path slime/utils/memory_utils.py, and the _byte_to_gb helper. The linting/formatting tests (ruff, isort, black) and repo unit tests are pass-to-pass gates not directly described, but these are standard CI checks on the file being edited. The test for psutil-based values follows from the instruction's requirement for h"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (add host memory metrics with specific keys) but does not specify the exact implementation (e.g., 'use psutil', 'add import on line X', 'insert vm = psutil.virtual_memory()'). A developer must reason about how to obtain host memory information."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for the presence of specific keys in the returned dict and that values are numeric, positive, and in GB range. They also check that host_total_GB matches psutil's value (rounded to 2 decimal places via round(vm.total / (1024**3), 2)). The _byte_to_gb helper in the repo uses round(..., 2) so this matches, but alternative implementations using the same rounding would also pass. The tests don't assert on variable names, line positions, or internal helpers \u2014 only on the output dictionary"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests actually execute the code via subprocess (python3 -c with mocked CUDA), parse the JSON output, and verify the returned dictionary's keys and values. They don't just grep source files for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_available_memory_has_host_keys, test_host_memory_values_match_psutil) check for specific keys and verify host_total_GB matches the actual system's psutil.virtual_memory().total converted to GB. A stub returning an empty dict or None would fail these assertions. The values must be positive, numeric, and match real system memory."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/slime's parent or test environment as solution/solve.sh. The agent could potentially read this file to extract the exact patch. Additionally, the test file at tests/test_outputs.py contains the _CALL_SCRIPT which reveals the exact mocking setup and expected behavior, and the agent could read it to reverse-engineer the solution. The Dockerfile and solution/solve.sh are present in the container environment and could be accessed by the agent."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: the four host memory keys exist, values are numeric in GB range, GPU keys are preserved, and the function returns correct host memory values from psutil."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass regression, Pass-to-pass CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly documents the exact schema of the returned dictionary, listing all expected keys (host_total_GB, host_available_GB, host_used_GB, host_free_GB, plus GPU keys) with their types and units."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or key names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (slime/utils/memory_utils.py) and function (available_memory()) which is appropriate since the task domain makes this obvious. It doesn't specify exact line numbers or the specific implementation approach (psutil)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the function `create_test_list_from_filter()`, the file `utils/tests_fetcher.py`, the job name `tests_hub`, the output files like `tests_hub_test_list.txt`, and the behavioral expectation (skip when no tests match). The tests check these same elements. The specific test file paths like `tests/models/bert/test_modeling_bert.py` are standard repo paths discoverable from the codebase context."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (tests_hub unconditionally sets files_to_test=['tests'] causing it to always run) and the expected behavior (skip when no other jobs have matching tests), but does not prescribe a specific fix. The developer must reason about how to implement the conditional logic."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check behavioral outcomes (whether tests_hub_test_list.txt file exists or not given certain inputs) rather than implementation details. An agent could use a different approach (e.g., checking if any non-hub job has matches before writing hub, or filtering post-hoc, or adding a flag) and still pass all tests. No specific variable names, line positions, or helper functions are asserted."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call `create_test_list_from_filter()` directly, check for file existence with `os.path.exists()`, read file contents, and run subprocesses. They verify actual behavior, not just source text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The key fail-to-pass tests (`test_empty_list_skips_hub`, `test_unmatched_files_skip_hub`) assert that `tests_hub_test_list.txt` does NOT exist when given empty/unmatched inputs. In the buggy base code, this file IS created unconditionally, so a stub/no-op would fail these tests. The fix requires actual logic changes to prevent the file from being written."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/transformers` context via `solution/solve.sh` which contains the exact gold patch. While the instructions say the agent sees only instruction.md, the Dockerfile doesn't explicitly prevent reading solution files if they're mounted. Also, the test file at `tests/test_outputs.py` is accessible in the container and contains detailed behavioral expectations that could be reverse-engineered."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: (1) tests_hub should be skipped when no other jobs have matching tests, (2) tests_hub should run when other jobs do have matching tests. Both behaviors are tested via `test_empty_list_skips_hub`, `test_unmatched_files_skip_hub`, `test_matching_files_include_hub`, and `test_hub_content_is_tests`."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly organized with section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff, Pass-to-pass/pr_diff/regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces text files with test lists, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Look at create_test_list_from_filter() in utils/tests_fetcher.py, around line 1106' and explicitly states 'The bug is in how tests_hub is handled relative to the other jobs.' This pinpoints the exact location and mechanism, reducing the localization challenge that should be part of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

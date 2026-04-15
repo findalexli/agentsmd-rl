@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific attributes like 'patch' and 'destroy' in scope_object_write_actions (from the gold solution), but instruction.md does not mention 'patch' or 'destroy' in the write actions list. The instruction lists 'merge', 'split', 'assign', 'cohort', 'bulk' as custom write actions and 'create', 'update', 'partial_update' as standard DRF write actions, omitting 'patch' and 'destroy'. Tests like test_scope_object_write_actions_content check for exact membership of these values. Also, t"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: define 'scope_object_read_actions' with ['list', 'retrieve', 'values'] and 'scope_object_write_actions' with ['create', 'update', 'partial_update', 'merge', 'split', 'assign', 'cohort', 'bulk'] as class-level attributes on ErrorTrackingIssueViewSet. This is essentially the complete solution with exact attribute names and values."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests (test_scope_object_read_actions_content, test_scope_object_write_actions_content) use AST parsing to extract exact class attribute values and check specific set membership. The gold solution includes 'patch' and 'destroy' in write actions, but the instruction doesn't mention these. An agent following only the instruction would produce a list without 'patch' and 'destroy' and fail. Additionally, exact attribute names are asserted via AST inspection (_get_class_attr), so alternative impl"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use AST parsing to extract actual Python attribute values, run subprocess calls for syntax/lint/format checks, and run pytest collection. They don't just grep for text strings in files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_scope_object_read_actions_exists, test_scope_object_read_actions_content, test_scope_object_write_actions_exists, test_scope_object_write_actions_content) check for specific class attributes with specific values that don't exist in the base code. A stub/no-op implementation would not have these attributes and would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/posthog and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch, or could grep test files in tests/ to discover exact expected values like the attribute names and their contents."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires adding scope_object_read_actions and scope_object_write_actions with specific values, and the tests verify both the existence and content of these attributes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, grouped into gates (pass_to_pass, static) and fail-to-pass sections, with descriptive function names like test_scope_object_read_actions_exists."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves adding class attributes to a Python ViewSet, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact class (ErrorTrackingIssueViewSet), exact attribute names (scope_object_read_actions, scope_object_write_actions), and exact values for each. It also points to the exact file. This goes beyond describing what's broken and essentially provides the complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

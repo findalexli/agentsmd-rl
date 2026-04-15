@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:59:01.875563",
-  "total_time": 2960.49,
-  "sandbox_id": "iu9u5cir4cijshn6z7r7n",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:42:28.903687",
+  "total_time": 780.27,
+  "sandbox_id": "iumzhvs69e9ne6739xket",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -79,17 +81,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.29,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:64: test `test_server_action_guard_in_static_path_key` has 1 assert(s)', 'A:[A] test_not_tautological @ tests/test_outputs.py:94: test `test_server_action_excluded_from_static_path_key` has 1 asse']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 30.36,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 600.0,
-      "at": "2026-04-11T01:30:00.000000"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -121,6 +134,14 @@
       "backend": "fireworks",
       "time": 2960.49,
       "at": "2026-04-12T00:59:01.875563"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 780.27,
+      "at": "2026-04-15T04:42:28.903687"
     }
   ]
 }

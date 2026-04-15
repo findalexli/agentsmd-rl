@@ -2,7 +2,7 @@
 
 ## Description
 
-Calling `Bun.dns.lookup()` with a non-object value (such as a string) as the second argument causes a crash. The DNS resolver in `src/bun.js/api/bun/dns.zig` has a type-checking guard on the second argument that is too permissive — it allows non-object cell values (like strings) through to code that then attempts to read properties from them, triggering a debug assertion failure.
+Calling `Bun.dns.lookup()` with a non-object value (such as a string) as the second argument causes a crash instead of gracefully handling the invalid input.
 
 ## Reproducer
 
@@ -19,4 +19,4 @@ When the second argument to `dns.lookup()` is not a valid options object, it sho
 
 ## Files to Investigate
 
-- `src/bun.js/api/bun/dns.zig` — the `Resolver` struct, specifically the argument validation logic around where the second argument is checked before being used as an options object
+The DNS resolver implementation is in `src/bun.js/api/bun/dns.zig`, specifically in the `Resolver` struct. The issue occurs when processing the second argument to the lookup function.

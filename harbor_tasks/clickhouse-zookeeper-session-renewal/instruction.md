@@ -2,49 +2,43 @@
 
 ## Problem
 
-The `refreshObjects` function in `UserDefinedSQLObjectsZooKeeperStorage` crashes when handling transient ZooKeeper/Keeper errors. The issue is in the session management during the retry loop.
+The `refreshObjects` function in `UserDefinedSQLObjectsZooKeeperStorage` crashes when handling transient ZooKeeper/Keeper errors during the retry loop.
 
-When the function encounters a Keeper error and triggers a retry via `ZooKeeperRetriesControl`, it continues using the original `zookeeper` session handle that was passed as a parameter. This session may have expired during the error, leading to:
-- Watches being set on a dead session
-- Subsequent operations failing with stale session errors
-- Potential crashes due to invalid session state
+When the function encounters a Keeper error and triggers a retry, it continues using the original ZooKeeper session handle that was passed as a function parameter. This session may have expired during the error. The problem is:
 
-## What You Need to Fix
+- Watches are set on a potentially dead session
+- Subsequent operations fail with stale session errors
+- The crash manifests as invalid session state during retries
 
-In `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`, modify the `refreshObjects` function to:
-
-1. **Move `object_names` fetching inside the retry loop** - Currently `Strings object_names = getObjectNamesAndSetWatch(...)` happens BEFORE the `retryLoop`. It should be inside the lambda so it's re-fetched with a fresh session on each retry.
-
-2. **Add session renewal logic** - Inside the `retryLoop` lambda, before fetching object names:
-   - Check if this is a retry using `retries_ctl.isRetry()`
-   - If so, obtain a fresh ZooKeeper session via `zookeeper_getter.getZooKeeper().first`
-   - Store this in a local `current_zookeeper` variable
-
-3. **Use the live session** - Update `getObjectNamesAndSetWatch` and `tryLoadObject` calls to use `current_zookeeper` instead of the stale `zookeeper` parameter.
-
-4. **Update comments** - The current comment mentions "5-second sleep in processWatchQueue" which is misleading. Update it to explain that on retry we obtain a fresh session and re-fetch the object list so watches are set on the live session.
-
-## Key Pointers
-
-- Look for the `retryLoop` call and the lambda passed to it
-- The `ZooKeeperRetriesControl` class has an `isRetry()` method
-- The `zookeeper_getter` is a member variable that provides fresh sessions
-- Keep the retry configuration constants (`max_retries`, `initial_backoff_ms`, `max_backoff_ms`)
-- Follow Allman brace style (opening brace on new line) as required by ClickHouse CI
+The stale session causes the function to crash or behave incorrectly when transient Keeper errors occur.
 
 ## Expected Behavior After Fix
 
 When a transient Keeper error occurs during `refreshObjects`:
+
 1. The retry loop catches the error
-2. On retry, a fresh ZooKeeper session is obtained
-3. Object names are re-fetched with the new session (setting watches on live session)
-4. Objects are loaded using the current (valid) session
-5. If retries are exhausted, the exception propagates (doesn't silently fail)
+2. On retry, a fresh ZooKeeper session must be obtained
+3. Object names must be re-fetched with the new session (watches set on live session)
+4. Objects must be loaded using the current (valid) session
+5. If retries are exhausted, the exception must propagate (not silently fail)
 
-## Testing
+## Required Implementation
 
-The fix should:
-- Compile without syntax errors
-- Maintain the same retry configuration
-- Properly renew sessions during retries
-- Not use sleep calls for race conditions (this is explicitly forbidden)
+The fix must include these specific patterns:
+
+1. **Session renewal check**: The code must check `retries_ctl.isRetry()` to detect when a retry is occurring
+2. **Fresh session acquisition**: On retry, obtain a fresh session via `zookeeper_getter.getZooKeeper().first`
+3. **Variable naming**: Use a `current_zookeeper` variable to hold the active session (initialized from the parameter, renewed on retry)
+4. **Move object_names into loop**: The `Strings object_names = getObjectNamesAndSetWatch(...)` declaration must be inside the retryLoop lambda so it re-fetches on each retry
+5. **Use current_zookeeper**: All calls to `getObjectNamesAndSetWatch` and `tryLoadObject` must use `current_zookeeper`, not the stale parameter
+6. **Comment updates**: Include comments with the following phrases:
+   - "Renew the session on retry"
+   - "re-fetch the object list"
+   - "watches are set on the live session"
+7. **Remove old comment**: Remove the comment mentioning "5-second sleep in processWatchQueue"
+
+## Style Requirements
+
+- Follow Allman brace style (opening brace on new line)
+- No sleep calls for race conditions (explicitly forbidden)
+- Keep existing retry configuration constants

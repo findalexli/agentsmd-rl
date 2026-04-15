@@ -2,38 +2,48 @@
 
 ## Summary
 
-The `ProcessorMixin.apply_chat_template()` method in `src/transformers/processing_utils.py` cannot handle arbitrary user-defined template variables in Jinja2 chat templates. When users define custom variables in their chat template (e.g. `{{ num_frames }}`, `{{ custom_flag }}`), the method fails to correctly distinguish template-level kwargs from processor kwargs because it relies on a hardcoded `AllKwargsForChatTemplate` TypedDict to classify arguments.
+The `ProcessorMixin.apply_chat_template()` method in `src/transformers/processing_utils.py` cannot handle arbitrary user-defined template variables in Jinja2 chat templates. When users define custom variables in their chat template (e.g. `{{ num_frames }}`, `{{ custom_flag }}`), the method fails to correctly distinguish template-level kwargs from processor kwargs.
 
-## Reproduction
+## Expected Behavior
 
-When calling `apply_chat_template` with kwargs that correspond to custom Jinja2 template variables (not listed in the `AllKwargsForChatTemplate` TypedDict), those kwargs are incorrectly routed as processor kwargs rather than being passed to the Jinja2 template renderer. This causes:
+The method should correctly route:
+- Custom Jinja2 template variables (e.g. `num_frames`, `fps`, `custom_var`, `custom_flag`) to the Jinja2 template renderer
+- Processor-specific kwargs (e.g. `padding`, `max_length`, `return_tensors`, `truncation`) to the processor's `__call__` method
 
-1. Custom template variables to be undefined when the template renders
-2. Processor kwargs to be polluted with template-level arguments, causing downstream errors
+## Requirements
 
-The root issue is in the kwargs-filtering logic:
+### 1. New extraction function in `chat_template_utils`
 
-```python
-# Current (broken) approach in processing_utils.py:
-template_kwargs = {}
-for key in AllKwargsForChatTemplate.__annotations__["template_kwargs"].__annotations__:
-    ...
-    value = kwargs.pop(key, default_value)
-    ...
-template_kwargs.update(kwargs)  # remaining kwargs get lumped in
-```
+Add a function (discoverable by the tests) that:
+- Takes a chat template string as input
+- Returns a `set` or `frozenset` of the template's variable names
+- Uses caching (via `lru_cache`) for performance — subsequent calls with the same template return cached results
+- Correctly identifies Jinja2 variables like `{{ messages }}`, `{{ bos_token }}`, `{% if custom_var %}`
+- Excludes loop variables (e.g., the `msg` in `{% for msg in messages %}`)
+- Works with nested conditionals like `{% if a %}{% if b %}{{ c }}{% endif %}{% endif %}`
+- Handles empty/literal templates (returns empty set)
 
-This approach uses a static list of known template kwargs. Any variable not in that list gets misclassified.
+### 2. Kwarg separation in `apply_chat_template`
 
-## Affected files
+The `apply_chat_template` method must:
+- Dynamically determine which kwargs are template variables using the extraction function
+- Ensure processor kwargs (`padding`, `max_length`, `return_tensors`, `truncation`) are NOT treated as template variables
+- Support a `processor_kwargs` dict parameter for clearer separation
 
-- `src/transformers/processing_utils.py` — `ProcessorMixin.apply_chat_template()` method
-- `src/transformers/utils/chat_template_utils.py` — missing utility to introspect template variables
-- `src/transformers/models/smolvlm/processing_smolvlm.py` — SmolVLM processor's `apply_chat_template` override
-- `src/transformers/models/voxtral/processing_voxtral.py` — Voxtral processor's `apply_chat_template` override
+### 3. Files to modify (syntax must remain valid)
 
-## Expected behavior
+- `src/transformers/processing_utils.py`
+- `src/transformers/utils/chat_template_utils.py`
+- `src/transformers/models/smolvlm/processing_smolvlm.py`
+- `src/transformers/models/voxtral/processing_voxtral.py`
 
-The method should dynamically determine which kwargs are template variables by introspecting the actual Jinja2 chat template, rather than relying on a hardcoded list. Custom template variables should be correctly passed through to the Jinja2 renderer, while processor-specific kwargs (like `padding`, `max_length`, `return_tensors`) should be separated and passed to the processor's `__call__` method.
+All modified files must pass Python syntax checks and ruff linting.
 
-Additionally, the method signatures should use explicit parameters instead of the opaque `**kwargs: Unpack[AllKwargsForChatTemplate]` pattern, and support a dedicated `processor_kwargs` dict parameter for cleaner separation.
+### 4. Backward compatibility
+
+- `render_jinja_template`, `get_json_schema`, `_compile_jinja_template` must continue to work
+- Existing unit tests in `tests/utils/test_chat_template_utils.py` must pass
+
+## Symptom (not fix description)
+
+When a chat template contains custom variables and those variables are passed via `**kwargs`, they may be incorrectly routed. For example, `{{ num_frames }}` in a template should receive the value passed for `num_frames`, but currently the routing logic doesn't distinguish template variables from processor kwargs.

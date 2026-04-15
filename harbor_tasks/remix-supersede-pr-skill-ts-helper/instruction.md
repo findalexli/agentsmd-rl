@@ -17,9 +17,10 @@ Each skill should have a `SKILL.md` file with YAML frontmatter (`name` and `desc
   - Takes `<old_pr> <new_pr>` as positional arguments
   - Supports `--repo <owner/repo>` and `--dry-run` flags
   - Validates PR numbers are numeric and different from each other
-  - Shows usage with `--help` or `-h`
+  - When validation fails, exits non-zero and prints a message containing the word "numeric" or "number" for non-numeric input, and a message containing the word "different" when both PR numbers are identical
+  - Shows usage with `--help` or `-h`; the help output must include the script name ("close_superseded_pr" or "old_pr"), the `--repo` flag, and the `--dry-run` flag
   - Uses `gh` CLI to comment on and close the old PR, then verifies closure
-- Create `skills/supersede-pr/tsconfig.json` with strict TypeScript settings
+- Create `skills/supersede-pr/tsconfig.json` with `strict: true` and `noEmit: true` (strict TypeScript settings that prevent emission)
 - Create `skills/make-pr/SKILL.md` describing the PR creation workflow
 - Update `AGENTS.md` to:
   - Add a code style rule about writing one-off scripts as executable TypeScript

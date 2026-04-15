@@ -14,10 +14,11 @@ The monitor interface (`Monitor` base class) has methods for logging training sa
 
 ## What needs to change
 
-1. The `Monitor` abstract base class needs a new abstract method for logging eval samples, analogous to the existing `log_samples` method but accepting an environment name parameter
+1. The `Monitor` abstract base class needs a new abstract method for logging eval samples with the signature:
+   `log_eval_samples(self, rollouts: list[RolloutOutput], env_name: str, step: int) -> None`
 2. All concrete monitor implementations (`NoOpMonitor`, `MultiMonitor`, `WandbMonitor`, `PrimeMonitor`) need to implement this method
-3. The `WandbMonitor` implementation should log eval samples to a dedicated W&B table (separate from the training samples table), including the environment name as a column
-4. The `evaluate_env` function should call this new method after logging metrics
+3. The `WandbMonitor` implementation should log eval samples to a dedicated W&B table (separate from the training samples table) with columns: `step`, `env`, `task`, `example_id`, `completion`, `reward`. Rollouts with empty or missing `completion` fields should not be added to the table.
+4. The `evaluate_env` function should call `monitor.log_eval_samples(outputs, env_name=env_name, step=step)` after logging metrics
 
 ## Relevant files
 

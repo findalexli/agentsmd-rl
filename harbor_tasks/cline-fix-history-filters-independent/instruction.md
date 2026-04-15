@@ -2,20 +2,25 @@
 
 ## Problem
 
-In the History view of this VS Code extension, the "Workspace" and "Favorites" filter toggles are mutually exclusive — selecting one deselects the other. This is a regression: both filters should work as independent toggles that can be active simultaneously.
+In the History view of this VS Code extension, the "Workspace" and "Favorites" filter toggles are mutually exclusive — selecting one deselects the other. This is incorrect behavior: both filters should work as independent toggles that can be active simultaneously.
 
-The root cause is that the Workspace and Favorites toggles are placed inside a `VSCodeRadioGroup` component, which enforces single-selection (radio button) behavior. They need to be moved outside this group.
+The Workspace filter is controlled by the `showCurrentWorkspaceOnly` state and the Favorites filter is controlled by the `showFavoritesOnly` state. Currently, these two toggle filters behave as if they're part of a radio button group where only one can be selected at a time, when they should behave like independent checkboxes that can both be active.
 
 ## Expected Behavior
 
 - Workspace and Favorites should be independent toggle filters (both can be active at the same time)
-- Sort options (Newest, Oldest, Most Relevant) should remain as mutually exclusive radio buttons inside `VSCodeRadioGroup`
-- The visual appearance should remain consistent — filters should look like they're part of the same group even though they function independently
+- Sort options (Newest, Oldest, Most Relevant) should remain as mutually exclusive radio options
+- The Workspace and Favorites filters should be wrapped in a container div that uses both `marginTop` and `flex` CSS properties to maintain visual continuity with the existing layout
+- The container div should have a negative top margin to align visually with the radio group above it
 
 ## Files to Look At
 
-- `webview-ui/src/components/history/HistoryView.tsx` — contains the filter UI logic and JSX layout
+- `webview-ui/src/components/history/HistoryView.tsx` — contains the filter UI logic with `showCurrentWorkspaceOnly` and `showFavoritesOnly` state
 
-## Additional Requirement
+## Documentation Update Requirement
 
-After fixing the code, update the relevant documentation to note an important tip about this project: check `package.json` for available scripts before trying to verify builds (e.g., `npm run compile`, not `npm run build`). Add this to the appropriate documentation file in the repository.
+After fixing the code, update `CLAUDE.md`:
+
+- Add a "Miscellaneous" section to `CLAUDE.md`
+- Include a tip that `npm run compile` is the correct command (not `npm run build`)
+- Mention checking `package.json` for discovering available scripts

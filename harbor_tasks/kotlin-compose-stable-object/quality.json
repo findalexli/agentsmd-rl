@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all critical file paths (Stability.kt, AbstractComposeLowering.kt, golden file paths), exact string patterns (`declaration.isObject`, `symbol.owner.isObject`), test method names (`testObjectTypesAreStable`, `testNoStablePropertyOnCompanionObjects`), test class files (ComposerParamTransformTests.kt, RunComposableTests.kt), and the specific golden files to create/update. All asserted values in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'checking `symbol.owner.isObject` instead of only checking for companion objects', shows the exact line to add (`if (declaration.isObject) return Stability.Stable`), and specifies replacing `isCompanion` with `isObject`. This tells the agent exactly WHAT to change rather than just describing the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string matches like `if (declaration.isObject) return Stability.Stable` and `if (symbol.owner.isObject) true`. An alternative correct fix (e.g., using `declaration.kind == ClassKind.OBJECT` or wrapping the check differently) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_stability_kt_has_object_check, test_lowering_kt_has_isobject_check, test_no_stable_property_in_golden_files, test_new_golden_files_exist, test_test_methods_exist) all use `assert '...' in open(path).read()` \u2014 pure text matching with no execution of the compiler, no running of tests, no behavioral verification. The kotlinc syntax checks are pass-to-pass only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for content that doesn't exist in the base repo (e.g., `declaration.isObject` in Stability.kt, `symbol.owner.isObject` in AbstractComposeLowering.kt, new golden files, new test methods). A stub or no-op wouldn't produce these specific strings in the source files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the exact patch. An agent could read this file directly (`cat /solution/solve.sh`) and execute it to pass all tests. Additionally, the test file at tests/test_outputs.py contains the exact strings being asserted, which the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires golden files to replace specific `.%stable` references with literal stability flags like `0b0110`, and requires specific IR output content in new golden files. However, the tests only check for absence of `.%stable` and `Object.%stable` \u2014 they don't verify the correct replacement values (e.g., `0b0110`) are present."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with clear docstrings indicating their purpose (e.g., 'Fail-to-pass: Stability.kt must have declaration.isObject check'), logically grouped into fail-to-pass and pass-to-pass categories with comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves compiler plugin source code modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, method names, and commands in the instruction and tests are consistent and correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact code changes: adding `if (declaration.isObject) return Stability.Stable` after the enum check, and changing `isCompanion` to `isObject` in `symbol.owner.isObject`. It even shows the baseline code line. This is implementation-level specificity that removes the need for the agent to localize or reason about the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task involving Kotlin source files and golden test files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

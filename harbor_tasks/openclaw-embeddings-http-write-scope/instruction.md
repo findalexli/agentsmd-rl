@@ -13,12 +13,10 @@ This means an operator with only `operator.read` scope — or even an empty scop
 3. Observe: the request succeeds with 200 and returns embeddings.
 4. Expected: the request should be rejected with 403, like the other write endpoints.
 
-## Relevant code
+## Required Fix
 
-- `src/gateway/embeddings-http.ts` — the `handleOpenAiEmbeddingsHttpRequest` function calls `handleGatewayPostJsonEndpoint` to handle auth, body parsing, and scope checks.
-- `src/gateway/http-endpoint-helpers.ts` — the shared helper already supports scope enforcement via an option that other endpoints pass but embeddings does not.
-- `src/gateway/method-scopes.ts` — defines which methods require which operator scopes.
+The `handleOpenAiEmbeddingsHttpRequest` function in `src/gateway/embeddings-http.ts` calls `handleGatewayPostJsonEndpoint` to handle auth and request processing. This call must pass `requiredOperatorMethod: "chat.send"` in its options object to enforce the write scope check. The value `"chat.send"` is the canonical operator method that requires `operator.write` scope, as defined in `src/gateway/method-scopes.ts` and used by other write-gated endpoints like `/v1/chat/completions`.
 
-## Scope
+## Verification
 
-The fix should align the embeddings endpoint's authorization with the other OpenAI-compatible write endpoints so that callers without write scope are properly rejected. The existing tests in `src/gateway/embeddings-http.test.ts` should be updated to declare write scope for successful requests and to add coverage for rejected scope scenarios.
+After the fix, the `handleGatewayPostJsonEndpoint` call in `handleOpenAiEmbeddingsHttpRequest` must include `requiredOperatorMethod: "chat.send"` alongside the existing `pathname: "/v1/embeddings"` option.

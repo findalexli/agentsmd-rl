@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (router.ts, instance.ts, server.ts, workspace-router-middleware.ts, worktree.ts), the export name WorkspaceRouterMiddleware, Instance.provide, InstanceBootstrap, directory query param, x-opencode-directory header, worktree adaptor fetch, and the requirement for >=2 Instance.provide calls. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation: 'Export a middleware function named WorkspaceRouterMiddleware', 'The router must have at least two separate Instance.provide calls', 'The old workspace-router-middleware.ts should be removed', 'worktree adaptor's fetch method is no longer needed and can throw'. This goes beyond describing what's broken and prescribes the exact solution architecture, naming, and implementation details."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use AST analysis to count exact number of Instance.provide calls (>=2), check for specific string literals like 'workspace' and 'x-opencode-directory', require adaptor.fetch pattern in router.ts, and mandate WorkspaceRouterMiddleware as the exact export name. An alternative correct fix that e.g. uses a different function name, uses a single Instance.provide with conditional args, or structures the routing differently would fail these tests despite being behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_instance_provide_in_router, test_instance_provide_removed_from_instance_ts, test_workspace_routing_branches, test_directory_resolution_in_router) are purely AST/text inspection \u2014 they parse source files looking for specific patterns like Instance.provide calls, string literals, and import paths. They never execute the middleware or verify its runtime behavior. Only test_router_exports_middleware does a dynamic import, but it only checks typeof."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty function export) would fail the AST checks for Instance.provide calls, InstanceBootstrap references, workspace param extraction, etc. The tests require specific code patterns to be present in the file, which can't be satisfied by trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is stored at /solution/solve.sh in the container. The agent could read it directly (cat /solution/solve.sh) and apply the exact patch. There's no evidence of measures preventing access to this file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: router.ts creation with WorkspaceRouterMiddleware export, Instance.provide with InstanceBootstrap, removal from instance.ts, deletion of old middleware, server.ts import update, directory resolution, worktree handling, and remote workspace adaptor fetch delegation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (fail-to-pass and pass-to-pass), descriptive function names (test_router_exports_middleware, test_instance_provide_in_router, etc.), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact new file path (packages/opencode/src/server/router.ts), exact export name (WorkspaceRouterMiddleware), specifies the exact number of Instance.provide calls needed (at least two), and describes precise implementation details like 'worktree adaptor's fetch method can throw'. This goes well beyond identifying the problem domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

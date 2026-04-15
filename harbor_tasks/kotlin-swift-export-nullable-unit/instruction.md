@@ -2,37 +2,55 @@
 
 ## Problem
 
-The Kotlin compiler's Swift Export feature (generating Swift bindings for Kotlin code) does not properly handle nullable Unit types (`Unit?`). When exporting Kotlin functions that return `Unit?` or accept `Unit?` parameters to Swift, the generated bridge code fails or produces incorrect results.
+The Kotlin compiler's Swift Export feature does not properly handle nullable Unit types (`Unit?`). When exporting Kotlin functions that return `Unit?` or accept `Unit?` parameters to Swift, the type bridging system currently produces incorrect results.
 
-## Key file
+The file `native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider/TypeBridging.kt` contains the type bridging logic. Currently, when an `AsVoid` type (representing non-nullable `Unit`) is encountered inside an `Optional` wrapper, the system does not have proper handling and may produce a `TODO("not yet supported")` error.
 
-The type bridging logic is in:
-- `native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider/TypeBridging.kt`
+## Required Changes
 
-## What you need to do
+After your fix, the following specific strings must be present in `TypeBridging.kt`:
 
-1. Add support for bridging `Optional<Void>` (Swift's representation of Kotlin's `Unit?`)
+### New Bridge Type
 
-2. The fix should:
-   - Create a new bridge type specifically for `Optional<Void>` (similar to how `Optional<Nothing>` is handled)
-   - Handle the Swift-to-Kotlin conversion: convert the boolean presence check to `Unit` or `null`
-   - Handle the Kotlin-to-Swift conversion: convert `Unit?` to a boolean presence indicator
-   - Update the bridge selection logic to use this new bridge when encountering `AsVoid` inside an `Optional` wrapper
-   - Update the NS collection element bridging to handle the new bridge type
+A new bridge object definition must exist with these exact properties:
+- Named exactly: `object AsOptionalVoid`
+- Swift type expression: `SirNominalType(SirSwiftModule.optional, listOf(SirNominalType(SirSwiftModule.void)))`
+- Kotlin type: `KotlinType.Boolean`
+- C type: `CType.Bool`
 
-## Hints
+### Value Conversion Expressions
 
-- Look at how `AsOptionalNothing` (for `Optional<Never>`/Nothing?) is implemented - follow the same pattern
-- The bridge should use `Boolean` as the underlying Kotlin type and `Bool` as the C type
-- The value conversions need to handle:
-  - Swift side: `Bool` ↔ `Void?` (using `nil` checks and `()` for non-nil)
-  - Kotlin side: `Boolean` ↔ `Unit?` (using null checks and `Unit` value)
-- Search for `AsNothing` and `AsOptionalNothing` to understand the pattern
-- Also look at `AsVoid` to see how non-optional `Unit`/`Void` is handled
+The new bridge must implement value conversions with these exact expressions:
 
-## Testing
+**For Kotlin sources (`inKotlinSources`):**
+- `swiftToKotlin` must return exactly: `(if ($valueExpression) Unit else null)`
+- `kotlinToSwift` must return exactly: `($valueExpression != null)`
 
-After your fix, the following should work:
+**For Swift sources (`inSwiftSources`):**
+- `swiftToKotlin` must return exactly: `($valueExpression != nil)`
+- `kotlinToSwift` must return exactly: `($valueExpression ? () : nil)`
+
+### Bridge Selection Logic
+
+The `bridgeNominalType` function must contain this exact pattern when handling Optional wrappers:
+- `is AsVoid -> AsOptionalVoid`
+
+### NS Collection Bridging
+
+The `bridgeAsNSCollectionElement` function must contain:
+- `is AsOptionalVoid -> AsObjCBridgedOptional(bridge.swiftType)`
+
+### Error Messages
+
+The following error handling patterns must exist:
+- When `AsVoid` is incorrectly used inside `AsOptionalWrapper`, the error message must be exactly: `"AsOptionalVoid must be used for AsVoid"`
+- When checking for double-wrapped optional bridges, the pattern must be: `is AsOptionalWrapper, AsOptionalNothing, AsOptionalVoid -> error`
+
+Additionally, `AsVoid` must not appear in the `TODO("not yet supported")` list within `AsOptionalWrapper`.
+
+## Verification
+
+After implementing the fix:
 - Functions returning `Unit?` in Kotlin are correctly bridged to Swift functions returning `Void?`
 - Functions accepting `Unit?` in Kotlin are correctly bridged to Swift functions accepting `Void?`
-- The generated bridge code compiles without errors
+- The type bridging system handles nullable Unit types without generating TODO errors

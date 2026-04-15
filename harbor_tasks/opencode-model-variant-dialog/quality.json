@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the function name `divide`, the file `src/calc.py`, the exception type `ValueError`, the exact message 'Cannot divide by zero', and the `.claude/CLAUDE.md` file. Tests check these same specifics. The repo tests (test_calc.py::test_add, etc.) and ruff lint are part of the existing repo infrastructure that the agent would discover by examining the repo."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'Add validation for b == 0' in the Files to Modify section and shows the exact code pattern (raise ValueError with specific message). This tells the agent exactly WHAT to change rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties (ValueError raised, message contains 'Cannot divide by zero', existing functions still work, ruff lint passes). Alternative implementations like `if not b:`, `if b == 0.0:`, or guard clauses at different positions would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All tests execute Python code via subprocess, import and call the functions (divide, add, subtract, multiply), and check runtime behavior (exception types, return values, pytest execution, ruff linting). No test merely reads file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_divide_by_zero_raises_error, test_divide_error_message) require divide(10, 0) to raise a ValueError with specific message. A stub that returns None or passes would not raise ValueError and would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/calc-repo which is accessible to the agent. The solve.sh file at solution/solve.sh contains the complete gold patch. An agent could read solution/solve.sh or the test file itself (tests/test_outputs.py) to extract the exact expected behavior and fixture values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) divide raises ValueError with message 'Cannot divide by zero' when b=0 \u2014 tested by test_divide_by_zero_raises_error and test_divide_error_message; (2) updating CLAUDE.md \u2014 while not directly tested for content, ruff lint and existing tests ensure no regression. All explicit behavioral requirements are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_divide_by_zero_raises_error, test_divide_error_message, test_add_still_works, etc.), have docstrings with fail_to_pass/pass_to_pass annotations, and are logically grouped by purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON, CSV, API responses, or database schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (src/calc.py, .claude/CLAUDE.md), function names (divide, add, subtract, multiply), paths, and error messages are consistently spelled throughout instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file to modify (src/calc.py), the exact check to add ('Add validation for b == 0'), and the exact file '.claude/CLAUDE.md'. For such a simple task, this constitutes significant localization leakage, though the task domain makes file identification somewhat obvious."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "The .claude/CLAUDE.md edit is not a traditional config file, and there are no tests that verify its specific content. The gold solution creates it from scratch, which is appropriate since it may not exist initially."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

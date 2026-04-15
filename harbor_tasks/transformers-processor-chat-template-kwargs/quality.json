@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests discover the extraction function by iterating over all callables in chat_template_utils and testing behavior, but the gold solution names it `_get_template_variables`. The instruction.md never specifies this exact name. More critically, test_processing_utils_imports_extraction checks that the discovered function name is importable as an attribute of processing_utils (`getattr(pu, fn_name, None)`), and test_extraction_cached checks for `cache_info` attribute \u2014 these specific implementation "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (custom Jinja2 template variables are incorrectly routed) and the requirements for the fix (extraction function, kwarg separation, specific files to modify) but does not specify exact code changes, line numbers, or the specific implementation approach beyond high-level requirements."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_template_variable_extraction_subprocess discovers the function by iterating dir(ctm) and excluding KNOWN_EXISTING names. test_processing_utils_imports_extraction requires the same function name to be importable as a top-level attribute of processing_utils via getattr(pu, fn_name). test_extraction_cached specifically checks for `cache_info` attribute (lru_cache). An alternative implementation using a different caching mechanism (e.g., manual dict cache) or a class-based approach would fail t"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute Python code via subprocess, call the extraction function with various templates, check return values, and verify behavioral properties (caching, variable extraction). test_syntax_check uses py_compile. Only test_processing_utils_imports_extraction has a minor source-reading check, but it primarily uses getattr to verify importability."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check that the extraction function returns specific variable names from specific templates (e.g., {'messages', 'bos_token', 'custom_var'} from a given template), excludes loop variables, returns empty sets for literal templates, and is cached. A stub returning empty set or None would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers (the solve.sh and patch are in solution/solve.sh which is copied into the container). An agent could potentially read the solution patch to determine the exact implementation. The Dockerfile copies 'test and solution files' into the container, making the gold patch accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) extraction function with caching \u2014 tested by test_template_variable_extraction_subprocess, test_extraction_cached; (2) kwarg separation \u2014 tested by test_kwargs_separation_behavior; (3) syntax validity \u2014 tested by test_syntax_check; (4) backward compatibility \u2014 tested by test_backward_compatibility. All major requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_syntax_check, test_template_variable_extraction_subprocess, test_extraction_is_dynamic, etc.), docstrings explaining what each test verifies, and clear section comments grouping pass_to_pass and fail_to_pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves code modification, not structured data output (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files to modify (processing_utils.py, chat_template_utils.py, etc.) which is appropriate for this task. It doesn't specify exact line numbers or the specific fix implementation. The files listed are the natural locations for the described functionality."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

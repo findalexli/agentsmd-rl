@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details like '_sub_obj_cache' variable name, 'setdefault' method usage, 'cache[i]' pattern, and propagation logic in _resolve_lora_path. The instruction.md never mentions '_sub_obj_cache', 'setdefault', or the specific caching pattern expected. These are undiscoverable from the instruction alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (divergent objects from repeated __getitem__ calls) and expected behavior (identity stability) but does not specify the exact fix like 'add a _sub_obj_cache dict using setdefault'. It describes what's broken, not how to fix it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: '_sub_obj_cache' variable name (test_generate_req_caching_implemented, test_embedding_req_caching_implemented), 'setdefault' method, 'cache[i]' pattern. Alternative correct fixes using functools.lru_cache, a different attribute name like '_cache', or __init_subclass__ would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_generate_req_caching_implemented, test_embedding_req_caching_implemented, and likely the truncated tests) use AST inspection and string matching on unparsed AST (e.g., '\"_sub_obj_cache\" in method_src', '\"setdefault\" in method_src'). They check for text patterns in code rather than executing the code and verifying identity behavior (e.g., 'assert obj[0] is obj[0]')."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific patterns like '_sub_obj_cache' and 'setdefault' in the AST, which would not be present in the original code or a stub. A pass/no-op implementation would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/sglang as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch, or grep for '_sub_obj_cache' in the test files to reverse-engineer what's expected. The Dockerfile doesn't remove the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction says 'req[0] is req[0] should be True' (identity check behavior) but the visible tests only do AST pattern matching for specific variable names, not actual runtime identity verification. The core behavioral requirement is not tested via execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (gates/pass_to_pass for linting, fail-to-pass for behavioral checks), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to Python classes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files (io_struct.py, tokenizer_manager.py) and specific classes/methods, which is appropriate given the task domain. It doesn't specify exact line numbers or the precise implementation pattern needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

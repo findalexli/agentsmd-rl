@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_fix_pattern_exists asserts the exact string 'end.saturating_sub(start)' in syntax/mod.rs and the exact function signature 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {'. The instruction's Hints section mentions 'source positions' and 'accumulated token lengths' but never names the specific pattern 'end.saturating_sub(start)' or the function 'inline_list_source_len'. These are undiscoverable from instruction.md alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The Hints section tells the agent exactly what to do: 'computing source spans using actual source positions rather than accumulated token lengths' and that 'the inline list length is computed' must 'land on a valid UTF-8 character boundary'. This describes the specific implementation approach rather than just the symptom."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_fix_pattern_exists asserts the exact string 'end.saturating_sub(start)' and the exact function signature 'fn inline_list_source_len(p: &mut MarkdownParser) -> usize {'. An alternative correct fix (e.g., using checked_sub, or restructuring the function differently, or renaming it) would fail these assertions even if it correctly fixes the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_fix_pattern_exists is purely textual: it reads syntax/mod.rs and asserts specific strings exist ('end.saturating_sub(start)', exact function signature). test_multibyte_test_case_exists similarly just searches for '9727' and 'multi-byte' or '\ud83d\udca1' in file content. While some tests (cargo check, cargo test, clippy) do execute code, two fail_to_pass tests are purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_multibyte_test_case_exists can be satisfied by simply appending a comment containing '9727' and '\ud83d\udca1' to spec_test.rs without any actual test logic. test_fix_pattern_exists can be satisfied by adding a dead function with the exact signature containing 'end.saturating_sub(start)' without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /solution/syntax_mod.rs and /solution/spec_test.rs in the container (as referenced in solve.sh). The agent could simply read and copy these files. Additionally, the test file itself contains the exact strings being asserted ('end.saturating_sub(start)', '9727'), which the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: compilation (tested by cargo check), tests passing (tested by cargo test spec_test), test case for #9727 (tested by test_multibyte_test_case_exists), formatter check (tested), fmt check (tested), clippy (tested). All stated requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_cargo_check, test_markdown_parser_tests_pass, etc.), have docstrings explaining what they test and whether they're pass_to_pass or fail_to_pass, and are logically grouped."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The Hints section names the specific computation approach ('source spans using actual source positions rather than accumulated token lengths') and the specific function behavior ('inline list length is computed'). Combined with the file path 'crates/biome_markdown_parser/src/syntax/mod.rs' being in the test, this leaks the exact location and nature of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

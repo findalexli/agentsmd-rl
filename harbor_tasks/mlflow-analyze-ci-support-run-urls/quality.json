@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names RUN_URL_PATTERN (via 'regex pattern as a module-level name ending in _PATTERN'), resolve_urls(), get_jobs(), the file paths (.claude/skills/src/skills/commands/analyze_ci.py, SKILL.md), the requirement for group(1) and group(2), filtering by conclusion=='failure', and documentation requirements. All test-asserted specifics (RUN_URL_PATTERN name, resolve_urls function, get_jobs call, bare run URL examples in SKILL.md, help text mentioning 'run url' or 'workflow run') are dis"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is needed (accept run URLs, define a pattern, update dispatch logic, update docs) but does not specify exact code changes, line numbers, or specific implementation like 'add $ anchor' or 'use elif'. A developer must still reason about how to implement the regex, dispatch order, and integration."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert the exact variable name 'RUN_URL_PATTERN' via _extract_regex_patterns and string matching in resolve_urls source. While the instruction says 'module-level name ending in _PATTERN', test_run_url_pattern_matches_run_urls explicitly checks `assert 'RUN_URL_PATTERN' in patterns`. An alternative correct fix using e.g. 'WORKFLOW_RUN_URL_PATTERN' or 'BARE_RUN_URL_PATTERN' would fail. Additionally, test_help_text_mentions_run_url checks for lines containing 'run url' or 'workflow run' witho"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_run_url_pattern_matches_run_urls, test_run_url_pattern_excludes_job_urls, test_resolve_urls_dispatches_run_pattern, test_help_text_mentions_run_url, test_skill_md_documents_run_urls) are all static text/AST inspection tests \u2014 they read source code and check for string patterns or AST structure. None of them actually import and call resolve_urls or execute the skill. test_resolve_urls_dispatches_run_pattern just checks that 'RUN_URL_PATTERN' and 'get_jobs' appear"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass: test_run_url_pattern_matches_run_urls requires a compiled regex that actually matches specific URLs; test_run_url_pattern_excludes_job_urls requires the regex to NOT match job URLs; test_resolve_urls_dispatches_run_pattern requires both 'RUN_URL_PATTERN' and 'get_jobs' in the resolve_urls function body. These cannot be satisfied by do-nothing stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/mlflow after applying solve.sh, and the agent could potentially read the solution file or the test file itself (tests/test_outputs.py) to discover exactly what assertions are checked. The Dockerfile does not remove or protect the /solution/ directory, and there's no evidence of sandboxing that prevents reading test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All key behaviors from the instruction are tested: regex pattern definition and matching (test_run_url_pattern_matches/excludes), dispatch in resolve_urls (test_resolve_urls_dispatches_run_pattern), help text update (test_help_text_mentions_run_url), and SKILL.md documentation (test_skill_md_documents_run_urls)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names, docstrings, clear section comments (Gates, Fail-to-pass, Config/doc, Pass-to-pass), and each test has a focused purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files which is appropriate for the task domain, but doesn't specify exact line numbers or the precise code to write. It describes requirements at an appropriate abstraction level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch for SKILL.md is a localized addition of run URL examples in two sections, and the analyze_ci.py changes are similarly scoped additions. Neither is a full-file rewrite."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

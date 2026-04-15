@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_write_path_uses_shared_validator asserts the exact import path string \"from './table.ts'\" but instruction.md only says 'import from ./table.ts' without specifying the exact string format; (2) test_timestamp_schema_uses_create_schema checks for import of 'createSchema' from '@remix-run/data-schema' and its use inside timestampSchema \u2014 instruction.md mentions this but the timestampSchema function name and createSchema"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md is very prescriptive about the exact solution: it names the exact function to create (validatePartialRow), specifies its signature (accepts table and partial row object), specifies its return format (issues key), tells exactly where to import from (./table.ts), tells to use createSchema from @remix-run/data-schema in timestampSchema, and specifies to remove DataSchema re-export. This leaves very little reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_write_path_uses_shared_validator checks for the exact string \"from './table.ts'\" (alternative using 'from \"./table\"' or './table.js' would fail); test_timestamp_schema_uses_create_schema uses a regex requiring 'createSchema' inside the timestampSchema function body; test_validate_partial_row_exported requires the exact function name 'validatePartialRow' and checks for 'issues' key specifically. An alternative correct implementation using"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Key tests like test_standard_schema_validation and test_validate_partial_row_exported actually execute TypeScript code via _run_ts, importing and calling functions, checking runtime behavior. While some tests (test_write_path_uses_shared_validator, test_timestamp_schema_uses_create_schema) do text-matching, the majority of critical tests verify actual behavior through execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_standard_schema_validation actually creates a table, checks for ~standard property, validates partial inputs, unknown columns, and invalid values \u2014 a stub returning defaults would not pass. test_validate_partial_row_exported similarly calls the function and checks behavior for valid and invalid inputs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container at /workspace/remix (or accessible via the Dockerfile build). It contains the exact git commit SHA (28d74aae012ca78b82fedaf6f7f5de53094fd002) and explicit checkout commands. An agent could read this file and simply execute the commands to get the gold solution. The Dockerfile doesn't show evidence of removing the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: Standard Schema compatibility (test_standard_schema_validation), validatePartialRow export and behavior (test_validate_partial_row_exported), write-path refactoring (test_write_path_uses_shared_validator), DataSchema removal (test_dataschema_type_removed_from_exports), timestampSchema using createSchema (test_timestamp_schema_uses_create_schema), AGENTS.md update (test_agents_md_cross_package_rule), README update (test_readme_data_validation)"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_standard_schema_validation, test_validate_partial_row_exported, etc.), each targeting a specific requirement, making it clear what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction references the Standard Schema specification (https://standardschema.dev/) and describes the expected interface (~standard property with version, vendor, validate function) and the validatePartialRow return format (issues key for failures)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and package names in instruction.md are all correct and consistent with the test file references."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names exact files (table.ts, database.ts, index.ts), exact function names to create (validatePartialRow), exact import sources (createSchema from @remix-run/data-schema), and exact types to remove (DataSchema). It also specifies the exact internal refactoring pattern (timestampSchema should use createSchema). This goes beyond describing what's broken and prescribes implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md edit is a localized addition (adding a cross-package boundary guideline) and README.md changes are additive documentation. These are bounded and don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 5
+}

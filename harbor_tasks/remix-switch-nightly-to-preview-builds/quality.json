@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant files (setup-installable-branch.ts, nightly.yml, preview.yml, README.md, CONTRIBUTING.md), describes the positional argument requirement, removal of nightly.yml, push trigger on main, workflow_dispatch support, preview branch naming, removal of overwrite protection (allowedOverwrites/remoteBranches), and documentation updates from nightly to preview. The specific strings tested (e.g., 'remix-run/remix#preview', 'remix-run/remix#nightly', 'Nightly Builds', 'PR P"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (positional arg instead of --branch flag, remove nightly.yml, extend preview.yml for push events, update docs) but does not specify exact code changes, line numbers, or specific implementation details like 'change line X to Y'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific literal strings that constrain implementation unnecessarily. For example, test_preview_workflow_continuous_build asserts 'PR Preview' NOT in preview.yml (the workflow name must not be 'PR Preview' but any alternative name would work only if it avoids that exact string). test_contributing_documents_preview_builds asserts '## Nightly Builds' not in contributing \u2014 an agent renaming to '## Preview Builds' passes but '### Nightly Builds' (h3) would also pass incorrectly. test"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are pure text/file-existence checks (assert 'string' in file.read_text()). test_setup_script_requires_positional_arg attempts behavioral execution but falls back to text inspection on import errors. test_repo_lint, test_repo_typecheck, test_repo_format_check execute subprocesses but are pass-to-pass gates. The fail-to-pass tests (test_nightly_workflow_removed, test_preview_workflow_continuous_build, test_readme_documents_preview_install, test_contributing_documents_preview_builds, tes"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by stub/no-op implementations. The base repo has nightly.yml present (test_nightly_workflow_removed would fail), preview.yml lacks push trigger (test_preview_workflow_continuous_build would fail), README/CONTRIBUTING reference nightly not preview, and the script has allowedOverwrites/remoteBranches and defaults to nightly. Actual changes are required."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/remix (the solve.sh is applied to REPO=/workspace/remix). An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings like 'remix-run/remix#preview', 'allowedOverwrites', 'PR Preview', etc. The Dockerfile doesn't appear to prevent access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: nightly.yml removal, preview.yml push trigger addition with workflow_dispatch, script positional arg requirement, removal of overwrite protection, README and CONTRIBUTING documentation updates from nightly to preview."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass, Anti-regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing scripts, workflows, and documentation files \u2014 no structured data output (JSON/CSV/API/DB) is produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files that are naturally part of the task domain (workflow files, build scripts, docs). It describes what should change behaviorally without specifying exact lines or internal implementation details like variable names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it involves code/config/doc changes across multiple files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

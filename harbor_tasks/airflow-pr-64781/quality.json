@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (dev/breeze/src/airflow_breeze/commands/ci_commands.py), function name (upgrade), variable names (pre_image_commands, post_image_commands), type annotations (list[tuple[str, str]]), loop syntax (for step_name, command in pre_image_commands:), the CI image build command ([\"breeze\", \"ci-image\", \"build\", \"--python\", \"3.10\"]), and all specific command strings (autoupdate, update-chart-dependencies, upgrade-important-versions, update-uv-lock) that tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: variable names (pre_image_commands, post_image_commands), their type annotations (list[tuple[str, str]]), exact loop syntax (for step_name, command in pre_image_commands:), exact command strings, and exact ordering. This is a complete specification of the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names ('pre_image_commands', 'post_image_commands'), exact type annotations (ast.AnnAssign), exact loop syntax ('for step_name, command in pre_image_commands:'), and specific implementation details. An alternative correct fix that used different variable names (e.g., 'dockerfile_commands' and 'image_commands') or different iteration patterns would fail the tests despite correctly fixing the ordering bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_pre_image_commands_exist, test_post_image_commands_exist, test_update_uv_lock_in_post_image_commands, test_ci_image_build_between_command_lists, test_dockerfile_updating_commands_in_pre_image) only do static text/AST analysis of the source file. They never import, call, or execute the upgrade function. The pass-to-pass tests for ruff do run subprocesses, but the core behavioral tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific variable names, list contents, and ordering that don't exist in the original code. The original code has 'upgrade_commands' as a single list with the CI build before it, so a stub/no-op wouldn't pass tests like test_pre_image_commands_exist which requires the string 'pre_image_commands' to be present."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (or the solve.sh is accessible in the container). The agent could read the gold patch from solution/solve.sh if it exists in the container. Additionally, since tests are purely textual checks, the agent could just insert the expected strings/variable names without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (pre_image_commands list with specific commands, post_image_commands list with update-uv-lock, CI image build between them, correct ordering) are tested by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_pre_image_commands_exist, test_ci_image_build_between_command_lists, etc.), have docstrings explaining their purpose and whether they're fail_to_pass or pass_to_pass, and are logically grouped."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Python source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (dev/breeze/src/airflow_breeze/commands/ci_commands.py), function name (upgrade), exact variable names to use, exact type annotations, exact loop syntax, and exact command ordering. This goes far beyond naming the buggy file \u2014 it provides the complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

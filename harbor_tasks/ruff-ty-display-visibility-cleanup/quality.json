@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all structs, enums, methods, fields, and dead code items that the tests check for: DisplayTuple, DisplayFunctionType, DisplayGenericContext, DisplaySpecialization, DisplayTypeArray, QualificationLevel, TupleSpecialization, singleline, force_signature_name, with_active_scopes, qualified/qualified_type_aliases fields, truncate_long_unions, and Specialization::display(). The file path is also specified. The cargo check/clippy/test/fmt/doc commands are standard Rust "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix for every item: which specific structs/enums should have pub removed, which specific methods should have pub removed, which specific fields should be made private, and which specific methods should be deleted entirely. This is not describing 'what's broken' \u2014 it's prescribing the exact changes to make. A competent developer doesn't need to reason about WHAT to change; the instruction is essentially a checklist of precise edits."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for absence of pub/pub(crate) on specific items and absence of specific dead-code methods. Any correct alternative that removes unnecessary visibility and dead code would pass \u2014 the tests don't assert on exact line positions, specific helper function names introduced by the gold patch, or implementation details beyond what's required."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While some tests do text-based checks (searching for pub keywords and method names in source), the majority of tests (test_cargo_check, test_cargo_clippy, test_cargo_test_lib, test_cargo_fmt, test_cargo_doc, etc.) execute subprocesses that compile, lint, test, and format the code. The text checks are appropriate here since the task is about visibility modifiers, which are inherently textual properties of source code, and the compilation/test gates ensure correctness."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for absence of specific patterns (truncate_long_unions, Specialization::display with DisplaySpecialization, pub on specific items). A stub/no-op implementation wouldn't pass because the original source file contains these patterns. The agent must actively modify the file to remove them, and the cargo check/clippy tests ensure the modifications don't break compilation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /solution/solve.sh and /solution/display.patch inside the container. The agent could simply run 'cat /solution/solve.sh' or 'git apply /solution/display.patch' to obtain and apply the gold solution without understanding anything about the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: removal of dead code (truncate_long_unions, Specialization::display), removal of unnecessary pub on structs/enums/methods, making fields private, and compilation/lint/test/format/doc gates."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff)' and 'Pass-to-pass (static / repo_tests)'), descriptive function names (test_truncate_long_unions_removed, test_no_unnecessary_pub_on_structs_enums, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves source code modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or item names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (crates/ty_python_semantic/src/types/display.rs) and lists every specific item to change with its exact name and the exact visibility change needed. While the file is reasonable to name given the task domain, listing every specific struct, method, and field with their exact required visibility changes goes beyond what's needed and eliminates any localization/diagnosis challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

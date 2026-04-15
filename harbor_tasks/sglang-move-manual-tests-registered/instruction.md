@@ -1,33 +1,20 @@
-# [CI] Move manual-only nightly tests out of test/registered/
+# [CI] Fix collect_tests failure for nightly-only GPU model tests
 
 ## Problem
 
-Three test files in `test/registered/8-gpu-models/` are causing `collect_tests()` to fail with `ValueError: No CI registry found`. These are manual-only nightly tests that were incorrectly placed in the auto-discovered `test/registered/` directory.
+`collect_tests()` in `python/sglang/test/ci/ci_register.py` raises `ValueError: No CI registry found` when processing certain test files in `test/registered/8-gpu-models/`. These files contain nightly-only CI registrations (using `nightly=True` for the `nightly-8-gpu-common` suite) that are intended for manual execution only, not for the standard CI test auto-discovery pipeline.
 
-The failing files are:
-- `test/registered/8-gpu-models/test_qwen3_235b.py`
-- `test/registered/8-gpu-models/test_deepseek_v31.py`
-- `test/registered/8-gpu-models/test_glm_46_fp8.py`
+The problematic files are in `test/registered/8-gpu-models/` and can be identified by their `nightly=True` CI registration parameter. There are three such files for these models:
+- Qwen3-235B
+- DeepSeek-V3.1
+- GLM-4.6-FP8
 
-These files contain `register_cuda_ci()` calls with `nightly=True` for the `nightly-8-gpu-common` suite, but they should not be auto-discovered by the CI test runner since they are intended for manual execution only.
+The repository already has a `test/manual/` directory used for tests that are not part of CI auto-discovery.
 
-## Expected Behavior
+## Expected Outcome
 
-1. Move the three test files from `test/registered/8-gpu-models/` to `test/manual/`
-2. Remove the `register_cuda_ci()` calls from these files
-3. Remove the `from sglang.test.ci.ci_register import register_cuda_ci` imports
-
-This will prevent `collect_tests()` from discovering these manual tests while keeping them available for manual execution when needed.
-
-## Files to Look At
-
-- `test/registered/8-gpu-models/test_qwen3_235b.py` — Qwen3-235B test with CI registration
-- `test/registered/8-gpu-models/test_deepseek_v31.py` — DeepSeek-V3.1 test with CI registration
-- `test/registered/8-gpu-models/test_glm_46_fp8.py` — GLM-4.6-FP8 test with CI registration
-- `python/sglang/test/ci/ci_register.py` — Contains `collect_tests()` function (for reference)
+After fixing, `collect_tests()` should complete without raising `ValueError` when scanning `test/registered/`. The nightly-only test files should be available under `test/manual/` for manual execution, properly adapted for standalone use without CI auto-discovery infrastructure. All remaining files in `test/registered/8-gpu-models/` should continue to have valid CI registrations. The test logic within the moved files (model paths, test functions, etc.) must be preserved unchanged.
 
 ## Notes
 
-- The `test/manual/` directory already exists and is used for non-CI tests
-- The files should be moved (preserving git history via `git mv` if possible)
-- The test logic itself should remain unchanged; only the CI registration should be removed
+- Ensure any modified files are valid Python that passes syntax checks

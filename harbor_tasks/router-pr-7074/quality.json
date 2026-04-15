@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts), the exact string 'import.meta.hot.data ??= {}', the function buildStableSplitComponentStatements, the if block structure pattern, and the test command. All asserted specifics in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'The template must include the literal line: import.meta.hot.data ??= {}' with exact placement requirements ('Inside the if (import.meta.hot) block, Before any statements that assign to import.meta.hot.data[%%hotDataKey%%]'). This is a complete specification of what to change and where, leaving no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_hmr_data_initialization_in_template asserts the exact string 'import.meta.hot.data ??= {}' via literal substring match. An alternative correct fix like 'if (!import.meta.hot.data) import.meta.hot.data = {}' or 'import.meta.hot.data = import.meta.hot.data || {}' would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two f2p tests (test_hmr_data_initialization_in_template and test_initialization_inside_if_block) are purely text-matching: they open the file and assert string/regex patterns. They do not import, call, or execute the code. The p2p tests do run subprocesses (build, unit tests, etc.), but the f2p tests are entirely 'assert string in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for the presence of the literal string 'import.meta.hot.data ??= {}' and a regex pattern in the source file. An agent could simply append a comment containing that string to the file (e.g., '// import.meta.hot.data ??= {}') and pass test_hmr_data_initialization_in_template without implementing the actual fix. The regex test is slightly harder to fool but still just checks text presence."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/router and the solution directory if it exists. More critically, the instruction.md itself literally states the exact string to insert ('import.meta.hot.data ??= {}') and the tests just check for that literal string in the file, so the agent can grep for or directly use the fixture value without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: the exact initialization statement (test_hmr_data_initialization_in_template), placement inside if block (test_initialization_inside_if_block), and no regressions via unit tests, type checks, build, and lint (p2p tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, have docstrings explaining fail_to_pass vs pass_to_pass categories, and are logically grouped by concern (template content, placement, unit tests, types, build, lint, publint)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and other identifiers in instruction.md and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file, exact function (buildStableSplitComponentStatements), exact line to add ('import.meta.hot.data ??= {}'), and exact placement within the template. This goes far beyond naming the buggy module \u2014 it specifies the complete solution including the exact code to insert."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_handlers_not_stubbed checks line count >= 200, test_socket_test_file_preserved checks > 500 lines, test_hostname_crash_fixed and test_unix_crash_fixed look for specific patterns like 'generated.unix_.get()' and 'generated.hostname.get()' which are not mentioned in the instructions. The exact file path 'src/bun.js/api/bun/socket/Handlers.zig' is never named in instruction.md (only the directory is hinted). Tests also c"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (assertf crash on truthy-but-empty strings), names candidate fix patterns (throwInvalidArguments, throwTypeError, etc.), and points to a directory. It does not specify exact line numbers or the precise code change, leaving the agent to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The Zig fix tests check for the absence of assertf crash assertions and presence of any of several error-handling patterns (throwinvalidarguments, throwtypeerror, throwpossiblyinvalidarguments, or length == 0 with return). The test file checks are also flexible \u2014 they look for triggers like [] with hostname, throw assertions, and Bun.listen/connect references without requiring exact gold-patch strings. Alternative correct fixes would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The Zig fix checks (test_hostname_crash_fixed, test_unix_crash_fixed) are purely textual/structural \u2014 they read the file, strip comments, and search for string patterns like 'assertf', 'throwinvalidarguments', etc. They never compile or execute the Zig code. The test file check (test_throw_tests_added) uses Node to parse the TS file as text, checking for string patterns rather than executing the tests. While the comment says 'Zig cannot be compiled without the full bun build system', the fail-to"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply removes all assertf lines from Handlers.zig and adds a 'throwInvalidArguments' string nearby (without actually fixing the logic), plus appends a test file with the right keywords, would pass the structural checks. The tests never execute the actual Bun runtime to verify the crash is fixed \u2014 test_hostname_crash_fixed and test_unix_crash_fixed only do text pattern matching."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is at /workspace/bun (same as REPO), and solve.sh is in solution/solve.sh. The agent could read the solution file or the test_outputs.py file to see exactly what patterns are checked (e.g., specific marker strings like 'generated.hostname.get()', the expected error function names, line count thresholds). The tests check for textual patterns that could be reverse-engineered from the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) fix the crash assertion for hostname and unix, (2) add tests for Bun.listen() and Bun.connect() with throw assertions for truthy-but-empty values. All these behaviors are tested \u2014 Zig fix checks verify both hostname and unix branches, and test_throw_tests_added verifies the test file covers both APIs with throw assertions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_hostname_crash_fixed, test_unix_crash_fixed, test_throw_tests_added, etc.), grouped by category (fail_to_pass, pass_to_pass, repo_tests) with clear docstrings and comments explaining each section."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a crash bug and adding tests \u2014 no structured data output (JSON/CSV/API/DB) is produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction points to a directory ('src/bun.js/api/bun/socket/') rather than a specific file, and describes the fix category (use throwInvalidArguments etc.) without giving exact line numbers or the precise code change. The directory hint is reasonable given the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

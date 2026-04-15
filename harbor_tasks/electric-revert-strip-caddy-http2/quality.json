@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics: file paths (src/vite-plugin-caddy.ts, vite.config.ts, AGENTS.md, README.md), the exported function name (caddyPlugin), plugin name ('vite-plugin-caddy'), required methods (configureServer, buildEnd), config key (host: true), literal strings to remove ('UPGRADE!'), and content requirements (HTTP/2, proxy, Caddy, caddy trust, connection limit explanation). All test assertions map to discoverable elements in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (slow shapes, outdated AGENTS.md text, missing Caddy integration) and what to create/fix, but doesn't give exact code, line numbers, or replacement strings. The agent must reason about implementation details like how to write the Vite plugin, the Caddyfile content, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for specific interface requirements (plugin name 'vite-plugin-caddy', function name 'caddyPlugin', methods configureServer/buildEnd) which are all explicitly stated in the instructions. The documentation tests check for keyword presence (HTTP/2, proxy, Caddy, caddy trust) not exact prose. Alternative implementations with different internal logic would pass as long as they meet the specified interface."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_vite_plugin_exports actually imports and executes the plugin code, which is behavioral. However, test_vite_config_uses_caddy is purely text-matching ('caddyPlugin' in content, 'host: true' in content), test_agents_md_http2_proxy_tip is purely text-matching, and test_readme_documents_caddy is purely text-matching. The majority of fail-to-pass tests (3 of 4) are text-only assertions with no execution. Only 1 of 4 fail-to-pass tests actually calls code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_vite_plugin_exports requires a real module that exports caddyPlugin returning an object with specific name and function-typed properties - a stub returning None or empty object would fail. The text-based tests require specific content that wouldn't exist by default. A no-op agent would fail all f2p tests since the files either don't exist or lack the required content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/electric as part of the Docker setup (solve.sh is in solution/). The agent could potentially read /solution/solve.sh which contains the complete gold patch with exact file contents. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four explicit requirements from instruction.md are tested: (1) vite-plugin-caddy.ts with caddyPlugin export (test_vite_plugin_exports), (2) vite.config.ts integration with host:true (test_vite_config_uses_caddy), (3) AGENTS.md fix (test_agents_md_http2_proxy_tip), (4) README.md documentation (test_readme_documents_caddy). Regression tests also verify existing plugins are retained."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (fail-to-pass code behavior, fail-to-pass config/documentation, pass-to-pass static, pass-to-pass repo_tests). Each test has a descriptive name and docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves creating a Vite plugin and editing documentation files, not producing structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths (examples/tanstack-db-web-starter/src/vite-plugin-caddy.ts, vite.config.ts, AGENTS.md, README.md), function names (caddyPlugin), and commands (caddy trust) are consistently spelled across instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the outdated text contains 'UPGRADE!' and describes what's wrong, but doesn't give exact line numbers or the precise replacement text. File locations are necessary context for the task, not localization hints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes: a single line change in AGENTS.md, additions to README.md, a new plugin file, and minor edits to vite.config.ts. No full-file rewrites or contradictions with other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

@@ -11,7 +11,9 @@ Fix the `getStatusCode` function in `frontend/src/utils/status.ts` so that when 
 The fix should:
 1. Add a priority check for `conversationStatus === "STARTING"` in the status logic
 2. This check should come BEFORE the WebSocket status check
-3. Update the existing tests in `frontend/__tests__/utils/status.test.ts` to reflect the new behavior
+3. Include the comment `PRIORITY 2.5: Handle conversation starting state` to document this ordering
+4. Update the existing tests in `frontend/__tests__/utils/status.test.ts` to reflect the new behavior
+5. Add a test case with the description `show Starting when conversation status is STARTING even with disconnected websocket` that verifies the STARTING status takes priority over DISCONNECTED
 
 ## Files to Modify
 

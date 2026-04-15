@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:53:37.554242",
-  "total_time": 767.01,
-  "sandbox_id": "inpnjp00w1788xfmgghf8",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:11:09.494545",
+  "total_time": 917.55,
+  "sandbox_id": "i8izjkls4vo972vfi7bkl",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,26 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.29,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:85: test `test_modular_causal_lm_no_init_override` has 1 assert(s), al', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.89,
+      "tier_a_fails": [
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1.59,
-      "at": "2026-04-09T14:52:39.096377"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +109,14 @@
       "backend": "fireworks",
       "time": 767.01,
       "at": "2026-04-12T05:53:37.554242"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 917.55,
+      "at": "2026-04-15T06:11:09.494545"
     }
   ]
 }

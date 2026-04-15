@@ -12,33 +12,33 @@ Gasless transactions are a protocol feature that allows certain transaction type
 
 ## The Bug
 
-Both `dry_exec_transaction` and `simulate_transaction` in `crates/sui-core/src/authority.rs` have a check like:
-
-```rust
-if transaction.gas().is_empty() {
-    // inject mock gas coin
-}
-```
-
-This is problematic because gasless transactions also have empty gas, but they should NOT receive mock gas injection.
-
-## What You Need to Fix
-
-1. In `dry_exec_transaction`: Add a check for gasless transactions BEFORE the mock gas injection. Gasless transactions should skip the mock gas injection and call `check_transaction_input` directly.
-
-2. In `simulate_transaction`: Add a similar check for gasless transactions and skip mock gas injection when the transaction is gasless.
-
-## Hint
+Both `dry_exec_transaction` and `simulate_transaction` in `crates/sui-core/src/authority.rs` check if `transaction.gas().is_empty()` to decide whether to inject mock gas. This is incorrect because gasless transactions also have empty gas, but they should NOT receive mock gas injection.
 
 A transaction is gasless when both:
 - `protocol_config.enable_gasless()` returns true
 - `transaction.is_gasless_transaction()` returns true
 
-Store this in a variable like `is_gasless` and use it to conditionally skip mock gas injection.
+## Required Behavior
+
+Your fix must ensure:
+
+1. **Gasless detection**: Both functions must determine whether the transaction is gasless using the protocol configuration and transaction state.
+
+2. **Skip mock gas for gasless**: When a transaction is gasless, mock gas injection must be skipped entirely.
+
+3. **Use direct validation for gasless**: For gasless transactions in `dry_exec_transaction`, use `sui_transaction_checks::check_transaction_input` directly instead of the mock gas path.
+
+4. **Preserve existing behavior**: Non-gasless transactions with empty gas should continue to work as before (mock gas injection).
 
 ## Files to Modify
 
-- `crates/sui-core/src/authority.rs` - Add gasless checks in two functions
+- `crates/sui-core/src/authority.rs` - Modify `dry_exec_transaction` and `simulate_transaction`
+
+## Implementation Notes
+
+- You will need to add gasless checks in two separate functions
+- The gasless validation path should call `sui_transaction_checks::check_transaction_input` with the appropriate parameters
+- For `simulate_transaction`, ensure the mock gas injection is skipped when the transaction is gasless
 
 ## Testing Guidelines
 

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all key paths (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills symlink to ../skills, AGENTS.md), required frontmatter fields (name, description), content requirements (vLLM, entry point, @ syntax, TOML, etc.), the Skills section heading, maintenance responsibilities, and toml-config references. The tests check for these same elements. Specific strings like 'inference-server', 'toml-config', 'vllm', '## Skills', '.claude/skills', 'maintainin"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to create (skills directory, symlink, AGENTS.md updates) and what content to include, but does not give exact line-by-line changes, specific wording, or the precise patch. The agent must still decide how to phrase the documentation, structure the markdown, and integrate the Skills section into AGENTS.md."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for reasonable invariants: directory existence, file existence, presence of key terms (vllm, @, TOML, inference-server, toml-config), section headers (## Skills), and conceptual content (maintaining, responsible for). Alternative correct implementations with different wording, ordering, or structure would pass as long as they include these required elements."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are purely text-matching: they read file contents and check for substring presence (e.g., 'assert \"## Skills\" in content', 'assert \"toml-config\" in content', 'assert \"vllm\" in content.lower()'). The symlink test uses os.readlink but still just checks a substring. No test imports code, executes behavior, or runs subprocesses against the created artifacts. The pass-to-pass tests do run ruff/syntax checks but those aren't testing the new functionality."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass: tests check for specific file existence (skills/inference-server/SKILL.md, skills/toml-config/SKILL.md), symlink existence, specific content within files (frontmatter, keywords like vllm, TOML, @), and specific sections in AGENTS.md (## Skills, maintaining, responsible for). An empty file or directory wouldn't satisfy the content assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/prime-rl accessible via solve.sh which is in solution/solve.sh. The Dockerfile doesn't remove the solution directory. An agent could potentially read the test file at tests/test_outputs.py to see exact assertions and craft minimal files to pass them, or read solution/solve.sh directly if it's mounted in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from instruction.md are tested: skills directory existence, both SKILL.md files with frontmatter and content checks, symlink creation, AGENTS.md Skills section, maintenance responsibility documentation, and toml-config skill reference. The instruction's requirements map well to the test coverage."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (pass-to-pass static, pass-to-pass repo_tests, fail-to-pass pr_diff structural, fail-to-pass pr_diff documentation), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces markdown documentation files and a symlink, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and references are consistent between instruction.md and the test file. No typos detected in paths like skills/inference-server/SKILL.md, skills/toml-config/SKILL.md, .claude/skills, AGENTS.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create and what content to include at a requirements level, without specifying exact line numbers, exact wording, or implementation details that would bypass the need for the agent to reason about the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md edit is localized: add a Skills section and replace detailed CLI bullet points with a skill reference. The gold diff shows a small, bounded change to AGENTS.md, not a full rewrite. New files are created but don't contradict existing content."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

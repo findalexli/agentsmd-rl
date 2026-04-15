@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (packages/shared/ReactPerformanceTrackProperties.js), the helper function name pattern (readReactElementTypeof), the 'in' operator check for '$$typeof', hasOwnProperty.call usage, the functions addValueToProperties and addObjectDiffToProperties, and the ordering requirement. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Introduce a helper function with a name matching the pattern readReactElementTypeof', 'Use the in operator to check for the $$typeof property', 'Use hasOwnProperty.call', 'Replace all direct $$typeof accesses in addValueToProperties and addObjectDiffToProperties with calls to this helper'. This is a complete implementation specification, not just a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact implementation details: the function must be named 'readReactElementTypeof' (test_safe_reader_function_defined), must contain exact string \"'$$typeof' in value\" (test_safe_reader_uses_in_operator), exact string \"hasOwnProperty.call(value, '$$typeof')\" (test_safe_reader_uses_has_own_property), and exact call pattern \"readReactElementTypeof(value) === REACT_ELEMENT_TYPE\" (test_add_value_uses_safe_reader). An alternative correct fix using a different name (e.g., safeReadTypeof"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_safe_reader_function_defined, test_safe_reader_uses_in_operator, test_safe_reader_uses_has_own_property, test_add_value_uses_safe_reader, test_add_object_diff_uses_safe_reader) are ALL string-based source inspection using 'assert X in src' patterns. While pass-to-pass tests do run subprocess tests, the core behavioral tests (f2p) never execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (empty file, pass, etc.) would fail the f2p tests because they check for specific string patterns like 'readReactElementTypeof(value) === REACT_ELEMENT_TYPE' and the absence of 'value.$$typeof === REACT_ELEMENT_TYPE'. The pass-to-pass tests also run actual test suites that would fail with a stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to see exact expected strings like \"'$$typeof' in value\" and reverse-engineer the solution. No measures prevent this."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: the helper function name (test_safe_reader_function_defined), 'in' operator usage (test_safe_reader_uses_in_operator), hasOwnProperty.call usage (test_safe_reader_uses_has_own_property), replacement in both functions (test_add_value_uses_safe_reader, test_add_object_diff_uses_safe_reader), and ordering (test_helper_defined_before_first_use)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Repo CI/CD, Fail-to-pass, Pass-to-pass), descriptive names, and detailed docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying source code, not producing structured data outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction are consistent and correct (packages/shared/ReactPerformanceTrackProperties.js, readReactElementTypeof, addValueToProperties, addObjectDiffToProperties, hasOwnProperty.call, $$typeof)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact target file (packages/shared/ReactPerformanceTrackProperties.js), exact function name to create (readReactElementTypeof), exact functions to modify (addValueToProperties, addObjectDiffToProperties), and exact implementation patterns ('in' operator, hasOwnProperty.call). This goes far beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

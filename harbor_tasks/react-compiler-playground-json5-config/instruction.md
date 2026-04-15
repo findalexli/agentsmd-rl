@@ -12,6 +12,14 @@ Additionally, the default config template uses TypeScript syntax (`import type`,
 
 Config parsing should use a safe parser (like JSON5) that only accepts data — not arbitrary JavaScript expressions. The default config should be a simple JSON5 object without TypeScript-specific syntax.
 
+The fix must satisfy these specific requirements:
+
+1. **Function name**: The config override parsing function must be exported as `parseConfigOverrides` (not `parseOptions`)
+2. **Config file path**: The config editor must reference a file named `config.json5` (not `config.ts`)
+3. **Default config format**: The default config in defaultStore.ts must use the syntax `export const defaultConfig = \`` template literal, and must not contain TypeScript-specific syntax (`import type`, `satisfies PluginOptions`)
+4. **Test file**: A unit test file must exist at `compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs`
+5. **Dependency**: The `json5` package must be listed as a dependency in `compiler/apps/playground/package.json`
+
 ## Files to Look At
 
 - `compiler/apps/playground/lib/compilation.ts` — contains the config parsing logic in the `parseOptions` function

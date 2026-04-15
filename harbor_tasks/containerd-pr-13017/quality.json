@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: (1) test_resolver_priority_check_present checks for the literal string 'firstErrPriority > 2' in the source code, which is never mentioned in the instructions. (2) Tests check for `remoteerrors.ErrUnexpectedStatus` with specific StatusCode fields - while instruction.md mentions ErrUnexpectedStatus, the exact package path `github.com/containerd/containerd/v2/core/remotes/errors` and the `StatusCode` field name are no"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug (fallback happens for all errors including 5xx) and desired behavior (only fallback on 404, not 5xx) but does not specify the exact code change like 'add if firstErrPriority > 2 { break }'. It mentions error severity tracking but doesn't give the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_resolver_priority_check_present (truncated but visible in structure) asserts that the literal string 'firstErrPriority > 2' exists in resolver.go. An alternative correct fix that uses a different variable name, different threshold, or a different mechanism (e.g., checking error type directly before fallback) would fail this test even if behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_resolver_priority_check_present is a structural/text-based test that checks for the presence of a specific string pattern in source code rather than testing behavior. However, the other tests (test_resolve_no_blobs_fallback_on_5xx, test_resolve_allows_blobs_fallback_on_404, test_5xx_errors_not_cached) do execute the code via `go test`. Since at least one test is purely text-matching, this is a FAIL."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_resolve_no_blobs_fallback_on_5xx, test_5xx_errors_not_cached) set up HTTP test servers and verify that the resolver does NOT call the /blobs/ endpoint on 5xx errors and returns an error. A stub or default implementation (the existing buggy code) would fall back to /blobs/ and these tests would fail, so they genuinely require the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/containerd (solution/solve.sh contains the exact patch). An agent could read solve.sh or the solution directory if accessible in the container. The Dockerfile doesn't remove the solution files, and there's no evidence they're excluded from the container filesystem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md specifies: 404 should fallback (tested by test_resolve_allows_blobs_fallback_on_404), 5xx should not fallback (tested by test_resolve_no_blobs_fallback_on_5xx and test_5xx_errors_not_cached), code should compile (test_go_build), and proper formatting (test_gofmt_check). All explicitly required behaviors are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_resolve_no_blobs_fallback_on_5xx, test_resolve_allows_blobs_fallback_on_404, etc.), have docstrings explaining fail-to-pass vs pass-to-pass semantics, and are logically grouped by scenario."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a bug in Go code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_resolve_no_blobs_fallback_on_5xx and test_5xx_errors_not_cached, the except block has 'raise AssertionError' which is a typo for 'AssertionError' (should be 'AssertionError' \u2014 actually this is a typo: it should be 'AssertionError' vs 'AssertionError'). Wait, looking more carefully: 'AssertionError' is indeed a typo for 'AssertionError'. Actually 'AssertionError' itself is wrong \u2014 the correct Python exception is 'AssertionError'. Let me recheck: Python's built-in is `AssertionError`... no"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md mentions the directory 'core/remotes/docker/' and describes the error severity tracking mechanism conceptually, but doesn't name exact line numbers or the specific variable 'firstErrPriority' or the threshold value '2'. The file path is appropriate given the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

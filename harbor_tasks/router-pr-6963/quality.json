@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: the file path `scripts/create-github-release.mjs`, variable names `typeOrder`, `typeLabels`, `isBreaking`, `bucket`, the `'breaking'` type key, the regex pattern structure with `(!)?` group, group indices (1=type, 2=scope, 3=!, 4=message), and `conventionalMatch = subject.match()`. The linting tests (eslint, prettier, types) use standard repo commands that are discoverable from the repo context."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact regex modification needed ('Include `(!)?` to optionally capture the `!` breaking marker in a group'), the exact variable names to create (`isBreaking`, `bucket`), the exact values (`bucket = isBreaking ? 'breaking' : type` pattern), and that group 4 is the message. This is essentially a step-by-step implementation guide, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names `isBreaking` and `bucket` (test_is_breaking_variable_exists, test_bucket_uses_breaking_type), exact regex group structure where group 3 must be '!' (test_regex_captures_breaking_marker checks `'!' in groups`), and specific string patterns like `isBreaking ? 'breaking'`. An alternative correct fix using different variable names (e.g., `breakingChange`, `category`) or a different regex structure would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests are text-matching: test_breaking_type_in_type_order checks `'breaking' in type_order_content`, test_is_breaking_variable_exists checks `'isBreaking' in script`, test_bucket_uses_breaking_type checks string patterns in source. The regex tests do execute the regex via `re.match()`, and linting tests run subprocesses, but the grouping logic tests are purely text-based assertions on file content."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests would not pass on the base commit: the regex on the base commit lacks `(!)?` so `feat!: breaking feature` won't match (test_regex_matches_breaking_commit_with_exclamation), and `typeOrder`/`typeLabels` don't contain 'breaking'. A stub/no-op implementation cannot satisfy these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/router` accessible path via `solution/solve.sh`, and contains the exact gold patch. An agent could read it or run it. Additionally, tests grep for specific strings like `isBreaking` that could be trivially inserted without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: regex matching breaking commits (with/without scope), capturing the `!` marker, `typeOrder` containing 'breaking', `typeLabels` having breaking entry, `isBreaking` variable, `bucket` logic, correct message extraction from group 4, and backward compatibility with regular commits."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestBreakingCommitRegex, TestBreakingCommitGrouping, TestMessageExtraction, TestRepoLinting) with clear docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a script's parsing logic, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the regex should include `(!)?`, group indices (1=type, 2=scope, 3=!, 4=message), exact variable names `isBreaking` and `bucket`, and the pattern `bucket = isBreaking ? 'breaking' : type`. This goes well beyond naming the buggy file and describes the exact solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a JavaScript script, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

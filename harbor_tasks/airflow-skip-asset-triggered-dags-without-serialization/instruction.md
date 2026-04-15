@@ -10,19 +10,30 @@ The Airflow scheduler's `dags_needing_dagruns()` method in `DagModel` has a bug 
 
 ## Files to Modify
 
-- **`airflow-core/src/airflow/models/dag.py`** - The `DagModel.dags_needing_dagruns()` method (around line 680)
+- **`airflow-core/src/airflow/models/dag.py`** - The `DagModel.dags_needing_dagruns()` method
 
 ## What You Need to Fix
 
-The `dags_needing_dagruns()` method currently retrieves `SerializedDagModel` rows for DAGs in `dag_statuses`, but it doesn't handle the case where some DAGs have `AssetDagRunQueue` rows but no `SerializedDagModel` yet.
+The `dags_needing_dagruns()` method retrieves `SerializedDagModel` rows for DAGs with `AssetDagRunQueue` entries, but it doesn't handle the case where some DAGs have `AssetDagRunQueue` rows but no `SerializedDagModel` yet.
 
-You need to:
+You need to implement logic that:
 
-1. **Filter out DAGs missing from serialized_dag table**: After fetching `ser_dags`, compute which DAG IDs from `adrq_by_dag` are missing from the serialized results. Remove these from both `adrq_by_dag` and `dag_statuses` dictionaries before processing.
+1. **Filters out DAGs missing from serialized_dag table**: After fetching the serialized DAGs, identify which DAG IDs from `adrq_by_dag` have no corresponding serialized data. Remove these DAGs from both `adrq_by_dag` and `dag_statuses` dictionaries before further processing.
 
-2. **Preserve ADRQ rows**: Do NOT delete `AssetDagRunQueue` rows for missing DAGs. These rows must remain so the scheduler can re-evaluate on a later run once `SerializedDagModel` exists.
+2. **Preserves ADRQ rows**: Do NOT delete `AssetDagRunQueue` rows for missing DAGs. These rows must remain in the database so the scheduler can re-evaluate on a later run once `SerializedDagModel` exists.
 
-3. **Emit an informative log message**: When skipping DAGs without serialized data, log an INFO message that includes the sorted list of affected DAG IDs. The log message should help operators understand why certain DAGs aren't being scheduled despite having queued asset events.
+3. **Emits an informative log message**: When skipping DAGs without serialized data, log an INFO message that includes the sorted list of affected DAG IDs. The log message must contain exactly:
+
+   ```
+   Dags have queued asset events (ADRQ), but are not found in the serialized_dag table.
+   ```
+
+## Required Variable Names
+
+Your implementation must include these specific variable names:
+
+- `missing_from_serialized` - A set containing the DAG IDs that are in `adrq_by_dag` but not in the serialized results
+- `ser_dag_ids` - A set containing the DAG IDs that were found in `SerializedDagModel`
 
 ## Expected Behavior After Fix
 
@@ -38,7 +49,7 @@ Your fix should pass these behavioral checks:
 
 2. **Preservation test**: After calling `dags_needing_dagruns()`, the `AssetDagRunQueue` row for the orphan DAG should still exist in the database
 
-3. **Log test**: An INFO log message should be emitted containing the text "Dags have queued asset events (ADRQ), but are not found in the serialized_dag table" and the affected DAG ID
+3. **Log test**: An INFO log message should be emitted containing the text "Dags have queued asset events (ADRQ), but are not found in the serialized_dag table." and the affected DAG ID
 
 4. **Sorting test**: When multiple DAGs lack `SerializedDagModel`, they should appear sorted alphabetically (e.g., "ghost_a" before "ghost_z") in the log message
 
@@ -47,6 +58,4 @@ Your fix should pass these behavioral checks:
 ## Key Considerations
 
 - The fix should only affect the in-memory dictionaries (`adrq_by_dag` and `dag_statuses`), not delete database rows
-- Use set operations to efficiently find missing DAG IDs: `set(adrq_by_dag.keys()) - ser_dag_ids`
-- The log message should use the INFO level and include sorted(missing_dag_ids)
 - Be careful with the session parameter — don't call `session.commit()` in this method

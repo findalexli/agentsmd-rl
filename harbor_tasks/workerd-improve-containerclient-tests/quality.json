@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_ws_timeout_mechanism extracts code between '// Listen for response' and '// Send a test message' markers and expects a variable named 'promise' or 'messagePromise', and uses Promise.withResolvers pattern. The instruction mentions the markers but does not mention Promise.withResolvers or that the variable should be named 'promise'. test_retry_no_verbose_logging asserts the exact string 'Retrying getTcpPort' is absent, which is not mentioned in instruction.md. test_readme_safe_docker_cleanup "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (WebSocket hangs, noisy logging, incorrect README commands) without specifying the exact code changes. It mentions using 'a modern promise pattern with a timeout' but doesn't prescribe Promise.withResolvers specifically."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_ws_timeout_mechanism extracts code between specific comment markers and expects the promise variable to be named exactly 'promise' or 'messagePromise'. An alternative fix that uses a different variable name (e.g., 'wsPromise' or 'responsePromise') would fail. Also, the test expects the code block between those exact markers to be self-contained and runnable in isolation with a mock WebSocket \u2014 alternative implementations restructuring the code differently would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_ws_timeout_mechanism extracts code from test.js and actually executes it via Node.js subprocess to verify the timeout behavior. test_syntax_check runs 'node --check'. However, test_retry_no_verbose_logging, test_readme_safe_docker_cleanup, and test_readme_correct_target are pure text searches. Since there's a mix and the key behavioral test (WebSocket timeout) does execute code, this passes."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op wouldn't pass: test_ws_timeout_mechanism requires the extracted promise code to reject with a timeout (not hang forever), test_retry_no_verbose_logging requires removing specific log text, test_readme_safe_docker_cleanup requires removing $() pattern, test_readme_correct_target requires adding :container-client@. None can be satisfied by doing nothing."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/workerd as solution/solve.sh is applied in the environment. The agent could read tests/test_outputs.py to discover exact assertions (e.g., the exact strings 'Retrying getTcpPort', 'docker rm -f $(', ':container-client@') and match them without understanding the bugs. The hidden test file and solution are accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three explicit requirements from the instruction are tested: WebSocket timeout (test_ws_timeout_mechanism), retry logging cleanup (test_retry_no_verbose_logging), and README fixes (test_readme_safe_docker_cleanup, test_readme_correct_target)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and comments separating gate tests from fail-to-pass behavioral tests. Clear grouping with section headers."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the comment markers '// Listen for response' and '// Send a test message' that bracket the code to change, and mentions specific implementation details like the $() subshell pattern and :container-client@ suffix. It also specifies the exact retry behavior ('console.info messages on every retry attempt'). This significantly narrows the search space beyond what's needed for a task description."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

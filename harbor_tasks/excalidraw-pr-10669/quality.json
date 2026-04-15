@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (packages/common/src/editorInterface.ts, packages/excalidraw/types.ts, packages/excalidraw/components/App.tsx, packages/excalidraw/index.tsx), the specific constant MQ_MAX_TABLET=1180, the 'iPad Air' comment, the 'not used for form factor detection' comment, the getFormFactor callback signature with editorWidth/editorHeight parameters and EditorInterface[\"formFactor\"] return type, removal of desktopUIMode and formFactor properties, and the optional chaining p"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact implementation details: 'MQ_MAX_TABLET should have the value 1180', 'getFormFactor?: (editorWidth: number, editorHeight: number) => EditorInterface[\"formFactor\"]', 'optional chaining should be used when invoking it', and the exact comment text 'not used for form factor detection'. This tells the agent exactly WHAT to change rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact string matching via grep, e.g. test_app_uses_getformfactor greps for the exact string 'getFormFactor?.(editorWidth, editorHeight)', test_index_handles_getformfactor greps for 'key.*===.*\"getFormFactor\"', and test_desktop_ui_mode_comment greps for exact string 'not used for form factor detection'. An alternative correct implementation using different variable names for parameters or different comment wording would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are pure text/grep checks: test_mq_max_tablet_value greps for a string, test_uioptions_has_getformfactor reads file content, test_app_uses_getformfactor greps for exact string pattern, etc. The only behavioral tests are test_typescript_compiles, test_repo_lint, and test_repo_format which run actual commands. The core fail-to-pass tests never import, call, or execute the changed code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/default implementation would not pass because the tests check for specific strings that don't exist in the original codebase (e.g., MQ_MAX_TABLET=1180, getFormFactor in types.ts, removal of formFactor?: and desktopUIMode?: patterns). The original code has MQ_MAX_TABLET=1400 and formFactor?:, so actual changes are required."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/excalidraw with solve.sh containing the exact patch. The agent could read solution/solve.sh or tests/test_outputs.py to discover exact expected strings like 'MQ_MAX_TABLET = 1180', 'getFormFactor?.(editorWidth, editorHeight)', and 'not used for form factor detection', then simply apply those changes without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: MQ_MAX_TABLET value change, iPad Air comment, MQ_MIN_WIDTH_DESKTOP comment, getFormFactor callback in types.ts, removal of formFactor and desktopUIMode from UIOptions, App.tsx using getFormFactor with optional chaining, removal of desktopUIMode reference in App.tsx, index.tsx handling getFormFactor, and typecheck/lint/format validation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (e.g., test_mq_max_tablet_value, test_uioptions_has_getformfactor), docstrings explaining fail-to-pass vs pass-to-pass classification, and clear assert messages explaining what each check verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correctly spelled and match the actual codebase structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths, exact callback signatures ('getFormFactor?: (editorWidth: number, editorHeight: number) => EditorInterface[\"formFactor\"]'), exact comment text ('not used for form factor detection'), and exact implementation patterns ('optional chaining should be used'). This goes well beyond identifying the buggy module and essentially dictates the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving TypeScript source changes, not configuration file edits."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

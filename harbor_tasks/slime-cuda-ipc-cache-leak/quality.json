@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable names like 'long_lived_tensors' and 'hf_named_tensors' (test_hf_named_tensors_released_in_loop), the existence of '_send_hf_params' and '_send_to_colocated_engine' methods (test_send_hf_params_exists, test_send_to_colocated_engine_structure), and specific event ordering between barrier/ipc_collect calls. The instruction.md mentions 'long_lived_tensors' nowhere, nor 'hf_named_tensors', nor '_send_to_colocated_engine'. While the file path is given, these specific "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (IPC cache leaks, missing ipc_collect calls, unreleased GPU tensors) and expected behavior but does not specify exact code changes like 'add del hf_named_tensors on line X' or 'insert torch.cuda.ipc_collect() after line Y'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_hf_named_tensors_released_in_loop requires exactly 'long_lived_tensors' and 'hf_named_tensors' to be released via del or =None inside a for loop. An alternative fix that releases memory differently (e.g., clearing a dict, reassigning to a new variable, using a context manager, or calling .cpu() on tensors) would fail. test_ipc_collect_in_loop requires exactly 2 ipc_collect calls between the first and second barrier, which is gold-specific \u2014 an alternative placing a single ipc_collect at the"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mix of AST parsing (structural analysis of the code) and subprocess mock-execution (_MOCK_SCRIPT runs the actual function with mocks and records events). The mock-execution tests (test_ipc_collect_in_loop, test_ipc_collect_after_barrier) actually execute the code and verify behavioral event ordering, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (pass/return None) would fail test_not_stub (requires >5 statements), test_ipc_collect_in_loop (requires ipc_collect events in mock execution), and test_hf_named_tensors_released_in_loop (requires del/None assignments for specific variables in a for loop). The f2p tests cannot be satisfied without meaningful changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. An agent could read this file to extract the exact changes needed. The Dockerfile doesn't remove the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires (1) releasing GPU tensors from each weight chunk and (2) calling torch.cuda.ipc_collect(). Both behaviors are tested: test_hf_named_tensors_released_in_loop checks tensor release, test_ipc_collect_in_loop and test_ipc_collect_after_barrier check ipc_collect calls."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a memory leak in Python code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path which is reasonable for the task domain, and describes the problem/expected behavior without specifying exact line numbers or the precise code fix. The file to investigate is explicitly scoped which is appropriate."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

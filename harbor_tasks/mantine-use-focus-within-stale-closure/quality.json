@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the file path, the hook name, the useCallbackRef utility, the utils directory, variable names like onFocusRef/onBlurRef, and the dependency array changes. All test-asserted specifics (file paths, string patterns like 'onFocusRef = useCallbackRef(onFocus)', import of useCallbackRef, etc.) are discoverable from instruction.md's 'Expected Fix' section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Expected Fix' section explicitly states: '1. Import useCallbackRef from utils, 2. Wrap onFocus and onBlur with useCallbackRef, 3. Call the wrapped refs instead of the original callbacks, 4. Remove onFocus and onBlur from the useCallback dependency arrays.' This is a step-by-step implementation guide, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like 'onFocusRef = useCallbackRef(onFocus)' and 'onBlurRef = useCallbackRef(onBlur)' in test_onfocus_uses_callbackref and test_onblur_uses_callbackref. An alternative correct fix using different variable names (e.g., 'focusCallback = useCallbackRef(onFocus)') or a different ref-based approach (e.g., manually using useRef + useEffect) would fail these string-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_use_callback_ref_imported, test_onfocus_uses_callbackref, test_onblur_uses_callbackref, test_handle_focus_in_no_deps, test_handle_focus_out_no_deps) are purely text-matching with 'assert X in open(path).read()'. While test_hooks_jest_passes runs subprocess tests, the core f2p tests are string-in-file checks."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_handle_focus_in_no_deps and test_handle_focus_out_no_deps have a fallback 'pass' branch: if the regex doesn't match, they silently pass. A stub or unmodified file could pass these tests if the regex pattern doesn't match the existing code structure."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mantine (the solve.sh is in solution/solve.sh). An agent could read the solution directory or grep for the exact fixture strings like 'onFocusRef = useCallbackRef(onFocus)' from test_outputs.py to produce the exact expected code without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes fixing the stale closure bug via useCallbackRef, and the tests verify that useCallbackRef is imported, used for both callbacks, dependency arrays are empty, Jest tests pass, and TypeScript compiles."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (file existence, fix verification, compilation, linting), and annotated with (fail-to-pass) and (pass-to-pass) labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a React hook bug, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, commands, and function names in instruction.md are all correct and consistent with the codebase structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Expected Fix' section names exact variable names ('onFocusRef', 'onBlurRef'), the exact utility function ('useCallbackRef'), and step-by-step changes including 'Remove onFocus and onBlur from the useCallback dependency arrays'. This goes well beyond identifying the buggy file."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

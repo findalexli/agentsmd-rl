@@ -6,12 +6,15 @@ When using the Gradio reload/hot-swap feature on Hugging Face Spaces, swapping b
 
 ## Root Cause
 
-The `SpacesReloader` class in `gradio/utils.py` overrides the `postrun` method from its parent class. When a demo change is detected, it calls `swap_blocks(demo)` from the parent. However, it does not regenerate `demo.config` after the swap. The parent class's `swap_blocks` method does not call `get_config_file()` either, so the config becomes stale.
+The `SpacesReloader` class in `gradio/utils.py` inherits from `ServerReloader`. When a demo change is detected in `postrun`, it calls `swap_blocks(demo)` inherited from the parent class. However, after the swap, `demo.config` is not regenerated to reflect the new demo's configuration. The `get_config_file()` method is available on demo objects and returns the current configuration, but it is not being invoked after block swapping.
 
-## Expected Fix
+## Required Behavior
 
-The `SpacesReloader` class should override `swap_blocks` to call the parent implementation and then regenerate the config by calling `demo.config = demo.get_config_file()`.
+After `swap_blocks(demo)` is called, the demo's configuration must be refreshed:
+- `demo.config` must be assigned the value returned by `demo.get_config_file()`
+- The `swap_blocks` method must still delegate to the parent class implementation (`super().swap_blocks(demo)`)
+- This must work correctly when called from `postrun` when a changed demo is detected
 
 ## Files to Investigate
 
-- `gradio/utils.py` -- the `SpacesReloader` class and its `swap_blocks`/`postrun` methods
+- `gradio/utils.py` -- the `SpacesReloader` class and its relationship to `ServerReloader`

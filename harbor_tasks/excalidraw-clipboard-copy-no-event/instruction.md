@@ -16,19 +16,27 @@ The function should implement a three-tier fallback strategy:
 2. **Second**: If no clipboardEvent or it fails, try `navigator.clipboard.writeText()` for plain text
 3. **Third**: If that fails, fall back to `document.execCommand('copy')`
 
-### Current (Broken) Behavior
+When any tier succeeds, the function should not continue trying subsequent tiers.
 
-The function incorrectly returns early even when `clipboardEvent` is null/undefined, preventing the fallback to `navigator.clipboard.writeText()`.
+### Additional Code Quality Issues in clipboard.ts
 
-### Files to Modify
+Within the `copyTextToSystemClipboard` function:
 
-- `packages/excalidraw/clipboard.ts` - Main fix for the clipboard logic
-- `packages/excalidraw/components/FilledButton.scss` - Add missing background color for success states (related styling fix included in the PR)
+- The `plainTextEntry` variable should be declared with `const` rather than `let`, since it does not need reassignment.
+- After successfully calling `navigator.clipboard.writeText()`, the code should not set `plainTextEntry = undefined`.
 
-### Key Function
+## SCSS Styling Fix
 
-Look at `copyTextToSystemClipboard` around line 616. The issue is with the placement of return statements relative to the `if (clipboardEvent)` block.
+The file `packages/excalidraw/components/FilledButton.scss` is missing a background color for the success/loading button states. The selector:
 
-### Related
+```scss
+&.ExcButton--status-loading,
+&.ExcButton--status-success {
+```
 
-This is a fix for a regression from PR #10710.
+should include `background-color: var(--color-success);`.
+
+## Files to Modify
+
+- `packages/excalidraw/clipboard.ts`
+- `packages/excalidraw/components/FilledButton.scss`

@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests check for literal strings like 'oneToManyJoinedTableNames', 'groupBy', 'min(column)' or 'max(column)', and 'isOneToMany: true' in specific files. While the instruction mentions oneToManyJoinedTableNames, groupBy, min/max, and isOneToMany conceptually, the test check_code_has_fix() specifically checks for the literal substring 'min(column)' or 'max(column)' (as in a comment), which is not explicitly stated in instruction.md as a required literal string. The instruction says 'min(column)"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the implementation approach: 'track oneToManyJoinedTableNames and use a groupBy approach with min(column) or max(column) aggregation for one-to-many joins', 'add isOneToMany field to distinguish one-to-many joins', 'accept and propagate the isOneToMany parameter', 'set isOneToMany: true when joining array parent tables'. This tells the agent exactly what to implement in each file, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use string matching for gold-specific implementation details: check_code_has_fix() asserts 'oneToManyJoinedTableNames' and 'min(column)' or 'max(column)' as literal strings in findMany.ts. An alternative correct fix using different variable names (e.g., 'arrayJoinTables') or different aggregation syntax (e.g., 'sql`MIN(...)`') would fail the tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail_to_pass test (check_code_has_fix and the three isOneToMany checks) are purely text-matching: they read files and check for substring presence ('oneToManyJoinedTableNames' in content, 'groupBy' in content, 'min(column)' in content, 'isOneToMany' in content). No code is executed or imported to verify actual behavior. The pass_to_pass tests do run lint/build but those verify syntax, not the bug fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string presence in source files. An agent could add dead-code comments like '// oneToManyJoinedTableNames groupBy min(column) max(column)' to findMany.ts and '// isOneToMany' to the other files, passing all checks without actually fixing the pagination bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /solution/gold.patch and /solution/solve.sh in the container. The agent could simply run 'cat /solution/solve.sh' or 'git apply /solution/gold.patch' to obtain the answer. Additionally, the test checks for specific literal strings that are visible in tests/test_outputs.py, so grepping for expected fixture values would reveal exactly what strings to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes expected pagination behavior (Page 1 has exactly 5 distinct docs, Page 2 has exactly 5 distinct docs, no duplicates, correct sort order) but the tests never verify this behavior - they only check for string presence in source files and that lint/build pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped into clearly named functions (check_code_has_fix, check_buildquery_has_is_one_to_many, etc.) with docstrings and labeled as pass_to_pass or fail_to_pass categories, with clear print output."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is about fixing a code bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names all four exact files to modify and describes the specific implementation approach for each: 'track oneToManyJoinedTableNames', 'use a groupBy approach with min(column) or max(column)', 'add isOneToMany field', 'set isOneToMany: true when joining array parent tables'. This goes far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

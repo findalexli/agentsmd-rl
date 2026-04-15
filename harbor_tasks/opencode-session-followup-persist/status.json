@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T02:38:46.600648",
-  "total_time": 1630.81,
-  "sandbox_id": "ifuze4gjfbddh171endz8",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:57:24.390673",
+  "total_time": 1221.57,
+  "sandbox_id": "ig91cm7vy1vaumfneiafj",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -58,17 +60,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:72: test `test_followup_store_wrapped_with_persistence` has 2 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:118: test `test_persistence_workspace_scoped` has 1 assert(s), all pas']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.02,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "gemini",
-      "time": 15899.57,
-      "at": "2026-04-10T05:48:15.343185"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -100,6 +114,14 @@
       "backend": "fireworks",
       "time": 1630.81,
       "at": "2026-04-12T02:38:46.600648"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1221.57,
+      "at": "2026-04-15T04:57:24.390673"
     }
   ]
 }

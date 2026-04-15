@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details not mentioned in instruction.md: 'isDeviceVerifySource' variable name (test_login_cta_has_source_prop), 'Use <a> for external destination' comment string (test_login_cta_has_source_prop), 'ENTERPRISE_URL' constant name (test_login_cta_has_source_prop, test_login_cta_renders_external_link_for_device_verify), 'href={ENTERPRISE_URL}' exact syntax (test_login_cta_renders_external_link_for_device_verify), 'isDeviceVerifySource ? (' exact conditiona"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact implementation details: 'Refactor the button classes into a shared constant', 'Track the location properly: trackSaasSelfhostedInquiry({ location: source })', exact CSS classes like 'lg:items-stretch', 'rounded-2xl', 'border-[#242424]', 'lg:self-stretch', and exact prop syntax 'source=\"device_verify\"'. This goes beyond describing what's broken and tells the agent exactly what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_login_cta_has_source_prop assert on gold-specific implementation details: exact variable name 'isDeviceVerifySource', exact comment text 'Use <a> for external destination', exact constant name 'ENTERPRISE_URL', exact type name 'type LoginCTAProps', and exact syntax 'isDeviceVerifySource ? ('. A correct alternative using e.g. 'isExternalSource' or 'LEARN_MORE_URL' or an if/else instead of ternary would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_login_cta_has_source_prop, test_login_cta_renders_external_link_for_device_verify, test_device_verify_uses_login_cta, test_device_verify_passes_correct_props, and test_layout_classes_updated are purely text-matching with 'assert X in open(path).read()'. While test_repo_frontend_tests and test_repo_tests_login_cta do execute subprocess tests, the majority of f2p tests (5 out of 6 non-pass_to_pass) are pure string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The text-matching tests check for specific strings that would not exist in the original codebase (e.g., 'isDeviceVerifySource', 'ENTERPRISE_URL', 'source=\"device_verify\"'), and the subprocess tests run actual unit tests and builds that would fail without real implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/openhands with the gold patch available via solve.sh. The agent could read the test file at tests/test_outputs.py to see exact expected strings like 'isDeviceVerifySource', 'ENTERPRISE_URL', etc. and simply insert those literal strings into the source files to pass the text-matching tests. The solution directory containing solve.sh is accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The tests cover all major requirements from instruction.md: source prop types, external link behavior for device_verify, LoginCTA usage in device-verify page, layout classes, and the build/lint/typecheck passes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_login_cta_has_source_prop, test_device_verify_uses_login_cta, etc.) and include docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves React component modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact implementation details like 'trackSaasSelfhostedInquiry({ location: source })', exact CSS class names, and 'Refactor the button classes into a shared constant'. However, the tests go further requiring specific variable names like 'isDeviceVerifySource' and 'ENTERPRISE_URL' that aren't in the instructions, creating a mismatch."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

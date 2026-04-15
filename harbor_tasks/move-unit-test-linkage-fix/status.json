@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:19:09.870833",
-  "total_time": 3070.76,
-  "sandbox_id": "ijie9r740f7ulfslv86pt",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:06:58.080158",
+  "total_time": 2538.72,
+  "sandbox_id": "io2utpicsx4ra4nxsxpds",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -42,6 +44,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:306: test `test_setup_test_storage_function_structure` has 5 assert(s)', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:14: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 20.28,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
@@ -60,6 +83,14 @@
       "backend": "fireworks",
       "time": 3070.76,
       "at": "2026-04-12T00:19:09.870833"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 2538.72,
+      "at": "2026-04-15T05:06:58.080158"
     }
   ]
 }

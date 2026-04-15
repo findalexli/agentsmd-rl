@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literals not mentioned in instruction.md: '@fast_loop_window_ms 500', '@fast_loop_threshold 5', '@fast_loop_max_count 5', 'recent_requests: []', 'fast_loop_consecutive_count: 0', '@spec check_fast_loop(t())', 'def clear_fast_loop', 'check_fast_loop(stream)', 'ShapeState.clear_fast_loop'. Also test_elixir_tests_pass asserts '8 tests' in shape_state_test.exs which is completely undiscoverable from the instruction. The exact constant names, struct field names, function si"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (sliding window, threshold counts, exponential backoff, error after 5 detections) and which files to modify, but does not give exact code changes, line numbers, or specific implementation details like variable names or function bodies."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact module attribute names (@fast_loop_window_ms, @fast_loop_threshold, @fast_loop_max_count), exact struct field names (recent_requests, fast_loop_consecutive_count), exact function names (check_fast_loop, clear_fast_loop), exact call patterns ('check_fast_loop(stream)'), and exact spec format ('@spec check_fast_loop(t())'). An alternative correct implementation using different names (e.g., 'detect_loop', 'loop_count', '@loop_window') would f"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are pure text searches: test_fast_loop_check_exists, test_fast_loop_constants, test_fast_loop_struct_fields, test_clear_fast_loop_exists, test_stream_calls_check_fast_loop, test_stream_clears_fast_loop_on_live all just read files and assert string presence. Only test_elixir_tests_pass, test_elixir_format_check, test_elixir_compile_warnings, test_elixir_fetch_unit_tests, test_elixir_util_tests, and test_elixir_mock_and_http_tests execute code. The f2p-specific tests (the first 6) are e"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The text-matching tests (test_fast_loop_check_exists, test_fast_loop_constants, etc.) could be satisfied by adding dead code with the right string patterns without implementing any actual fast-loop detection behavior. test_elixir_tests_pass depends on a test file (shape_state_test.exs) that must already exist and have 8 passing tests, but the agent doesn't know the test content, so adding stub functions matching the text patterns plus a test file with 8 trivial passing tests could satisfy all ch"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is fetched via 'curl -sL https://github.com/electric-sql/electric/pull/4028.patch' in solve.sh. The agent could read /workspace/electric/packages/elixir-client/solution/solve.sh (if accessible), see the PR number, curl the patch, and apply it directly. Additionally, since tests are text-matching, the agent could grep the test file for expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction mentions exponential backoff behavior and raising Client.Error after 5 consecutive detections, but no test verifies these behavioral aspects. The tests only check for string presence in source files and that pre-existing test suites pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individual functions with descriptive docstrings (e.g., 'ShapeState has check_fast_loop/1 function', 'Stream clears fast-loop tracking when transitioning to live/up-to-date mode') and descriptive function names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON, CSV, API responses, or database schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and function names are consistent between instruction.md and test_outputs.py with no apparent typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify (shape_state.ex and stream.ex) which is reasonable given the task domain, but does not specify exact line numbers or exact code to write. The file-level guidance is appropriate for the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

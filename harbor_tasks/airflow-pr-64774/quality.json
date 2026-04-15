@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (scripts/in_container/install_airflow_and_providers.py), both function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), the datetime import requirement, the --exclude-newer flag, the ISO timestamp format, the requirement it appears at least twice, and the 'airflow and providers' message string. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation steps: add datetime import, generate UTC timestamp in ISO format, add --exclude-newer to both named functions, and update the console message to include 'airflow and providers'. This is effectively telling the agent exactly what to change, not just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_datetime_import_present check for exact string 'from datetime import datetime' or 'import datetime' in source. test_exclude_newer_appears_twice_in_source counts literal occurrences of '--exclude-newer' in the source file. test_prerelease_message_updated checks for the exact string 'airflow and providers' in console output. An alternative correct fix using e.g. time.time() or a different timestamp library would fail these text-based checks."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_datetime_import_present and test_exclude_newer_appears_twice_in_source are purely textual (assert 'X' in file.read_text()). While other tests do import and call code, these two f2p tests only inspect source text without execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for --exclude-newer in captured commands, datetime import in source, count of --exclude-newer occurrences, and 'airflow and providers' in console messages. A stub or no-op implementation of the original code would not produce these artifacts, so the tests are not tautological."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace/airflow or potentially accessible path. The Dockerfile doesn't remove or protect the solution directory. An agent could read the gold patch from the solution file and apply it directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements from the instruction are tested: datetime import (test_datetime_import_present), --exclude-newer in both functions (test_prerelease_adds_exclude_newer_to_providers_install, test_prerelease_adds_exclude_newer_to_airflow_install, test_exclude_newer_appears_twice_in_source), updated console message (test_prerelease_message_updated), and non-pre-release unaffected (test_no_prerelease_no_exclude_newer)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, have docstrings explaining what they test, and include comments like '(fail_to_pass)' and '(pass_to_pass)' to indicate their category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names both exact function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), specifies exactly where to add the datetime import, and describes the precise code changes needed. This goes beyond identifying the file and leaks localization details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

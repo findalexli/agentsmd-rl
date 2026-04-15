@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific function names `_content_hash`, `_load_cache`, `_save_cache` and exact behaviors (e.g., hex string >= 32 chars, set order insensitivity). While instruction.md does name these functions and describes their behavior, the test `test_cache_save_load_round_trip` searches for a module-level variable by scanning AST for assignments containing both '.json' and 'cache' in source segment \u2014 instruction.md says the path must contain '.json' and 'cache' but doesn't specify the exact AST"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT needs to change (add caching functions, create Makefile target, remove legacy targets, update docs) but doesn't give exact code patches or line numbers. A developer must still reason about implementation details."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific function names `_content_hash`, `_load_cache`, `_save_cache` via `_extract_and_exec(LINTER, ['_content_hash'])`. An alternative correct implementation using different function names (e.g., `compute_hash`, `load_cache_file`, `save_cache_file`) would fail. However, instruction.md does specify these exact names, so the agent knows them \u2014 but the deeper issue is that the tests use AST extraction to find a module-level variable by scanning for '.json' and 'cache' in sour"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests actually execute the code: `test_content_hash` calls `_content_hash()` and checks return values; `test_cache_save_load_round_trip` calls `_save_cache`/`_load_cache` and checks round-trip behavior; `test_cli_cache_flag` runs the script with `--help`; `test_makefile_typing_target` runs `make -n typing`. While some tests (like `test_agent_config_updates`, `test_docs_updated`, `test_gitignore_entry`) do text matching on files, the core behavioral tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests require meaningful implementations: `test_content_hash` checks determinism, sensitivity to text/rule changes, and order insensitivity \u2014 a stub returning empty string or None would fail. `test_cache_save_load_round_trip` requires actual file I/O round-tripping. `test_cli_cache_flag` requires 'cache' in help output. `test_makefile_typing_target` requires a working make target."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at `/workspace/transformers` in the container environment, and solve.sh applies a git patch. An agent could potentially read the test file at tests/test_outputs.py to discover exact expected behaviors and fixture values. The solution patch in solve.sh is described as 'hidden' but the Dockerfile doesn't prevent access to it if it's mounted. More critically, the agent could grep for test assertions to reverse-engineer exact expected values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: caching functions (_content_hash, _load_cache, _save_cache), --no-cache CLI flag, make typing target, legacy target removal, check-repo linter invocation, backward CLI compatibility, agent config updates, docs updates, and .gitignore entry."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments ('Gates', 'Fail-to-pass', 'Pass-to-pass', 'Structural checks'), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the cache JSON schema: 'a flat dictionary mapping file-path strings to hash-digest strings, for example: {\"src/transformers/models/foo/modeling_foo.py\": \"a1b2c3...\", ...}'. This is adequately documented."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify (which is appropriate for this task type) but doesn't specify exact line numbers or minimal diffs. The function signatures are specified as requirements, not hints about existing code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes to Makefile, .gitignore, .ai/AGENTS.md, .ai/skills/SKILL.md, and docs \u2014 all bounded edits, not full-file rewrites, and consistent with instruction.md requirements."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

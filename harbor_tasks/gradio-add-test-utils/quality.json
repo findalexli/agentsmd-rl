@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all specific constants (TEST_TXT, TEST_JPG, etc.), function names (download_file, upload_file, drop_file, mock_client), file paths (js/tootils/src/), browser command names (expect_download, set_file_inputs, drop_files), the event_buffer array name, the retrospective option, the ./download-command export entry, and README requirements. All test assertions reference items discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be implemented (fixtures, utilities, browser commands, event buffering, mock client, documentation) but does not specify exact code, line numbers, or precise implementation details like 'change line X to Y'. A developer must still reason about how to implement each feature."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_render_event_buffer checks for exact string 'event_buffer.push' in source code, test_listen_retrospective_mode checks for 'for' keyword combined with 'event_buffer', test_download_module_functions checks for exact string 'export async function download_file'. An alternative correct implementation using e.g. 'event_buffer = [...event_buffer, evt]' instead of 'event_buffer.push' would fail. Similarly, using arrow function exports like 'exp"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are almost entirely text-matching: test_render_event_buffer does 'assert \"event_buffer.push\" in content', test_download_module_functions does 'assert f\"export async function {fn_name}\" in content', test_fixtures_module does 'assert f\"export const {name}\" in content'. None of these import, execute, or test actual behavior. The pass-to-pass tests do run subprocesses (formatting, builds, TS compilation), but the core f2p tests are all string-in-file checks."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply creates files with the right string patterns would pass all f2p tests. For example, creating download.ts with 'export async function download_file(){}' (empty body) passes test_download_module_functions. Creating fixtures.ts with 'export const TEST_TXT = null as any;' passes test_fixtures_module. No actual functionality is verified."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio as solve.sh could be accessed by the agent. The tests only check for string patterns in files, so the agent could read the solution and copy it, or simply write stub files containing the expected strings without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires mock_client to have 'upload' with echo-back behavior and 'stream' as no-op, but test_mock_client_function only checks that the strings 'mock_client', 'upload', and 'stream' appear in the file. The actual echo-back and no-op behaviors are never tested. Similarly, download_file's return type (filename + content) is never verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names, grouped into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', and 'Config/documentation update tests'. Each test has a docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces source code files and documentation, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction specifies which files to create and what to name things, but this is appropriate for a feature implementation task. It doesn't leak specific line numbers or internal implementation details beyond what's needed to define the public API."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The config edits required (package.json exports entry, vite.config.ts browser commands) are localized additions, not full-file rewrites. The README rewrite is explicitly requested as a complete rewrite in the instruction."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (docker/Dockerfile.rocm), the URL (astral.sh/uv/install.sh), the curl|sh anti-pattern, the need for retry logic, and verification of UV installation. All test-specific elements (file path, UV install URL, retry flag, verification behavior) are discoverable from the instruction. The line number (~32) is approximate but sufficient to locate the code."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (curl|sh masks failures) and hints at categories of fixes (error propagation, retry logic, verification) but does not specify exact implementation details like 'save to file first', 'use --retry 3', or 'add uv --version'. A developer must still reason about what specific changes to make."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_retry_flag_present asserts '--retry' in cmd as a literal string. An alternative correct fix could use a retry loop (e.g., 'for i in 1 2 3; do curl ... && break; done') which would propagate curl failures and handle transient issues but would fail this test. Similarly, test_command_not_stub checks for 'sh ' or 'bash ' in the command, which could reject valid alternatives like 'source' or direct execution of the downloaded script."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core f2p tests (test_curl_failure_propagates, test_verifies_uv_installed, test_successful_install_works) actually execute the extracted command with mock curl/uv binaries and check exit codes \u2014 genuine behavioral testing. While test_retry_flag_present is text-based, the majority of tests verify behavior through execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., leaving the original curl|sh pipe) would fail test_curl_failure_propagates because the mock failing curl piped to sh would exit 0. test_verifies_uv_installed would also fail because without a verification step, the command succeeds even when uv is broken. These tests genuinely require the bug fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /repo as a git repo and solution/solve.sh exists in the container's task definition. An agent could potentially read the gold patch from the solution directory or inspect the test file at tests/test_outputs.py to reverse-engineer the exact expected behavior. The environment Dockerfile doesn't remove or protect these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors mentioned in the instruction are tested: curl failure propagation (test_curl_failure_propagates), retry logic (test_retry_flag_present), and UV installation verification (test_verifies_uv_installed). The instruction's requirements are fully covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, detailed docstrings explaining the base bug and expected fix, and categorization tags like [pr_diff] and [static]."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing a Dockerfile, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions 'around line 32' which is approximate, and names the file docker/Dockerfile.rocm which is the obvious target. It describes the anti-pattern generically ('curl ... | sh masks the exit code') without specifying the exact fix. The hints section mentions categories of fixes but not specific implementations."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a localized 5-line change to a single RUN instruction in docker/Dockerfile.rocm, replacing 2 lines with 4 lines. It doesn't rewrite the entire file or contradict other task files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

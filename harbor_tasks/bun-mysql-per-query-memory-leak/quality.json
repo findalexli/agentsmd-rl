@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All four file paths, function names (deinit, decodeInternal, checkForDuplicateFields), struct names (ColumnDefinition41, Execute, ColumnIdentifier), field names (name_or_index, params, catalog, schema, table, org_table, name, org_name), and behavioral requirements (zero-initialization after alloc, freeing before reassignment) are explicitly described in instruction.md. The tests check exactly these elements."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md section 'Required Behavior' essentially dictates the exact fix: e.g., 'when decodeInternal() assigns a new value to name_or_index, any previously owned memory must be freed first', 'The params slice array itself must be freed', 'ColumnDefinition41 arrays must be properly initialized before use'. These are not just descriptions of what's broken \u2014 they specify precisely what code changes to make in which functions, leaving almost no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific patterns like 'bun.default_allocator.free(this.params)' in Execute.deinit(), 'this.name_or_index.deinit()' in ColumnDefinition41.deinit(), and exact zero-initialization syntax 'for (statement.columns) |*col| col.* = .{}'. An alternative correct fix using e.g., 'self.params' instead of 'this.params', or '@memset' for zero-initialization, or a different but correct cleanup approach would fail these regex-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test is purely text/regex matching on source files (e.g., searching for 'this.name_or_index.deinit()' as a string pattern). No test compiles the code, runs it, or checks actual memory behavior. This is exactly the 'assert foo in open(path).read()' pattern."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The base repo at the specified commit does NOT contain these patterns (e.g., 'this.name_or_index.deinit()' in ColumnDefinition41.deinit, 'bun.default_allocator.free(this.params)' in Execute.deinit). A stub or no-op would not pass these checks since the tests verify specific new code additions that don't exist in the original."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /repo's solve.sh or the solution/ directory. The agent could read solution/solve.sh to get the exact patch. Additionally, the test patterns are so specific that grepping the test file itself reveals exactly what strings to insert where."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four required behaviors from instruction.md are tested: (1) ColumnDefinition41.deinit freeing all fields including name_or_index, (2) PreparedStatement Execute.deinit freeing params slice, (3) checkForDuplicateFields freeing before overwrite, (4) zero-initialization after alloc in MySQLConnection."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) - core behavioral tests' sections, with descriptive function names like test_coldef_deinit_frees_name_or_index."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing memory leaks in Zig source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, field names, and variable names in instruction.md all match the actual codebase and test expectations without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files, exact functions (deinit, decodeInternal, checkForDuplicateFields), exact fields (name_or_index, params, catalog, schema, etc.), and prescribes exact fix actions ('any previously owned memory must be freed before the assignment'). This goes well beyond describing what's broken and into specifying the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Zig source files, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

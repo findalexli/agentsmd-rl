@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all specific file paths (binding.ts, linearElementEditor.ts, focus.ts, utils.ts, align.ts, App.tsx), constant names (BASE_ARROW_MIN_LENGTH = 10), function names (extractBinding, elementArea, updateBoundPoint, updateBoundElements, pointIsCloseToOtherElement), parameter names (dragging, customIntersector, indirectArrowUpdate), import names (doBoundsIntersect, getElementBounds, getGlobalFixedPointForBindableElement, normalizeFixedPoint), and literal strings ('To avoid worki"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md essentially describes the exact fix: 'A constant BASE_ARROW_MIN_LENGTH set to 10 should be defined', 'updateBoundPoint function should accept a dragging?: boolean parameter instead of the current options object', 'extractBinding and elementArea should be present', 'indirectArrowUpdate option should be removed', etc. This is a complete specification of WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact function names like 'const extractBinding = (' and 'elementArea = (element:', exact variable name 'pointIsCloseToOtherElement', exact constant 'BASE_ARROW_MIN_LENGTH = 10', exact comment string 'To avoid working with stale arrow state', and specific parameter names 'endIsDragged,' and 'startIsDragged,'. An alternative correct fix that uses different helper names or approaches would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of f2p tests (test_base_arrow_min_length_constant_exists, test_extract_binding_function_exists, test_element_area_function_exists, test_update_bound_point_signature_changed, test_indirect_arrow_update_removed, test_point_is_close_to_other_element_check, etc.) are purely text-matching with 'assert X in open(path).read()' patterns and never import, call, or execute the code. Only the pass-to-pass tests (typecheck, lint, binding tests, etc.) actually execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests that check for specific strings in files (e.g., test_extract_binding_function_exists checks 'const extractBinding = (' in content) could be satisfied by simply appending dead code like 'const extractBinding = () => {}' without actually fixing the bug. The text-matching tests don't verify behavioral correctness."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container at /workspace and contains the exact git commit hash (5852d0d41005e67ca00124079b9eee91e4ab716d) of the fix. An agent could read solve.sh and simply run 'git checkout 5852d0d41005e67ca00124079b9eee91e4ab716d' to pass all tests. Additionally, the agent could grep test_outputs.py for the exact strings being asserted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: BASE_ARROW_MIN_LENGTH constant, extractBinding/elementArea helpers, dragging parameter, indirectArrowUpdate removal, focus.ts changes, linearElementEditor.ts changes, utils.ts imports, align.ts/App.tsx cleanup, and import cleanup."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_base_arrow_min_length_constant_exists, test_indirect_arrow_update_removed), have docstrings explaining what they check, and are logically grouped by the file/feature they verify."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and commands in the instruction and tests are consistent and free of typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: specific function signatures ('should accept a dragging?: boolean parameter'), exact constant values ('BASE_ARROW_MIN_LENGTH set to 10'), exact helper function names ('extractBinding and elementArea'), exact import removals ('doBoundsIntersect and getElementBounds'), and exact comment text ('To avoid working with stale arrow state'). This goes far beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

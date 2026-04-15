@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md explicitly names the file path (packages/solid-router/src/headContentUtils.tsx), the function (useTags), the import (replaceEqualDeep from @tanstack/router-core), the use of Solid.createMemo with prev parameter, and replaceEqualDeep(prev, next) \u2014 all specifics asserted in the tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md section 'Test Requirements' explicitly states the exact fix: import replaceEqualDeep from @tanstack/router-core, return Solid.createMemo with a prev parameter callback, and call replaceEqualDeep(prev, next). This tells the agent exactly WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details via regex: 'return Solid.createMemo((prev', 'replaceEqualDeep(prev, next)'. An alternative correct fix using different variable names (e.g., 'previous' instead of 'prev', or 'newTags' instead of 'next'), or a different memoization approach that also prevents FOUC, would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The three fail-to-pass tests (test_use_tags_imports_replace_equal_deep, test_use_tags_returns_create_memo, test_use_tags_calls_replace_equal_deep) are purely text-matching via regex on file contents with no code execution. They use patterns like `assert re.search(r'replaceEqualDeep\\s*\\(\\s*prev\\s*,\\s*next\\s*\\)', content)`."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests only check for string patterns in source code. An agent could simply add a dead-code comment like '// replaceEqualDeep(prev, next)' or add unused import and unreachable code matching the regex patterns without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router as part of the solve.sh, and the test patterns are simple regex matches on file content. An agent could read solution/solve.sh to extract the exact fix, or simply grep the test file for the expected patterns and insert matching strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three code pattern requirements from instruction.md are tested (import, createMemo with prev, replaceEqualDeep call), plus all verification steps (unit tests, types, build, eslint, publint) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with clear docstrings, separated into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, and each test has a descriptive name."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, function names, and variable names in instruction.md and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (packages/solid-router/src/headContentUtils.tsx), the exact function (useTags), and the exact implementation details (import replaceEqualDeep, use Solid.createMemo with prev parameter, call replaceEqualDeep(prev, next)). This is explicit solution leakage, not just pointing at the problem domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

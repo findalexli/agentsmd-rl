@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the benchmark file path, the src-js/index.js file, the src-js/generated/ directory, import path issues, and named export mismatches. The tests check for specific paths like './src-js/generated/constants.js' and the 'parse as parseAsync' alias \u2014 these are discoverable from investigating the files mentioned in the instruction (checking what exports exist in src-js/index.js and what paths exist under src-js/generated/)."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes symptoms (broken imports, path issues, named export mismatches) and tells the agent to investigate specific files, but does not state the exact fix like 'change ./generated/ to ./src-js/generated/' or 'rename parseAsync to parse as parseAsync'. The agent must inspect the files and reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use strict regex patterns like r'import \\{ parse as parseAsync, parseSync \\}' (test_parse_import_uses_alias) which would fail if an agent wrote an equally correct alternative such as 'import { parseSync, parse as parseAsync }' (different ordering). The tests enforce exact import ordering and syntax that only the gold patch satisfies."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_import_path_constants_fixed, test_import_path_deserialize_js_fixed, test_import_path_deserialize_ts_fixed, test_import_path_walk_program_fixed, test_parse_import_uses_alias, test_import_paths_count) are all pure text-matching with regex on file contents. They never import/execute the benchmark or verify that imports actually resolve. test_node_syntax_validation only reads the file, doesn't actually validate imports. test_repo_unit_tests and test_repo_lint are pass-to"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op solution would leave the original broken imports in place. The tests check both that the correct patterns exist AND that the incorrect patterns do NOT exist, so the broken file would fail. The agent must actually modify the import statements."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/oxc at solve.sh path accessible from the container. The agent could read solution/solve.sh or the test file tests/test_outputs.py to see exactly what regex patterns are expected and reverse-engineer the exact fix. The tests check for literal strings that could be found by grepping the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires fixing broken import statements (paths and named exports). All these behaviors are tested: correct import paths for 4 generated files, correct aliased import for parse/parseAsync, file existence verification, and syntax validation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_import_path_constants_fixed, test_parse_import_uses_alias, etc.), have docstrings explaining what they verify, and are annotated with fail-to-pass vs pass-to-pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing JavaScript import statements, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, and commands in the instruction and tests are correctly spelled and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction tells the agent to check specific directories and files for export mismatches and path issues, but doesn't name exact buggy lines or the specific fix. The files mentioned are natural investigation targets for the described bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task modifying a single JavaScript file, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

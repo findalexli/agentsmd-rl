@@ -6,13 +6,39 @@ When a Next.js project uses **both** `turbopack.rules` in `next.config.js` (conf
 
 Using either feature independently works fine. The issue only manifests when both are active simultaneously.
 
-## Relevant Code
+## Root Cause
 
-The bug is in `turbopack/crates/turbopack/src/lib.rs`, in the `process_default_internal` function. This function handles import assertions (e.g., `with { turbopackLoader: '...' }`). It creates a `node_evaluate_asset_context` with a `Layer` name.
+Two different code paths create `Layer` names for webpack loader evaluation contexts:
 
-Separately, config-based webpack loaders (from `next.config.js` `turbopack.rules`) are processed in `turbopack/crates/turbopack/src/module_options/mod.rs`. That code also creates an evaluate context with a `Layer` name.
+1. **Import assertion path** (when source files use `import ... with { turbopackLoader: '...' }`): Creates a `Layer` using `Layer::new(rcstr!("..."))`
 
-The problem is that these two code paths use **different layer names** when they should use the **same** one. The layer name mismatch causes Turbopack's dependency tracking system to create conflicting contexts, leading to the infinite loop.
+2. **Config-based loader path** (when `next.config.js` has `turbopack.rules`): Also creates a `Layer` using `Layer::new(rcstr!("..."))`
+
+Currently, these use **different layer names** when they should use the **same** name. The layer name mismatch causes Turbopack's dependency tracking system to create conflicting contexts, leading to the infinite loop.
+
+The correct layer name that should be used in both places is `"webpack_loaders"`. The buggy layer name that must be removed is `"turbopack_use_loaders"`.
+
+## Specific Identifiers
+
+The relevant code involves these specific types and functions which must remain intact:
+- `node_evaluate_asset_context`
+- `WebpackLoaderItem`
+- `WebpackLoaders`
+- `loader_runner_package`
+- `SourceTransforms`
+- `process_default_internal`
+
+The layer name syntax uses: `Layer::new(rcstr!("..."))`
+
+There is also another existing layer name `"externals-tracing"` in the codebase which must not be modified.
+
+## Expected Behavior
+
+Both config-based loaders and import-assertion loaders should work together without conflicts. After the fix:
+- Both code paths must use `"webpack_loaders"` as the layer name
+- The string `"turbopack_use_loaders"` must not appear anywhere in the relevant files
+- All other layer names (like `"externals-tracing"`) must remain unchanged
+- The `Layer::new(rcstr!(...))` call syntax must be preserved
 
 ## Reproduction
 
@@ -32,7 +58,3 @@ The problem is that these two code paths use **different layer names** when they
    import data from './file.ext' with { turbopackLoader: 'some-loader' }
    ```
 4. Run `next dev` — the dev server hangs with "Dependency tracking is disabled"
-
-## Expected Behavior
-
-Both config-based loaders and import-assertion loaders should work together without conflicts.

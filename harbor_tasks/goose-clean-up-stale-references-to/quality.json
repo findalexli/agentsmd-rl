@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions map to specifics mentioned in instruction.md: the exact file paths for dead code files, the console.log strings in App.tsx, the tracing::debug! to tracing::warn! change in extensions.rs, and the TODO comment in experiments.rs. Every asserted literal string and file path is discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'tracing::debug! changed to tracing::warn!' which is the exact fix, not just a description of the problem. It also says 'All 8 dead code files removed' naming each file, and 'All debug console.log statements removed'. While the dead file removal and console.log removal are somewhat obvious fixes, the debug\u2192warn change is a specific implementation directive rather than a behavioral description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for file absence (dead files), absence of specific strings (console.log, TODO comment), and presence of tracing::warn! with a specific message string. Any correct alternative that achieves the same cleanup would pass \u2014 e.g., different formatting of the warn! call, different approaches to removing console.log lines. The tests don't assert on exact line numbers or gold-specific implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are purely text-based: test_log_level_upgraded_to_warn reads file content and checks for 'tracing::warn!' string; test_stale_todo_comment_removed checks string absence; test_debug_console_log_removed_from_app checks string absence. However, there are also compilation/execution tests (cargo check, cargo clippy, cargo fmt, tsc --noEmit) that verify the code actually compiles. The core behavioral tests are text-inspection only, not execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests cannot be satisfied by stub/no-op implementations. The dead file tests check that files DON'T exist (they exist in the base repo). The console.log test checks strings are absent (they exist in the base repo). The warn test checks for tracing::warn! which doesn't exist in the base repo (it's tracing::debug!). The TODO test checks the comment is absent (it exists in the base repo). All require actual changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/goose/../solution/solve.sh (or wherever Harbor mounts it). The Dockerfile doesn't remove or restrict access to /solution/. An agent could read solve.sh to get the exact patch. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked, so grepping for fixture values is trivially possible."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md lists 8 dead code files to remove, but tests only check 3 of them (InterruptionHandler.tsx, useRecipeManager.ts, WaveformVisualizer.tsx). The remaining 5 dead files (ScheduleFromRecipeModal.tsx, sessionCache.ts, RecipeExpandableInfo.tsx, RecipeInfoModal.tsx, CustomRadio.tsx) are not tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code cleanup (removing files, changing log levels, removing comments) and does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and string literals in the instruction match those in the tests and solution. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files and exact changes: 'tracing::debug! changed to tracing::warn!' in extensions.rs, specific console.log strings like 'reactReady signal' and 'keyboard shortcuts' in App.tsx, and the exact TODO comment text. This goes beyond describing what's broken and specifies the exact lines/changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code cleanup task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

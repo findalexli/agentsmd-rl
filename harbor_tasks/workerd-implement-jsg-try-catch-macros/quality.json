@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: 'JsgCatchScope' class name (test_jsg_catch_scope_implementation, test_jsg_catch_scope_class_declared), 'catchException' method name, 'getCaughtException' method name. The instruction never specifies these class/method names. Also test_repo_python_lint checks 'tools/update_node_version.py' and test_repo_shellcheck_build_script checks 'build-releases.sh' which are not mentioned in the instruction. The commit SHA 'bca5351"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what macros to create (JSG_TRY/JSG_CATCH), their behavioral requirements, and which files to modify, but does not specify exact implementation code, line numbers, or the specific internal class structure (JsgCatchScope). The agent must still design the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_jsg_catch_scope_class_declared requires 'class JsgCatchScope', 'getCaughtException', and 'catchException' \u2014 these are internal helper names from the gold solution. A valid alternative could use a differently-named class (e.g., 'JsgTryCatchHelper') or different method names and would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests are pure text/grep checks: test_jsg_try_macro_defined greps for '#define JSG_TRY', test_jsg_catch_scope_implementation greps for 'JsgCatchScope::catchException', test_callers_migrated_to_jsg_try greps for 'JSG_TRY', test_readme_documents_jsg_try_catch checks string presence. No test compiles the code, executes it, or verifies runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply adds '#define JSG_TRY(js) if(true)' and '#define JSG_CATCH(e) else' to jsg.h, adds a dummy 'class JsgCatchScope' with 'getCaughtException'/'catchException' declarations, adds 'JsgCatchScope::catchException' string to jsg.c++, does find-and-replace of 'js.tryCatch' with 'JSG_TRY' text in migrated files, and adds 'JSG_TRY'/'JSG_CATCH'/'js.throwException'/'js.error' strings to README.md would pass all tests without implementing any real exception handling."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace as solve.sh (mounted via solution/solve.sh). An agent could read or execute it directly. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py (if accessible) for expected strings and insert them without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires: (1) automatic conversion of JsExceptionThrown and kj::Exception to jsg::Value, (2) proper try/catch infrastructure on construction, (3) nested usage support, (4) ExceptionToJsOptions support, (5) if-else friendliness. None of these behavioral requirements are actually tested \u2014 tests only check text presence."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass core, Fail-to-pass config/docs, Pass-to-pass regression, Pass-to-pass repo), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves C++ macro implementation and documentation updates, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction specifies which files to modify (which is appropriate for a migration task) but doesn't reveal exact line numbers, internal class names like JsgCatchScope, or specific implementation patterns."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code implementation task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

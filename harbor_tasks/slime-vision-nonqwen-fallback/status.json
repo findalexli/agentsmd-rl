@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:22:10.205764",
-  "total_time": 1337.68,
-  "sandbox_id": "imsfm2698rznqfs1p53e4",
+  "validated_at": "2026-04-15T06:11:17.029158",
+  "total_time": 1882.39,
+  "sandbox_id": "i752vogov5e1oaltz9lzh",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -71,17 +73,27 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.4,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:298: test `test_actor_numpy_handling` has 2 assert(s), all pass on a s', 'A:[A] test_not_tautological @ tests/test_outputs.py:336: test `test_sglang_safe_multimodal_access` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: pillow, transformers']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.4,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1278.3,
-      "at": "2026-04-09T14:49:29.339928"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -113,6 +125,14 @@
       "backend": "fireworks",
       "time": 1337.68,
       "at": "2026-04-12T04:22:10.205764"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1882.39,
+      "at": "2026-04-15T06:11:17.029158"
     }
   ]
 }

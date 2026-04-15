@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:19:29.523873",
-  "total_time": 1108.32,
-  "sandbox_id": "iku25xla10xonhld0yhd2",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:21:50.654654",
+  "total_time": 1069.91,
+  "sandbox_id": "i4d9kek29j3surmg2k6ke",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:450: test `test_is_explicit_has_doc_comment` has 1 assert(s), all pass']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.78,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1588.0,
-      "at": "2026-04-09T14:54:39.112799"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -90,6 +102,14 @@
       "backend": "fireworks",
       "time": 1108.32,
       "at": "2026-04-12T06:19:29.523873"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1069.91,
+      "at": "2026-04-15T06:21:50.654654"
     }
   ]
 }

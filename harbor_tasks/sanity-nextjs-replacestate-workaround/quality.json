@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file paths (sessionId.ts, createAuthStore.ts), function names (clearSessionId, consumeSessionId, getSessionId, handleCallbackUrl), the export signature (export function clearSessionId()), the import pattern, and the GitHub issue URL (github.com/vercel/next.js/issues/91819) that the tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Add a new exported function clearSessionId() that calls consumeSessionId()', 'Import the new clearSessionId function alongside getSessionId', 'call clearSessionId() immediately after getSessionId()', and 'Add a comment explaining this is a workaround for https://github.com/vercel/next.js/issues/91819'. This is a complete specification of WHAT to change, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact implementation details like 'export function clearSessionId(): void' signature, that the function body contains exactly one non-comment line 'consumeSessionId()', exact regex patterns for import statements, and the specific comment URL pattern. An alternative correct fix (e.g., naming it resetSessionId, inlining the logic, using a different comment format) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_clear_session_id_exported, test_clear_session_id_imported_in_auth_store, test_clear_session_id_called_in_handle_callback, test_session_id_function_behavior) all exclusively use file reading and regex matching (open(path).read() with string/regex assertions). None import, call, or execute the code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check file contents via string matching. An agent could simply add the exact text patterns the tests look for (e.g., 'export function clearSessionId(): void { consumeSessionId() }') without understanding the bug. The tests don't verify runtime behavior, so a syntactically matching but semantically broken stub would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/sanity's solve.sh (solution/solve.sh), and the agent could read it. Additionally, since the instruction already specifies the exact fix and tests only check file text, the agent can trivially match the expected patterns without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: clearSessionId export in sessionId.ts, import in createAuthStore.ts, call after getSessionId in handleCallbackUrl, the workaround comment, and build/type/lint checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_clear_session_id_exported, test_clear_session_id_imported_in_auth_store, etc.), have docstrings explaining what they verify, and are labeled with fail_to_pass/pass_to_pass markers."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, commands, and variable names in instruction.md are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact files, exact function names to create, exact function signatures, exact call patterns, and exact comment text. This goes far beyond identifying the buggy area \u2014 it's a complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

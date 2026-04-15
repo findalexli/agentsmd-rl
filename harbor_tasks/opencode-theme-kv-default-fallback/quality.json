@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/opencode/src/cli/cmd/tui/context/theme.tsx), the createMemo block producing 'values', the KV key 'theme', the kv object from useKV(), the fallback to 'opencode', and the expected 3-step fallback chain. Tests check these same elements. The test for AGENTS.md constraints (no 'any', no try/catch, no loops, prefer const) and export checks (resolveTheme, useTheme/ThemeProvider, DEFAULT_THEMES) are discoverable from the file itself. While specific test nam"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (fallback chain skips KV store) and what the expected behavior should be (3-step fallback), but does not specify exact code changes, line numbers to modify, or the specific implementation. The agent must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_buggy_direct_fallback_removed uses a regex to assert the absence of the specific pattern 'store.themes[store.active] ?? store.themes.opencode'. An alternative correct fix could use a different structure, e.g., a ternary with store.themes[store.active] || ... that still includes store.themes.opencode as part of a longer chain. More critically, the tests extract the memo body and execute it as a plain function with mocks expecting specific variable names (store.themes, store.active, kv.get, r"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests (test_kv_fallback_when_active_missing, test_kv_fallback_varied_themes, test_active_theme_used_when_present, etc.) extract the memo body and execute it in Node.js with mocks, checking actual return values. While some tests do text inspection (test_buggy_direct_fallback_removed, export checks), the majority verify behavior through execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_kv_fallback_when_active_missing, test_kv_fallback_varied_themes, test_buggy_direct_fallback_removed) cannot be satisfied by a stub. The original code returns store.themes.opencode (i.e., 'T:opencode') when the active theme is missing, but the tests expect 'T:dracula' etc. A no-op or default-returning implementation would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo as solve.sh is applied there, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh or the Dockerfile doesn't appear to remove it. Additionally, the test file at tests/test_outputs.py contains the exact expected values (e.g., 'T:dracula', 'T:opencode') and the exact regex patterns being checked, which an agent could grep for and reverse-engineer the expected fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies three behaviors: (1) check KV store for saved theme when active not found, (2) use saved theme if valid, (3) fall back to opencode as last resort. All three are tested: test_kv_fallback_when_active_missing covers 1&2, test_opencode_fallback_when_kv_invalid and test_opencode_fallback_when_kv_not_string cover 3, and test_active_theme_used_when_present covers the normal case."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass behavioral, Pass-to-pass repo_tests, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a fallback chain in a theme resolution function, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (packages/opencode/src/cli/cmd/tui/context/theme.tsx), points to the specific createMemo that computes 'values', describes the exact buggy pattern ('store.themes[store.active] ?? store.themes.opencode'), and even says 'The fix should be in the createMemo callback that produces the resolved theme values'. This removes essentially all localization effort from the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

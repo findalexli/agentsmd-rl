@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T19:13:49.332406",
-  "total_time": 1043.75,
-  "sandbox_id": "icbhqbrsb8g7646tbeq35",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:38:59.981625",
+  "total_time": 811.39,
+  "sandbox_id": "i34hla79m44l767xewpaa",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.37,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_repo_package_json_valid` has 1 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:233: test `test_repo_typos_toml_valid` has 1 assert(s), all pass on a ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.77,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 4203.25,
-      "at": "2026-04-10T02:33:19.861237"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -91,6 +105,14 @@
       "backend": "fireworks",
       "time": 1043.75,
       "at": "2026-04-11T19:13:49.332406"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 811.39,
+      "at": "2026-04-15T03:38:59.981625"
     }
   ]
 }

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (src/bun.js/VirtualMachine.zig), function (resolveMaybeNeedsTrailingSlash), the save/restore pattern for log pointers, package_manager.log as the missing piece, and references ModuleLoader.zig as a reference implementation. All test-asserted specifics (function name, file path, package_manager, .log = &log, defer block, _resolve call, resolver/linker log patterns) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (package_manager's log pointer is never updated/restored) and where (the save/restore pattern in resolveMaybeNeedsTrailingSlash), but does not specify exact code lines to add or the precise syntax of the fix. A developer must still reason about how to implement the save/restore for pm.log."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for structural patterns (package_manager appearing near .log = &log in a window of lines, before defer and in defer blocks) rather than exact variable names or line positions. Alternative correct fixes (e.g., using different variable names for the saved log, different access patterns to package_manager, or slightly different code organization) would still pass as long as they set and restore package_manager's log pointer in the right locations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the source file as text and uses regex pattern matching (e.g., re.search for 'package_manager' and '.log = &log'). No test compiles, executes, or calls the Zig code. The tests are purely textual/structural assertions on source code content, which is exactly the 'assert foo in open(path).read()' pattern."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_pm_log_set_before_defer, test_pm_log_restored_in_defer, test_pm_log_set_before_resolve_call) check for package_manager log patterns that do NOT exist in the base commit's code. A stub or no-op implementation would not add these patterns and would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun's accessible filesystem (solution/solve.sh contains the exact patch). An agent could read it directly or grep for the patch content. Additionally, the gold patch is a simple 6-line addition that could be extracted by reading the solution file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (package_manager log not saved/restored), and the tests verify: pm.log is set before defer, pm.log is restored in defer, pm.log is set before _resolve call, existing resolver/linker/jsc_vm log patterns remain intact. All described behavioral requirements are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail_to_pass for core fix, pass_to_pass for existing functionality, static anti-stub, agent_config rules), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a source code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths (src/bun.js/VirtualMachine.zig, src/bun.js/ModuleLoader.zig), function names (resolveMaybeNeedsTrailingSlash), and variable names are consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'around lines 1832\u20131845 in src/bun.js/VirtualMachine.zig' and describes the exact pattern needed ('The save/restore pattern... needs to also cover package_manager.log'). It also points to ModuleLoader.zig as containing a 'reference implementation.' This narrows the task significantly beyond just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

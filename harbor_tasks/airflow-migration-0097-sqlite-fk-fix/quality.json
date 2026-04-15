@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the migration file path, the upgrade() function, the disable_sqlite_fkeys context manager, the UPDATE statements for log and dag tables, and the requirement to move them inside the context block. All test assertions check for these named elements which are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'Consider what operations should happen inside vs outside the `with disable_sqlite_fkeys(op):` block' and explains that PRAGMA is ignored inside transactions and that op.execute() triggers autobegin. Combined with the problem description, this essentially tells the agent the exact fix: move UPDATE statements inside the disable_sqlite_fkeys block. However, the instruction doesn't literally say 'move the UPDATE statements inside' \u2014 it frames it as a question. This"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use AST parsing to check very specific structural requirements: UPDATE statements must be direct children of the with disable_sqlite_fkeys block (test_update_statements_inside_disable_sqlite_fkeys checks for ast.Expr containing ast.Call with func.attr=='execute' as direct inner_stmt of the with block). Alternative correct fixes like wrapping UPDATEs in a helper function, using text() instead of string literals, using session.execute(), or restructuring with nested context managers woul"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test uses AST parsing or file reading to inspect the source code structure. No test actually imports the migration, runs it against a SQLite database, or executes any code. Tests like test_update_statements_inside_disable_sqlite_fkeys literally parse the AST looking for specific patterns \u2014 this is textual/structural verification, not behavioral testing."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The original (buggy) file has UPDATE statements outside the disable_sqlite_fkeys block. The tests check that UPDATEs are inside the block (test_update_statements_inside_disable_sqlite_fkeys) and not before it (test_no_updates_before_disable_sqlite_fkeys). A stub/no-op implementation would fail these checks since the original file structure wouldn't match."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/task's solution/solve.sh which is accessible in the container. The agent could read this file directly to see the exact patch. Additionally, since tests are purely AST-based, the agent could grep test files to discover the exact structural pattern expected."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires moving UPDATE statements inside the disable_sqlite_fkeys block so PRAGMA executes before autobegin. The tests verify this: UPDATEs are inside the context (test_update_statements_inside_disable_sqlite_fkeys), not before it (test_no_updates_before_disable_sqlite_fkeys), and the structure is correct (test_disable_sqlite_fkeys_context_structure)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_migration_file_exists, test_migration_valid_syntax, test_update_statements_inside_disable_sqlite_fkeys, etc.) and have docstrings explaining their purpose. They're logically grouped from basic validation to structural verification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a migration file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction match those in the actual codebase and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the migration file and utils.py, but these are the only two relevant files for this task and are naturally obvious from the domain. The instruction doesn't specify exact line numbers or the precise code change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving a migration file fix, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

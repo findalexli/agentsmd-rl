@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:45:02.536523",
-  "total_time": 1119.12,
-  "sandbox_id": "ikmc5a1uredc8z1pblxe6",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:34:24.518721",
+  "total_time": 1215.01,
+  "sandbox_id": "i0cvcyrwgv1hcmzimkfu6",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -59,17 +61,27 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.67,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:88: test `test_style_guide_covers_tone` has 3 assert(s), all pass on a']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 32.86,
+      "tier_a_fails": [
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -0.1,
-      "backend": "fireworks",
-      "time": 1653.06,
-      "at": "2026-04-09T14:55:44.183055"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -101,6 +113,14 @@
       "backend": "fireworks",
       "time": 1119.12,
       "at": "2026-04-11T18:45:02.536523"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1215.01,
+      "at": "2026-04-15T03:34:24.518721"
     }
   ]
 }

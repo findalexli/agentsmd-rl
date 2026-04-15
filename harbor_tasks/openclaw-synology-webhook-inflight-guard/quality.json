@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not discoverable from instruction.md: (1) test_account_scoped_inflight_key checks that the in-flight key uses accountId and NOT remoteAddress \u2014 instruction.md never specifies this scoping choice, only saying 'keyed per logical endpoint'; (2) test_makeres_statuscode_sync checks bidirectional statusCode/_status sync on makeRes() \u2014 instruction.md only vaguely says 'may need updating'; (3) test_cleanup_clears_inflight_limiter checks that clearSynologyWebhookRateLimiterS"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (no pre-auth concurrency limit) and gives hints about existing utilities (beginWebhookRequestPipelineOrReject, createWebhookInFlightLimiter) but doesn't specify exact code changes, line numbers, or the precise implementation. A developer still needs to reason about how to integrate these utilities."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_import_createWebhookInFlightLimiter asserts the literal string 'createWebhookInFlightLimiter' appears in the handler file's imports. test_account_scoped_inflight_key uses regex patterns to find specific function naming patterns like 'InFlightKey' or 'WebhookKey'. test_import_beginWebhookRequestPipelineOrReject checks for the exact function name. An alternative correct fix using different internal helper names or a custom limiter implementation would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The behavioral tests (concurrent_requests_429, shared_limiter_across_handlers, cleanup_resets_inflight, makeres_statuscode_sync) actually import and call createWebhookHandler, send mock requests, and check HTTP status codes. While some static tests do text-matching (test_import_*, test_account_scoped_inflight_key), the majority of fail-to-pass tests execute actual code behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral tests (concurrent_requests_429, shared_limiter_across_handlers) send 12 concurrent stalled requests and assert some get 429 and some don't \u2014 a stub handler that does nothing or always returns 200 would fail. cleanup_resets_inflight checks that after clearing state, the same rejection count recurs. These require actual implementation of the concurrency limiter."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openclaw as solve.sh content is embedded in the task definition. The agent could potentially read the gold patch from the hidden solution/solve.sh if it exists in the container filesystem, or examine test_outputs.py to see exact behavioral test code and reverse-engineer the expected implementation."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: (1) excess concurrent pre-auth requests rejected with 429 \u2014 tested by concurrent_requests_429; (2) requests past pre-auth not affected \u2014 implicitly tested by checking some requests aren't rejected; (3) shared limiter per logical endpoint \u2014 tested by shared_limiter_across_handlers. All explicitly required behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized: static checks are separate Python functions with descriptive names (test_files_exist, test_import_*, test_account_scoped_inflight_key), behavioral vitest tests are grouped in a describe('behavioral') block with clear names (concurrent_requests_429, shared_limiter_across_handlers, etc.), and each has docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying TypeScript webhook handler code, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (extensions/synology-chat/src/webhook-handler.ts, openclaw/plugin-sdk/webhook-ingress, etc.), function names (createWebhookHandler, beginWebhookRequestPipelineOrReject, createWebhookInFlightLimiter), and commands are all consistent between instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names relevant files and utility functions (which is appropriate given the hints section), but doesn't specify exact line numbers or the precise code changes needed. The file mentions are at the right level of abstraction for a bug-fix task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving TypeScript source changes, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

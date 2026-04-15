@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_setrightpanelshown_destructured checks for 'setRightPanelShown' being destructured from useConversationLocalStorageState; test_conversation_store_imported checks for exact import string 'from \"#/stores/conversation-store\"'; test_unpin_active_tab_closes_panel checks for exact strings 'setHasRightPanelToggled(false)' and 'setRightPanelShown(false)'. The instruction never mentions setHasRightPanelToggled, setRightPan"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the broken behavior (unpinning active tab leaves panel open) and expected behavior (panel should close), but does not specify exact code changes, line numbers, or implementation details like which store hooks to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "F2P tests like test_unpin_active_tab_closes_panel assert exact strings like 'selectedTab === tab', 'setHasRightPanelToggled(false)', 'setRightPanelShown(false)'. An alternative correct fix could use different variable names (e.g., 'currentTab === tab'), different state management approaches (e.g., a single 'closeRightPanel()' action), or different conditional structure, and would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "F2P tests test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, and test_setrightpanelshown_destructured all use only `open(file).read()` and string/regex matching with no code execution. Only test_vitest_context_menu_tests and P2P tests actually execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "F2P tests test_conversation_store_imported, test_store_hooks_used, test_setrightpanelshown_destructured, and test_test_file_includes_active_tab_test are purely text-matching. An agent could add dead code comments containing the exact strings (e.g., '// useConversationStore selectedTab === tab setHasRightPanelToggled(false) setRightPanelShown(false)') without implementing any actual fix, and these tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/OpenHands (since the Dockerfile clones the repo and the solve.sh operates on it). The agent could read /solution/solve.sh or the test file test_outputs.py to discover the exact strings being checked (e.g., 'selectedTab === tab', 'setHasRightPanelToggled(false)') and match them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: unpinning active tab closes panel, unpinning non-active tab doesn't close panel, specific test descriptions, and test additions. All these are tested via test_vitest_context_menu_tests, test_test_file_includes_active_tab_test, and the source file checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test validates (e.g., 'F2P: When unpinning the currently active tab...', 'P2P: The frontend linting must pass...')."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves UI component behavior fixes, not structured data production."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and test descriptions in the instruction and test files are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files (component and test file) which is appropriate for the task domain, and mentions the hooks/stores involved at a high level without specifying exact implementation details like specific variable names or line numbers."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

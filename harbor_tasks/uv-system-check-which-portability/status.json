@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:21:05.203782",
-  "total_time": 1038.61,
-  "sandbox_id": "ivup4fi6bs6cgypqvzgu3",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:15:49.342536",
+  "total_time": 632.37,
+  "sandbox_id": "iyw63r00qqxiipkr5s0cq",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.38,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] test_not_tautological @ tests/test_outputs.py:35: test `test_no_platform_guard_on_path_check` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:75: test `test_uses_cross_platform_which` has 2 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:121: test `test_path_check_raises_when_not_found` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_script_has_main_guard` has 1 assert(s), all pass on a ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.68,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15575.09,
-      "at": "2026-04-09T13:31:27.389908"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 1038.61,
       "at": "2026-04-12T06:21:05.203782"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 632.37,
+      "at": "2026-04-15T06:15:49.342536"
     }
   ]
 }

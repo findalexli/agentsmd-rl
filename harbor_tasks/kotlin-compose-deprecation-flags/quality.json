@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all five extension properties, four feature flags, the subplugin file, test files, specific annotation changes (DeprecationLevel.ERROR/WARNING), suppress annotation updates, and the stabilityConfigurationFile\u2192stabilityConfigurationFiles migration. All file paths and identifiers tested are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Update @Deprecated annotations to include level = DeprecationLevel.ERROR with messages mentioning 2.5.0', 'Update @Suppress(\"DEPRECATION\") to @Suppress(\"DEPRECATION_ERROR\")', 'Migrate from stabilityConfigurationFile.set(...) to stabilityConfigurationFiles.set(listOf(...))'. These are precise code-change instructions, not descriptions of broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to check for exact strings like '2.5.0' in deprecation messages, exact level names like 'ERROR' and 'WARNING', and exact suppress annotation values like 'DEPRECATION_ERROR'. While most correct solutions would share these, the test_compose_it_uses_stability_configuration_files test checks for exact string 'stabilityConfigurationFiles' which constrains the implementation to the specific gold patch approach."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads file content and uses regex/string matching (e.g., parse_deprecated_annotation uses re.search on file text, parse_suppress_annotation extracts strings). No test compiles code, runs Gradle, imports modules, or verifies runtime behavior. This is purely text-based assertion."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific annotation patterns that don't exist in the base commit (e.g., DeprecationLevel.ERROR on properties that had no level, @Deprecated on OptimizeNonSkippingGroups which had none). A stub/default file would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/kotlin's git history or could be found via solution/solve.sh. The agent could read the solve.sh file which contains the complete patch, or grep test files for expected values like '2.5.0' and 'DEPRECATION_ERROR'."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six categories of changes described in the instruction (extension property deprecations, feature flag deprecations, new deprecations on OptimizeNonSkippingGroups/PausableComposition, suppress annotation updates, dual suppress annotations, and ComposeIT migration) are covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names (test_generate_function_key_meta_classes_deprecation_error, etc.), grouped by category with section comments (e.g., '# Fail-to-pass tests: Deprecation annotation changes'), and each has a docstring explaining the change."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Kotlin source files with annotations, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, property names, annotation names, and deprecation level constants are all correctly spelled and match the actual codebase identifiers."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact properties, exact annotation changes, and exact replacement values. For example, it specifies changing '@Suppress(\"DEPRECATION\")' to '@Suppress(\"DEPRECATION_ERROR\")' and migrating 'stabilityConfigurationFile.set(...)' to 'stabilityConfigurationFiles.set(listOf(...))'. This goes beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task modifying Kotlin source files, not a configuration-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T19:07:07.982583",
-  "total_time": 1070.75,
-  "sandbox_id": "ij6asfmu7ezg9vrl4ydzr",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:34:58.167862",
+  "total_time": 621.65,
+  "sandbox_id": "i8023nl0it27ossironbi",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.64,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:226: test `test_put_inside_loop` has 3 assert(s), all pass on a stub i']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.26,
+      "tier_a_fails": [
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 749.31,
-      "at": "2026-04-09T20:30:57.903638"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 1070.75,
       "at": "2026-04-11T19:07:07.982583"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 621.65,
+      "at": "2026-04-15T03:34:58.167862"
     }
   ]
 }

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes skipping hidden directories (starting with '.'), skipping node_modules, still removing .pyc files in regular directories, and still removing __pycache__ directories. All test assertions check these exact behaviors. The file path `dev/breeze/src/airflow_breeze/utils/path_utils.py` and function name `cleanup_python_generated_files` are explicitly named. The specific directory names (.git, .venv, node_modules) are all mentioned in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (rglob traverses unnecessary directories) and the desired behavior (skip hidden dirs and node_modules) but does not prescribe the specific implementation (e.g., it doesn't say 'use os.walk with in-place pruning'). The developer must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests verify behavioral outcomes (whether files exist or not after cleanup) rather than implementation details. An agent could use os.walk, manual recursion, filtered rglob, or any other approach. The tests use extract_cleanup_function which regex-extracts the function body and executes it, so any correct implementation within that function would pass. The TestRepoCIChecks class does check for os.walk usage, but looking at the truncated tests, the behavioral tests are the core ones and don't ass"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests create actual directory structures, execute the cleanup function via subprocess (run_cleanup), and then check file existence with assert pyc_file.exists() / assert not regular_pyc.exists(). This is behavioral testing, not text matching. The extract_cleanup_function method does read source text but only to create an executable version that is then run."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (e.g., test_hidden_dir_pyc_not_deleted) create .pyc files in hidden directories AND regular directories. They assert the hidden .pyc still exists AND the regular .pyc is deleted. A stub/no-op implementation would fail because regular .pyc files would not be deleted. The original (unfixed) implementation would also fail because it would delete hidden directory .pyc files. The tests require actual selective behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow and the gold patch is in solve.sh. An agent could read the solution directory or grep for the patch content. The Dockerfile doesn't remove /solution/ after setup, and there's no evidence the solution files are excluded from the container's filesystem that the agent can access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behaviors from the instruction are tested: (1) removing .pyc in regular dirs (test_regular_pyc_deleted), (2) removing __pycache__ in regular locations (test_pycache_dir_deleted, test_nested_pycache_deleted), (3) skipping hidden directories (test_hidden_dir_pyc_not_deleted, test_git_dir_pyc_not_deleted, test_venv_dir_pyc_not_deleted, test_hidden_pycache_not_deleted), (4) skipping node_modules (test_node_modules_pyc_not_deleted, test_nested_node_modules_pyc_not_deleted)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized into well-named classes (TestCleanupSkipsHiddenDirectories, TestCleanupSkipsNodeModules, TestCleanupStillWorks, TestPruningCombinations) with descriptive docstrings explaining F2P vs P2P behavior for each test."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a cleanup function; it doesn't produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and directory names in the instruction are all correct and consistent with the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Look at the cleanup_python_generated_files() function around line 415' which gives the exact line number. While the file is already identified, pinpointing the line number is unnecessary localization leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

@@ -2,22 +2,32 @@
 
 ## Problem
 
-`AutoProcessor.from_pretrained` silently drops hub kwargs like `force_download`, `cache_dir`, `token`, `revision`, etc. This means users cannot control caching, authentication, or versioning when loading processors through the auto class.
+When calling `AutoProcessor.from_pretrained` with hub-related keyword arguments, the arguments are silently discarded and never reach the internal file-caching function. This prevents users from controlling caching, authentication, or versioning when loading processors through the auto class.
 
-## Root Cause
+## Expected Behavior
 
-In `src/transformers/models/auto/processing_auto.py`, the `from_pretrained` method filters kwargs for `cached_file` using `inspect.signature(cached_file).parameters`. However, `cached_file` is defined as:
+The following 9 hub kwargs must all be forwarded to the internal `cached_file` function:
 
-```python
-def cached_file(path_or_repo_id, filename, **kwargs):
-```
+- `cache_dir`
+- `force_download`
+- `proxies`
+- `token`
+- `revision`
+- `local_files_only`
+- `subfolder`
+- `repo_type`
+- `user_agent`
 
-Since it uses `**kwargs`, `inspect.signature` only sees three parameter names: `path_or_repo_id`, `filename`, and `kwargs`. Hub parameters like `force_download`, `cache_dir`, `token`, `revision`, etc. are never matched by the filter and get silently dropped before reaching the `cached_file` calls.
+The following kwargs must NOT be forwarded (they are not hub-related):
 
-## Expected Fix
+- `_from_auto`
+- `processor_class`
+- `task`
+- `trust_remote_code`
+- `torch_dtype`
 
-Replace the `inspect.signature` filtering with an explicit tuple of the hub parameter names that `cached_file` actually accepts. This is consistent with how other auto classes like `AutoTokenizer` handle the same situation -- they pass hub kwargs explicitly by name. Also remove the now-unused `import inspect`.
+## Additional Requirements
 
-## Files to Investigate
-
-- `src/transformers/models/auto/processing_auto.py` -- the `from_pretrained` class method
+- The code must pass `ruff check` linting without errors.
+- The code must pass `ruff format --check` without errors.
+- Any unused imports in the modified file must be removed.

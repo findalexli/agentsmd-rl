@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T19:08:15.020361",
-  "total_time": 1183.47,
-  "sandbox_id": "i801l5sjhvv2m83y8hwn8",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:37:24.792354",
+  "total_time": 788.27,
+  "sandbox_id": "ia48i288qbexx76orq9q5",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -50,17 +52,30 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.67,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:254: test `test_root_h_include` has 2 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:280: test `test_cpp_no_trailing_whitespace` has 1 assert(s), all pass ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.41,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 3,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3648.57,
-      "at": "2026-04-10T02:24:05.214459"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -92,6 +107,14 @@
       "backend": "fireworks",
       "time": 1183.47,
       "at": "2026-04-11T19:08:15.020361"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 788.27,
+      "at": "2026-04-15T03:37:24.792354"
     }
   ]
 }

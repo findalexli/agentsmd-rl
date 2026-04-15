@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the class `CreateCatalogItem`, the file `recommendations_ai.py`, the attributes `created_catalog_items` and `failed_catalog_items`, the `expand()` method, and the `_CreateCatalogItemFn.process()` DoFn with TaggedOutput. All test-specific names (created_catalog_items, failed_catalog_items, CreateCatalogItem, the file path) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (expand returns plain PCollection instead of tagged outputs) and the expected behavior (return object with created_catalog_items and failed_catalog_items), but does not specify exact code changes like 'use pardo.with_outputs()' or 'change line X to Y'. A developer must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for `hasattr(result, 'created_catalog_items')` and `hasattr(result, 'failed_catalog_items')` and that items route correctly. These are behavioral requirements. An alternative implementation (e.g., using a custom named tuple wrapper, or different internal variable names) would pass as long as the output object has the right attributes with correct routing. The attribute names are part of the public API contract described in the instruction."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import apache_beam, create pipelines, apply transforms, check attributes on result objects, and use assert_that/is_not_empty to verify pipeline execution. They are behavioral tests, not text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_expand_returns_tagged_output_type, test_success_items_routed_to_created_output, test_failure_items_routed_to_failed_output) require the result to have specific attributes and for PCollections to be non-empty after pipeline execution. A stub returning None, an empty collection, or a plain PCollection would fail these tests since hasattr checks and is_not_empty assertions would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/beam's container as solve.sh could potentially be read. The Dockerfile doesn't remove /solution/ or prevent access. Also, the gold patch is in solution/solve.sh which may be bind-mounted. An agent could read this file to extract the exact fix (grep for 'pardo.with_outputs' or read the patch directly)."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires created_catalog_items and failed_catalog_items attributes on the result, which are tested. It requires proper routing of successes and failures, which is tested. The Dead Letter Queue pattern behavior is fully covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, regression + anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output; it's about PTransform output routing."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and class (CreateCatalogItem, expand() method) which is appropriate for the task domain. It mentions the DoFn already yields TaggedOutput but doesn't specify the exact fix mechanism like 'use with_outputs()'. The file path is explicitly provided but this is reasonable given the task scope."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

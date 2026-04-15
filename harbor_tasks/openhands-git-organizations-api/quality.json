@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific function names like 'saas_get_user_git_organizations' (in enterprise/server/routes/user.py), exact method names 'get_user_groups', 'get_github_organizations', 'get_gitlab_groups' on specific classes, exact import paths like 'from server.routes.user import saas_get_user_git_organizations', exact parameter names like 'min_access_level' with string value '10' and 'per_page' with string value '100', and the exact mock pattern using '_make_request'. While instruction.md mentions"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be built (a new endpoint, new methods) but doesn't specify exact line changes or diff-level details. A developer still needs to reason about where and how to implement the solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: the exact function name 'saas_get_user_git_organizations', the exact method names 'get_github_organizations' and 'get_gitlab_groups' on ProviderHandler, the exact internal method '_make_request' being called with specific string parameters. An alternative correct implementation using different method names or different internal delegation patterns would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests import and call the actual code (e.g., calling service.get_user_groups(), handler.get_github_organizations(), saas_get_user_git_organizations()). There is one fallback in test_enterprise_api_endpoint_exists that reads file content, but this is a fallback for missing dependencies and is not the primary testing pattern. The subprocess-based tests also execute actual test suites."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests verify non-trivial behavior: test_gitlab_get_user_groups_returns_group_paths checks that the method extracts 'path' fields from API response dicts and returns ['my-team', 'open-source']; test_get_github_organizations_delegates_to_service verifies delegation to the correct service; test_enterprise_api_unsupported_provider_returns_400 checks for a 400 status code. A stub returning None or empty list would fail most of these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/OpenHands and solve.sh contains the full gold patch. An agent could read /solution/solve.sh (if accessible) or examine the enterprise directory structure to find the exact changes needed. The Dockerfile doesn't prevent access to /solution/."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes: organizations endpoint, multiple provider support (GitHub/GitLab/Bitbucket), error handling (400 for unsupported, 401 for no tokens), structured response, and GitLab groups API with min_access_level=10. Tests cover all these: provider delegation, error cases, unsupported provider 400, GitLab API parameters, and response structure."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear descriptive names (e.g., test_gitlab_get_user_groups_returns_group_paths, test_enterprise_api_unsupported_provider_returns_400), grouped by component (GitLab service, ProviderHandler, enterprise API), and include docstrings and section comments (FAIL TO PASS, PASS TO PASS)."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact JSON response schema: '{\"provider\": \"github\", \"organizations\": [\"org1\", \"org2\"]}' with 'provider' and 'organizations' keys, which matches what the tests verify."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the feature to build at a high level without naming exact file paths or line numbers. It mentions 'enterprise server routes' and 'GitLab service' generically, leaving the agent to locate the correct files."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code implementation task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

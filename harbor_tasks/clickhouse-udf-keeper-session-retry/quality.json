@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all specific strings, variable names, include paths, catch syntax, log messages ('Keeper hardware error'), function names (backQuote(object_name)), variable names (retries_ctl, max_retries, initial_backoff_ms, max_backoff_ms), and patterns (function_names_and_asts.clear(), retries_ctl.retryLoop) that the tests assert on. The target file path is also explicitly stated."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: specific variable names (retries_ctl, max_retries, initial_backoff_ms, max_backoff_ms), exact catch syntax ('catch (const zkutil::KeeperException & e)'), exact method calls (retries_ctl.retryLoop, function_names_and_asts.clear()), exact log message text ('Keeper hardware error'), and exact include files. This is a complete specification of WHAT to change, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'retries_ctl' (test_zookeeper_retries_control_usage asserts 'ZooKeeperRetriesControl retries_ctl('), exact parameter names 'initial_backoff_ms' and 'max_backoff_ms', exact string 'retries_ctl.retryLoop', exact catch syntax 'catch (const zkutil::KeeperException & e)', exact log message 'Keeper hardware error'. An alternative correct fix using different variable names or a different retry mechanism would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test is purely text-matching: reading the file content and asserting substrings exist (e.g., 'assert \"#include <Common/ZooKeeper/ZooKeeperCommon.h>\" in content'). No test compiles, executes, or calls any code. The pass-to-pass tests do use subprocess (grep, git) but only for style checks, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply appends the required strings as comments or dead code to the file would pass all f2p tests. For example, adding the include lines, a comment block containing all the required strings ('catch (const zkutil::KeeperException & e)', 'isHardwareError(e.code)', 'ZooKeeperRetriesControl retries_ctl(', etc.) without any actual functional code would satisfy every assertion."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution script is at /workspace/clickhouse/solution/solve.sh (or mounted in the container). The agent could read the test file at tests/test_outputs.py to discover all exact strings being asserted, then simply insert those strings into the target file. The tests only check for string presence, making this trivially exploitable."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (includes, exception handling, retry logic, logging, comments) are tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_hardware_error_include, test_keeper_exception_handler, test_retry_loop_pattern, etc.) and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying C++ source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file ('src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp'), exact function names to modify (tryLoadObject, refreshObjects), exact variable names to use, exact catch syntax, and exact log message strings. This goes far beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

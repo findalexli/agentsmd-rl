@@ -1,15 +1,15 @@
 # Fix calculateAverage for empty arrays
 
-The `calculateAverage` function in `index.js` has a bug where it returns `null` for empty arrays. It should return `0` instead.
+The `calculateAverage` function in `index.js` returns `null` when given an empty array. It should return `0` instead.
 
-## Task
-
-1. Modify `index.js` to fix the `calculateAverage` function
-2. Change the return value from `null` to `0` when the input array is empty
+The repository at `/workspace/sample_repo` must be in a clean state:
+- `index.js` exports `calculateAverage` and `calculateSum` functions
+- `package.json` exists
+- `npm run lint` passes
+- `npm test` passes
 
 ## Expected Behavior
 
-```javascript
-calculateAverage([]);  // Should return 0, not null
-calculateAverage([1, 2, 3]);  // Should return 2
-```
+`calculateAverage([])` must return `0` (not `null`)
+`calculateAverage([1, 2, 3, 4, 5])` must return `3.0`
+`calculateSum([1, 2, 3, 4, 5])` must return `15`

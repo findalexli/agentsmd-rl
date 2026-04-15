@@ -2,21 +2,28 @@
 
 ## Problem
 
-When deploying a Next.js application that uses the edge runtime, the deployment fails because several server-side code paths unconditionally try to import `node:stream`, which is not available in the edge runtime environment. The affected code paths include stream conversion utilities, the pre-render tee operation, and render result stream handling.
+When deploying a Next.js application using the edge runtime, the deployment crashes because server-side code unconditionally calls `require('node:stream')`. This Node.js built-in module is unavailable in the edge runtime, and the require executes at import time regardless of the runtime environment.
 
-The root cause is that `require('node:stream')` calls are executed regardless of the runtime environment, so even when running in edge mode (where Node.js built-in modules are unavailable), the code attempts to load `node:stream` and crashes.
+The affected code paths include stream conversion utilities, the pre-rendering tee operation, and render result stream handling.
 
 ## Expected Behavior
 
-Code that uses `node:stream` should detect when it is running in the edge runtime and either:
-- Throw a clear error explaining the operation is not supported in edge runtime
-- Fall back to web stream APIs that are available in edge runtime
+### Edge runtime guards with DCE-safe structure
 
-The `require('node:stream')` calls should be structured so that webpack's dead code elimination (DCE) can remove them from edge bundles entirely.
+All code paths that import `node:stream` must check whether the runtime is edge before executing the require. Specifically:
 
-## Files to Look At
+1. Use `process.env.NEXT_RUNTIME === 'edge'` to detect the edge runtime
+2. Place the `require('node:stream')` call inside an `else` branch (the require must be preceded by a `} else {` block) so that webpack's dead code elimination removes the require from edge bundles entirely
 
-- `packages/next/src/server/stream-utils/node-web-streams-helper.ts` — Contains `webToReadable()` and `streamToUint8Array()` which convert between web and node streams
-- `packages/next/src/server/app-render/app-render-prerender-utils.ts` — Contains `ReactServerResult` class with a `tee()` method that uses `node:stream`
-- `packages/next/src/server/render-result.ts` — Contains `RenderResult` class with `toReadableStream()` and `tee()` methods that use `node:stream`
-- `packages/next/errors.json` — Error message registry
+In the edge branch, the behavior depends on the operation:
+- Functions that fundamentally depend on Node.js streams must **throw** an error explaining the incompatibility
+- Functions that can operate with web streams only must delegate to the existing `webstreamToUint8Array()` function instead of requiring `node:stream`
+
+### Error codes
+
+The project's error registry `packages/next/errors.json` uses a JSON schema that maps numeric string keys to error message strings: `{ "<code>": "<message>", ... }`. It must be updated with edge-runtime-specific error messages:
+
+- At least **3** error messages containing the text "edge runtime"
+- At least **1** of those must mention `Readable`, `stream`, or `webToReadable`
+
+New error codes should follow the existing sequential numbering pattern.

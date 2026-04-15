@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T20:32:40.580450",
-  "total_time": 2924.35,
-  "sandbox_id": "iupyy1tie7svbgz4tko3i",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:22:01.494654",
+  "total_time": 2856.84,
+  "sandbox_id": "iwcpeb5st6p798x0zp67q",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -65,17 +67,30 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.89,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:15: unpinned pip deps: pytest, pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.64,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 3,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1401.24,
-      "at": "2026-04-09T20:41:49.789937"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -107,6 +122,14 @@
       "backend": "fireworks",
       "time": 2924.35,
       "at": "2026-04-11T20:32:40.580450"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2856.84,
+      "at": "2026-04-15T04:22:01.494654"
     }
   ]
 }

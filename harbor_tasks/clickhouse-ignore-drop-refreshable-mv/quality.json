@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'orphaned view would keep refreshing indefinitely', 'Don't ignore `DROP` for refreshable materialized views', specific variable name 'is_refreshable_view', exact pattern '!is_refreshable_view && settings[Setting::ignore_drop_queries_probability]', and 'dynamic_cast<StorageMaterializedView *>'. While instruction.md mentions some concepts (isRefreshable, StorageMaterializedView, is_refreshable_view), it does not specify the exact comment text 'orphaned view would ke"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the implementation: 'Get a pointer to the table and check if it's a StorageMaterializedView', 'Check if the view is refreshable using isRefreshable()', 'Add !is_refreshable_view to the condition'. It also names the exact variable 'is_refreshable_view' and gives the exact file and line number (~line 199). This leaves essentially no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'is_refreshable_view', exact cast syntax 'dynamic_cast<StorageMaterializedView *>', exact regex pattern '!is_refreshable_view\\s*&&\\s*settings[Setting::ignore_drop_queries_probability]', and exact comment strings. An alternative correct fix using e.g. 'is_refreshable' as variable name, or using a different check order, or a helper function, would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_refreshable_view_check_exists, test_truncate_behavior_documented) are purely text-matching: they open the file and assert substrings/regex patterns in the source code. No compilation, no execution, no behavioral verification. Even test_logic_structure just checks line ordering in source text."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply inserts the expected comment text and variable declarations (without any actual logic integration or compilation) would pass all f2p tests, since they only check for string presence in the source file, not actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/ClickHouse's solution/solve.sh (if accessible) or simply grep the test file at tests/test_outputs.py to discover the exact strings being asserted (e.g., 'orphaned view would keep refreshing indefinitely') and insert them verbatim without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires checking for refreshable views, skipping DROP-to-TRUNCATE conversion, and adding a comment. Tests cover all three requirements (comment check, dynamic_cast check, condition check)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_refreshable_view_check_exists, test_truncate_behavior_documented, test_logic_structure, etc.) with docstrings indicating f2p vs p2p classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces C++ source code modifications, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies 'src/Interpreters/InterpreterDropQuery.cpp - The executeToTableImpl function around line 199', which is precise localization that removes the need for the agent to find the buggy location."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

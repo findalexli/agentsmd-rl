@@ -2,43 +2,25 @@
 
 ## Problem
 
-The Move unit test runner is not correctly handling package linkage when setting up test storage. When running unit tests that involve multiple packages with cross-package dependencies, the test runner fails to provide proper linkage context to the VM runtime.
-
-## Location
-
-The issue is in the `setup_test_storage` function within:
-- `external-crates/move/crates/move-unit-test/src/test_runner.rs`
+The Move unit test runner crashes when running unit tests that involve cross-package dependencies. When modules in one package need to reference modules in another package, the VM runtime fails because the stored packages lack proper linkage context.
 
 ## What You Need to Do
 
-The `setup_test_storage` function iterates over packages and creates `StoredPackage` instances for testing. Currently, it creates packages without proper linkage context, which causes issues when modules in one package need to reference modules in another package.
+Modify the `setup_test_storage` function in `external-crates/move/crates/move-unit-test/src/test_runner.rs` to properly initialize package linkage.
 
-You need to:
+The current implementation creates StoredPackage instances without linkage context. This causes linkage errors when tests have cross-package dependencies.
 
-1. **Import the linkage context module**: Add `linkage_context` to the imports from `move_vm_runtime::shared`.
+### Requirements
 
-2. **Create a linkage table**: Before the loop that creates `StoredPackage` instances, construct a linkage table that maps each package address to itself (identity mapping). This table should be built from the keys of the `packages` BTreeMap:
-   ```rust
-   let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();
-   ```
+1. **Import the linkage context module**: The `linkage_context` module must be imported from `move_vm_runtime::shared` alongside the existing `gas::GasMeter` import.
 
-3. **Create a LinkageContext**: Use the linkage table to create a `LinkageContext`:
-   ```rust
-   let linkage_context = linkage_context::LinkageContext::new(linkage_table).unwrap();
-   ```
+2. **Create a linkage table**: Before iterating over packages, construct a linkage table that maps each package address to itself (identity mapping) using the keys of the `packages` BTreeMap. The table format should be a BTreeMap where each address maps to itself.
 
-4. **Update StoredPackage creation**: Modify the loop that creates `StoredPackage` instances to:
-   - Use `StoredPackage::from_module_for_testing_with_linkage` instead of `from_modules_for_testing`
-   - Pass the `linkage_context` (cloned) as a parameter along with the address and modules
+3. **Create a LinkageContext**: Instantiate a `LinkageContext` using the linkage table. The `LinkageContext::new()` constructor requires a valid table and will return `Ok` on success.
 
-## Key Points
+4. **Update package loading**: Change the package creation to use a method that accepts linkage context, passing the linkage context (cloned) as a parameter along with the address and modules. The old method that doesn't accept linkage context should no longer be used in this function.
 
-- The `LinkageContext` type is located in `move_vm_runtime::shared::linkage_context`
-- The linkage table is a `BTreeMap` where each package address maps to itself
-- The `StoredPackage::from_module_for_testing_with_linkage` method takes three parameters: address, linkage_context, and modules
-- Make sure to clone the linkage_context when passing it to each package creation
-
-## Verification
+### Verification
 
 After making changes:
 1. Run `cargo check -p move-unit-test` to verify the code compiles

@@ -1,26 +1,25 @@
-# fix(studio): use hook for org in NoProjectsOnPaidOrgInfo
+# Fix missing warning banner in NoProjectsOnPaidOrgInfo
 
 ## Problem
 
-The `NoProjectsOnPaidOrgInfo` component in the billing section is supposed to show a warning banner when an organization is on a paid plan but has no projects. However, the component is not receiving the `organization` prop from its parent, causing it to always return `null` and never display the banner.
-
-This was a follow-up fix to a previous PR where the prop wasn't actually being wired through the component tree.
+The `NoProjectsOnPaidOrgInfo` component in `apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx` should display a warning `Admonition` banner when an organization is on a paid plan but has zero projects. Currently the component returns `null` and the banner never appears.
 
 ## Expected Behavior
 
-The component should display an `Admonition` banner when:
-1. The current organization is on a paid plan (not 'free', 'platform', or 'enterprise')
-2. The organization has 0 projects
+The component must:
 
-The banner should display the organization's plan name and provide a link to billing settings.
+1. Render an `Admonition` banner from `ui-patterns` (imported as `import { Admonition } from 'ui-patterns'`)
+2. Import and use `Link` from `next/link`
+3. Check whether the current organization is on a paid plan (i.e., its `plan.id` is not one of: `free`, `platform`, `enterprise`)
+4. Display the organization's `plan.name` in the banner
+5. Provide a link to billing settings
 
-## Files to Look At
+The eligibility check uses `isEligible = organization != null && !EXCLUDED_PLANS.includes(organization.plan.id ?? '')`, where `EXCLUDED_PLANS = ['free', 'platform', 'enterprise']`.
 
-- `apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx` — Component that displays the warning banner
+The project count is obtained via `useOrgProjectsInfiniteQuery`.
 
-## Notes
+## Constraints
 
-- The component currently receives `organization` as a prop but it's not being passed in by parent components
-- Consider using data fetching hooks available in the studio codebase to get the current organization
-- The component should still use `useOrgProjectsInfiniteQuery` to check project count
-- Keep the `EXCLUDED_PLANS` logic unchanged
+- The component's parameter list must not include `organization` as a destructured prop
+- No `NoProjectsOnPaidOrgInfoProps` interface should be present
+- The `EXCLUDED_PLANS` array and `isEligible` logic must remain unchanged

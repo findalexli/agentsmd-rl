@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (config_models.py, config_router.py, v1_router.py, public.py), class names (LLMModel, LLMModelPage), function names (search_models, _get_verified_models, _get_all_models_with_verified), router configuration details (prefix='/config'), and schema fields that the tests assert on. All test-specific details are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, specifying exact function signatures ('def _get_verified_models() -> set[str]'), exact internal implementation details like 'verified_models = set()', 'model_name.split(\"/\", 1)', and 'VERIFIED_MODELS.items()'. This goes beyond describing what's needed and dictates the exact implementation, leaving virtually no reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_get_verified_models_function assert exact implementation details: 'verified_models = set()' in content, 'return verified_models' in content, 'VERIFIED_MODELS.items()' in content, 'verified_models.add(' in content. A correct alternative using e.g. a set comprehension or different variable names would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Multiple core tests (test_config_router_file_exists, test_get_verified_models_function, test_get_all_models_with_verified, test_v1_router_includes_config_router, test_public_models_deprecated) are purely string-matching via 'assert X in content' without importing or executing the code. Only test_config_models_file_exists and test_llm_model_serialization actually import and call code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests do require actual implementation: test_config_models_file_exists imports and instantiates LLMModel/LLMModelPage with specific field values, test_llm_model_serialization checks model_dump() output against expected dicts. A stub returning None or empty collections would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/OpenHands after solve.sh runs, and the agent could potentially read test_outputs.py or solution/solve.sh to discover exact string patterns the tests check for (e.g., 'verified_models = set()', 'model_name.split(\"/\", 1)'). No measures prevent reading /solution/ directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies pagination parameters (page_id, limit with gt=0/le=100, query case-insensitive substring match, verified__eq filter) and endpoint behavior, but no test actually calls the search_models endpoint with these parameters to verify filtering/pagination behavior. The endpoint is only checked via string matching in the source file."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each tests (e.g., 'F2P: config_models.py file must exist', 'Repo's circular import tests pass (pass_to_pass)') and grouped logically by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction provides a clear table of query parameters with types/defaults/constraints and documents the LLMModel and LLMModelPage response schemas with field types and defaults."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact internal implementation details like 'Include a helper function _get_verified_models with return type set[str]' and the exact variable 'VERIFIED_MODELS' constant location, which are internal design choices not required by the API specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code creation/modification task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

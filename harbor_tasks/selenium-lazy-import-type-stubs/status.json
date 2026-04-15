@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:30:20.171759",
-  "total_time": 2746.69,
-  "sandbox_id": "i4y75bi2z38cpwggxumit",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:50:52.457063",
+  "total_time": 1419.69,
+  "sandbox_id": "i0bfv263fyp7w407y07ux",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,17 +59,27 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.43,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:175: test `test_stub_syntax_valid` has 1 assert(s), all pass on a stub', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: pytest, mypy', 'B:[B] no_network_during_tests @ tests/test.sh:8: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.47,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15331.85,
-      "at": "2026-04-09T13:27:24.220640"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +111,14 @@
       "backend": "fireworks",
       "time": 2746.69,
       "at": "2026-04-12T03:30:20.171759"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1419.69,
+      "at": "2026-04-15T05:50:52.457063"
     }
   ]
 }

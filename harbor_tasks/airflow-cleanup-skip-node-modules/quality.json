@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_dirnames_pruning_in_os_walk checks for 'dirnames[:]' literal string in code, test_uses_os_walk_instead_of_rglob checks for 'os.walk' string. The instruction says 'Rewrite the function' but never specifies os.walk must be used (could use os.scandir recursion, pathlib with manual filtering, etc.). Also test_file_compiles_successfully and test_ruff_passes reference specific verification commands that are mentioned in"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (rglob traverses everything) and the desired behavior (skip node_modules, hidden dirs) but does not specify the exact code change like 'use os.walk' or 'modify dirnames[:]'. The agent must reason about what approach to take."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_dirnames_pruning_in_os_walk asserts 'dirnames[:]' must appear in the file, and test_uses_os_walk_instead_of_rglob asserts 'os.walk' must be present. A correct alternative using os.scandir with manual recursion, or a custom walk function, or pathlib-based manual traversal would fail these tests despite being behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_uses_os_walk_instead_of_rglob and test_dirnames_pruning_in_os_walk are purely textual checks (reading file content and asserting string presence like 'os.walk', 'dirnames[:]', 'node_modules', 'startswith'). The behavioral tests (test_skips_node_modules, test_skips_hidden_directories, etc.) test a local reference function cleanup_python_generated_files_fixed, NOT the actual patched code. They never import or call the actual function from path_utils.py."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The behavioral tests (test_skips_node_modules, test_skips_hidden_directories, test_cleans_pyc_files_in_regular_directories, test_cleans_pycache_directories) all call the locally-defined cleanup_python_generated_files_fixed function, NOT the actual code being modified. These tests pass regardless of what the agent does to the source file, making them tautological for the actual task."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/airflow after solve.sh runs, and the gold patch is in solution/solve.sh. The agent could read /solution/solve.sh or inspect the test file to see exactly what strings need to appear in the code (os.walk, dirnames[:], node_modules, startswith). The structural tests can be gamed by inserting the required strings as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires that 'Existing breeze tests in dev/breeze/tests/ still pass' but no test verifies this. The behavioral tests for skipping node_modules and hidden directories test a local reference function, not the actual modified code. The FileNotFoundError and PermissionError handling tests also test local functions, not the actual code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, grouped by concern (structural checks, behavioral checks for different features), and include docstrings explaining purpose and expected behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path dev/breeze/src/airflow_breeze/utils/path_utils.py and function cleanup_python_generated_files, which is appropriate for the task domain. It describes the problem (rglob) but doesn't specify exact line numbers or the exact replacement code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

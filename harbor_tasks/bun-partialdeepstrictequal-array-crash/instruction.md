@@ -1,4 +1,4 @@
-# Bug: `assert.partialDeepStrictEqual` crashes on array inputs
+# Bug: `assert.partialDeepStrictEqual` crashes on array inputs with "TypeError: expectedCounts.@set is not a function"
 
 ## Description
 
@@ -19,16 +19,32 @@ assert.partialDeepStrictEqual(["foo", "bar", "baz"], ["foo", "baz"]);
 // TypeError: expectedCounts.@set is not a function
 ```
 
-## Root Cause
+## Error Details
 
-The issue is in `src/js/node/assert.ts`, in the `compareBranch` function. The array comparison branch uses a `SafeMap` instance to count expected elements. However, `SafeMap` instances have their prototype set to `null` by `makeSafe()`, which breaks the resolution of certain private methods on the map instance. The code calls methods directly on the map instance, but since the prototype chain has been severed, those method lookups fail at runtime.
+The error message specifically mentions `expectedCounts.@set is not a function` (or similar for `@delete`). This occurs because the implementation uses a map instance with a null prototype, and direct method calls like `map.$set(key, value)` or `map.$delete(key)` fail since the methods cannot be found on the null prototype chain.
 
-The existing code already handles this correctly for some `SafeMap` operations (like `has` and `get`) by extracting uncurried prototype references and calling them explicitly. The array branch is missing the same treatment for two other `SafeMap` methods that it uses.
+## Required Fix Pattern
+
+In Bun's JavaScript runtime (`src/js/`), method calls on objects with null prototypes must use prototype-based invocation with Bun's `.$call` or `.$apply` intrinsics. The fix MUST:
+
+1. Extract or use `SafeMap.prototype.set` and `SafeMap.prototype.delete` references
+2. Invoke these using Bun's `.$call` or `.$apply` syntax: `SafeMap.prototype.set.$call(mapInstance, key, value)` or `SafeMap.prototype.delete.$call(mapInstance, key)`
+3. You need at least 3 such prototype-based calls (for set operations, initialization, and delete operations in the counting logic)
+
+**CRITICAL**: Use `.$call` and `.$apply`, never plain `.call` or `.apply`. For example:
+- CORRECT: `SafeMap.prototype.set.$call(expectedCounts, key, value)`
+- WRONG: `SafeMap.prototype.set.call(expectedCounts, key, value)`
 
 ## Expected Behavior
 
-`assert.partialDeepStrictEqual` should work with array inputs the same way it works with object inputs, without throwing.
+`assert.partialDeepStrictEqual` should work with array inputs the same way it works with object inputs, without throwing `TypeError: expectedCounts.@set is not a function`.
 
 ## Files to Investigate
 
-- `src/js/node/assert.ts` — the `compareBranch` function, specifically the array handling branch around the `expectedCounts` map usage
+- `src/js/node/assert.ts` - Look for array comparison logic and any code using `expectedCounts` with map operations
+
+## Constraints (from src/js/CLAUDE.md)
+
+- Modules under `src/js/` are NOT ES modules — use `require()`, not `import`
+- Use `.$call` and `.$apply`, never `.call` or `.apply`
+- `require()` calls must use string literals only, not dynamic expressions

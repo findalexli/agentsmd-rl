@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target directory (native/swift/sir-providers/), the package (org.jetbrains.kotlin.sir.providers.impl.BridgeProvider), all specific coroutine imports (CancellationException, CoroutineScope, CoroutineStart, Dispatchers), the FqName(\"kotlinx.coroutines.launch\") literal, it.safeImportName, buildList, .kotlinx_coroutines_launch(, private val FqName.safeImportName: String, pathSegments().joinToString, get() = kotlinFqName.safeImportName, and the no-wildcard requirement. All t"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact fix: use 'buildList', replace '.launch(' with '.kotlinx_coroutines_launch(', add 'private val FqName.safeImportName: String', delegate via 'get() = kotlinFqName.safeImportName', use 'it.safeImportName' in a builder lambda. This is not describing what's broken \u2014 it's prescribing the exact implementation changes line by line."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: 'buildList' (test_additional_imports_uses_safe_import_name), 'private val FqName.safeImportName: String' (test_fqname_safe_import_name_extension), 'get() = kotlinFqName.safeImportName' (test_bridge_function_uses_fqname_extension), 'it.safeImportName' (test_additional_imports_uses_safe_import_name). An alternative correct fix using listOf(), a different helper name, or inline implementation would fail these tests despite being functionally cor"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test is purely text-matching: reading the file content and checking for literal strings like 'buildList', '.kotlinx_coroutines_launch(', 'private val FqName.safeImportName: String'. No test compiles, executes, or calls any code. The tests are entirely 'assert X in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "An agent could pass all fail-to-pass tests by simply inserting the required literal strings as comments or dead code into the file (e.g., adding '// buildList kotlinx.coroutines.CancellationException .kotlinx_coroutines_launch( private val FqName.safeImportName: String pathSegments().joinToString get() = kotlinFqName.safeImportName'). No behavioral verification prevents this."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin's sibling or the solve.sh contains the complete gold patch inline. The agent could read the Dockerfile or solution/solve.sh (which contains the exact patch) to extract the expected changes. Additionally, the tests only check for literal strings that appear in the gold patch."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (explicit imports, aliased launch call, FqName extension property, delegation, no wildcard, buildList) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_additional_imports_uses_safe_import_name, test_coroutine_launch_uses_aliased_name, etc.), each has a docstring explaining the purpose and whether it's FAIL-TO-PASS or PASS-TO-PASS."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact method signatures ('private val FqName.safeImportName: String'), exact delegation code ('get() = kotlinFqName.safeImportName'), and exact replacement strings ('.kotlinx_coroutines_launch('), which constitute precise implementation-level hints rather than bug descriptions."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

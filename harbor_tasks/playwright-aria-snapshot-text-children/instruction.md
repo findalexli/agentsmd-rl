@@ -1,15 +1,38 @@
-# fix(aria-snapshot): include text children when name is longer than text
+# Fix ARIA snapshot generation dropping informative text children
 
 ## Problem
 
-When generating ARIA snapshots (e.g. via `toMatchAriaSnapshot`), text children are silently dropped from the snapshot output when the accessible name of the parent element is longer than the text content. For example, a `progressbar` with `aria-label="Alpha Beta"` containing child text nodes `<span>Alpha</span>` and `<span>7</span>` produces a snapshot that omits the text entirely, even though "7" is informative content not covered by the accessible name.
+When generating ARIA snapshots (e.g. via `toMatchAriaSnapshot`), text children that contain information not present in the element's accessible name are sometimes silently dropped from the snapshot output. The `textContributesInfo` function in the source is responsible for deciding whether a text child should appear in the rendered snapshot — it currently drops text in cases where it should not.
 
-This affects any element where the accessible name is longer than its text children — the text is unconditionally stripped regardless of whether it actually contributes information beyond the name.
+### Expected inclusion cases
 
-## Expected Behavior
+These text children should appear in snapshots (text has information not in the name):
 
-Text children should be included in the generated ARIA snapshot whenever they contribute information not already present in the accessible name. The existing heuristic for determining text-vs-name overlap should be used for all cases, not short-circuited based on string length alone.
+| Name | Text | Expected |
+|---|---|---|
+| `"Alpha Beta"` | `"7"` | included |
+| `"Some Long Name"` | `"42"` | included |
+| `"Click to Submit"` | `"!"` | included |
 
-## Files to Look At
+Text that partially overlaps the name but also carries unique information should also be included:
 
-- `packages/injected/src/ariaSnapshot.ts` — contains the `textContributesInfo` function that decides whether a text child should be included in the rendered snapshot
+| Name | Text | Expected |
+|---|---|---|
+| `"Alpha Beta"` | `"Alpha 7"` | included |
+| `"Save Document"` | `"Save 3"` | included |
+| `"Loading Progress Bar"` | `"Loading 85%"` | included |
+
+### Expected exclusion cases (existing behavior to preserve)
+
+| Name | Text | Expected |
+|---|---|---|
+| `"Hello World"` | `"Hello"` | excluded |
+| `"Foo Bar"` | `"Foo"` | excluded |
+| `"anything"` | `""` | excluded |
+| `""` | `"some text"` | included |
+
+The source uses a `longestCommonSubstring` utility for determining text-name overlap. This utility and its call site must remain present in the source.
+
+## File to Look At
+
+- `packages/injected/src/ariaSnapshot.ts` — contains the `textContributesInfo` function that decides whether text children appear in the rendered snapshot

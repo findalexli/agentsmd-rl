@@ -15,7 +15,19 @@ When viewing a stickiness insight:
 
 Non-stickiness insights should continue to display date-formatted labels as before.
 
-## Files to Look At
+## Implementation Requirements
 
-- `frontend/src/lib/charts/utils/dates.ts` — contains `createXAxisTickCallback` which produces the x-axis tick formatter. Currently has no mechanism to prefix numeric (non-date) tick values.
-- `frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx` — the line graph component that calls `createXAxisTickCallback`. This is where stickiness-specific behavior needs to be wired up.
+### dates.ts
+
+The `createXAxisTickCallback` function in `frontend/src/lib/charts/utils/dates.ts` must accept a new parameter named exactly `numericTickPrefix` that:
+- When provided, formats numeric tick values as `{prefix} {value}` (e.g., `Day 1`, `Week 2`)
+- When not provided (undefined), continues returning plain numeric strings for backward compatibility
+
+The file must import dayjs from `lib/dayjs` (not directly from the `dayjs` package).
+
+### LineGraph.tsx
+
+The line graph component in `frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx` must:
+- Access a value named exactly `isStickiness` from `insightVizDataLogic` to determine when a chart represents stickiness data
+- Pass a property named exactly `numericTickPrefix` to `createXAxisTickCallback` only when `isStickiness` is true
+- The prefix should be derived from the current interval: capitalize the interval name (`day` → `Day`, `week` → `Week`, `month` → `Month`)

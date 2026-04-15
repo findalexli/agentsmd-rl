@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant files (gradio/chat_interface.py, gradio/utils.py), methods (_stream_fn, _examples_stream_fn, SyncToAsyncIterator.aclose, safe_aclose_iterator), and requirements (aclosing from contextlib, async aclose, await in safe_aclose_iterator). All test assertions check for these named elements."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'The `aclosing` context manager from `contextlib` must be used', 'SyncToAsyncIterator.aclose() must be an async method', 'safe_aclose_iterator() must await the aclose() calls'. These are not descriptions of what's broken but prescriptions of exactly what to change. A competent developer doesn't need to reason about what to change \u2014 they're told to use aclosing, make aclose async, and add await."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests test_aclosing_used_in_stream_fn and test_aclosing_used_in_examples_stream_fn use AST inspection to check for the exact pattern `async with aclosing(...)` with `item.context_expr.func.id == 'aclosing'`. An alternative correct fix using a try/finally block to call generator.aclose(), or using a different context manager wrapper, would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While test_aclosing_used_in_stream_fn and test_aclosing_used_in_examples_stream_fn are AST-based, the other tests (test_aclose_is_coroutine, test_aclose_closes_underlying_generator, test_safe_aclose_iterator_awaits_generic_async_iterator, test_safe_aclose_iterator_awaits_sync_to_async) actually execute the code via exec/asyncio.run and verify behavior. It's a mix, not purely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests cannot be passed by stubs: test_aclose_is_coroutine asserts asyncio.iscoroutine(result) which requires an actual async def; test_aclose_closes_underlying_generator checks a finally block executed via await; test_safe_aclose_iterator_awaits_generic_async_iterator checks mock.closed becomes True. The AST tests require specific code structure."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/gradio in solve.sh, and the Dockerfile doesn't remove the solution directory. An agent could read /solution/solve.sh or look at test files to extract exact expected patterns (e.g., the AST checks for 'aclosing' name)."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements from the instruction are tested: aclosing in _stream_fn (test_aclosing_used_in_stream_fn), aclosing in _examples_stream_fn (test_aclosing_used_in_examples_stream_fn), async aclose (test_aclose_is_coroutine), and await in safe_aclose_iterator (test_safe_aclose_iterator_awaits_generic_async_iterator)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and comments grouping them into 'Gates (static)', 'Fail-to-pass (pr_diff)', and 'Pass-to-pass (static/pr_diff)' sections."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Python code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact methods to modify (_stream_fn, _examples_stream_fn), exact classes (SyncToAsyncIterator), exact functions (safe_aclose_iterator), and even the exact fix mechanism ('aclosing context manager from contextlib must be used', 'must be an async method'). This goes beyond naming the buggy file/module \u2014 it pinpoints exact locations and solutions."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

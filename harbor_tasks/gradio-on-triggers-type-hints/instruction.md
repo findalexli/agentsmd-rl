@@ -1,33 +1,38 @@
-# Fix type hints for gr.on and gr.render triggers parameter
+# Type hints for gr.on and gr.render triggers parameter cause false type-checking errors
 
 ## Bug Description
 
-The `triggers` parameter in `gr.on()` and `gr.render()` has incorrect type hints that cause false type-checking errors in mypy, pyright, and VS Code Pylance. The parameter is typed as `Sequence[EventListenerCallable] | EventListenerCallable | None`, but component event methods like `button.click` and `tab.select` are **bound methods** that do not expose the `block` first-parameter present in the `EventListenerCallable` type alias.
+The `triggers` parameter in `gr.on()` (in `gradio/events.py`) and `gr.render()` (in `gradio/renderable.py`) produces false type-checking errors in mypy, pyright, and VS Code Pylance when passed bound component event methods like `button.click`, `tab.select`, or `state.change`.
 
-This means that valid, working code like this produces type errors:
+The current type annotation for `triggers` uses `EventListenerCallable`, which expects a callable with a `block` first-parameter. However, bound component event methods have already consumed the `self`/`block` parameter through binding, so their signature does not match `EventListenerCallable`.
+
+This means valid, working code like this produces type errors:
 
 ```python
 gr.on(triggers=[tab.select, state.change, button.click])  # type error
 gr.on(triggers=button.click)  # type error
+gr.render(triggers=[input.change, button.click])  # type error
 ```
 
-The `EventListenerCallable` type expects a callable with a specific signature that includes a `block` parameter as the first argument. But bound component event methods (e.g., `button.click`) have already consumed the `self`/`block` parameter through binding, so their signature does not match `EventListenerCallable`.
+## Required Fix
 
-## What to Fix
+The `triggers` parameter type should accept:
+1. The existing `EventListenerCallable` type (for backward compatibility)
+2. Any bound component event method (any callable that returns a `Dependency`)
 
-1. In `gradio/events.py`, define a `Trigger` type alias that accepts both the full `EventListenerCallable` and bound component event methods (any callable that returns a `Dependency`). Update the `gr.on()` function signature to use `Trigger` instead of `EventListenerCallable` for the `triggers` parameter.
+The new type should be named `Trigger` (a type alias defined in `gradio/events.py` that includes both `EventListenerCallable` and `Callable[..., Dependency]`).
 
-2. In `gradio/renderable.py`, update the import and the `gr.render()` function signature to use the new `Trigger` type instead of `EventListenerCallable`.
+## Affected Files
 
-## Affected Code
-
-- `gradio/events.py`: Add `Trigger` type alias, update `on()` signature
-- `gradio/renderable.py`: Update import and `render()` signature
+- `gradio/events.py`: The `gr.on()` function and the location where `Trigger` should be defined
+- `gradio/renderable.py`: The `gr.render()` function and its imports from `gradio.events`
 
 ## Acceptance Criteria
 
-- A `Trigger` type alias (or equivalent) is defined that accepts both `EventListenerCallable` and `Callable[..., Dependency]`
-- `gr.on()` triggers parameter uses the new type
-- `gr.render()` triggers parameter uses the new type
+- A `Trigger` type alias is defined in `gradio/events.py` that includes both `EventListenerCallable` and `Callable[..., Dependency]`
+- `gr.on()` in `gradio/events.py` has its `triggers` parameter annotated with a type that references `Trigger` (not `EventListenerCallable` directly)
+- `gr.render()` in `gradio/renderable.py` has its `triggers` parameter annotated with a type that references `Trigger` (not `EventListenerCallable` directly)
+- `gradio/renderable.py` imports `Trigger` from `gradio.events` (not `EventListenerCallable`)
 - Both files remain syntactically valid Python
-- Runtime behavior is unchanged
+- `EventListenerCallable` remains importable from `gradio.events` (backward compatibility)
+- Runtime behavior is unchanged (this is a type annotation fix only)

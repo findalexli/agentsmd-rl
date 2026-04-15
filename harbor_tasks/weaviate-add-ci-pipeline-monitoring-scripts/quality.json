@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on `calculateSum` function (test_sum_function_works) and check `npm run lint` and `npm test` pass (test_repo_lint, test_repo_tests_pass), but instruction.md never mentions calculateSum, linting, or the repo's own test suite. Also, the test checks the file structure includes package.json, which isn't mentioned in instructions."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: 'Change the return value from null to 0 when the input array is empty.' This tells the agent exactly what to change, leaving no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check behavioral outputs (return values of calculateAverage and calculateSum), not implementation details like variable names, line positions, or internal helpers. Alternative correct implementations would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute JavaScript code via Node.js subprocess, import the module, call functions, and check returned values. They are behavioral, not text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning 0 for calculateAverage would fail test_average_works_for_normal_arrays (expects 3.0 for [1,2,3,4,5]). A stub returning null would fail the empty-array test. The f2p tests cannot be trivially satisfied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sample_repo/../solution/solve.sh (or similar path in the container). The agent could read solution/solve.sh to discover the exact fix. There's no evidence the solution directory is excluded from the container or made inaccessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The primary behavior described in instruction.md (return 0 for empty arrays, correct average for non-empty arrays) is tested by test_average_returns_zero_for_empty_array and test_average_works_for_normal_arrays."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, grouped with comments (FAIL-TO-PASS, PASS-TO-PASS, Static checks), and each has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves fixing a simple JavaScript function, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across all task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies the exact file (index.js), the exact function (calculateAverage), and the exact change ('from null to 0'). This is excessive localization for what should be a debugging task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

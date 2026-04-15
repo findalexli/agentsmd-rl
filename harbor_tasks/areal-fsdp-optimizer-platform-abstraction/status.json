@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T01:55:03.544672",
-  "total_time": 1906.87,
-  "sandbox_id": "ijnhuq3oeujl62ihfklda",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T03:26:50.122499",
+  "total_time": 798.83,
+  "sandbox_id": "i8z2rswt4pf8v4w4iz5ia",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -47,17 +48,27 @@
       "backend": "fireworks",
       "time": 1.22,
       "notes": "ICR=0.50"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1.44,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:523: test `test_no_gpu_cpu_sync` has 1 assert(s), all pass on a stub i', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: httpx', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: transformers']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.92,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 70.72,
-      "at": "2026-04-09T14:59:02.191723"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +100,14 @@
       "backend": "fireworks",
       "time": 1906.87,
       "at": "2026-04-10T01:55:03.544672"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 798.83,
+      "at": "2026-04-15T03:26:50.122499"
     }
   ]
 }

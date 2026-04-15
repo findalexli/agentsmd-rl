@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T03:02:11.484676",
-  "total_time": 5935.1,
-  "sandbox_id": "ifawnb2af78zsjo8dar61",
-  "backend": "gemini",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T04:05:57.509864",
+  "total_time": 2974.48,
+  "sandbox_id": "iinws42xeyq17aulyom7c",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -47,17 +48,29 @@
       "backend": "gemini",
       "time": 1.48,
       "notes": "ICR=0.50"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:56: test `test_null_excluded_from_direct_stream_path` only re', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:112: test `test_close_direct_stream_sink_guard` only reads fi', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:160: test `test_flush_direct_stream_sink_guard` only reads fi', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:203: test `test_stream_locked_on_direct_consumption` only rea']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 32.12,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 60.46,
-      "at": "2026-04-09T14:58:51.939791"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +102,14 @@
       "backend": "gemini",
       "time": 5935.1,
       "at": "2026-04-10T03:02:11.484676"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2974.48,
+      "at": "2026-04-15T04:05:57.509864"
     }
   ]
 }

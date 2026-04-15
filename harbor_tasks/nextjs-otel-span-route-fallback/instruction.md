@@ -24,6 +24,6 @@ Additionally, in `pages-handler.ts`, there's a code path that decides whether to
 ## Expected behavior
 
 When handlers are invoked directly by a custom entrypoint server:
-1. Span names should include both the method and the route (e.g., `"GET /app/[param]/rsc-fetch"`)
-2. Span attributes `next.route`, `http.route`, and `next.span_name` should always be set
-3. Parent span names should be propagated correctly
+1. Span names should include both the method and the route (e.g., `"GET /app/[param]/rsc-fetch"`). When `rootSpanAttributes.get('next.route')` returns nothing (as happens when `base-server` is not wrapping the call), the route must fall back to other available identifiers such as `normalizedSrcPage` or `srcPage`. The resulting route must be a non-empty string starting with `/`.
+2. Span attributes `next.route`, `http.route`, and `next.span_name` should always be set unconditionally — do NOT guard the span attribute assignment inside `if (route)`. The `http.route` attribute must be set on the parent span via `parentSpan.setAttribute('http.route', route)` regardless of whether the route came from `rootSpanAttributes` or a fallback.
+3. In `pages-handler.ts`, the branching logic that decides whether to reuse an existing active span must correctly detect whether the handler is wrapped by `base-server` (look for variables such as `isWrappedByNextServer` that reflect this wrapping state). A bare `if (activeSpan)` without wrapping detection is insufficient.

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests import `_json_schema_to_python_type` from `gradio_client.utils` and call it with specific schemas (FILE_DATA_SCHEMA, IMAGE_DATA_SCHEMA, GALLERY_ITEM_SCHEMA, PLAIN_OBJECT_SCHEMA). The instruction.md never mentions the function `_json_schema_to_python_type` by name, nor does it mention the file `gradio_client/utils.py`. It also references `value_is_file` but doesn't specify the module path. The exact function name and module are undiscoverable from instruction.md alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (file schemas should display as 'filepath') and detection criteria, but does not specify exact code changes, line numbers, or specific implementation details like helper function names to create."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests directly import and call `_json_schema_to_python_type` with specific arguments. An alternative correct fix might implement the logic differently (e.g., modifying the function's internals in a way that changes its signature, or implementing a wrapper). However, since the tests call the existing function by name with (schema, defs) arguments, the interface is fixed. More critically, the tests don't assert on gold-specific internal helper names like `_is_file_schema` \u2014 they only test the publ"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import `_json_schema_to_python_type` and `value_is_file`, call them with schema dictionaries, and assert on return values. Subprocess tests compile and lint the code. No tests merely grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests assert `result == 'filepath'` for FILE_DATA_SCHEMA and IMAGE_DATA_SCHEMA, and `'filepath' in result` for GALLERY_ITEM_SCHEMA. A stub returning None, empty string, or the original dict representation would fail these assertions. The original code returns a verbose dict string, so the bug fix must be implemented."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/gradio as a git repo, and the agent could potentially read the solve.sh or solution directory if mounted. Additionally, the test file at tests/test_outputs.py contains the exact schemas and expected outputs ('filepath'), which the agent could grep for. The agent could also just hardcode 'filepath' return for object types containing 'path' without truly understanding the detection logic."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: file schemas returning 'filepath' (test_file_schema_returns_filepath, test_image_like_schema_returns_filepath), nested file fields (test_nested_file_shows_filepath_in_dict), plain objects still showing dict (test_non_file_object_still_dict), and value_is_file is mentioned in instructions though indirectly tested through the schema display."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction describes the characteristics of file-type JSON schemas (path property, meta with gradio.FileData, $defs structure) in sufficient detail for the agent to understand the schema format."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction does not name specific files or line numbers. It describes the problem domain and expected behavior without pointing to exact code locations. The mention of `value_is_file` is a public API function name, not a localization hint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

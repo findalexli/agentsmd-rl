@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files (slime/rollout/rm_hub/gpqa.py, slime/router/router.py, slime/ray/rollout.py), the function compute_gpqa_reward, the WorkerType enum, the nodes_per_engine property, the init_tracking call, and the specific behavior (labels 8/9 mapping to I/J, placeholder worker type, filtering placeholder groups). All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (letter range too narrow, placeholder groups not filtered, init_tracking called too early) but does not specify exact code changes like 'change [:8] to [:10]' or 'add if g.worker_type != placeholder'. A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_nodes_per_engine_ignores_placeholder extracts the nodes_per_engine method source via AST, then executes it with FakeGroup objects that have a .worker_type attribute. The test assumes the fix filters on g.worker_type == 'placeholder' specifically. An alternative fix that uses a different attribute name, checks an is_placeholder property, or uses a different filtering mechanism would fail. Similarly, test_init_tracking_after_server_launch checks for specific ordering patterns in the AST (init"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests actually execute code: GPQA tests import and call compute_gpqa_reward, the WorkerType test executes the class definition, nodes_per_engine test executes the extracted method with mock objects, and the init_tracking test uses AST analysis to verify ordering. These are behavioral checks, not simple string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "For GPQA tests: a stub returning 0.0 would fail the assert reward==1.0 checks. For WorkerType: a stub enum without PLACEHOLDER would fail. For nodes_per_engine: a stub returning None or not filtering placeholders would raise ValueError or return wrong value. For init_tracking ordering: a stub with original ordering would fail the AST position check. No stub/default implementation passes these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/slime's filesystem as solve.sh could be reconstructed, and the test file at tests/test_outputs.py contains the exact expected values (e.g., label 8 maps to I, label 9 maps to J, WorkerType.PLACEHOLDER.value == 'placeholder'). An agent could read the test file to extract exact expected behaviors. The Dockerfile doesn't remove /solution/ directory if present."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three issues described in instruction.md are tested: GPQA letter range (tests for labels 8, 9, and regression for A-H), placeholder worker type (WorkerType enum test and nodes_per_engine filtering test), and init_tracking ordering (test_init_tracking_after_server_launch)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories like [pr_diff] fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files and describes bugs at a conceptual level (e.g., 'default set of valid answer letters only covers A through H') without specifying exact line numbers or exact code to write. The file paths are necessary context for a multi-file bug fix task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

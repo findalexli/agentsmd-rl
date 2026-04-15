@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions `_combine_hybrid_results`, `query.py`, `pa.unify_schemas()`, `_relevance_score` (pa.float32()), `with_row_ids`, `_rowid`, `num_rows`, `vector_results`, `fts_results`, `LanceHybridQueryBuilder` \u2014 all key identifiers checked by the tests. The tests check for patterns like 'return early' in lowercase which maps to the hint about returning early. The file path `python/python/lancedb/query.py` is explicitly stated."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (crash on empty results) and what the fix should achieve (early return with proper empty table), but doesn't specify exact line numbers or exact code to write. It gives hints about utilities to use (pa.unify_schemas, pa.float32()) but the developer still needs to reason about where and how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce gold-specific implementation details via text matching: test_patch_code_structure checks for 'return early' in content.lower(), test_pa_unify_schemas_usage asserts 'pa.unify_schemas' literally in content, test_relevance_score_column_added checks for regex pattern 'append_column' with '_relevance_score', test_combined_schema_includes_both checks for 'vector_results.schema' and 'fts_results.schema' as literal strings. An alternative correct fix using e.g. manual schema construction w"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every f2p test (test_empty_results_early_return_exists, test_relevance_score_column_added, test_with_row_ids_handling, test_pa_unify_schemas_usage, test_patch_code_structure, test_no_index_error_on_empty_results, test_combined_schema_includes_both) reads the file content and does string/AST matching. None of them actually import and call _combine_hybrid_results with empty tables. No test executes the fixed code path."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply adds the right text patterns to the file (e.g., dead code containing 'num_rows == 0', 'pa.unify_schemas', 'append_column(\"_relevance_score\"', 'vector_results.schema', 'fts_results.schema', 'with_row_ids', '_rowid', 'drop') within the _combine_hybrid_results method would pass all f2p tests without actually fixing the bug, since tests only do text/AST pattern matching, not behavioral verification."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/lancedb's solve.sh (accessible at solution/solve.sh which contains the exact gold patch). An agent could read this file to extract the exact patch. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py for the expected patterns and insert matching strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) _relevance_score column - tested by test_relevance_score_column_added, (2) schema merging with unify_schemas - tested by test_pa_unify_schemas_usage, (3) with_row_ids handling - tested by test_with_row_ids_handling, (4) early return for empty results - tested by test_empty_results_early_return_exists. All explicitly required behaviors are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_empty_results_early_return_exists, test_relevance_score_column_added, etc.), have docstrings explaining what they check and why, and are grouped logically by aspect of the fix."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying Python code to handle empty PyArrow tables, not producing structured data output like JSON/CSV/API."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, method names, and commands are consistent and correct throughout instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact method `_combine_hybrid_results`, the exact class `LanceHybridQueryBuilder`, the exact file `python/python/lancedb/query.py`, and provides specific implementation hints like 'use pa.unify_schemas()', 'append _relevance_score column of type pa.float32()', and 'drop _rowid column if with_row_ids=False'. This goes beyond describing the bug and effectively dictates the implementation approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

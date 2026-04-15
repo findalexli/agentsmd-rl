@@ -1,32 +1,26 @@
-# Fix: supports_tp_plan and supports_pp_plan always return True
+# Fix: Parallel plan support checks always return True
 
 ## Problem
 
-The `supports_tp_plan` and `supports_pp_plan` properties on `PreTrainedModel` always return `True`, even for models that do not have tensor parallelism or pipeline parallelism plans. This breaks any logic that conditionally enables TP/PP based on model support.
+In the huggingface/transformers repository (commit `09fea1e6e970a1051b1141ce320a3d696b2c15ed`), the `PreTrainedModel` class has properties `supports_tp_plan` and `supports_pp_plan` that indicate whether a model supports tensor parallelism or pipeline parallelism. These properties always return `True`, even for models that have no parallelism plans configured.
 
-## Root Cause
+Specific issues:
 
-In `src/transformers/modeling_utils.py`:
+1. **Empty plans treated as supported**: `supports_tp_plan` and `supports_pp_plan` return `True` even when the plan variables are empty dictionaries `{}`. They should return `False` when no non-empty plan exists from any source (the model's own plan, its base model's plan, or its config's plan).
 
-- In configs, `base_model_tp_plan` and `base_model_pp_plan` default to `None`.
-- In models, `_tp_plan` and `_pp_plan` class variables appear to default to `None`, but `post_init` always sets them to empty dicts `{}`.
-- The `supports_tp_plan` and `supports_pp_plan` properties check `is not None`, which is always `True` for an empty dict.
+2. **Missing config check for PP**: `supports_pp_plan` does not check `config.base_model_pp_plan`, whereas `supports_tp_plan` correctly checks `config.base_model_tp_plan`. Models with PP plans defined only in their config are not detected as PP-capable.
 
-So the checks `self._tp_plan is not None` and `self._pp_plan is not None` always pass because `post_init` converts `None` to `{}`.
+3. **pp_plan setter lacks input validation**: The `pp_plan` setter accepts any value without raising an error. It should raise a `ValueError` for non-dict, non-None inputs (e.g. strings, integers, lists, booleans, tuples).
 
-Additionally:
-- The `pp_plan` setter lacks input validation (unlike `tp_plan`'s setter).
-- The `_pp_plan` type hint incorrectly uses a `PipelineParallel` Enum type that does not match actual usage (it should be `dict[str, tuple[str, str]]`).
-- The `supports_pp_plan` property does not check `config.base_model_pp_plan`.
+4. **pp_plan setter mishandles None**: When `None` is assigned via the `pp_plan` setter, it is stored as `None` instead of being converted to an empty dictionary `{}`.
 
-## Expected Fix
+5. **Unused PipelineParallel enum**: A `PipelineParallel` enum class exists in the module but is unused. The `_pp_plan` type hint on `PreTrainedModel` references this enum instead of using the correct type `dict[str, tuple[str, str]]`.
 
-- Change `is not None` checks to truthiness checks (empty dict is falsy).
-- Add input validation to the `pp_plan` setter.
-- Fix the `_pp_plan` type hint.
-- Add config check to `supports_pp_plan`.
-- Remove the unused `PipelineParallel` Enum.
+## Expected Behavior
 
-## Files to Investigate
-
-- `src/transformers/modeling_utils.py` -- `supports_tp_plan`, `supports_pp_plan`, `pp_plan` setter, `_pp_plan` type hint
+- `supports_tp_plan` returns `False` when all of `_tp_plan`, `base_model._tp_plan`, and `config.base_model_tp_plan` are empty dicts or `None`. Returns `True` when any of them is a non-empty dict.
+- `supports_pp_plan` returns `False` when all of `_pp_plan`, `base_model._pp_plan`, and `config.base_model_pp_plan` are empty dicts or `None`. Returns `True` when any of them is a non-empty dict.
+- The `pp_plan` setter accepts dict values (storing them as-is), accepts `None` (converting to `{}`), and raises `ValueError` for any other input type.
+- The `PipelineParallel` enum class is removed entirely, along with the `from enum import Enum` import if no longer needed.
+- The `_pp_plan` type hint uses `dict[str, tuple[str, str]]` without `| None`.
+- All changes must pass `ruff check` and `ruff format --check`.

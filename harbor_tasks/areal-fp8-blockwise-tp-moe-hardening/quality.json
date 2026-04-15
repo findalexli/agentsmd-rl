@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (file paths like 'areal/api/cli_args.py', function names like 'validate_fp8_shard_alignment', class names like 'ArchonFP8Config', attribute names like '_fp8_block', 'enabled', weight names 'w1'/'w2'/'w3', dtype names like 'float8_e4m3fn'/'float8_e5m2'/'float8_e4m3fnuz'/'float8_e5m2fnuz', module type 'GroupedExperts', function '_check_fp8_shard_compatibility', 'Shard(1)') are all explicitly mentioned in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'All FP8-active checks should use a consistent predicate rather than raw mode != \"disabled\" comparisons', 'Expert forward patching must mark expert modules with the _fp8_block attribute', 'The FP8 linear forward path must handle DTensor weights gracefully' with 'to_local()' method named in Key Types section, and 'dequant_fp8_state_dict only accepts torch.float8_e4m3fn'. These are specific fixes, not just symptoms."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_fp8_config_post_init_uses_enabled assert 'self.enabled' appears in __post_init__ source, test_validate_alignment_not_linear_only asserts 'hasattr' and '_fp8_block' in source, and test_fp8_linear_fwd_calls_to_local asserts 'to_local' in source. An alternative correct fix using e.g., a different property name, a different DTensor handling method, or a different attribute marker would fail these AST/string checks."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of tests (test_validate_alignment_handles_grouped_experts, test_validate_alignment_not_linear_only, test_dequant_only_accepts_e4m3fn, test_fp8_linear_fwd_calls_to_local, test_expert_patch_sets_fp8_block, test_engine_uses_enabled_predicate, test_utils_uses_enabled_predicate, test_check_fp8_shard_compatibility_exists) are pure text/AST inspection ('assert X in func_src'). Only test_fp8_config_enabled_property and test_fp8_config_post_init_uses_enabled actually instantiate objects and "
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for code that doesn't exist in the base commit (e.g., 'enabled' property, GroupedExperts handling in validate_fp8_shard_alignment, _check_fp8_shard_compatibility function). A stub/no-op wouldn't add these constructs to the source files, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/AReaL as a git repo and solve.sh applies a patch. An agent could read the solution/solve.sh file if it exists in the container, or simply inspect the test file at tests/test_outputs.py to see exact string assertions (like 'self.enabled', 'to_local', 'GroupedExperts') and mechanically satisfy them without understanding the bugs."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six acceptance criteria from instruction.md are tested: expert alignment validation (#1), DTensor to_local handling (#2), consistent enabled predicate (#3), dtype restriction (#4), shard compatibility check (#5), and _fp8_block marking (#6)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass groups), descriptive function names, and detailed docstrings explaining each test's purpose and connection to the fix."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code fixes to Python source files, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction are consistent with the codebase and test expectations. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names exact functions to modify (e.g., 'validate_fp8_shard_alignment', '_patch_fp8_experts_forward', '_fp8_linear_fwd', '_check_fp8_shard_compatibility'), exact files, exact attributes ('_fp8_block', '_fp8_use_triton'), and exact methods ('to_local()'). This goes well beyond describing symptoms\u2014it pinpoints the exact locations and mechanisms of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task involving config file changes."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

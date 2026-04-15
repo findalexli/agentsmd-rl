@@ -2,27 +2,29 @@
 
 ## Bug Description
 
-The SGLang engine's Prometheus metrics endpoint (`/engine_metrics`) is not reliably available for W&B (Weights & Biases) metrics scraping. The endpoint is only activated when a specific CLI flag is passed, even though the metrics infrastructure is always running and the endpoint should always be accessible.
+The SGLang engine's Prometheus metrics endpoint (`/engine_metrics`) is not reliably available for W&B (Weights & Biases) metrics scraping. The endpoint is only activated when a specific CLI flag is passed, even though the metrics infrastructure should always be accessible.
 
-There are three related issues across the metrics pipeline:
+There are several related issues across the metrics pipeline:
 
-1. **`slime/backends/sglang_utils/sglang_engine.py`**: The `_compute_server_args` function builds the server configuration but does not unconditionally enable the Prometheus metrics endpoint. The server arguments allowlist also omits the relevant key, so it would be silently dropped even if set externally. Additionally, prefill workers use an incorrect load-balancing method.
+1. **Server configuration in `slime/backends/sglang_utils/sglang_engine.py`**: The server arguments builder needs to unconditionally enable the Prometheus metrics endpoint by setting `enable_metrics=True` in the server kwargs. Additionally, the `enable_metrics` key must be added to the `_EXTERNAL_ENGINE_SKIP_CHECK_FIELDS` allowlist so it is not silently dropped. A related configuration issue: prefill workers are configured with an incorrect load-balancing method; they should use `follow_bootstrap_room` instead of `round_robin`.
 
-2. **`slime/ray/rollout.py`**: The `_get_metrics_router_addr` method has an early-return guard that checks a CLI flag before returning the router address. When the flag is unset (the common case), the method returns `None`, which silently disables W&B metrics forwarding even when a valid router address exists.
+2. **Router address retrieval in `slime/ray/rollout.py`**: The method that returns the metrics router address has an early-return guard that checks a CLI flag (`sglang_enable_metrics`) before returning the address. When the flag is unset, the method returns `None`, which silently disables W&B metrics forwarding even when a valid router address exists. This guard should be removed so the router address is returned whenever available.
 
-3. **`slime/utils/wandb_utils.py`**: The `init_wandb_secondary` function gates the Open Metrics forwarding setup behind the same CLI flag. Even when a valid `router_addr` is provided, metrics are not forwarded unless the flag is explicitly set.
+3. **W&B initialization in `slime/utils/wandb_utils.py`**: The Open Metrics forwarding setup is gated behind the same CLI flag. Even when a valid router address is provided, metrics are not forwarded unless the flag is explicitly set. The forwarding should activate based on the presence of the router address, not the CLI flag.
 
-A secondary issue is in `slime/rollout/sglang_rollout.py`: the `GenerateState` class contains dead code for DP (data-parallel) rank balancing — a context manager and associated bookkeeping that is no longer needed since the engine handles DP scheduling itself. This dead code wraps the generation logic in an unnecessary context manager, adding complexity.
+4. **Dead code in `slime/rollout/sglang_rollout.py`**: The `GenerateState` class contains unused code for DP (data-parallel) rank balancing — a context manager method `dp_rank_context` and associated bookkeeping (`dp_counts`, `dp_rank`) that is no longer needed since the engine handles DP scheduling itself. This dead code should be removed, including the `from contextlib import contextmanager` import which was only used by this feature.
 
 ## Expected Behavior
 
-- The Prometheus metrics endpoint should always be enabled in the server configuration, without requiring a CLI flag.
-- W&B metrics forwarding should activate whenever a valid router address is available.
-- Dead DP-rank balancing code should be removed to simplify the rollout path.
+- The Prometheus metrics endpoint should always be enabled in the server configuration via `enable_metrics=True`
+- The `_EXTERNAL_ENGINE_SKIP_CHECK_FIELDS` allowlist must include `enable_metrics`
+- Prefill workers should use `follow_bootstrap_room` as the load-balance method
+- W&B metrics forwarding should activate whenever a valid router address is available, without requiring a CLI flag
+- Dead DP-rank balancing code (the `dp_rank_context` method, related instance variables, and the `contextmanager` import) should be removed
 
 ## Files to Investigate
 
-- `slime/backends/sglang_utils/sglang_engine.py` — `_compute_server_args()` and the server args allowlist
-- `slime/ray/rollout.py` — `_get_metrics_router_addr()`
-- `slime/utils/wandb_utils.py` — `init_wandb_secondary()`
-- `slime/rollout/sglang_rollout.py` — `GenerateState` class and `generate_and_rm()`
+- `slime/backends/sglang_utils/sglang_engine.py` — server configuration and allowlist
+- `slime/ray/rollout.py` — router address retrieval
+- `slime/utils/wandb_utils.py` — W&B metrics forwarding setup
+- `slime/rollout/sglang_rollout.py` — `GenerateState` class

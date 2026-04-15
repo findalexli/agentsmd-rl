@@ -2,7 +2,7 @@
 
 ## Summary
 
-When a `Response` object is constructed with a body backed by an async iterable (`Symbol.asyncIterator`), calling `.bytes()` or `.arrayBuffer()` on it crashes with a null dereference error ("null is not an object"). Additionally, calling the same consumption method a second time does not properly reject — the stream is not locked after the first consumption begins.
+When a `Response` object is constructed with a body backed by an async iterable (`Symbol.asyncIterator`), calling `.bytes()` or `.arrayBuffer()` on it crashes with a "null is not an object" error. Additionally, calling the same consumption method a second time does not properly reject. In debug builds, unhandled exceptions cause assertion failures.
 
 ## Reproduction
 
@@ -19,18 +19,20 @@ try { await resp.bytes(); } catch {}
 try { await resp.bytes(); } catch(e) { console.log(e.message); }
 ```
 
-## Root Cause
+## Observed Behavior
 
-The issue spans both the JavaScript builtins and the C++ binding layer:
+Three distinct problems manifest when consuming Response bodies backed by async iterables:
 
-1. **JavaScript builtins** (`src/js/builtins/ReadableStream.ts`): The functions `readableStreamToArray`, `readableStreamToText`, `readableStreamToArrayBuffer`, and `readableStreamToBytes` check `underlyingSource` to determine if the stream is a "direct stream". However, the `initializeArrayBufferStream` function (in `ReadableStreamInternals.ts`) sets `underlyingSource` to `null` — not `undefined`. The current comparison operator does not exclude `null`, so `null` is passed to the direct-stream consumption path, which tries to access properties on it (e.g., `.pull`).
+1. **Null dereference crash**: The first call to `.bytes()` or `.arrayBuffer()` crashes with a "null is not an object" error. This occurs because the async iterable path sets an internal property to `null` rather than `undefined`, and the subsequent check in the consumption functions does not account for this distinction.
 
-2. **JavaScript builtins** (`src/js/builtins/ReadableStreamInternals.ts`): The `onCloseDirectStream` and `onFlushDirectStream` functions access `this.$sink` without checking if it's already been cleaned up (set to `undefined`). Other error-handling paths in the same file (e.g., `handleDirectStreamError`) already have this guard. Also, `readableStreamToArrayBufferDirect` does not lock the stream, so a second consumption call bypasses the lock check.
+2. **Double consumption not prevented**: After a first (failing) consumption attempt, a second call to the same method should reject with an error indicating the stream is already in use, but it proceeds without rejection. The direct consumption path does not properly mark the stream as consumed.
 
-3. **C++ layer** (`src/bun.js/bindings/webcore/ReadableStream.cpp`): Several C++ wrapper functions that call JavaScript builtins via `call()` do not check for exceptions afterward. If the JS call throws, the exception goes unhandled, which can trigger assertion failures in debug builds.
+3. **Unhandled exceptions in C++ bindings**: In debug builds, assertion failures occur because exceptions thrown during JavaScript-to-C++ boundary crossings are not properly caught. The C++ wrapper functions that call into JavaScript builtins do not check for pending exceptions after the call returns.
 
-## Files to Investigate
+## Relevant Files
 
-- `src/js/builtins/ReadableStream.ts` — the four `readableStreamTo*` functions with the null-check issue
-- `src/js/builtins/ReadableStreamInternals.ts` — `onCloseDirectStream`, `onFlushDirectStream`, and `readableStreamToArrayBufferDirect`
-- `src/bun.js/bindings/webcore/ReadableStream.cpp` — C++ wrappers that call JS builtins
+The implementation of ReadableStream consumption spans these files:
+
+- `src/js/builtins/ReadableStream.ts` — contains the `readableStreamToArray`, `readableStreamToText`, `readableStreamToArrayBuffer`, and `readableStreamToBytes` functions
+- `src/js/builtins/ReadableStreamInternals.ts` — contains `onCloseDirectStream`, `onFlushDirectStream`, and `readableStreamToArrayBufferDirect`
+- `src/bun.js/bindings/webcore/ReadableStream.cpp` — contains C++ wrappers `readableStreamToText`, `readableStreamToFormData`, `readableStreamToJSON`, and `readableStreamToBlob`

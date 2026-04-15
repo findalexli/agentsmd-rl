@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (universal_marker.rs, export/mod.rs), function names (resolve_conflicts, resolve_activated_extras, conflict_marker_reachability), the Edge enum, field names (dep_extras, scope_package), and parameter types (Option<&PackageName>) that the tests check for. All test-asserted specifics like 'scope_package', 'dep_extras', 'package.clone()', 'name.clone()', 'unencoded', 'package.name()', 'parent.name()' are mentioned or clearly derivable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: rename to 'resolve_activated_extras', add 'scope_package' parameter of type 'Option<&PackageName>', convert Edge from tuple to struct variants with 'dep_extras' field, insert ConflictItems in conflict_marker_reachability, use 'package.clone()' and 'name.clone()'. This goes far beyond describing what's broken \u2014 it prescribes exact implementation details including variable names, function signatures, and code patterns."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names: test_resolve_handles_package_scope checks for exact param names ['scope_package', 'package_name', ...]; test_edge_carries_dep_extras checks for exact field names ['dep_extras', 'extras', 'child_extras', 'activated_extras']; test_unencoded_extra_lookup checks for literal strings ['scope_package', 'package.clone()', 'name.clone()']. An alternative correct fix using different naming conventions (e.g., 'context_pkg', 'target_extras', 'pkg.clone()') would"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_resolve_handles_package_scope, test_edge_carries_dep_extras, test_unencoded_extra_lookup, test_dep_extras_fed_into_conflict_map) all exclusively use pattern matching on source text via read_text() and string containment checks. None of them import, call, or execute the Rust code. They are purely textual assertions like 'any(p in sig for p in scope_params)' and 'any(name in enum_body for name in extras_field_names)'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass \u2014 the tests check for specific structural changes (new parameter names in function signatures, new fields in enum definitions, specific code patterns in function bodies). Simply leaving the code unchanged or adding empty functions would fail since the base commit lacks these specific identifiers."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/uv via the gold patch (solution/solve.sh applies a git patch). An agent could read solution/solve.sh or grep for the expected test fixture strings (e.g., 'resolve_activated_extras', 'dep_extras', 'scope_package') in any hints file and simply insert those strings into the source without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes four key behavioral changes: scope-aware extra resolution, per-edge extras on Edge variants, propagating extras in conflict_marker_reachability, and unencoded extra lookup. Each has a corresponding test function that checks for the described behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (pass_to_pass repo_tests, fail_to_pass pr_diff), descriptive function names, and detailed docstrings explaining what each test validates and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Rust source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact function names to create (resolve_activated_extras), exact parameter names (scope_package), exact field names (dep_extras), exact types (Option<&PackageName>), and exact code patterns (package.clone(), name.clone()). This goes well beyond identifying the buggy area \u2014 it specifies the solution's implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

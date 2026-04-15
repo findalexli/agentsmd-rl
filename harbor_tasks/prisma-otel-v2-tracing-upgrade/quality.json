@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all five affected file paths, all v1\u2192v2 API replacements (resourceFromAttributes, ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION, spanProcessors, trace.setGlobalTracerProvider, parentSpanContext?.spanId), and the specific deprecated patterns. The test files check exactly these patterns and files, all of which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact replacements: 'new Resource({...})' \u2192 'resourceFromAttributes({...})', 'SEMRESATTRS_SERVICE_NAME' \u2192 'ATTR_SERVICE_NAME', 'provider.addSpanProcessor(processor)' followed by 'provider.register()' \u2192 'spanProcessors array in constructor' + 'trace.setGlobalTracerProvider(provider)', 'span.parentSpanId' \u2192 'span.parentSpanContext?.spanId'. This is telling the agent exactly what to change, not just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for presence/absence of specific API names (resourceFromAttributes, spanProcessors, setGlobalTracerProvider, etc.) that are dictated by the OpenTelemetry v2 SDK itself, not by arbitrary implementation choices. Any correct migration to OTel v2 would use these same APIs, so alternative correct fixes would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_v2_otel_provider_pattern, test_v2_semantic_conventions, test_v2_parent_span_access, test_v2_readme_example) primarily do string-matching on file contents (e.g., content.includes('resourceFromAttributes'), content.includes('spanProcessors'), !content.includes('new Resource(')). While they also run some Node.js runtime verification of OTel v2 APIs in isolation, the actual verification of the agent's code changes is purely textual grep, not behavioral execution of the m"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that specific v1 patterns are removed AND v2 patterns are present in the files. A stub/no-op would leave the original v1 code intact, failing checks like 'content.includes(\"new Resource(\")' causing errors. The agent must actually modify the files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/prisma as a git repo and solve.sh is available at solution/solve.sh. The agent could read the solution file or grep for expected patterns. Additionally, since the tests are primarily string-matching, the agent could just do targeted find-and-replace of the exact strings without understanding the migration."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four migration points from the instruction are tested: resource creation (resourceFromAttributes), semantic conventions (ATTR_SERVICE_NAME/VERSION), provider initialization (spanProcessors + setGlobalTracerProvider), and parent span access (parentSpanContext). The README is also checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Pass-to-pass static, Pass-to-pass repo_tests, Fail-to-pass pr_diff behavioral), descriptive function names (test_v2_otel_provider_pattern, test_v2_semantic_conventions, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code migration, not producing structured data outputs like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, API names, package names, and variable names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact API replacements (e.g., 'resourceFromAttributes', 'ATTR_SERVICE_NAME', 'spanProcessors', 'trace.setGlobalTracerProvider', 'parentSpanContext?.spanId') and the exact deprecated APIs to replace. This goes beyond describing what's broken and essentially provides a line-by-line migration guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code migration task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

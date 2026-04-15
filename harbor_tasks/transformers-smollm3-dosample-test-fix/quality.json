@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (tests/models/smollm3/test_modeling_smollm3.py), class name (SmolLM3IntegrationTest), method names (test_model_3b_generation, test_model_3b_long_prompt), the old expected text fragment ('pulls objects toward the center of the Earth'), the required parameter (do_sample=False), and the forbidden parameter (temperature). All test assertions map to these explicitly stated requirements."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md essentially states the exact fix: requirement 2 says 'must include do_sample=False as an explicit keyword argument with literal value False', requirement 3 says 'temperature keyword argument must not appear in any generate() call', and requirement 1 says the old text must be replaced. Combined with the hints about generation_config.json defaults, this leaves virtually no reasoning for the agent \u2014 it tells them exactly what parameters to add and remove."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check structural properties (do_sample=False present, temperature absent, old text gone, assertions exist) rather than gold-specific implementation details. An alternative fix that uses do_sample=False with a different expected text string, or structures the code differently while meeting these constraints, would still pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_dosample_false_in_generate, test_no_temperature_in_generate, test_expected_text_updated) use AST parsing of the source file. They never import, call, or execute the code. While the tests note this is justified because GPU/model weights are needed, the rubric asks whether tests 'import and CALL the code, execute subprocesses, or inspect behavior' \u2014 and every core test is essentially 'assert pattern in source'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty method bodies, pass statements) would fail: test_not_stub checks for >=3 meaningful statements per method, test_dosample_false_in_generate checks for >=3 generate() calls with do_sample=False, and test_expected_text_updated checks for assertions in the method body. These constraints require actual substantive code changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers and the gold patch is in solution/solve.sh. An agent could read solve.sh to see the exact patch including the new expected text string ('pulls objects toward each other'). The Dockerfile doesn't remove the solution directory, and there's no evidence solution/ is excluded from the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three explicit requirements from instruction.md are tested: (1) old expected text not present (test_expected_text_updated), (2) do_sample=False in all generate calls (test_dosample_false_in_generate), (3) no temperature parameter (test_no_temperature_in_generate)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining the rationale for each check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying Python test code, not producing structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, class names, and variable names are all correctly spelled and consistent between instruction.md and the test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies exact line numbers ('line ~102', 'line ~118'), the exact old text fragment to remove, the exact parameter to add (do_sample=False with literal value False), and the exact parameter to remove (temperature). This goes well beyond describing what's broken and into prescribing the exact localization and fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Python test file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

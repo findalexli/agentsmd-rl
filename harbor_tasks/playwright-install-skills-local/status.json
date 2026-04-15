@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:15:15.014895",
-  "total_time": 3294.43,
-  "sandbox_id": "i6uyffcw54tx29m4m44gd",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:17:17.380618",
+  "total_time": 1354.24,
+  "sandbox_id": "i63q4zdmrj27h7g7jdjhz",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.5,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.3,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5898.08,
-      "at": "2026-04-09T07:43:37.009884"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +112,14 @@
       "backend": "fireworks",
       "time": 3294.43,
       "at": "2026-04-12T05:15:15.014895"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1354.24,
+      "at": "2026-04-15T05:17:17.380618"
     }
   ]
 }

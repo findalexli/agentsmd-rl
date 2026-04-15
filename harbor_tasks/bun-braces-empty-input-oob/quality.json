@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file (src/shell/braces.zig), the functions (flattenTokens, Parser.advance, prev), the struct (Parser), the crash causes (items[0] access on empty list, current-1 underflow on u32 at 0), and the expected behavior. All test assertions reference these same elements, and the specific details like 'brace_count', '.open', 'current - 1' are standard implementation details of the described functions that are discoverable by reading the file."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (two crash sites with their root causes) but does not prescribe the exact fix. It doesn't say 'add if (len == 0) return' or 'use conditional return with self.peek()'. A developer must still reason about the correct guard patterns."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_flatten_tokens_empty_guard uses very specific regex patterns to detect guards (e.g., '.len == 0' with 'return', or '.len < 1'). An alternative correct fix like wrapping the entire function body in 'if (self.tokens.items.len > 0) { ... }' is partially covered, but a fix using a different approach like 'if (self.tokens.items.len == 0) { return error.EmptyInput; }' or checking via a helper function would fail. Similarly, test_advance_prev_no_underflow checks for very specific patterns; a fix t"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_flatten_tokens_empty_guard, test_advance_prev_no_underflow) only do static text/regex analysis of the source file. They never compile or execute the code, never call Bun.$.braces(''), and never verify the actual runtime behavior. Every assertion is pattern matching on file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty flattenTokens or trivial advance) would fail test_flatten_tokens_not_stub (requires brace_count, .open, >=15 lines) and test_prev_normal_case_intact (requires 'current - 1' or 'current -| 1'). The f2p tests require specific guard patterns that wouldn't exist in unmodified code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun's git history accessible via solve.sh, and the tests only check static source patterns. An agent could read solution/solve.sh if it exists in the container, or simply grep the test file to discover the exact patterns being checked (e.g., '.len == 0' + 'return', 'current > 0' + 'prev') and insert minimal matching lines."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'Bun.$.braces(\"\") should return [\"\"] without crashing' and lists three JS reproducers. No test actually verifies this runtime behavior\u2014all tests are static source analysis only."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass anti-stub), descriptive function names, and detailed docstrings explaining the bug and valid fix patterns."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves fixing a bug in a brace expansion function, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames (src/shell/braces.zig), function names (flattenTokens, advance, prev, peek, is_at_end), or other identifiers in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names not just the file but the exact functions (flattenTokens, Parser.advance, prev), the exact variable (self.tokens.items[0], self.current), and the exact crash mechanism (u32 underflow at current-1). This goes beyond identifying what's broken and essentially pinpoints the exact lines to fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

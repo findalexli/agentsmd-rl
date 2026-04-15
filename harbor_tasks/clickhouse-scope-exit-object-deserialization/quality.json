@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'std::vector<std::shared_ptr<DeserializationTask>> tasks;', exact regex patterns for SCOPE_EXIT block structure, and exact variable names like 'task_size', 'num_tasks', 'tasks'. The instruction.md mentions DeserializationTask, tryExecute(), wait(), SCOPE_EXIT, and the three required comment phrases, but does not mention the exact variable declaration 'std::vector<std::shared_ptr<DeserializationTask>> tasks;' or 'task_size = std::max' pattern tested in test_scope_e"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: use SCOPE_EXIT macro, iterate tasks calling tryExecute() then iterate again calling wait(), place it after task collection is constructed but before scheduling, and include three specific comment phrases. This leaves essentially no reasoning for the agent \u2014 it's a dictation of the solution, not a description of the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_scope_exit_pattern_present uses a rigid regex requiring exact syntax: 'SCOPE_EXIT(\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s*:\\s*tasks\\)\\s*task->tryExecute\\(\\);\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s*:\\s*tasks\\)\\s*task->wait\\(\\);\\s*\\)'. An alternative correct fix using a different loop style (e.g., index-based for loop, range-for with different variable name, or a separate helper function) would fail this regex even if functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the file as text and checks for string patterns or regex matches. No test compiles the code, runs it, or verifies actual runtime behavior. All tests are purely textual: 'assert X in content' or 're.search(pattern, content)'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for SCOPE_EXIT patterns and specific comment strings that do not exist in the original source file. A stub or no-op would not add these strings, so the tests cannot be trivially satisfied without making changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or the container's solution path). The agent could read the gold patch from solution/solve.sh which contains the exact patch to apply. Additionally, the required comment phrases are literal strings in test_original_pr_descriptive_comment that could be extracted by reading the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: SCOPE_EXIT with tryExecute()+wait(), placement after task collection but before scheduling, three required comment phrases, and balanced braces/parens. All of these are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_scope_exit_pattern_present, test_scope_exit_placed_after_task_size, etc.) with docstrings explaining what each verifies, including fail-to-pass vs pass-to-pass annotations."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces a code patch, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction tells the agent exactly where to place the fix (after task collection is constructed, before scheduling), exactly what macro to use (SCOPE_EXIT), exactly what methods to call (tryExecute then wait), and provides three exact comment phrases. This goes well beyond identifying the buggy area and dictates the precise implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

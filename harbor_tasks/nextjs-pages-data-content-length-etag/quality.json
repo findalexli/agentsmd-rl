@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific patterns like 'Buffer.from(JSON.stringify(result.value.pageData))' and 'Buffer.from(previousCacheEntry.value.html)' which are exact code strings never mentioned in instruction.md. The instruction describes the bug symptomatically but doesn't reveal these specific Buffer.from wrapping patterns that the fail-to-pass tests check for. Also, tests reference specific identifiers like 'CachedRouteKind.PAGES', 'generateEtags', 'getHandler export', 'toUnchunkedString' etc. that a"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md mentions 'RenderResult class used to represent response payloads' and describes the exact mechanism (chunked transfer encoding vs Content-Length/ETag). While it doesn't say 'remove Buffer.from', it strongly narrows the solution space by naming the exact three files and describing the exact code path. However, a developer would still need to figure out Buffer.from is the culprit, so this is borderline. On reflection, the instruction describes what's broken rather than the fix, "
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_data_response_path_no_buffer asserts 'Buffer.from(JSON.stringify(result.value.pageData))' not in code. An alternative fix that keeps Buffer.from but modifies RenderResult to handle Buffer inputs correctly (e.g., adding a toString() call in isDynamic getter) would fail this test despite being a valid fix. Similarly, test_isr_fallback_path_no_buffer rejects any solution that retains Buffer.from wrapping, even if the downstream behavior is corrected."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two fail-to-pass tests (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer) are purely text-matching: they read the file and check 'assert X not in code'. While test_string_render_result_enables_headers runs a Node.js subprocess to verify behavior, the core fix verification tests are string-in-file checks with no execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that specific Buffer.from patterns are NOT present. A stub/empty file would pass these negative assertions, BUT the pass-to-pass tests (test_handler_not_stub, test_handler_structure) require the handler to contain substantial code with specific patterns like 'isNextDataRequest', 'JSON.stringify', 'sendRenderResult', etc. and have >200 lines. So a stub cannot pass all tests together."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the exact gold patch. An agent could read this file to discover the exact fix (removing Buffer.from wrappings). The Dockerfile doesn't remove /solution/ and there's no evidence it's excluded from the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires Content-Length and ETag headers on /_next/data/ responses and ISR fallback responses. The tests verify the fix mechanism (removing Buffer.from), the isDynamic->header chain, and the structural integrity of the relevant files, covering the described behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (fail_to_pass, pass_to_pass), descriptive function names, and docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing server response headers, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct with no typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names three relevant files which is reasonable for guiding the developer to the right area, but doesn't name specific lines or the exact Buffer.from pattern that needs to be changed. The file-level hints are appropriate given the size of the Next.js codebase."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files, describes the specific functions (transfer_item_warp, release_req via retract_req semantics, batch_is_full flag), mentions the PTX instructions (ld.global.nc.v2.b64, st.global.cg.v2.b64, ld.global.nc.b64), the 16-byte chunk size, tail handling, hisparse_coordinator None check, and batch_is_full reset. All test assertions reference concepts discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction gives very specific implementation details: exact PTX instruction mnemonics ('ld.global.nc.v2.b64', 'st.global.cg.v2.b64', 'ld.global.nc.b64'), the exact formula 'item_size_bytes / 16', that tail handling uses 8-byte portions, that batch_is_full must be set to False, and that retraction must move to release_req with an 'is not None' guard. This essentially dictates the solution rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_transfer_item_warp_128bit_alignment asserts exact strings like 'item_size_bytes / 16', 'ld.global.nc.v2.b64', 'st.global.cg.v2.b64', 'tail_8B' or 'tail'. test_batch_is_full_reset_after_hisparse checks for literal 'batch_is_full = False' in get_next_batch_to_run. An alternative correct fix using different variable names (e.g., 'num_pairs' instead of expression containing 'item_size_bytes / 16') or different code structure would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single f2p test uses only AST parsing and string matching (e.g., 'assert \"ld.global.nc.v2.b64\" in src', 'assert \"batch_is_full = False\" in method_src', 'assert \"retract_req\" in method_src'). No test imports, compiles, or executes any code. All tests are purely textual checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific patterns that don't exist in the base commit (e.g., 'ld.global.nc.v2.b64' isn't in the original hisparse.cuh, 'retract_req' isn't in the original release_req method, 'batch_is_full = False' isn't in get_next_batch_to_run). A stub/no-op would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/sglang as a git repo where solve.sh applies a patch. The agent could read solve.sh if it's accessible, or grep test_outputs.py (which contains the exact string patterns being checked) to reverse-engineer exactly what text to insert. The tests are pure text-matching, making pattern-matching without understanding trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three bugs described in instruction.md are tested: 128-bit transfer (test_transfer_item_warp_128bit_alignment), retraction moved to release_req (test_hisparse_coordinator_retract_in_release_req, test_retract_req_removed_from_scheduler), and batch_is_full reset (test_batch_is_full_reset_after_hisparse)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves code fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact functions (transfer_item_warp, release_req, get_next_batch_to_run), exact file paths, exact PTX instructions to use, exact formulas (item_size_bytes / 16), and exact fix strategies (move retract_req to release_req, reset batch_is_full to False). This goes well beyond describing what's broken and effectively prescribes the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

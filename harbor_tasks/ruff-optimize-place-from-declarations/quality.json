@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key elements tested: or_else method on Truthiness in types.rs, or_else usage in place_from_bindings_impl for deleted_reachability, DeclarationsBoundnessEvaluator enum with AssumeBound/BasedOnUnboundVisibility variants and evaluate() method, is_non_exported standalone function with db/declaration/requires_explicit_reexport parameters, and all file paths (types.rs, place.rs). The test for or_else semantics (Ambiguous.or_else with AlwaysTrue returning AlwaysTrue) requires "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides extremely detailed implementation specifications: exact method signature for or_else, exact enum name and variant names, exact function name and parameter order for is_non_exported, exact behavior per Truthiness variant ('when self is AlwaysFalse, return the closure result; when self is Ambiguous, return AlwaysFalse if closure returns AlwaysFalse, otherwise return Ambiguous'). This goes well beyond describing what's broken and tells the agent exactly WHAT to change and H"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names (deleted_reachability.or_else), exact enum name (DeclarationsBoundnessEvaluator), exact variant names (AssumeBound, BasedOnUnboundVisibility), exact function name (is_non_exported), exact method name (evaluate). An alternative correct fix that used different names (e.g., BoundnessEvaluator, LazyBoundnessCheck) or a different architecture (e.g., trait-based lazy evaluation) would fail these regex-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_lazy_deleted_reachability_eval, test_declarations_boundness_evaluator, and test_is_non_exported_standalone are purely textual checks using regex on source files (re.search on file content). They never execute the code or verify runtime behavior. Only test_or_else_method_semantics actually compiles and runs code. test_cargo_check/test_existing_crate_tests do execute but are pass-to-pass gates, not fail-to-pass behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_or_else_method_semantics injects actual unit tests that verify specific semantic behavior (short-circuiting, delegation, propagation) and would fail with a stub. The text-matching tests (test_lazy_deleted_reachability_eval, test_declarations_boundness_evaluator, test_is_non_exported_standalone) require specific code structures that wouldn't exist by default, plus test_cargo_check ensures compilation. A trivial stub couldn't satisfy these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/ruff after applying solve.sh, and the Dockerfile doesn't remove it. The agent could read solution/solve.sh or the gold patch directly. Additionally, since tests are regex-based on source text, the agent could grep test files or reverse-engineer expected patterns without understanding the optimization."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four required changes from instruction.md are tested: or_else method (test_or_else_method_semantics), or_else usage in place_from_bindings_impl (test_lazy_deleted_reachability_eval), DeclarationsBoundnessEvaluator enum (test_declarations_boundness_evaluator), and is_non_exported extraction (test_is_non_exported_standalone). Compilation and existing tests are also verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, grouped into gates (pass_to_pass) and fail_to_pass categories with comments, and each has a docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code optimization/refactoring, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, function names, and variable names in instruction.md and tests match consistently with no apparent typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact file paths (types.rs, place.rs), exact function names (place_from_bindings_impl, place_from_declarations_impl), exact variable names (deleted_reachability), exact new names to create (DeclarationsBoundnessEvaluator, is_non_exported, or_else), and exact semantics per variant. This leaves almost no localization or design work for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

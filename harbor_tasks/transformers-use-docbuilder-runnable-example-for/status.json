@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:12:14.108425",
-  "total_time": 1359.42,
-  "sandbox_id": "ivbsalagd697zgyqgqxsn",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:27:50.808466",
+  "total_time": 1765.86,
+  "sandbox_id": "ii7gpl6uh189t4lpyhvwp",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,30 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.43,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:152: test `test_docs_extra_in_testing` has 1 assert(s), all pass on a ', 'lint_tier_b:4', 'B:[B] no_network_during_tests @ tests/test.sh:18: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:24: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:30: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.19,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 8.78,
-      "at": "2026-04-10T12:56:42.391807"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +113,14 @@
       "backend": "fireworks",
       "time": 1359.42,
       "at": "2026-04-12T06:12:14.108425"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1765.86,
+      "at": "2026-04-15T06:27:50.808466"
     }
   ]
 }

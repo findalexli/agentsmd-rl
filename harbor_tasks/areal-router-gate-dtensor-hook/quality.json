@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (areal/experimental/models/archon/moe/router.py), the class TokenChoiceTopKRouter, the gate attribute, the function router_gating_linear, the required class name RouterGateLinear (nn.Linear subclass), its __init__ parameters (in_features, out_features, router_dtype), and the forward method delegation. All test-asserted specifics (class name, inheritance, state_dict compatibility, hook firing) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction requirement #4 explicitly states: 'The gate must be implemented as a subclass of nn.Linear named RouterGateLinear. This subclass must have an __init__ that accepts in_features, out_features, and router_dtype parameters, and a forward method that delegates to router_gating_linear.' This specifies the exact implementation approach (class name, method signatures, delegation target), leaving almost no reasoning for the agent about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert the exact class name 'RouterGateLinear' (test_router_gate_linear_class_exists, test_gate_is_router_gate_linear) and that it subclasses nn.Linear. An alternative correct fix (e.g., wrapping the gate call differently, using a different class name like 'GateLinear', or using a mixin) would fail these tests despite correctly fixing the DTensor hook issue."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and execute the module, create router instances, register hooks and verify they fire, run forward passes, and check output shapes. test_not_stub does AST inspection but most tests are behavioral. The majority of tests call code and verify execution results."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_gate_hook_fires, test_gate_hook_with_varied_inputs, test_router_gate_linear_class_exists, test_gate_is_router_gate_linear, test_not_stub) cannot be satisfied by stubs. A stub RouterGateLinear with just 'pass' in forward would fail test_not_stub's AST check, and not registering the class or using it would fail the class existence/instance checks. Hook tests require actual module invocation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. An agent could read /workspace/AReaL/../solution/solve.sh or the solution directory to obtain the answer directly. There's no evidence of solution directory removal in the Dockerfile."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four required behaviors from the instruction are tested: (1) gate module invocation/hook firing (test_gate_hook_fires), (2) GEMM precision via router_gating_linear delegation (test_not_stub verifies real logic), (3) checkpoint compatibility (test_state_dict_compat), (4) RouterGateLinear class requirement (test_router_gate_linear_class_exists, test_gate_is_router_gate_linear)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Static, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining rationale, and clear grouping by test category (static checks, behavioral checks, regression checks)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact class name 'RouterGateLinear', its exact constructor signature, and that forward must delegate to router_gating_linear. It also names the exact line of buggy code ('forward() calls the standalone function router_gating_linear(x, self.gate.weight, self.router_dtype)'). This goes well beyond describing what's broken and into prescribing the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

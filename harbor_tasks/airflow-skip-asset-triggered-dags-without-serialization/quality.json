@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` checks for exact variable names like 'missing_from_serialized' and 'ser_dag_ids' via string search in the source file. The instruction mentions 'set(adrq_by_dag.keys()) - ser_dag_ids' under 'Key Considerations', and mentions 'missing_from_serialized' isn't explicitly named but is implied. However, the exact variable name 'missing_from_serialized' is not explicitly required by the instruction \u2014 it says 'compute which DAG IDs...are missin"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the implementation approach: 'Use set operations to efficiently find missing DAG IDs: set(adrq_by_dag.keys()) - ser_dag_ids', tells you to remove entries from both dictionaries, specifies the exact log message text, and describes the exact variable names and operations. This goes beyond describing what's broken and prescribes the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` does string matching for exact variable names: `'missing_from_serialized' in method_body` and `'ser_dag_ids' in method_body`. An alternative correct fix using different variable names (e.g., 'unregistered_dags', 'serialized_ids') would fail this test despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The critical F2P test `test_adrq_without_serialized_dag_is_excluded` is purely text-matching: it reads the source file and checks for string presence of 'missing_from_serialized', 'ser_dag_ids', and 'del adrq_by_dag[dag_id]'. It never imports, calls, or executes the function. While P2P tests do run subprocess tests, the only F2P test is source-text inspection only."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The F2P test `test_adrq_without_serialized_dag_is_excluded` only checks that specific variable names exist in the source text. A developer could add dead code like `missing_from_serialized = None; ser_dag_ids = set(); del adrq_by_dag[dag_id]` in an unreachable branch and pass the test without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow and the gold patch is in solution/solve.sh. The agent could read solution/solve.sh to see the exact patch. Additionally, the F2P test only does string matching, so the agent could grep the test file to find the exact variable names needed ('missing_from_serialized', 'ser_dag_ids') without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that ADRQ rows are preserved in the database and that DAGs are excluded from triggered_date_by_dag return value. The hidden tests only do source code text matching for the F2P case \u2014 they don't actually verify the runtime behavior of ADRQ preservation or exclusion from return values at the F2P level."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with clear docstrings, grouped into P2P and F2P categories with explicit comments, and have descriptive function names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API responses."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file and line number ('around line 680'), the exact variable names to use ('ser_dag_ids', 'adrq_by_dag'), the exact set operation ('set(adrq_by_dag.keys()) - ser_dag_ids'), and the exact log message text. This is excessive localization that removes the need for the agent to reason about the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

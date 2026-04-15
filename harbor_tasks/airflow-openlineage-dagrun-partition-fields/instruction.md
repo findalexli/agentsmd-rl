@@ -2,31 +2,29 @@
 
 ## Problem
 
-The OpenLineage integration in Airflow is missing `partition_key` and `partition_date` fields when serializing DagRun information. These fields were introduced in Airflow 3.2+ and need to be included in the OpenLineage events sent to lineage backends.
+The OpenLineage integration in Airflow is not including partition information when serializing DagRun data for lineage events. Airflow 3.2 introduced `partition_key` and `partition_date` attributes on DagRun, but these fields are absent from the serialized output sent to lineage backends.
 
-## Files to Modify
+## Symptom
 
-- `providers/openlineage/src/airflow/providers/openlineage/utils/utils.py`
-
-## Expected Behavior
-
-When DagRun information is serialized for OpenLineage events, the output should include:
+When DagRun information is serialized for OpenLineage events, the output is missing:
 - `partition_key`: The partition identifier string (or None)
 - `partition_date`: The partition date in ISO 8601 format (or None)
 
-## Where to Look
+## Expected Behavior
 
-The `DagRunInfo` class in the utils file handles serialization of DagRun attributes. Look for the `attributes` class variable that defines which DagRun fields get serialized.
+The DagRun serialization must include these two fields. The source code controlling which fields are serialized uses entries with inline version comments in the pattern `"<field_name>",  # Airflow X.Y`. The new entries must satisfy:
+
+1. **Field names**: The exact strings `"partition_key"` and `"partition_date"` must be included.
+2. **Version comments**: Each entry must have a trailing inline comment with the exact text `# Airflow 3.2+`, matching the existing formatting convention (string value, comma, two spaces, version comment).
+3. **Ordering**: The entries must appear after the `"logical_date"` entry (comment: `# Airflow 3`) and before the `"run_after"` entry (comment: `# Airflow 3`). `"partition_key"` must appear before `"partition_date"`.
+4. **No duplicates**: Each field should appear only once.
+
+All existing unit tests and linting (ruff, mypy) in the OpenLineage provider must continue to pass.
 
 ## Testing
 
-The repo has existing unit tests in:
-- `providers/openlineage/tests/unit/openlineage/utils/test_utils.py`
-
-You can run tests with: `uv run --project providers/openlineage pytest <test_path>`
-
-## Notes
-
-- The fix involves adding two field names to a list of attributes
-- The fields should be added with appropriate version comments (Airflow 3.2+)
-- The serialization logic is already handled by the `InfoJsonEncodable` base class
+You can run the relevant unit tests with:
+```bash
+cd providers/openlineage
+uv run --group dev pytest tests/unit/openlineage/utils/test_utils.py -v
+```

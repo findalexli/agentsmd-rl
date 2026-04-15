@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T08:17:41.666546",
-  "total_time": 3813.16,
-  "sandbox_id": "ixft1hyext1prmm5unl7r",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:49:18.598896",
+  "total_time": 1605.67,
+  "sandbox_id": "ixvtgoel5h502jpjjihd7",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,17 +59,30 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.43,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:308: test `test_no_local_imports` has 1 assert(s), all pass on a stub ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.7,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 305.98,
-      "at": "2026-04-09T15:02:57.448196"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +114,14 @@
       "backend": "fireworks",
       "time": 3813.16,
       "at": "2026-04-12T08:17:41.666546"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1605.67,
+      "at": "2026-04-15T05:49:18.598896"
     }
   ]
 }

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:06:05.506769",
-  "total_time": 3038.75,
-  "sandbox_id": "isrym8vxvtcm93bvxhbmf",
+  "validated_at": "2026-04-15T03:26:53.792422",
+  "total_time": 801.78,
+  "sandbox_id": "idv1q2ltrhqncvobvkknm",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -63,17 +65,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.28,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:81: test `test_no_direct_route_dereference_without_check` has 2 assert', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 20.02,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T20:36:23.685316"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -105,6 +119,14 @@
       "backend": "fireworks",
       "time": 3038.75,
       "at": "2026-04-11T18:06:05.506769"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 801.78,
+      "at": "2026-04-15T03:26:53.792422"
     }
   ]
 }

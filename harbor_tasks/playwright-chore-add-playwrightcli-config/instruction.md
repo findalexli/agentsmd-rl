@@ -13,15 +13,44 @@ A new `config` command should allow restarting the current session with a differ
 3. Work with named sessions via the `--session` flag
 4. Be available as both `playwright-cli config <path>` and via `--config=<path>` with `open`
 
-The daemon browser config should also set sensible default viewport dimensions (1280x720) for headless mode.
+## Implementation Requirements
 
-After implementing the code changes, update the project's skill documentation to reflect the new command and its usage patterns.
+### Type System
 
-## Files to Look At
+- The `Category` type union must include `'config'` as a member.
 
-- `packages/playwright/src/mcp/terminal/command.ts` — Category type union for command grouping
-- `packages/playwright/src/mcp/terminal/commands.ts` — Command declarations and the commands array
-- `packages/playwright/src/mcp/terminal/helpGenerator.ts` — Help text categories and global options
-- `packages/playwright/src/mcp/terminal/program.ts` — Session management and command routing
-- `packages/playwright/src/mcp/browser/config.ts` — Daemon browser configuration defaults
-- `packages/playwright/src/mcp/terminal/SKILL.md` — Skill documentation for the CLI tool
+### Command Declaration
+
+- A `config` command must be declared using `declareCommand` with `name: 'config'` and `category: 'config'`.
+- The command must be added to the commands array with a `// config` comment above it.
+
+### Help System
+
+- The help generator's categories array must include an entry with `name: 'config'` and `title: 'Configuration'`.
+
+### Program Routing
+
+- When the command name is `'config'`, the program must route it through `handleSessionCommand` passing `'config'` as the subcommand.
+- The `handleSessionCommand` function must dispatch the `'config'` subcommand to a `configure()` method on the session manager.
+
+### Configure Method
+
+The `configure()` method on the session manager must:
+
+1. Resolve the session name from args
+2. Check if the session can be connected
+3. If connected, stop the existing session
+4. Update `this._options.config` with the new config path
+5. Reconnect to the session
+
+### Daemon Browser Config
+
+The daemon browser configuration should set default viewport dimensions for headless mode by adding `contextOptions` with a `viewport` of `{ width: 1280, height: 720 }`.
+
+### SKILL.md Documentation
+
+Update the project's skill documentation to include a `### Configuration` section with:
+
+- Usage showing `playwright-cli config` with a config file argument
+- Usage with named sessions using `--session=` combined with `config`
+- The `--config=` flag usage with the `open` command

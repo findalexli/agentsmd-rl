@@ -3,19 +3,31 @@
 ## Problem
 The sui-benchmark stress binary currently runs benchmarks but has no way to enforce a minimum throughput requirement. For CI smoke tests, we need the binary to exit with a non-zero status code if the achieved TPS (transactions per second) falls below a specified threshold.
 
-## Task
-Add a `--min-tps` command-line flag to the stress binary that:
-1. Accepts an optional float value (e.g., `--min-tps 1.0`)
-2. After the benchmark completes, calculates the actual TPS from `num_success_txes / duration`
-3. If `actual_tps < min_tps`, returns an error with a clear message like "TPS {actual_tps:.2} is below minimum threshold {min_tps}"
-4. The flag should be a global option available to all subcommands
+## Requirements
+
+1. **Command-line option**: Add a `--min-tps` flag that accepts an optional float value and is available globally to all subcommands. The option must:
+   - Be named `min_tps` in the code with type `Option<f64>`
+   - Use the clap attribute `#[clap(long, global = true)]`
+   - Include documentation explaining it specifies a minimum TPS threshold that, if not met, causes the binary to exit with an error
+
+2. **TPS calculation and validation**: After the benchmark completes and statistics are available (specifically `num_success_txes` and `duration`), the code must:
+   - Calculate actual TPS using `num_success_txes as f64 / duration.as_secs_f64()`
+   - Handle edge cases (avoid division by zero on very short durations) by ensuring the denominator is at least 1.0
+   - Compare the calculated TPS against the configured minimum threshold
+   - If the actual TPS is below the minimum, return an error with the exact message format containing the text "is below minimum threshold" along with the actual and minimum TPS values
+   - Use `anyhow::anyhow!` or `anyhow!` for the error return
+
+3. **Implementation specifics**: The solution requires these exact code patterns:
+   - Variable extraction: `let min_tps = opts.min_tps;`
+   - Conditional check: `if let Some(min_tps) = min_tps`
+
+4. **License headers**: Both modified files must include the standard license headers:
+   - `SPDX-License-Identifier: Apache-2.0`
+   - `Copyright (c) Mysten Labs, Inc.`
 
 ## Files to Modify
-- `crates/sui-benchmark/src/options.rs` - Add the `min_tps` field to the `Opts` struct
-- `crates/sui-benchmark/src/bin/stress.rs` - Add the validation logic after benchmark completion
+- `crates/sui-benchmark/src/options.rs` - add the command-line option definition
+- `crates/sui-benchmark/src/bin/stress.rs` - add the TPS validation logic after benchmark completion
 
-## Guidelines
-- The project requires all files to have Apache-2.0 license headers with "Copyright (c) Mysten Labs, Inc."
+## Verification
 - Use `cargo check --package sui-benchmark` to verify your changes compile
-- The flag should use clap's `#[clap(long, global = true)]` attribute
-- The TPS calculation should handle edge cases (avoid division by zero on very short durations)

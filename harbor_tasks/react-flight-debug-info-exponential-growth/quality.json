@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names all key specifics tested: the file path (ReactFlightClient.js), function names (initializeDebugChunk, resolveIOInfo, getOutlinedModel), the flag name (isInitializingDebugInfo) with its declaration form ('let isInitializingDebugInfo' with Flow type 'boolean'), the variable name 'prevIsInitializingDebugInfo', the 'finally' block requirement, the test file (ReactFlightAsyncDebugInfo-test.js), and the exact test name ('should not exponentially accumulate debug info on outlined d"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact implementation: 'A module-level boolean flag (isInitializingDebugInfo) controls whether transferReferencedDebugInfo is invoked', 'The flag must be declared as let isInitializingDebugInfo with Flow type annotation boolean', 'Both initializeDebugChunk and resolveIOInfo must save the previous flag value with prevIsInitializingDebugInfo and use a finally block to restore it after setting it to true', 'getOutlinedModel must check isInitializingDebugInfo befo"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_is_initializing_debug_info_flag_declared checks for exact string 'let isInitializingDebugInfo', test_flag_set_in_initialize_debug_chunk checks for exact strings 'isInitializingDebugInfo = true' and 'prevIsInitializingDebugInfo' and 'finally', etc. An alternative correct fix (e.g., using a different variable name, a counter instead of boolean, a WeakSet to track debug chunks, or modifying transferReferencedDebugInfo itself to check chunk "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_is_initializing_debug_info_flag_declared, test_flag_set_in_initialize_debug_chunk, test_flag_set_in_resolve_io_info, and test_transfer_debug_info_guarded_during_debug_init are purely text-matching (reading file contents and checking for string presence). Only test_no_exponential_debug_accumulation and the pass_to_pass tests actually execute code. The majority of fail_to_pass tests (4 out of 5) are string-in-file assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral test (test_no_exponential_debug_accumulation) runs a Jest test that creates a 20-level deep component tree and verifies it doesn't hang/OOM - a stub won't pass this. The AST tests require specific code patterns that don't exist in the base commit. While the AST tests are text-based, they can't be satisfied by a trivial stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace with solve.sh containing the complete gold patch. An agent could read /solution/solve.sh (or the solution directory) to get the exact diff. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: the flag declaration, its use in initializeDebugChunk and resolveIOInfo with save/restore pattern, the guard in getOutlinedModel, the regression test for deep component trees, and existing test preservation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/static, Fail-to-pass behavioral, Fail-to-pass structural, Pass-to-pass repo tests), descriptive function names, and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in React source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact functions (initializeDebugChunk, resolveIOInfo, getOutlinedModel), exact variable names (isInitializingDebugInfo, prevIsInitializingDebugInfo), exact implementation patterns (finally block, boolean flag), and the exact file to modify. This goes well beyond identifying the buggy domain - it specifies the exact solution architecture."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

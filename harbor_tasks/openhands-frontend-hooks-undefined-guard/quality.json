@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files (hook-event-item.tsx, hook-matcher-content.tsx, v1-conversation-service.types.ts), describes the specific patterns to look for (matcher.hooks.length, matcher.hooks.map), mentions the type field 'hooks' needing to be optional, and references the test/build commands. The test assertions check for 'matcher.hooks ?? []' patterns and 'hooks?:' in the type file, which are directly discoverable from the instruction's description of the bug (undefined hooks field) a"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly says 'Look for where matcher.hooks.length is accessed' and 'Look for where matcher.hooks.map(...) is called', essentially pinpointing the exact buggy expressions. Combined with 'The modal should display \"0 hooks\" when hooks is undefined' and 'This type definition may need to be updated to reflect that hooks can be undefined', this effectively tells the agent exactly what to change \u2014 add null guards to these specific expressions and make the type optional. A competent d"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation strings: test_hook_event_item_has_guard checks for literal 'matcher.hooks ?? []', test_hook_matcher_content_has_guard checks for exact '(matcher.hooks ?? []).map'. Alternative correct fixes like 'matcher.hooks?.length ?? 0', 'matcher.hooks?.map(...) ?? []', or '(matcher.hooks || []).length' would all fail these tests despite being correct fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_hook_event_item_has_guard, test_hook_matcher_content_has_guard, test_nullish_coalescing_present, test_type_definition_optional) are purely text-matching: they read files and assert substrings like 'matcher.hooks ?? []' and 'hooks?:'. While there are pass-to-pass tests that run subprocesses (typecheck, lint, vitest), the core f2p tests never execute or import the code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string presence in source files (e.g., 'assert \"matcher.hooks ?? []\" in content'). An agent could simply insert a comment like '// matcher.hooks ?? [] guard' into the files without actually fixing the bug, and these tests would pass. The tests don't verify runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/OpenHands (the solve.sh is in solution/ directory which may be accessible). Additionally, the agent could grep test files or solution files to find the exact strings being asserted ('matcher.hooks ?? []', 'hooks?:') and insert them verbatim without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: graceful handling of missing hooks (tested via null guard checks), displaying '0 hooks' when undefined (implied by the ?? [] pattern), no runtime errors (tested via typecheck and vitest), and the type definition update (tested via hooks?: check). All explicit requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_hook_event_item_has_guard, test_hook_matcher_content_has_guard, etc.), have docstrings indicating pass_to_pass vs fail_to_pass, and are logically grouped by concern (structural checks, unit tests, typecheck, lint)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing React components, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, commands, and variable names in the instruction match the actual repository structure and test assertions."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact buggy expressions: 'Look for where matcher.hooks.length is accessed' in hook-event-item.tsx and 'Look for where matcher.hooks.map(...) is called' in hook-matcher-content.tsx. This pinpoints the exact lines/expressions to fix, which is excessive localization when the task is ostensibly about debugging."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

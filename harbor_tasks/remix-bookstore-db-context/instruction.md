@@ -8,7 +8,12 @@ There is also a dedicated TypeScript module augmentation file (`app/types/contex
 
 ## Expected Behavior
 
-All database access should use the standard request context pattern: the database middleware should store the database handle using `context.set()`, and all handlers/middleware should read it back with `get()`. The module augmentation file should be removed.
+The `remix/data-table` package exports a `Database` symbol that serves as the context key for database access. All database access should follow the standard request context pattern used by other context values:
+
+- **Middleware (database.ts)**: Import `Database` from `remix/data-table` and store the database handle using `context.set(Database, db)` instead of `context.db = db`.
+- **Handlers and middleware**: Import `Database` from `remix/data-table` and read the database back with `get(Database)` instead of destructuring `db` from the context parameter.
+
+The module augmentation file should be removed.
 
 After making the code changes, update the bookstore demo's README to accurately describe the new database context pattern. The existing README references the old `context.db` pattern in its description of the database middleware — those references should be updated to reflect the new approach.
 

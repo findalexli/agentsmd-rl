@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (file paths like packages/opencode/src/tool/registry.ts, packages/opencode/src/plugin/index.ts, function names like 'all', 'register', 'ids', 'tools', patterns like Effect.fn, Effect.fnUntraced, InstanceState.make, Config.Service, Plugin.Service, defaultLayer, Promise.all, etc.) are explicitly named in instruction.md's requirements section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'yield* on the service references' for Config.Service and Plugin.Service, 'Effect.fn for named/traced effect operations at least 3 times', 'Effect.fnUntraced for internal or anonymous helper effects', 'Effect.forEach or Effect.all' for concurrency, 'all must be defined as an Effect function using Effect.fn or Effect.gen'. These tell the agent exactly WHAT to change rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce gold-specific implementation patterns via regex. For example, test_all_is_effectful checks for `all = Effect.fn` or `all = Effect.gen` by regex - an alternative like `const all = Effect.fnUntraced(...)` would fail. test_services_yielded_in_layer checks for exact pattern `yield* Config.Service` and `yield* Plugin.Service` between `Layer.effect` and `InstanceState.make` - alternative valid approaches (e.g., yielding them inside InstanceState.make callback) would fail. test_effect_fn_"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are pure text/regex checks on source files (reading file content, checking for string patterns like 'Promise.all', 'Effect.fn', 'yield*'). Tests like test_no_facade_in_state_init, test_all_is_effectful, test_effect_concurrency, test_services_yielded_in_layer, test_effect_fn_usage, test_effect_fn_untraced_usage all just read source code and grep for patterns. The typecheck and test runner tests do execute code, but the majority of fail-to-pass tests are text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation couldn't pass these tests - they require specific patterns in substantial code files (>150 lines), proper Effect.fn usage (>=3 times), proper service yielding patterns, absence of Promise.all, etc. The typecheck and test runner also provide behavioral validation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/opencode as a git repo and solve.sh contains the full patch. An agent could read the solution by examining the git history or the solve.sh file. Additionally, since tests are pure text-matching on source files, an agent could craft source code to match the expected regex patterns without understanding the underlying Effect library concepts."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 11 requirements in instruction.md have corresponding tests: no async facades (test_no_facade_in_state_init), effectful all (test_all_is_effectful), Effect concurrency (test_effect_concurrency), services yielded (test_services_yielded_in_layer), Effect.fn usage (test_effect_fn_usage), Effect.fnUntraced (test_effect_fn_untraced_usage), Plugin defaultLayer (test_plugin_default_layer_exported), Registry defaultLayer (test_registry_default_layer_exported), explicit return type tested implicitly v"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section headers (fail_to_pass, pass_to_pass, agent_config, static, repo_tests), clear docstrings, and descriptive function names like test_no_facade_in_state_init, test_effect_concurrency, etc."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code refactoring task, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, commands, and variable names in instruction.md appear correct and consistent with the codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction specifies exact patterns to use: 'yield* on the service references', 'Effect.fn for named/traced effect operations at least 3 times', 'Effect.fnUntraced for internal or anonymous helper effects', 'InstanceState.make closure must not call module-level async facades such as Config.directories(), Config.waitForDependencies(), or Plugin.list()'. These are very specific implementation hints beyond just describing what files need attention."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

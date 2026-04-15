@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:07:38.883726",
-  "total_time": 1159.31,
-  "sandbox_id": "iikznsdxw9p8jugfn047z",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:14:53.501388",
+  "total_time": 1028.18,
+  "sandbox_id": "idtj9r251798tgo2nnr26",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,27 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:283: test `test_missing_type_field_fallback` has 1 assert(s), all pass', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.6,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 5453.84,
-      "at": "2026-04-09T03:08:10.917103"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 1159.31,
       "at": "2026-04-12T06:07:38.883726"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1028.18,
+      "at": "2026-04-15T06:14:53.501388"
     }
   ]
 }

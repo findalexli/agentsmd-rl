@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths (e.g., packages/next/src/server/stream-utils/node-web-streams-helper.ts, packages/next/src/server/app-render/app-render-prerender-utils.ts, packages/next/src/server/render-result.ts) and specific function names (webToReadable, streamToUint8Array, webstreamToUint8Array). The instruction mentions 'stream conversion utilities', 'pre-rendering tee operation', and 'render result stream handling' but never names the exact file paths or function names. Tests also che"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (node:stream imports crash edge runtime) and the expected pattern (if/else with NEXT_RUNTIME check) but doesn't specify exact line numbers or give copy-paste code. The developer must still locate the files, understand the codebase, and implement the guards."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_webToReadable_edge_guard requires 'throw' in the edge branch between the edge check and require; test_streamToUint8Array_edge_delegation requires 'webstreamToUint8Array' string in the edge branch; test_require_node_stream_dce_safe requires '} else {' or '} else{' within 30 lines before require. An alternative correct fix using early return pattern, a wrapper function, or dynamic import() instead of require would fail these tests despite bei"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_webToReadable_edge_guard, test_streamToUint8Array_edge_delegation, test_prerender_tee_edge_guard, test_render_result_edge_guards, test_require_node_stream_dce_safe) all read source files as text and use regex/string matching. None import, compile, or execute the TypeScript code. test_edge_error_codes does execute node to parse JSON, but it's just validating JSON content. The repo tests (prettier, error codes check) do execute subprocesses but are pass-to-pass tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific patterns that don't exist in the original source code (NEXT_RUNTIME === 'edge' checks, edge-runtime error messages in errors.json, '} else {' before require). A stub/no-op implementation wouldn't add these patterns to the source files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever mounted). The agent could read the gold patch from solve.sh. Additionally, since tests just check for text patterns in source files, the agent could grep the test file itself (if accessible) to discover exactly what patterns are needed and insert them mechanically."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors described in instruction.md are tested: edge runtime guards on node:stream imports, DCE-safe else-branch pattern, error codes in errors.json with 'edge runtime' messages, and stream-related error messages."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (fail_to_pass pr_diff, fail_to_pass agent_config, pass_to_pass static, pass_to_pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the errors.json schema: 'JSON schema that maps numeric string keys to error message strings: { \"<code>\": \"<message>\", ... }' and specifies sequential numbering and content requirements."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact DCE pattern ('require must be preceded by a } else { block'), mentions specific function behavior (webstreamToUint8Array delegation), and gives the exact runtime check expression (process.env.NEXT_RUNTIME === 'edge'). While it doesn't name exact files, it provides implementation-level detail that significantly reduces the reasoning required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

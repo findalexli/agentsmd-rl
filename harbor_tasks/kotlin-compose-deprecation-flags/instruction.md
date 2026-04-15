@@ -1,50 +1,53 @@
-# Update Deprecated Compose Feature Flags
+# Update Deprecated Compose Feature Flags for Kotlin 2.5.0 Removal
 
 ## Problem
 
-The Kotlin Compose Compiler Gradle plugin has several deprecated properties and feature flags that need their deprecation levels updated to ERROR (since they will be removed in Kotlin 2.5.0). Additionally, two feature flags (`OptimizeNonSkippingGroups` and `PausableComposition`) need deprecation annotations added.
+Several properties and feature flags in the Kotlin Compose Compiler Gradle plugin have inconsistent deprecation annotations. These items are scheduled for removal in Kotlin 2.5.0, but their current deprecation levels do not appropriately reflect this timeline or the severity of their impending removal.
 
-The affected files are in `libraries/tools/kotlin-compose-compiler/`:
+### Extension Properties
 
-1. **ComposeCompilerGradlePluginExtension.kt** - Contains deprecated extension properties:
-   - `generateFunctionKeyMetaClasses`
-   - `enableIntrinsicRemember`
-   - `enableNonSkippingGroupOptimization`
-   - `enableStrongSkippingMode`
-   - `stabilityConfigurationFile`
+In `ComposeCompilerGradlePluginExtension.kt`, the following five extension properties currently have `@Deprecated` annotations without a specified level (defaulting to WARNING), despite being scheduled for removal in Kotlin 2.5.0:
+- `generateFunctionKeyMetaClasses`
+- `enableIntrinsicRemember`
+- `enableNonSkippingGroupOptimization`
+- `enableStrongSkippingMode`
+- `stabilityConfigurationFile`
 
-   These currently have simple `@Deprecated` annotations without a level (defaulting to WARNING). They need to be updated to `DeprecationLevel.ERROR` with specific messages mentioning "Will be removed in Kotlin 2.5.0".
+Since these properties will be removed in Kotlin 2.5.0, their deprecation annotations should include "2.5.0" in the message and use an appropriate `DeprecationLevel` to signal the severity of the upcoming breaking change.
 
-2. **ComposeFeatureFlags.kt** - Contains feature flag constants:
-   - `StrongSkipping` and `IntrinsicRemember` currently have deprecation without level
-   - `OptimizeNonSkippingGroups` and `PausableComposition` have NO deprecation annotation yet
+### Feature Flags
 
-   The first two need `DeprecationLevel.ERROR`, the latter two need `DeprecationLevel.WARNING`.
+In `ComposeFeatureFlags.kt`, the deprecation states are inconsistent:
+- `StrongSkipping` and `IntrinsicRemember` have `@Deprecated` without a level specified
+- `OptimizeNonSkippingGroups` and `PausableComposition` have no deprecation annotation at all
 
-3. **ComposeCompilerSubplugin.kt** - Uses the deprecated properties internally. The `@Suppress("DEPRECATION")` annotations need to be updated to `@Suppress("DEPRECATION_ERROR")` where appropriate, or include both when accessing both deprecated and non-deprecated items.
+Given that all four flags relate to features that should be enabled by default and will be removed in upcoming versions, they need appropriate deprecation annotations that distinguish between:
+- Items being removed in Kotlin 2.5.0 (which should reference "2.5.0" in their deprecation messages)
+- Items transitioning to a warning state (which should use `DeprecationLevel.WARNING`)
 
-4. **ExtensionConfigurationTest.kt** - Test file that accesses deprecated APIs. Its `@Suppress` annotations need updating.
+### Suppress Annotations
 
-5. **ComposeIT.kt** - Integration test that uses the deprecated `stabilityConfigurationFile` API. This needs to be migrated to use `stabilityConfigurationFiles` (the plural/non-deprecated version).
+The internal usage sites in `ComposeCompilerSubplugin.kt` and test code in `ExtensionConfigurationTest.kt` currently use `@Suppress("DEPRECATION")` to access deprecated APIs. However, since deprecation levels distinguish between WARNING (still usable) and ERROR (compilation fails), the suppress annotations must align with the actual deprecation levels of the items being accessed:
+- Code accessing items with `DeprecationLevel.ERROR` requires `"DEPRECATION_ERROR"` suppression
+- Code accessing items with `DeprecationLevel.WARNING` requires `"DEPRECATION"` suppression
+- Code accessing both levels requires both suppression values
 
-## What Needs to Change
+### Test Code Migration
 
-1. Update all `@Deprecated` annotations on the 5 extension properties to include:
-   - A `message` parameter mentioning "Will be removed in Kotlin 2.5.0"
-   - `level = DeprecationLevel.ERROR`
+The integration test in `ComposeIT.kt` currently uses `stabilityConfigurationFile.set(...)` to configure stability settings. Since `stabilityConfigurationFile` is scheduled for removal in Kotlin 2.5.0, the test should use the replacement API `stabilityConfigurationFiles.set(...)` which accepts a list argument.
 
-2. Update `StrongSkipping` and `IntrinsicRemember` feature flags to have `DeprecationLevel.ERROR`.
+## Affected Files
 
-3. Add `@Deprecated` annotations to `OptimizeNonSkippingGroups` and `PausableComposition` with `DeprecationLevel.WARNING`.
+1. **ComposeCompilerGradlePluginExtension.kt** - Extension properties in `libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/`
+2. **ComposeFeatureFlags.kt** - Feature flag constants in the same directory
+3. **ComposeCompilerSubplugin.kt** - Internal usage of deprecated APIs
+4. **ExtensionConfigurationTest.kt** - Test code accessing deprecated APIs in `libraries/tools/kotlin-compose-compiler/src/functionalTest/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/`
+5. **ComposeIT.kt** - Integration test in `libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/`
 
-4. Update `@Suppress("DEPRECATION")` to `@Suppress("DEPRECATION_ERROR")` where only ERROR-level deprecated items are accessed.
+## Expected Behavior After Fix
 
-5. Update places accessing both deprecated and non-deprecated items to use `@Suppress("DEPRECATION_ERROR", "DEPRECATION")`.
-
-6. Migrate the test code in ComposeIT.kt from `stabilityConfigurationFile.set(...)` to `stabilityConfigurationFiles.set(listOf(...))`.
-
-## Notes
-
-- The `featureFlags` property accesses both ERROR and WARNING level deprecated items, so it needs both suppressions.
-- The extension test file has many `@Suppress("DEPRECATION")` annotations that should become `@Suppress("DEPRECATION_ERROR")` for tests accessing the ERROR-level deprecated properties.
-- Tests for `OptimizeNonSkippingGroups` and `PausableComposition` should keep or add `@Suppress("DEPRECATION")` since those are only WARNING level.
+1. The five extension properties have `DeprecationLevel.ERROR` with deprecation messages containing "2.5.0"
+2. The `StrongSkipping` and `IntrinsicRemember` feature flags have `DeprecationLevel.ERROR` with messages containing "2.5.0"
+3. The `OptimizeNonSkippingGroups` and `PausableComposition` feature flags have `@Deprecated` with `DeprecationLevel.WARNING`
+4. Suppress annotations in subplugin and test code distinguish between `DEPRECATION_ERROR` and `DEPRECATION` based on which deprecation level they access
+5. `ComposeIT.kt` uses `stabilityConfigurationFiles.set(listOf(...))` instead of `stabilityConfigurationFile.set(...)`

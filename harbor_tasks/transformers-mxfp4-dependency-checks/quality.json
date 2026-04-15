@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_validate_environment_not_stub checks for >= 80 AST nodes, test_repo_imports checks that is_triton_available and is_kernels_available are importable from the module (not just used internally), and test_ruff_lint enforces specific ruff rules ('--select=E,W,F,I', '--ignore=E501'). The instruction doesn't mention AST node count thresholds, importability requirements, or ruff lint rules."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (combined boolean, ambiguous messages) and the desired behavior (separate checks, specific messages) but does not specify exact code changes, line numbers, or variable names to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_validate_environment_not_stub asserts that both 'is_triton_available' and 'is_kernels_available' appear as literal strings in the source AND that validate_environment has >= 80 AST nodes. The 80-node threshold is calibrated to the gold solution's specific implementation size. An alternative correct fix (e.g., a more concise implementation using helper functions) could fail this arbitrary size check."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core f2p tests (test_warning_triton_missing_mentions_triton, test_warning_kernels_missing_mentions_kernels, test_error_triton_missing_raises_for_triton, test_error_kernels_missing_raises_for_kernels) actually instantiate the quantizer, call validate_environment(), capture real log output and exceptions, and verify behavioral outcomes (dequantize=True, ValueError raised). While test_validate_environment_not_stub does static analysis, the majority of tests execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests mock one dependency as available and the other as missing, then check that warnings/errors mention the specific missing one and NOT the combined phrase. A stub that does nothing or always passes would fail because it wouldn't produce the required warnings or raise ValueError, and wouldn't set dequantize=True."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/transformers and the solve.sh is in solution/solve.sh. The Dockerfile doesn't remove solution/ from the container. An agent could read /solution/solve.sh or inspect the gold patch directly to replicate the exact fix without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: separate warnings for triton/kernels missing (pre_quantized=True), separate ValueErrors (pre_quantized=False), dequantize set to True, no combined 'triton and kernels' phrase, and installation instructions presence (implicitly through message content checks)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file to modify (quantizer_mxfp4.py) and the method (validate_environment), which is appropriate for the task domain. It references quantizer_higgs.py as a pattern but doesn't specify exact line numbers or the precise code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

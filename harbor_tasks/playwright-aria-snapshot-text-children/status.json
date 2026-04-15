@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:42:41.352581",
-  "total_time": 4394.75,
-  "sandbox_id": "isiuejnc73qoaxcumoyvz",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:50:23.999415",
+  "total_time": 3552.02,
+  "sandbox_id": "ioplydpd8g4vj6c6j5dfy",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -69,17 +71,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.31,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:113: test `test_text_contributes_unique_short_text` has 1 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:128: test `test_text_contributes_partial_overlap` has 1 assert(s), all']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.2,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 204.4,
-      "at": "2026-04-09T15:01:15.875756"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -111,6 +124,14 @@
       "backend": "fireworks",
       "time": 4394.75,
       "at": "2026-04-12T04:42:41.352581"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 3552.02,
+      "at": "2026-04-15T05:50:23.999415"
     }
   ]
 }

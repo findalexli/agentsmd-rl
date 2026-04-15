@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on the specific class name 'GenerateDashboardRequest', the specific file path 'superset/mcp_service/dashboard/schemas.py', specific field names like 'chart_ids', 'dashboard_title', 'description', 'published', and that the field uses Field(default=False). The instruction.md mentions the directory 'superset/mcp_service/dashboard/' but does not name the file 'schemas.py', the class 'GenerateDashboardRequest', or the specific field names. An agent would need to explore the codebase to d"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (dashboards default to published state) and expected behavior (should default to unpublished) without specifying exactly what to change. It doesn't say 'change default=True to default=False in schemas.py line X'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_published_field_with_multiple_values uses a regex pattern 'published:\\s*bool\\s*=\\s*Field\\s*\\(\\s*default\\s*=\\s*(True|False)' that requires the exact syntax 'published: bool = Field(default=False'. An alternative correct fix using e.g. 'published: bool = Field(False, ...)' (positional default) or 'published: Optional[bool] = Field(default=False)' would fail this regex test. The tests are overly specific to the gold patch's exact syntax."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests use AST parsing and regex matching on the source text of schemas.py rather than importing and instantiating GenerateDashboardRequest to check its actual runtime behavior. test_published_field_with_multiple_values is literally regex matching on source text. No test does something like 'from superset.mcp_service.dashboard.schemas import GenerateDashboardRequest; req = GenerateDashboardRequest(...); assert req.published is False'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_published_default_is_false and test_published_field_with_multiple_values) check that the default is specifically False. The original code has default=True, so without changing the code, these tests fail. A stub implementation wouldn't pass because the tests parse the actual file content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/superset's solve.sh path referenced in the task definition. The agent could read the solution/solve.sh file (if accessible in the container) to see the exact patch. Additionally, the gold patch is a single-character change (True\u2192False) that could be discovered by grepping test files for 'False' and understanding the expected value."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction says MCP-created dashboards should not be published by default, and the tests verify the published field defaults to False. The instruction also mentions the option to publish should still be available, which is implicitly satisfied by keeping the field (just changing default)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_published_default_is_false, test_published_field_with_multiple_values, etc.), have docstrings explaining purpose, and include Type annotations (fail_to_pass vs pass_to_pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves changing a default value in a schema class, not producing structured data output like JSON/CSV/API responses."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the directory 'superset/mcp_service/dashboard/' which is appropriate context, and describes the problem conceptually without naming exact files, line numbers, or the specific field to change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a single-line change (True\u2192False) in one file, which is highly localized and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 4
+}

@@ -15,3 +15,17 @@ Additionally, strings that combine octal escapes with named Unicode escapes (lik
 ## Files to Look At
 
 - `crates/ruff_linter/src/rules/pyupgrade/rules/unnecessary_encode_utf8.rs` — contains the `literal_contains_string_only_escapes` function that parses escape sequences in string literals for the UP012 rule
+
+## Development Guidelines
+
+When modifying the code, follow the conventions in `/workspace/ruff/AGENTS.md`:
+
+1. **Error Handling**: Avoid `panic!()`, `unreachable!()`, and `.unwrap()`. Instead, encode constraints in the type system.
+2. **Imports**: Keep all Rust imports at the top of the file, never inside function bodies.
+
+## Repository Quality Standards
+
+All changes must pass the following repo-wide checks:
+- `cargo clippy --package ruff_linter --all-targets -- -D warnings` must pass without warnings
+- `cargo fmt --check` must pass (code must be properly formatted)
+- `cargo check --workspace` must pass (entire workspace must compile)

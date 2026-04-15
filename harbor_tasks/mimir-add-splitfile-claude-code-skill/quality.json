@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: tool path `tools/split-file-verify/`, skill path `.claude/skills/split-file/SKILL.md`, TSV output format `name<TAB>sha256_hash`, method format `(Server).Start`, sorted output, usage message on no args, first 16 hex chars of SHA-256, YAML frontmatter fields (`name`, `description`, `argument-hint`), and references to the verify tool. All test-asserted specifics (paths, naming conventions, frontmatter fields, output format, behavior on no args) are discoverable from the i"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to build (a Go CLI tool and a skill markdown file) and their behavioral requirements, but does not provide the actual implementation code. A developer must still reason about how to parse Go AST, format output, structure the skill document, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outputs (declaration names in TSV, hash consistency, sorted order, usage on no args, frontmatter fields, content keywords) rather than implementation-specific details like variable names or internal helper functions. Alternative correct implementations using different AST traversal strategies or different internal structures would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The Go tool tests compile and execute the binary with test Go files, then inspect stdout. The SKILL.md tests do use string matching (`assert 'git mv' in content`), but this is mixed with the behavioral tests for the tool. The tool tests (majority of f2p tests) genuinely execute the compiled binary and verify behavioral output. The SKILL.md tests are inherently config/doc checks where text inspection is appropriate."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass: `test_verify_tool_extracts_func_decls` checks specific names ('hello', 'world') and exactly 2 lines; `test_verify_tool_extracts_methods` checks '(Server).Start' format; `test_verify_tool_no_args_shows_usage` checks non-zero exit and 'Usage' in stderr; `test_verify_tool_produces_consistent_hashes` checks hash equality across files. These require real AST parsing and hash computation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution file is in /solution/solve.sh which could theoretically be read, but tests create fresh Go files at runtime with unique content and execute the compiled binary against them. The agent cannot simply copy expected outputs since test inputs are dynamically generated. The agent would need to build a working tool to pass behavioral tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors are tested: function extraction, method formatting with receiver, type extraction, sorted output, consistent hashes, multi-file support, no-args usage message, SKILL.md existence, frontmatter fields, git rename technique documentation, and verify tool reference in skill."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments ('Gates', 'Fail-to-pass', 'Config file update tests'), each has a descriptive function name and docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the TSV output format: `name<TAB>sha256_hash`, sorted by declaration name, using first 16 hex characters of SHA-256. This is sufficient schema documentation for the structured output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to build at a requirements level without specifying exact implementation lines or internal structure. It names output paths and formats which are necessary specifications, not hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md is a new file creation (not editing an existing config). The gold diff creates localized new files without contradicting other tier-1 files."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 12,
+  "fail_count": 0
+}

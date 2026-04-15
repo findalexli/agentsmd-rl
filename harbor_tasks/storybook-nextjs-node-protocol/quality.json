@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names NODE_PROTOCOL_REGEX with pattern /^node:/, the webpack import syntax, NormalModuleReplacementPlugin usage, the spread syntax for fallback and plugins, plugin ordering, and the compile/check commands. All test assertions (exact strings like 'const NODE_PROTOCOL_REGEX = /^node:/', 'import webpack from \"webpack\"', spread operators, etc.) are discoverable from the instruction's 'What Must Be True After the Fix' section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: use NODE_PROTOCOL_REGEX = /^node:/, import webpack, use NormalModuleReplacementPlugin with resource.request.replace(NODE_PROTOCOL_REGEX, ''), use exact spread syntax '...baseConfig.resolve?.fallback' and '...(baseConfig.plugins || [])'. This is not describing what's broken \u2014 it's prescribing the exact implementation down to variable names and code snippets."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'const NODE_PROTOCOL_REGEX = /^node:/' and 'import webpack from \"webpack\"' and 'new webpack.NormalModuleReplacementPlugin(NODE_PROTOCOL_REGEX' via text matching. Alternative correct fixes (e.g., using a different variable name like NODE_PREFIX_RE, using inline regex, using webpack.NormalModule.getCompilationHooks, or destructuring the import) would all fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests (test_webpack_imported, test_node_protocol_regex_defined, test_normal_module_replacement_plugin_used, test_fallback_preserved, test_plugins_array_structure, test_plugin_order_correct, test_no_duplicate_webpack_import) are purely text-matching via 'assert X in content'. While test_compilation_succeeds, test_typecheck_succeeds, and test_nx_compile/test_nx_check do execute subprocesses, the core f2p tests are all string-in-file checks with no execution of the actual code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings that don't exist in the base commit (NODE_PROTOCOL_REGEX, webpack import, NormalModuleReplacementPlugin usage). A stub/no-op implementation would not pass since the base file lacks these strings. The compilation and typecheck tests also require actual valid TypeScript."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/storybook and the solve.sh is in /solution/solve.sh. The agent could read the solution file directly or grep for expected test strings. The tests check for exact literal strings that are visible in the test file, making it trivial to reverse-engineer the exact needed content."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 8 conditions listed in the instruction's 'What Must Be True' section are tested: NODE_PROTOCOL_REGEX definition, webpack import, NormalModuleReplacementPlugin usage, fallback preservation, plugins preservation, plugin ordering, compilation, and type checking."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_webpack_imported, test_node_protocol_regex_defined, etc.), have docstrings explaining purpose, and include a comment section header for pass-to-pass tests. The module docstring explains the overall purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying webpack configuration code, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (code/frameworks/nextjs/src/nodePolyfills/webpack.ts), commands (yarn nx compile nextjs, yarn nx check nextjs), variable names (NODE_PROTOCOL_REGEX), and plugin names (NormalModuleReplacementPlugin, NodePolyfillPlugin) are all correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Look for code that configures NodePolyfillPlugin and manages webpack resolve.fallback settings' and gives the exact variable name, regex pattern, import syntax, spread syntax, and replacement logic. This goes far beyond describing the affected area \u2014 it provides the complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a localized edit to a single file (webpack.ts), adding imports, a constant, and modifying the plugins array and resolve.fallback \u2014 a bounded, non-contradictory change."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

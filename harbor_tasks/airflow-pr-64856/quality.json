@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (dev/breeze/src/airflow_breeze/commands/ci_commands.py), the function (upgrade), the commit message pattern ('CI: Upgrade important CI environment'), the exception type (subprocess.CalledProcessError), the --no-verify flag, git add ., console_print, and --message flag. All test assertions check for these elements which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact implementation: wrap in try/except CalledProcessError, call console_print, run git add ., retry with --no-verify and --message flags. This is a step-by-step recipe for the fix, not just a description of broken behavior. Point 1-5 under 'Expected Behavior' essentially dictate the exact code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_message_flag_format asserts that git commit must use '--message' (long form) instead of '-m'. A correct alternative fix using '-m' flag would fail this test. The gold patch switches from '-m' to '--message' which is an implementation detail, not a behavioral requirement. Also, tests require console_print specifically (not get_console().print or any other logging), and run_command specifically as the function name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail_to_pass tests use AST parsing to inspect the source code structure (test_calledprocesserror_import_present, test_no_verify_flag_in_retry, test_retry_adds_files_before_commit, test_try_except_structure_around_commit, test_console_print_on_failure, test_message_flag_format). No test actually imports, calls, or executes the upgrade function. They are structural/textual checks on the AST, not behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific AST structures (try/except blocks, --no-verify flag, git add in handler, console_print call) that would not exist in a stub or default implementation. The original code has none of these structures, so a no-op wouldn't pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace/airflow (or accessible path). The Dockerfile doesn't remove it. An agent could read the gold patch directly from solution/solve.sh to know exactly what to change. Additionally, the tests only do AST inspection, so the agent could grep for test expectations and craft minimal matching code."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five expected behaviors listed in instruction.md are tested: try/except structure (test_try_except_structure_around_commit), CalledProcessError catching (test_calledprocesserror_import_present), console_print message (test_console_print_on_failure), git add in handler (test_retry_adds_files_before_commit), --no-verify retry (test_no_verify_flag_in_retry)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_syntax_valid, test_calledprocesserror_import_present, etc.), have docstrings explaining what they verify, and include comments distinguishing pass_to_pass vs fail_to_pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact function ('upgrade'), exact file path, and provides a step-by-step implementation guide including specific function calls (console_print), specific flags (--no-verify, --message), and exact exception type. This goes beyond identifying the buggy location into prescribing the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

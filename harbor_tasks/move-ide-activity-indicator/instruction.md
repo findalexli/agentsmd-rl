@@ -4,81 +4,65 @@
 
 The Move IDE (VSCode extension for the Move language) lacks visibility into the language server's current state. Users cannot tell:
 - Whether the server is actively processing/compiling
-- When operations are taking longer than expected (slow state)
+- When operations are taking longer than expected
 - When a fatal error has occurred that stopped the server
 
 ## What You Need to Do
 
 Implement an activity indicator in the VSCode status bar that:
-1. Shows the server state: starting → idle ↔ busy → slow → stopped
+1. Shows the server state: starting, idle, busy, slow, or stopped
 2. Displays an animated indicator during active work (starting, busy, slow states)
 3. Shows error/warning colors for stopped (red) and slow (yellow) states
 4. Includes a tooltip with extension version, server version, and a restart command
 
-The implementation requires changes in both:
-- **Rust (server-side)**: `external-crates/move/crates/move-analyzer/src/`
-- **TypeScript (client-side)**: `external-crates/move/crates/move-analyzer/editors/code/src/`
+### Server-Side Requirements (Rust)
 
-### Server-Side Requirements
+The language server needs to send progress notifications to the client so the extension can track compilation state. These notifications use LSP's `$/progress` mechanism with a specific token string.
 
-The language server needs to send progress notifications to the client:
-- Send `$/progress` notifications with token `"symbolication"` when compilation starts and ends
+The server must:
+- Send progress begin notification when compilation starts
+- Send progress end notification when compilation finishes
 - Distinguish between non-fatal errors (missing manifest) and fatal errors (dependency failures)
-- On fatal errors, the server should exit cleanly so the client detects the stopped state
+- Exit cleanly on fatal errors so the client detects the stopped state
 
-### Client-Side Requirements
+### Client-Side Requirements (TypeScript)
 
-The VSCode extension needs to:
-- Create a new `ServerActivityMonitor` class that manages the status bar item
-- Wire it to language client state changes (starting, running, stopped)
-- Listen for server-sent `$progress` notifications to track compilation state
-- Wrap `sendRequest` to track individual LSP request latency as a secondary busy signal
-- Implement a state machine: starting → idle ↔ busy → slow, and stopped (terminal)
-- Prevent auto-restart on fatal errors (let user restart manually via tooltip)
-- Create a persistent output channel that survives server restarts
+The VSCode extension needs a status bar indicator that tracks server health. This requires:
 
-## Files to Modify
+- A status bar item aligned to the left
+- State-based coloring: red background when stopped, yellow when slow
+- A state machine with these states: `starting`, `idle`, `busy`, `slow`, `stopped`
+- Methods to handle: client state changes, compilation start/end events, request tracking, and rendering
+- Wrapped request sending to track individual LSP request latency
+- An error handler configured to prevent automatic restart on fatal errors
+- A persistent output channel that survives server restarts
 
-**Server-side (Rust):**
-- `external-crates/move/crates/move-analyzer/src/analyzer.rs` - Handle new message types and send progress notifications
-- `external-crates/move/crates/move-analyzer/src/symbols/runner.rs` - Send start/end messages and distinguish error types
+## Expected Behavior
 
-**Client-side (TypeScript):**
-- Create `external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts` - New file with ServerActivityMonitor class
-- `external-crates/move/crates/move-analyzer/editors/code/src/context.ts` - Initialize and wire activity monitor
-- `external-crates/move/crates/move-analyzer/editors/code/src/main.ts` - Initialize activity monitor with version info
+### State Machine
 
-## Key Design Points
+The indicator follows this state model:
+- **starting**: Initial state when client connects
+- **idle**: Server running with no active work
+- **busy**: Compilation in progress OR pending requests exist
+- **slow**: Promoted from starting/busy when operations exceed ~10 seconds
+- **stopped**: Terminal state when server process dies
 
-1. **State machine transitions**:
-   - `starting`: Initial state when client connects
-   - `idle`: When client is running with no active work
-   - `busy`: When compilation in progress OR pending requests exist
-   - `slow`: Promoted from starting/busy after ~10 seconds
-   - `stopped`: Terminal state when server process dies
+### Progress Notification Flow
 
-2. **Progress notification flow**:
-   - Server sends `SymbolicationStart` → Client shows busy
-   - Server sends `SymbolicationEnd` → Client can return to idle (if no pending requests)
+The server sends LSP `$/progress` notifications:
+- Server sends progress `begin` → client shows busy
+- Server sends progress `end` → client can return to idle (if no pending requests)
 
-3. **Request tracking**:
-   - Each outgoing LSP request gets a tracking ID
-   - Request sent → busy (if idle)
-   - Response received → can return to idle (if no compilation and no other pending requests)
+### Request Tracking
 
-## Testing
+Each outgoing LSP request is tracked by ID:
+- Request sent → busy (if idle)
+- Response received → can return to idle (if no compilation in progress and no other pending requests)
 
-Run tests to verify:
-```bash
-cd /workspace/task/tests
-python3 -m pytest test_outputs.py -v
-```
+### Error Handling
 
-Or manually verify by building:
-```bash
-cd /workspace/sui
-cargo check -p move-analyzer
-```
+Fatal errors cause the server process to exit. The client detects this as the `Stopped` state and displays the red error indicator. The user can restart manually via the tooltip command.
 
 ## References
 

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T17:51:44.634900",
-  "total_time": 3186.91,
-  "sandbox_id": "ia7zppgspev3lvyqnwy77",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:46:40.693202",
+  "total_time": 1989.88,
+  "sandbox_id": "ibtlh1k1lbd27dx307gjo",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,30 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.69,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:16', 'A:[A] test_not_tautological @ tests/test_outputs.py:34: test `test_clang_syntax_only` has 1 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:67: test `test_libclang_parses` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:99: test `test_check_cpp_style` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:130: test `test_codespell_typos` has 1 assert(s), all pass on a stub i', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:11: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.0,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1443.24,
-      "at": "2026-04-09T20:42:31.763161"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +106,14 @@
       "backend": "fireworks",
       "time": 3186.91,
       "at": "2026-04-11T17:51:44.634900"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1989.88,
+      "at": "2026-04-15T03:46:40.693202"
     }
   ]
 }

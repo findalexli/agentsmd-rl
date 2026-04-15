@@ -24,19 +24,21 @@ bun install
 
 The same silent exit happens for various other scanner failure modes: invalid package ID, partial install failure, IPC pipe failures, etc.
 
-## Root Cause
+## Requirements
 
-The error handling in `src/install/PackageManager/install_with_manager.zig` has a catch-all `else` branch in the security scanner error switch that calls `Global.exit(1)` without printing any message. Only the `SecurityScannerInWorkspace` error variant has a message — all other errors are swallowed silently.
+1. **Error visibility**: Every security scanner error path must print a descriptive error message to stderr before exiting. Currently only `SecurityScannerInWorkspace` errors produce output; all other error variants silently exit.
 
-Additionally, some error messages that DO exist are printed in `src/install/PackageManager/security_scanner.zig` at the point where errors are returned, but the catch-all in the caller ignores them. The error printing is split across two files inconsistently.
+2. **Error printing function**: Error messages must use `Output.errGeneric` (not `Output.pretty` with `<red>` formatting).
 
-## Expected Fix
+3. **Error propagation**: When the retry result contains an `.error` variant, the original error information must be preserved and propagated rather than being collapsed into a generic `SecurityScannerRetryFailed` error.
 
-Ensure that every error path in the security scanner error handler prints a descriptive error message to stderr before exiting. Error messages should be centralized in the caller (`install_with_manager.zig`) rather than scattered across both files. Each error variant should have a specific, helpful message.
-
-Also fix the case where the `.error` variant from the retry result is being collapsed into a generic `SecurityScannerRetryFailed`, losing the original error information.
+4. **Regression test**: Create a regression test at `test/regression/issue/28193.test.ts` that:
+   - Imports `bunExe`, `bunEnv`, and `tempDir` from the `'harness'` module
+   - Does NOT use `tmpdirSync` or `mkdtempSync` from Node.js
+   - Contains at least one test case with `expect()` assertions
+   - Follows CLAUDE.md guideline #101: assert stderr/stdout content before asserting exit code
 
 ## Files to Investigate
 
-- `src/install/PackageManager/install_with_manager.zig` — the security scanner error handling switch in `installWithManager`
-- `src/install/PackageManager/security_scanner.zig` — error returns from `doPartialInstallOfSecurityScanner`, `ScannerFinder`, and `performSecurityScanAfterResolution`
+- `src/install/PackageManager/install_with_manager.zig` — security scanner error handling in the install flow
+- `src/install/PackageManager/security_scanner.zig` — security scanner implementation and error returns

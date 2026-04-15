@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all key specifics tested: typeOrder array with exact types, typeLabels object with exact mappings ('Features', 'Fix', etc.), conventionalMatch variable name, groups[type] pattern, `### ${label}` heading format, removal of `#### ${pkg.name}`, removal of fs.readFileSync(changelogPath), git log --pretty=format:\"%h %ae %s\", --no-merges, removal of appendAuthors function, removal of resolveAuthorForCommit, removal of authorCache, retention of resolveAuthorForPR/prAuth"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names (conventionalMatch, typeOrder, typeLabels, typeIndex, groups), exact regex patterns, exact data structures, exact label mappings, and exact format strings. This goes far beyond describing what's broken \u2014 it prescribes the implementation in detail, leaving almost no reasoning about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'conventionalMatch', 'typeOrder', 'typeLabels', 'typeIndex', 'groups[type]', specific regex pattern `### \\${label}`, and specific function removal patterns. An alternative correct implementation using different variable names (e.g., 'commitMatch', 'categoryOrder', 'categoryLabels', 'sortIndex') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are purely text-matching: they read the script file and assert on string patterns like 'typeOrder' in content, 'conventionalMatch' in content, regex searches for variable names. Only test_script_syntax_valid and test_repo_eslint_scripts/test_repo_prettier_scripts actually execute the code. No test actually runs the changelog generation to verify behavioral output."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since the tests only check for string presence in source code, an agent could write a script containing all the right variable names and patterns as dead code (e.g., comments or unused variables) without implementing any actual changelog generation logic, and all fail-to-pass tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/router after solve.sh runs, and the agent could read test_outputs.py (which is in the container at tests/test_outputs.py) to see exactly what strings to include. The agent could also simply grep for expected patterns in the test file and insert matching strings into the script without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: typeOrder/typeLabels definitions, conventional commit parsing, grouping by type, markdown headings, removal of CHANGELOG.md reading, git log format, removal of appendAuthors/resolveAuthorForCommit, type sorting, and retention of resolveAuthorForPR."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections, each test has a descriptive name and docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a markdown changelog string, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact variable names (conventionalMatch, typeOrder, typeLabels, typeIndex), exact regex patterns, exact function names to remove (resolveAuthorForCommit, appendAuthors, authorCache), and exact format strings. This is excessive implementation detail leakage beyond identifying the file to modify."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a JavaScript script, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

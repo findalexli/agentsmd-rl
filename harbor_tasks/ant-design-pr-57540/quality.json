@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (components/cascader/style/columns.ts), the function (getColumnsStyle as default export), the import source ('../../style' for textEllipsis), and all specific CSS properties tested: minWidth:0 on &-content, textEllipsis on &-content, maxWidth:400 on &-item, and textEllipsis NOT on &-item. All test assertions map to discoverable specifics in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'On &-content: Must have minWidth: 0', 'On &-content: Must include the textEllipsis styles', 'On &-item: Must have maxWidth: 400', 'On &-item: Must NOT include textEllipsis styles directly'. This is a complete specification of what to change, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use regex to find '&-item' and '&-content' blocks and check for exact strings like '...textEllipsis', 'minWidth: 0', and 'maxWidth:'. An alternative correct fix using different syntax (e.g., Object.assign, a helper function wrapping textEllipsis, or maxWidth as a variable) might fail the regex-based text matching. The test_maxwidth_on_item checks for 'maxWidth:' in the first 400 chars but asserts a specific value of 400 is needed in the instruction while only checking for the property "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The three fail-to-pass tests (test_textellipsis_in_content_not_item, test_minwidth_zero_in_content, test_maxwidth_on_item) ALL use `read_columns_file()` and regex/string matching on source text. They never import, execute, or render the component. While pass-to-pass tests do run tsc/eslint/biome, the core behavioral tests are purely text-based assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific CSS properties in specific selectors. A stub/empty file or default implementation would not have '&-content' with minWidth:0 and textEllipsis, nor '&-item' with maxWidth. The original buggy code has textEllipsis on &-item (not &-content), so the tests correctly fail on the unfixed code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/antd (accessible in the container via solve.sh). The agent could read solution/solve.sh which contains the exact patch. Additionally, since tests are pure text matching on a file, the agent could grep test files (if accessible) for the expected strings and replicate them."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements listed in instruction.md are tested: minWidth:0 on &-content (test_minwidth_zero_in_content), textEllipsis on &-content (test_textellipsis_in_content_not_item), maxWidth on &-item (test_maxwidth_on_item), and no textEllipsis on &-item (test_textellipsis_in_content_not_item)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'Fail-to-Pass' and 'Pass-to-Pass' sections with comments, descriptive function names, and detailed docstrings explaining the CSS rationale."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves CSS-in-JS style fixes, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, CSS property names, and commands are all correctly spelled and consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (components/cascader/style/columns.ts), the exact selectors (&-content, &-item), and the exact properties to add/remove (minWidth:0, textEllipsis, maxWidth:400). This goes well beyond identifying the buggy module \u2014 it specifies the exact fix at the property level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -2,22 +2,27 @@
 
 ## Problem
 
-SGLang Prometheus metrics are not being uploaded to W&B (Weights & Biases) during training. The metrics scraping was configured in the secondary W&B process (rollout worker), but the open metrics endpoint requires being set up on the primary W&B run for the stats monitor to work.
+SGLang Prometheus metrics are not being uploaded to W&B (Weights & Biases) during training. The metrics endpoint configuration is happening in the wrong W&B process, causing the stats monitor to miss SGLang metrics.
 
-## Root Cause
+The issue is a sequencing problem:
+1. The primary W&B run is initialized early in the training script (before rollout servers start) to obtain the run ID for secondary processes
+2. By the time the rollout servers are running and the SGLang metrics router address is known, the primary W&B run is already initialized without the metrics endpoint configured
+3. Secondary W&B processes cannot run the stats monitor needed for open metrics collection
 
-The primary W&B init happens in `train.py` before rollout servers start (to obtain `wandb_run_id` for secondary processes). By the time the rollout servers are up and the router address is available for scraping SGLang metrics, the primary W&B run has already been initialized without metrics endpoints. The secondary process tried to configure the endpoints via `router_addr` parameter to `init_wandb_secondary`, but secondary processes cannot run the stats monitor for open metrics.
+## Technical Requirements
 
-## Expected Behavior
+To fix this issue, the following behavioral requirements must be met:
 
-1. Remove `router_addr` from `init_wandb_secondary` -- secondary processes should not configure metrics endpoints
-2. Add a `reinit_wandb_primary_with_open_metrics` function that re-initializes the primary W&B run after servers are up, with the router metrics endpoint configured
-3. Expose a public `get_metrics_router_addr()` on the rollout manager for the driver process
-4. Call the re-init from `train.py` and `train_async.py` after the rollout manager is created
+1. **Secondary process changes**: The secondary W&B initialization function should not accept a `router_addr` parameter, since secondary processes cannot run the stats monitor.
 
-## Files to Modify
+2. **Primary process re-initialization**: A function named `reinit_wandb_primary_with_open_metrics` must be created that accepts `args` and `router_addr` parameters. This function must:
+   - Return early without touching wandb when `router_addr` is `None`
+   - Call `wandb.finish()` before `wandb.init()` to close the existing run
+   - Use `resume="allow"` in the init kwargs to continue the same run
+   - Configure `wandb.Settings` with `x_stats_open_metrics_endpoints` containing `"sgl_engine": f"{router_addr}/engine_metrics"`
 
-- `slime/utils/wandb_utils.py` -- add reinit function, remove router_addr from secondary
-- `slime/utils/logging_utils.py` -- add update_tracking_open_metrics
-- `slime/ray/rollout.py` -- expose public get_metrics_router_addr, remove router_addr from init_tracking
-- `train.py` and `train_async.py` -- call update after rollout manager creation
+3. **Logging utilities bridge**: The logging utilities module must expose a function named `update_tracking_open_metrics(args, router_addr)` that delegates to `reinit_wandb_primary_with_open_metrics`.
+
+4. **Rollout manager API**: The rollout manager class must expose a public method `get_metrics_router_addr()` that returns the metrics router address (wrapping the private `_get_metrics_router_addr` method).
+
+5. **Training script updates**: The training entry points must import `update_tracking_open_metrics` and call it after the rollout manager is created, passing the router address obtained via `ray.get(rollout_manager.get_metrics_router_addr.remote())`.

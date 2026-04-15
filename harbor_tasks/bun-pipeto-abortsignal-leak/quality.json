@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests check very specific implementation patterns (e.g., test_cpp_pattern_compiles validates a standalone C++ program with LockedContainer, WeakCallbackRef patterns; test_static_code_patterns_consistent checks tab counts \u22645; test_static_cpp_syntax_basic checks balanced braces/parens). While instruction.md does mention most pattern requirements in its 'Test Validation Requirements' section, the pass_to_pass tests like test_repo_shellcheck (checking scripts/check-node.sh etc.), test_repo_struc"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix implementation: use JSCallbackDataWeak instead of JSCallbackDataStrong in JSAbortAlgorithm.cpp, add a Vector<pair<uint32_t, Ref<AbortAlgorithm>>> container in AbortSignal.h, use Lock/Mutex, implement visitAbortAlgorithms, use container insertion with locking in addAbortAlgorithmToSignal (not addAlgorithm), use removeFirstMatching with locking in removeAbortAlgorithmFromSignal (not removeAlgorithm), and account for m_abortAlgorithms in memoryCost. Th"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test checks require JSCallbackDataWeak specifically, require a Vector/HashMap with AbortAlgorithm, require visitAbortAlgorithms pattern, require Lock/Mutex members, require addAbortAlgorithmToSignal to NOT call addAlgorithm() and use append/push_back, require removeAbortAlgorithmFromSignal to NOT call removeAlgorithm() and use removeFirstMatching/erase. An alternative correct fix (e.g., using ref-counting weakening in the existing m_algorithm"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass test test_cpp_pattern_compiles compiles and runs a standalone C++ program (behavioral), but most other tests in test_outputs.py (visible from the truncated content and the instruction's validation requirements) use regex pattern matching on source file contents \u2014 e.g., checking for 'JSCallbackDataWeak' in files, checking for 'Lock' patterns in headers, checking container insertion patterns. These are textual grep-style checks, not behavioral execution of the actual codebase."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The pass_to_pass tests (test_target_files_exist, test_static_header_structure_valid, test_static_cpp_syntax_basic, test_static_code_patterns_consistent, test_repo_structure, etc.) all pass on the unmodified repo without any fix. The fail_to_pass test test_cpp_pattern_compiles is a standalone C++ compilation that doesn't test the actual bug fix code \u2014 it validates that certain C++ patterns compile, which they would regardless of whether the actual source files are modified. A stub that just adds "
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun after applying solve.sh (the gold patch). The agent could read the solution file at solution/solve.sh if accessible in the container. Additionally, since tests are pattern-matching on file contents, the agent could grep test_outputs.py for the exact patterns being checked (like 'JSCallbackDataWeak', 'removeFirstMatching', etc.) and insert them into files without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires creating a regression test file (test/js/web/streams/pipeTo-signal-leak.test.ts) that tests actual GC behavior with heapStats(). The test suite doesn't appear to verify that this test file exists with correct content or that it actually runs and passes \u2014 the visible tests only check C++ source patterns and repo structure."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are named descriptively (test_target_files_exist, test_cpp_pattern_compiles, test_static_header_structure_valid, etc.) and grouped by category (static pass_to_pass, repo_tests pass_to_pass, behavioral fail_to_pass) with comments explaining each section."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md or the test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact files to modify, the exact patterns to implement (JSCallbackDataWeak, Lock, visitAbortAlgorithms, etc.), the exact function signatures (addAbortAlgorithmToSignal must NOT call addAlgorithm(), must use append), and even specific member variable types (Vector<pair<uint32_t, Ref<AbortAlgorithm>>>). This goes far beyond identifying the buggy module \u2014 it specifies the exact solution implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

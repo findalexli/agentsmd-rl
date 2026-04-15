@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' and 'progress.OneOff(ld.pctx, fmt.Sprintf(\"pulling %s\", ld.desc.Digest))'. The instruction.md never mentions the specific variable names 'ld.pctx', 'ld.desc.Digest', 'p.src.Reference.String()', or the exact call-site patterns. While the instruction says to 'preserve the exact same arguments', it doesn't tell the agent what those arguments are (e.g., that worker.go uses 'ld.pctx' not 'ctx'). The ag"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly says 'Replace each call to the local helper function with the appropriate progress.OneOff call' and 'Remove the local helper function definitions' and 'The buildkit progress package provides a OneOff function with the same signature as the local helpers.' This tells the agent exactly what to do: replace oneOffProgress with progress.OneOff and delete the local definitions. The fix is fully specified."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact literal strings like 'progress.OneOff(ctx, \"resolve \"+p.src.Reference.String())' with exact whitespace. An alternative correct fix that, e.g., assigns the result differently, uses a variable for the string, or has slightly different whitespace would fail. The test also checks exact count of 5 progress.OneOff calls, and checks for exact import line presence/absence."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_pull_go_uses_progress_oneoff, test_export_go_uses_progress_oneoff, test_writer_go_no_local_oneoffprogress, test_worker_go_uses_progress_oneoff, test_no_duplicate_oneoffprogress_anywhere, test_correct_number_of_call_sites) are ALL pure text-matching assertions using 'assert ... in content' or 'content.count(...)'. While there are compilation/vet/unit-test pass-to-pass tests, the core fail-to-pass tests verify text, not behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific content changes (presence of progress.OneOff calls, absence of local function definitions) that cannot be satisfied by a stub or no-op implementation. The original files contain oneOffProgress, not progress.OneOff, so actual code changes are required."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/moby as a git repo and solution/solve.sh is present in the container. The agent could read /solution/solve.sh to get the exact patch. Additionally, the agent could grep test_outputs.py to find the exact literal strings being asserted and reproduce them."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: compilation (test_compilation), go vet (test_go_vet), unit tests pass (test_unit_*), no duplicate definitions remain (test_no_duplicate_oneoffprogress_anywhere), and correct usage of progress.OneOff in each file."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings, grouped by file (pull.go, export.go, writer.go, worker.go) and concern (compilation, vet, unit tests, refactoring correctness)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, package names, function names, and commands in instruction.md all appear correct and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify but this is appropriate since the task is about refactoring specific files. It doesn't specify exact line numbers or the precise code to write (though it comes close by naming progress.OneOff)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -4,18 +4,50 @@
 
 The `ty` type checker has two related issues with type expression validation:
 
-1. **`Literal[-3.14]` is silently accepted**: Writing `x: Literal[-3.14]` or `x: Literal[-3j]` does not produce an `invalid-type-form` diagnostic, even though only integer literals are valid inside `Literal[]` with unary operators. The issue is in how `infer_type_expression` handles unary operations on number literals — it currently accepts all number types (int, float, complex) instead of restricting to integers only.
+1. **`Literal[-3.14]` is silently accepted**: Writing `x: Literal[-3.14]` or `x: Literal[-3j]` does not produce an `invalid-type-form` diagnostic, even though only integer literals are valid inside `Literal[]` with unary operators. Both of these should be flagged:
+   ```python
+   x: Literal[-3.14]
+   y: Literal[-2.718]
+   z: Literal[-3j]
+   w: Literal[-1.5j]
+   ```
+   However, integer literals with unary operators should remain valid:
+   ```python
+   a: Literal[-3]
+   b: Literal[-42]
+   c: Literal[+7]
+   ```
 
-2. **PEP-613 type alias right-hand sides use ad-hoc validation**: The validation for `TypeAlias` assignment values uses a hand-written `alias_syntax_validation` function with a `const fn` approach. This is incomplete — for example, `var1 = 3; X: TypeAlias = var1` is incorrectly accepted because the validator treats all `Name` expressions as valid. The proper approach is to reuse the existing `infer_type_expression` infrastructure which already knows how to validate type expressions thoroughly.
+2. **PEP-613 type alias right-hand sides are under-validated**: The current validation for `TypeAlias` assignment values is incomplete. For example:
+   ```python
+   var1 = 3
+   Bad: TypeAlias = var1
+   ```
+   This should produce an `invalid-type-form` diagnostic but currently doesn't. Valid type aliases must continue to work without errors:
+   ```python
+   Good1: TypeAlias = int
+   Good2: TypeAlias = int | str
+   Good3: TypeAlias = list[int]
+   Good4: TypeAlias = tuple[int, str]
+   ```
 
-## Expected Behavior
+## New Module
 
-- `Literal[-3.14]`, `Literal[-3j]`, and similar non-integer unary expressions in `Literal[]` should emit `invalid-type-form`
-- `Literal[-3]` (integer) should continue to be accepted
-- PEP-613 type alias right-hand sides should be fully validated using `infer_type_expression`, catching cases like variable references that aren't types
+The PEP-613 alias validation must be implemented as a new Rust module at:
 
-## Files to Look At
+`crates/ty_python_semantic/src/types/infer/builder/post_inference/pep_613_alias.rs`
 
-- `crates/ty_python_semantic/src/types/infer/builder/type_expression.rs` — handles `infer_type_expression`, specifically the unary-op arm in `Literal[]` subscript inference
-- `crates/ty_python_semantic/src/types/infer/builder.rs` — contains the ad-hoc `alias_syntax_validation` function and the post-inference pass dispatch loop
-- `crates/ty_python_semantic/src/types/infer/builder/post_inference/` — existing post-inference check modules; a new module for PEP-613 alias validation would fit here
+This module must:
+- Be registered in the parent directory's `mod.rs`
+- Not contain `panic!()`, `.unwrap()`, or `unreachable!()` on non-comment lines
+- Have all `use` imports only at the top of the file (no imports inside function bodies)
+
+## Codebase
+
+The repo is at `/workspace/ruff`. After changes, the codebase must:
+- Compile (`cargo check -p ty_python_semantic`)
+- Pass formatting (`cargo fmt --all --check`)
+- Pass clippy (`cargo clippy -p ty_python_semantic`)
+- Pass all mdtest suites (including `literal` and `pep613` tests)
+- Pass library unit tests (`cargo test -p ty_python_semantic --lib`)
+- Build docs without errors (`cargo doc --no-deps -p ty_python_semantic`)

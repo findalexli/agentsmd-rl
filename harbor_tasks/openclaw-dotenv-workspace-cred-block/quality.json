@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction lists every exact key name tested (ANTHROPIC_API_KEY, OPENAI_API_KEY, ANTHROPIC_OAUTH_TOKEN, OPENAI_API_KEYS, OPENCLAW_GATEWAY_TOKEN/PASSWORD/SECRET, OPENCLAW_LIVE_* variants, prefix-based suffixed variants, existing blocked keys like ALL_PROXY/HTTP_PROXY/HTTPS_PROXY/OPENCLAW_STATE_DIR/OPENCLAW_CONFIG_PATH, _BASE_URL suffix, safe keys like MY_CUSTOM_VAR/DATABASE_URL/APP_SECRET/NODE_ENV, and case-insensitive blocking). The target file src/infra/dotenv.ts and function shouldBlockWo"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (workspace .env files can inject API credentials) and specifies which keys should be blocked, but does not prescribe the implementation approach (e.g., doesn't say 'add to BLOCKED_WORKSPACE_DOTENV_KEYS set' or 'add a BLOCKED_WORKSPACE_DOTENV_PREFIXES array'). The developer must decide HOW to implement the blocking."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests call shouldBlockWorkspaceDotEnvKey with various keys and check boolean return values. Alternative implementations (e.g., using regex patterns, a single large Set with all variants, prefix arrays, or if-else chains) would all pass as long as they produce the correct blocking behavior. Tests don't assert on variable names like BLOCKED_WORKSPACE_DOTENV_PREFIXES or specific line positions. The anti-stub test checks for generic logic patterns (.has, .includes, .startsWith, etc.) which any real "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests extract the shouldBlockWorkspaceDotEnvKey function from the TypeScript file, transpile it to JavaScript, execute it via Node.js subprocess, and check the boolean return values for various keys. This is genuine behavioral testing, not text matching. The anti-stub and lint tests do use text inspection but supplement the behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_core_credential_keys_blocked, test_oauth_and_secondary_keys_blocked, test_gateway_auth_vars_blocked, test_live_provider_keys_blocked, test_prefix_based_blocking) all expect True for keys that the unpatched code returns False for. A stub returning always-True would fail test_safe_keys_allowed (which expects False for MY_CUSTOM_VAR etc.), and a stub returning always-False would fail the f2p tests. The combination of positive and negative tests prevents trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openclaw is the repo root, and solution/solve.sh contains the exact gold patch. The Dockerfile doesn't remove or protect the solution/ directory. An agent could read /solution/solve.sh (or wherever it's mounted) to obtain the exact patch. Additionally, the tests/ directory with test_outputs.py could be read to reverse-engineer exact requirements, though the instruction already provides most of this information."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: exact key blocking (provider API keys, OAuth keys, gateway auth, live provider keys), prefix-based blocking with suffixes, case-insensitive blocking, preservation of existing blocks (proxy, state-dir, _BASE_URL), and safe keys not being blocked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass, Anti-stub, Config-derived), descriptive function names (test_core_credential_keys_blocked, test_safe_keys_allowed), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying a TypeScript function's blocking logic, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (src/infra/dotenv.ts), variable names (ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENCLAW_GATEWAY_TOKEN, etc.), and paths are consistent between instruction.md and the test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction identifies the affected file (src/infra/dotenv.ts) which is appropriate since there's only one relevant file. It describes the function's purpose ('manages which environment variables are blocked') but doesn't specify exact line numbers, variable names like BLOCKED_WORKSPACE_DOTENV_KEYS, or the implementation approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TypeScript source, not an agentmd/config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

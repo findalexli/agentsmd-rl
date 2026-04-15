@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the file path (js/core/src/gradio_helper.ts), the function name (formatter), the I18N_MARKER constant (__i18n__), the marker format (__i18n__{\"key\":\"common.submit\"}), the translate_i18n_marker helper, and the expected behaviors for nested objects, arrays, null/undefined, malformed markers, and normal translations. All test-asserted specifics (return original string for objects/arrays, return empty string for null/undefined, handle i18n markers, handle malformed markers)"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the buggy behavior (labels rendering as [object Object]) and expected behavior (return original text when translation is a nested object) but does not specify the exact code change needed (e.g., adding typeof check). A developer must reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (formatter returns 'file' when translate returns an object, returns '' for null, etc.) rather than implementation details. Alternative fixes (e.g., checking with instanceof, using JSON.stringify detection, checking if result is not a string) would all pass the tests as long as the behavior is correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the formatter function, load it in Node.js, execute it with various inputs via subprocess, and assert on the returned values. They are behavioral tests, not static text-matching tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (e.g., test_nested_key_returns_string_not_object) set up a translate function that returns objects for certain keys, then assert formatter returns the original string. A stub returning empty string or the default would fail since tests check for specific string values like 'file', 'audio', etc. The null/undefined test expects '' which could match a trivial stub, but the other f2p tests require actual logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio as solve.sh content is accessible via the container's /solution/ directory (referenced in the Dockerfile setup). An agent could read /solution/solve.sh to see the exact patch (adding typeof direct_translation === 'string' check) and apply it directly without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: nested object keys returning original string, array values returning original string, null/undefined returning empty string, normal translations working, i18n marker translation, and malformed marker handling."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear groupings (static checks, pass-to-pass repo tests, fail-to-pass behavioral tests), descriptive function names (test_nested_key_returns_string_not_object, test_null_undefined_returns_empty_string), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a TypeScript function's behavior, not producing structured data output with a specific schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (js/core/src/gradio_helper.ts), function names (formatter, translate_i18n_marker), constants (I18N_MARKER, __i18n__), and commands are all correctly spelled and consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (gradio_helper.ts) and function (formatter) which is appropriate for scoping the task, but doesn't specify the exact line or the specific code change needed. Naming the file is reasonable given the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving a TypeScript function fix, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

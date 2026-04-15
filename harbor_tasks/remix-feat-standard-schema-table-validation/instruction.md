@@ -2,28 +2,37 @@
 
 ## Problem
 
-The `data-table` package's `createTable()` results are not [Standard Schema](https://standardschema.dev/)-compatible. This means tables cannot be passed directly to `parse()` or `parseSafe()` from `remix/data-schema`, forcing users to manually validate data before writes rather than using the same schema infrastructure they already use elsewhere.
+The `data-table` package's `createTable()` results are not [Standard Schema](https://standardschema.dev/)-compatible. Tables cannot be passed directly to `parse()` or `parseSafe()` from `@remix-run/data-schema`, forcing users to manually validate data before writes rather than using the same schema infrastructure they use elsewhere.
 
-Additionally, the `data-table` package was re-exporting the `DataSchema` type from its own package instead of having consumers import directly from the owning `data-schema` package, which goes against the monorepo's architectural guidelines.
+Additionally, the `data-table` package defines and exports its own `DataSchema` type instead of using the canonical `Schema` type from the owning `data-schema` package, which goes against the monorepo's architectural guidelines for cross-package boundaries.
 
 ## Expected Behavior
 
 After the fix:
-1. Tables should be Standard Schema-compatible so they work with `parseSafe()` from `remix/data-schema`
-2. Table validation should accept partial objects, reject unknown columns, and parse provided values through each column's schema
-3. The `DataSchema` type should be removed from data-table's exports — consumers should import `Schema` directly from `data-schema`
-4. Write-path validation in the database helper should route through the shared table validator for consistency
 
-## Files to Look At
+1. **Standard Schema compatibility**: Table objects returned by `createTable()` must implement the [Standard Schema](https://standardschema.dev/) protocol. Tables must expose a `~standard` property containing a `validate(value: unknown)` function that returns:
+   - `{ value: T }` for valid input
+   - `{ issues: ReadonlyArray<{ message: string, path?: string[] }> }` for invalid input
 
-- `packages/data-table/src/lib/table.ts` — Table creation, metadata, and the new Standard Schema `~standard` property
-- `packages/data-table/src/lib/database.ts` — Database helper that uses table validation for write operations
-- `packages/data-table/src/index.ts` — Public API exports
-- `AGENTS.md` — Monorepo architecture rules (update to document the cross-package boundary guideline)
-- `packages/data-table/README.md` — Package documentation (update to document the new validation behavior)
+2. **Validation behavior**: The `validate` function must enforce these rules:
+   - Partial objects are accepted — only provided columns need to be valid, and their parsed values are returned
+   - Empty objects `{}` are valid (no columns required)
+   - Unknown columns are rejected — each unknown column produces an issue where `message` includes "Unknown column" and `path` is an array containing the column name (e.g., `["extra"]` for a column named `extra`)
+   - Invalid column values are rejected — issues have `path` as an array pointing to the column (e.g., `["id"]`)
+   - Non-object values (`null`, arrays) are rejected — the function returns `{ issues: [...] }` rather than `{ value: ... }`
+   - All unknown columns should be reported (not just the first one)
 
-## Notes
+3. **parseSafe interop**: `parseSafe` imported from `@remix-run/data-schema` must work directly on table objects, returning `{ success: true, value }` for valid input and `{ success: false, issues }` for invalid input
 
-After implementing the code changes, update the relevant documentation:
-- The project's `AGENTS.md` should document the cross-package boundary rule about avoiding re-exports
-- The `data-table` README should document the data validation behavior and Standard Schema compatibility
+4. **Existing exports preserved**: The `tableMetadataKey` export must continue to work — accessing `table[tableMetadataKey]` must still return metadata with `name`, `primaryKey`, etc. Column references on the table (e.g., `table.id`) must also remain functional.
+
+5. **Type consistency**: The `data-table` package should use the `Schema` type from `data-schema` rather than defining its own `DataSchema` type.
+
+6. **Write-path consistency**: Database write helpers (`create`, `update`, etc.) must use the same validation semantics as the Standard Schema `validate` function described above.
+
+## Documentation Updates
+
+Update the following documentation:
+
+- `AGENTS.md`: Document the cross-package boundary rule about avoiding re-exports. The file should mention avoiding "re-export" (or "reexport") and reference either "cross-package" boundaries or importing from the "owning package".
+- `packages/data-table/README.md`: Add a "Data Validation" section documenting Standard Schema compatibility and that partial objects are allowed.

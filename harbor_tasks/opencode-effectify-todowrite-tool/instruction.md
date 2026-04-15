@@ -6,20 +6,26 @@ The `TodoWriteTool` in `packages/opencode/src/tool/todo.ts` is currently built u
 
 This means `TodoWriteTool` does not declare `Todo.Service` as a dependency — it reaches into the `Todo` namespace and calls the convenience wrapper directly. This breaks the effectification pattern used by other tools and makes the tool harder to test in isolation.
 
-## Expected Behavior
+## Required Changes
 
-`TodoWriteTool` should be converted to use `Tool.defineEffect(...)` so that:
+Convert `TodoWriteTool` to use the Effect-based pattern with these specific requirements:
 
-1. It declares `Todo.Service` as an Effect requirement
-2. It yields the service inside `Effect.gen` and calls methods on the yielded instance
-3. The `ToolRegistry` layer correctly provides `Todo.Service` (and its default layer) to the tool
-4. All existing type checks and tests continue to pass
+1. **Use `Tool.defineEffect(...)`** instead of `Tool.define(...)` to declare `Todo.Service` as a dependency
+
+2. **Use `Effect.gen(function* () { ... })`** for composition inside the tool implementation
+
+3. **Yield the service with `yield* Todo.Service`** to obtain the Todo service instance inside the Effect generator
+
+4. **Export `defaultLayer`** from `packages/opencode/src/session/todo.ts` — the instruction must contain `export const defaultLayer`
+
+5. **Provide `Todo.defaultLayer`** in `packages/opencode/src/tool/registry.ts` so the `ToolRegistry` layer makes the service available to the tool
+
+6. All existing type checks and tests must continue to pass
 
 ## Files to Look At
 
-- `packages/opencode/src/tool/todo.ts` — the tool definition to convert
-- `packages/opencode/src/tool/tool.ts` — contains both `Tool.define` and `Tool.defineEffect` APIs
-- `packages/opencode/src/tool/registry.ts` — wires up all tools; needs to provide the new dependency
-- `packages/opencode/src/session/todo.ts` — the `Todo` service whose `defaultLayer` may need to be exported
-- `packages/opencode/test/session/prompt-effect.test.ts` — test layer setup that may need updating
-- `packages/opencode/test/session/snapshot-tool-race.test.ts` — test layer setup that may need updating
+- `packages/opencode/src/tool/todo.ts` — the tool definition
+- `packages/opencode/src/tool/tool.ts` — contains `Tool.define` and `Tool.defineEffect` APIs
+- `packages/opencode/src/tool/registry.ts` — wires up all tools
+- `packages/opencode/src/session/todo.ts` — the `Todo` service
+- Test files in `packages/opencode/test/` that verify layer setup

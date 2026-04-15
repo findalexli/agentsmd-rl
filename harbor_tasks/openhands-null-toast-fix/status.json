@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:16:58.625850",
-  "total_time": 2067.16,
-  "sandbox_id": "ik9fadx73fzene487jfoj",
+  "validated_at": "2026-04-15T05:16:10.728358",
+  "total_time": 1879.21,
+  "sandbox_id": "ixb6804l7n40viak9bg9j",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,31 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:25: test `test_calculateToastDuration_various_inputs` has 1 assert(s),', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.06,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 2,
+      "fail_count": 8
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15633.2,
-      "at": "2026-04-10T05:43:48.985942"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +114,14 @@
       "backend": "fireworks",
       "time": 2067.16,
       "at": "2026-04-12T03:16:58.625850"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1879.21,
+      "at": "2026-04-15T05:16:10.728358"
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', 'match._nonReactive.loadPromise = undefined' (with count >= 2), and 'let previousCommitPromise = this.commitLocationPromise'. The instruction.md mentions the general concepts (loadPromise, commitLocationPromise) but does not specify these exact variable names (prevLoadPromise, previousCommitPromise) or the exact pattern of using 'let' i"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (promise references retained after resolution) and which functions/files to look at, but does not prescribe the exact fix (e.g., doesn't say 'change const to let', 'add prevLoadPromise = undefined'). It only describes the symptom."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined' (test_router_commit_promise_cleared). An alternative correct fix that clears the promise reference using different variable names or a different approach (e.g., setting match._nonReactive.loadPromise directly to undefined without an intermediate variable, or using "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are entirely text-matching: they read file contents and assert on string patterns like 'let prevLoadPromise' and 'prevLoadPromise = undefined'. They do not import, call, or execute any code to verify the memory leak is actually fixed. The p2p tests do run builds/tests but the core behavioral verification is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that don't exist in the base commit (e.g., 'let prevLoadPromise' instead of 'const prevLoadPromise', 'prevLoadPromise = undefined'). A stub or no-op implementation wouldn't add these strings to the source files, so they would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace's solution/solve.sh (accessible in the container as part of the task setup). The agent could read it directly. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact strings to insert (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined') without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three areas mentioned in instruction.md (executeBeforeLoad loadPromise, loadRouteMatch loadPromise, commitLocation commitLocationPromise) are tested, plus build/type/unit/lint checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named and grouped by concern: separate functions for each fix location (prev_promise_cleared, load_promise_cleared_in_loader, commit_promise_cleared) plus separate p2p checks. Each has a docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves source code modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'execute_before_load' (Python snake_case) but the actual function is 'executeBeforeLoad' (camelCase). This is a minor inconsistency in the test message but not in the test logic itself."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the functions (executeBeforeLoad, loadRouteMatch, commitLocation) and files, which is appropriate for narrowing scope. It doesn't specify exact line numbers or the exact code changes needed. The functions are the natural unit of localization for this task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

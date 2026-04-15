@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The test `test_vitest_file_created` asserts the exact path `services/mcp/tests/unit/tool-name-validation.test.ts`, but instruction.md only says 'services/mcp/tests/unit/' as a directory \u2014 the specific filename `tool-name-validation.test.ts` is not mentioned. Also, tests assert specific constant names like `TOOL_NAME_PATTERN`, `FEATURE_NAME_PATTERN`, and `MAX_TOOL_NAME_LENGTH` which, while inferrable, the exact export names are not explicitly stated in instruction.md. The test also checks for `GE"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT needs to change (add pattern validation, extend lint script, add tests, update docs) but does not specify exact code changes, line numbers, or specific implementations like regex patterns to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert specific variable names like `TOOL_NAME_PATTERN` and `FEATURE_NAME_PATTERN` (test_tool_name_pattern_validation, test_feature_name_pattern_validation), and the exact test filename `tool-name-validation.test.ts`. A correct alternative using different constant names (e.g., `TOOL_NAME_REGEX`, `FEATURE_NAME_REGEX`) or a different test file name would fail. Also, test_lint_uses_pattern_validation checks for literal string `validateToolName` or `TOOL_NAME_PATTERN.test`, constraining implem"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several fail-to-pass tests are purely text-based: test_zod_schema_validates_tool_name_keys checks `'.regex(' in schema_section` and `'TOOL_NAME_PATTERN' in schema_section`; test_zod_schema_validates_feature_field checks `'FEATURE_NAME_PATTERN' in schema_section`; test_lint_validates_json_definitions checks for literal strings in file content; test_lint_uses_pattern_validation checks for string presence; test_vitest_file_created reads file text and checks for string presence. Only test_tool_name_"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The regex extraction tests (test_tool_name_pattern_validation, test_feature_name_pattern_validation) actually run the regex against valid/invalid inputs and verify correct accept/reject behavior \u2014 a stub regex like /.*/ would fail. The text-matching tests require specific patterns to be present in files, which wouldn't exist without implementation. The pass-to-pass tests (typecheck, build, lint, unit tests) verify the code compiles and runs correctly."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/posthog (solve.sh is visible in the container context), and the agent could read the hidden solution/solve.sh or tests/test_outputs.py to reverse-engineer the exact expected implementation. The Dockerfile doesn't remove /solution/ after setup, and the test file paths and expected strings are fully discoverable."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: pattern constants exported from yaml-config-schema.ts, CategoryConfigSchema validation, lint script covering JSON files, vitest test for TOOL_MAP, and documentation updates for SKILL.md and handbook (truncated tests suggest these exist based on test_skill_md_documents_naming)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff/core behavioral tests, Fail-to-pass/pr_diff/documentation updates), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data output like JSON/CSV/API responses; it's about adding validation patterns and documentation."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names specific files to modify which is appropriate for the task domain, but doesn't specify exact line numbers or exact code to write. The file list is natural for a task scoping document."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it's a code and documentation editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

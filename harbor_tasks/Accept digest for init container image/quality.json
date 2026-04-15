@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_python_schema_classes_exist asserts specific class names 'InitContainerImage' and 'InitContainerWithStructuredImage' with specific import path 'schema.charts.utils.kubernetes', and asserts a specific property name '.name' for image rendering. These exact class names and the '.name' property are never mentioned in instruction.md. Also test_values_schema_updated checks for specific schema keys like 'InitContainerImage' in values.schema.json files, which are not named in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the desired behavior (what image formats should render to what strings) but does not specify exact code changes, line numbers, or specific template helper names to create."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_python_schema_classes_exist asserts exact class names 'InitContainerImage' and 'InitContainerWithStructuredImage' from 'schema.charts.utils.kubernetes' and a '.name' property. An alternative correct fix could use different class names (e.g., 'InitContainerImageSpec') or a different method name (e.g., '.full_name' or '.image_ref'), which would pass helm template tests but fail this test. test_values_schema_updated checks for the literal key 'InitContainerImage' in the JSON schema files."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute 'helm template' as a subprocess and parse the YAML output to inspect rendered container specs. test_python_schema_classes_exist imports and instantiates the Python classes. These are behavioral checks, not simple text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The helm template tests require actual correct rendering of structured image formats (e.g., 'busybox@sha256:abc123def456'), which cannot be produced by stub/default implementations. The existing template would fail on structured image inputs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/dagster after the gold patch is applied via solve.sh. The Dockerfile clones the repo to /workspace/dagster and the solution patch is available. An agent could potentially read the solve.sh or solution directory if accessible, or inspect the test file at /tests/test_outputs.py to extract exact expected values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: string format, structured with tag, structured with digest, digest precedence over tag, pullPolicy rendering, and mixed formats in a single deployment."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_init_container_string_image_format, test_init_container_structured_image_with_digest, etc.), have docstrings explaining what they test and whether they're F2P, and are logically grouped by feature."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact expected rendered image strings in a table format and provides example values.yaml with expected outputs. The JSON schema requirements are implicit but the structured format is well-documented."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md mentions 'templates/ directory', 'shared template helpers file', and 'schema/' but does not name specific buggy lines, exact file names to change, or specific helper function names to create. The guidance is at the directory/area level appropriate for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/template editing task, not purely a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

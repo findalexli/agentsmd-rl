@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T04:09:05.962499",
-  "total_time": 9949.86,
-  "sandbox_id": "idegbhkzo30pnu7bdj829",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T05:10:54.130796",
+  "total_time": 3997.75,
+  "sandbox_id": "izvgq4i4loe5m2vqrw3n4",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "docker_build": {
       "status": "fixed",
@@ -66,17 +67,29 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 51.89
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.31,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.25,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 651.24,
-      "at": "2026-04-09T14:39:02.412864"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -108,6 +121,14 @@
       "backend": "fireworks",
       "time": 9949.86,
       "at": "2026-04-10T04:09:05.962499"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 3997.75,
+      "at": "2026-04-15T05:10:54.130796"
     }
   ]
 }

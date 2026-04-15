@@ -1,26 +1,28 @@
 # Fix Flaky Benchmark Smoke Test
 
-The benchmark smoke test in the CI is consistently flaky. It fails with "TPS X.XX is below minimum threshold 1" even when throughput should be acceptable.
+The benchmark smoke test in CI is failing intermittently with "TPS X.XX is below minimum threshold 1" even when the benchmark completes transactions successfully.
 
-## The Problem
+## Problem Analysis
 
-The TPS (transactions per second) calculation in the benchmark driver has precision issues:
+The benchmark driver displays statistics including transactions per second (TPS). When the number of successful transactions is small relative to the benchmark duration (e.g., 1 transaction in 2 seconds), the calculated TPS should be a fractional value like 0.5. However, the current implementation appears to be truncating these fractional values to 0, causing the CI to reject runs that should pass.
 
-1. **Integer division bug**: The code uses `self.num_success_txes / self.duration.as_secs()` which is integer division. For example, if 1 transaction completes in 2 seconds, the TPS is 0 (1/2=0 in integer division), not 0.5.
+Additionally, the CI workflow rejects any benchmark run with TPS below 1. This threshold is too strict for CI runners that may legitimately produce fractional TPS values between 0 and 1.
 
-2. **High threshold**: The CI workflow uses `--min-tps 1` which is too strict for slow CI runners that may produce ~0.5-1.0 TPS.
+## Required Changes
 
-## Files to Modify
+You must modify:
 
-1. `crates/sui-benchmark/src/drivers/mod.rs` - Fix the TPS calculation in the `BenchmarkStats::report_table` method to use floating-point division and format to 2 decimal places
+1. **`crates/sui-benchmark/src/drivers/mod.rs`** - The benchmark driver's statistics display code. The TPS calculation needs to properly handle fractional values and display them with appropriate precision.
 
-2. `.github/workflows/rust.yml` - Lower the `--min-tps` threshold in the benchmark smoke test job from 1 to 0.01
+2. **`.github/workflows/rust.yml`** - The benchmark smoke test job's `--min-tps` threshold needs adjustment to accommodate slower CI runners.
 
-## What to Look For
+## Success Criteria
 
-In `crates/sui-benchmark/src/drivers/mod.rs`, find the code that calculates TPS for display:
-- Look for `row.add_cell(Cell::new(self.num_success_txes / self.duration.as_secs()))`
-- The fix should use `as_secs_f64()` for floating-point division and format the result to 2 decimal places
+After your changes:
+- TPS values should display with 2 decimal places (e.g., "0.50" instead of "0")
+- The benchmark driver should correctly calculate fractional TPS values without truncation
+- The CI workflow's benchmark smoke test should accept TPS values as low as 0.01
+- The code should compile and pass all lint checks (`cargo xclippy`, `cargo xlint`, `cargo fmt --check`)
 
 ## Agent Config Rules
 

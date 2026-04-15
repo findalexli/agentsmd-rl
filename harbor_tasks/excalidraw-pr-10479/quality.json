@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant file paths (binding.ts, linearElementEditor.ts, actionFinalize.tsx, App.tsx), function names (bindOrUnbindBindingElement, getBindingStrategyForDraggingBindingElementEndpoints, pointDraggingUpdates, shouldRotateWithDiscreteAngle), parameter names (angleLocked, shiftKey), and concepts (orbit mode, projectFixedPointOntoDiagonal) that the tests assert on. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly prescribes the exact fix: 'replace the raw shiftKey parameter with an angleLocked boolean', 'parameter name should be angleLocked', 'use orbit mode with a focus point from projectFixedPointOntoDiagonal', and 'Simplify the angle-lock conditions... without gating on hovered elements or existing bindings.' This tells the agent exactly WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'angleLocked?: boolean;' in binding.ts, exact string 'opts?.angleLocked && otherBindableElement' in binding strategy logic, exact parameter name 'angleLocked: boolean' in linearElementEditor.ts, exact string 'angleLocked: shouldRotateWithDiscreteAngle(event)' in actionFinalize.tsx, and 'angleLocked: shouldRotateWithDiscreteAngle(event.nativeEvent)' in App.tsx. An alternative correct fix using a different parameter name or approac"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_angle_locked_param_exists_in_binding, test_angle_locked_used_in_strategy_logic, test_shift_key_check_simplified_in_linear_editor, test_point_dragging_updates_passes_angle_locked, test_action_finalize_passes_angle_locked, test_app_component_passes_angle_locked, test_binding_strategy_respects_angle_lock) are all pure text grep tests using `assert 'X' in content` or `assert 'X' not in content`. They do not call/execute the code or verify runtime behavior. The pass-to-pa"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply adds the literal strings 'angleLocked?: boolean;', 'opts?.angleLocked && otherBindableElement', etc. into the files (even as comments or dead code) would pass all f2p tests since they only check string presence in file contents, not actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/excalidraw accessible via solve.sh. The agent could read solution/solve.sh (which contains the full gold patch) or simply grep the test file for the exact fixture strings being asserted and insert them verbatim into the source files. The f2p tests are all string-matching, making this trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (simplified angle-lock condition, angleLocked parameter in binding functions, orbit mode for angle-locked binding, parameter passing in actionFinalize and App.tsx) are tested, plus pass-to-pass tests cover typecheck, lint, prettier, and existing test suites."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped by purpose (fail-to-pass structural checks vs pass-to-pass CI checks), and clearly commented."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact parameter names ('angleLocked'), exact function signatures to change, exact conditions to remove ('!hoveredElement && !element.startBinding && !element.endBinding'), and exact helper functions to use ('projectFixedPointOntoDiagonal'). This goes well beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

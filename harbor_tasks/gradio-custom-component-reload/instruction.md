@@ -6,14 +6,15 @@ Custom components in Gradio do not update when the app is reloaded in developmen
 
 ## Root Cause
 
-In `MountCustomComponent.svelte`, the `$effect` block only mounts the component once (guarded by `!comp`) and never re-runs when props change. When `app_tree.reload` creates new prop objects, the effect does not detect the change because it does not read the prop references inside its body. Additionally, `onDestroy` is used for cleanup instead of returning a cleanup function from `$effect`, which means the old component instance is never unmounted before a new one is mounted.
+In `MountCustomComponent.svelte`, the `$effect` block is guarded by a module-level variable that prevents it from re-triggering when props change. When `app_tree.reload` creates new prop objects, the effect does not detect the change because it does not read the prop references inside its body. Additionally, cleanup is handled via `onDestroy` instead of returning a cleanup function from `$effect`, which means the old component instance may not be properly unmounted before a new one is mounted.
 
-There is also a stale `$inspect(node)` debug call in `MountComponents.svelte` that should be removed.
+There is also a typo where the runtime type uses `umount` instead of `unmount`. A stale `$inspect(node)` debug call exists in `MountComponents.svelte` that should be removed.
 
 ## Expected Behavior
 
 - Custom components should re-mount with updated props when the app reloads in dev mode
 - The old component instance should be properly unmounted before mounting the new one
+- The runtime type should use correct spelling `unmount` (not `umount`)
 - No debug `$inspect` calls should remain in production code
 
 ## Files to Investigate

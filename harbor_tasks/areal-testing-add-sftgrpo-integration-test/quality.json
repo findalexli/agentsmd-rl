@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all file paths (config_megatron.yaml, config_fsdp.yaml, ref_losses_megatron.json, test_grpo.py, test_sft.py), required keys (allocation_mode, experiment_name), required values (megatron, tests-grpo, tests-sft), the parametrize decorator pattern, the 'backend' parameter name, the 16-float constraint, and the config_{backend}.yaml pattern. All test assertions map to discoverable requirements in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: use @pytest.mark.parametrize with 'backend' parameter, use config_{backend}.yaml pattern, rename files with _fsdp suffix, create specific config files with specific keys/values. This leaves virtually no reasoning for the agent \u2014 it's a step-by-step recipe, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use AST parsing (test_grpo_parametrized_with_megatron, test_sft_parametrized_with_megatron) to check for exact decorator structure: @pytest.mark.parametrize with 'backend' as first arg and a list containing 'fsdp' and 'megatron'. An alternative correct approach using pytest fixtures, indirect parametrization, or a different parametrize structure (e.g., parametrizing with config paths directly) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are purely text/file-content inspection: test_megatron_grpo_config_exists checks 'allocation_mode:' in content string, test_megatron_sft_config_exists does the same, test_grpo_uses_backend_config_path checks for string patterns in source code, and the parametrize tests use AST parsing of source text rather than actually running the tests. No test actually executes pytest or imports the test modules."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require actual file creation (config_megatron.yaml files, ref_losses_megatron.json) and code modifications (adding parametrize decorators, changing config paths). A stub/no-op implementation would not create these files or modify the test code, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/AReaL as a git repo where solve.sh applies a patch. The agent could potentially read the solve.sh or the test file itself (test_outputs.py) to extract exact expected values. Additionally, the tests check for simple string patterns (e.g., 'megatron' in content, 'experiment_name: tests-grpo') that can be trivially matched by creating minimal files without understanding the actual configuration semantics."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement #6 says existing files (config.yaml, ref_losses.json) must be renamed with _fsdp suffix, but no test verifies that config_fsdp.yaml or ref_losses_fsdp.json exist, or that the original config.yaml/ref_losses.json are removed. The test_repo_yaml_valid test (truncated) may check some YAML files but the renaming requirement is not explicitly tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail_to_pass, pass_to_pass, static, repo_tests), descriptive function names (test_grpo_parametrized_with_megatron, test_megatron_sft_ref_losses), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies that ref_losses_megatron.json must be a JSON array of exactly 16 float values, each strictly between 0.0 and 10.0. This schema is documented and tested."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and free of typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files to modify, exact function names (test_grpo, test_sft), exact decorator to use (@pytest.mark.parametrize), exact parameter name ('backend'), exact file naming pattern (config_{backend}.yaml), and exact function call to avoid (load_expr_config with 'config.yaml'). This eliminates the localization aspect of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff creates new config files and renames existing ones without contradicting other files. The changes are localized to the test directories."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 6
+}

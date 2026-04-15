@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Every test-asserted specific (function names like resolveAuthorForCommit/appendAuthors, variable names like authorCache/commitMatch/bumpedPackages/changelogPath/versionHeader, string literals like 'No changelog entries', regex patterns like [a-f0-9], format strings like '#### ${pkg.name}', version comparison 'prevPkg.version !== currentPkg.version', imports fs/path/execSync/globSync, GH_TOKEN/GITHUB_TOKEN) is explicitly named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive - it specifies exact variable names (authorCache, commitMatch, bumpedPackages, changelogPath, versionHeader), exact function signatures (async function resolveAuthorForCommit, async function appendAuthors), exact comparison expressions (prevPkg.version !== currentPkg.version), exact format strings (#### ${pkg.name}), and exact fallback messages ('No changelog entries'). This leaves virtually no reasoning about WHAT to change; the instruction essentially "
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names (authorCache, commitMatch, bumpedPackages, changelogPath, versionHeader), exact function signatures ('async function resolveAuthorForCommit', 'async function appendAuthors'), exact regex patterns ([a-f0-9]), and exact format strings ('#### ${pkg.name}'). An alternative correct fix using different variable names (e.g., 'cachedAuthors' instead of 'authorCache') or different function names would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every fail-to-pass test is purely text-matching: they read the script file and check for string presence (e.g., 'assert \"async function resolveAuthorForCommit\" in content', 'assert \"authorCache\" in content', 'assert \"CHANGELOG.md\" in content'). Only test_script_is_valid_esm and test_eslint_passes/test_repo_prettier_format actually execute the code. No test imports or calls the functions, or verifies actual behavior of changelog generation."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply contains the right string literals (e.g., 'async function resolveAuthorForCommit() {}', 'async function appendAuthors() {}', 'const authorCache = {}', 'const commitMatch = /[a-f0-9]/') with no real logic would pass all fail-to-pass tests, since they only check for string presence in the file, not actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router and the agent could read solution/solve.sh (or the patch within it) to extract the exact code. Additionally, since tests are purely string-matching, the agent could grep the test file for expected strings and insert them as comments or dead code to pass all tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires behavioral outcomes (e.g., 'only packages with actual version bumps should be listed', 'append author attribution to entries', 'read changelog entries from CHANGELOG.md') but tests only verify string presence, not that these behaviors actually work correctly when the script runs."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, and docstrings explaining what each test checks and why it should fail/pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces markdown text output (release notes), not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify (scripts/create-github-release.mjs) plus exact variable names, function signatures, comparison expressions, and format strings - this goes well beyond describing what's broken and effectively dictates the implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a JavaScript script, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

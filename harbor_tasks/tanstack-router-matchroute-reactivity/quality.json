@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_matchroute_returns_jsx_fragment checks for exact string 'return <>{renderedChild()}</>', test_matchroute_uses_memo_for_children checks for 'const renderedChild = Solid.createMemo', test_usematchroute_opts_inside_memo checks for destructuring pattern inside createMemo. None of these specific patterns are described in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes only the symptoms (MatchRoute not updating on navigation/signal changes) and the file to modify, without specifying the exact code changes needed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_usematchroute_opts_inside_memo checks for exact destructuring pattern 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo; test_matchroute_uses_memo_for_children checks for exact string 'const renderedChild = Solid.createMemo'; test_matchroute_returns_jsx_fragment checks for exact string 'return <>{renderedChild()}</>'. An alternative correct fix (e.g., using createEffect, or different variable naming, or Solid.Show) wo"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "3 of the 4 fail_to_pass tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are purely text-matching with assertions like `assert 'return <>{renderedChild()}</>' in content` \u2014 they read the file and check for literal strings, never executing the code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests only check for specific string patterns in the source file. An agent could simply add the expected strings as comments or dead code to pass test_matchroute_returns_jsx_fragment ('return <>{renderedChild()}</>') and similar tests without actually fixing the reactivity bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router's solve.sh and is accessible in the container at /solution/solve.sh. The agent could read it directly. Additionally, the tests check for exact literal strings that appear in the test file itself, so grepping test files reveals the expected patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires 'MatchRoute properly reactive to both navigation changes and signal updates' but no test actually verifies this runtime behavior \u2014 the fail_to_pass tests only do string matching on source code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, grouped logically, and have descriptive docstrings explaining what each test checks and why (e.g., 'fail_to_pass' vs 'pass_to_pass' annotations)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names only the file (Matches.tsx) which is reasonable for a targeted bugfix task, and doesn't specify exact lines or the solution approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

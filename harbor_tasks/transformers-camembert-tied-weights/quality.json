@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific internal attribute paths like 'model.roberta.embeddings.word_embeddings.weight' and 'model.lm_head.decoder.weight', the attribute name 'roberta' (not 'camembert'), and check that _tied_weights_keys exists in both modeling_camembert.py and modular_camembert.py. The instruction mentions the error message referencing 'camembert.embeddings.word_embeddings.weight' and 'lm_head.decoder.weight', but never explicitly states that the model's internal attribute is 'roberta' (which is"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (ValueError due to _tied_weights_keys mismatch) and requirements (model must instantiate, weights must be tied, fix in both files), but does not specify the exact code change needed. The developer must figure out that 'camembert' should be 'roberta' in the key path."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check behavioral outcomes (model instantiation, memory sharing via data_ptr(), mutation propagation) rather than asserting specific code text. The static tests only check that _tied_weights_keys string exists somewhere in the files. Alternative correct implementations (e.g., different formatting, additional keys) would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests (test_model_instantiates, test_weight_tying_shares_memory, test_weight_mutation_propagates) import the class, instantiate it, and check runtime behavior. While test_tied_weights_keys_exists does text search, the majority of tests execute code. There is a healthy mix of behavioral and static tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_model_instantiates would fail with the buggy code (raises ValueError). test_weight_tying_shares_memory checks data_ptr equality which requires actual weight tying. test_weight_mutation_propagates sets specific values and checks propagation. A stub/pass implementation would not satisfy these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers (accessible in container) as solve.sh with the exact patch. The agent could read solution/solve.sh to see the exact fix: changing 'camembert.embeddings' to 'roberta.embeddings' in _tied_weights_keys. The Dockerfile doesn't remove the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 5 requirements from instruction.md are tested: (1) no ValueError on instantiation, (2) data_ptr equality for weight tying, (3) bidirectional mutation propagation, (4) _tied_weights_keys in both files, (5) other Camembert variants still work (test_other_camembert_models_unaffected in truncated portion, plus regression tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass, Fail-to-pass pr_diff, Pass-to-pass regression), descriptive function names, and docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a Python class attribute, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the error message which naturally contains the buggy key path, but doesn't name the exact file or line to change. The error message is what a user would actually see, making it a legitimate problem description rather than a hint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

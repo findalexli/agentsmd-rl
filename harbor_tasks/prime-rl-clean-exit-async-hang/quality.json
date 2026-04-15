@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the file (src/prime_rl/utils/utils.py), the function (clean_exit decorator with async_wrapper and sync_wrapper), the expected behavior (sys.exit(1) raising SystemExit(1), finally block execution, wandb.finish(exit_code=1)), and the error scenario. All test assertions (SystemExit with code 1, wandb.finish calls, destroy_process_group cleanup, success path behavior) are discoverable from the instruction's expected behavior section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The process must call sys.exit(1) to raise SystemExit(1)' in the Expected behavior section, which is exactly the gold patch fix. A competent developer doesn't need to reason about what to change \u2014 the instruction tells them the exact fix (replace raise with sys.exit(1))."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (SystemExit with code 1, wandb.finish called with exit_code=1, destroy_process_group called, success paths work). Alternative implementations like os._exit wrapped with cleanup, or catching and converting to SystemExit differently, would also pass as long as they produce SystemExit(1). The tests don't assert on exact line content or variable names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_async_exit, test_sync_exit, etc.) run the decorated functions in subprocesses or in-process and check behavioral outputs (SystemExit raised, cleanup callbacks invoked). The only static test is test_syntax_check which parses the AST. Tests genuinely execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_async_exit, test_sync_exit, etc.) assert that SystemExit(1) is raised instead of the original exception. A stub/no-op implementation would either re-raise the original exception (failing the SYSTEM_EXIT:1 check) or not raise at all (printing NO_EXCEPTION). The unpatched code raises the original exception, so these tests genuinely detect the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo). The tests extract and execute the clean_exit function dynamically, so reading test files wouldn't help bypass the behavioral checks. The agent must actually modify the source code to produce correct behavior."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: error logging (implicit via no crash), wandb.finish(exit_code=1) (test_wandb_cleanup), destroy_process_group in finally (test_finally_cleanup), sys.exit(1)/SystemExit(1) (test_async_exit, test_sync_exit), process not hanging (subprocess timeout), and success paths still work (test_success_path_async/sync)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories ([static], [pr_diff], [repo_tests], [agent_config])."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a decorator's error handling behavior, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact function (clean_exit), the exact inner functions (async_wrapper and sync_wrapper), and prescribes the exact fix: 'The process must call sys.exit(1) to raise SystemExit(1)'. This goes beyond describing the bug location and into specifying the solution implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

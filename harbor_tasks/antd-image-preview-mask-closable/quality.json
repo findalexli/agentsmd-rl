@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files (index.tsx, PreviewGroup.tsx, useMergedPreviewConfig.ts), the Omit pattern with 'maskClosable', the return type signature with 'maskClosable?: boolean', and the variable name 'mergedMaskClosable' (implicitly via the hook implementation details). The test-specific strings like 'maskClosable?: boolean', 'mergedMaskClosable', and the Omit pattern are all described in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly gives the exact type definition to use ('type OriginPreviewConfig = Omit<NonNullable<Exclude<RcImageProps[\"preview\"], boolean>>, \"maskClosable\">'), the exact return type ('T & { blurClassName?: string; maskClosable?: boolean }'), and describes extracting 'closable' from mask config and passing as 'maskClosable'. This is essentially the complete solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names like 'mergedMaskClosable' (test_useMergedMask_returns_third_value uses regex matching exact destructuring pattern), exact string 'maskClosable: mergedMaskClosable' in test_useMergedPreviewConfig_returns_maskClosable. An alternative correct fix using different variable names (e.g., 'closableValue' or 'maskClosableFromMask') would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_useMergedPreviewConfig_returns_maskClosable, test_Image_types_use_omit_pattern, test_PreviewGroup_types_use_omit_pattern, and test_useMergedMask_returns_third_value are purely text-matching tests (reading file content and asserting on string patterns). While test_image_jest_tests and test_image_mask_closable_tests do execute code, the F2P tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific strings like 'maskClosable?: boolean', 'mergedMaskClosable', and regex patterns that wouldn't be present in the unmodified code. A stub/no-op implementation that doesn't modify the files would fail since the base code doesn't contain these patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ant-design (same repo), and solve.sh is in /solution/solve.sh. The agent could read the solution directory if it exists in the container. Additionally, since tests are text-matching, the agent could grep test files (if accessible) for the exact strings being asserted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: type changes in index.tsx and PreviewGroup.tsx (tested), hook changes in useMergedPreviewConfig.ts (tested), and passing existing tests (tested via Jest). All explicitly required behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_useMergedPreviewConfig_returns_maskClosable, test_Image_types_use_omit_pattern, etc.), have docstrings explaining F2P vs P2P checks, and include before/after descriptions."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves TypeScript code changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact code snippets showing the type definition, return type signature, and implementation details including the exact Omit pattern and variable naming. This goes beyond naming files/modules and essentially provides the complete solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

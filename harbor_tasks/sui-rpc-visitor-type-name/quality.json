@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the key paths (crates/sui-types/src/object/rpc_visitor/mod.rs, crates/sui-display/src/v2/value.rs, base_types), the function pattern (type_name_layout, move_ascii_str_layout, move_utf8_str_layout, url_layout), the struct details (0x1::type_name::TypeName, field 'name'), and the test commands. The specific import lines like 'use crate::base_types::type_name_layout;' are discoverable from the described pattern, though very specific. The test for exact grep patterns (e.g., 'us"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact implementation: 'A corresponding layout function for TypeName should be added to base_types and then referenced in those two RPC/display modules.' It names exact files, exact function naming pattern, and exactly where to add references. This is effectively telling the agent WHAT to change rather than just describing the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests grep for exact strings like 'use crate::base_types::type_name_layout;' (test_rpc_visitor_imports_type_name_layout), 'type_name_layout()' (test_rpc_visitor_handles_type_name), 'use sui_types::base_types::type_name_layout;' (test_sui_display_imports_type_name_layout), and check the function is in a specific layouts list. An alternative correct fix that uses a different function name, inlines the check, or structures the code differently would fail these grep-based tests even if behaviorally "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several fail-to-pass tests (test_rpc_visitor_imports_type_name_layout, test_rpc_visitor_handles_type_name, test_sui_display_imports_type_name_layout, test_sui_display_uses_type_name_in_atoms) are purely grep-based text searches with no execution or behavioral verification. Only test_type_name_layout_exists compiles code. The core behavioral claim (TypeName serializes as plain string) is never directly tested."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific function existence (test_type_name_layout_exists compiles code that imports and calls type_name_layout) and specific text patterns in source files. A stub or no-op couldn't pass these since the function must exist with correct struct fields, and the grep checks require actual code changes in specific files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sui's solve.sh (solution/solve.sh). The agent could potentially read this file or grep for expected patterns. Additionally, since tests are grep-based for specific strings, the agent could match fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'a 0x1::type_name::TypeName value should serialize as a plain JSON string in RPC output, not as {\"name\": \"...\"}'. No test actually verifies this end-to-end serialization behavior. The tests only check for code structure (grep patterns) and compilation, not the actual JSON output format."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating fail-to-pass vs pass-to-pass, and what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data output that needs schema documentation; it's about modifying serialization behavior in existing code."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (crates/sui-types/src/object/rpc_visitor/mod.rs, crates/sui-display/src/v2/value.rs), exact function names to create (type_name_layout), and the exact module (base_types) where to add it. This is excessive localization that removes the need for the agent to reason about where to make changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

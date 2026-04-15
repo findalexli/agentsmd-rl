@@ -6,17 +6,32 @@ The `remix` package's prerelease system couples the version suffix (e.g. `alpha`
 
 ## Expected Behavior
 
-- The `prerelease.json` config field should be renamed from `tag` to `channel` to clearly distinguish it from the npm dist-tag
-- The npm dist-tag for remix prereleases should always be `"next"`, regardless of the channel value
-- The code in `scripts/utils/changes.ts` and `scripts/publish.ts` should use the new `channel` terminology
-- The project documentation (`AGENTS.md`, `CONTRIBUTING.md`) should be updated to reflect the renamed field and the fact that the dist-tag is always `next`
+### Configuration File
+- `packages/remix/.changes/prerelease.json` must use a field named `channel` (not `tag`)
+- The `channel` field value is the string `"alpha"` (e.g., `{ "channel": "alpha", ... }`)
 
-## Files to Look At
+### changes.ts — readRemixPrereleaseConfig()
+- The `RemixPrereleaseConfig` interface must define `channel: string`
+- The function must check for `'channel' in obj` and read `obj.channel`
+- The function must validate the channel value with `.trim()` (e.g., `obj.channel.trim()`)
+- The function must return an object containing `config: { channel: ... }`
 
-- `packages/remix/.changes/prerelease.json` — the prerelease config file (currently uses `"tag"`)
-- `scripts/utils/changes.ts` — contains `RemixPrereleaseConfig` interface and `readRemixPrereleaseConfig()` which reads/validates the config
-- `scripts/publish.ts` — the publish script that uses the prerelease config to determine the npm tag
-- `AGENTS.md` — development guide with prerelease documentation (look for the "Prerelease mode" section under "Changes and Releases")
-- `CONTRIBUTING.md` — contributor guide with prerelease instructions
+### changes.ts — getNextVersion()
+- Version calculation must use `semver.inc`
 
-After fixing the code, update `AGENTS.md` and `CONTRIBUTING.md` to reflect the renamed field and the new behavior where the npm dist-tag is always `"next"`.
+### publish.ts — Prerelease Publishing
+- The script must use the variable `remixPrereleaseChannel` (renamed from the old `tag` variable)
+- The publish command for remix must use `--tag next` (not `--tag ${channel}` or any other tag)
+- The publish command must be a real `pnpm publish` command
+
+### Documentation
+- `AGENTS.md` must mention the `channel` field and explain that the npm dist-tag is always `"next"`
+- `CONTRIBUTING.md` must show `prerelease channels` in section headers (not "tags") and include a JSON example with `"channel": "alpha"`
+
+## Files to Modify
+
+- `packages/remix/.changes/prerelease.json` — rename `tag` to `channel`, value remains `"alpha"`
+- `scripts/utils/changes.ts` — update RemixPrereleaseConfig interface, readRemixPrereleaseConfig(), and getNextVersion()
+- `scripts/publish.ts` — rename tag variable to `remixPrereleaseChannel`, ensure `--tag next` is used
+- `AGENTS.md` — update prerelease documentation to use `channel` terminology and explain `next` dist-tag
+- `CONTRIBUTING.md` — update prerelease section headers and JSON examples

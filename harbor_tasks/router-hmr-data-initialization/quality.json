@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the target file path, the buildStableSplitComponentStatements template, the exact patterns (import.meta.hot?.data?.[%%hotDataKey%%], import.meta.hot.data[%%hotDataKey%%]), the initialization requirement, and the test file path. All asserted specifics in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md states 'Before writing to import.meta.hot.data[key], the import.meta.hot.data object must be initialized' and 'The tests verify these exact string patterns exist in the source file' \u2014 combined with the explicit mention of ??= initialization pattern and the ordering requirement, this essentially tells the agent to add `import.meta.hot.data ??= {}` before the write. The instruction describes the fix, not just the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_source_code_initializes_hot_data asserts the exact string 'import.meta.hot.data ??= {}' must appear in the source. Alternative valid fixes like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail the test despite being correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) are purely string-matching on file content with `assert '...' in content`. While P2P tests do run builds/tests via subprocess, the core F2P tests are entirely text-matching without executing the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests check for a specific string ('import.meta.hot.data ??= {}') that does not exist in the original source file and check ordering. A stub or no-op would not pass since the base commit lacks this initialization line."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router (solution/solve.sh shows the exact patch). An agent could read the Dockerfile or solution directory. Additionally, the F2P tests assert exact literal strings ('import.meta.hot.data ??= {}') that the agent could simply grep for or insert without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: (1) optional chaining read pattern, (2) write pattern, (3) initialization before write. All three are tested in test_source_has_correct_template_structure and test_source_code_initializes_hot_data. Build and unit test pass requirements are also tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_source_code_initializes_hot_data, test_source_has_correct_template_structure, etc.), have docstrings explaining F2P vs P2P purpose, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and patterns in instruction.md match those in tests and solution without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (react-stable-hmr-split-route-components.ts), the exact template (buildStableSplitComponentStatements), and describes the exact fix pattern needed ('import.meta.hot.data object must be initialized' before writing). This goes beyond describing symptoms to specifying the exact location and nature of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

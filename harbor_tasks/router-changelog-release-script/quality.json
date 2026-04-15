@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Every test assertion checks for specific strings, function signatures, variable names, and patterns that are explicitly named in instruction.md. For example: 'async function resolveAuthorForCommit(hash)', 'async function appendAuthors(content)', 'const bumpedPackages = []', 'prevVersion: null', the changelog path construction, sort logic, old patterns to remove, etc. The script path 'scripts/create-github-release.mjs' is implicitly discoverable from the task description. All specifics are presen"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates exact variable names ('const bumpedPackages = []'), exact function signatures ('async function resolveAuthorForCommit(hash)'), exact code patterns ('if (prevPkg.version !== currentPkg.version)'), exact comment text ('// Package didn\\'t exist in previous release'), and exact expressions ('bumpedPackages.sort((a, b) => a.name.localeCompare(b.name))'). This is essentially the complete solution specification, leaving no reasoning about WHAT to change \u2014 only transc"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact implementation details: specific variable names like 'const bumpedPackages = []', exact function signatures like 'async function resolveAuthorForCommit(hash)', exact expressions like 'bumpedPackages.sort((a, b) => a.name.localeCompare(b.name))', and exact comments like '// Package didn\\'t exist in previous release'. An alternative correct implementation using different variable names (e.g., 'changedPackages'), different function names, or different sorting syntax would fail"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every test (7 out of 8) is purely text-matching via `assert 'string' in content` or regex on the file content. Only test_script_syntax_valid actually executes the code (via `node --check`). No test imports, calls, or executes the functions to verify their behavior. The tests are essentially all `assert 'foo' in open(path).read()` pattern."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply contains the required string literals (function signatures, variable declarations, comments) without any actual logic would pass all f2p tests. For example, writing `async function resolveAuthorForCommit(hash) {}` and `async function appendAuthors(content) {}` with the right variable names and comments but no real implementation would satisfy all assertions since they only check for string presence in the file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /solution/solve.sh which references /solution/fix.patch. The agent could apply this patch directly (`git apply /solution/fix.patch`) or read it to extract the exact solution. Additionally, since tests only check for string presence, the agent could grep test files to find the exact strings needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes: removing old conventional commit patterns, adding resolveAuthorForCommit and appendAuthors functions, bumpedPackages detection with sorting, changelog extraction from files, author attribution, new package handling, and output formatting. All of these are covered by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_resolveAuthorForCommit_function_exists, test_no_conventional_commit_grouping), have docstrings explaining what they check, and are tagged with F2P/P2P annotations indicating their type."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a script that generates markdown text, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (scripts/create-github-release.mjs), exact variable names to add and remove, exact function signatures, exact code patterns like 'const bumpedPackages = []', and even exact comments like '// Package didn\\'t exist in previous release'. This goes far beyond describing what's broken \u2014 it's a line-by-line implementation guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a JavaScript script, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

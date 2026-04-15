@@ -2,45 +2,59 @@
 
 ## Problem
 
-The Airflow Helm chart's `workers.volumeClaimTemplates` configuration option is located at the top level of the workers section. However, volume claim templates are specifically for Celery workers (not for Kubernetes executor workers). This creates confusion and inconsistent configuration.
+The Airflow Helm chart currently provides a `workers.volumeClaimTemplates` configuration option. However, volume claim templates are specifically for Celery workers (not for Kubernetes executor workers). A new `workers.celery.volumeClaimTemplates` field should be added for better organization, while maintaining backward compatibility with the existing location and marking the old location as deprecated.
 
-The goal is to:
-1. Add a new `workers.celery.volumeClaimTemplates` field for better organization
-2. Maintain backward compatibility with the existing `workers.volumeClaimTemplates`
-3. Mark the old location as deprecated with appropriate warnings
+## Requirements
 
-## What You Need to Do
+### 1. New field in values.yaml
 
-1. **Add the new field location** in `chart/values.yaml`:
-   - Add `volumeClaimTemplates: []` under `workers.celery`
-   - Include proper documentation comments explaining the purpose
+Add a `volumeClaimTemplates` field under the `workers.celery` section in `chart/values.yaml`. The `workers.celery` section already contains the fields: `enableDefault`, `persistence`, `hostAliases`, and `schedulerName`. The new field should be placed alongside these existing fields.
 
-2. **Update the JSON schema** in `chart/values.schema.json`:
-   - Add `workers.celery.volumeClaimTemplates` with proper type, description, and examples
-   - Update the description of the old `workers.volumeClaimTemplates` to indicate deprecation
+- The default value must be an empty list (`[]`)
+- The field must have a documentation comment containing either the phrase "Additional volume claim templates" or "Requires mounting"
 
-3. **Add deprecation warning** in `chart/templates/NOTES.txt`:
-   - When `workers.volumeClaimTemplates` is used, show a deprecation warning
-   - Direct users to use the new `workers.celery.volumeClaimTemplates` instead
+### 2. Deprecation comment on old field
 
-4. **Create newsfragment** at `chart/newsfragments/62048.significant.rst`:
-   - Document the deprecation and migration path
+The existing `workers.volumeClaimTemplates` field in `chart/values.yaml` must have a deprecation comment with the exact text:
 
-## Key Files to Modify
+```
+# (deprecated, use `workers.celery.volumeClaimTemplates` instead)
+```
 
-- `chart/values.yaml` - Add new field location
-- `chart/values.schema.json` - Update schema for both old and new locations
-- `chart/templates/NOTES.txt` - Add deprecation warning
-- `chart/newsfragments/62048.significant.rst` - Create this file
+### 3. JSON schema update
+
+Update `chart/values.schema.json`:
+
+- Add `workers.celery.volumeClaimTemplates` with:
+  - Type: `"array"`
+  - A `"description"` field
+  - At least 2 entries in `"examples"`
+  - Each example must contain the keys: `name`, `storageClassName`, `accessModes`, and `resources`
+- Update the old `workers.volumeClaimTemplates` description to include the word "deprecated" and reference `workers.celery.volumeClaimTemplates` as the replacement
+
+### 4. Deprecation warning in NOTES.txt
+
+Add a deprecation warning in `chart/templates/NOTES.txt` that:
+
+- Contains the exact text: `` `workers.volumeClaimTemplates` has been renamed ``
+- References `workers.celery.volumeClaimTemplates` as the new location
+
+### 5. Newsfragment
+
+Create the file `chart/newsfragments/62048.significant.rst` documenting the deprecation and migration path.
+
+## Backward Compatibility
+
+The chart must still render correctly with:
+
+- Only the old `workers.volumeClaimTemplates` (backward compatibility)
+- Only the new `workers.celery.volumeClaimTemplates`
+- Both specified simultaneously (new location takes precedence)
 
 ## Testing
 
-The chart should still render correctly with both:
-- The old `workers.volumeClaimTemplates` (backward compatibility)
-- The new `workers.celery.volumeClaimTemplates`
-- Both specified (new location takes precedence)
+To verify rendering:
 
-To test rendering:
 ```bash
 cd /workspace/airflow/chart
 helm dependency build
@@ -50,5 +64,4 @@ helm template test . --values <values-file>
 ## Notes
 
 - Look at how other fields are organized under `workers.celery` for consistency
-- The examples in schema.json should show realistic volume claim templates
 - The deprecation warning should follow the same format as other deprecation warnings in NOTES.txt

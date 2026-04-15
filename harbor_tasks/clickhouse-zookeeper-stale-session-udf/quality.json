@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()', and the specific variable name 'current_zookeeper'. While the instruction mentions getZooKeeper().first and 'is retry' method conceptually, it never names the variable 'current_zookeeper' nor the exact method 'isRetry()'. These test-specific identifiers are not fully discoverable from instruction.md alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'A fresh ZooKeeper session should be obtained via the getter's getZooKeeper().first method', 'session renewal should happen BEFORE calling getObjectNamesAndSetWatch', 'The retry control provides a method to detect when this is a retry attempt', and 'The object list must be re-fetched inside the retry loop'. This describes exactly WHAT to change rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names: 'current_zookeeper' is checked as an exact literal string in multiple tests (e.g., test_zookeeper_session_renewal_in_retry_loop checks 'current_zookeeper = zookeeper_getter.getZooKeeper().first', test_session_renewal_timing checks 'getObjectNamesAndSetWatch(current_zookeeper'). An alternative correct fix using a different variable name like 'fresh_zookeeper' or 'active_zk' would fail all tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, test_no_stale_zookeeper_parameter_in_loop, test_session_renewal_timing) reads the source file and uses string matching / regex on the file content. No test actually compiles or runs the code to verify behavior. test_file_compiles attempts compilation but explicitly allows non-zero return codes."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op would not pass - the tests check for specific code patterns that must be present in the source file (e.g., 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()'). The original unmodified file would fail these checks since these strings don't exist in it."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/clickhouse's solve.sh which contains the exact patch. An agent could read /tmp/fix.patch or the solution/solve.sh file (if accessible) to extract the exact changes. Additionally, since tests are pure string matching, the agent could grep for the expected strings in test files and insert them mechanically."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: session renewal on retry, object names re-fetched inside loop, use of current session variable, session renewal before getObjectNamesAndSetWatch. All of these are tested in the corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_zookeeper_session_renewal_in_retry_loop, test_object_names_fetched_inside_retry_loop, etc.), have docstrings explaining what they check, and are grouped logically by the aspect of the fix they verify."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a C++ code fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file and function, names the exact API methods to use (getZooKeeper().first, isRetry()), and describes the exact ordering of operations. This goes beyond localizing the bug and essentially prescribes the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

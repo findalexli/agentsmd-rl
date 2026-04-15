@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:11:37.506113",
-  "total_time": 2695.24,
-  "sandbox_id": "iwgl49xp96usoyz4zl7ro",
+  "validated_at": "2026-04-15T06:11:29.231447",
+  "total_time": 2881.17,
+  "sandbox_id": "imf3vonex53n47dg6itam",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -53,17 +55,30 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.59,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:145: test `test_typealias_before_no_instance_fallback` only r', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:401: test `test_member_lookup_not_stubbed` only reads file te', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:457: test `test_no_local_use_statements` only reads file text']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.2,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1215.53,
-      "at": "2026-04-09T14:48:26.575653"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -95,6 +110,14 @@
       "backend": "fireworks",
       "time": 2695.24,
       "at": "2026-04-12T03:11:37.506113"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2881.17,
+      "at": "2026-04-15T06:11:29.231447"
     }
   ]
 }

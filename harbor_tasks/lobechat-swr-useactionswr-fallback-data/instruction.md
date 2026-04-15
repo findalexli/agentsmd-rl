@@ -1,12 +1,32 @@
 ## Bug: useActionSWR auto-fetches on mount and breaks shared loading state
 
-The `useActionSWR` hook in `src/libs/swr/index.ts` currently uses `useSWRMutation`, which causes two problems:
+The `useActionSWR` hook in `src/libs/swr/index.ts` currently has two problems:
 
-1. **Auto-fetch on mount**: When the SWR cache is empty and a component mounts, the hook triggers an unwanted fetch request. Even with `revalidateOnMount: false`, `useSWR` will auto-fetch when the cache is empty.
-2. **No shared loading state**: `useSWRMutation`'s `isMutating` state is per-hook-instance, not shared globally by SWR key. This means multiple components using the same key (e.g., the "create agent" button and the "+" button in the header) don't share loading state.
+1. **Auto-fetch on mount**: When the SWR cache is empty and a component mounts, the hook triggers an unwanted fetch request. This happens even when `revalidateOnMount: false` is set, because when the cache is empty, SWR still auto-fetches.
 
-The fix should switch `useActionSWR` to use `useSWR` with `fallbackData` set to an empty object, so SWR thinks initial data exists and won't auto-fetch on mount. Combined with `revalidateOnMount: false`, this prevents auto-fetch while preserving shared `isValidating` state across components.
+2. **No shared loading state**: The loading state is per-hook-instance, not shared globally by SWR key. This means multiple components using the same key (e.g., the "create agent" button and the "+" button in the header) don't share loading state.
 
-Also, the project's `CLAUDE.md` has a large inline section for Linear issue management rules. This should be extracted into a separate `.cursor/rules/linear.mdc` file (following the pattern of other rules in `.cursor/rules/`), with `CLAUDE.md` just containing a reference to it. Keep the section heading but replace the full rules with a single line pointing to the external file.
+The fix must:
+- Prevent auto-fetch on mount while preserving shared loading state across components using the same key
+- Use the SWR configuration options `fallbackData` and `revalidateOnMount`
+- Not use `useSWRMutation` (the current approach)
+- Ensure all comments in the SWR module are written in English only (no Chinese characters)
 
-The comments in the SWR module should be in English only -- remove any non-English comments and translate them if needed.
+---
+
+## CLAUDE.md Restructuring
+
+The project's `CLAUDE.md` currently contains a large inline section for Linear issue management rules. This should be refactored:
+
+1. Create a new file at `.cursor/rules/linear.mdc` containing the Linear issue management rules
+2. The new file must include:
+   - Frontmatter with `alwaysApply: true`
+   - A heading containing the text "Linear Issue Management"
+   - A section titled "Completion Comment"
+   - A section titled "Per-Issue Completion Rule"
+   - A reference to "In Review" status
+3. Update `CLAUDE.md` to reference `.cursor/rules/linear.mdc` instead of containing the full rules inline
+4. `CLAUDE.md` must NOT contain the strings "Retrieve issue details" or "Per-Issue Completion Rule" after the restructure
+5. Keep the section heading in `CLAUDE.md` but replace the full rules with a single line pointing to the external file
+
+Follow the pattern of other rule files in `.cursor/rules/` (if they exist) for the frontmatter format.

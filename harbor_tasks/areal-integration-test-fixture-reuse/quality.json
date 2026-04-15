@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific values not mentioned in instruction.md: pytestmark must evaluate to pytest.mark.sglang (test_pytestmark_sglang_present), consumer_batch_size >= 3 (instruction says >= 3 but test checks gateway_controller specifically), max_head_offpolicyness >= 100 in gateway_controller_full_init (instruction doesn't mention this fixture needs it but test checks it), and the specific fixture names 'gateway_controller_full_init' are not mentioned in the instruction. The marker name 'sglan"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states implementation details: 'local_scheduler fixture must use tmp_path_factory parameter (not tmp_path)', 'consumer_batch_size must be >= 3', 'max_head_offpolicyness must be >= 100', specific fixtures must be module-scoped, specific tests referencing should_accept_fn must be removed. These are prescriptive fixes, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_pytestmark_sglang_present hardcodes the marker name 'sglang' \u2014 an alternative correct fix using a different marker name (e.g., 'inference_service' or 'integration') would fail. test_fixtures_module_scoped checks specific fixture names including 'gateway_controller_full_init'. test_controller_settings_loosened checks max_head_offpolicyness in 'gateway_controller_full_init' by name. An alternative that renames fixtures or uses a different marker would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use AST parsing and eval/exec to evaluate decorator expressions and assignments at runtime with mock objects, rather than simple string matching. For example, test_fixtures_module_scoped evaluates fixture decorators with a mock pytest.fixture, and test_pytestmark_sglang_present executes assignments with a mock pytest module."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check substantive changes: fixture scope must be 'module'/'session' (default is 'function'), pytestmark must be assigned, slow markers must be removed, should_accept_fn tests must be deleted, specific numeric thresholds must be met. A stub or no-op would not pass these checks against the base commit code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/AReaL as a git repo, and solve.sh applies a patch. An agent could potentially read /solution/solve.sh or the test file tests/test_outputs.py to discover exact expected values like 'sglang' marker name, consumer_batch_size >= 3, max_head_offpolicyness >= 100. The Dockerfile doesn't restrict access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: module-scoped fixtures (test_fixtures_module_scoped), module-level markers (test_pytestmark_sglang_present), removal of @pytest.mark.slow (test_slow_marker_removed), controller settings (test_controller_settings_loosened, test_consumer_batch_size_increased), removal of should_accept_fn tests (test_should_accept_fn_tests_removed), tmp_path_factory usage (test_fixture_no_tmp_path)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with clear docstrings, grouped by concern (syntax, fixture scope, markers, settings, removal), and have section comments separating gate tests from f2p tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying test fixture configurations, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names exact fixture functions ('local_scheduler', 'gateway_controller'), exact parameters ('tmp_path_factory', 'consumer_batch_size', 'max_head_offpolicyness'), exact numeric thresholds (>= 3, >= 100), and exact test patterns to remove ('should_accept_fn'). This goes well beyond describing the problem domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized \u2014 it modifies specific fixture definitions and class decorators in three files without full-file rewrites, and doesn't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

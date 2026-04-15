@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both helper functions (`_infer_runtime_lora_path`, `_register_runtime_lora_name`), their signatures, the target file, the `xccl://` synthetic path format, the success gating with `all(success for success, _ in ret_list)`, `base_model_name` propagation, stale alias removal logic, and the `LoRARequest` construction. All test-asserted specifics (function names, path format, behavior) are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: specific helper names, their exact signatures, step-by-step logic (e.g., 'iterate over all entries... delete any entry whose lora_int_id matches but lora_name differs'), the exact fallback path format `xccl://{lora_name}`, and the exact success gating condition `all(success for success, _ in ret_list)`. A developer doesn't need to reason about what to change \u2014 the instruction is a detailed implementation spec."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests search for functions by exact name patterns ('register' and 'lora' in name, 'infer' or 'path' and 'lora' in name) via AST extraction. test_success_gating checks for exact string patterns like 'all(' in func_src, 'req.lora_name = ' not present, and regex for helper call patterns. An alternative correct implementation using different function names (e.g., `update_lora_registry`) or a different success-checking pattern (e.g., `if not any(not s for s, _ in ret_list)`) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests use subprocess execution to actually call the extracted functions with mock objects and assert on behavioral outcomes (registry contents, path values, base_model_name). test_success_gating uses AST inspection which is structural rather than purely text-based. The tests are not purely string-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral tests assert specific non-trivial outcomes: test_register_helper_creates_lora_request checks that entries appear in registry with correct attributes, test_stale_aliases_removed checks deletion of old entries, test_infer_path_synthetic_fallback checks the xccl:// format, test_infer_path_preserves_existing checks path preservation logic. A stub returning None/empty would fail all of these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/AReaL/_eval_tmp.py during test runs, and more critically, the gold patch is in solve.sh which could be read from the container. The agent could also read the test file at the tests path to reverse-engineer expected behavior. No measures prevent reading /solution/solve.sh."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: path inference with existing path, fallback to xccl://, stale alias removal, new LoRARequest creation, base_model_name propagation, success gating, and no inline mutation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_register_helper_creates_lora_request, test_stale_aliases_removed, etc.), have docstrings explaining intent, and are grouped into gate tests (pass_to_pass) and behavioral tests (fail_to_pass) with clear section comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies Python code behavior, not structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact target file (`areal/engine/vllm_ext/areal_vllm_server.py`), exact function names to create, exact signatures, and the exact location in `update_weight_lora_xccl` where changes should be made. This goes beyond describing what's broken and essentially localizes and prescribes the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T11:48:19.471532",
-  "total_time": 2062.52,
-  "sandbox_id": "iyqk4ga1ymgxf2nla70ec",
+  "validated_at": "2026-04-15T04:48:35.143113",
+  "total_time": 1550.74,
+  "sandbox_id": "i79brdt463w00embwip6b",
   "backend": "fireworks",
-  "pipeline": "agents",
-  "config_edit_precision": 0.0,
-  "rubric_icr": 1.0,
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -78,6 +78,26 @@
       "backend": "fireworks",
       "time": 33.05,
       "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.31,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:46: test `test_update_labels_function_logic` only reads file ', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:97: test `test_label_names_and_constants` only reads file tex', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:124: test `test_labels_called_on_all_paths` only reads file t', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:147: test `test_pr_detection_fallback` only reads file text; ', 'lint_tier_b:1']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.2,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
@@ -104,6 +124,14 @@
       "backend": "fireworks",
       "time": 2062.52,
       "at": "2026-04-10T11:48:19.471532"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1550.74,
+      "at": "2026-04-15T04:48:35.143113"
     }
   ]
 }

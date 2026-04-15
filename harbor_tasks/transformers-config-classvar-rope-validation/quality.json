@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_upstream_config_kwargs_complete asserts an exact list of expected missing keys including '_output_attentions', '_attn_implementation_internal', '_experts_implementation_internal', '_commit_hash', etc. The instruction.md mentions 'config_common_kwargs completeness check expects transformers_version in the missing keys list' but does not enumerate the full expected list. Also test_validate_rope_dispatches_for_real_config checks dispatch_count > 0 and uses '_validate_test_dispatch_rope_paramet"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix for Bug 2: 'The method only checks if rope_parameters_dict is None but does not handle the empty dict case' \u2014 this directly tells the agent to add an empty-dict check. For Bug 1, it says fields are 'currently excluded from dataclasses.fields()' and should be instance fields, which essentially says 'change ClassVar to instance field'. For Bug 3, it says to add an 'allowed_params' keyword argument to specific functions. These are implementation-level instr"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_auto_docstring_parameter_filtering asserts that 'allowed_params' is literally in inspect.signature(fn).parameters for _process_regular_parameters, _process_parameters_section, and auto_method_docstring. An alternative correct fix (e.g., using 'filter_params', 'include_params', or a different filtering mechanism like a decorator) would fail this test. The tests enforce the gold solution's specific parameter name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute actual code via subprocess (_run_python) or direct imports, checking runtime behavior like instance isolation, rope validation, and function signatures. test_check_config_attributes_allowlist does read file text but also imports and checks behavior. The majority of tests are behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_validate_rope_dispatches_for_real_config checks dispatch_count > 0, preventing a stub that just returns None. test_transformers_version_not_classvar checks dataclasses.fields() membership and instance isolation. test_auto_docstring_filtering_behavior checks that 'beta' is filtered out while 'alpha' and 'gamma' remain. These cannot be satisfied by trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/transformers as a git repo, and solve.sh applies a patch. An agent could potentially read the solution/solve.sh file if it exists in the container, or examine git history. The Dockerfile doesn't explicitly remove the /solution directory or prevent access to test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors listed in instruction.md are tested: dataclasses.fields inclusion, per-instance isolation, rope empty dict handling, rope None case, allowed_params filtering, ATTRIBUTES_TO_ALLOW membership, and config_common_kwargs completeness."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (configuration_utils.py, modeling_rope_utils.py, auto_docstring.py, check_config_attributes.py), exact function names (_process_regular_parameters, _process_parameters_section, auto_method_docstring, validate_rope), and exact parameter names (allowed_params) to add. It also specifies the exact variable ATTRIBUTES_TO_ALLOW. This goes beyond describing what's broken and into prescribing implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

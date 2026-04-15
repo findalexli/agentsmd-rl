@@ -37,6 +37,48 @@ Install a plugin whose source contains `eval('danger')`. The scan warns but
 the install succeeds. After the fix, the install should fail with a clear
 error code and message.
 
+## Required changes
+
+### Error codes
+
+The `PLUGIN_INSTALL_ERROR_CODE` constant in `src/plugins/install.ts` must be
+extended with two new entries:
+
+- `SECURITY_SCAN_BLOCKED` with string value `"security_scan_blocked"`
+- `SECURITY_SCAN_FAILED` with string value `"security_scan_failed"`
+
+Each code must be used in actual handling logic (not just defined), appearing
+at least twice in the file.
+
+### install.ts: catch blocks
+
+In the three install functions (package, bundle, file), the catch blocks that
+handle scan exceptions currently log a warning and continue. After the fix,
+these catch blocks must return a blocking result with `ok: false`, a descriptive
+`error` string, and the `SECURITY_SCAN_FAILED` error code. The string
+`"Installation continues"` must not appear anywhere in the file after the fix.
+
+### install-security-scan.ts: type update
+
+The `InstallSecurityScanResult` type's `blocked` object must have a `code`
+field with the closed union type `"security_scan_blocked" | "security_scan_failed"
+| undefined`.
+
+### install-security-scan.runtime.ts: block construction
+
+The runtime must produce blocked results with the appropriate code based on
+the builtin scan outcome:
+
+- When the builtin scan has `status === "error"` → blocked result code is
+  `"security_scan_failed"`
+- When the builtin scan has `critical > 0` → blocked result code is
+  `"security_scan_blocked"`
+
+The scan functions must not directly return the hook result. Instead, they
+must capture the hook result and use the builtin block as a fallback when
+the hook does not block — applying `hookResult?.blocked ? hookResult : builtinBlocked`
+or equivalent logic.
+
 ## Scope
 
 The three install paths (package, bundle, file) all need the same treatment.

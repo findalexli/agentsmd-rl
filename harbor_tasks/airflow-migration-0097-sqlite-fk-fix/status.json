@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T22:04:42.475796",
-  "total_time": 333.98,
-  "sandbox_id": "ibohd7n5okecpm8lvk8oy",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T03:25:02.986404",
+  "total_time": 691.7,
+  "sandbox_id": "iexutjxf9ins5ycz8ktpw",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -40,6 +41,26 @@
       "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.28,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:33: test `test_update_statements_inside_disable_sqlite_fkeys` has 4 as', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: pytest, sqlalchemy, alembic', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.44,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
@@ -58,6 +79,14 @@
       "backend": "fireworks",
       "time": 333.98,
       "at": "2026-04-09T22:04:42.475796"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 691.7,
+      "at": "2026-04-15T03:25:02.986404"
     }
   ]
 }

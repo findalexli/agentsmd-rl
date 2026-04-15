@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific literal strings like '(?!\\\\.\\\\.\\\\.)', check for files like 'KLibDumpParser.kt' and 'KlibParsingCursorExtensions.kt', and verify exact regex structure details that are not mentioned in instruction.md. The instruction never mentions the negative lookahead syntax '(?!\\.\\.\\.)' explicitly, nor does it mention the companion parser files."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially tells the developer exactly what to do: modify the regex so it stops matching before '...' sequence. Combined with pointing to the exact variable name 'validIdentifierWithDotRegex' and the exact file, and mentioning that validIdentifierRegex 'already handles similar cases correctly', this practically gives away that a negative lookahead for '...' is needed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for the exact string '(?!\\\\.\\\\.\\\\.)'  (negative lookahead) in the file content. Alternative correct fixes \u2014 such as using a possessive quantifier, changing the character class to exclude dots in certain positions, using a different regex structure, or modifying the parsing logic instead of the regex \u2014 would all fail these tests even if they correctly solve the parsing bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All F2P tests (test_vararg_regex_has_negative_lookahead, test_validIdentifierWithDotRegex_structure, test_fix_distinguishes_vararg, test_no_old_buggy_regex) only do string matching on file content with patterns like '(?!\\\\.\\\\.\\\\.)'  in content. No test actually executes the regex or parser to verify behavioral correctness. The only execution test (test_kotlin_syntax_compiles) is a P2P test."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub fix that simply inserts the literal string '(?!\\\\.\\\\.\\\\.)'  anywhere near the validIdentifierWithDotRegex definition \u2014 without actually fixing the regex correctly \u2014 would pass all F2P tests since they only check for substring presence."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin (accessible in container) and the agent could read /solution/solve.sh or the test file to discover the exact expected string '(?!\\\\.\\\\.\\\\.)'  and insert it without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Ensure the fix works for parsing inputs like kotlin/DoubleArray... correctly' but no test actually parses this input or verifies the behavioral outcome (type name extraction and vararg detection). Tests only check for string patterns in source code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_vararg_regex_has_negative_lookahead, test_fix_distinguishes_vararg, etc.) with docstrings explaining F2P vs P2P purpose and what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands appear correct and consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact variable 'validIdentifierWithDotRegex', the exact file 'Cursor.kt' with full path, and describes the exact mechanism of the bug (regex consuming dots without restriction), effectively localizing the fix to a single regex pattern modification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

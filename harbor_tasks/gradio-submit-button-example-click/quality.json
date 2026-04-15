@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific AST structural details: test_example_select_not_in_stop_triggers checks that 'example_select' is absent from _setup_stop_events event_triggers; test_submit_btn_false_in_example_chain checks for a .then() with submit_btn=False; test_events_to_cancel_conditional checks for a compound ast.BoolOp(And) condition guarding events_to_cancel with 'example_select'. These specific implementation patterns (compound condition with And, .then() with submit_btn=False as a keyword) ar"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: 'it should not be registered as an additional trigger in the stop-events setup', 'submit button should still be temporarily hidden via a .then() step within the example chain', and 'collection of events eligible for cancellation should only include the example event when examples actually execute'. These are direct implementation instructions, not just bug descriptions."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_events_to_cancel_conditional requires specifically an ast.BoolOp with ast.And (compound condition) guarding events_to_cancel with 'example_select'. An alternative correct fix could use separate if-statements, a different variable name, or a different control flow structure. test_submit_btn_false_in_example_chain requires specifically a .then() call with submit_btn=False keyword argument; an alternative could use update() or a different method. These tests enforce the gold solution's specifi"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_example_select_not_in_stop_triggers, test_submit_btn_false_in_example_chain, test_events_to_cancel_conditional) all work by parsing the AST of the source file and checking structural patterns - they never actually execute the ChatInterface or test runtime behavior. They are sophisticated text/structure matching, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code structures that don't exist in the original code: a .then() with submit_btn=False, removal of example_select from stop triggers, and a compound condition for events_to_cancel. A stub or no-op would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/gradio as a git repo, and solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh or the git history to find the exact patch. Additionally, since tests are pure AST checks, the agent could grep test files to discover exactly what AST patterns are expected."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four acceptance criteria from instruction.md are tested: submit button restoration (test_submit_btn_false_in_example_chain), valid Python (test_syntax_valid), ruff format/check (test_ruff_formatting, test_repo_ruff_check), and existing unit tests pass (test_repo_chat_interface_init_unit_tests, etc.)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings, are clearly grouped by concern (static checks, pr_diff checks, repo_tests), and each maps to a specific check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Python source code, not producing structured data."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (gradio/chat_interface.py), the exact class (ChatInterface), and describes precisely which event handler registration to modify ('should not be registered as an additional trigger in the stop-events setup') and where to add code ('.then() step within the example chain'). This goes well beyond naming the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

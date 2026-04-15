@@ -1,20 +1,12 @@
-# Missing encoder_only attribute causes run failure
+# AttributeError when accessing encoder_only attribute
 
 ## Problem
 
-The `launch_server_process()` function in `slime/backends/sglang_utils/sglang_engine.py` directly accesses `server_args.encoder_only` without checking whether the attribute exists. When `worker_type` is `"regular"`, the `ServerArgs` object does not have the `encoder_only` attribute, causing an `AttributeError` crash:
-
-```
-File "slime/backends/sglang_utils/sglang_engine.py", line 54, in launch_server_process
-    if server_args.encoder_only:
-AttributeError: 'ServerArgs' object has no attribute 'encoder_only'
-```
-
-The `encoder_only` attribute is only present on `ServerArgs` when certain worker types or configurations are used. The code needs to handle the case where it is absent.
+The `launch_server_process()` function in `slime/backends/sglang_utils/sglang_engine.py` directly accesses `server_args.encoder_only`. When `server_args` is constructed without an `encoder_only` attribute, this raises an `AttributeError`.
 
 ## Expected Behavior
 
-The function should safely check whether `server_args` has the `encoder_only` attribute before accessing it. When the attribute is missing, the function should fall through to the default (non-encoder-only) import path.
+When `encoder_only` is absent or falsy, the function should proceed with the default non-encoder-only import path and launch the server successfully without crashing.
 
 ## File to Modify
 

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:29:40.757542",
-  "total_time": 2241.1,
-  "sandbox_id": "iai24c5y6xxwqmp2gjqd5",
+  "validated_at": "2026-04-15T05:27:46.831750",
+  "total_time": 1721.03,
+  "sandbox_id": "iksfzagv78hlnqf8xbua1",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -75,17 +77,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:429: test `test_repo_imports` has 1 assert(s), all pass on a stub impl', 'A:[A] test_not_tautological @ tests/test_outputs.py:450: test `test_repo_ast_valid` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:530: test `test_repo_tach_check` has 1 assert(s), all pass on a stub i']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.45,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "validate",
-      "time": 0,
-      "at": "2026-04-10T19:40:00.000000"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -117,6 +131,14 @@
       "backend": "fireworks",
       "time": 2241.1,
       "at": "2026-04-12T05:29:40.757542"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1721.03,
+      "at": "2026-04-15T05:27:46.831750"
     }
   ]
 }

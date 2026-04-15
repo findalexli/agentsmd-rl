@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes SizeDict in image_utils.py, the need for __or__ and __ror__, the expected return types (SizeDict for SizeDict|dict, dict for dict|SizeDict), NotImplemented for unsupported types, and override/merge semantics. All test assertions (type checks, field values, override semantics, NotImplemented returns) are discoverable from the instruction's expected behavior section."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (missing | operator support) and expected behavior but does not specify exact method names like __or__/__ror__, line numbers, or implementation details. A developer must reason about what to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (isinstance checks, field values, NotImplemented returns) rather than implementation details. Alternative implementations (e.g., using dataclasses.asdict instead of dict(), different merge strategies internally) would all pass as long as behavior matches."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All fail-to-pass tests import SizeDict and call the | operator, checking return types and values. Pass-to-pass tests run subprocess commands that import and execute code. No test relies solely on text matching of source files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_sizedict_or_dict, test_dict_or_sizedict, test_sizedict_or_sizedict, test_sizedict_or_unsupported) all exercise the | operator which raises TypeError without the fix. A stub/no-op implementation cannot satisfy these since the operator must return specific SizeDict/dict instances with correct field values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo/../solution/solve.sh (or wherever mounted) and contains the exact git patch. The agent could read /solution/solve.sh to extract the gold patch and apply it directly. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behaviors listed in the instruction's Expected Behavior section are tested: SizeDict|dict (test_sizedict_or_dict), SizeDict|SizeDict (test_sizedict_or_sizedict), dict|SizeDict (test_dict_or_sizedict), and unsupported type returning NotImplemented (test_sizedict_or_unsupported)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly organized into two sections (Gates/pass_to_pass and Fail-to-pass/pr_diff) with descriptive function names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves implementing Python dunder methods, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions 'src/transformers/image_utils.py' and the SizeDict class, which is appropriate for the task domain. It says 'near the end of the file' but doesn't specify exact line numbers. The missing method name (__or__) is naturally implied by the problem description of the | operator."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

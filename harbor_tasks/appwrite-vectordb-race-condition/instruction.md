@@ -13,8 +13,10 @@ The issue is in `src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collecti
 - Flaky tests during parallel test runs involving CSV export migration
 - Intermittent `DuplicateException` errors when creating VectorDB collections
 - Race condition between checking `exists()` and calling `create()` on the metadata collection
+- The code checks `if (!$dbForDatabases->exists(null, Database::METADATA))` then calls `$dbForDatabases->create()` without handling concurrent creates
+- The exception being raised is `Appwrite\Extend\Exception\DuplicateException`
 
-## Expected Behavior
+## Required Behavior
 
 The metadata bootstrap should be idempotent under concurrency. When multiple requests race to create the metadata:
 
@@ -24,14 +26,12 @@ The metadata bootstrap should be idempotent under concurrency. When multiple req
 4. The duplicate exception is benign - the metadata is now present
 5. Both requests can proceed to create their actual collections
 
-The fix should only affect the one-time metadata bootstrap, not hide duplicate errors for actual user collection creation.
-
-## Constraints
+## Technical Context
 
 - Keep duplicate handling scoped only to the one-time metadata bootstrap
 - Do NOT suppress duplicate errors for actual collection creation in `createCollection()`
-- The exception being caught is `Appwrite\Extend\Exception\DuplicateException`
-- Remove the outdated comment about "passing null in creates only creates the metadata collection"
+- The exception class is `Appwrite\Extend\Exception\DuplicateException`
+- The file contains the comment: `// passing null in creates only creates the metadata collection`
 
 ## Module Conventions
 

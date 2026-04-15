@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (alias.ts, colors.ts for dark/default, maps/colors.ts, ColorMap.ts), function names (getShadowColor, generateNeutralColorPalettes), token names (colorShadow, shadowBaseColor, boxShadow, boxShadowCard), and specific values (rgba(0,0,0,...), rgba(255,255,255,...), alpha values 0.08 and 0.16) that the tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction prescribes the exact implementation: create a 'getShadowColor' function, use a 'shadowBaseColor' variable, add 'colorShadow' to a specific interface, use specific alpha values (0.08, 0.16), and use '@ant-design/fast-color'. This is a step-by-step solution, not just a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_shadow_tokens_adapt_to_dark_theme checks for exact strings 'getShadowColor' and 'shadowBaseColor' in alias.ts; test_dark_theme_box_shadow_values checks for 'getShadowColor(0.08)'; test_dark_theme_box_shadow_card_values checks for 'getShadowColor(0.16)'. An alternative correct fix using a different helper name (e.g., 'makeShadow') or different variable name would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_shadow_tokens_adapt_to_dark_theme, test_dark_theme_box_shadow_values, test_dark_theme_box_shadow_card_values, test_color_shadow_token_defined, test_dark_theme_color_shadow_white, test_default_theme_color_shadow_black) exclusively use 'assert X in open(path).read()' pattern \u2014 pure text matching with no code execution or behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply adds the string 'getShadowColor' and 'shadowBaseColor' as comments in alias.ts, 'colorShadow' as a comment in colors.ts interface, and 'colorShadow' + '255, 255, 255' in dark/colors.ts and 'colorShadow' + '#000' in default/colors.ts would pass all f2p tests without implementing any actual functionality."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/ant-design accessible via solve.sh, and the agent could read test_outputs.py to discover exact strings to insert (e.g., 'getShadowColor(0.08)', 'shadowBaseColor', 'colorShadow'). The agent could also grep for expected fixture strings and simply insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that 'Dark theme shadows should use rgba(255, 255, 255, ...) values' and 'Default theme shadows should use rgba(0, 0, 0, ...) values' as actual runtime token values, but no test actually generates tokens and checks their runtime values \u2014 only text matching on source files is performed."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with clear separation into 'Fail-to-Pass' and 'Pass-to-Pass' groups, descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript source code for theme tokens, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths, exact function names to create (getShadowColor), exact variable names (shadowBaseColor), exact parameter signatures, and exact alpha values \u2014 this goes far beyond identifying the buggy area and prescribes the complete solution architecture."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

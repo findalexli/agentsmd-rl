@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all file paths, literal strings like 'components_to_document = [\"dataframe\", \"js-client\"]', 'components_to_document.includes(p)', 'urlExists', 'method: \"HEAD\"', 'import \"prism-svelte\"', language map entries, package.json export values, section names in README, and the standalone README deletion. All test assertions reference specifics that are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction prescribes exact implementation details: the exact variable name 'components_to_document = [\"dataframe\", \"js-client\"]', the exact filter logic 'components_to_document.includes(p)', the exact helper function name 'urlExists', the exact method 'method: \"HEAD\"', exact language map entries 'svelte: \"svelte\"', 'sv: \"svelte\"', 'md: \"markdown\"', 'css: \"css\"'. This tells the agent exactly WHAT to write, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_website_layout_has_components_filter checks for exact string 'components_to_document = [\"dataframe\", \"js-client\"]' and 'components_to_document.includes(p)'. test_website_js_page_dynamic_redirect checks for 'async function urlExists' and 'method: \"HEAD\"'. An alternative correct fix using a different variable name (e.g., 'documented_components') or different filtering approach would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every fail-to-pass test uses string-in-file checks: 'assert \"Standalone Svelte component\" in content', 'assert \\'components_to_document = [\"dataframe\", \"js-client\"]\\' in content', 'assert \\'import \"prism-svelte\"\\' in jsdoc_content', etc. No tests import modules, run the server, or verify actual behavior. The TypeScript 'syntax checks' merely read the file with node's fs module, not compile it."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for content that doesn't exist in the base commit (e.g., standalone README deleted, comprehensive docs in main README, components_to_document filter, urlExists function, prism-svelte imports). A stub/no-op wouldn't pass since these require actual file modifications."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio as solve.sh (mounted in container). The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings. Tests use simple string matching ('assert X in content') so the agent could grep test fixtures and write matching strings without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from instruction.md are tested: README consolidation, standalone deletion, layout server filtering, JS page dynamic redirect, prism-svelte imports, language map extension, navigation link removal, and package.json exports."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The package.json schema requirements (exports with '.', './example', 'default', 'types' fields) are explicitly documented in the instruction with exact values."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction match those referenced in tests without any typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation code: 'The exact string being tested is: components_to_document = [\"dataframe\", \"js-client\"]', 'The filtering logic being tested is: components_to_document.includes(p)', 'The helper function should be named urlExists', 'The urlExists function must use method: \"HEAD\"'. This goes beyond describing what's broken and prescribes exact code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch shows localized edits to specific files (adding filter logic, imports, language maps, package.json fields) rather than full-file rewrites. Changes don't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 5
+}

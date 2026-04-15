@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics are documented in instruction.md: function name `asRef`, its signature, the regex pattern `/^(f\\d+)?e\\d+$/`, return values `{ ref: refOrSelector }`, `{ ref: '', selector: refOrSelector }`, `{}`, parameter names `target`, `startElement`, `endElement`, file paths, `selector?: string`, `z.string().optional()`, `.omit()` with `{ selector: true, startSelector: true, endSelector: true }`, `does not match any elements` error message, `page.locator(selector)`, SKILL.md path a"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies exact function signatures (`function asRef(refOrSelector: string | undefined): { ref?: string, selector?: string }`), exact return values for each branch, exact regex patterns, exact parameter renames, and exact implementation details like `.omit({ selector: true, startSelector: true, endSelector: true })`. This goes far beyond describing what's broken\u2014it tells the agent exactly WHAT to write, leaving virtually no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string `return { ref: refOrSelector }` and `return { ref: '', selector: refOrSelector }` and `return {}` in source code (test_asref_function_classifies_inputs), exact regex string `refOrSelector.match(/^(f\\d+)?e\\d+$/)`, exact method call `this.page.locator(param.selector)`, exact parameter names like `asRef(target)` in click_section. An alternative correct implementation using different variable names, a switch statement, or `locator(pa"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all tests are pure text-matching (`assert 'string' in content`). test_asref_function_classifies_inputs does execute code, but it runs a REPLICATED version of the function, not the actual source code. Tests like test_cli_commands_use_target_param, test_tab_reflocator_accepts_selector, test_tool_schemas_include_selector, test_filtered_tools_strips_selector all just read file contents and check for string presence without importing or executing any project code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Most f2p tests only check for string presence in source files. An agent could write stub/dead code containing the required strings (e.g., a comment with `return { ref: refOrSelector }` or an unused variable `selector?: string`) and pass tests like test_tab_reflocator_accepts_selector, test_tool_schemas_include_selector, test_filtered_tools_strips_selector without implementing any actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in `/workspace/playwright` after `solve.sh` runs (solution/solve.sh is available in the container). The agent could also grep test_outputs.py to find exact string assertions and place those strings in the files. Tests only check string presence, making it trivial to satisfy them by inserting comments or dead code containing the expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires that when selector matches no elements, an error is thrown. Tests only check the string 'does not match any elements' exists in tab.ts source, but never actually test that behavior. Instruction also requires auto-detection routing in CLI commands, but tests only verify string patterns in source, not actual command execution behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_syntax_check, test_asref_function_classifies_inputs, etc.), docstrings explaining each test's purpose, and clear section comments grouping them into gates, fail-to-pass, and config/doc categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces code changes and documentation, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in instruction.md are consistent and match what tests expect with no observable typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction specifies exact function signatures, exact regex patterns, exact return value expressions, exact parameter names, and exact .omit() call syntax. This goes beyond naming files/modules\u2014it provides the exact implementation code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md documentation update is a localized addition of a section about selector targeting, not a full-file rewrite, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

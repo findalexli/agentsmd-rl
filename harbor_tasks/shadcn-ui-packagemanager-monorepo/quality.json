@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific literal strings not mentioned in instruction.md: 'Monorepo templates use turbo which requires packageManager' (test_monorepo_sets_packagemanager_for_bun), 'await getPackageManagerVersion(packageManager)' (same test), exact function name 'getPackageManagerVersion' (test_getpackagemanagerversion_function_exists), 'if (isMonorepo)' (test_monorepo_condition_checks_is_monorepo), use of 'execa' specifically (test_packagemanager_version_detection_uses_execa), exact format "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially describes the complete fix: create a helper function for version detection running '<packageManager> --version', add conditional logic checking isMonorepo, set packageManager to '<manager>@<version>' or '<manager>@*' on failure, delete for non-monorepo. It also specifies updating the comment from 'strip' to reflect new behavior. This leaves very little reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact function name 'getPackageManagerVersion' (test_getpackagemanagerversion_function_exists), exact string 'await execa(packageManager, [\"--version\"])' (test_packagemanager_version_detection_uses_execa), exact comment text 'Monorepo templates use turbo which requires packageManager' (test_monorepo_sets_packagemanager_for_bun), exact variable 'if (isMonorepo)' (test_monorepo_condition_checks_is_monorepo), exact template literal format '`${pa"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_monorepo_sets_packagemanager_for_bun through test_comment_updated) are entirely string-matching tests that read file content and check for substrings like 'Monorepo templates use turbo which requires packageManager' in content, '`${packageManager}@' in content, etc. They never import, call, or execute the actual code. The pass-to-pass tests do execute code (pnpm build/test/lint), but ALL f2p tests are pure text inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply writes the expected strings into the file (e.g., adding a comment containing 'Monorepo templates use turbo which requires packageManager', a dead function named 'getPackageManagerVersion', etc.) without actually fixing the bug would pass all f2p tests since they only check for string presence in the source file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/ui as solve.sh content visible in the container's solution directory. The agent could read /solution/solve.sh (if mounted) or simply grep for the exact fixture strings tested (like 'Monorepo templates use turbo which requires packageManager') from the test file. Since tests only check string presence, the agent could also just insert those literal strings as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (version detection, conditional monorepo logic, fallback to wildcard, non-monorepo deletion, comment update) are covered by tests, plus pass-to-pass tests for build/typecheck/lint."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (FAIL-TO-PASS, PASS-TO-PASS, STRUCTURAL TESTS) and descriptive function names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript source code, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact function to modify ('adaptWorkspaceConfig'), the exact file ('packages/shadcn/src/templates/create-template.ts'), tells the agent to create a specific helper function pattern, and describes the exact conditional logic structure including the isMonorepo check and fallback behavior."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

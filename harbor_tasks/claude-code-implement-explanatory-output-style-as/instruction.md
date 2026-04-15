@@ -22,3 +22,44 @@ The session-start.sh script must output a JSON object containing:
 
 - No existing files need modification (this is a new plugin creation)
 - Reference existing plugins in the `plugins/` directory for structure patterns
+
+## Plugin Manifest Requirements
+
+The plugin manifest at `plugins/explanatory-output-style/.claude-plugin/plugin.json` must be valid JSON with these fields:
+- `name`: must be `"explanatory-output-style"`
+- `version`: version string (e.g. `"1.0.0"`)
+- `description`: human-readable description of the plugin's purpose
+- `author`: either a string or an object with author information
+
+## Hooks Configuration Schema
+
+The hooks configuration at `plugins/explanatory-output-style/hooks/hooks.json` must be valid JSON with this structure:
+- Top-level key `hooks` containing an object
+- Under `hooks`, a key `SessionStart` containing an array of hook group objects
+- Each hook group object has a `hooks` array
+- Each hook in that array is an object with `type: "command"` and a `command` string containing `"session-start.sh"`
+
+Example structure:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## SessionStart Hook Script
+
+The script at `plugins/explanatory-output-style/hooks-handlers/session-start.sh` must:
+- Be executable (have a shebang like `#!/bin/bash` or `#!/usr/bin/env bash`)
+- Output valid JSON to stdout when executed
+- The JSON must contain a `hookSpecificOutput` object with:
+  - `hookSpecificOutput.hookEventName`: must be the string `"SessionStart"`
+  - `hookSpecificOutput.additionalContext`: educational instructions for explanatory mode
+- The additionalContext text must mention: "explanatory", "insight", "educational", and include backtick formatting

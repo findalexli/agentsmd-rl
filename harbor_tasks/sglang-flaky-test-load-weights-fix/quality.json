@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests check for a specific FIXME comment string '# FIXME: refactor this test to have less random behavior' (visible in the gold patch) and that remote_instance_weight_loader_start_seed_via_transfer_engine is hardcoded to False. The instruction.md never mentions the exact FIXME comment text or the specific parameter name 'remote_instance_weight_loader_start_seed_via_transfer_engine'. An agent cannot discover the required FIXME comment string from instruction.md alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md states 'The fix should stabilize the configuration that causes the hang by making it unconditional rather than dependent on random selection' \u2014 this essentially describes the exact fix (change conditional logic to unconditional). Combined with pointing to init_process_dst and test_load_weights_from_remote_instance, this leaves very little reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The test suite (truncated but visible in the docstring) checks for the exact FIXME comment string 'FIXME: refactor this test to have less random behavior' and that the parameter is hardcoded to False. An alternative correct fix \u2014 e.g., removing random.choice entirely and picking fixed values, or setting the parameter to True unconditionally, or using a different comment \u2014 would fail these specific checks."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The test docstrings indicate AST parsing is used ('we verify the fix via AST parsing') to check that remote_instance_weight_loader_start_seed_via_transfer_engine is hardcoded to False and that a specific FIXME comment exists. While AST parsing is more sophisticated than raw text search, the core verification is still checking for specific text/code patterns rather than executing the code and verifying behavior. The linting tests run tools but don't test the actual fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The visible f2p tests (test_syntax_check, test_repo_python_syntax_check, test_repo_ruff_check, test_repo_black_check, etc.) are all linting/formatting checks that pass on the unmodified base commit. A stub or no-op change would pass all these tests. The actual behavioral tests checking the FIXME comment and parameter value appear in the truncated portion, but the majority of visible tests are tautological pass_to_pass checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/sglang as a git repo where solve.sh exists at solution/solve.sh. The agent could read the test file tests/test_outputs.py to discover the exact FIXME comment string and parameter value expected. The gold patch content is also visible in solve.sh if the agent can access it."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md says the fix should make the test more deterministic and resolve hangs, but the tests only verify AST structure (parameter set to False, FIXME comment present) and linting \u2014 they don't verify that the test actually runs without hanging or that the configuration is truly stable."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped by type (static/syntax checks, repo linting checks), and clearly commented with their categories ([static], [repo_tests])."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifically points to 'init_process_dst function' and 'test_load_weights_from_remote_instance method' and describes the exact pattern (conditional flag based on random backend selection should be made unconditional). This significantly narrows the localization and fix, leaving little for the agent to discover."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

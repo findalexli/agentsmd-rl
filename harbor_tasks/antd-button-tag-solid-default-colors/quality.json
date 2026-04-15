@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific string literals like \"if (variant === 'solid')\", \"if (contextVariant === 'solid')\", \"nextVariant === 'solid'\", \"nextColor === undefined\", \"isPresetColor(nextColor)\", \"isPresetStatusColor(nextColor)\", \"['primary', variant]\", \"nextColor = 'default'\", \"InternalCompoundedButton\", and \"React.forwardRef\". The instruction.md does not mention most of these exact variable names (e.g., contextVariant, nextColor, nextVariant, InternalCompoundedButton) or the exact string patterns"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (solid variants without color don't get defaults) and gives hints about where to look, but does not specify exact code changes like 'change line X to Y'. The agent must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like \"if (variant === 'solid')\", \"['primary', variant]\", \"nextColor = 'default'\", \"nextColor === undefined\", \"isPresetColor(nextColor)\", \"isPresetStatusColor(nextColor)\". An alternative correct fix using different variable names, different conditional structure (e.g., ternary, switch, or 'variant === \"solid\" && !color'), or different return patterns would fail these text-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_button_solid_default_code, test_button_context_solid_default_code, test_tag_solid_default_code, test_tag_uses_nextcolor_for_preset, test_tag_uses_nextcolor_for_status, test_button_returns_primary_for_solid, test_tag_returns_default_for_solid, and test_button_structure_preserved are ALL purely 'assert X in open(path).read()' text-matching tests with no execution. While there are also execution-based tests (tsc, lint, unit tests), the core f2p tests that verify the actual fix are entire"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The execution-based tests (test_repo_typescript_compiles, test_repo_lint_passes, test_repo_button_tests_pass, etc.) are pass-to-pass tests that would pass on the unmodified codebase. The f2p tests (test_button_solid_default_code, test_tag_solid_default_code, etc.) are string-matching tests. An agent could satisfy them by inserting dead code comments containing the exact strings like '// if (variant === \"solid\")' and \"['primary', variant]\" without actually implementing the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace solution/solve.sh (mounted in the container). The agent could read it directly. Additionally, since tests are pure string-matching, the agent could grep test files or solution files for the expected strings and insert them as comments or dead code."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies CSS class verification (e.g., '<Button variant=\"solid\"> \u2192 should have ant-btn-variant-solid AND ant-btn-color-primary'), but no test actually renders components and checks for these CSS classes. The tests only check source code text patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, logically grouped by component (button vs tag) and test type (code checks vs execution checks)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying React component code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify (Button.tsx, useColor.ts) which is reasonable given the task domain, and gives conceptual hints but doesn't specify exact line numbers or exact code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

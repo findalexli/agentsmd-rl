@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T17:34:33.145456",
-  "total_time": 337.81,
-  "sandbox_id": "ipjvatxfkk6g9zav2qeps",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "validated_at": "2026-04-15T03:39:21.716238",
+  "total_time": 1378.02,
+  "sandbox_id": "ig9vjjcx9tei5si2i7xwq",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -47,17 +48,28 @@
       "backend": "fireworks",
       "time": 3.12,
       "notes": "ICR=1.00"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:307: test `test_bake_harness_syntax` has 2 assert(s), all pass on a st']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.84,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 120,
-      "at": "2026-04-10T00:00:00"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +101,14 @@
       "backend": "fireworks",
       "time": 337.81,
       "at": "2026-04-10T17:34:33.145456"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1378.02,
+      "at": "2026-04-15T03:39:21.716238"
     }
   ]
 }

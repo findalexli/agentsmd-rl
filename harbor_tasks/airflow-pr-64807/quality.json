@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three function names (inject_parent_job_information_into_emr_serverless_properties, inject_transport_information_into_emr_serverless_properties, _get_or_create_spark_defaults_properties), the exact file paths, the configuration schema keys (applicationConfiguration, classification, spark-defaults, properties, spark.openlineage.*), and the behavioral requirements (no mutation, skip if already present, handle None input). All test assertions reference values discoverable "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what functions need to be implemented, their signatures, and behavioral requirements, but does not give the exact implementation code or line-by-line changes. A developer must still reason about the implementation details."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific internal helper function name '_get_or_create_spark_defaults_properties' (TestGetOrCreateSparkDefaultsProperties class, test_get_or_create_spark_defaults_function_exists). An alternative correct implementation could use a differently-named helper or inline the logic. Tests also check for exact function names via hasattr, meaning any alternative naming would fail. The tests mock internal helpers like '_get_parent_job_information_as_spark_properties' directly on the module"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests load the module via importlib, call the actual functions (e.g., spark._get_or_create_spark_defaults_properties(config), spark.inject_parent_job_information_into_emr_serverless_properties(config, mock_context)), and assert on return values and behavioral properties. No tests merely grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests cannot be satisfied by stubs: test_creates_spark_defaults_when_empty asserts the config dict is populated with specific structure; test_inject_parent_into_none_config asserts specific keys exist in the returned dict; test_inject_parent_does_not_mutate_input verifies deep copy behavior. A function returning None or {} would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow as solve.sh contains the full gold patch. An agent could read /solution/solve.sh (or the git apply patch within it) to extract the exact implementation. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: function existence, handling None input, preserving existing properties, not mutating input, skipping if already present, creating nested structure, and compat layer exports. All these behaviors are covered by corresponding test classes and methods."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into classes (TestEmrServerlessInjectionFunctionsExist, TestGetOrCreateSparkDefaultsProperties, TestInjectParentJobInformation, TestInjectTransportInformation) with descriptive method names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The EMR Serverless configuration schema is documented in detail in instruction.md with a Python dict example showing applicationConfiguration, classification, properties keys and their types."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, function names, and variable names in the instruction are consistent and correctly spelled, matching what the tests expect."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names all three exact files to modify, all three exact function names to implement, their exact signatures, and specific internal helper functions to reuse (_get_parent_job_information_as_spark_properties, etc.). This goes beyond describing what's broken and essentially provides the implementation specification, including exact parameter names like 'openlineage_inject_parent_job_info'."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
+}

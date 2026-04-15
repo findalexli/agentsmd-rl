@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file `js/markdown/Index.svelte`, describes the `class:pending` CSS class behavior, mentions `show_progress` values ('hidden', 'full', 'minimal'), and describes backward compatibility when undefined. All test-asserted behaviors (pending with hidden=false, full=true, minimal=true, complete=false, undefined=true, tab indentation, format check) are discoverable from the instruction. The tab indentation requirement is explicitly stated. The Prettier format check requirement "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (pending CSS class applied without considering show_progress) and expected behavior, but does not specify the exact code change. A developer must reason about how to modify the class:pending expression."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests extract and evaluate the `class:pending={EXPR}` expression via regex and Node.js eval with specific variable mocking (e.g., `gradio.shared.loading_status`). An alternative correct fix that refactors the logic differently\u2014such as moving the check into a script block reactive statement that toggles a boolean, or using a different variable structure\u2014could fail `_extract_pending_expr` or the Node eval. For example, `test_expression_differs_from_buggy` checks for an exact buggy string, and "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the expression and evaluate it via Node.js subprocess (`_eval_pending`), actually executing the JavaScript expression with mocked context. They also run real repo CI commands (format check, unit tests). The `test_expression_differs_from_buggy` is text-based but is supplementary alongside behavioral eval tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test `test_pending_false_when_hidden` requires the expression to return false for status='pending' + show_progress='hidden', which the original buggy code fails. `test_expression_differs_from_buggy` ensures the original expression was actually changed. A stub/no-op would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/gradio` as `solution/solve.sh` in the task bundle. The Dockerfile doesn't explicitly prevent access to solution files. An agent could potentially read the gold patch from the solution directory if it's mounted in the container. The tests don't check for such access patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: hidden show_progress should not show pending (test_pending_false_when_hidden), full/minimal should show pending (test_pending_true_when_full, test_pending_true_when_minimal), backward compatibility when undefined (test_pending_true_when_progress_undefined), tab indentation (test_tab_indentation), and format check (test_repo_format_check)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gate, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose. Test categories are annotated with [static], [pr_diff], [agent_config], [repo_tests] tags."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a frontend Svelte component, not producing structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (`js/markdown/Index.svelte`), paths, commands (`pnpm format:check`), variable names (`show_progress`, `class:pending`), and configuration references are correctly spelled and consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (`js/markdown/Index.svelte`) and pinpoints the exact mechanism ('The `pending` CSS class is applied based on the loading status without considering whether progress indication should be shown'). This significantly narrows localization, though for a single-file fix task this is borderline. More importantly, the instruction essentially describes the fix pattern (check show_progress before applying pending class)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

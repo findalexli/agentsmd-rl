@@ -2,23 +2,43 @@
 
 ## Problem
 
-The test "per-page value overrides global staleTimes.dynamic regardless of direction" in `test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts` is flaky. It intermittently fails because `browser.back()` restores BFCache state, causing previously-opened accordion links to be immediately visible. This triggers uncontrolled re-prefetches via IntersectionObserver outside of `act` scopes, which break subsequent `no-requests` assertions when stale data triggers unexpected network requests.
+The test "per-page value overrides global staleTimes.dynamic regardless of direction" is flaky due to BFCache behavior. When `browser.back()` is used to return to a previously-visited page, BFCache restores the full page state including React `useState` values. This causes `LinkAccordion` components that were previously toggled open to be immediately visible without any `act` scope. As a result, `<Link>` components trigger IntersectionObserver-based prefetches outside controlled test scopes, which breaks `no-requests` assertions when stale data triggers unexpected network requests.
 
-## Expected Behavior
+## Required Behaviors
 
-The test should deterministically pass every time. Instead of navigating back to previously-visited pages (where accordion state is restored from BFCache), the test should navigate forward to fresh "hub" pages that have their own `LinkAccordion` components starting in a closed state. This ensures all prefetches are controlled within `act` scopes.
+The implementation must satisfy these verified behaviors:
 
-## Files to Look At
+1. **Hub pages with specific names and structure**: Create three pages with **exact paths** `/per-page-config/hub-a`, `/per-page-config/hub-b`, and `/per-page-config/hub-c`. Each hub page must:
+   - Import and use `LinkAccordion` from the existing component at `test/e2e/app-dir/segment-cache/staleness/components/link-accordion.tsx`
+   - Call `await connection()` in an async component (ensures dynamic rendering)
+   - Use `<Suspense>` with a fallback for async content
+   - Export a default `Page` function
+   - Contain `LinkAccordion` links to `/per-page-config/dynamic-stale-10` and `/per-page-config/dynamic-stale-60`
 
-- `test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts` — the flaky test that uses `browser.back()`
-- `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/` — test fixture pages; new hub pages need to be created here
-- `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx` — needs LinkAccordion links to hub pages
-- `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-60/page.tsx` — needs LinkAccordion links to hub pages
-- `test/e2e/app-dir/segment-cache/staleness/components/link-accordion.tsx` — the LinkAccordion component used to control prefetch timing
+2. **Stale page connectivity**: The pages at `/per-page-config/dynamic-stale-10` and `/per-page-config/dynamic-stale-60` must include `LinkAccordion` links to hub pages (`hub-a`, `hub-b`, `hub-c`).
 
-## Additional Requirements
+3. **Test navigation assertions**: The test file `test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts` must:
+   - Navigate to `/per-page-config/hub-a`, `/per-page-config/hub-b`, and `/per-page-config/hub-c` (instead of using `await browser.back()`)
+   - Use `act` scopes with `includes` assertions matching hub content (e.g., `'Hub a'`)
+   - Not contain `await browser.back()` calls in the "per-page value overrides global" test
 
-After fixing the test, update the agent instruction files to document this pattern:
+4. **AGENTS.md documentation**: The file `AGENTS.md` at the repository root must document:
+   - `LinkAccordion` for prefetch control
+   - The `browser.back()` / `BFCache` flakiness issue
+   - Reference to the `$router-act` skill
 
-- Add a rule to `AGENTS.md` about using LinkAccordion to control prefetches in router act tests, warning about browser.back()/BFCache issues
-- Create a new skill file at `.agents/skills/router-act/SKILL.md` documenting the full router act testing pattern, including the LinkAccordion approach, hub page pattern, no-requests assertions, and common sources of flakiness
+5. **Skill documentation**: Create `.agents/skills/router-act/SKILL.md` containing:
+   - Frontmatter with `name: router-act` and a `description` field
+   - Documentation of `LinkAccordion` pattern
+   - The string `'no-requests'` for assertion patterns
+   - The term `hub` for hub page pattern documentation
+   - Explanation of `includes` matching and `requestIdleCallback` interception
+   - Warnings about `browser.back()` flakiness and `BFCache` state restoration
+
+## Verification Context
+
+- **Test file**: `test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts`
+- **LinkAccordion component**: `test/e2e/app-dir/segment-cache/staleness/components/link-accordion.tsx`
+- **Test fixture directory**: `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/`
+
+The test must deterministically pass every time after the fix is applied.

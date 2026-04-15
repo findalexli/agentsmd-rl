@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the function `ensure_config()`, the file `_config.py`, the test `test_configurable_metadata` in `test_utils.py`, the behavior of configurable keys not propagating to metadata, and the expected metadata keys. The hidden tests use exactly these concepts. While hidden tests use specific config keys like 'a-key', 'somesecretval', etc., these are testing the same behavioral contract described in the instruction (config items should not propagate to metadata). The instruction"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (config items propagating to metadata) and what the expected behavior should be, but does not specify exact code changes like 'delete the _exclude_as_metadata function' or 'remove lines 311-329'. The note about 'removing helper code' is a hint but doesn't specify which code. A developer still needs to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests assert on behavioral outcomes (metadata keys, metadata values, configurable values) rather than implementation details. An agent could fix this by removing the propagation loop, by making it a no-op, by commenting it out, or by clearing metadata after propagation \u2014 all would pass. Tests don't check for specific helper function names, line positions, or internal implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The f2p tests import `ensure_config` and call it with actual config dicts, then assert on the returned metadata keys and values. The p2p tests run subprocess commands (pytest, ruff, mypy). No test relies solely on reading file contents as text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub `ensure_config` returning default/empty values would fail because tests check that metadata retains original keys (e.g., 'nooverride' with value 18, 'existing' with value 'value'), and that configurable items remain in the configurable dict. A no-op or empty return would not satisfy these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/langgraph/solution/solve.sh (or could be placed in the container). The Dockerfile doesn't remove solution files. An agent could read the gold patch from the solution directory. Additionally, the test file test_outputs.py is accessible and could be read to reverse-engineer the expected behavior, though this is less of a concern since the behavior is described in instructions."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) config items not propagated to metadata, (2) config items remain in configurable, (3) test_configurable_metadata updated to expect only {'nooverride'}, (4) repo test suite passes. All of these are tested: f2p tests verify behaviors 1-3, p2p tests run the repo's test suite including test_configurable_metadata, linting, and type checking."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_config_items_not_propagated_to_metadata, test_sensitive_keys_not_in_metadata, etc.), grouped into f2p and p2p sections with comments, and each has a descriptive docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction are all correct and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file to modify (`libs/langgraph/langgraph/_internal/_config.py`) and the exact function (`ensure_config()`), and even says 'You may need to remove some helper code that was used for the filtering/propagation logic' \u2014 which directly hints at removing the `_exclude_as_metadata` helper. This goes beyond describing the bug domain and leaks localization details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

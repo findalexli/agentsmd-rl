@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact strings to use (e.g., `kanban@latest`, spawn arguments, error message, command description, option description), the file paths (cli/src/index.ts, cli/src/index.test.ts), and the function name `runKanbanAlias` is discoverable. All asserted literals and paths in the tests are mentioned or derivable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact replacement strings: 'The code that spawns the npx process must use the arguments [\"-y\", \"kanban@latest\", \"--agent\", \"cline\"]', the exact error message, exact .description() and .option() strings. This is essentially telling the agent exactly what to change to what \u2014 a direct specification of the fix, not just a description of the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_kanban_spawn_uses_latest_tag assert the exact string 'spawn(getNpxCommand(), [\"-y\", \"kanban@latest\", \"--agent\", \"cline\"]' which depends on the specific internal helper function name getNpxCommand(). An alternative correct fix that, say, inlined the npx command or used a different helper would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated, test_kanban_command_description_updated, test_kanban_option_description_updated, test_test_file_consistent) are ALL pure text-matching assertions like `assert '...' in content` on file reads. None execute the code, import modules, or test runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass \u2014 the tests check for specific strings in existing source files that start without those strings. The agent must actually modify the files to include 'kanban@latest' references."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/cline/tests/test_outputs.py or the solution file solve.sh (if accessible in the container) to discover exactly what strings to write. Additionally, since tests are pure string matching, the agent could just grep for the expected strings and write them directly without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five required changes listed in instruction.md (spawn call, error message, command description, option description, test file consistency) are tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated), grouped logically, and each has a docstring explaining whether it's fail-to-pass or pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing source code strings, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact strings like '.command(\"kanban\").description(\"Run npx kanban@latest --agent cline\")' and '.option(\"--kanban\", \"Run npx kanban@latest --agent cline\")' which precisely identify the lines and their exact replacement content, removing the localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-edit task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

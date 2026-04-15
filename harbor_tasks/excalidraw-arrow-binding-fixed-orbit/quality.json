@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics asserted in tests: `otherNeverOverride`, `arrowStartIsInside`, `otherBinding?.mode === \"inside\"`, the file paths `packages/element/src/binding.ts` and `packages/excalidraw/components/App.tsx`, the function `getBindingStrategyForDraggingBindingElementEndpoints_simple`, the `const other: BindingStrategy = !otherNeverOverride` pattern, and `arrowStartIsInside: event.altKey`. All asserted strings and patterns are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md Requirements section #3 explicitly states the exact implementation: 'A variable (named `otherNeverOverride`)', 'stored in `initialState` with key `arrowStartIsInside`', 'the other endpoint's binding mode should remain `{ mode: undefined }`', and 'The logic `const other: BindingStrategy = !otherNeverOverride ? ... : { mode: undefined }`'. This is essentially the complete solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names like `otherNeverOverride` (test_binding_ts_never_override_check_exists, test_binding_logic_preserves_inside_binding, test_no_orbit_override_for_fixed_binding), `arrowStartIsInside` (test_binding_ts_never_override_check_exists, test_app_ts_tracks_arrow_start_is_inside), and exact code patterns like `const other: BindingStrategy = !otherNeverOverride` and `arrowStartIsInside: event.altKey`. An alternative correct fix using different variable names (e.g."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "F2P tests (test_binding_ts_never_override_check_exists, test_app_ts_tracks_arrow_start_is_inside, test_binding_logic_preserves_inside_binding, test_no_orbit_override_for_fixed_binding) are all purely text-matching with `assert 'string' in open(path).read()`. While P2P tests do run subprocesses (typecheck, lint, unit tests), the F2P tests that verify the actual fix are entirely string-in-file checks with no code execution."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All F2P tests check only for the presence of specific strings in source files. An agent could simply append a dead-code comment block containing all required strings (`otherNeverOverride`, `arrowStartIsInside`, `otherBinding?.mode === \"inside\"`, `const other: BindingStrategy = !otherNeverOverride`, `arrowStartIsInside: event.altKey`) without actually fixing the bug, and all F2P tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/excalidraw (reachable from the container) as solution/solve.sh. The agent could read the gold patch from the solution directory or grep the test file to find the exact strings it needs to insert. Since F2P tests are pure string matching, the agent can trivially pass by inserting the literal fixture strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md requires 'When one endpoint has an inside binding and you drag the other endpoint, the inside binding should remain unchanged' \u2014 this actual behavioral requirement is never tested functionally. No test creates an arrow, binds it inside, drags the other end, and verifies the binding is preserved."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_binding_ts_never_override_check_exists, test_app_ts_tracks_arrow_start_is_inside, etc.), docstrings with F2P/P2P labels, and clear grouping by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying TypeScript source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in instruction.md and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names the exact function `getBindingStrategyForDraggingBindingElementEndpoints_simple`, specifies exact variable names `otherNeverOverride` and `arrowStartIsInside`, exact code patterns like `const other: BindingStrategy = !otherNeverOverride`, and the exact key `arrowStartIsInside` to add to `initialState`. This goes far beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

@@ -2,19 +2,19 @@
 
 ## Bug Description
 
-There are three bugs across the slime codebase:
+There are three bugs in the slime codebase that need to be fixed.
 
-### 1. Wrong variable used in HF checkpoint loading (`checkpoint.py`)
+### 1. Checkpoint loading ignores caller-specified path
 
-In `_load_checkpoint_hf`, the function receives a `load_path` parameter but incorrectly uses `args.hf_checkpoint` when calling `AutoBridge.from_hf_pretrained()`. This means the function ignores the caller-specified checkpoint path and always uses the global config value, which may point to a different or nonexistent path.
+In `slime/backends/megatron_utils/checkpoint.py`, the function `_load_checkpoint_hf` accepts a parameter specifying the checkpoint path to load from. However, when calling `AutoBridge.from_hf_pretrained()`, it ignores this parameter and reads the checkpoint path from a global config attribute instead. This means the function does not respect the caller-specified path and may load the wrong checkpoint or fail when the global config points elsewhere.
 
-### 2. Unused `multimodal_num_items` tracking in data batching (`data.py`)
+### 2. Dead tracking metadata accumulated on batch
 
-The `get_batch` function builds a `multimodal_num_items` dictionary that tracks per-sequence item counts for each multimodal key. This variable is set on the batch dict but is a leftover from FSDP support and is never consumed by any downstream code. It adds unnecessary complexity and stores stale metadata.
+In `slime/backends/megatron_utils/data.py`, the `get_batch` function creates a dictionary that tracks per-sequence item counts for each multimodal key and attaches it to the batch. No downstream code ever reads this data — it is dead code that adds unnecessary complexity to the batch dictionary.
 
-### 3. Missing `return_mm_token_type_ids=False` in processor kwargs (`processing_utils.py`)
+### 3. Missing processor flag causing downstream errors
 
-In `build_processor_kwargs`, the `text_kwargs` dict does not include `return_mm_token_type_ids=False`. In newer versions of the Transformers library, the processor returns `mm_token_type_ids` by default. This field is not a tensor and is not used by Megatron, causing errors or unexpected behavior when the batch is processed downstream.
+In `slime/utils/processing_utils.py`, the `build_processor_kwargs` function does not configure the text processor to suppress `mm_token_type_ids` from its output. In newer versions of the Transformers library, the processor returns this field by default. Since it is not a tensor and is not used by Megatron, its presence causes errors when the batch is processed downstream.
 
 ## Files to Modify
 

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (python/python/lancedb/query.py), the function (ensure_vector_query), the error message ('Vector query must be a non-empty list'), and the inputs ([], [[]]). The tests check for these same elements. The structural tests (len(val)==0, len(sample)==0, 'non-empty') are patterns that naturally follow from the described bug and function, and are discoverable from the instruction's description of the function's validation logic."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'Find the lines that return ValueError(...) and change them to raise ValueError(...)' in the Agent Guidance section. This directly tells the agent exactly what code change to make, leaving no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The F2P tests verify behavior (that ValueError is raised, not returned) by executing the function. The structural test (test_repo_function_source_structure) checks for 'len(val) == 0', 'len(sample) == 0', and 'non-empty' which are patterns present in both the buggy and fixed code. Any correct fix that changes return to raise would pass all tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The F2P tests (test_ensure_vector_query_raises_on_empty_list, test_ensure_vector_query_raises_on_nested_empty_list) extract and execute the function via subprocess, testing actual behavior (whether ValueError is raised). test_ensure_vector_query_accepts_valid_inputs also executes the function. While test_repo_function_source_structure does text/AST inspection, the key F2P tests are behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests call ensure_vector_query([]) and ensure_vector_query([[]]) and explicitly check that ValueError is raised (not returned). A stub that returns None or a default value would fail because the test checks `if isinstance(result, ValueError)` and also requires catching ValueError in the except block."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/lancedb in the container (solution/solve.sh contains the exact patch). An agent could read the gold patch from the solve.sh or the Dockerfile reveals the base commit. The agent could also grep for the expected test patterns to reverse-engineer the solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that [] and [[]] raise ValueError, and that valid inputs continue to work. All three behaviors are tested by the F2P and P2P tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_ensure_vector_query_raises_on_empty_list, etc.), have docstrings with F2P/P2P labels, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in a validation function, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and variable names in the instruction are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly says 'Find the lines that return ValueError(...) and change them to raise ValueError(...)' \u2014 this is the exact fix, not just a description of the bug. It also specifies the exact function name and file path, though the file path is reasonable given the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

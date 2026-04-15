@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:32:32.934889",
-  "total_time": 2304.73,
-  "sandbox_id": "i6cmc2juyzth81z956dtt",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:17:23.180727",
+  "total_time": 1904.57,
+  "sandbox_id": "i81cy6d96c9a6izdaawmo",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,30 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.41,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 31.32,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 205.19,
-      "at": "2026-04-09T15:01:16.662345"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +113,14 @@
       "backend": "fireworks",
       "time": 2304.73,
       "at": "2026-04-12T03:32:32.934889"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1904.57,
+      "at": "2026-04-15T05:17:23.180727"
     }
   ]
 }

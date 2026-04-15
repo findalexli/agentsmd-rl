@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_abort_signal_header_compiles_with_new_members asserts 'm_abortAlgorithms', 'm_abortAlgorithmsLock', 'wtf/Lock.h', and the exact template signature 'template<typename Visitor> void visitAbortAlgorithms(Visitor&)'. test_add_abort_algorithm_uses_new_vector asserts 'signal.m_abortAlgorithms.append' and 'Locker locker { signal.m_abortAlgorithmsLock }'. test_run_abort_steps_handles_new_vector asserts 'abortAl"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'The JSAbortAlgorithm class needs to use a weak reference pattern that allows GC collection' and 'JSAbortAlgorithm currently holds its JS callback via JSCallbackDataStrong' \u2014 this directly tells the agent to switch from JSCallbackDataStrong to a weak pattern. It also names the exact reference pattern to follow (JSPerformanceObserverCallback) and says to add GC visitation. This is effectively describing the fix, not just the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details like 'JSCallbackDataWeak* m_data', 'signal.m_abortAlgorithms.append', 'Locker locker { signal.m_abortAlgorithmsLock }', 'abortAlgorithms = std::exchange(m_abortAlgorithms, {})', 'pair.second->visitJSFunction(visitor)', exact visitJSFunction signatures, and 'm_abortAlgorithms.sizeInBytes()'. An alternative correct fix (e.g., using different member names, a different container, or a different synchronization approach) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail_to_pass tests are pure text/string matching: they read source files and assert substrings like 'JSCallbackDataWeak* m_data in h_src', 'signal.m_abortAlgorithms.append in src', etc. test_jsabortalgorithm_compiles_with_weak_ref does run clang -fsyntax-only but only checks for syntax errors (and acknowledges it may fail due to missing includes). No test actually compiles the project, runs the binary, or verifies the memory leak is fixed."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply writes the expected strings into the source files (e.g., adding 'JSCallbackDataWeak* m_data' to the header, 'm_abortAlgorithms' member declarations, etc.) without any functional correctness would pass all tests, since tests only check for string presence in files. No test executes the code or verifies the leak is actually fixed."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun after applying solve.sh, and the gold patch is in solution/solve.sh. The agent could read /solution/solve.sh or the test file tests/test_outputs.py to see exact expected strings and simply write them into the source files. Tests only check string presence, so pattern-matching the fixture strings without understanding the bug would work."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md states the expected behavior is that 'AbortSignal should be garbage collected' and 'No Strong reference cycle should prevent collection.' No test actually verifies GC behavior or memory leak absence \u2014 tests only check source code text patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, grouped into sections (gates/pass_to_pass and fail_to_pass), and each has a docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves C++ source code modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files, exact member variables (m_algorithms, JSCallbackDataStrong), the exact reference cycle path, the exact class to modify (JSAbortAlgorithm), the exact pattern to follow (JSPerformanceObserverCallback), and even the exact technique (use weak reference pattern, visit callback from visitAdditionalChildrenInGCThread). This goes well beyond describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

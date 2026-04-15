@@ -37,14 +37,40 @@ if __name__ == "__main__":
 4. **Expected**: The textbox shows "some text"
 5. **Actual**: The textbox is empty
 
-## Root Cause Area
+## Technical Requirements
 
-The issue is in `js/core/src/init.svelte.ts`, specifically in how `update_state` and `register_component` interact when a component is hidden in an inactive tab.
+The fix must address three related issues in `js/core/src/init.svelte.ts`:
 
-When the load event fires, the target component hasn't mounted yet (it's in an inactive tab, so it has no `_set_data` callback). The `update_state` method falls back to updating the node's props directly, but when the component later mounts asynchronously, the Svelte 5 `$effect` syncs from the node's props and overwrites the values.
+### 1. Deferred state storage for unmounted components
 
-Additionally, `render_previously_invisible_children` does a full tree traversal and reassignment even when no nodes need to change, which can trigger unnecessary reactive cascades.
+When `update_state` is called for a component that has not yet mounted (no `_set_data` callback available), the implementation must store the update in a deferred state map using the exact pattern:
+- A private class field named `#pending_updates` initialized as `new Map<number, Record<string, unknown>>()`
+- The `update_state` method must read existing pending state via `this.#pending_updates.get(id)`
+- The `update_state` method must write merged state via `this.#pending_updates.set(id, { ...existing, ...new_state })`
+
+### 2. Deferred state application on component registration
+
+When a component eventually mounts and registers via `register_component`, the implementation must apply any pending updates that were stored while the component was hidden. The fix must use this exact pattern:
+- Read pending state via `this.#pending_updates.get(id)`
+- Delete the entry via `this.#pending_updates.delete(id)` after reading
+- Defer application using `tick().then(() => { ... })` to ensure Svelte 5 effects have run first
+- Apply the pending state by calling `_set(pending)` with the stored data
+
+### 3. In-place property modification instead of spread replacement
+
+In `update_state`, when modifying a node's props, the implementation must modify properties in-place using `for...in` loops instead of replacing the entire props object with spread syntax. The fix must use:
+- `for (const key in new_props.shared_props)` to update shared props in-place
+- `for (const key in new_props.props)` to update component props in-place
+
+This prevents Svelte 5's deep `$state` proxy from losing track of values during async component mounting.
+
+### 4. Targeted node lookup in render visibility handling
+
+When handling visibility changes for previously hidden children, the implementation must use targeted node lookup instead of full tree traversal with root reassignment. The fix must:
+- Use `find_node_by_id(this.root!, id)` for targeted lookup
+- Check `#hidden_on_startup.has(node.id)` before any processing to enable early return when no changes are needed
+- Avoid patterns like `this.root = this.traverse(this.root, ...)` which trigger unnecessary reactive cascades
 
 ## Key Files
 
-- `js/core/src/init.svelte.ts` — The `AppTree` class, specifically `update_state()`, `register_component()`, and `render_previously_invisible_children()`
+- `js/core/src/init.svelte.ts` — Contains the state management logic that needs modification

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact files (sglang_config.py, sglang_engine.py, rollout.py), classes (ServerGroupConfig, ModelConfig, HttpServerEngineAdapter), worker_type values including 'encoder', the has_pd_disaggregation property pattern, and the concept of has_encoder_disaggregation. All test-specific elements (worker_type='encoder', has_encoder_disaggregation property, valid worker types, ServerGroupConfig, ModelConfig) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (config validation rejects encoder, no encoder awareness, single-phase startup, key format mismatch) and expected behavior, but does not specify exact code changes like 'add encoder to valid_types set' or 'add property has_encoder_disaggregation'. A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check behavioral properties: that ServerGroupConfig accepts 'encoder', that ModelConfig has a has_encoder_disaggregation property returning True/False based on encoder groups. These test the interface contract, not implementation details. Alternative implementations (e.g., using a method instead of property, different internal data structures) would pass as long as the behavior matches. The property name 'has_encoder_disaggregation' follows the existing 'has_pd_disaggregat"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and instantiate ServerGroupConfig and ModelConfig objects, check property values, and use pytest.raises for validation. They execute code rather than grep for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_encoder_worker_type_accepted would fail on the base code because ServerGroupConfig.__post_init__ raises AssertionError for worker_type='encoder'. test_has_encoder_disaggregation_positive requires a new property that doesn't exist on the base ModelConfig class. A stub returning None/False would fail the positive test. These cannot be satisfied without implementing the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/slime's working directory context and solve.sh is in the solution/ directory. The Dockerfile doesn't remove solution/ from the container. An agent could potentially read /solution/solve.sh to extract the exact patch. Additionally, the gold patch is accessible if the agent checks the container filesystem."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes 4 areas of change, but tests only cover items 1 (config validation for encoder) and partially item 2 (has_encoder_disaggregation property). Items about encoder engine launch entry point (encode_server vs http_server), phased startup in rollout.py, get_url method, skip router registration, and config override key normalization (item 4) are not tested in the fail-to-pass tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments ([static], [pr_diff] fail_to_pass, [repo_tests] pass_to_pass), have descriptive names (test_encoder_worker_type_accepted, test_has_encoder_disaggregation_positive/negative), and include docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to Python classes and doesn't produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, class names, method names, and variable names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact functions (_compute_server_args(), start_rollout_servers(), launch_server_process implicitly via 'encode_server instead of http_server'), specific class names (ServerGroupConfig, HttpServerEngineAdapter), and specific fields (encoder_urls, language_only, worker_type). It also specifies the exact entry point change ('encode_server instead of http_server'). This goes beyond describing what's broken and into specifying implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

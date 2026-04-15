@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions all key files (chart/values.yaml, chart/values.schema.json, chart/templates/NOTES.txt, chart/templates/workers/worker-deployment.yaml), the configuration paths (workers.celery.hpa, workers.hpa), and the expected properties (enabled, minReplicaCount, maxReplicaCount). The tests check for these exact paths and properties, which are all discoverable from the instruction. The deprecation warning strings like 'workers.hpa.enabled' and 'workers.celery.hpa.enabled' are directly"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior should exist (new config section, schema, deprecation warnings, backward compatibility) but doesn't specify exact code changes, line numbers, or specific implementation details like template conditionals."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests are extremely implementation-specific. For example, test_values_yaml_has_celery_hpa_section parses the YAML file line by line looking for specific indentation patterns of 'celery:' under 'workers:' and 'hpa:' under 'celery:'. An alternative valid approach (e.g., using a different YAML structure, comments, or formatting) might fail these text-parsing tests. Similarly, test_notes_have_deprecation_warnings_for_hpa_enabled asserts exact strings like 'workers.hpa.enabled' and 'workers.celer"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are pure text/file content checks: test_values_yaml_has_celery_hpa_section reads file and parses lines, test_schema_has_celery_hpa_properties reads JSON and checks keys, test_notes_have_deprecation_warnings_for_hpa_enabled does 'assert string in content'. The TestBackwardCompatibility and TestNewConfiguration classes do run 'helm template' subprocess calls, but the majority of fail-to-pass tests (TestValuesYamlChanges, TestSchemaChanges, TestDeprecationWarnings) are purely text-matchi"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for content that genuinely doesn't exist in the base commit (workers.celery.hpa section in values.yaml, celery.hpa in schema, deprecation warnings in NOTES.txt). A stub/no-op implementation would not pass these tests since the base files lack this content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory contains solve.sh which fetches PR #64734 and applies it. An agent could read /workspace/airflow/../solution/solve.sh (or the solution/ directory visible in the container) to discover the exact PR number and apply it directly. The solve.sh script is accessible and contains the complete solution strategy."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement #4 ('When both workers.hpa and workers.celery.hpa are specified, the celery.hpa values should take precedence') is not tested. There is no test that sets both configurations simultaneously and verifies precedence behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestValuesYamlChanges, TestSchemaChanges, TestDeprecationWarnings, TestBackwardCompatibility, TestNewConfiguration) with clear docstrings explaining fail-to-pass vs pass-to-pass intent."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the expected schema structure (workers.celery.hpa with enabled, minReplicaCount, maxReplicaCount, metrics, behavior) and references values.schema.json as the schema definition file."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, configuration keys, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to investigate which is appropriate for a Helm chart task. It doesn't specify exact line numbers or the precise template conditionals to change. The file list (values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml) represents the natural scope of a Helm chart config change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch fetches a specific PR diff scoped to chart/ and helm-tests/ directories, applying localized changes to configuration files rather than full rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 8,
+  "fail_count": 4
+}

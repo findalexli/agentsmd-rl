@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_double_push_eliminated checks that workbuf.append count is <11 (the exact number 11 is not in the instruction); test_workitem_tracks_multiple_indices checks for removal of 'idx: u32' field and presence of specific type names like BitSet, AutoBitSet, ArrayList, BoundedArray, etc.; test_pattern_matching_iterates_active_indices checks for iteration patterns like .iterator(), findFirstSet, etc. These specific identifiers and thresho"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly describes the fix approach: 'The standard approach is to carry a set of active component indices per work item, so that when a boundary is crossed, both indices are tracked together and the directory is iterated only once.' This tells the agent exactly WHAT to change (replace single index with a set of indices in WorkItem), not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_workitem_tracks_multiple_indices asserts idx:u32 is gone and checks for specific type names (BitSet, AutoBitSet, ArrayList, etc.). An alternative correct fix that uses a different mechanism (e.g., a deduplication cache/hashmap on directory paths, or a 'visited' set to skip already-opened dirs without changing WorkItem's idx field) would fail these tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_workitem_tracks_multiple_indices, test_double_push_eliminated, test_pattern_matching_iterates_active_indices) all use regex pattern matching on source code text (e.g., re.search(r'\\bidx\\s*:\\s*u32', body)). They inspect source structure via string/regex matching, not by compiling or executing the code. The comment in the test file explicitly states 'AST-only because: Zig code requires Zig compiler + WebKit/JSC; not available in container'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op solution would leave the original code unchanged, which has idx:u32 in WorkItem and 11 workbuf.append calls. test_workitem_tracks_multiple_indices would fail (idx:u32 still present), test_double_push_eliminated would fail (count=11 not <11), and test_pattern_matching_iterates_active_indices would fail (no iteration patterns). So stubs cannot pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/bun or could be accessed. The test file itself is at tests/test_outputs.py and readable, which reveals exactly what regex patterns and counts the tests check for. An agent could read test_outputs.py to craft a minimal source edit that passes all regex checks without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires 'Correctness must be preserved: all matches found by the old code must still be found' and 'Patterns without **/X boundaries should be unaffected.' No test verifies actual glob matching correctness or that non-boundary patterns still work. Tests only check source code structure."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact struct ('WorkItem'), the exact field causing the bug ('two separate WorkItems'), the exact function ('matchPatternDir'), and prescribes the exact solution approach ('carry a set of active component indices per work item'). This goes well beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

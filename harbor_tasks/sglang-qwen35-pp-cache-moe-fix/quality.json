@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check specific file paths like 'python/sglang/srt/disaggregation/decode.py' and class names like 'HybridMambaDecodeReqToTokenPool' which are not mentioned in instruction.md. The test test_decode_pp_parameters checks for specific parameter names 'mamba_layer_ids' and 'start_layer' in HybridMambaDecodeReqToTokenPool.__init__ and checks that '# TODO: Support PP' is removed - none of these specifics are in the instruction. The test test_qwen3_vl_pp_properties checks for fallback behavior (defa"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (cache not sharded, weight loading failure) and the general approach (utility function, filtering, PP-aware pools) but does not specify exact code changes like 'change line X to Y'. It describes the architectural fix needed without giving the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_decode_pp_parameters requires exact parameter names 'mamba_layer_ids' and 'start_layer' in HybridMambaDecodeReqToTokenPool.__init__. test_qwen3_5_load_weights_pp_filtering requires the function be named exactly 'get_layer_id' and called within load_weights/load_fused_expert_weights. test_qwen3_vl_pp_properties requires specific fallback behavior (default 0, fallback to config.num_hidden_layers). An alternative correct fix using different"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_decode_pp_parameters uses only AST inspection to check parameter names exist, without executing the constructor. test_qwen3_5_load_weights_pp_filtering uses only AST walking to check that 'get_layer_id' is called and 'continue' exists - pure text/structure inspection. test_qwen3_vl_pp_properties does execute extracted property functions against mock objects, which is behavioral. However, several f2p tests are purely structural AST checks, not behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_decode_pp_parameters only checks AST structure - simply adding 'mamba_layer_ids' and 'start_layer' as unused parameters to __init__ and removing the TODO comment would pass. test_qwen3_5_load_weights_pp_filtering only checks that get_layer_id is called and continue exists - adding a dead-code call to get_layer_id with a continue in the same function would pass without actually implementing PP filtering."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/sglang and the gold patch could potentially be accessed. The test file test_outputs.py is in the container and could be read to reverse-engineer exact requirements. The Dockerfile and test structure don't prevent reading /solution/ or test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires that 'Mamba cache pools should only allocate memory for layers within the current PP rank's range' (actual memory allocation behavior) and 'Weight loading should skip any layer whose ID falls outside the current rank's range \u2014 no KeyError should occur' (runtime behavior). Tests only check AST structure and a utility function, never test actual memory allocation or weight loading behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gate, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves code bug fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names exact files ('python/sglang/srt/layers/utils/common.py'), exact class names ('HybridReqToTokenPool', 'MambaPool', 'HybridLinearKVPool'), exact method names ('load_weights', 'load_fused_expert_weights'), and specifies exact function signatures ('get_layer_id' utility function that extracts layer ID from weight names). It even specifies the exact location for the new utility function."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all files (enums.py, operator.py, pyproject.toml, CLAUDE.md), the enum names (agentos_docker, agentos_aws, agentos_railway), the version bump to 1.0.7, the CLAUDE.md section requirements (GitHub Operations, gh api, gh pr edit, GraphQL, -X PATCH, repos/<owner>/<repo>/pulls/<number>), and the repo URL preservation requirement. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact new enum member names ('agentos_docker = \"agentos-docker\"'), the exact version to set ('1.0.7'), and the exact content to add to CLAUDE.md (specific command formats). This goes beyond describing what's broken and tells the agent exactly what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_claude_md_github_operations_section assert exact strings like 'GitHub Operations', 'gh api', 'gh pr edit'. test_claude_md_graphql_workaround asserts 'PATCH', 'repos/', '/pulls/'. test_default_template_prompt_updated asserts the exact string 'default (agentos-docker)'. These are implementation-specific string checks that constrain the solution to match the gold patch's exact wording rather than testing behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_enum_values_renamed imports and calls the enum (behavioral). However, test_template_name_map_updated, test_default_template_prompt_updated, test_claude_md_github_operations_section, test_claude_md_graphql_workaround, and test_version_bumped are all pure text/AST-based file content checks (assert 'X' in content patterns). The majority of tests are text-matching, not behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for the absence of '-template' suffixes and presence of specific shortened names. A stub or no-op implementation would leave the original '-template' suffixed names in place, which would fail these assertions. The version bump test checks for '1.0.7' while the original is '1.0.6'. None can be passed trivially."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. An agent could read it directly (cat /solution/solve.sh or similar path) to obtain the exact changes needed. The Dockerfile doesn't show any measures to prevent access to solution files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: enum renaming (test_enum_values_renamed), map updates (test_template_name_map_updated), prompt update (test_default_template_prompt_updated), repo URL preservation (test_repo_urls_unchanged), version bump (test_version_bumped), and CLAUDE.md updates (test_claude_md_github_operations_section, test_claude_md_graphql_workaround)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config/documentation), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify (enums.py, operator.py, pyproject.toml, CLAUDE.md) and the exact changes to make (e.g., 'agentos_docker = \"agentos-docker\"', version '1.0.7', specific CLAUDE.md content including 'repos/<owner>/<repo>/pulls/<number>'). This eliminates the need for the agent to localize the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The CLAUDE.md edit in the gold patch is a localized addition of a new section, not a full-file rewrite, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

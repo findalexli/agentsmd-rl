@@ -1,22 +1,25 @@
-# Update WebKit Safari User-Agent Version to 26.4
+# Update WebKit Safari User-Agent Version to Current Stable
 
 ## Problem
 
-The WebKit browser in Playwright currently reports Safari version `26.0` in its user-agent string, but the latest stable Safari release is `26.4`. This means all WebKit user-agent strings — in the browser constant, device descriptors, badges, and release notes — are stale.
+The WebKit browser in Playwright currently reports Safari version `26.0` in its user-agent string. The latest stable Safari release is `26.4`. This means all WebKit user-agent strings — in the browser constant, device descriptors, badges, and release notes — are stale and will report the wrong browser version to servers.
 
-Going forward, the version should track Safari stable releases (e.g. 26.4) rather than Safari Technology Preview.
+## What to Do
 
-## What Needs to Change
+1. Find the latest stable Safari version from [Safari Release Notes](https://developer.apple.com/documentation/safari-release-notes) (the highest numbered entry that is not a Technology Preview).
 
-1. The `BROWSER_VERSION` constant in `packages/playwright-core/src/server/webkit/wkBrowser.ts` is the source of truth for the WebKit Safari version string. Update it to `26.4`.
-
-2. The version also appears in:
+2. Update the Safari version string wherever it appears:
+   - `packages/playwright-core/src/server/webkit/wkBrowser.ts` — the `BROWSER_VERSION` constant
    - `packages/playwright-core/browsers.json` — the `browserVersion` field for WebKit
    - `packages/playwright-core/src/server/deviceDescriptorsSource.json` — all `Version/X.Y` in WebKit device user-agent strings
    - `README.md` — the WebKit version badge and compatibility table
    - `docs/src/release-notes-*.md` — the browser versions section in each language's release notes
 
-3. After making the code changes, document the Safari version update process as a new development skill in `.claude/skills/playwright-dev/`. The repo already has skill docs for other common tasks (see the existing SKILL.md index). Create a skill doc explaining where the version is declared, how to find the latest stable Safari version, and what to run afterwards. Update the SKILL.md index to link to the new doc.
+3. Document the update process as a new skill doc in `.claude/skills/playwright-dev/webkit-safari-version.md`. The doc should:
+   - Name `BROWSER_VERSION` as the source of truth for the Safari version
+   - Reference `wkBrowser.ts` where it is declared
+   - Explain how to find the latest stable Safari version
+   - Be linked from `.claude/skills/playwright-dev/SKILL.md`
 
 ## Files to Look At
 

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (TTDDialogOutput.tsx, useTextGeneration.ts, en.json), translation keys (chat.errors.mermaidParseError, chat.errors.requestFailed, chat.errors.generationFailed, ttd.errorMermaidSyntax), the exact translation values, the consolidated condition pattern (error?.status === 429 || rateLimitRemaining === 0), removeLastAssistantMessage, trackEvent call signature, and the helper functions to remove (getReadableErrorMsg, handleError are implicitly covered by 'helper fu"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive - it specifies exact translation key names and values, exact function calls like 'trackEvent(\"ai\", \"mermaid parse success\", \"ttd\")', exact conditional patterns like combining 429 status check with rateLimitRemaining === 0, and tells the agent to remove helper functions and inline their logic. This goes beyond describing what's broken and tells the agent exactly what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string matches like 't(\"chat.errors.mermaidParseError\")' in file content, 'const getReadableErrorMsg' not in content, 'const handleError' not in content, and 'trackEvent(\"ai\", \"mermaid parse success\", \"ttd\")' in content. An alternative correct fix that uses different quoting (e.g., double quotes around the t function argument vs single), different variable naming, or keeps helper functions but renames them would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_ttd_dialog_uses_new_translation_key, test_getreadableerrormsg_removed, test_handleerror_removed, test_new_error_keys_present, test_consolidated_429_error_handling, and test_mermaid_parse_success_tracking all exclusively use string-in-file-content assertions (assert '...' in content). While there are also subprocess-based tests (typecheck, lint, prettier, unit tests), the f2p tests are purely textual pattern matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific new strings that don't exist in the original codebase (e.g., 'chat.errors.mermaidParseError', trackEvent call) and check for removal of existing strings. A stub or no-op implementation wouldn't pass these since the original files contain the old patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/excalidraw and the solve.sh script exists in the solution/ directory. An agent could read the solution file or grep test files (which contain exact expected strings like 't(\"chat.errors.mermaidParseError\")') to determine what to write without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: translation key migration (test_translation_key_moved), new key usage in TTDDialogOutput (test_ttd_dialog_uses_new_translation_key), helper removal (test_getreadableerrormsg_removed, test_handleerror_removed), new error keys in useTextGeneration (test_new_error_keys_present), consolidated 429 handling (test_consolidated_429_error_handling), analytics tracking (test_mermaid_parse_success_tracking), and compilation/lint/format checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, grouped logically by concern (translation keys, file changes, compilation checks, unit tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact JSON schema for en.json translation keys: chat.errors.mermaidParseError = 'Mermaid syntax error', chat.errors.requestFailed = 'Failed to send request, please try again later', chat.errors.generationFailed = 'Failed to generate diagram'."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, translation keys, command names, and variable names in the instruction are all correctly spelled and consistent with the test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (TTDDialogOutput.tsx, useTextGeneration.ts), exact function names to remove (helper functions), exact translation key replacements, and exact conditional patterns to use. It essentially provides a detailed implementation specification rather than a bug description."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

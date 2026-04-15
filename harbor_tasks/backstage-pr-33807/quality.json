@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/cli-module-build/src/lib/runner/startEmbeddedDb.ts), the function (startEmbeddedDb()), the key calls (pg.initialise(), fs.writeFile with PID_FILE, pg.start()), the try block structure, the EmbeddedPostgres constructor, and the constant PID_FILE. All assert targets in tests (file path, function name, method names, constant names) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction heavily hints at the fix: 'the sequence of operations must satisfy what pg.initialise() requires of its working directory', 'the directory already contains a backstage.pid file when initialization begins', and 'something during the startup sequence causes the directory to not be empty when pg.initialise() is called.' Combined with naming the exact operations (writeFile with PID_FILE, pg.initialise(), pg.start()) and saying the sequence matters, this essentially tells the develope"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check ordering of specific API calls (pg.initialise(), fs.writeFile with PID_FILE, pg.start()) within the try block and that no PID_FILE reference appears before EmbeddedPostgres instantiation. Any correct fix must move the PID write after initialise and before start, which is the only logical fix. Alternative approaches (like writing PID to a different location or renaming the file) would change the program's behavior. The tests check structural ordering constraints that any correct f"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All three fail-to-pass tests (test_pid_write_after_initialise, test_embedded_postgres_initialise_and_pid_sequence, test_no_standalone_pid_write_before_embedded_postgres) exclusively use regex/string matching on source code text \u2014 they open the .ts file and assert on character positions and string presence. None import, call, or execute the actual code. The pass-to-pass tests do run subprocesses but have conditional skips (if not os.path.exists node_modules: return) that likely skip in the contai"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check source code ordering that is specifically violated in the base commit (PID write before initialise). A stub or no-op implementation would fail because the tests look for specific method calls in specific orders. The base commit's code fails these tests, and only the actual fix (reordering) passes them."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/backstage (same repo the tests inspect) via solve.sh, and the Dockerfile also clones to /workspace/backstage. The agent could read solution/solve.sh which contains the exact patch with the diff showing lines to add/remove. The solve.sh file is present in the container and contains 'cat << PATCH > /tmp/fix.patch' with the complete diff."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes: PID file must be written after pg.initialise() and the directory must be empty when initialise runs. The tests verify this ordering constraint (PID after initialise, PID before start, no PID before EmbeddedPostgres constructor). All described buggy behavior is tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (fail-to-pass and pass-to-pass), each has descriptive names and detailed docstrings explaining the bug scenario and expected behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths (packages/cli-module-build/src/lib/runner/startEmbeddedDb.ts), function names (startEmbeddedDb, cleanStaleDatabases, startEmbeddedPostgres), and variable names (PID_FILE, EmbeddedPostgres) are correctly spelled and match the actual code."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file, the exact function, the exact sequence of calls (pg.initialise(), fs.writeFile with PID_FILE, pg.start()), mentions the try block structure, and explicitly says 'the sequence of operations must satisfy what pg.initialise() requires of its working directory.' This narrows the solution to reordering two lines within a specific try block, leaving almost no localization work for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'const stream = fs.createReadStream(file, opts)', 'res.on(\"close\", () => stream.destroy())', 'let stream: ReturnType<typeof createReadStream> | undefined', 'stream = createReadStream(fullPath)', and 'stream?.destroy()'. While the instruction mentions capturing stream variables and destroying them, it does not specify these exact literal strings. For example, the instruction never specifies the variable must be named 'stream', nor the exact type annotation 'ReturnT"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Verification Criteria' section in instruction.md essentially describes the exact implementation: 'A read stream variable is captured before piping, and the stream is explicitly destroyed when the response closes' and 'A read stream variable is declared outside the try block... assigned inside the try block, and destroyed in the catch block on errors.' This tells the agent exactly WHAT to change and HOW, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact string matching: e.g., test_partytown_stream_cleanup asserts 'const stream = fs.createReadStream(file, opts)' and 'res.on(\"close\", () => stream.destroy())'. An alternative correct fix using a different variable name (e.g., 'readStream'), or using res.on('close', function() { ... }), or using pipeline() from stream/promises, would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two fail-to-pass tests (test_partytown_stream_cleanup and test_node_serve_app_stream_cleanup) exclusively use string-in-file assertions like 'assert \"const stream = fs.createReadStream(file, opts)\" in content'. They never execute the code, create streams, simulate client disconnects, or verify that file descriptors are actually released. The build/lint/compile tests do execute subprocesses but are pass-to-pass tests."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_partytown_stream_cleanup and test_node_serve_app_stream_cleanup) only check for specific strings in source files. An agent could simply insert the exact expected strings as dead code (e.g., in a comment or unreachable block) and pass these tests without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/astro's git history or solve.sh at a known path. The agent could read solution/solve.sh to see the exact patch. Additionally, since the tests are pure string matching, the agent could grep the test file for the expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (stream cleanup in sirv.ts, stream cleanup in serve-app.ts, TypeScript compilation, Biome linting, build success) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_partytown_stream_cleanup, test_node_serve_app_stream_cleanup, etc.), have docstrings explaining what they verify and whether they're fail-to-pass or pass-to-pass, and are logically grouped by integration."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing source code files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact functions (send() in sirv.ts, readErrorPageFromDisk() in serve-app.ts), describes the exact fix pattern ('read stream variable is captured before piping', 'declared outside the try block', 'destroyed in the catch block'), effectively telling the agent exactly where and how to make changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

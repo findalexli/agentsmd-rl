@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert the function must be named exactly `_awrite_todos` (e.g., `from langchain.agents.middleware.todo import _awrite_todos`), but instruction.md never specifies this name. It only refers to 'an async function' and 'new_async_function'. A developer reading only instruction.md could reasonably name it `_async_write_todos`, `_write_todos_async`, etc. and would fail the tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the problem (missing async handler) and requirements (add async function, register coroutine) but does not specify exact code changes, line numbers, or the specific implementation. A developer must still reason about what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on the exact function name `_awrite_todos` (test_awrite_todos_function_exists imports it by name, test_todo_middleware_tool_has_coroutine checks `write_todos_tool.coroutine is _awrite_todos`). An alternative correct fix using a different function name like `_async_write_todos` would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import modules, call async functions with `asyncio.run()`, inspect signatures, check `asyncio.iscoroutinefunction()`, instantiate `TodoListMiddleware()`, run subprocess pytest/ruff/mypy commands. They execute code rather than just checking text in files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_awrite_todos_functional_behavior actually calls `await _awrite_todos(mock_runtime, test_todos)` and checks the returned Command has correct `update['todos']`. A stub returning None or empty would fail. test_awrite_todos_function_exists checks `asyncio.iscoroutinefunction`. These cannot be satisfied by trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/langchain as solve.sh could be applied, and the gold patch is in solution/solve.sh. An agent could read this file or grep for the patch content. No evidence of solution directory being excluded from the container or made inaccessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: async coroutine check (test_awrite_todos_function_exists), correct signature (test_awrite_todos_has_correct_signature), tool coroutine registration (test_todo_middleware_tool_has_coroutine), docstring (test_awrite_todos_docstring), functional behavior/delegation (test_awrite_todos_functional_behavior), linting/formatting/type-checking (test_ruff_linting, test_ruff_formatting, test_mypy_type_checking), imports (test_todo_module_imports), upstream test"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating fail-to-pass vs pass-to-pass categories. Each test has a clear, specific purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, commands, and function names in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file path `libs/langchain_v1/langchain/agents/middleware/todo.py` which is appropriate given the task domain. It doesn't specify exact line numbers or the exact function name to add."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

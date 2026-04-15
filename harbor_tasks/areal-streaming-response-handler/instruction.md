@@ -1,11 +1,41 @@
+# Task: Fix Streaming Response Handler
+
+## Problem
+
 The `/chat/completions` endpoint in `areal/experimental/openai/proxy/proxy_rollout_server.py` raises a `ResponseValidationError` when a client sends `stream=true` in the request body.
 
-There are two problems:
+## Symptoms
 
-1. The `_call_client_create` helper does not strip the `stream` field from the request body kwargs. When a request includes `{"stream": true}`, the field leaks through to the underlying OpenAI client call via `**kwargs`, causing it to return an `AsyncGenerator` even when the endpoint did not explicitly request streaming via the `stream` parameter.
+1. When a request includes `{"stream": true}` in the body, the OpenAI client returns an `AsyncGenerator` instead of a `ChatCompletion` dict, causing FastAPI validation to fail with `ResponseValidationError`.
 
-2. The `chat_completions` endpoint has no streaming branch. It always passes the return value of `_call_client_create` directly to FastAPI as a `ChatCompletion` response. When an `AsyncGenerator` is returned (because `stream` leaked through), FastAPI tries to validate it as a `ChatCompletion` dict and raises `ResponseValidationError`.
+2. Even when the explicit `stream` parameter is used, the response format is incorrect for SSE streaming clients.
 
-Fix both issues so that:
-- The `stream` field from the request body is stripped in `_call_client_create` so only the explicit `stream` parameter controls streaming behavior.
-- The `chat_completions` endpoint detects `stream=true` in the request and returns a proper `StreamingResponse` with Server-Sent Events in the OpenAI SSE format (`data: {json}\n\n` ... `data: [DONE]\n\n`).
+## Required Behaviors
+
+The implementation must satisfy all of the following:
+
+1. **Stream field isolation**: The `stream` field from the request body must not reach the underlying OpenAI client call via `**kwargs`. Only the explicit `stream` parameter passed to the client should control streaming behavior.
+
+2. **SSE format compliance**: When streaming is enabled, the endpoint must return Server-Sent Events in the OpenAI SSE format:
+   - Each chunk: `data: {json}\n\n` (JSON contains `id` and `content` fields)
+   - Termination: `data: [DONE]\n\n`
+
+3. **Streaming response support**: The endpoint must be capable of returning a streaming response without FastAPI attempting to validate it as a non-streaming `ChatCompletion` response.
+
+4. **Behavior under stream parameter combinations**:
+
+   | Body stream | Param stream | Expected behavior |
+   |-------------|--------------|-------------------|
+   | `true`      | `false`      | Strip body stream, non-streaming |
+   | `true`      | `true`       | Strip body stream, streaming |
+   | `false`     | `false`      | Strip body stream, non-streaming |
+   | `false`     | `true`       | Strip body stream, streaming |
+   | omitted     | `false`      | No stream in kwargs, non-streaming |
+   | omitted     | `true`       | Add stream=True to kwargs, streaming |
+
+## Verification
+
+The fix is correct when:
+- `ResponseValidationError` is no longer raised for streaming requests
+- SSE clients receive properly formatted `data: ` events with `content` fields
+- Non-streaming requests continue to work as before

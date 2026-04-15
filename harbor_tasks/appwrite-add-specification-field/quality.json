@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (app/config/collections/projects.php), both collection IDs ('functions' and 'sites'), the field name ('specification'), all properties (size 128, signed false, required false, default APP_COMPUTE_SPECIFICATION_DEFAULT, type Database::VAR_STRING), and the positioning requirement (before buildSpecification). All test assertions check these same elements."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact field definition with all property values, the exact file to edit, and the exact insertion points (between startCommand and buildSpecification for functions, before buildSpecification for sites). This is essentially the complete solution \u2014 a developer doesn't need to reason about what to change, only copy the specification into the file."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests use regex matching for field structure and check ordering relative to buildSpecification. Alternative correct implementations (different whitespace, different formatting, slightly different array syntax) would still pass as long as the field properties and ordering are correct. The regex patterns are flexible enough to accommodate variations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_functions_has_specification_field, test_sites_has_specification_field, test_specification_field_properties, etc.) all use regex on the file content via PROJECTS_PHP.read_text(). They never execute the PHP code, import the config, or test runtime behavior. The only execution-based tests are the p2p PHP syntax checks. Every f2p test is essentially 'assert pattern in open(path).read()'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass. The tests check for specific regex patterns matching the specification field with correct properties in the actual projects.php file. Without actually adding the field blocks to the file, the regex matches would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/appwrite and solve.sh is accessible. The agent could read /solution/solve.sh which contains the exact patch. Additionally, the instruction itself essentially provides the complete solution (exact field definition and insertion points), making it trivial to produce the answer without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: presence of specification field in both collections, correct field properties (size, signed, required, default, type), and correct positioning before buildSpecification."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and clear comments separating pass-to-pass tests from fail-to-pass tests. Each test function has a clear purpose indicated by its name and docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact schema of the specification field to be added, including all property names and values (array, $id, type, format, size, signed, required, default, filters)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or field names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (app/config/collections/projects.php), exact insertion points ('between the startCommand field and the buildSpecification field'), and complete field definition. This goes well beyond describing what's broken and provides the exact localization and fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized \u2014 it adds two small blocks (11 lines each) to specific locations in projects.php without rewriting the entire file, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 4
+}

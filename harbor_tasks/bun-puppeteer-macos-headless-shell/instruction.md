@@ -14,15 +14,15 @@ The root cause is that macOS Gatekeeper quarantines the Chrome for Testing `.app
 
 Additionally, there are several robustness issues in the current launch configuration:
 
-1. **Headless mode**: The current `headless: true` mode uses the full Chrome for Testing `.app` bundle on macOS, which is subject to Gatekeeper. There is an alternative headless mode that uses a standalone binary not inside a `.app` bundle.
+1. **Headless mode**: The current `headless: true` mode uses the full Chrome for Testing `.app` bundle on macOS, which is subject to Gatekeeper blocks. The headless mode should be made platform-aware so that macOS avoids the `.app` bundle entirely, while Linux keeps the current behavior.
 
-2. **Executable path**: On macOS, when using the alternative headless mode, passing a system browser path is incorrect because it points to full Chrome, not the headless shell binary. The code currently always passes the system browser path when found.
+2. **Executable path**: The code currently always passes `executablePath` when a system browser is found, regardless of platform. This behavior should be re-evaluated for correctness on macOS, considering the headless mode selection.
 
-3. **Downloaded binaries may not be executable**: Puppeteer's downloaded browser binaries in the cache may lack execute permissions.
+3. **Downloaded binary permissions**: Puppeteer's downloaded browser binaries in the cache may lack execute permissions, contributing to launch failures.
 
-4. **Launch timeouts set to 0**: Both `timeout` and `protocolTimeout` are set to `0` (infinite), which can cause tests to hang indefinitely if the browser fails to respond rather than failing fast.
+4. **Infinite timeouts**: Both `timeout` and `protocolTimeout` are set to `0` (infinite), which can cause tests to hang indefinitely when the browser fails to respond rather than failing fast.
 
-5. **Retry delay too short**: The 1-second delay between launch retries is insufficient for transient macOS launch issues.
+5. **Retry delay**: The delay between launch retries is only 1 second, which is insufficient for transient macOS launch issues to resolve before the next attempt.
 
 ## Relevant file
 

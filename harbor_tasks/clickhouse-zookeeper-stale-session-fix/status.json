@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T03:21:13.745193",
-  "total_time": 7077.44,
-  "sandbox_id": "i1v5xgqtl3wbzepxqqvh1",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T04:17:31.199768",
+  "total_time": 2525.57,
+  "sandbox_id": "i5oofggi43mkfoplojjwj",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -53,6 +54,26 @@
       "backend": "fireworks",
       "time": 1.55,
       "notes": "ICR=0.50"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.37,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:51: test `test_fix_session_refresh_in_retry_loop` has 3 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:304: test `test_repo_style_check_various` has 1 assert(s), all pass on', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: pip, pytest', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.61,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
@@ -79,6 +100,14 @@
       "backend": "fireworks",
       "time": 7077.44,
       "at": "2026-04-10T03:21:13.745193"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2525.57,
+      "at": "2026-04-15T04:17:31.199768"
     }
   ]
 }

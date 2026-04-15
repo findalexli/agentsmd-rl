@@ -2,43 +2,41 @@
 
 ## Problem
 
-The `AwsEventServiceInjector` class in `openhands/app_server/event/aws_event_service.py` currently reads the S3 endpoint URL directly from the `AWS_S3_ENDPOINT` environment variable at runtime using `os.getenv()`. This approach has limitations:
+The `AwsEventServiceInjector` class in `openhands/app_server/event/aws_event_service.py` reads the S3 endpoint URL directly from the `AWS_S3_ENDPOINT` environment variable at runtime using `os.getenv()`. This causes several issues:
 
 1. The endpoint URL protocol (HTTP vs HTTPS) is not properly handled based on the `AWS_S3_SECURE` setting
-2. The configuration cannot be easily customized per-instance
-3. Feature branches cannot properly use custom S3/Minio endpoints for event storage
+2. When `AWS_S3_ENDPOINT` contains a protocol prefix that doesn't match the `AWS_S3_SECURE` setting, the wrong protocol is used
+3. The configuration cannot be customized per-instance because it's read directly from environment at client creation time
+4. When `AWS_S3_SECURE` is not set, the code doesn't default to secure connections
 
 ## Your Task
 
-Modify `openhands/app_server/event/aws_event_service.py` to:
+Fix `openhands/app_server/event/aws_event_service.py` so that:
 
 1. **Create a helper function** `_get_default_aws_endpoint_url()` that:
-   - Reads from `AWS_S3_ENDPOINT` environment variable
-   - Handles the `AWS_S3_SECURE` setting (defaults to `true` if not set)
-   - Properly sets the protocol (`https://` when secure, `http://` when insecure)
-   - Converts between protocols if the endpoint URL doesn't match the secure setting
-   - Returns `None` if `AWS_S3_ENDPOINT` is not set
+   - Returns `None` if `AWS_S3_ENDPOINT` environment variable is not set
+   - Reads the `AWS_S3_SECURE` environment variable (defaults to `true` when not set)
+   - Returns a URL with `https://` prefix when `AWS_S3_SECURE` is `true` (case-insensitive)
+   - Returns a URL with `http://` prefix when `AWS_S3_SECURE` is `false` (case-insensitive)
+   - Converts between `http://` and `https://` if the endpoint URL protocol doesn't match the secure setting
+   - Preserves URLs that already have the correct protocol prefix
 
 2. **Add an `endpoint_url` field** to the `AwsEventServiceInjector` class:
-   - Use Pydantic's `Field` with a `default_factory` pointing to `_get_default_aws_endpoint_url`
-   - The field should be optional (`str | None`)
-   - This allows the endpoint URL to be configurable per-instance while defaulting from environment
+   - Type: `str | None`
+   - Must use Pydantic's `Field` with `default_factory=_get_default_aws_endpoint_url`
+   - This allows per-instance customization while defaulting from environment
 
-3. **Update the S3 client creation** in `AwsEventServiceInjector.inject()` to use `self.endpoint_url` instead of `os.getenv('AWS_S3_ENDPOINT')`
-
-## Key Files
-
-- `openhands/app_server/event/aws_event_service.py` - Main file to modify
-  - Look for the `AwsEventServiceInjector` class
-  - Find where `boto3.client('s3', ...)` is called
+3. **Update the S3 client creation** in `AwsEventServiceInjector.inject()`:
+   - The current code passes `endpoint_url=os.getenv('AWS_S3_ENDPOINT')` to `boto3.client('s3', ...)`
+   - Change this to use `endpoint_url=self.endpoint_url` instead
 
 ## Testing
 
-Your changes should allow feature branches to properly configure S3/Minio endpoints through:
-- Environment variables (`AWS_S3_ENDPOINT`, `AWS_S3_SECURE`)
-- Direct constructor parameter (`endpoint_url`)
-
 The implementation should correctly handle:
-- Endpoints with or without protocol prefixes
-- Protocol conversion based on the secure setting
-- Default secure=true behavior when `AWS_S3_SECURE` is not set
+- Endpoints without protocol prefixes (adds `https://` when secure, `http://` when insecure)
+- Endpoints with `https://` prefix preserved when secure
+- Endpoints with `http://` prefix preserved when insecure
+- Protocol conversion: `http://` → `https://` when secure=true
+- Protocol conversion: `https://` → `http://` when secure=false
+- Returns `None` when `AWS_S3_ENDPOINT` is not set
+- Defaults to secure=true when `AWS_S3_SECURE` is not set

@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceEndPos = 0', 'sourceEndPos = sourceByteLen', 'if (pos < sourceEndPos)', 'fromCharCode.apply(null, arr)', 'sourceTextLatin,' declaration, 'sourceTextLatin.substr(', 'sourceTextLatin = void 0', '{ latin1Slice } = Buffer.prototype', 'latin1Slice.call(uint8', 'if (len > 64)', and 'STRING_DECODE_CROSSOVER = 64'."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the solution approach in detail: use latin1Slice from Buffer.prototype, pre-allocate reusable arrays, increase threshold substantially, use sourceTextLatin variable, clear it in resetBuffer. While it doesn't give exact line numbers, it describes WHAT to change rather than just WHAT is broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact variable names like 'sourceTextLatin', 'stringDecodeArrays', 'sourceEndPos', exact expressions like 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'fromCharCode.apply(null, arr)', exact threshold 'if (len > 64)'. An alternative correct fix using different variable names (e.g., 'latin1Source'), different array sizes, or different threshold values would fail these tests despite being functionally cor"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_latin1slice_usage, test_source_text_latin_variable, test_string_decode_arrays, test_64_byte_threshold, test_from_char_code_apply, test_source_end_pos, test_raw_transfer_generator_updated) are ALL pure text-matching assertions using 'assert \"...\" in content'. Only the pass-to-pass tests (test_napi_parser_tests, test_napi_parser_esm, test_napi_parser_visit) actually execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply writes the expected string patterns into the target files (e.g., appending comments containing '{ latin1Slice } = Buffer.prototype', 'stringDecodeArrays = Array(65).fill(null)', etc.) would pass all f2p tests since they only check for string presence in files. No behavioral validation is done in f2p tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/oxc with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file at tests/test_outputs.py to extract every exact string pattern being asserted, then mechanically insert those patterns into the target files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction mentions testing for 'All-ASCII source files', 'Source files with non-ASCII characters (UTF-8)', 'Empty strings', 'Very long strings', 'Short strings in various positions' but no f2p test verifies these specific behaviors. The p2p tests run general test suites but don't specifically target these edge cases."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and clear separation between fail-to-pass and pass-to-pass categories marked by comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names implementation details: 'latin1Slice', 'Buffer prototype', 'pre-allocated reusable arrays', 'threshold of 9 bytes should be increased substantially', 'sourceTextLatin'. These are solution-specific choices, not just descriptions of what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

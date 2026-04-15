@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both affected files (plugin.ts and utils.ts), the specific exports to remove (isRolldown, bundlerOptionsKey), the import to remove (import * as vite from 'vite'), and the specific keys to set (rollupOptions: bundlerOptions, rolldownOptions: bundlerOptions). All test assertions reference items discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Remove export const isRolldown', 'Remove export const bundlerOptionsKey', 'Remove import * as vite from vite', 'Set rollupOptions: bundlerOptions', 'Set rolldownOptions: bundlerOptions'. This is a step-by-step solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_client_env_has_dual_bundler_options checks for 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions' with exact variable name 'bundlerOptions'. test_server_env_has_dual_bundler_options counts occurrences of 'rollupOptions: bundlerOptions'. An alternative fix using spread syntax like '...options' or a different variable name like 'opts' would fail these tests despite being correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests 1-5 and 11-12 are purely text-matching (assert string in/not in file content, regex on file content). Tests 6-10 do run subprocesses (build, eslint, unit tests, type checks), but the core behavioral tests (test_plugin_sets_both_rollup_and_rolldown_options, test_client_env_has_dual_bundler_options, test_server_env_has_dual_bundler_options) only check file text, not actual runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (text checks like test_bundlerOptionsKey_removed_from_utils, test_isRolldown_removed_from_utils) fail on the base commit because the base code contains 'export const bundlerOptionsKey' and 'export const isRolldown'. A stub/no-op would not pass since the base files contain these strings."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/router with solve.sh accessible in the container. The agent could read /solution/solve.sh (if mounted) or inspect the test file at tests/test_outputs.py to see exact expected strings like 'rollupOptions: bundlerOptions' and replicate them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: removal of isRolldown, bundlerOptionsKey, vite import from utils.ts; setting both rollupOptions and rolldownOptions in plugin.ts; TypeScript compilation; ESLint; unit tests; type checks; build quality."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_bundlerOptionsKey_removed_from_utils, test_plugin_sets_both_rollup_and_rolldown_options, etc.), have docstrings explaining purpose and rationale, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code editing, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact changes: 'Remove export const isRolldown', 'Remove export const bundlerOptionsKey', 'Remove import * as vite from vite', 'Set rollupOptions: bundlerOptions' and 'Set rolldownOptions: bundlerOptions'. It also names the variable 'bundlerOptions' that should be used, going far beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -12,12 +12,20 @@ Because LLM API providers cache prompts based on exact prefix matching, a projec
 
 The bash tool description should be **project-independent** so that it can be cached across different projects. The `${maxLines}` and `${maxBytes}` substitutions are fine since those are global constants, but the directory should not be baked into the description.
 
-## Files to investigate
+### Requirements for bash.txt
 
-- `packages/opencode/src/tool/bash.txt` — the description template
-- `packages/opencode/src/tool/bash.ts` — where the template substitutions happen (look at the `description` field in the return object around line 59)
+The template file must:
+- **NOT** contain the `${directory}` placeholder (this breaks caching)
+- Still **contain** the `${maxLines}` and `${maxBytes}` placeholders (these are acceptable global constants)
+- Be substantial content: at least 20 lines, 100+ words, and mention at least 5 distinct concepts from: command, output, execute, run, shell, timeout, workdir, truncation, parameter, exit
+- Describe the default working directory behavior (must mention: "working directory", "current directory", "default directory", or describe where commands run)
+- Include guidance sections on: (1) proper quoting practices, (2) preference for specialized tools over bash for file operations, and (3) timeout/truncation behavior
 
-## Hints
+### Requirements for bash.ts
 
-- The `workdir` parameter's `.describe()` already mentions the directory, so users still know the default working directory.
-- The template text referencing `${directory}` can be replaced with a static phrase that conveys the same meaning.
+The TypeScript file must:
+- **NOT** inject `Instance.directory` or any project-specific path into the tool description
+- **NOT** use `: any` type annotations
+- Still export `BashTool`
+- Still reference `DESCRIPTION` and set a tool description
+- Still reference `MAX_LINES` and `MAX_BYTES` (or `maxLines`/`maxBytes`)

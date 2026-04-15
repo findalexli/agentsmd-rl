@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert on specific implementation details not mentioned in instruction.md: the struct field name 'Original' (used in test_error_includes_original as `ExitError{Code: 1, Original: orig}`), the struct name 'ExitError', and the file path 'dagql/idtui/exit.go'. While ExitError and the separator '\\n\\n' are somewhat implied, the field name 'Original' is never mentioned in instruction.md. The SKILL.md exact content is specified, but the tests reference config_edit tests that appear to be cut "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (error wrapping loses original message) and the expected behavior (include both exit code and original message with '\\n\\n' separator), but doesn't specify exact code changes like 'change line X to Y'. The agent must still locate the file and determine the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that ExitError.Error() contains the original error message via strings.Contains, and that nil Original doesn't cause issues. Alternative implementations (e.g., using different formatting, different conditional checks) would all pass as long as the original message appears in the output. The separator '\\n\\n' is mentioned in instructions but not actually asserted in tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests compile and execute Go code via `go test`, creating ExitError instances and calling .Error() to verify behavior. The SKILL.md tests appear to be missing/incomplete (config_edit tests are commented headers only), but the Go tests are execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub ExitError.Error() that only returns `fmt.Sprintf('exit code %d', e.Code)` (the original implementation) would fail test_error_includes_original because strings.Contains(msg, 'parser: unexpected token at line 42') would be false. The fix requires actually including the Original error's message."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/dagger as the solve.sh patch, and the agent could read solution/solve.sh or inspect the test file at tests/test_outputs.py to discover the exact field name 'Original' and exact implementation. The Dockerfile doesn't prevent access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md requires updating skills/dagger-chores/SKILL.md with specific content, but the config_edit test functions in test_outputs.py are empty (just comments '# [config_edit] fail_to_pass' with no test body). This required behavior is not actually tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass, Fail-to-pass, Pass-to-pass regression, Config edit), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md doesn't name the exact file (dagql/idtui/exit.go), struct name (ExitError), or field name (Original). It describes the problem abstractly, requiring the agent to locate the relevant code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff for SKILL.md is a localized append of a new section at the end of the file, not a full-file rewrite, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
+}

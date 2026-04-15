@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_stub_js_content asserts the exact string \"require('playwright/lib/cli/client/program')\" which is not mentioned anywhere in instruction.md. The instruction only says 'loads the CLI program from the playwright package' without specifying the exact import path. Also test_skill_md_has_required_sections checks for 'name: playwright-cli' in frontmatter and specific section names like '## Quick start' and '## Commands' which are not specified in instruction.md. test_package_lock_updated requires u"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create/modify at a high level (create stub package, update docs, remove script) without giving exact code lines or implementation details like the specific require path."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_stub_js_content asserts the exact string \"require('playwright/lib/cli/client/program')\" and \"program().catch\". An alternative valid implementation using a different import path (e.g., requiring a different entry point) or different error handling pattern (e.g., try/catch with async/await) would fail. Also test_stub_package_json_content asserts the exact bin path string 'playwright-cli-stub.js' which is one specific choice."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all tests are purely text/file inspection: reading file contents and checking for string presence (e.g., test_stub_js_content checks 'require(...)' in content, test_skill_md_installation_section checks 'npx playwright-cli' in content). No test actually executes the stub script, runs npx, or tests behavioral output. Every f2p test is essentially 'assert X in open(path).read()'."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for files that don't exist yet (packages/playwright-cli-stub/), specific JSON fields, executable permissions, specific file content, and removal of a script from package.json. A stub/empty implementation would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright (or could be accessed via the solve.sh path). The agent could read tests/test_outputs.py to discover exact strings like \"require('playwright/lib/cli/client/program')\" and simply produce files matching those exact assertions. There's no protection against reading the test file or solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says the stub script should 'handle errors by logging the error message and exiting with code 1', but no test actually executes the script to verify this behavior. The test only checks for string presence of 'process.exit(1)' and 'catch' in the source text."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Code Behavior Tests (f2p)', 'Config/Documentation Update Tests', 'Pass-to-Pass Tests'), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The package.json schema (name, version, private, bin fields and their exact values) is documented in instruction.md under the 'Create a stub package' section."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, package names, and commands are consistent between instruction.md and tests (packages/playwright-cli-stub/, playwright-cli-stub.js, etc.)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create at a component level without giving exact code implementations or line numbers. It names files to create/modify but that's appropriate for the task scope."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "fail",
+      "reason": "The SKILL.md gold solution is a complete file rewrite (the entire file content is replaced via cat >), not a localized edit to just the Installation section as described in the instruction. The solution rewrites the entire SKILL.md file."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "config_edit_scope_bounded"
+  ],
+  "pass_count": 6,
+  "fail_count": 6
+}

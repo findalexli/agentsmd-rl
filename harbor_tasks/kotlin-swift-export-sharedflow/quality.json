@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md specifies all the exact variable names (kotlinSharedFlow, kotlinTypedSharedFlow, etc.), class ID strings (kotlinx/coroutines/flow/SharedFlow, etc.), protocol names (KotlinSharedFlow, etc.), struct names (_KotlinTypedSharedFlowImpl, etc.), mapping relationships, and Swift protocol hierarchies that the tests assert on. The file paths are not explicitly listed in instruction.md, but the domain context (Swift Export framework in the Kotlin repo) combined with the detailed specific"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md essentially specifies the complete solution: exact variable names, exact string values, exact mappings, exact protocol hierarchies, and exact method signatures. For example, 'kotlinSharedFlow protocol with name \"KotlinSharedFlow\"', 'SHARED_FLOW_CLASS_ID \u2192 KotlinCoroutineSupportModule.kotlinSharedFlow', etc. This leaves virtually no reasoning for the developer \u2014 it's a transcription task, not a problem-solving task."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact string matches like 'kotlinSharedFlow: SirProtocol', 'SHARED_FLOW_CLASS_ID -> KotlinCoroutineSupportModule.kotlinSharedFlow', 'kotlinTypedSharedFlow -> KotlinCoroutineSupportModule.kotlinTypedSharedFlowImpl', etc. These are gold-specific implementation details (exact variable names, exact formatting of when clauses). An alternative correct implementation using different variable naming or code structure would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every f2p test uses the pattern `assert 'some string' in open(path).read()` \u2014 pure text/content matching with no code execution, no imports, no subprocess compilation, no behavioral verification. For example, test_kotlin_runtime_module_has_shared_flow_protocols checks for string presence like 'kotlinSharedFlow: SirProtocol' in file content."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings that don't exist in the base commit files (e.g., 'SHARED_FLOW_CLASS_ID', 'kotlinSharedFlow', 'KotlinTypedSharedFlow'). A stub or no-op implementation would not add these strings to the existing files, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/kotlin after solve.sh runs, and the agent could read solution/solve.sh if it exists in the container. Also, since tests are pure string-matching, the agent could simply grep test files for the expected strings and insert them into the target files without understanding the domain."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors described in the instruction (class IDs, protocol declarations, struct declarations, protocol mappings, type provider mappings, type bridging, type naming, Swift protocol definitions with inheritance, nonmutating setter, compareAndSet) are covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_kotlin_runtime_module_has_shared_flow_protocols, test_sir_protocol_support_protocol_mapping, etc.) and docstrings explaining what each test validates."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or protocol names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like variable names ('kotlinSharedFlow: SirProtocol'), exact mapping syntax ('SHARED_FLOW_CLASS_ID \u2192 KotlinCoroutineSupportModule.kotlinSharedFlow'), and exact struct names ('_KotlinTypedSharedFlowImpl'). While it doesn't name exact files, the level of detail essentially dictates the exact code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

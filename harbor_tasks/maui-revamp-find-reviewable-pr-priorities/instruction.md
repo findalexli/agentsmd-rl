@@ -1,31 +1,51 @@
-# Revamp find-reviewable-pr Skill: Add New Priority Categories and Fix Defaults
+# Revamp find-reviewable-pr Skill: New Priority Categories and Updated Defaults
 
 ## Problem
 
-The `find-reviewable-pr` skill's PowerShell script (`query-reviewable-prs.ps1`) and its documentation (`SKILL.md`) are out of date. The script currently defaults to showing all categories, but in practice reviewers primarily need to see P/0 and milestoned PRs. The script also lacks several important PR categories that the team now tracks:
+The `find-reviewable-pr` skill in the dotnet/maui repository needs updates to both its PowerShell script and its SKILL.md documentation. The skill is located at:
 
-1. **Approved (Not Merged)** PRs that have human approval but haven't been merged yet
-2. **Ready To Review** PRs from the MAUI SDK Ongoing project board
-3. **Agent Reviewed** PRs that have been analyzed by the AI agent workflow (detected via `s/agent-reviewed`, `s/agent-approved`, `s/agent-changes-requested` labels)
+- `.github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1`
+- `.github/skills/find-reviewable-pr/SKILL.md`
 
-Additionally, the script's default `-Limit` is too low, and the output is missing the Assignees column and agent review status.
+### What's Wrong
 
-## Expected Behavior
+1. **Missing PR categories**: The script doesn't support several categories the team now tracks:
+   - **Approved (Not Merged)** — PRs with human approval that haven't been merged yet
+   - **Ready To Review** — PRs from the MAUI SDK Ongoing project board
+   - **Agent Reviewed** — PRs analyzed by the AI agent workflow (detected via `s/agent-reviewed` and `s/agent-approved` labels)
 
-**Script changes:**
-- Default `-Category` should be `"default"` (not `"all"`), showing only P/0 + milestoned PRs and excluding changes-requested PRs
-- Default `-Limit` should be `100` (not `10`)
-- Add three new categories to the `-Category` ValidateSet: `"approved"`, `"ready-to-review"`, `"agent-reviewed"` (plus `"default"`)
-- Add new queries to fetch approved, agent-reviewed, and agent-approved PRs
-- Add Assignees field to processed PR output objects
-- Track agent label status (`s/agent-approved`, `s/agent-reviewed`, `s/agent-changes-requested`) and approved/ready-to-review state per PR
-- Add a `Write-PREntry` helper function to replace the repeated per-category output blocks
-- Implement a `Get-ReadyToReviewPRNumbers` function that queries the MAUI SDK Ongoing project board via GraphQL
-- Update the priority ordering to: P/0 > Approved > Ready To Review > Milestoned > Agent Reviewed > Partner > Community > Recent > docs-maui
-- Update the category switch, output functions, summary, and JSON output to support all new categories
+2. **Inadequate defaults**: Without arguments, the script defaults to showing all PR categories. In practice, reviewers primarily need to see P/0 and milestoned PRs. The `-Limit` parameter default is also too restrictive.
 
-**Documentation changes:**
-- Update the SKILL.md to accurately reflect all script changes: new priority order (9 categories), new parameter values, corrected defaults, new Quick Start examples, and updated table columns (including Assignees and Agent Review)
+3. **Missing output fields**: PR entries don't include assignee information or agent review status.
+
+4. **Documentation outdated**: SKILL.md doesn't document the new categories, updated defaults, or the Assignees output column.
+
+## Requirements
+
+### PowerShell Script (`query-reviewable-prs.ps1`)
+
+**Existing structure to preserve**: The script already defines these helper functions that must be retained: `Invoke-GitHubWithRetry`, `Add-UniquePRs`, `Get-ReviewStatus`, `Get-ProjectStatus`, `Get-PRCategory`, `Get-PRComplexity`. The script uses a `param()` block with `[ValidateSet(...)]` parameter validation and sets `$ErrorActionPreference`.
+
+**Parameter defaults**: When invoked without arguments, the script must use `$Category = "default"` and `$Limit = 100`. The `-Category` parameter's ValidateSet must accept `"default"`, `"approved"`, `"ready-to-review"`, and `"agent-reviewed"` (among any existing values).
+
+**New functions needed**: The script must define a function named `Write-PREntry` for formatting and outputting individual PR entries, and a function named `Get-ReadyToReviewPRNumbers` for fetching PR numbers from the MAUI SDK Ongoing project board via GraphQL.
+
+**Default category behavior**: The `"default"` category must combine P/0 and milestoned PRs while filtering out any PRs with `CHANGES_REQUESTED` review status. The category switch must include a `"default"` case, and the merged results must be held in a `$defaultPRs` variable.
+
+**PR data fields**: Each PR output object must include an `Assignees` field. The script must reference the labels `s/agent-reviewed` and `s/agent-approved`.
+
+### SKILL.md Documentation
+
+**Priority Categories section**: Must list at least 9 numbered categories. The following categories must be included:
+- **Approved (Not Merged)** — PRs with human approval not yet merged
+- **Ready To Review** — PRs from the MAUI SDK Ongoing project board
+- **Agent Reviewed** — PRs analyzed by the AI agent workflow
+
+**Required sections**: The document must include `## Priority Categories`, `## Quick Start`, and `## Script Parameters` sections. Usage examples must use ` ```bash ` code blocks. P/0 must be documented as a priority category.
+
+**Parameter table**: The parameter documentation table must show `-Category` defaulting to `default` and `-Limit` defaulting to `100`.
+
+**Output columns**: The documented output columns must include `Assignees`.
 
 ## Files to Look At
 

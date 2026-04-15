@@ -10,17 +10,27 @@ The `dagster-dlt` integration has an issue where dlt's local state from previous
 
 This is particularly problematic in orchestrated environments like Dagster+ where the same pipeline instance may be reused across different asset materializations.
 
-## Files to Modify
-
-- `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`
-
 ## What You Need to Do
 
-Find the `_run` method in the `DagsterDltResource` class. Before calling `dlt_pipeline.run()`, you need to clear any stale local state from previous runs:
+Find where the dagster-dlt integration manages dlt pipeline execution. Before the pipeline runs the source data through, you need to clear any stale local state from previous runs.
 
-1. When `dlt_pipeline.config.restore_from_destination` is `True` (the default), call `dlt_pipeline.drop()` to clear all local state. This is safe because the state will be restored from the destination.
+The fix should handle two cases based on the pipeline's configuration:
 
-2. When `dlt_pipeline.config.restore_from_destination` is `False`, call `dlt_pipeline.drop_pending_packages()` instead. This clears pending packages without wiping incremental loading cursors that can't be recovered from the destination.
+1. When the pipeline is configured to restore state from the destination (`restore_from_destination=True`, which is the default behavior), all local state can be safely cleared because it will be restored from the destination.
+
+2. When the pipeline is configured to NOT restore state from the destination (`restore_from_destination=False`), only pending packages should be cleared. This avoids wiping incremental loading cursors that cannot be recovered from the destination.
+
+The dlt library provides methods to clear this state - refer to the dlt pipeline API documentation for the appropriate methods to drop state and/or pending packages.
+
+## Requirements
+
+After your fix:
+- `dlt_pipeline.drop()` must be called when `restore_from_destination` is True
+- `dlt_pipeline.drop_pending_packages()` must be called when `restore_from_destination` is False
+- These calls must happen before the pipeline's `run()` method is invoked
+- Stale state from previous failed runs must not interfere with subsequent runs
+- All existing dagster-dlt tests must continue to pass
+- Ruff linting and formatting checks must pass
 
 ## Background
 
@@ -30,4 +40,4 @@ The dlt library maintains local state including extracted and normalized data pa
 - Failed runs can leave stale packages behind
 - These stale packages interfere with subsequent runs, causing them to process old data or fail entirely
 
-The fix should be applied just before the `dlt_pipeline.run()` call in the `_run` method.
+The fix should be applied within the dagster-dlt resource where the pipeline execution is managed.

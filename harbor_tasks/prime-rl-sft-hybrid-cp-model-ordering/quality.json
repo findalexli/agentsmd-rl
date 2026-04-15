@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The instruction mentions the file and function names (train.py, train(), setup_model(), setup_hybrid_cp()), but tests check specific details like ruff lint/format compliance, TOML config validity, and precise ordering of setup_model vs setup_hybrid_cp calls with line-number comparisons. The instruction never mentions ruff formatting requirements, TOML config validation, or the specific ordering fix (moving setup_hybrid_cp after setup_model). The instruction says 'NameError' but doesn't explicitl"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The setup_hybrid_cp() call must be guarded by if parallel_dims.cp_enabled: so it only runs when CP is active' \u2014 this directly describes the fix, not just the symptoms. It also names setup_model() and setup_hybrid_cp() and their relationship, making the solution obvious."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_model_assigned_before_hybrid_cp, test_hybrid_cp_after_model_init) check that setup_hybrid_cp is called after setup_model by comparing line numbers in the AST. An alternative correct fix that, for example, inlines the setup_hybrid_cp logic or renames the function would fail these tests. The tests also specifically look for function calls named 'setup_hybrid_cp' and 'setup_model' by name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute Python subprocesses (py_compile, ruff, AST analysis scripts) and parse/compile source code rather than just doing string matching on file contents. The fail-to-pass tests run AST-based dataflow analysis scripts."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that setup_hybrid_cp is called AFTER setup_model in the AST ordering. In the base commit, setup_hybrid_cp is called before model is assigned, so these tests would fail on the unpatched code. A stub/no-op change would not pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace via the gold patch in solve.sh. The agent could read the solution directory or inspect the Dockerfile/solve.sh if accessible. The solution patch is also deterministic and could be reverse-engineered from the test scripts that are written to temporary files in the repo directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction says the trainer should initialize successfully when cp > 1, and the tests verify the core issue: that setup_hybrid_cp is called after model initialization (setup_model). The guard condition is also implicitly tested through the ordering checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates pass_to_pass, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a Python source file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (src/prime_rl/trainer/sft/train.py), the exact functions involved (setup_model, setup_hybrid_cp), and even specifies the fix: 'The setup_hybrid_cp() call must be guarded by if parallel_dims.cp_enabled:'. This goes well beyond describing symptoms."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

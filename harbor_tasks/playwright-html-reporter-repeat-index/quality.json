@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics \u2014 file paths (packages/html-reporter/src/testCaseView.tsx, types.d.ts, html.ts), function name (appendRepeatEachIndexAnnotation), field name (repeatEachIndex?: number), exact expressions (repeatEachIndex: test.repeatEachIndex || undefined), annotation push format, truthy check pattern, and the requirement for at least 2 calls \u2014 are all explicitly stated in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md gives the exact implementation: the exact expression 'repeatEachIndex: test.repeatEachIndex || undefined', the exact function name 'appendRepeatEachIndexAnnotation', its exact body logic ('if (repeatEachIndex)', 'annotations.push({ type: \"repeatEachIndex\", description: String(repeatEachIndex) })'), and specifies it must be called twice in specific locations. This is a complete solution specification, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact function name 'appendRepeatEachIndexAnnotation', exact string 'annotations.push({ type: \\'repeatEachIndex\\'', exact expression 'repeatEachIndex: test.repeatEachIndex || undefined', exact check 'if (repeatEachIndex)', exact 'String(repeatEachIndex)'. An alternative correct implementation using e.g. a different function name, ternary expressions, or inline logic would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_repeat_index_in_types, test_repeat_index_in_html_reporter, test_append_function_in_view, test_annotation_calls_in_view, test_zero_index_not_shown, test_not_stub) exclusively use string matching like 'assert \"X\" in content' on file contents. No test actually executes the code, renders a component, or checks runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply adds the exact strings to the files without any real logic would pass. For example, adding a function with the right string patterns (if (repeatEachIndex), annotations.push, String(repeatEachIndex)) but that never actually gets called in a meaningful way would satisfy all text-matching assertions. The test_not_stub test only checks for those strings within a regex-matched function body."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/playwright accessible via solve.sh content or by reading the git apply patch. The agent could also grep test files (if accessible) or the Dockerfile for exact expected strings. Since tests only check for literal strings in files, the agent could just insert those exact strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behavior described in instruction.md (type definition, html reporter field, function definition, two calls, truthy check for zero exclusion) is tested. The build/lint pass-to-pass tests also verify the changes don't break compilation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (pass-to-pass, gates, fail-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies source code files, not structured data outputs like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in file paths, variable names, function names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact file paths, exact variable names, exact expressions ('repeatEachIndex: test.repeatEachIndex || undefined'), exact function signatures, and exact implementation logic. This goes far beyond naming the buggy module \u2014 it provides the complete solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings not mentioned in instruction.md: e.g., test_deprecated_field_has_comment checks for exact string '# (deprecated, use `workers.celery.volumeClaimTemplates` instead)', test_deprecation_warning_exists checks for '`workers.volumeClaimTemplates` has been renamed', test_celery_section_has_all_fields checks for specific fields like 'enableDefault', 'persistence', 'hostAliases', 'schedulerName' in workers.celery, test_schema_examples_are_valid requires at least 2 examp"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be done at a high level (add new field, update schema, add deprecation warning, create newsfragment) without specifying exact line numbers or exact code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact literal strings like '# (deprecated, use `workers.celery.volumeClaimTemplates` instead)' in test_deprecated_field_has_comment and '`workers.volumeClaimTemplates` has been renamed' in test_deprecation_warning_exists. An alternative correct implementation using different wording (e.g., 'DEPRECATED:' or 'moved to') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While many tests do check file contents (text matching), the TestHelmRender class actually executes helm template via subprocess and checks rendered output behavior (test_new_volumeclaimtemplates_location_works, test_backward_compatibility, test_new_location_takes_precedence). So not ALL tests are pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for fields and content that don't exist in the base repo (e.g., workers.celery.volumeClaimTemplates in values.yaml, the deprecation warning in NOTES.txt, schema additions). A stub/no-op implementation would fail these tests since the base code doesn't have these additions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/airflow as solve.sh could be applied. The agent could read the hidden solution/solve.sh if it exists in the container, or could grep for the exact test fixture strings in test_outputs.py to reverse-engineer the expected output. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four main requirements from instruction.md are tested: values.yaml changes (TestValuesYaml), schema changes (TestValuesSchema), NOTES.txt deprecation warning (TestNotesTxt), and helm rendering behavior (TestHelmRender). The newsfragment is mentioned in the truncated test file."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into clearly named classes (TestValuesYaml, TestValuesSchema, TestNotesTxt, TestHelmRender, TestYamlStructure, TestCommentsAndDocumentation) with descriptive docstrings and method names."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task involves JSON schema (values.schema.json) and YAML (values.yaml) structured data. The instruction describes the expected schema structure (type, description, examples) and the tests validate the exact schema keys."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify (which is appropriate for a config/chart task) but doesn't specify exact line numbers or exact code to insert. It describes the task domain and what sections to modify."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized to specific sections in 4 files (values.yaml, values.schema.json, NOTES.txt, newsfragment) with targeted additions/modifications, not full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

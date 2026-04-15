@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (plugin.json, hooks.json, session-start.sh, README.md), schema keys (name, version, description, author, hooks, SessionStart, hookSpecificOutput, hookEventName, additionalContext), literal strings ('learning-output-style', '1.0.0', 'Learning', 'SessionStart', 'learning', 'Insight', '# Learning Style Plugin', 'What it does', 'How it works', '.DS_Store'), the shebang requirement (#!/bin/bash is implied by 'executable'), and directory structure. Th"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create and the schemas/constraints but does not give the exact file contents or code. The agent must still reason about the JSON structure, shell script implementation, and README content."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for structural properties (valid JSON with required fields, executable permission, specific key values like 'SessionStart', presence of words like 'learning' and 'Insight') rather than exact file contents. Multiple different implementations of the shell script, README, and JSON files would pass as long as they meet the schema constraints."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_session_start_executable actually runs the shell script via subprocess, checks return code, and parses the JSON output. test_repo_shellcheck_passes runs shellcheck on all scripts. test_repo_explanatory_hook_runs executes the existing plugin. Several tests do pure text checks (README, .gitignore, plugin.json content) but this is appropriate for configuration/documentation files. The key behavioral test (script execution) is properly tested via subprocess."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would fail: an empty session-start.sh wouldn't output valid JSON with the required hookSpecificOutput structure; an empty plugin.json wouldn't have the required fields; empty hooks.json wouldn't have the SessionStart structure. The tests check for specific non-trivial content and behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/claude-code (solution/solve.sh is provided in the task bundle). An agent could potentially read the solution file if it's mounted in the container. Additionally, the test file at tests/test_outputs.py contains all the expected literal strings and fixture values, so an agent could grep for them to construct a passing solution without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: plugin.json schema (test_plugin_json_valid), hooks.json schema (test_hooks_json_valid), executable script with JSON output (test_session_start_executable), README content (test_readme_exists), .gitignore (test_gitignore_updated), directory structure (test_plugin_directory_structure), shebang (test_session_start_has_shebang)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)'), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents exact JSON schemas for plugin.json, hooks.json, and the session-start.sh output, including field names, nesting structure, and required values."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in file paths, commands, variable names, or schema keys across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create (a new plugin) with schema constraints but doesn't specify exact implementation details like the full additionalContext string content or exact author values. It appropriately references the existing plugin as a structural reference."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a file creation task, not a config edit task. The only edit to an existing file is adding .DS_Store to .gitignore, which is a minimal addition."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

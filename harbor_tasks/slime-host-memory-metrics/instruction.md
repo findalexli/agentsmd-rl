@@ -6,7 +6,23 @@ The `available_memory()` function in `slime/utils/memory_utils.py` reports GPU m
 
 ## Expected Behavior
 
-`available_memory()` should return host memory metrics alongside the existing GPU metrics. The returned dictionary should include total, available, used, and free host memory — reported in GB, consistent with the existing GPU metrics format.
+`available_memory()` should return host memory metrics alongside the existing GPU metrics. The returned dictionary should include:
+
+**Host memory keys** (in GB):
+- `host_total_GB` — total host memory
+- `host_available_GB` — available host memory
+- `host_used_GB` — used host memory
+- `host_free_GB` — free host memory
+
+**GPU keys** (already present, must be preserved):
+- `gpu`
+- `total_GB`
+- `free_GB`
+- `used_GB`
+- `allocated_GB`
+- `reserved_GB`
+
+Values must be numeric (int or float) in the GB range (not raw bytes).
 
 ## Files to Look At
 

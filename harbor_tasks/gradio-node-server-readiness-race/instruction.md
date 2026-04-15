@@ -21,4 +21,17 @@ Similarly, on the TypeScript side, `launchGradioApp()` resolves its startup prom
 
 ## Expected Behavior
 
-The server readiness check should verify that the server can actually handle HTTP requests, not just that the port is accepting TCP connections. Both the Python-side startup verification and the TypeScript-side test launcher need to be updated.
+### Python side (`gradio/node_server.py`)
+
+The `verify_server_startup()` function must perform an actual HTTP request instead of just checking TCP connectivity. The readiness semantics should be:
+
+- If the server responds with any HTTP status code **less than 500** (e.g., 200, 302, 404), the server is considered **ready** (return `True`). A 404 or redirect still means the HTTP stack is up and handling requests.
+- If the server responds with HTTP status **500 or above**, it is **not ready** (return `False`). A 500 indicates a server error — the app is not functioning.
+- If no server is listening on the port, return `False`.
+- If a TCP socket accepts the connection but never sends an HTTP response (a bare TCP listener), return `False`.
+
+The existing `attempt_connection()` function in the same file must continue to work correctly after the changes — do not break its existing behavior.
+
+### TypeScript side (`js/tootils/src/app-launcher.ts`)
+
+The `launchGradioApp()` function needs an HTTP-based readiness check that polls the server with HTTP requests rather than relying solely on stdout log messages. The file must contain code that makes HTTP requests using one of Node.js's built-in HTTP APIs — the source must include at least one of the patterns `http.request`, `http.get`, or `fetch(`.

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (internal/warpc/warpc.go), the method (lazyDispatcher.start()), the struct fields (started, startErr, dispatcher), and the exact fix pattern (guard d.started=true with d.startErr==nil check). All test assertions reference these same elements which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'Only set started = true when Start() succeeds (when startErr == nil)' under 'Expected Fix'. It also shows the exact buggy line with a comment '// BUG: This is set unconditionally'. This removes the need for the agent to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on the exact gold implementation pattern: test_lazy_dispatcher_started_flag_only_set_on_success uses regex to find 'if d.startErr == nil' wrapping 'd.started = true'. An alternative correct fix like checking 'if d.dispatcher != nil' instead of 'if d.startErr == nil', or a nil-check in Close(), would fail these tests despite being valid fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_lazy_dispatcher_started_flag_only_set_on_success, test_no_unconditional_started_assignment) are purely text-matching with regex patterns like 'if d.startErr == nil' in file content. They never instantiate a lazyDispatcher, call start() with a failing config, or call Close() to verify no SIGSEGV. Only pass-to-pass tests (build, vet) execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for the specific pattern 'if d.startErr == nil' guarding 'd.started = true' in the source. A stub or no-op implementation would not have this pattern, so the tests would fail without the actual fix being applied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/hugo via solve.sh, and the agent could read /solution/solve.sh or the test file itself (which describes the exact regex patterns being checked) to discover what string patterns to produce. The tests are pure text-matching, so an agent could grep test_outputs.py for the expected patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that started=true only be set on success, and that Close() won't SIGSEGV on nil dispatcher. Both behaviors are tested (via text matching and structural checks on Close() guards)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass and pass-to-pass categories with clear comments separating them."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (internal/warpc/warpc.go), the exact method (lazyDispatcher.start()), shows the buggy code block with a '// BUG' comment on the exact line, and states the exact fix ('Only set started = true when Start() succeeds'). This is excessive localization that eliminates the debugging task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

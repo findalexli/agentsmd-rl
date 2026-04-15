@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (CLAUDE.md, .claude/commands/ci-failures.md, .gitignore, .alexignore), all literal strings tested (e.g., '# Next.js Development Guide', 'gt submit --no-edit', 'Graphite Stack Safety Rules', 'Never use `git stash` with Graphite', 'pnpm test-dev-turbo', 'gh api', 'in_progress', 'subagent'/'Parallel subagent'), and the structural requirements (length >1000 for CLAUDE.md, >2000 for ci-failures.md, ```bash blocks, >=3 ## sections). The length and code-block co"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially provides the complete solution - it specifies exact file paths, exact content sections, exact strings to include, and even the exact entries to append. There is no reasoning required about WHAT to change; the instruction is a step-by-step recipe. For example, it says 'Create `CLAUDE.md` at repository root' with exact headers, exact commands, exact section names, and exact .gitignore entries to append."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for exact literal strings like 'Never use `git stash` with Graphite' (with exact backtick formatting), 'Graphite Stack Safety Rules', 'Parallel subagent', and require specific thresholds (>1000 chars, >2000 chars, >=4 code blocks). The test_ci_failures_md_not_empty requires content.count('```') >= 4 and '```bash' in content - these are implementation-specific details. A correct alternative CI failures guide that uses different formatting (e.g., indented code blocks instead of fenced)"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every test is purely text-matching: reading file contents and checking for substring presence (e.g., assert '# Next.js Development Guide' in content). The only behavioral tests are test_repo_git_status_clean (runs git status), test_repo_prettier_package_json (runs prettier), and test_repo_alex_lint (runs alex). All fail-to-pass tests are pure text assertions with no execution or behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific content strings and file existence that wouldn't be satisfied by empty/stub files. test_claude_md_not_empty explicitly checks len(content) > 1000 and section count >= 3. test_ci_failures_md_not_empty checks len(content) > 2000 and code block count >= 4. A stub returning empty or minimal content would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever Harbor mounts it). The agent could read the solution script which contains the exact file contents. Additionally, the test file at tests/test_outputs.py contains all the exact strings being checked, so grepping for them would trivially reveal what to write. The solve.sh is truncated in the prompt but exists in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors explicitly required by instruction.md are tested: CLAUDE.md content (header, Git Workflow, Build Commands, Testing, Graphite safety rules, test commands), ci-failures.md content (header, gh api, in_progress, subagent), .gitignore entries, and .alexignore entries. The alex lint pass-to-pass test also verifies the .alexignore works correctly."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, pass-to-pass repo_tests, pass-to-pass static), descriptive function names (test_claude_md_exists_with_content, test_claude_ci_failures_command_exists, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces configuration/documentation files (Markdown, gitignore), not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact content to create - exact headers, exact command strings, exact .gitignore entries. This is beyond hint leakage; it's essentially the complete solution specification. For a 'chore: add configuration' task, the instruction tells exactly what configuration to add with exact text."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized: creating new files (CLAUDE.md, .claude/commands/ci-failures.md) and appending entries to existing files (.gitignore, .alexignore). It doesn't rewrite existing files entirely and doesn't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

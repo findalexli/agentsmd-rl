@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: Standard Schema `~standard` property with `validate`, partial objects accepted, unknown columns rejected with 'Unknown column' message and path, invalid values rejected with path, non-object rejection, `parseSafe` interop from `@remix-run/data-schema`, `tableMetadataKey` export preservation, column references, AGENTS.md cross-package rule mentioning 're-export' and 'cross-package'/'owning package', README.md 'Data Validation' section with 'Stan"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is expected (Standard Schema compatibility, validation rules, documentation updates) but does not specify exact code changes, line numbers, or implementation details. A developer must reason about how to implement the ~standard protocol, where to add validation logic, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral contracts (validate returns value/issues, parseSafe works, specific error messages contain 'Unknown column', paths are arrays) rather than internal implementation details. Alternative implementations (e.g., different helper function names, different internal validation structure) would pass as long as they expose the correct ~standard interface and produce correct validation results."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core behavioral tests (test_table_standard_schema_partial, test_table_standard_schema_unknown_column, etc.) execute TypeScript code via Node.js subprocess that imports modules, calls functions, and checks return values. The documentation tests (test_agents_md_cross_package_rule, test_readme_documents_data_validation) are text-based checks, but the majority of tests execute actual code. The mix is appropriate since doc tests necessarily check text content."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests require real implementation: test_table_standard_schema_partial requires `users['~standard'].validate({id: 42})` to return `{value: {id: 42}}`, test_table_standard_schema_unknown_column requires issues with specific message/path, test_not_stub explicitly checks that null is rejected and multiple unknown columns are all reported. A stub returning empty/default values would fail these checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory contains only solve.sh (a shell script applying a patch), not directly copyable source files. Tests execute actual TypeScript code through Node.js imports, so the agent must produce working code in the correct package locations. The agent cannot simply grep for expected strings since tests validate runtime behavior."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from the instruction are tested: Standard Schema compatibility (partial, unknown columns, invalid values, non-objects), parseSafe interop, existing exports preserved (tableMetadataKey, column references), documentation updates (AGENTS.md cross-package rule, README data validation section). Write-path consistency is covered by existing pass-to-pass database tests. Type consistency (using Schema from data-schema) is implicitly tested via the parseSafe interop test."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff) \u2014 core behavioral tests', 'Fail-to-pass (pr_diff) \u2014 config/documentation update checks', 'Pass-to-pass (repo_tests / static) \u2014 regression + anti-stub'), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact schema for Standard Schema validation results: `{ value: T }` for valid input and `{ issues: ReadonlyArray<{ message: string, path?: string[] }> }` for invalid input, plus parseSafe return shapes `{ success: true, value }` and `{ success: false, issues }`."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or package names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction does not name specific source files, line numbers, or exact code to change. It describes the problem at the package/API level (createTable, data-table package, data-schema package) without pointing to specific implementation files."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch for AGENTS.md adds a single line about cross-package boundaries, and README.md changes are localized additions/modifications. Neither contradicts other files."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 12,
+  "fail_count": 0
+}

@@ -2,29 +2,25 @@
 
 ## Problem
 
-Creating a global project variable via the `POST /v1/project/variables` endpoint always fails with the error message:
+Creating a global project variable via the `POST /v1/project/variables` endpoint fails with the error message:
 
 > "Param 'variableId' is not optional"
 
-This happens because the Console UI does not send a `variableId` when creating variables through Settings > Global variables, but the API endpoint incorrectly marks this parameter as required.
+This occurs because the API endpoint marks `variableId` as a required parameter, but the Console UI does not provide a `variableId` when creating variables through Settings > Global variables.
 
 ## Expected Behavior
 
-When no `variableId` is provided, the endpoint should automatically generate one using `ID::unique()`, similar to how the `createVariable` endpoints for Functions and Sites work.
+When no `variableId` is provided in the request, the endpoint should automatically generate one using `ID::unique()`, matching the behavior of the `createVariable` endpoints for Functions and Sites.
 
-## File to Modify
-
-**`src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php`**
-
-## Hints
-
-- Look at the `->param()` call for `variableId` in the constructor
-- The second argument is the default value, the fifth argument controls whether the param is optional (`true` = optional)
-- The `action()` method already has logic to handle `'unique()'` - it just needs the parameter to be optional for it to be reachable
-- Check how other similar endpoints (Functions/Variables/Create.php or Sites/Variables/Create.php) define their `variableId` parameter for reference
+The fix should ensure:
+- The `variableId` parameter is optional (the optional flag should be `true`)
+- The default value for `variableId` is `'unique()'`
+- The `CustomId` validator continues to be used for the parameter
+- The `action()` method logic remains unchanged (it already handles `'unique()'` correctly)
+- PSR-12 formatting standards are maintained
 
 ## Constraints
 
-- Do NOT change the validator logic - keep using `CustomId`
-- Do NOT modify the `action()` method - the fix is only in the `__construct()` method's param definition
+- Do NOT modify the validator logic - keep using `CustomId`
+- Do NOT modify the `action()` method - it already handles `'unique()'` correctly
 - Maintain PSR-12 formatting standards

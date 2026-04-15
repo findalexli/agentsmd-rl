@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the script path (scripts/repair-sdist-cargo-lock.py), CLI argument acceptance, tarball validation (non-tarball, multiple top-level dirs, missing Cargo.lock), lockfile pruning, verification, and repacking. All test-specific behaviors (reject non-tarfile, reject missing Cargo.lock, reject multi-toplevel, repair and repack, CLI --help, top-level imports) are discoverable from the instruction plus the referenced AGENTS.md style conventions and existing scripts."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the script should do (accept tarball, extract, prune lockfile, verify, repack) but does not specify exact implementation details like 'use cargo update --workspace' or specific code to write. The developer must reason about the approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: non-zero exit on invalid input, pruning of phantom entries from Cargo.lock, successful --help output, and top-level imports. They don't assert on specific internal function names, variable names, or implementation details. Alternative implementations (e.g., using toml parsing to prune instead of cargo update) would also pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the script via subprocess.run, check return codes, extract repacked tarballs and verify content changes, and run cargo commands. They test actual execution behavior, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub script (e.g., always exits 0 or always exits 1) cannot pass all tests: test_rejects_non_tarfile requires exit!=0, test_repairs_and_repacks_sdist requires exit==0 AND the phantom entry removed from the repacked tarball, and test_cli_argument_parsing requires --help to exit 0 with relevant keywords."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/uv (via solve.sh applying a patch), and the Dockerfile doesn't prevent reading /solution/ or the test file at tests/test_outputs.py. An agent could read the test file to see exact test expectations (e.g., 'phantom_workspace_crate' string) or read the solution patch directly. The container doesn't appear to restrict filesystem access to these paths."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behaviors listed in the instruction (CLI argument, extract+locate, prune lockfile, verify consistency, repack in-place) plus input validation (non-tarball, multi-toplevel, missing Cargo.lock) are tested. The instruction's requirements are well-covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (fail_to_pass, agent_config, pass_to_pass), each has a descriptive name and docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a script that modifies tarballs, not structured data output like JSON/CSV/API."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction references relevant files for context (scripts/, workflow yml, Cargo.toml) but doesn't specify exact lines to change or implementation details. The script path is the deliverable, not a hint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code creation task (new Python script), not an AGENTS.md config edit task. The gold diff does touch CI files but those changes are not tested and not required by the instruction."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

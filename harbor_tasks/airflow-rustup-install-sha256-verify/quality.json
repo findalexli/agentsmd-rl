@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all file paths, function names (install_rustup), SHA256 checksums (4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10, 9732d6c5e2a098d3521fca8145d826ae0aaa067ef2385ead08e6feac88fa5792 are discoverable from the rustup archive URL pattern given), variable names (RUSTUP_HOME, CARGO_HOME, RUSTUP_VERSION, RUSTUP_DEFAULT_TOOLCHAIN), architecture targets, curl flags, timeout values (25, 1320), and PATH cleanup details. The specific SHA256 checksums are not"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially gives the complete solution: exact function structure (install_rustup), exact variable names (rustup_sha256s, rustup_targets), exact environment variables with exact values, exact curl flags, exact sha256sum command, exact architecture detection method, exact cleanup steps, exact timeout values, exact PATH changes. It reads like a step-by-step implementation guide rather than a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact implementation details like 'rustup_sha256s=' (variable name), 'rustup_targets=' (variable name), exact SHA256 hex strings, exact curl flag syntax (\"--proto '=https'\"), exact default value syntax ('RUSTUP_VERSION=${RUSTUP_VERSION:-1.29.0}'), and exact PATH string ('ENV PATH=\"/usr/python/bin:/root/.local/bin:${PATH}\"'). An alternative correct implementation using different variable names (e.g., 'RUSTUP_CHECKSUMS' instead of 'rustup_sha256s') or different default syntax would"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_install_rustup_function_in_script, test_dockerfile_has_rustup_install, etc.) are almost entirely 'assert X in open(path).read()' string-matching tests. The pass-to-pass tests do run shellcheck, bash -n, yamllint, and pytest as subprocesses which verify behavior, but the core f2p tests only check text content of files, never executing the install_rustup function or building any Docker image."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings (SHA256 hashes, function definitions, variable names) that would not exist in the base commit files. A stub/empty implementation would not pass since the base files don't contain 'install_rustup', 'rustup_sha256s', etc."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/airflow accessible in the container (the Dockerfile clones the repo and checks out a specific commit). The agent could read solution/solve.sh if it exists in the test environment, or could simply look at the gold patch commit (1b2893300d8b6c3ae656b8e7d9a44138b663d633) which is fetched in the Dockerfile. The agent could run 'git diff c4a209ba..1b289330' to see the exact solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: SHA256 verification, architecture handling, curl security flags, environment variables in both Dockerfiles, PATH cleanup in Dockerfile.ci, timeout updates in CI workflow, and the install_rustup function definition."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_install_rustup_function_in_script, test_dockerfile_has_rustup_install, etc.), have docstrings with f2p/pass_to_pass annotations, and are logically grouped by file/concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces shell scripts and Dockerfiles, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: exact function name 'install_rustup()', exact variable names, exact curl flags, exact sha256sum command, exact architecture detection method, exact cleanup steps. This goes well beyond naming the file and describes the exact solution line by line."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes to 4 files (adding functions, environment variables, and updating timeout values) without full-file rewrites, and doesn't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

@@ -14,11 +14,18 @@ Specifically:
 
 ## Expected behavior
 
-- Track the number of failed rollouts (`total_requested - total_returned`) and include it in evaluation metrics
-- When all rollouts fail, still report the failure count to the monitoring system so dashboards reflect what happened
-- After generation completes, log an aggregate summary of how many groups failed
+- Track the number of failed rollouts (`total_requested - total_returned`) and include it in evaluation metrics. The metric key must contain the word "fail" (case-insensitive) and should be named `failed_rollouts`. For environment-specific breakdown, use the key format `eval/{env_name}/failed_rollouts` where `{env_name}` is the environment's name.
+- When all rollouts fail, still report the failure count to the monitoring system via `monitor.log()` so dashboards reflect what happened.
+- After generation completes, log an aggregate summary warning that mentions both the number of failed groups and the total group count, in the form `"N/M groups failed"` (e.g., "2/5 groups failed"). The summary warning must be distinct from individual group failure messages and should not contain the exact string "Group failed:".
 
 ## Files to investigate
 
 - `src/prime_rl/orchestrator/eval_utils.py` -- `evaluate_env()` function
 - `src/prime_rl/orchestrator/vf_utils.py` -- `generate()` and `evaluate()` functions
+
+## Metrics schema
+
+When logging metrics via `monitor.log()`, include at minimum:
+- A key containing "fail" (case-insensitive) with an integer value equal to the number of failed rollouts (requested - returned)
+- Optionally, a key in the format `eval/{env_name}/failed_rollouts` with the same value
+- Standard keys: `progress/ckpt_step` and `step` (if the monitoring API requires them)

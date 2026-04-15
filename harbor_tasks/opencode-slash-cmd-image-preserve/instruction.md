@@ -2,7 +2,7 @@
 
 ## Summary
 
-When a user has image attachments in the prompt input and then selects a slash command (either custom or built-in), all image attachments are silently removed from the prompt state. This means users lose their pasted screenshots or uploaded images whenever they invoke a slash command.
+When a user has image attachments in the prompt input and then selects a slash command (either custom or built-in), all image attachments are silently removed from the prompt state. Users lose their pasted screenshots or uploaded images whenever they invoke a slash command.
 
 ## Reproduction
 
@@ -11,14 +11,29 @@ When a user has image attachments in the prompt input and then selects a slash c
 3. Select any slash command (custom or built-in)
 4. Observe that the image attachments are gone
 
-## Relevant Code
+## Technical Context
 
-The issue is in `packages/app/src/components/prompt-input.tsx`, specifically in the `handleSlashSelect` function. This function handles what happens when a user picks a slash command from the popover.
+The prompt input component manages its content as an array of typed parts. Each content part has a `type` field — the relevant types are:
 
-The prompt state is managed through a `prompt.set()` call that accepts an array of `ContentPart` items and a cursor position. Image attachments are stored as `ImageAttachmentPart` entries in the prompt's content parts array.
+- `"text"` — text content with `content`, `start`, and `end` fields
+- `"image_attachment"` — image attachments with a `url` field (and `start`/`end`)
 
-The prompt context (`packages/app/src/context/prompt.tsx`) defines the `ContentPart` types including `ImageAttachmentPart`, and a `DEFAULT_PROMPT` constant used for resetting state.
+The component provides these key functions used during slash command handling:
+
+- `imageAttachments()` — returns the current array of image attachment content parts
+- `prompt.set(parts, cursorPosition)` — sets the prompt's content parts array and cursor position
+- `closePopover()` — closes the slash command popover
+- `clearEditor()` — clears the editor text
+- `setEditorText(text)` — sets the editor text to the given string
+- `focusEditorEnd()` — moves focus to the end of the editor
+- `promptProbe.select(id)` — selects a command probe by id
+- `command.trigger(id, source)` — triggers a command by id with a source string
+- `DEFAULT_PROMPT` — a constant representing the default prompt content (an array with a single empty text part)
+
+When a slash command is selected with `undefined` or no argument, the handler should return early without calling `prompt.set`, `closePopover`, or any other side-effect functions.
+
+For built-in commands, `command.trigger` must be called with the command's `id` and the string `"slash"`.
 
 ## Expected Behavior
 
-Selecting a slash command should preserve any existing image attachments in the prompt. Only the text portion of the prompt should be modified by the slash command selection.
+Selecting a slash command should preserve any existing image attachments in the prompt. Only the text portion of the prompt should be modified by the slash command selection. After the fix, `prompt.set` should be called with a parts array that includes both the new text content and all existing `"image_attachment"` parts.

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (router.ts, router.test.ts, README.md, bookstore README.md, .changes/minor.router-run.md), the method name `run()`, the interface `Router`, the function `createRouter()`, and the describe block. The test checks for `createStorageKey` import removal, which is implied by 'imports that were only used by those tests should be cleaned up'. All specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to remove (router.run() method, its types, tests, change file, docs) but doesn't specify exact line numbers, exact code replacements, or specific implementation details of how to do it. The developer must still reason about what constitutes the run() method body, which imports to remove, and what doc sections to delete."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for absence of `run` method declarations, absence of `router.run(` calls, absence of `createStorageKey` import, absence of specific README sections, and file deletion. Any correct implementation that removes the run() API would pass these checks. Tests don't assert on specific line numbers or gold-specific variable names beyond what's inherent to the task."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are purely text-matching: test_router_run_removed_from_source checks regex patterns in source text, test_router_run_tests_and_imports_removed checks string inclusion, test_readme_router_run_section_removed and test_bookstore_readme_no_router_run check string patterns. However, test_repo_unit_tests, test_repo_lint, and test_repo_typecheck do execute actual commands. The core f2p tests (the first 5) are all text-based assertions with no execution of the code itself."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that specific content has been REMOVED from files that initially contain it. A stub/no-op solution (doing nothing) would leave the original router.run() code in place and fail these tests. The change file deletion test also requires actual file removal."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/remix as a git repo, and solve.sh is in /solution/solve.sh. The agent could read the solution file directly. Additionally, since the tests are purely text-matching on file contents, the agent could grep for the expected patterns and surgically remove only the matched strings without understanding the codebase."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors are tested: run() removal from interface and implementation (test_router_run_removed_from_source), test deletion and import cleanup (test_router_run_tests_and_imports_removed), change file deletion (test_change_file_deleted), README section removal (test_readme_router_run_section_removed), bookstore README cleanup (test_bookstore_readme_no_router_run), and preserved functionality (fetch, map, syntax, linting, typecheck)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves removing code and documentation, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and commands in the instruction and tests are correct and consistent with each other."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names specific files but this is appropriate since the task is about removing a specific API. It doesn't specify exact line numbers or exact code to write. The files listed are the obvious locations where router.run() would appear."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code removal task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

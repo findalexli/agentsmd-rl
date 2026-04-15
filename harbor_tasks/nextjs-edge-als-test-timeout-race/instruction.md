@@ -16,6 +16,16 @@ Fix the test so that:
 - Both API route variants are served from real fixture files in the test directory
 - The race condition between instance creation and cleanup is eliminated
 
+Specific implementation requirements:
+- Import and use `nextTestSetup` from `e2e-utils` to set up the Next.js instance. This helper manages instance lifecycle in `beforeAll`/`afterAll` with a longer setup timeout.
+- Reference the fixture directory using `__dirname`, `import.meta`, or `path.join`/`path.resolve` (do not use inline `files: { ... }` objects)
+- The test should still import `fetchViaHTTP` from `next-test-utils`
+- The test must send concurrent requests with `req-id` headers via `Promise.all`
+- Create two fixture files under `pages/api/`:
+  - `single.js` — single AsyncLocalStorage instance; handler receives request with `req-id` header and returns JSON `{id: <req-id>}` via `Response.json()`
+  - `multiple.js` — nested AsyncLocalStorage instances; handler receives request with `req-id` header and returns JSON `{id: <req-id>, nestedId: 'nested-'+<req-id>}` via `Response.json()`
+- Both fixture files must have edge runtime config: `export const config = { runtime: 'edge' }`
+
 ## Relevant files
 
 - `test/e2e/edge-async-local-storage/index.test.ts` — the flaky test
@@ -23,5 +33,5 @@ Fix the test so that:
 
 ## Hints
 
-- The Next.js test framework provides helpers that handle instance lifecycle in `beforeAll`/`afterAll` with a longer setup timeout — look at how other e2e tests in the repo set up their instances
+- Look at how other e2e tests in the repo set up their instances using `nextTestSetup` instead of `createNext`
 - Fixture files should live alongside the test in the `pages/api/` directory

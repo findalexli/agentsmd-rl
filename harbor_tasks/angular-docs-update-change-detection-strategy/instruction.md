@@ -1,28 +1,48 @@
-# Update change detection strategy references
+# Update change detection strategy documentation
 
 ## Problem
 
-Angular v22 made `OnPush` the default change detection strategy, but the codebase still has documentation and configuration that treats `OnPush` as an optional performance optimization that developers must explicitly set. This includes:
+Angular v22 made `OnPush` the default change detection strategy. However, the codebase still contains documentation and configuration that treats `OnPush` as an optional performance optimization and describes `Default`/`Eager` as the normal behavior.
 
-- JSDoc comments in the core framework source (`packages/core/src/change_detection/constants.ts` and `packages/core/src/metadata/directives.ts`) that don't mention OnPush is now the default
-- Documentation pages under `adev/src/content/` that describe OnPush as optional and show code snippets for manually enabling it
-- AI/agent configuration files under `adev/src/context/` that still instruct agents to "Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator" — this is now unnecessary and misleading since it's the default
+Specifically:
+- The JSDoc comments for the `ChangeDetectionStrategy` enum do not indicate that `OnPush` is now the default
+- The JSDoc for the `changeDetection` property on component metadata lacks information about the new default behavior and the relationship to the `Eager` strategy
+- Documentation pages describe `OnPush` as something that must be manually enabled and show code examples for setting it
+- Documentation pages describe `Eager` as the default strategy when it should be described as optional
+- AI agent configuration files contain rules instructing agents to always set `OnPush` in component decorators
 
-## Expected Behavior
+## Affected Files
 
-All references to the change detection strategy should be updated to reflect that `OnPush` is now the default:
+The following files need review and possible updates to align with the new default behavior:
 
-1. **Core source JSDoc**: The `OnPush` enum member and `changeDetection` property should have notes indicating OnPush is the default. The old `Default` strategy reference should be updated to use `Eager`.
-2. **Documentation**: Pages explaining change detection should describe OnPush as the default strategy (since v22), not as an optional optimization. Code examples showing how to manually set OnPush should be removed. References to the old "default" strategy should use `Eager`.
-3. **Agent config files**: Rules instructing AI agents to always set OnPush should be removed, since it's now the default behavior.
-
-## Files to Look At
-
-- `packages/core/src/change_detection/constants.ts` — `ChangeDetectionStrategy` enum definition
-- `packages/core/src/metadata/directives.ts` — `changeDetection` property JSDoc on `Component` interface
+- `packages/core/src/change_detection/constants.ts` — `ChangeDetectionStrategy` enum definition with JSDoc comments
+- `packages/core/src/metadata/directives.ts` — `Component` interface with `changeDetection` property JSDoc
 - `adev/src/content/best-practices/runtime-performance/skipping-subtrees.md` — change detection best practices guide
 - `adev/src/content/guide/components/advanced-configuration.md` — component configuration docs
 - `adev/src/context/airules.md` — AI rules configuration
 - `adev/src/context/guidelines.md` — coding guidelines for AI agents
 - `adev/src/context/angular-20.mdc` — Angular 20 best practices for AI agents
 - `adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md` — signals tutorial
+
+## Expected Behavior After Fix
+
+When the updates are complete, the codebase should reflect that `OnPush` is the default change detection strategy (as of Angular v22). The tests will verify:
+
+1. The JSDoc comment immediately above the `OnPush = 0` enum member in `constants.ts` contains the exact text: `OnPush is enabled by default`
+
+2. The JSDoc comment immediately above the `changeDetection?` property in `directives.ts`:
+   - Contains the exact text: `OnPush is enabled by default`
+   - References `ChangeDetectionStrategy#Eager` (the text "Eager" must appear)
+
+3. The following string patterns do NOT appear in the specified files:
+   - `adev/src/content/best-practices/runtime-performance/skipping-subtrees.md`: `ChangeDetectionStrategy.OnPush,`
+   - `adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md`: `About ChangeDetectionStrategy.OnPush`
+   - `adev/src/context/airules.md`: `changeDetection: ChangeDetectionStrategy.OnPush`
+   - `adev/src/context/guidelines.md`: `changeDetection: ChangeDetectionStrategy.OnPush`
+   - `adev/src/context/angular-20.mdc`: `Always set \`changeDetection: ChangeDetectionStrategy.OnPush\``
+
+4. The documentation accurately describes `OnPush` as the default strategy and `Eager` as an optional mode. Specifically:
+   - The first mention of `OnPush` in `skipping-subtrees.md` occurs near the word "default"
+   - The first mention of `Eager` in `advanced-configuration.md` occurs near the word "optional"
+
+Your task is to identify all locations where the documentation contradicts the new default behavior and update them appropriately. The tests will verify the expected content is present and the deprecated patterns have been removed.

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not fully specified in instruction.md: test_missing_vars_computed_correctly requires 'missing = [' as a variable name pattern, test_hook_logic_buildkite_conditional requires exact string 'if os.getenv(\"BUILDKITE\"):', test_hook_logic_integration_keyword_filter requires exact pattern 'if \"integration\" not in item.keywords:'. The instruction describes behavior but doesn't mandate these exact code patterns (e.g., variable name 'missing', exact condit"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially provides the complete solution: it specifies the exact function name (pytest_runtest_setup), the exact hook mechanism, the exact 4 env vars, the exact keyword check ('integration' in item.keywords), the exact skip message text, and even says to use pytest.skip(). A competent developer doesn't need to reason about WHAT to change \u2014 it's all spelled out."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce gold-specific implementation details: test_missing_vars_computed_correctly asserts 'missing = [' (exact variable name), test_hook_logic_buildkite_conditional asserts exact string 'if os.getenv(\"BUILDKITE\"):', test_integration_keyword_check_exists asserts exact string '\"integration\" not in item.keywords'. An alternative correct implementation using e.g., 'missing_vars = [' or 'if os.environ.get(\"BUILDKITE\")' or a different conditional structure would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of fail-to-pass tests (test_pytest_runtest_setup_function_exists, test_integration_keyword_check_exists, test_buildkite_env_check_exists, test_required_env_vars_listed, test_pytest_skip_called_with_missing_vars, test_missing_vars_computed_correctly, test_hook_logic_integration_keyword_filter, test_hook_logic_buildkite_conditional, test_skip_message_includes_missing_vars) all use 'assert X in content' pattern reading the file as text. Only test_conftest_syntax_valid and test_conftest"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "While the tests are text-based, they do check for specific implementation patterns that wouldn't be present in a stub (empty function or pass). A stub pytest_runtest_setup would not contain 'missing = [', 'os.getenv(\"BUILDKITE\")', etc."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/dagster as solve.sh contains a full patch. The agent could read /solution/solve.sh (or the patch content) to obtain the exact gold answer. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five requirements from instruction.md (integration keyword check, BUILDKITE env check, four required env vars, missing vars computation, skip message) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings indicating their purpose (e.g., 'Fail-to-pass:', 'Behavioral:', 'Pass-to-pass:', 'Repo CI:')."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies the exact file to edit, the exact function name to implement (pytest_runtest_setup), the exact hook mechanism, exact variable names to check, and exact skip message text. This goes well beyond describing what's broken \u2014 it's a step-by-step implementation guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

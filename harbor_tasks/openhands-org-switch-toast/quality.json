@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (declaration.ts, translation.json, use-switch-organization.ts, org-selector.tsx, org-selector.test.tsx), all i18n keys (ORG$SWITCHED_TO_ORGANIZATION, ORG$SWITCHED_TO_PERSONAL_WORKSPACE), exact literal strings ('You have switched to organization: {{name}}', 'You have switched to your personal workspace.'), function/variable names (displaySuccessToast, useTranslation, orgId, orgName, isPersonal, organizations?.find, params?: Record<string, string>, params?.name"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact parameter names (orgId, orgName, isPersonal), exact i18n key names, exact lookup patterns ('organizations?.find'), exact mock typing ('params?: Record<string, string>'), and exact onSuccess logic flow. This is essentially a step-by-step implementation guide, not a problem description. A developer reading it doesn't need to reason about WHAT to change; they just transcribe the instructions."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_org_selector_test_accepts_params_in_translation assert exact string 'params?: Record<string, string>' in the test file, and test_org_selector_finds_org_by_id asserts 'organizations?.find' or 'organizations.find' literally. Test test_use_switch_organization_imports_toast_handler checks for exact import syntax 'import { useTranslation }' or 'import {useTranslation}'. These are implementation-specific text matches that would fail for correct alternatives (e.g., using a different var"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests are pure text-matching: test_i18n_keys_exist checks 'in content', test_use_switch_organization_imports_toast_handler checks 'displaySuccessToast in content' and exact import strings, test_org_selector_finds_org_by_id checks 'organizations?.find in content', test_org_selector_test_accepts_params_in_translation checks 'params?: Record<string, string>' in file text. Only the p2p tests (test_repo_unit_tests, test_repo_build, etc.) actually execute code. The majority of f2p tests never"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests are string-presence checks in source files. An agent could simply add comment lines like '// ORG$SWITCHED_TO_ORGANIZATION', '// displaySuccessToast', '// organizations?.find', '// params?: Record<string, string>' to pass many f2p tests without implementing actual functionality. The tests don't verify behavior \u2014 they only verify string presence."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/openhands as the solve.sh writes files there. The agent could read solution/solve.sh if it exists in the container, or simply grep the test file for expected literal strings like 'You have switched to organization: Acme Corp' and 'You have switched to your personal workspace.' and hardcode those. The f2p tests are all text-matching, making it trivial to game them by inserting the right strings without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (i18n keys, translations for 15 languages, mutation hook changes, component changes, unit tests with specific descriptions and toast assertions) are covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_i18n_keys_exist, test_use_switch_organization_imports_toast_handler, etc.) and include docstrings with F2P/P2P labels indicating their category."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task produces structured data in translation.json with a specific JSON schema (keys with 15 language codes, interpolation variables). The instruction documents the exact schema including all 15 language codes and the required interpolation variable {{name}}."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or i18n keys across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: exact parameter names ('orgId, orgName, isPersonal'), exact lookup pattern ('organizations?.find(\u2026)'), exact mock typing ('params?: Record<string, string>'), exact import sources, and exact callback logic. This goes far beyond naming files \u2014 it prescribes the exact code structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

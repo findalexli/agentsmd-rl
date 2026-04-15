@@ -1,43 +1,38 @@
-# Refactor reasoning_tokens tests to use existing server fixtures
+# Consolidate reasoning token tests to reuse existing server fixtures
 
 ## Problem
 
-The current test setup for reasoning token usage is inefficient. The standalone `test_reasoning_usage_tokens.py` file launches **3 dedicated servers** (non-spec DeepSeek-R1, spec/EAGLE3, spec-v2/EAGLE3) only for reasoning_tokens tests. This wastes GPU resources and CI time.
+The reasoning token usage tests currently run from a standalone file that launches **3 dedicated servers** (non-spec DeepSeek-R1, spec/EAGLE3, spec-v2/EAGLE3) only for these tests. This wastes GPU resources and CI time — the same server configurations already exist in other test classes that run with `--reasoning-parser qwen3`.
 
-## Expected Behavior
+## Goal
 
-Refactor the reasoning token tests to:
+Consolidate the reasoning token tests so they reuse existing server fixtures instead of launching new ones. The net effect should be **3 fewer server launches**, with zero additional GPU time.
 
-1. **Remove the standalone test file** at `test/registered/openai_server/features/test_reasoning_usage_tokens.py`
+## What to do
 
-2. **Create a reusable test kit** at `python/sglang/test/kits/reasoning_tokens_kit.py` containing:
-   - A `ReasoningTokenUsageMixin` class with 5 test methods:
-     - `test_reasoning_tokens_thinking` — non-streaming chat with thinking enabled
-     - `test_reasoning_tokens_non_thinking` — non-streaming chat without thinking
-     - `test_reasoning_tokens_thinking_stream` — streaming chat with thinking
-     - `test_reasoning_tokens_non_thinking_stream` — streaming chat without thinking
-     - `test_reasoning_tokens_generate_exact_count` — verify exact token count in /generate API
-   - An `init_reasoning_token_verifier()` classmethod that initializes the tokenizer and token IDs
+1. Remove the standalone reasoning token test file (`test/registered/openai_server/features/test_reasoning_usage_tokens.py`)
 
-3. **Integrate the mixin into existing test classes** that already launch servers with `--reasoning-parser qwen3`:
-   - `test_enable_thinking.py::TestEnableThinking` — non-spec, Qwen3-30B-A3B (1-GPU)
-   - `test_qwen35_models.py::TestQwen35FP4MTP` — spec/NEXTN, Qwen3.5-397B (4-GPU)
-   - `test_qwen35_models.py::TestQwen35FP4MTPV2` — spec-v2/NEXTN, same model (4-GPU)
+2. Extract the test logic into a reusable test kit in `python/sglang/test/kits/` (create the directory if it doesn't exist)
 
-4. **Fix TestQwen35FP4** to use `CustomTestCase` instead of `unittest.TestCase`
+3. Integrate the test kit into the test classes that already launch servers with `--reasoning-parser qwen3`:
+   - `test_enable_thinking.py::TestEnableThinking`
+   - `test_qwen35_models.py::TestQwen35FP4MTP`
+   - `test_qwen35_models.py::TestQwen35FP4MTPV2`
 
-## Files to Look At
+4. Also fix `TestQwen35FP4` in `test_qwen35_models.py` to use `CustomTestCase` instead of `unittest.TestCase` (it already inherits from `CustomTestCase` in the other two classes)
 
-- `test/registered/openai_server/features/test_reasoning_usage_tokens.py` — the file to remove
-- `test/registered/openai_server/features/test_enable_thinking.py` — add mixin to TestEnableThinking
-- `test/registered/4-gpu-models/test_qwen35_models.py` — add mixin to TestQwen35FP4MTP and TestQwen35FP4MTPV2, fix TestQwen35FP4
-- `python/sglang/test/kits/` — directory for the new test kit (may not exist yet)
+## Expected file structure
 
-## Hints
+- `python/sglang/test/kits/reasoning_tokens_kit.py` — new shared test kit
+- `test/registered/openai_server/features/test_reasoning_usage_tokens.py` — deleted
 
-- The mixin needs attributes set on the test class: `model`, `base_url`, `reasoning_parser_name`
-- Each test class using the mixin must call `cls.init_reasoning_token_verifier()` in `setUpClass`
-- The mixin uses `requests` for HTTP calls to the running server
-- Consider how `think_end_token_id` is computed from the tokenizer and reasoning parser
+The kit should provide test methods that verify:
+- Reasoning tokens are counted correctly in chat completions with and without thinking enabled
+- Reasoning tokens are counted correctly in streaming chat completions
+- The `/generate` API correctly reports reasoning token counts
 
-Net effect should be **3 fewer server launches**, with zero additional GPU time.
+Each test class that uses the kit must set `reasoning_parser_name = "qwen3"` and call the kit's initializer in `setUpClass`.
+
+## Validation
+
+Your changes must pass all pre-commit hooks (ruff, isort, codespell, black-jupyter, check-ast, check-yaml, check-toml, etc.) and the Python files must parse as valid AST.

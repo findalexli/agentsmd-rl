@@ -1,59 +1,68 @@
-# Task: Move domainVerification and cookieDomain to Request-Scoped Resources
+# Task: Refactor domainVerification and cookieDomain from Global Config to Request-Scoped Resources
 
 ## Problem
-The `domainVerification` and `cookieDomain` values are currently stored in global mutable Config (`Config::getParam()` and `Config::setParam()`). This is problematic because these values are request-dependent - they depend on the hostname, origin, and project context. Using global config forces the application to mutate global state on each request.
+The codebase currently stores `domainVerification` and `cookieDomain` in global mutable state via `Config::setParam()` and `Config::getParam()`. These values are derived from request-specific data (hostname, origin, project context), so using global config forces mutation of global state on each request. This is an anti-pattern that should be refactored to use request-scoped dependency injection.
 
-## Goal
-Move `domainVerification` and `cookieDomain` from global Config to request-scoped resources that are injected into controllers via Utopia PHP's dependency injection system.
+## Background
+The application uses Utopia PHP's `Http::setResource()` system for defining request-scoped resources and the `->inject()` method for dependency injection into controller actions. You should familiarize yourself with how existing resources are defined in the initialization layer and how controllers receive injected dependencies.
 
-## Files to Modify
+## Required Changes
 
-### 1. `app/init/resources.php`
-Add two new resources using `Http::setResource()`:
-- `domainVerification`: A boolean indicating if the request origin matches the request hostname
-- `cookieDomain`: The cookie domain string (or null for localhost/IP)
+### New Resources to Define
 
-Both resources should depend on the `Request` object. The `cookieDomain` resource also needs the `project` document.
+You must define two request-scoped resources:
 
-Key behaviors to preserve:
-- `domainVerification`: Compare `getRegisterable()` of the hostname vs origin hostname
-- `cookieDomain`: Return `null` for localhost or IP addresses; return registerable domain prefixed with `.` for console project with root session enabled; return `.` + hostname for regular requests
+1. **`domainVerification`** (resource name)
+   - Must return a `bool` indicating whether the request origin's registerable domain matches the request hostname's registerable domain
+   - Depends on the `Request` object
+   - Must use the `Utopia\Domains\Domain` class to parse and compare domains
+   - Logic: Compare `getRegisterable()` of hostname vs origin hostname; return true only if both match AND are non-empty
 
-### 2. `app/controllers/general.php`
-Remove the `Config::setParam('domainVerification', ...)` and `Config::setParam('cookieDomain', ...)` calls from the request handling flow.
+2. **`cookieDomain`** (resource name)
+   - Must return `?string` (nullable string) - the cookie domain or `null` for localhost/IP addresses
+   - Depends on both the `Request` object and the `project` document
+   - Must handle these specific cases:
+     - Return `null` when hostname is `localhost` or matches pattern `localhost:{port}`
+     - Return `null` when hostname is a valid IP address (detect using `FILTER_VALIDATE_IP`)
+     - Return `null` for migration hosts defined in `_APP_MIGRATION_HOST` environment variable
+     - Return `.` + registerable domain (via `Domain` class) when project ID is `console` AND `_APP_CONSOLE_ROOT_SESSION` env var equals `enabled`
+     - Return `.` + hostname for all other cases
 
-### 3. `app/controllers/api/account.php`
-Update all endpoints that use `Config::getParam('domainVerification')` or `Config::getParam('cookieDomain')`:
-- Add `->inject('domainVerification')` and `->inject('cookieDomain')` to the action chain
-- Update action function signatures to accept `bool $domainVerification` and `?string $cookieDomain`
-- Replace all `Config::getParam('domainVerification')` calls with `$domainVerification`
-- Replace all `Config::getParam('cookieDomain')` calls with `$cookieDomain`
+### Code Patterns to Eliminate
 
-The `$createSession` closure at the top of the file also needs these parameters.
+The following patterns indicate the old global-state approach and must be eliminated:
+- `Config::setParam('domainVerification', ...)` - setting global config
+- `Config::setParam('cookieDomain', ...)` - setting global config
+- `Config::getParam('domainVerification')` - reading global config
+- `Config::getParam('cookieDomain')` - reading global config
 
-### 4. `src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php`
-Update the membership status endpoint:
-- Add `->inject('domainVerification')` and `->inject('cookieDomain')` to the action chain
-- Update the `action()` method signature to accept these parameters
-- Replace `Config::getParam()` calls with the injected variables
+### Controllers Requiring Injection
 
-## Pattern Reference
-The Utopia framework uses `Http::setResource()` to define request-scoped resources. Controllers use `->inject('resourceName')` to declare dependencies, and the action function receives them as parameters.
+Controller actions that need these values must:
+- Inject the resources using `->inject('domainVerification')` and `->inject('cookieDomain')` in the action chain
+- Accept `bool $domainVerification` and `?string $cookieDomain` as parameters in the action callback
+- Use the injected parameters instead of `Config::getParam()` calls
 
-Example from the codebase:
-```php
-Http::setResource('myResource', function (Request $request) {
-    return $request->getHostname();
-}, ['request']);
+### Closures Requiring Updates
 
-Http::post('/v1/example')
-    ->inject('myResource')
-    ->action(function (string $myResource) {
-        // Use $myResource
-    });
-```
+Any closures (such as `$createSession`) that use these values must be updated to accept them as parameters.
 
-## Notes
-- The app uses `Utopia\Domains\Domain` class for domain parsing
-- Look at the existing `allowedOrigins` resource in `app/init/resources.php` for a similar pattern
-- Ensure all 4 files are modified consistently - partial changes will break the application
+## Files Likely Involved
+
+Based on the problem description, you should examine:
+- Resource initialization files (where `Http::setResource()` calls are defined)
+- General controller/router files (where global config mutations likely occur)
+- Account-related API controllers (where session/cookie handling occurs)
+- Team membership controllers (where invitation acceptance and session creation occurs)
+
+## Verification Criteria
+
+After implementation:
+- All modified PHP files must have valid syntax (`php -l` passes)
+- The code must pass linting (`vendor/bin/pint --test`)
+- The code must pass static analysis (`vendor/bin/phpstan analyse`)
+- The `domainVerification` and `cookieDomain` resources must be defined via `Http::setResource()`
+- The `Utopia\Domains\Domain` class must be imported where used
+- Controllers must use `->inject('domainVerification')` and `->inject('cookieDomain')`
+- Action signatures must declare `bool $domainVerification` and `?string $cookieDomain`
+- Global config patterns for these values must be eliminated

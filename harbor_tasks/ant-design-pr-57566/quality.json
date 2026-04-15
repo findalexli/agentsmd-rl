@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names the file path (components/typography/Base/index.tsx), the variable name (needNativeEllipsisMeasure), the exact definition (cssEllipsis && !!tooltipProps.title), the gating condition, the useEffect dependency array contents, the isMergedEllipsis update, and the IntersectionObserver changes. All assert'd specifics in the tests (variable names, patterns, ordering) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix in 7 numbered steps: 'Define a boolean variable named needNativeEllipsisMeasure that evaluates to cssEllipsis && !!tooltipProps.title', 'Gate the isEleEllipsis call behind the condition if (enableEllipsis && needNativeEllipsisMeasure && textEle)', exact dependency array ordering, etc. This is a complete implementation specification, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on the exact variable name 'needNativeEllipsisMeasure' (test_needNativeEllipsisMeasure_variable_exists), the exact regex pattern 'cssEllipsis && !!tooltipProps.title', exact dependency array ordering '[enableEllipsis, needNativeEllipsisMeasure, children,' etc. An alternative correct fix using a different variable name (e.g., 'shouldMeasureNativeEllipsis') or different but equivalent logic would fail all f2p tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All 7 fail-to-pass tests exclusively use regex pattern matching on file contents (e.g., re.search(pattern, content)). None import the component, render it, call isEleEllipsis, or execute any code. The pass-to-pass tests do run linters/parsers as subprocesses, but the core behavioral tests are purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All f2p tests check for the presence of specific strings/patterns in source code. An agent could simply add a dead-code comment block containing all the required patterns (e.g., '// needNativeEllipsisMeasure = cssEllipsis && !!tooltipProps.title') without actually fixing the bug, and most f2p tests would pass. There's no execution-based verification that the optimization actually works."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/antd and solve.sh is in /solution/. The agent could read solve.sh to see the exact patch. Additionally, since tests are pure regex on file content, the agent could grep test files (if accessible) for the exact patterns and insert matching strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 7 behavioral requirements listed in instruction.md (steps 1-7) have corresponding test functions that check for their implementation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, have descriptive function names, and include docstrings explaining before/after behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names (needNativeEllipsisMeasure), exact expressions (cssEllipsis && !!tooltipProps.title), exact conditions (if (enableEllipsis && needNativeEllipsisMeasure && textEle)), and exact dependency array ordering. This goes far beyond identifying the buggy file/area and constitutes detailed implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

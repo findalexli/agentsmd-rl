@@ -2,30 +2,33 @@
 
 ## Problem
 
-The `DeepseekV2DecoderLayer.forward()` method currently recomputes the `quant_format` detection logic on every forward call. This is inefficient because:
+The `DeepseekV2DecoderLayer.forward()` method in `python/sglang/srt/models/deepseek_v2.py` recomputes quant_format detection logic on every forward call. This is wasteful because the value depends only on static properties that never change between calls:
 
-1. The `quant_format` value depends only on static properties (weight dtype of `fused_qkv_a_proj_with_mqa`)
-2. The same nested conditional logic runs repeatedly during inference
-3. On non-gfx95 platforms, this check is unnecessary overhead
+1. Whether gfx95 is supported (via the module-level `_is_gfx95_supported` flag)
+2. The existence and dtype of `self_attn.fused_qkv_a_proj_with_mqa.weight`
 
-The current code in `forward()` has a complex nested conditional that checks `_is_gfx95_supported`, the existence of `fused_qkv_a_proj_with_mqa`, its `weight` attribute, and the dtype to determine whether to use "mxfp4", "fp8", or "" (empty string).
+The current inline logic in `forward()` evaluates a complex nested conditional to determine one of three quant_format values:
+
+- `"mxfp4"` when the weight dtype is `torch.uint8`
+- `"fp8"` when the weight dtype is `torch.float8_e4m3fn`
+- `""` (empty string) otherwise (including when gfx95 is not supported or weight is absent)
+
+This entire conditional block runs on every forward pass even though the result is always the same for a given model instance.
 
 ## Expected Behavior
 
-1. Extract the `quant_format` detection logic into a dedicated `_detect_gfx95_quant_format()` method on `DeepseekV2DecoderLayer`
-2. Cache the result in `__init__` as `self._gfx95_quant_format` so it's computed once instead of on every forward call
-3. On non-gfx95 platforms, the value should be empty string immediately with zero runtime overhead
-4. On gfx95 platforms, it should be lazily computed (though in the patch, it's computed in `__init__`)
-5. The `forward()` method should use the cached `self._gfx95_quant_format` value instead of recomputing
+The quant_format detection should be computed once during initialization rather than on every forward call. The fix should:
 
-## Files to Look At
+1. Factor the detection logic out of `forward()` into a dedicated method on `DeepseekV2DecoderLayer` with a `str` return type annotation
+2. Store the computed result as a cached instance attribute during `__init__`
+3. Replace the inline computation in `forward()` with the cached value
 
-- `python/sglang/srt/models/deepseek_v2.py` — Contains the `DeepseekV2DecoderLayer` class that needs modification
-  - Look at the `forward()` method for the current inline `quant_format` logic
-  - Look at `__init__` to add the caching
+The detection method must contain real logic (not a stub) that checks for gfx95 support and handles the `torch.uint8` → `"mxfp4"` and `torch.float8_e4m3fn` → `"fp8"` cases, returning `""` as the fallback.
 
-## Notes
+## Files
 
-- The method should return a string: "mxfp4" for uint8 weights, "fp8" for float8_e4m3fn weights, or "" otherwise
-- The `_is_gfx95_supported` variable is already defined in the module scope (imported from deepseek_common.utils)
-- The fix should preserve all existing behavior while improving performance by caching
+- `python/sglang/srt/models/deepseek_v2.py` — Contains the `DeepseekV2DecoderLayer` class with the relevant `forward()` and `__init__` methods
+
+## Reference
+
+This refactoring corresponds to PR #22143 in sgl-project/sglang. The PR can be fetched from the cloned repository to see the exact naming and implementation details used.

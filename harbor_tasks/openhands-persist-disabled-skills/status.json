@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:23:22.087376",
-  "total_time": 2367.18,
-  "sandbox_id": "i0vx2lb2czj7ffxsuuyxr",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:32:06.034701",
+  "total_time": 2819.2,
+  "sandbox_id": "iemabb3xyd4b9shuglwfh",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.32,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:40: test `test_user_model_has_disabled_skills_column` has 2 assert(s),', 'A:[A] test_not_tautological @ tests/test_outputs.py:81: test `test_user_model_imports_json_type` has 1 assert(s), all pass', 'A:[A] test_not_tautological @ tests/test_outputs.py:280: test `test_repo_alembic_latest_migration` has 3 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:329: test `test_repo_sqlalchemy_model_conventions` has 1 assert(s), al', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest, sqlalchemy, alembic, pydantic, jinja2', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.32,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 15495.44,
-      "at": "2026-04-10T05:41:31.238016"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +104,14 @@
       "backend": "fireworks",
       "time": 2367.18,
       "at": "2026-04-12T03:23:22.087376"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2819.2,
+      "at": "2026-04-15T05:32:06.034701"
     }
   ]
 }

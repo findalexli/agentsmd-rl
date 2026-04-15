@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions reference file paths, strings, and patterns that are explicitly mentioned in instruction.md: tracing.ts path, DisposableStub import, 'from ./disposable', 'return new DisposableStub', groupEnd(), Promise<Disposable> in both types files, 'returns: <[Disposable]>' in docs, 'npm run flint' and 'Before committing' in CLAUDE.md. The instruction names all these files and concepts."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to 'Import DisposableStub from the disposable module', 'return a DisposableStub that calls groupEnd() when disposed', change return type to 'Promise<Disposable>', and add specific text to CLAUDE.md. This is a step-by-step recipe, not a problem description. A competent developer doesn't need to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'return new DisposableStub' and 'from ./disposable' in test_tracing_ts_imports_disposable and test_tracing_group_returns_disposable. An alternative correct implementation that e.g. uses a different import path, re-exports DisposableStub through another module, or stores the stub in a variable before returning would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_tracing_ts_imports_disposable, test_tracing_group_returns_disposable, test_types_d_updated, test_api_docs_updated, and test_claude_md_has_flint_rule all use `assert 'string' in file.read_text()` pattern \u2014 pure text matching with no code execution or behavioral verification. test_typescript_compiles and test_flint_linting do run subprocesses, but the core f2p tests are all text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'DisposableStub' in tracing.ts, 'return new DisposableStub', 'Before committing' in CLAUDE.md). A stub/no-op implementation wouldn't add these strings to the files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the complete gold patch. The agent could read it directly. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them mechanically."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires the pattern 'await using group = await context.tracing.group(\"name\")' to work and 'automatically call groupEnd() when disposed'. No test actually verifies this runtime behavior \u2014 all tests are text-matching on source files."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_claude_md_has_flint_rule, test_tracing_ts_imports_disposable, etc.), have docstrings with category tags like [config_edit] and [code_edit], and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the exact file (tracing.ts), the exact class to import (DisposableStub), the exact module path ('./disposable'), and the exact return statement pattern. This goes well beyond naming the module \u2014 it specifies the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The CLAUDE.md edit in the gold patch is a single line addition in the Commit Convention section, which is localized and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

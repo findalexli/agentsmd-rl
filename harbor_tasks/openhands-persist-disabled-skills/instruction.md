@@ -1,32 +1,26 @@
-# Task: Fix disabled_skills persistence in SaaS settings store
+# Task: Fix disabled_skills persistence in SaaS settings
 
 ## Problem Description
 
-The skill toggles in Settings > Skills appear to save successfully (HTTP 200, success toast), but the change reverts after page refresh. This is a data persistence bug.
-
-## Root Cause
-
-The `SaasSettingsStore` persists settings via `hasattr`/`setattr` across `User`, `Org`, and `OrgMember` models. However, the `User` model is missing a column needed to store `disabled_skills`. When the store tries to save this value, it gets silently dropped because the column doesn't exist on the model.
+In the enterprise SaaS application, toggling skills in Settings > Skills appears to save successfully (HTTP 200 response, success toast displayed), but after a page refresh the toggled changes revert. The `disabled_skills` setting is not being persisted to the database. Investigate the enterprise storage layer in `enterprise/storage/` to identify and fix the root cause.
 
 ## Your Task
 
-1. Add the missing column to the User model in `enterprise/storage/user.py`
-   - The column should be named `disabled_skills`
-   - It should use SQLAlchemy's JSON type
-   - It should be nullable
+1. **Investigate and fix the persistence issue:**
+   - The fix requires adding a column named `disabled_skills` with SQLAlchemy type `JSON` (imported from `sqlalchemy`), nullable: `True`
+   - Follow the existing column definition patterns in the storage model you identify as needing the fix
 
-2. Create a new Alembic migration file to add this column to the database
+2. **Create a new Alembic migration file:**
+   - File name: `104_add_disabled_skills_to_user.py`
    - Place it in `enterprise/migrations/versions/`
-   - Use the next sequential migration number
-   - Follow the existing migration patterns in that directory
-
-## Files to Modify
-
-- `enterprise/storage/user.py` - Add the column definition
-- `enterprise/migrations/versions/` - Create a new migration file
+   - Include `upgrade()` and `downgrade()` functions
+   - The `upgrade()` function should call `op.add_column('user', ...)` to add the `disabled_skills` JSON column (nullable)
+   - The `downgrade()` function should drop the column
+   - Set `revision` to `'104'` and `down_revision` to `'103'`
+   - Follow the existing migration patterns for import structure
 
 ## Tips
 
-- Look at how other columns are defined in `enterprise/storage/user.py`
-- Check existing migrations in `enterprise/migrations/versions/` for the pattern
-- The `SaasSettingsStore` uses generic column mapping, so adding the column to the User model should automatically make it work
+- Examine the models in `enterprise/storage/` to understand how settings map to database columns
+- Look at how other JSON columns are defined in those models
+- Check existing migrations in `enterprise/migrations/versions/` for the numbering and structure pattern

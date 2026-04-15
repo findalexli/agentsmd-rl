@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (HeaderUpgradeButton.tsx, LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), the event name 'header_upgrade_cta_clicked', the interface name 'HeaderUpgradeCtaClickedEvent', the experiment ID 'headerUpgradeCta', the hooks useTrack/usePHFlag/useTrackExperimentExposure, the free plan check, the @group Events JSDoc, and the onClick prop. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially specifies the complete implementation: exact interface shape with code snippet, exact file locations, exact prop name 'onClick', exact component name, exact experiment gating logic ('test' variant shows button, 'control' tracks but shows nothing), and exact hook usage. A developer reading this has very little reasoning to do about WHAT to change \u2014 it's all prescribed. The instruction even specifies the exact TypeScript interface definition as a code block."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_header_upgrade_tracks_click_event checks for a specific pattern: a click handler function where 'handle' and 'click' appear in the same line (case-insensitive), with 'track(' and 'header_upgrade_cta_clicked' within the next 5 lines. An alternative correct implementation using an inline arrow function like `onClick={() => track('header_upgrade_cta_clicked')}` without a named handleClick function would fail this test. The test also checks exact variable naming patterns rather than behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost every test is pure text/pattern matching: reading file contents and checking for string presence or regex matches. For example, test_header_upgrade_button_component checks if strings like 'headerUpgradeCta', 'free', 'UpgradePlanButton' exist in the file. test_telemetry_event_interface_defined uses regex on file content. No test imports, compiles, or executes the TypeScript code to verify actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests require creating a new file (HeaderUpgradeButton.tsx) that doesn't exist yet, modifying UpgradePlanButton.tsx to add onClick prop, adding a new interface to telemetry-constants.ts, and modifying LayoutHeader.tsx and MobileNavigationBar.tsx. A stub or no-op wouldn't satisfy the file existence checks and content requirements."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/supabase in the container after solve.sh runs, and there's a solution/solve.sh file. An agent could potentially read /solution/solve.sh (the gold patch) or examine the git history after the patch is applied. The tests only check file contents, so copying the solution directly would work."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) HeaderUpgradeButton component - tested, (2) experiment gating with headerUpgradeCta - tested, (3) experiment exposure tracking - partially tested via presence of useTrackExperimentExposure, (4) click telemetry - tested, (5) UpgradePlanButton reuse with onClick - tested, (6) presence in LayoutHeader and MobileNavigationBar - tested, (7) telemetry interface definition - tested. All major behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_header_upgrade_button_component, test_header_upgrade_tracks_click_event, etc.), have docstrings explaining what they verify, and are logically grouped with section comments separating 'fail-to-pass (pr_diff)' from 'fail-to-pass (agent_config)' tests."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction provides the exact TypeScript interface shape for HeaderUpgradeCtaClickedEvent as a code block, documenting the structured data schema for the telemetry event."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, event names, and component names in the instruction are consistent and correctly spelled, matching what the tests expect."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names every file to modify, the exact prop to add ('onClick?: () => void'), where to forward it ('to the rendered Button'), and provides the exact interface definition. This goes beyond describing the problem and specifies the implementation details, though the 'Files to Look At' section is somewhat justified for a large repo."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

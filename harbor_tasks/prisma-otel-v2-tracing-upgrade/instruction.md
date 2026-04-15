@@ -4,22 +4,31 @@
 
 The `@opentelemetry/resources`, `@opentelemetry/sdk-trace-base`, and `@opentelemetry/semantic-conventions` packages have been upgraded to their v2 major versions. Several APIs used throughout the tracing test files and the `@prisma/instrumentation` README are now deprecated and need to be migrated to their v2 replacements.
 
-The affected deprecated APIs include:
-- `new Resource({...})` from `@opentelemetry/resources` — replaced by a new factory function
-- `SEMRESATTRS_SERVICE_NAME` / `SEMRESATTRS_SERVICE_VERSION` from `@opentelemetry/semantic-conventions` — replaced by shorter constant names
-- `basicTracerProvider.addSpanProcessor(...)` followed by `basicTracerProvider.register()` — the v2 SDK uses a different initialization pattern
-- `span.parentSpanId` — the v2 SDK accesses parent span info through a different property
+The deprecated v1 APIs and their v2 equivalents are documented below. Each migration point must be updated in all affected files.
 
-## Expected Behavior
+### 1. Resource creation (`@opentelemetry/resources`)
 
-All four tracing functional test files should be updated to use the OpenTelemetry SDK v2 APIs consistently. The `@prisma/instrumentation` package README should also be updated so that its Jaeger example code reflects the new API patterns.
+The v1 constructor `new Resource({...})` is removed. The v2 SDK exports a factory function `resourceFromAttributes({...})` that serves the same purpose.
 
-## Files to Look At
+### 2. Semantic convention constants (`@opentelemetry/semantic-conventions`)
 
-- `packages/client/tests/functional/tracing-disabled/tests.ts` — tracing disabled scenario
-- `packages/client/tests/functional/tracing-filtered-spans/tests.ts` — filtered spans scenario
-- `packages/client/tests/functional/tracing-no-sampling/tests.ts` — zero-sampling scenario
-- `packages/client/tests/functional/tracing/tests.ts` — main tracing test (also uses parent span filtering)
-- `packages/instrumentation/README.md` — Jaeger tracing example code shown to users
+The v1 constants `SEMRESATTRS_SERVICE_NAME` and `SEMRESATTRS_SERVICE_VERSION` are removed. The v2 SDK exports `ATTR_SERVICE_NAME` and `ATTR_SERVICE_VERSION` as their replacements.
 
-After fixing the code, update the `packages/instrumentation/README.md` to reflect the new SDK patterns. The example code should match how the tracing setup is actually done in the test files.
+### 3. Provider initialization (`@opentelemetry/sdk-trace-base` + `@opentelemetry/api`)
+
+The v1 pattern of calling `provider.addSpanProcessor(processor)` followed by `provider.register()` is deprecated. In v2:
+- Span processors are passed as a `spanProcessors` array in the `BasicTracerProvider` constructor options.
+- Global provider registration uses `trace.setGlobalTracerProvider(provider)`, where `trace` is imported from `@opentelemetry/api`.
+
+### 4. Parent span access
+
+The `span.parentSpanId` property is removed in the v2 SDK. Parent span IDs are now accessed via `span.parentSpanContext?.spanId` through the `parentSpanContext` property on `ReadableSpan`.
+
+## Scope
+
+All four tracing functional test files and the instrumentation README must be updated:
+- `packages/client/tests/functional/tracing-disabled/tests.ts`
+- `packages/client/tests/functional/tracing-filtered-spans/tests.ts`
+- `packages/client/tests/functional/tracing-no-sampling/tests.ts`
+- `packages/client/tests/functional/tracing/tests.ts`
+- `packages/instrumentation/README.md` — the Jaeger tracing example code must reflect the v2 API patterns

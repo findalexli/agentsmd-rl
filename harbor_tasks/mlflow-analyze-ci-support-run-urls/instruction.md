@@ -8,14 +8,35 @@ Users frequently copy run URLs from the GitHub Actions UI, but pasting one into 
 
 ## Expected Behavior
 
-The skill should accept workflow run URLs (`github.com/owner/repo/actions/runs/N`) as input. When given a run URL, it should fetch all failed jobs from that run and analyze them, the same way it already does for PR URLs.
+The skill must accept bare workflow run URLs — URLs of the form `https://github.com/owner/repo/actions/runs/N` where `N` is a run ID — as input. When given a run URL, it must fetch all failed jobs from that run and analyze them, the same way it already does for PR URLs and job URLs.
 
-The URL dispatching must be careful: job URLs (`/actions/runs/N/job/M`) are a superset of run URLs, so the pattern matching order matters to avoid false positives.
+The URL dispatching must be careful: job URLs (`/actions/runs/N/job/M`) are a superset pattern of run URLs, so the dispatch logic must check for job URLs before (or with higher priority than) bare run URLs to avoid false positives.
 
-The error message for unrecognized URLs should mention the new run URL format.
+### URL pattern requirements
+
+The skill must define a regex pattern (as a module-level name ending in `_PATTERN`) that matches bare workflow run URLs and captures two groups:
+- group(1): the `owner/repo` string
+- group(2): the run ID as a decimal digit string
+
+The pattern must NOT match URLs that contain a `/job/` path segment (job URLs must be handled separately).
+
+### resolve_urls requirements
+
+The `resolve_urls()` async function must dispatch run URLs by:
+1. Matching the URL against the run URL pattern
+2. Extracting `owner`, `repo`, and `run_id` from the pattern groups
+3. Calling `client.get_jobs(owner, repo, run_id)` to fetch jobs for the run
+4. Filtering to only failed jobs (`conclusion == "failure"`)
+5. Adding those jobs to the result list
+
+### Documentation requirements
+
+The error message for unrecognized URLs must mention that workflow run URLs are a valid format.
+
+The skill documentation (`.claude/skills/analyze-ci/SKILL.md`) must include an example of a bare workflow run URL (showing `actions/runs/N` without any `/job/` suffix) in both the Usage and Examples sections.
 
 ## Files to Look At
 
-- `.claude/skills/src/skills/commands/analyze_ci.py` — URL patterns and `resolve_urls()` dispatch logic
-- `.claude/skills/src/skills/github/client.py` — `get_jobs()` method already exists for fetching jobs by run ID
-- `.claude/skills/analyze-ci/SKILL.md` — skill documentation (usage and examples should reflect the new URL format)
+- `.claude/skills/src/skills/commands/analyze_ci.py` — URL patterns, `resolve_urls()` dispatch logic, and help text
+- `.claude/skills/src/skills/github/client.py` — `get_jobs()` method for fetching jobs by run ID
+- `.claude/skills/analyze-ci/SKILL.md` — skill documentation (must be updated to show run URL examples)

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics: SCHEME_TAURI constant, 'tauri' value, 'Web (Tauri)' friendly name, getNameByScheme() method, Platform.php and Origin.php file paths, the constructor signature `new Origin(['localhost'], ['tauri'])`, test file path, tauri://localhost valid case, tauri://example.com invalid case with 'Web (Tauri)' in error message. The tests check these same things. The p2p tests (composer validate, phpstan, pint, existing unit tests) are regression tests that don't require"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to do: add constant SCHEME_TAURI with value 'tauri', register it with name 'Web (Tauri)' via getNameByScheme(), include Platform::SCHEME_TAURI in the list of web platforms in Origin.php, and add specific test cases. It specifies the exact constant name, value, method, and implementation pattern. This is a detailed implementation guide, not a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavior (validation results, constant existence, platform name mapping) rather than implementation details. An alternative fix that achieves the same behavior (e.g., different internal variable names, different ordering in arrays) would still pass all tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All f2p tests execute PHP code via subprocess, instantiate Origin validators, call isValid() and getDescription(), and check runtime behavior. They don't just grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass these tests. test_tauri_localhost_valid requires isValid('tauri://localhost') to return true (default would be false for unknown scheme). test_tauri_unregistered_host_invalid requires specific error message content. test_tauri_constant_exists checks the constant is defined."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/appwrite (the solve.sh shows the full git diff patch). The agent could read solution/solve.sh if it exists in the container, or could inspect the test file at tests/test_outputs.py to extract exact expected strings and behavior. The Dockerfile doesn't remove solution/ or tests/ directories."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors in instruction.md are tested: SCHEME_TAURI constant existence, 'Web (Tauri)' name mapping, tauri://localhost valid, tauri://example.com invalid with proper error message, and existing platforms still working."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_tauri_localhost_valid, test_tauri_unregistered_host_invalid, etc.), have docstrings, and are logically grouped by concern (syntax, behavior, constants, regression)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (src/Appwrite/Network/Platform.php, src/Appwrite/Network/Validator/Origin.php, tests/unit/Network/Validators/OriginTest.php), exact method names (getNameByScheme()), exact constant names (SCHEME_TAURI), and the exact pattern to follow. This goes beyond identifying the buggy module \u2014 it's a step-by-step implementation guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

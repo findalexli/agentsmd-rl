@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly mentions `!descriptor.get`, `{ ...descriptor, enumerable: false }`, `__DEV__`, `export function installGlobal`, the file path `packages/expo/src/winter/installGlobal.ts`, the backup naming pattern `original{Name}`, and the need for explanatory comments about getters and enumerable. All test assertions check for these specific strings/patterns which are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'the string `!descriptor.get` should appear in the condition that guards backup creation' and 'Make any created `original*` backups non-enumerable using the spread pattern `{ ...descriptor, enumerable: false }`'. These are exact code snippets telling the agent precisely what to write, not just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like `'{ ...descriptor, enumerable: false }'` and `'!descriptor.get'`. An alternative correct fix using e.g. `Object.defineProperty(object, backupName, Object.assign({}, descriptor, {enumerable: false}))` or checking `'get' in descriptor` or `descriptor.get !== undefined` would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_no_backup_for_getter_properties, test_backup_is_non_enumerable) only do `assert '!descriptor.get' in content` and `assert '{ ...descriptor, enumerable: false }' in content` \u2014 pure text matching on source file contents. No test actually imports/calls installGlobal or verifies runtime behavior. The Node.js subprocess tests only check for string presence in source code, not execution."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since f2p tests only check for string presence in the source file (e.g., `assert '!descriptor.get' in content`), an agent could simply append a comment like `// !descriptor.get { ...descriptor, enumerable: false }` without actually fixing the bug, and all f2p tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/expo (the solve.sh applies a patch), and the agent could read /solution/solve.sh or the patch file. Additionally, since tests only check for string presence, the agent could grep test files for the expected strings and insert them as comments without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires the fix to 'Pass TypeScript compilation' but no test actually runs TypeScript compilation (tsc). The syntax test only does basic string matching in Node.js, not actual TS compilation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_no_backup_for_getter_properties, test_backup_is_non_enumerable, etc.), have clear docstrings explaining the bug and fix, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing TypeScript source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands are consistent and correct throughout instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies the exact code patterns required: 'the string `!descriptor.get` should appear in the condition' and 'using the spread pattern `{ ...descriptor, enumerable: false }`'. This goes far beyond identifying the buggy file/area and dictates the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

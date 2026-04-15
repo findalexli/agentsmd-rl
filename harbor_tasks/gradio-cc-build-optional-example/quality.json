@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific details not mentioned in instruction.md: the exact file path 'js/preview/src/build.ts' (BUILD_TS variable), the exact function signature 'export async function make_build', the exact string 'build(' and 'pkg.exports', and the specific block markers 'const exports' and 'for (const [out_path'. The instruction says 'js/preview/src/' directory but never names build.ts specifically, nor mentions make_build, nor the exact code patterns tested."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (unconditional access on ./example causing TypeError) and expected behavior (conditional inclusion) but does not specify the exact code change like spread operator with ternary, removing .filter(), etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests extract the exact code block between 'const exports' and 'for (const [out_path' markers and evaluate it. This constrains the solution to maintain these exact variable names and code structure. An alternative fix that renamed 'exports' to something else, or restructured the code differently (e.g., using an if-statement after initialization instead of inline conditional), would fail the extraction logic in _eval_exports_construction."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core f2p tests (test_missing_example_no_crash, test_missing_example_one_entry, test_null_example_no_crash) extract code from build.ts and actually execute it in Node.js, checking runtime behavior (no crash, correct array length). test_build_function_not_stub does use text matching but is a pass_to_pass anti-stub check, not a primary behavioral test."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty function or returning empty array) would fail test_example_present_two_entries (expects 2 entries), test_build_function_not_stub (requires 'build(' and 'pkg.exports'), and the extraction itself requires the code block structure. The f2p tests require the extracted code to actually run and produce correct results."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio's container context as solution/solve.sh, and the agent could potentially read it. Additionally, the test file at tests/test_outputs.py reveals the exact extraction mechanism (_eval_exports_construction) and expected outputs, which could be reverse-engineered."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 5 behavioral requirements from instruction.md are tested: (1) no crash without ./example, (2) 1 entry when absent, (3) 2 entries when present, (4) real build logic with build() and pkg.exports, (5) format check via test_repo_format_check."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings, and comments indicating test categories like [static], [pr_diff], [repo_tests]."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing a build pipeline crash, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction points to 'js/preview/src/' directory which is reasonable for the task domain, and describes the bug conceptually without naming exact line numbers or the specific file build.ts."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

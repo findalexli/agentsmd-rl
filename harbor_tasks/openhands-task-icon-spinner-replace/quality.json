@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (frontend/src/components/features/chat/task-tracking/task-item.tsx, frontend/src/components/v1/chat/task-tracking/task-item.tsx, frontend/src/icons/u-check-circle-half.svg), the icon names (CheckCircleHalfIcon, LoadingIcon, CircleIcon, CheckCircleIcon), the case strings ('todo', 'in_progress', 'done'), and the animate-spin class. All test assertions reference these same items."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Replace the import of LoadingIcon with an import of the new CheckCircleHalfIcon', 'For the in_progress case, return the new CheckCircleHalfIcon WITHOUT the animate-spin class'. This tells the agent exactly WHAT to change and HOW, leaving no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on the exact name 'CheckCircleHalfIcon' (e.g., test_v1_component_imports_correct_icon asserts 'CheckCircleHalfIcon' in content). An alternative correct fix using a different icon name like 'InProgressIcon' or 'HalfCircleIcon' would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_v1_component_imports_correct_icon, test_features_component_imports_correct_icon, test_v1_in_progress_no_animation, etc.) are purely text-matching via string searches and regex on file contents. They do `assert 'CheckCircleHalfIcon' in content` without importing, rendering, or executing the components. The build/lint/typecheck tests do run subprocesses but are pass-to-pass tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass because the tests check that specific strings exist in files (CheckCircleHalfIcon) and that other strings don't exist (LoadingIcon, animate-spin). The base code has LoadingIcon, so doing nothing fails."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/OpenHands (or could be accessed via solve.sh in the container). The agent could read the gold patch from /solution/solve.sh if it exists in the container. Additionally, since tests are pure text matching, the agent could grep test files to discover exact expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from the instruction are tested: new SVG file existence (test_new_icon_file_exists), both components import CheckCircleHalfIcon (test_v1/features_component_imports_correct_icon), no animation (test_v1/features_in_progress_no_animation), icon consistency for all states (test_v1/features_icon_usage_consistency), build/lint/typecheck pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_new_icon_file_exists, test_v1_component_imports_correct_icon) with docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by component version and concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves UI component modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md match those in the test file and solution exactly."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact files, the exact function (getTaskIcon), the exact icon names to use, and the exact class to remove (animate-spin). This goes beyond describing the bug domain and specifies the precise implementation changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

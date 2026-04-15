@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, the test data file path, scripting test paths), exact diagnostic name UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE, class names like UnnamedPropertyWithImplicitUnitTypeImpl, exact strings like 'underscore property is inferred to', KT-84618, RUN_PIPELINE_TILL: BACKEND, UnnamedLocalVariables, function names testWithImplicit/testWithExplicit, and warning marker format. The tests for FirU"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the converter class name 'UnnamedPropertyWithImplicitUnitTypeImpl', exact file paths for Analysis API files, exact diagnostic name, exact error message text containing 'underscore property is inferred to', exact test structure with specific function names and minimum warning counts. It also specifies the exact fix for the scripting file ('return Int instead of implicitly returning Unit'). This goes beyond describing what's broken and prescr"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on highly specific implementation details: test_checker_contains_unit_warning_logic requires 'isUnitOrFlexibleUnit' and 'ImplicitTypeRef' as exact strings in the checker file. An alternative correct implementation could use different method names (e.g., checking classId against StandardClassIds.Unit, or using coneType.isUnit) and would fail these text-based assertions. The error message test requires exact substring 'underscore property is inferred to' which excludes valid alternati"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test function uses only `assert 'string' in open(path).read()` or regex matching on file contents. No test compiles code, runs the compiler, executes subprocesses, or inspects actual diagnostic behavior. All tests are purely grep-based text checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for content that doesn't exist at the base commit (e.g., UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE in various files, the withUnitType.kt test data file). A stub or no-op implementation wouldn't add these strings to the files, so the tests would fail. The agent must actually create/modify files with the correct content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin's solve.sh (solution/solve.sh is mounted/accessible). An agent could read the solution file or grep for expected test fixture values. Since all tests are text-based assertions on file contents, the agent could simply write the exact expected strings to the expected files without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the warning should NOT fire for nullable Unit, lambda parameters, or destructuring declarations, but no test verifies these negative cases exist in the test data. The test only checks testWithExplicit doesn't have warning markers but doesn't verify nullable Unit or lambda param cases are present."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_new_diagnostic_in_diagnostics_list, test_checker_contains_unit_warning_logic, etc.), each has a docstring explaining what it verifies and why it's a fail-to-pass test, and they're logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying compiler source code and diagnostics, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, diagnostic names, and commands in the instruction are consistent and correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files like KaFirDataClassConverters.kt, KaFirDiagnosticsImpl.kt, FirUnnamedPropertyChecker.kt, and specifies exact class names like UnnamedPropertyWithImplicitUnitTypeImpl. It also specifies exact modifications to the scripting test file. This is excessive localization that removes the need for the agent to reason about where changes should go."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task across multiple source files, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

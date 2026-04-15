@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (waspc/run, waspc/run.ps1, .github/workflows/ci-waspc-build.yaml), variable names (BUILD_ALL_CMD, BUILD_HS_CMD, BUILD_ALL_STATIC_CMD, BUILD_STATIC, WASP_PACKAGES_COMPILE), command names (build, build:hs, build:all, build:all:static, build:packages), dispatch mechanisms (case $COMMAND in, echo_and_eval, switch ($Command)), and behavioral requirements that the tests assert on. Every test-asserted specific (e.g., 'build:hs)' in content, 'BUILD_ALL_CMD' in build "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'build) must invoke $BUILD_ALL_CMD via echo_and_eval', 'BUILD_HS_CMD variable must remain defined and should incorporate the BUILD_STATIC env var to conditionally pass --enable-executable-static', and 'BUILD_ALL_STATIC_CMD variable must be removed entirely'. These are direct fix instructions, not just descriptions of what's broken. A competent developer wouldn't need to reason about WHAT to change \u2014 it's all spelled out."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details. test_build_dispatches_all uses a regex requiring exactly 'echo_and_eval \"$BUILD_ALL_CMD\"' after 'build)' in the case block. test_static_via_env_var checks for the literal string 'BUILD_STATIC' and absence of 'BUILD_ALL_STATIC_CMD'. An alternative correct implementation that, say, inlined the commands rather than using variables, or used a different variable name for the static flag, would fail these tests despite being behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_build_dispatches_all, test_build_hs_command_exists, test_old_build_all_removed, test_static_via_env_var, test_ci_uses_new_build_command, test_powershell_build_dispatches_all) are all text-matching tests using patterns like 'assert X in content' or regex on file contents. While there are some subprocess-based tests (test_syntax_check, test_repo_run_script_version_cmd, test_repo_run_script_help_works), all the f2p tests are purely textual inspection with no behavi"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings/patterns that don't exist in the original repo (e.g., 'build:hs)' doesn't exist, BUILD_ALL_STATIC_CMD exists and must be removed, the case dispatch for 'build)' currently maps to BUILD_HS_CMD not BUILD_ALL_CMD). A stub/no-op solution would fail these tests since the original file contents don't satisfy the assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/wasp via the solve.sh script path pattern. The Dockerfile doesn't remove /solution/ and the agent could potentially access solution/solve.sh if it exists in the container. Additionally, since tests are purely text-matching, the agent could grep test files (if accessible) for the exact expected patterns and produce matching text without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: build dispatches to BUILD_ALL_CMD, build:hs exists, old commands removed, BUILD_STATIC env var used, BUILD_ALL_STATIC_CMD removed, CI updated, PowerShell updated, build:packages preserved. The README updates mentioned in the gold patch are not required by instruction.md, so their absence from tests is fine."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_build_dispatches_all, test_build_hs_command_exists), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves script/config file modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (waspc/run, waspc/run.ps1, .github/workflows/ci-waspc-build.yaml), variable names (BUILD_ALL_CMD, BUILD_HS_CMD, BUILD_STATIC, BUILD_ALL_STATIC_CMD), and command names (build, build:hs, build:packages) are consistently spelled correctly throughout instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'In the case $COMMAND in dispatch block: build) must invoke $BUILD_ALL_CMD via echo_and_eval', 'build:hs) must exist and invoke $BUILD_HS_CMD via echo_and_eval', 'BUILD_ALL_STATIC_CMD variable must be removed entirely'. This goes well beyond naming files/modules and gives the exact code structure needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes to three files (waspc/run, waspc/run.ps1, ci-waspc-build.yaml) plus README updates. Changes are surgical variable/case-block edits, not full-file rewrites, and don't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

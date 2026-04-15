@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names every exact string, object name, expression, error message, and pattern that the tests check for, including 'object AsOptionalVoid', all conversion expressions, 'is AsVoid -> AsOptionalVoid', 'is AsOptionalVoid -> AsObjCBridgedOptional(bridge.swiftType)', error messages, and the TODO removal requirement."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exactly what code to add: the exact object definition 'object AsOptionalVoid' with exact property values, exact conversion expressions, exact lines to add in bridgeNominalType and bridgeAsNSCollectionElement, and exact error messages. This is effectively giving the complete solution rather than describing broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for exact literal strings like 'is AsVoid -> AsOptionalVoid', '(if ($valueExpression) Unit else null)', 'object AsOptionalVoid', etc. An alternative correct implementation using different variable names, different conversion logic, or a different bridge structure that still correctly handles Unit? would fail these tests. The tests enforce one specific implementation."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test ultimately calls functions like _parse_type_bridging() which does `'object AsOptionalVoid' in content`, `'(if ($valueExpression) Unit else null)' in content`, etc. These are pure text/string presence checks on a source file \u2014 no code is compiled, executed, or behaviorally tested. The subprocess calls are just indirection around string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for strings that do not exist in the original file (e.g., 'object AsOptionalVoid', 'is AsVoid -> AsOptionalVoid'). A stub or no-op implementation would not pass because these specific strings must be added to the file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent could read /workspace/kotlin's solution/solve.sh if it exists in the container, or simply grep the test file test_outputs.py to find every exact string being checked (e.g., 'object AsOptionalVoid', all conversion expressions) and insert them into the target file without understanding the bug. The tests are pure string matching, making this trivially exploitable."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements listed in instruction.md (new bridge object, value conversions, bridge selection logic, NS collection bridging, error messages, TODO removal) are covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_asoptional_void_bridge_exists, test_asoptional_void_value_conversions, etc.), docstrings explaining purpose, and helper functions that separate concerns."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and string literals in instruction.md are consistent with those in the test file and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (TypeBridging.kt), exact function names (bridgeNominalType, bridgeAsNSCollectionElement), exact code patterns to insert ('is AsVoid -> AsOptionalVoid'), and exact object definitions. This goes far beyond identifying the buggy module \u2014 it specifies the complete implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

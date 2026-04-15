@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:18:22.591580",
-  "total_time": 1245.63,
-  "sandbox_id": "iyp38skun39jojm6gf9wo",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:26:46.371943",
+  "total_time": 1407.52,
+  "sandbox_id": "imzj5trustuff3782it1f",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -56,17 +58,28 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:172: test `test_jj_code_added_to_diff` has 1 assert(s), all pass on a ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.07,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T07:02:59.858340"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 1245.63,
       "at": "2026-04-12T06:18:22.591580"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1407.52,
+      "at": "2026-04-15T06:26:46.371943"
     }
   ]
 }

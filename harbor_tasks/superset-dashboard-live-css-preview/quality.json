@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'dispatch(dashboardInfoChanged({ css }))' with specific spacing, 'onCustomCssChange={handleCustomCssChange}', etc. While instruction.md mentions useRef, useCallback, dashboardInfoChanged, and 500ms debounce, it does not specify the exact variable names 'originalCss', 'cssDebounceTimer', 'handleCustomCssChange', or the exact type annotat"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's Hints section essentially dictates the implementation: 'Use useRef to store the original CSS value and the debounce timer reference', 'Use useCallback for the CSS change handler', 'import dashboardInfoChanged from the dashboardInfo actions', 'create a wrapper handler' instead of directly passing setCustomCss. This goes beyond describing what's broken and prescribes the exact solution approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact variable names ('originalCss', 'cssDebounceTimer', 'handleCustomCssChange'), exact type signatures ('useRef<string | null>(null)', 'useRef<ReturnType<typeof setTimeout> | null>(null)'), and exact code patterns ('dispatch(dashboardInfoChanged({ css }))' with specific spacing). A correct alternative using lodash.debounce, different variable names like 'savedCss'/'debounceRef', or different type annotations would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_original_css_ref_exists, test_handle_custom_css_change_exists, test_cancel_handler_restores_css, test_unmount_cleanup_exists, test_original_css_capture_on_open, test_no_explicit_any_types, and test_props_use_handler_not_setter are ALL purely string/regex matching on file content (assert '...' in content). While test_repo_jest_tests_pass and similar run subprocesses, the fail-to-pass tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that wouldn't exist in the base file (e.g., originalCss ref, handleCustomCssChange, debounce timer). A stub or no-op implementation wouldn't contain these strings, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset with solve.sh available. The agent could read /solution/solve.sh or the test file itself (test_outputs.py contains all exact strings being asserted) to reverse-engineer the expected code. Since tests are pure string matching, the agent could simply insert the exact strings the tests look for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All key behaviors from instruction.md are tested: live CSS preview via debounced dispatch (test_handle_custom_css_change_exists), cancel reverts (test_cancel_handler_restores_css), cleanup on unmount (test_unmount_cleanup_exists), capturing original CSS (test_original_css_capture_on_open), and existing tests passing (test_repo_jest_tests_pass)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, individually documented with docstrings explaining what they check, and logically grouped by concern (refs, handlers, cleanup, imports, type safety, integration)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a React component; it does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file path, specifies exact function/action names to import (dashboardInfoChanged), exact hooks to use (useRef, useCallback), and exact implementation patterns (wrapper handler for setCustomCss, 500ms debounce). This goes well beyond identifying the problem area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript component, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_handler_not_stub checks for specific keywords like 'CachedRouteKind', 'generateEtags', 'poweredByHeader' which aren't mentioned in instruction.md; (2) test_handler_not_stub asserts line count thresholds (>200 lines, >100 code lines) not mentioned anywhere; (3) test_repo_lint_ast_grep, test_repo_lint_handler, test_repo_typescript, test_repo_unit_tests run specific repo CI commands not mentioned in instruction.md; (4)"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly says 'verify that the response body is in the correct form that enables header generation' and points to specific line numbers (~740, ~526). Combined with the test name 'test_string_render_result_enables_headers' mentioned in instruction.md and the explanation about Buffer.from causing isDynamic=true, the instruction effectively tells the agent to remove Buffer.from wrapping. For AGENTS.md, the instruction literally states the exact fix: 'The correct syntax must includ"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for absence of specific buggy patterns (Buffer.from wrapping) and presence of specific strings in AGENTS.md, which any correct fix would satisfy. The fix is essentially unique: remove Buffer.from() in two places and add '--' in two AGENTS.md locations. Alternative correct fixes would all result in the same textual changes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p tests (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax) are purely text-matching: they read file contents and check for string presence/absence. test_string_render_result_enables_headers does execute a subprocess but it runs a self-contained Node script that doesn't import the actual codebase - it recreates a simplified model. The repo lint/typecheck/unit tests do execute real checks,"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for absence of specific buggy patterns ('Buffer.from(JSON.stringify(result.value.pageData))') that exist in the original code. A stub or no-op would fail these tests since the original file contains those patterns, and the handler anti-stub test requires >200 lines with specific keywords present."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/next.js as a git repo where the agent could potentially access solve.sh or solution/ directory if mounted. More critically, the test file test_outputs.py contains the exact expected patterns, and the instruction.md itself contains the exact fix strings (e.g., 'pnpm new-test -- --args'). An agent could grep for test expectations without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires fixing Buffer.from wrapping in two code paths and fixing AGENTS.md in two places. All four changes are tested by corresponding test functions (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (fail-to-pass pr_diff, fail-to-pass config fix, pass-to-pass behavioral, pass-to-pass repo tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code and config file edits, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the test file references."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact line numbers ('around line 740', 'around line 526'), names the exact code paths to modify, specifies the exact correct syntax for AGENTS.md ('pnpm new-test -- --args'), and even names the specific test to run. This goes well beyond describing what's broken and effectively prescribes the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md gold diff is localized to two specific lines/sections, not a full-file rewrite, and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

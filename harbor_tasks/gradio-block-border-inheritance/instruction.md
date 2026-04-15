@@ -2,7 +2,7 @@
 
 ## Summary
 
-When `gr.HTML` is used as a layout container (i.e., with children placed inside it), child components unexpectedly lose their borders. This happens because the `Block` Svelte component's approach to hiding borders on container-less blocks inadvertently affects all descendant blocks.
+When `gr.HTML` is used as a layout container (i.e., with children placed inside it), child components unexpectedly lose their borders. This happens because the border-hiding mechanism for container-less blocks inadvertently cascades to all descendant blocks.
 
 ## Reproduction
 
@@ -19,16 +19,22 @@ with gr.Blocks() as demo:
 demo.launch()
 ```
 
-The `Textbox` and `Button` inside the `gr.HTML` layout will have no visible borders, even though they should.
-
-## Root Cause
-
-The issue is in `js/atoms/src/Block.svelte`. When a block has no explicit container (the `.hide-container` CSS class), the border is currently removed by modifying a CSS custom property. Since CSS custom properties are inherited by child elements, this border removal cascades down to all nested blocks — not just the container-less parent.
+The `Textbox` and `Button` inside the `gr.HTML` layout will have no visible borders, even though they should retain their normal border styling.
 
 ## Expected Behavior
 
-Only the container-less block itself should have its border hidden. Child blocks should retain their normal border styling.
+- Container-less layout blocks (like those used internally by `gr.HTML`) should hide their own borders
+- Child blocks nested inside these containers should retain their normal border styling
+- Only the container-less block itself should have its border hidden; children should not be affected
 
-## Relevant Files
+## Required Verification
 
-- `js/atoms/src/Block.svelte` — the `Block` component's template and styles
+After the fix, the following must hold in `js/atoms/src/Block.svelte`:
+
+1. The `.hide-container:not(.fullscreen)` CSS class must set `border-width: 0` directly
+2. The `.hide-container:not(.fullscreen)` CSS class must NOT contain `--block-border-width: 0`
+3. The `.block` CSS class must set `border-width: var(--block-border-width)`
+4. The `.hide-container:not(.fullscreen)` CSS class must preserve its other CSS resets: `margin: 0`, `box-shadow: none`, `background: transparent`, `padding: 0`, `overflow: visible`
+5. The template must NOT contain the inline attribute `style:border-width="var(--block-border-width)"`
+6. The template must still contain: `class:hide-container`, `class:fullscreen`, `style:flex-grow`, and `<slot`
+7. The `.block` CSS class must retain: `box-shadow:`, `border-color:`, `border-radius:`, and `background:`

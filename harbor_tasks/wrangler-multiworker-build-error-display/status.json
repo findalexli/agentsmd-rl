@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T07:05:03.133767",
-  "total_time": 1980.99,
-  "sandbox_id": "i5sawlrc1dljqorhy8y3f",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:20:46.747168",
+  "total_time": 609.1,
+  "sandbox_id": "i3snwnn158x7af4eowt60",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,6 +51,25 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.25,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:101: test `test_devenv_formats_esbuild_failures` has 3 assert(s), all ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.2,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
@@ -75,6 +96,14 @@
       "backend": "fireworks",
       "time": 1980.99,
       "at": "2026-04-12T07:05:03.133767"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 609.1,
+      "at": "2026-04-15T06:20:46.747168"
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Every assert in the tests checks for literal strings, file paths, variable names, and patterns that are explicitly named in instruction.md \u2014 e.g., 'pgoGenerate', 'pgoUse', exact error message, section header comments like '\u2500\u2500\u2500 PGO (compile-side) \u2500\u2500\u2500', flag strings like '-fprofile-generate=', feature labels 'pgo-gen'/'pgo-use', 'optFlags', 'optFlagStr', 'CMAKE_C_FLAGS: optFlagStr', etc."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: specific variable names (optFlags, optFlagStr), exact code lines like 'if (cfg.pgoGenerate) features.push(\"pgo-gen\")', exact error messages, exact flag strings, exact section header comments, and where to place them. This is a step-by-step recipe, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'if (cfg.pgoGenerate) features.push(\"pgo-gen\")' and 'CMAKE_C_FLAGS: optFlagStr' and '\u2500\u2500\u2500 PGO (compile-side) \u2500\u2500\u2500'. An alternative correct implementation using different variable names (e.g., 'pgoFlags' instead of 'optFlags'), different comment styles, or different formatting would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests use only `assert 'exact string' in src` pattern \u2014 pure text matching on file contents. The only behavioral tests are pass-to-pass ones (node --check, oxlint, prettier). No test actually imports/runs the config resolution logic or checks that flags are correctly emitted."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not contain the specific literal strings being checked (e.g., '-fprofile-generate=', 'pgoGenerate && pgoUse', exact error messages). The tests check for presence of specific implementation artifacts that require actual code changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/bun after the gold patch would be applied, and the agent could read test_outputs.py or solution/solve.sh if present in the container. The tests are pure string-matching, so an agent could grep for expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (CLI args, Config/PartialConfig interfaces, resolveConfig validation, formatConfig features, compile flags, link flags, WebKit forwarding) have corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces code changes to TypeScript files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, flag strings, and commands in instruction.md match those checked in tests without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies exact line numbers ('around line 314'), exact code snippets ('if (cfg.pgoGenerate) features.push(\"pgo-gen\")'), exact variable names, and exact placement within specific functions \u2014 this is implementation-level detail far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized additions to 4 specific files, adding PGO support without rewriting existing functionality."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

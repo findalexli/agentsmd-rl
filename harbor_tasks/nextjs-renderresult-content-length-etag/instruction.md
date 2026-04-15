@@ -4,36 +4,29 @@
 
 Pages Router JSON responses at `/_next/data/<BUILD_ID>/...` are missing `Content-Length` and `ETag` headers. This breaks CDN-side compression (e.g., CloudFront requires `Content-Length` to compress responses on-the-fly).
 
-The issue is in `packages/next/src/server/route-modules/pages/pages-handler.ts`. When constructing `RenderResult` for data requests, the code wraps the response with `Buffer.from()`:
-
-```typescript
-new RenderResult(Buffer.from(JSON.stringify(result.value.pageData)), ...)
-```
-
-Since `RenderResult.isDynamic` checks `typeof this.response !== 'string'`, passing a `Buffer` causes it to return `true`, making `sendRenderResult` treat the response as a dynamic stream and skip `Content-Length` and `ETag` generation.
+When `RenderResult` is constructed with certain data types, the `isDynamic` getter may incorrectly return `true`, causing `sendRenderResult` to skip `Content-Length` and `ETag` generation even for cacheable responses.
 
 ## Expected Behavior
 
 - Data requests (`/_next/data/`) should return with `Content-Length` and `ETag` headers
-- `RenderResult` should receive the JSON string directly, not wrapped in `Buffer.from()`
-- Similar issue exists for cached HTML responses - also remove `Buffer.from()` there
+- Cached HTML responses should also include these headers
+- The response type passed to `RenderResult` must be compatible with static/bufferable handling
 
-## Files to Look At
+## Files to Examine
 
-- `packages/next/src/server/route-modules/pages/pages-handler.ts` — Pages Router request handler with the Buffer.from bug
+- `packages/next/src/server/route-modules/pages/pages-handler.ts` — Pages Router request handler
+- `packages/next/src/server/render-result.ts` — `RenderResult` class definition
 
 ## Additional Task: Update AGENTS.md
 
-This PR also includes a documentation fix in `AGENTS.md`. The `pnpm new-test` command syntax needs updating:
-
-The command for non-interactive test generation needs a separator (`--`) before the `--args` flag. Review and update the `pnpm new-test` examples in `AGENTS.md` to use the correct syntax.
+The `AGENTS.md` file in the repository root contains examples of the `pnpm new-test` command. Some of these examples show incorrect syntax for the non-interactive test generation pattern.
 
 **What to look for in AGENTS.md:**
-- Find any instances of `pnpm new-test --args ...` (without the `--` separator)
-- Update them to use `pnpm new-test -- --args ...` (with the separator)
+- Find any instances of `pnpm new-test --args` (without the `--` separator before `--args`)
+- Update them to use `pnpm new-test -- --args` (with the `--` separator)
 - This applies to all examples showing the non-interactive test generation pattern
 
 ## Summary
 
-1. Fix the code: Remove `Buffer.from()` wrappers when constructing `RenderResult` for data requests and cached HTML
-2. Fix the docs: Update `pnpm new-test` command syntax in `AGENTS.md` to use `-- --args`
+1. Fix the code: Ensure `RenderResult` is constructed with a type that does not trigger dynamic handling for data requests and cached HTML
+2. Fix the docs: Update `pnpm new-test` command syntax in `AGENTS.md` to use `-- --args` before any arguments

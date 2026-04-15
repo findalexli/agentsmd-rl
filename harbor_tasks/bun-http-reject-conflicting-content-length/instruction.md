@@ -8,11 +8,30 @@ Separately, the project lacks a comprehensive tool for reading PR feedback. The 
 
 ## Expected Behavior
 
-**HTTP Parser Fix**: After parsing headers, the parser should walk every `Content-Length` header and reject the request (400) if any value differs from the first one. Identical duplicate values should still be accepted. Empty Content-Length values should also be rejected.
+**HTTP Parser Fix**: After parsing headers, the parser should walk every `Content-Length` header and reject the request (400) if any value differs from the first one. The implementation must:
+- Use `req->bf.mightHave("content-length")` to short-circuit when no Content-Length header is present
+- Iterate headers using a pattern like `for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )`
+- Check for Content-Length header key using `h->key.length() == 14 && !strncmp(h->key.data(), "content-length", 14)`
+- Store the first Content-Length value in a `std::string_view contentLengthString` variable
+- Check for empty values using `h->value.length() == 0`
+- Track first-occurrence detection using `contentLengthString.data() == nullptr`
+- Compare duplicate values byte-for-byte using `strncmp(h->value.data(), contentLengthString.data(), contentLengthString.length())`
+- Return error using `HttpParserResult::error(HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH)`
 
-**PR Comments Tool**: Create a script at `scripts/pr-comments.ts` that fetches all three GitHub comment endpoints (issue comments, reviews, and line-level review comments) and presents them in one chronological listing. Add a `"pr:comments"` entry in `package.json` that runs the script.
+Identical duplicate values should still be accepted. Empty Content-Length values should also be rejected.
 
-**Documentation**: Update `CLAUDE.md` to document the new `pr:comments` command, including usage examples, output format description, and an explanation of why it's needed over `gh pr view --comments`.
+**PR Comments Tool**: Create a script at `scripts/pr-comments.ts` that fetches all three GitHub comment endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and presents them in one chronological listing. The script should:
+- Accept PR number, URL, or current branch as input
+- Support a `--json` flag for machine-readable output
+- When in JSON mode, emit objects with keys: `when`, `user`, `kind`, `location`, `body`, `url`, `resolved`, `outdated`
+- The `resolved` and `outdated` fields should come from GraphQL reviewThreads and only be present on line comments/replies
+
+Add a `"pr:comments"` entry in `package.json` that runs `bun scripts/pr-comments.ts`.
+
+**Documentation**: Update `CLAUDE.md` to document the new `pr:comments` command, including:
+- Usage examples showing `bun run pr:comments`, `bun run pr:comments 28838`, `bun run pr:comments --json`
+- An explanation of why it's needed versus `gh pr view --comments`
+- Description of the JSON output schema with fields: `when`, `user`, `kind`, `location`, `body`, `url`, `resolved`, `outdated`
 
 ## Files to Look At
 

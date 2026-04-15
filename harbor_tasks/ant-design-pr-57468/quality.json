@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the affected file (components/date-picker/style/panel.ts), the component (TimePicker), the styling system (@ant-design/cssinjs), and describes the overflow/touch/hover interaction issue. Tests check overflowY values, hover rules, overflowX, scrollbar properties, timeColumnWidth, and linting \u2014 all discoverable from the instruction's mention of the file path, CSS overflow styling, pseudo-selectors, and touch event interaction context."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes symptoms (touch scrolling doesn't work, hover interaction needed) and points to the file and general area (overflow styling, CSS pseudo-selectors). It does not say 'change overflowY from hidden to auto' or 'remove the hover override'. A developer must reason about what specifically to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check semantic properties: overflowY is 'auto' as default, no hover override with overflowY, overflowX remains 'hidden', scrollbar styles intact, linting passes. Alternative correct fixes (e.g., different formatting, different ordering of properties, using 'scroll' might fail but that's a legitimate behavioral check) that achieve the same semantic result would pass. The tests don't assert exact line numbers or gold-specific variable names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_overflow_y_default_is_auto, test_no_hover_overflow_override, test_overflow_x_still_hidden, test_style_scrollbar_properties_intact, and test_time_column_width_preserved all read the file text and check for string patterns (e.g., regex matching overflowY values, checking 'in content'). Only test_biome_lint and test_eslint execute subprocesses. The core behavioral tests (the f2p tests) are purely text-based assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_overflow_y_default_is_auto, test_no_hover_overflow_override) would fail on the original codebase since overflowY defaults to 'hidden' and the hover override exists. A stub or no-op would not pass these tests \u2014 the actual file content must be modified."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/antd relative path as solution/solve.sh in the task bundle, and the Dockerfile doesn't remove it. The agent could potentially read /solution/solve.sh or the test file at tests/test_outputs.py to discover exactly what changes are expected (overflowY: 'auto', remove hover override). The test file's docstrings explicitly state the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires touch scrolling to work on time columns. The tests verify the CSS fix that enables this (overflowY: 'auto' default, no hover-gated overflow), plus regression checks (overflowX, scrollbar styling, linting). All described behavior is covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_overflow_y_default_is_auto, test_no_hover_overflow_override, etc.), each has a docstring explaining the rationale, and they're logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CSS-in-JS styling changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (components/date-picker/style/panel.ts), property names (overflowY, overflowX), and commands are all correctly spelled throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (panel.ts) which is reasonable given the task domain, but doesn't specify exact lines, exact property values to change, or the specific fix. It mentions 'CSS pseudo-selectors interact with touch events' which is a hint but not a direct solution specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch (solve.sh) makes localized changes: changing one overflowY value and removing a small hover block in a single file. It doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

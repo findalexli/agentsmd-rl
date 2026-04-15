@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:20:59.977845",
-  "total_time": 2343.93,
-  "sandbox_id": "i2q7hzsjwzk2u4vj2tbol",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:55:50.531977",
+  "total_time": 1357.68,
+  "sandbox_id": "i94zibh0zbtzru1fvfq0k",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -68,17 +70,30 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.49,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:22: test `test_reasoning_tokens_kit_syntax` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:36: test `test_modified_files_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: requests']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.45,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 3,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8228.12,
-      "at": "2026-04-09T22:16:16.163292"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -112,6 +127,14 @@
       "backend": "fireworks",
       "time": 2343.93,
       "at": "2026-04-12T04:20:59.977845"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1357.68,
+      "at": "2026-04-15T05:55:50.531977"
     }
   ]
 }

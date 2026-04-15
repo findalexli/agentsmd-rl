@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the specific files (fixtures.rs, the snapshot file), the function (ensure_unchanged_ast), the data structure (HashMap), and the sorting behavior needed. All test-asserted paths and function names are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the problem (non-deterministic HashMap iteration order) and the expected behavior (sorted by source location) but does not specify the exact code change (e.g., doesn't say 'add .sort_by_key on error.range()' or 'change .values() to .iter()')."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_hashmap_iteration_order_addressed checks specifically for the pattern 'formatted_unsupported_syntax_errors.values().map' and if present requires 'diagnostics.sort'. An alternative correct fix that replaces HashMap with BTreeMap, or uses .into_iter().sorted() without a .sort call on 'diagnostics', or renames the variable, would fail this test despite being correct. test_sort_applied_to_errors requires a '.sort' substring in the function body, which would fail for solutions using a BTreeMap o"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are predominantly text-inspection: test_sort_applied_to_errors does regex search for '.sort' in source text, test_hashmap_iteration_order_addressed does regex on source text, test_snapshot_errors_sorted_by_location parses snapshot file text. While there are pass-to-pass tests that run cargo test/check/clippy, the core fail-to-pass tests only read file contents and check for string patterns, not executing the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op change would fail: test_sort_applied_to_errors requires '.sort' in the function body (not present in base), test_snapshot_errors_sorted_by_location requires errors sorted by line number (not the case in the base snapshot), and test_hashmap_iteration_order_addressed checks that HashMap iteration is addressed."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ruff alongside the agent's working directory. The agent could read solution/solve.sh or tests/test_outputs.py to discover exactly what changes are needed. The gold patch is in solve.sh which is accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires sorting diagnostics by source location for deterministic output. Tests verify sorting in the snapshot file, presence of sort call in the function, and that HashMap iteration order is addressed, plus repo tests pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (fail_to_pass, pass_to_pass for repo_tests and agent_config) with descriptive names and docstrings explaining each check's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the function and files but these are directly relevant to the task domain. It doesn't specify exact line numbers to change or the specific code fix, only describes the problem area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

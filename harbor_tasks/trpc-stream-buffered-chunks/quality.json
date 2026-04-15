@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/server/src/unstable-core-do-not-import/stream/jsonl.ts), function names (handleClose, handleAbort, closeAll, jsonlStreamConsumer, createStreamsManager), the literal string 'Stream closed before head was received', method names (streamManager.closeAll(), streamManager.cancelAll(reason), controller.close()), and all behavioral details that the tests assert on. Every test-asserted specific is discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: 'const handleClose = () => {' with specific calls to 'streamManager.closeAll()', 'headDeferred.reject' with exact message, 'headDeferred = null', 'const handleAbort = (reason?: unknown) => {' with 'streamManager.cancelAll(reason)', a 'closeAll()' method iterating controllerMap calling 'controller.close()', and exact hook wiring 'close: handleClose, abort: handleAbort'. This is a complete specification of the solution, not just a descr"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details like 'const handleClose = () => {', 'const handleAbort = (reason?: unknown) => {', 'function closeAll() {', 'streamManager.closeAll()', 'close: handleClose,', 'abort: handleAbort,', 'handleAbort(error)' in catch block. An alternative correct fix (e.g., using different function names, inline lambdas, or different signatures) would fail these string-matching tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_gold_patch_applied, test_closeAll_closes_controllers, test_handleClose_vs_handleAbort_separation, test_handleAbort_cancels_all, test_stream_hooks_use_correct_handlers, test_headDeferred_null_after_reject, and test_catch_block_uses_handleAbort are ALL pure string-matching tests (assert 'X' in content). While tests test_repo_vitest_jsonl_unit_tests, test_repo_vitest_server_unit_tests, test_repo_vitest_streaming_integration_tests, and test_repo_server_typecheck do execute code, the major"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_gold_patch_applied through test_catch_block_uses_handleAbort) only check for string presence in the source file. An agent could simply append a dead-code comment block containing all the expected strings (e.g., '// const handleClose = () => { streamManager.closeAll() ...') without actually fixing the bug, and pass all string-matching tests. The vitest tests might catch this, but the string-matching tests themselves are tautologically satisfiable."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/trpc with solve.sh accessible. The agent could read the solution patch directly. Additionally, since tests are string-matching, the agent could grep test_outputs.py for the exact strings needed and insert them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (handleClose with closeAll, handleAbort with cancelAll, closeAll function, stream hook wiring, catch block delegation, headDeferred null assignment) are tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_gold_patch_applied, test_closeAll_closes_controllers, test_handleClose_vs_handleAbort_separation, etc.) with descriptive docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies streaming code logic, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify and provides exact function signatures ('const handleClose = () => {'), exact method names ('closeAll'), exact call patterns ('streamManager.closeAll()'), and exact string literals ('Stream closed before head was received'). This goes far beyond naming the buggy file \u2014 it specifies the complete implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

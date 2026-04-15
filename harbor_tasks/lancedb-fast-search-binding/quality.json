@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions LanceFtsQueryBuilder, fast_search(), _fast_search attribute initialized to None, returning self, docstring with 'unindexed'/'flat search', to_query_object() passing fast_search to Query, and the target file path. All test-asserted specifics (class name, method name, attribute name, file path, docstring content keywords) are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation: 'Sets an internal _fast_search attribute to True', 'Returns self', 'Passes the _fast_search value to the Query constructor in to_query_object()'. It even specifies initializing the attribute and provides the exact usage pattern. This leaves no reasoning for the developer about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use AST inspection to check exact implementation details: test_fast_search_init_attribute checks for self._fast_search = None specifically in __init__, test_fast_search_sets_true checks self._fast_search = True via AST, test_fast_search_return_annotation requires the exact string 'LanceFtsQueryBuilder' in the return annotation. An alternative correct implementation using e.g., a different internal attribute name or a parameter-based approach would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All F2P tests use AST parsing (ast.parse + ast.walk) to inspect source code structure rather than importing and executing the code. No test actually instantiates LanceFtsQueryBuilder, calls fast_search(), or verifies runtime behavior. This is essentially structural text inspection, not behavioral testing."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (empty fast_search returning None, no __init__ changes) would fail tests like test_fast_search_sets_true (checks AST for _fast_search = True), test_fast_search_returns_self (checks for return self), and test_fast_search_to_query_object (checks Query call has fast_search kwarg). These require actual implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/lancedb's solve.sh (solution/solve.sh is mounted or available in the container). An agent could read /solution/solve.sh to get the exact patch. Additionally, since tests only do AST inspection of the source file, the agent could simply pattern-match the expected structure without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behaviors specified in the instruction (sets _fast_search to True, returns self, has docstring about unindexed/flat search, passes to Query in to_query_object) are tested by the F2P tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'Pass-to-Pass Tests: Repo CI Checks' and 'Fail-to-Pass Tests: Functional Tests for the Feature' sections with descriptive names and comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the target file (python/python/lancedb/query.py), the exact class (LanceFtsQueryBuilder), and even specifies internal implementation details like '_fast_search attribute', 'to_query_object()' method, and 'Query constructor'. The Hints section further pinpoints phrase_query() as a reference pattern."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

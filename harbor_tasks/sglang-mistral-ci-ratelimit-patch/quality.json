@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific names like `_is_base_mistral_patched`, `_TRANSFORMERS_PATCHED_VERSION`, `_patch_is_base_mistral_in_ci`, and `TokenizerWarningsFilter`. The instruction.md never mentions these variable/function names. The `_extract_source_range` helper in tests explicitly searches for these exact names, and `_patch_env` constructs mocks expecting these exact identifiers. A developer reading only instruction.md cannot discover these specific names."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix strategy: 'short-circuit this check in CI', 'Only apply in CI (SGLANG_IS_IN_CI env var)', 'Only apply for the known problematic transformers version', 'Be applied once, before the first AutoTokenizer.from_pretrained call', 'Log appropriately (info when patching, warning when version changes)'. This is a detailed specification of the solution, not just a description of the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use `_extract_source_range` to find specific names `_is_base_mistral_patched`, `_TRANSFORMERS_PATCHED_VERSION`, `_patch_is_base_mistral_in_ci` in the source. An alternative correct fix using different function/variable names (e.g., `_apply_ci_mistral_workaround`, `_PATCHED_TF_VERSION`) would fail because the test extraction would find no matching code. The tests are tightly coupled to gold-specific implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests use `_patch_env` to actually exec the extracted code with mocked dependencies, call the patch function, and verify behavioral outcomes (e.g., checking that `mock_tut.is_base_mistral` returns False after patching). Tests also run subprocess imports and syntax checks. This is behavioral testing, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (truncated but visible) include behavioral checks like verifying `_patch_is_base_mistral_in_ci()` actually modifies `is_base_mistral` to return False, and that version mismatch triggers different behavior. A stub/no-op implementation would not pass these behavioral assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/repo/_eval_tmp.py` path area and `solution/solve.sh` contains the complete git patch. The Dockerfile doesn't remove solution files. An agent could potentially read `/solution/solve.sh` if it exists in the container, or inspect the test file at `tests/test_outputs.py` to reverse-engineer the exact expected variable names."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: CI-only application, version-specific behavior, one-time application, and appropriate logging. The tests (visible portions plus truncated f2p tests referenced by `_patch_env`) verify CI mode toggling, version checking, patching behavior, and idempotency."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers ('Pass-to-pass gates (static)', 'Pass-to-pass gates (repo_tests)', 'Helpers'), descriptive function names, and docstrings explaining each test's purpose and category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves patching Python source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (`python/sglang/srt/utils/hf_transformers_utils.py`), the exact function (`get_tokenizer()`), the exact env var (`SGLANG_IS_IN_CI`), and the exact module path (`transformers.tokenization_utils_tokenizers`). It also specifies the exact function to patch (`is_base_mistral`) and where to apply it. This over-specifies the localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

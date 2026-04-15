@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: conditional element rendering with `as` prop based on `href`, focus-visible styles with `theme.color.secondary` and `zIndex`, deprecation via `deprecate` from `storybook/internal/client-logger`, `isButton = undefined` default, and compilation/formatting checks. The specific string `as={href ? 'a' : 'button'}` tested in test_link_renders_as_button_without_href is implied by the instruction's requirement to 'use styled-components' `as` prop or eq"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: use `as` prop for conditional rendering, add `&:focus-visible` with `outline` using `theme.color.secondary` and `zIndex`, import `deprecate` from specific module, set `isButton = undefined`, check `isButton !== undefined`. This is not just describing what's broken \u2014 it prescribes the exact code patterns to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like `as={href ? 'a' : 'button'}`, `href={href}`, `isButton = undefined`, and `if\\s*\\(\\s*isButton\\s*!==?\\s*undefined\\s*\\)`. An alternative correct fix using e.g. a ternary variable (`const Tag = href ? 'a' : 'button'` then `as={Tag}`), or checking `isButton != null`, or using `typeof isButton !== 'undefined'` would fail these regex-based tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_link_renders_as_button_without_href, test_link_renders_as_anchor_with_href, test_button_focus_styles_applied, test_isbutton_prop_deprecated, and test_isbutton_default_changed all exclusively use `assert 'string' in content` or regex matching on the source file text. Only the compilation/formatting tests (test_typescript_compilation, test_component_compiles, test_repo_formatting) execute subprocesses. The core behavioral F2P tests never import, render, or execute the component."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all F2P tests just check for string/regex patterns in the source file, an agent could pass them by inserting dead code comments or unreachable code blocks containing the expected strings (e.g., `// as={href ? 'a' : 'button'}`) without actually implementing the fix. The tests don't verify runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/storybook (via solve.sh in the container's solution/ directory). The agent could read the gold patch from /solution/solve.sh to see the exact expected code. Additionally, since tests are pure text-matching on the source file, the agent could grep test_outputs.py for the exact assertion strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors listed in instruction.md (conditional rendering, focus styles, deprecation warning, isButton default change, compilation, type checking, formatting) have corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_link_renders_as_button_without_href, etc.), docstrings explaining the purpose and rationale, and F2P/P2P annotations."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a React component, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files. (Note: there's `AssertionError` typo in test_outputs.py __main__ block but that's a Python built-in misspelling that doesn't affect test execution via pytest.)"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify, the exact CSS selectors to add (`&:focus-visible`), the exact prop mechanism (`as` prop), the exact import path (`storybook/internal/client-logger`), and the exact default value change (`isButton = undefined`). This goes well beyond identifying the buggy file \u2014 it prescribes implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

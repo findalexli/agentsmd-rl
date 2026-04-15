@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths, the workaround pattern ('val data = when (data.moduleKind)'), the replacement pattern ('AnalysisApiTestConfiguratorFactoryData()'), TestModuleKind.SourceLike, requireSupported(data), and all test files. The specific assert targets (e.g., 'FrontendKind.Fir,' absence, 'AnalysisApiFirTestConfiguratorFactory.createConfigurator' presence) are discoverable from the described changes."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Remove the val data = when (data.moduleKind) block', 'Replace explicit AnalysisApiTestConfiguratorFactoryData(FrontendKind.Fir, TestModuleKind.Source, ...) calls with simple AnalysisApiTestConfiguratorFactoryData()', and 'use TestModuleKind.SourceLike directly'. This tells the agent exactly WHAT to change rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for absence of specific workaround patterns and presence of default constructor usage. Any correct fix that removes the workaround and switches to default constructors would pass. The tests don't assert on exact line positions or gold-specific helper function names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every F2P test (test_workaround_removed_from_main_factory, test_generator_uses_default_constructor, test_compose_test_uses_default_constructor, etc.) exclusively uses 'assert ... in content' or 'assert ... not in content' pattern by reading file text. No test imports, compiles, or executes any Kotlin/Java code to verify actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific string patterns that don't exist in the original files (e.g., 'AnalysisApiTestConfiguratorFactoryData()' with no args) and absence of patterns that do exist (e.g., 'val data = when (data.moduleKind)'). A stub/no-op wouldn't pass these since the original files contain the workaround code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory contains solve.sh and solve.py which are accessible in the container at /solution/. An agent could simply read and execute these files (e.g., 'cat /solution/solve.sh' or 'bash /solution/solve.sh') to pass all tests without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors from the instruction (remove workaround, update test files to default constructor, update generated test to SourceLike) are tested by the F2P tests. Copyright year updates and import style changes mentioned in hints aren't tested, but those are hints not explicit requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into clearly labeled sections (FAIL-TO-PASS and PASS-TO-PASS) with descriptive function names and docstrings explaining the before/after state."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring of Kotlin/Java files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction tells the agent to 'Look for the comment \"This is a workaround for the transition time\"', names the exact pattern 'val data = when (data.moduleKind)', and specifies the exact replacement ('AnalysisApiTestConfiguratorFactoryData()'). This goes beyond naming files and describes exact code-level changes."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not an agentmd-edits or config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

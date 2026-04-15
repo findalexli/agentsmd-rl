@@ -7,7 +7,7 @@ The Chrome DevTools Protocol (CDP) domain adapter classes (`V143Domains`, `V144D
 This causes issues because:
 - Event handlers registered on one instance are lost when a new instance is created
 - State set on the domain object doesn't persist across property accesses
-- Multiple references to the same property compare as different objects
+- Multiple references to the same property compare as different objects (`domains.Network != domains.Network`)
 
 ## Affected Files
 
@@ -15,32 +15,29 @@ This causes issues because:
 - `dotnet/src/webdriver/DevTools/v144/V144Domains.cs`
 - `dotnet/src/webdriver/DevTools/v145/V145Domains.cs`
 
-## What You Need to Do
+## Required Changes
 
-Modify the three `V*Domains.cs` files to ensure that accessing `Network`, `JavaScript`, `Target`, or `Log` properties always returns the **same instance** (reference equality).
+Modify the three `V*Domains.cs` files to ensure that accessing `Network`, `JavaScript`, `Target`, or `Log` properties always returns the **same instance** on subsequent accesses (reference equality).
 
-### Implementation Guidance
+### Specific Requirements
 
-The standard C# pattern for lazy-initialized properties is:
+**For V143Domains:**
+- The `Network` property currently creates `new V143Network(domains.Network, domains.Fetch)` - this must be cached
+- The `JavaScript` property currently creates `new V143JavaScript(domains.Runtime, domains.Page)` - this must be cached
+- The `Target` property currently creates `new V143Target(domains.Target)` - this must be cached
+- The `Log` property currently creates `new V143Log(domains.Log)` - this must be cached
 
-1. Add private `readonly Lazy<T>` fields for each domain object
-2. Initialize these fields in the constructor with factory lambdas
-3. Change property getters to return `this.field.Value` instead of `new DomainType(...)`
+**For V144Domains:**
+- The `Network` property currently creates `new V144Network(domains.Network, domains.Fetch)` - this must be cached
+- The `JavaScript` property currently creates `new V144JavaScript(domains.Runtime, domains.Page)` - this must be cached
+- The `Target` property currently creates `new V144Target(domains.Target)` - this must be cached
+- The `Log` property currently creates `new V144Log(domains.Log)` - this must be cached
 
-Example pattern:
-```csharp
-public class V143Domains : DevToolsDomains
-{
-    private readonly Lazy<V143Network> network;
-
-    public V143Domains(DevToolsSession session)
-    {
-        this.network = new Lazy<V143Network>(() => new V143Network(...));
-    }
-
-    public override DevTools.Network Network => this.network.Value;
-}
-```
+**For V145Domains:**
+- The `Network` property currently creates `new V145Network(domains.Network, domains.Fetch)` - this must be cached
+- The `JavaScript` property currently creates `new V145JavaScript(domains.Runtime, domains.Page)` - this must be cached
+- The `Target` property currently creates `new V145Target(domains.Target)` - this must be cached
+- The `Log` property currently creates `new V145Log(domains.Log)` - this must be cached
 
 ## Expected Behavior
 
@@ -52,10 +49,9 @@ After your fix:
 
 ## Testing
 
-You should also create a test file at `dotnet/test/webdriver/DevTools/DevToolsDomainsTests.cs` that verifies the domain accessors return the same instance on multiple accesses.
+Create a test file at `dotnet/test/webdriver/DevTools/DevToolsDomainsTests.cs` that verifies the domain accessors return the same instance on multiple accesses using `Is.SameAs()` assertions for `domains.Log`, `domains.Network`, `domains.Target`, and `domains.JavaScript`.
 
 ## Repository Guidelines
 
 - Follow existing code style and XML documentation patterns
-- The codebase uses `Lazy<T>` for deferred initialization - use this approach
 - Build with: `dotnet build dotnet/src/webdriver/WebDriver.csproj`

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: `terminalAttr` constant with value `data-pty-id`, `terminalProbe` export, `window.__opencode_e2e.terminal.terminals[id]` structure with `connected`, `rendered`, `settled` fields, `init()`, `connect()`, `render(data)`, `settle()`, `drop()` methods, file paths like `packages/app/src/testing/terminal.ts`, `packages/app/e2e/actions.ts`, `packages/app/e2e/AGENTS.md`, and helper names `waitTerminalReady`/`runTerminal`. All asserted specifics in tests are"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact method signatures (`init()`, `connect()`, `render(data: string)`, `settle()`, `drop()`), exact data structure (`window.__opencode_e2e.terminal.terminals[id]` with `connected`, `rendered`, `settled` fields), exact constant name and value (`terminalAttr` = `data-pty-id`), exact file paths to create/modify, and exact helper function signatures. This tells the agent precisely WHAT to implement rather than just describing the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: the exact export name `terminalProbe` (test_syntax_check), exact constant name `terminalAttr` with exact value `data-pty-id` (test_terminal_attr_constant), exact state structure with fields `connected`, `rendered`, `settled` (test_terminal_probe_state_tracking), and exact window path `__opencode_e2e.terminal.terminals`. An alternative correct fix using different naming (e.g., `ptyProbe`, `terminalAttribute`, or a different state structure) wo"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core f2p tests (test_terminal_attr_constant, test_terminal_probe_state_tracking, test_terminal_probe_drop) actually import and execute the TypeScript module via `_run_ts()`, calling methods and checking runtime behavior. test_syntax_check does text checking but is a gate test. The behavioral tests dominate."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning defaults would not pass: test_terminal_attr_constant checks the specific string 'data-pty-id'; test_terminal_probe_state_tracking checks connected=true, rendered='hello world', settled=1 after calling specific methods; test_terminal_probe_drop checks that an entry is removed. These require actual implementation logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/opencode as the gold patch could be applied via solve.sh. The agent could potentially read the test file at the known path or grep for expected values. The solution file path pattern is predictable. Also, test_agents_md_documents_helpers just checks for string presence in AGENTS.md, which could be trivially gamed."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires integration into terminal.tsx (probe calls on mount/unmount/connect/render), e2e action helpers (waitTerminalReady, runTerminal implementations), fixture setup in fixtures.ts (page.addInitScript), and selectors.ts usage. Tests only verify the probe module itself and AGENTS.md text \u2014 they don't test the terminal.tsx integration, the e2e helpers' actual behavior, or the fixture setup."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass core behavioral, Pass-to-pass regression, Repo CI/CD, Config/documentation), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact schema: `window.__opencode_e2e.terminal.terminals[id]` with fields `connected: boolean`, `rendered: string`, `settled: number`, and the probe's method signatures."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths, exact method signatures, exact constant names and values, exact window property paths, and exact field names. This goes beyond naming the buggy module \u2014 it provides a complete implementation specification including `terminalAttr = 'data-pty-id'`, the probe method list, and the state schema."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code task, not a config-edit task. The AGENTS.md edit is documentation, not configuration."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

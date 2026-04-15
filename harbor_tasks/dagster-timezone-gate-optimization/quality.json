@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert the existence of a specific function `has_nonzero_minute_offset` with `cache_info` attribute (test_has_nonzero_minute_offset_function_exists), and test_find_hourly_schedule_time_accepts_new_parameter asserts a specific parameter name `use_timezone_minute_resolution`. Neither the function name `has_nonzero_minute_offset` nor the parameter name `use_timezone_minute_resolution` appear in instruction.md. An agent cannot discover these exact names from the instruction alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the optimization goal (fast path for whole-hour offsets, slow path for minute offsets) and lists which timezones fall in each category, but does not specify exact code changes, line numbers, or implementation details like specific function/parameter names."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_has_nonzero_minute_offset_function_exists requires a function named exactly `has_nonzero_minute_offset` with `cache_info` attribute; test_find_hourly_schedule_time_accepts_new_parameter requires a parameter named exactly `use_timezone_minute_resolution`. An alternative correct implementation using different names (e.g., `needs_minute_resolution`, `minute_aware`) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call functions (has_nonzero_minute_offset, cron_string_iterator, _find_hourly_schedule_time), run subprocesses (make ruff, pytest), and check return values. They do not merely grep source files for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_has_nonzero_minute_offset_function_exists, test_has_nonzero_minute_offset_returns_false/true, test_find_hourly_schedule_time_accepts_new_parameter) require actual implementation: the function must exist, be cached, return correct boolean values for specific timezones, and accept a new parameter. A stub returning None or empty would fail the boolean assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/dagster in the container (solve.sh applies a patch there), and the agent could potentially read /solution/solve.sh or inspect the gold patch to discover exact function names and implementation details needed to pass the tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: correct hourly cron for all timezones (tested), fast path for whole-hour offsets (tested via has_nonzero_minute_offset returning False), correct handling of minute-offset timezones (tested), passing ruff/existing tests (tested), module exports (tested in test_module_imports)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, logically grouped by functionality (function existence, timezone classification, iterator behavior, linting, repo tests, module imports)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces code changes, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, timezone names, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file to modify (schedules.py) which is appropriate for the task domain, and describes the optimization goal without naming specific internal functions or line numbers."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

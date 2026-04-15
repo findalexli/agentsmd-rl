@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_not_stub checks for exact strings 'if server_functions:', 'for fn in server_functions:', and 'decorated = server(fn)' or 'server(fn)'. test_server_import_added checks for exact string 'from gradio.components.base import Component, server'. These exact code patterns are not specified in the instruction. Also test_skill_md_html_signature_updated checks for specific file path '.agents/skills/gradio/SKILL.md' whi"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is expected (new parameter, decorator usage, docstring updates, frontend changes, SKILL.md updates) but does not give exact code to write or exact line numbers to change. It describes the mechanism at a design level."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_not_stub asserts exact implementation patterns: 'if server_functions:' in src, 'for fn in server_functions:' in src, and 'server(fn)' in src. A correct alternative implementation using e.g. 'if server_functions is not None:', or 'for func in server_functions:', or a list comprehension approach, would fail these tests. test_server_import_added asserts exact import string 'from gradio.components.base import Component, server' \u2014 an alternative like a separate import line would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several key tests are pure text-matching: test_not_stub checks for exact strings in source code ('if server_functions:', 'for fn in server_functions:', 'server(fn)'). test_server_import_added checks for exact import string in source. test_js_on_load_docstring_updated and test_server_functions_docstring_exists check docstring text. While some tests do execute code (test_server_functions_decorated_and_attached, test_html_component_still_works), critical fail-to-pass tests are text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require real implementation: test_server_functions_parameter_exists checks the parameter exists in the signature, test_server_functions_decorated_and_attached creates an HTML instance with server_functions and verifies the function is attached and server_fns is populated. A stub returning None or pass wouldn't satisfy these behavioral checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/gradio or accessible via the solve.sh script at solution/solve.sh. While the prompt says the agent doesn't see tests/ or solution/, the Docker environment includes these files. An agent could read /solution/solve.sh or the test file to reverse-engineer the exact expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement #5 (frontend changes - server object propagation through Svelte components, Index.svelte and HTML.svelte modifications) is not tested at all. The tests only check Python-side changes and SKILL.md, but no test verifies the Svelte/frontend changes were made correctly."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the exact import pattern ('server decorator from the base component module'), the exact parameter placement ('between the buttons and props parameters'), and references specific components (FileExplorer, ImageEditor) as implementation guides. While it doesn't give line numbers, it effectively narrows the solution space to a single implementation approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code task, not an agentmd-edits task focused on config changes."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (libs/npm/resolution/snapshot.rs), the function (snapshot_from_lockfile), the test name (test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps), the lockfile key format (@myorg/shared@1.0.0_zod@4.3.6), the package names (@myorg/shared, zod), and the expected dist values (None vs Some). All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'Correctly identify linked packages by comparing against the parsed name and version fields (id.nv) rather than the raw serialized key that includes peer-dep suffixes.' This tells the agent exactly WHAT to change (compare against id.nv instead of key), leaving minimal reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_no_raw_key_comparison_for_link_packages asserts 'link_package_ids.contains(key)' must not appear in the source, and test_dist_check_not_using_raw_key uses a regex matching 'dist: if !\\w+\\.contains(\\s*key\\s*)'. These check for specific variable names ('link_package_ids', 'key') from the original buggy code. An alternative fix that renamed variables or restructured the code differently (e.g., extracting to a helper function) might fail these text-based checks despite being correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_no_raw_key_comparison_for_link_packages and test_dist_check_not_using_raw_key are purely text/regex searches on source code ('assert \"link_package_ids.contains(key)\" not in content'). They do not execute or call the code. While test_linked_peer_deps_unit_test_passes does execute a cargo test, 2 of the 3 fail-to-pass tests are pure text assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_linked_peer_deps_unit_test_passes runs the actual unit test via cargo test and checks '1 passed', which requires a real implementation of the fix. The text-based tests (test_no_raw_key_comparison and test_dist_check_not_using_raw_key) verify the buggy pattern is removed, which cannot be satisfied by a stub. A no-op would leave the buggy pattern in place."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/deno as solve.sh would be applied there, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh (or the hidden test file) to extract the exact patch. The Dockerfile doesn't prevent access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behavior explicitly required by instruction.md is tested: the fix to link-package identification (tested by text checks and the unit test), the unit test requirement with specific name and assertions (tested by test_linked_peer_deps_unit_test_passes), and existing tests still passing (tested by test_existing_snapshot_tests and others)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Rust source code, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or package names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact function (snapshot_from_lockfile), the exact variable pattern (link_package_ids.contains), and the exact fix approach (compare against id.nv instead of the raw key). This goes beyond identifying the file/module and essentially localizes the bug to a specific code pattern."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

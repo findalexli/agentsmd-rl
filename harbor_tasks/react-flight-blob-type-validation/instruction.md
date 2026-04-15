@@ -10,16 +10,19 @@ Since `FormData.get()` returns either a string or a File/Blob object, a malforme
 
 The fix should add type validation to ensure that when a `$B` reference is resolved, the backing entry is actually a Blob instance. If the backing entry is not a Blob (e.g., it's a string), the deserializer should throw a descriptive error rather than returning the invalid value.
 
-The error message should clearly indicate that the referenced Blob is not actually a Blob.
+The error message should clearly indicate that the referenced Blob is not actually a Blob: **"Referenced Blob is not a Blob."**
 
 ## Relevant Areas
 
-- Server Action reply deserialization logic
-- `ReactFlightDOMReply-test.js` for test coverage
+- Server Action reply deserialization logic lives in `packages/react-server/src/ReactFlightReplyServer.js`
+- Tests for this functionality are in `ReactFlightDOMReply-test.js` (under `packages/react-server-dom-webpack/src/__tests__/`)
+- Error messages are registered in `scripts/error-codes/codes.json` and must be registered via the `yarn extract-errors` command
 
 ## Expected Behavior
 
 After the fix:
 - Valid Blob references continue to work normally
-- String values referenced via `$B` throw an error with the message "Referenced Blob is not a Blob."
+- String values referenced via `$B` throw an error with the message **"Referenced Blob is not a Blob."**
+- The new error message is registered in `scripts/error-codes/codes.json` (error code 582)
+- A new test case named **"cannot deserialize a Blob reference backed by a string"** exists and passes
 - The error handling integrates with React's existing error code system

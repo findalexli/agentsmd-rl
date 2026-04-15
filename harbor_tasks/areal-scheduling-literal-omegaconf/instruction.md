@@ -3,8 +3,7 @@
 ## Summary
 
 The `SchedulingSpec` dataclass in `areal/api/cli_args.py` causes a `ValidationError`
-whenever any code path loads a config that includes scheduling configuration. This
-affects **all** scheduler types, not just Ray — including `scheduler.type=local`.
+whenever any code path loads a config that includes scheduling configuration.
 
 ## Reproduction
 
@@ -15,26 +14,22 @@ from areal.api.cli_args import SchedulingSpec
 OmegaConf.structured(SchedulingSpec())  # Raises ValidationError
 ```
 
-The error message indicates that the type annotation used for the
-`ray_placement_strategy` field is not supported by the version of omegaconf pinned in
-the project (`omegaconf 2.4.0.dev2`).
+## Expected Behavior
 
-## Where to look
+1. `OmegaConf.structured(SchedulingSpec())` must succeed without raising `ValidationError`
+2. The valid values for `ray_placement_strategy` are: `"shared"`, `"separate"`, `"deferred"`
+3. Invalid values must be rejected at runtime with a `ValueError` that includes the field name `"ray_placement_strategy"` in the error message
+4. The default value when `SchedulingSpec()` is instantiated with no arguments must be `"shared"`
 
-- `areal/api/cli_args.py` — the `SchedulingSpec` dataclass, specifically the
-  `ray_placement_strategy` field's type annotation
-- The project uses omegaconf structured configs extensively for all configuration
-  dataclasses
+## Code Standards (per AGENTS.md)
 
-## Expected behavior
+The file `areal/api/cli_args.py` must comply with these rules:
 
-- `OmegaConf.structured(SchedulingSpec())` should succeed without raising
-- The field should still enforce that only valid placement strategy values are accepted
-- The fix should follow existing patterns used by other enum-like fields in the same
-  file (look at how other fields with a fixed set of valid choices handle validation)
+- **No wildcard imports** — do not use `from X import *`
+- **Unused imports must be removed** — if a `Literal` import from `typing` is no longer needed in type annotations, it must be deleted
+- **No bare print() calls** — use `areal.utils.logging` instead
+- **Ruff formatting must pass** — code must conform to the project's ruff configuration
 
-## Hints
+## What to Fix
 
-- Check how other fields in `cli_args.py` that have a fixed set of choices specify
-  their type vs. how they validate their values
-- The CLI documentation files may need to be updated to reflect the field being available
+The `SchedulingSpec` dataclass currently uses a `Literal` type annotation for the `ray_placement_strategy` field. This is incompatible with the version of omegaconf pinned in the project (`omegaconf 2.4.0.dev2`). You must change the field's type annotation while preserving runtime validation of allowed values.

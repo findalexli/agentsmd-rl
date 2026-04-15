@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key schema keys (enabled, minReplicaCount, maxReplicaCount, metrics, behavior), file paths (values.yaml, values.schema.json, NOTES.txt, worker-deployment.yaml, worker-hpa.yaml), and the configuration paths (workers.hpa.*, workers.celery.hpa.*) that tests assert on. The deprecation warning strings like 'workers.hpa.enabled' and 'workers.celery.hpa.enabled' are discoverable from the instruction's description of deprecation warnings and the old/new paths."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is expected (new config section, override semantics, deprecation warnings, schema updates) but does not specify exact code changes, line numbers, or specific template syntax to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_deprecation_warning_in_notes_template and test_deprecation_warning_for_min_replica assert exact string matches like 'workers.hpa.enabled' and 'workers.celery.hpa.enabled' in NOTES.txt. An alternative correct implementation that uses different wording (e.g., 'workers.hpa is deprecated, use workers.celery.hpa instead') without listing each individual key would fail these tests. Similarly, test_values_yaml_has_celery_hpa_section requires the exact YAML structure workers.celery.hpa to exist, wh"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests are predominantly text-based: test_values_schema_has_celery_hpa reads JSON and checks keys (structural but not behavioral), test_deprecation_warning_in_notes_template and test_deprecation_warning_for_min_replica are pure string-in-file checks ('assert \"workers.hpa.enabled\" in content'), and test_values_yaml_has_celery_hpa_section reads YAML and checks key existence. While pass-to-pass tests do run helm template, the critical fail-to-pass tests that validate the fix are all"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not add schema keys to values.schema.json, deprecation strings to NOTES.txt, or hpa section to values.yaml. Each fail-to-pass test requires actual file modifications that reflect the intended feature."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/airflow via solve.sh which does 'git checkout 8dc4305675a6817f55d5ebcc88367859da21beca -- chart/...' The agent could read solution/solve.sh to discover the exact commit hash and files to checkout, or simply run the solve script directly. The Dockerfile doesn't remove the /solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that 'Values set in workers.celery.hpa.* should override values in workers.hpa.*' but this override behavior is only tested in a pass-to-pass test (test_celery_hpa_merge_works), meaning it already works before the fix. There's no fail-to-pass test verifying the override semantics. Also, the instruction mentions 'metrics' and 'behavior' HPA fields but these aren't tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, and each test has a descriptive docstring explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the expected schema structure for workers.celery.hpa (enabled, minReplicaCount, maxReplicaCount, metrics, behavior) and mentions values.schema.json should be updated."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to investigate which is appropriate for the task domain (Helm chart configuration), but doesn't specify exact lines or precise code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold solution checks out specific files from a commit, making localized changes to chart/values.yaml, chart/values.schema.json, chart/templates/NOTES.txt, and related files. The diff is bounded to the relevant config files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 8,
+  "fail_count": 4
+}

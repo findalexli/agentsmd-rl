@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug behavior, the files to modify, the fixture file with TODO comments, and the expected behavior for nested classes, dotted chains, and top-level super calls. All test-specific behaviors (no false positive on nested class, no false positive on dotted chain, TODO removal, top-level still triggers, full chain triggers) are discoverable from instruction.md. The specific fixture path and rule file path are explicitly named."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (incorrect matching of inner class names, lack of verification of class nesting levels) and what the correct behavior should be, but does not specify exact code changes like 'add enclosing_classes.next().is_some() check' or 'change line X to Y'. A developer must reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (whether UP008 triggers or not on specific code patterns) and stylistic constraints (no unwrap, imports at top, no nested if-let). They don't assert on specific variable names, helper function names, or exact line positions in the implementation. Alternative correct implementations (e.g., different approaches to walking scope hierarchy) would pass as long as they produce correct linting behavior and follow coding standards."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests build ruff, run it as a subprocess on Python code, and check stdout/stderr for UP008 presence/absence. The snapshot tests run cargo test. Only test_todo_comments_removed, test_no_unwrap_or_panic, test_rust_imports_at_top, and test_no_nested_if_let are text-based, but these are supplementary checks alongside the behavioral execution tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that UP008 does NOT trigger on nested class patterns (test_nested_class_super_no_false_positive, test_dotted_chain_super_no_false_positive). The current unpatched code produces false positives on these, so a stub/no-op would fail. test_todo_comments_removed checks for removal of specific TODO text that exists in the fixture. None can be satisfied without actual changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory contains solve.sh with the complete gold patch and a snapshot file at /solution/UP008.py.snap. The agent could read /solution/solve.sh to get the exact patch and apply it directly. The Dockerfile copies the snapshot file explicitly: 'cp /solution/UP008.py.snap'. There's no evidence the /solution/ directory is blocked from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: nested class false positive (test_nested_class_super_no_false_positive), dotted chain false positive (test_dotted_chain_super_no_false_positive), full chain should trigger (test_full_chain_dotted_super_triggers), top-level should trigger (test_top_level_super_still_triggers), TODO removal (test_todo_comments_removed)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass', 'Config-derived'), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies linter rules and fixture files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify, which is appropriate since this is a targeted bug fix task. It describes the bug conceptually without specifying exact line numbers or code changes. The file paths are natural given the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Rust source and a Python fixture file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

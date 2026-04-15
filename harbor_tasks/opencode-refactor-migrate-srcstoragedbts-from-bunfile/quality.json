@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (calculator.py), function (divide), exception type (ZeroDivisionError), message string ('division by zero'), and the other operations (add, subtract, multiply) that must keep working. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (returns None instead of raising ZeroDivisionError) and what the correct behavior should be, but does not specify exact code changes like 'add if b == 0: raise...' or line numbers. A developer still needs to reason about implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavior: that ZeroDivisionError is raised, its message contains 'division by zero', normal division returns 5.0, and other ops work. Alternative fixes (e.g., using `a / b` directly without guard, or checking `b == 0` with different variable names/structure) would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "All tests execute Python code via subprocess, importing and calling the actual functions (divide, add, subtract, multiply) and checking runtime behavior, not source text."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_divide_by_zero_raises_exception, test_divide_by_zero_error_message) require that divide(10, 0) raises ZeroDivisionError with 'division by zero' message. A stub returning None would print 'ERROR: No exception raised' and fail the 'PASS:' assertion."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/calculator/../solution/solve.sh (or similar path). The Dockerfile doesn't remove it, and there's no evidence the /solution directory is excluded from the container. An agent could read solve.sh to get the gold patch. Additionally, tests/ directory may be readable, allowing the agent to grep for expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: ZeroDivisionError raised on divide by zero, correct error message, normal division works, and add/subtract/multiply still work."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_divide_by_zero_raises_exception, test_add_still_works, etc.) with docstrings indicating fail_to_pass vs pass_to_pass classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names calculator.py which is the only file in the project - this is natural for the task domain, not excessive localization. No line numbers or exact code changes are given."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

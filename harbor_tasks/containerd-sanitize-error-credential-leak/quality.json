@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all required test function names (TestSanitizeError_SimpleURLError, TestSanitizeError_WrappedError, etc.), the file locations (internal/cri/util/), the literal string 'ctrdutil.SanitizeError(err)', the target file instrumented_service.go, and the behavior expected (redacting query params with '[REDACTED]'). The test_outputs.py checks for these same things, and all are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be done (sanitize URL errors, redact query params, integrate into image operations) but does not specify exact line numbers, exact code patches, or the precise implementation structure. A developer still needs to reason about how to implement the sanitizedError type, the Unwrap method, and where exactly to insert calls."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_instrumented_service_uses_sanitize checks for the exact literal string 'ctrdutil.SanitizeError(err)' in the file. An alternative correct fix might use a different call pattern like 'ctrdutil.SanitizeError(err)' with different spacing, or assign to a different variable, or wrap differently. However, the instruction does explicitly require this exact string. More critically, tests run Go test functions by exact name (TestSanitizeError_SimpleURLError etc.) and the package path './internal/cri/"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute 'go test -v -run TestName ./internal/cri/util/' as subprocesses, which compiles and runs Go code that exercises the SanitizeError function. There are also 'go build' and 'go vet' checks. While test_instrumented_service_uses_sanitize and test_sanitize_file_exists are text/file-existence checks, the majority of tests execute actual code behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The Go tests that are executed (TestSanitizeError_SimpleURLError etc.) would need to actually create url.Error instances, call SanitizeError, and verify the output contains '[REDACTED]' instead of secrets. A stub returning nil or the original error unchanged would fail TestSanitizeError_SimpleURLError which checks that sensitive params are redacted. The tests also verify compilation succeeds."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/containerd (solution/solve.sh shows the gold patch). An agent could read the solve.sh or inspect /solution/ directory contents to extract the exact patch. The Dockerfile doesn't remove solution files from the container, and there's no evidence they're excluded from the agent's filesystem access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: sanitizing URL errors with query params, handling wrapped errors, nil errors, non-URL errors, URL errors without query params, unwrap support, integration in instrumented_service.go, compilation, go vet, and go fmt."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., test_sanitize_error_simple_url, test_sanitize_error_wrapped, etc.)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces Go source code, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_outputs.py, test_go_vet has docstring 'pass-to_pass' (underscore instead of hyphen) and test_go_fmt_check has 'pass_to_pass' - minor but these are typos in the comments. More importantly these don't affect functionality."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions 'instrumented_service.go' and the CRI image operations but doesn't specify exact line numbers or the precise code changes needed. The file is naturally obvious from the task domain (CRI instrumentation layer)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

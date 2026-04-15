@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig), all 7 functions (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError), the specific patterns (bun.assert(instance != .zero), createErrorInstance returning .zero, hasException, error.JSError), and the behavior expected. All test assertions reference items discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix for each function, e.g., 'Must check if createErrorInstance returns .zero and return error.JSError instead of asserting non-zero with bun.assert(instance != .zero)' for throw(), 'Must check this.hasException() before calling this.vm().throwError()' for throwValue(), and 'Must route through throwValue or have its own exception guard' for throwError(). This is a direct description of the solution, not just a description of the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for patterns like 'if (... == .zero)', 'hasException', and 'error.JSError' in function bodies, which are the canonical Zig patterns for this fix. Alternative correct approaches (e.g., using 'orelse' or 'catch') are also accepted in several tests. The tests don't assert exact line positions or gold-specific variable names beyond what's necessary."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the source file and does string/regex matching on the code text (e.g., checking 'bun.assert(instance != .zero)' is removed, 'hasException' appears before 'vm().throwError'). No test compiles or executes the code, runs the reproduction script, or checks runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original code (e.g., the original has 'bun.assert(instance != .zero)' which test_crash_assert_removed requires to be absent, and throwValue doesn't have hasException guard originally). A stub or no-op would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/bun's solution/solve.sh path (mounted in container). The agent could also read the test file at tests/test_outputs.py to see exactly what patterns are checked and reverse-engineer the minimal text changes needed without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 7 functions listed in instruction.md (throw, throwPretty, throwTODO, createRangeError, throw with error options, throwValue, throwError) are tested for the required changes. The instruction's requirements are covered by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_crash_assert_removed, test_throwvalue_guarded, test_throwtodo_handles_zero) with docstrings explaining what each test verifies. Tests are grouped by function/concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Zig source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig) and every specific function to change (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError) along with the exact code pattern to replace (e.g., 'bun.assert(instance != .zero)'), which constitutes significant localization leakage beyond what the task domain requires."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

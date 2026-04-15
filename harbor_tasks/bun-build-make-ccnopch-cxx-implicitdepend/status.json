@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T11:31:49.792920",
-  "total_time": 1072.78,
-  "sandbox_id": "iomsdr7qm5hp4rxa22o0f",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "config_edit_precision": 0.25,
-  "rubric_icr": 1.0,
+  "validated_at": "2026-04-15T03:37:15.499525",
+  "total_time": 830.02,
+  "sandbox_id": "ipi8q8k53n3j01sf1wpvc",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -75,6 +75,26 @@
       "backend": "fireworks",
       "time": 3.15,
       "notes": "ICR=1.00"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:153: test `test_repo_editorconfig_compliance` has 1 assert(s), all pas', 'A:[A] test_not_tautological @ tests/test_outputs.py:194: test `test_repo_build_script_imports` has 1 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:315: test `test_repo_shell_scripts_syntax` has 1 assert(s), all pass o']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.47,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 5
     }
   },
   "history": [
@@ -93,6 +113,14 @@
       "backend": "fireworks",
       "time": 1072.78,
       "at": "2026-04-10T11:31:49.792920"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 830.02,
+      "at": "2026-04-15T03:37:15.499525"
     }
   ]
 }

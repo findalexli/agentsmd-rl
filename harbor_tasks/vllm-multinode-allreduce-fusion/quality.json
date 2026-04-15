@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert the existence of a function named `_resolve_fi_ar_backend` (test_resolve_backend_auto_selects_by_node_count, test_resolve_backend_explicit_passthrough, test_trtllm_multinode_raises_valueerror). The instruction.md never names this specific function \u2014 it only says 'The backend resolution logic should be in a function that returns the resolved backend string.' An agent could name it anything (e.g., `resolve_backend`, `get_backend`), and the tests would fail."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the expected behavior (default to 'auto', use get_node_count(), raise ValueError, etc.) but does not give exact code patches, line numbers, or diffs. A developer must still reason about how to implement the changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests explicitly search for a function named `_resolve_fi_ar_backend` via AST walking (test_resolve_backend_auto_selects_by_node_count, test_resolve_backend_explicit_passthrough, test_trtllm_multinode_raises_valueerror). Any correct alternative that uses a different function name would fail. The instruction never mandates this exact name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract function source via AST, then exec() it with mocked dependencies and call the function, checking return values and raised exceptions. test_default_backend_is_auto checks AST structure but verifies the actual default value. This is behavioral verification, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check non-trivial behavior: test_default_backend_is_auto verifies the default changed from 'trtllm' to 'auto'; test_resolve_backend_auto_selects_by_node_count verifies node-count-dependent selection logic; test_trtllm_multinode_raises_valueerror verifies a ValueError is raised. A stub returning None/pass would fail these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/ directory exists in the container at /workspace/vllm (or accessible path). The agent could read /solution/solve.sh (the gold patch) directly. The Dockerfile does not remove or restrict access to the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from instruction.md are tested: (1) default 'auto' \u2014 test_default_backend_is_auto, (2) multi-node selection \u2014 test_resolve_backend_auto_selects_by_node_count, (3) explicit passthrough \u2014 test_resolve_backend_explicit_passthrough, (4) multi-node trtllm error \u2014 test_trtllm_multinode_raises_valueerror, (5) quant workspace multi-node \u2014 test_quant_workspace_returns_none_multinode."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and comments categorizing them as [static], [repo_tests], or [pr_diff] with pass_to_pass/fail_to_pass labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_default_backend_is_auto, the fallback assertion uses 'AssertionError' (missing the 'r' \u2014 should be 'AssertionError' is actually wrong, should be 'AssertionError'). Wait, looking again: `raise AssertionError(...)` \u2014 this is a typo for `AssertionError` which should be `AssertionError`. Actually Python's built-in is `AssertionError` \u2014 no, it's `AssertionError`. Actually: Python's is `AssertionError`. Let me recheck: Python's built-in is `AssertionError`. Actually it's `AssertionError`. No \u2014"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify, which is reasonable for a bug-fix task. It does not specify exact line numbers or the precise internal function name `_resolve_fi_ar_backend`."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

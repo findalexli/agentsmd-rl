@@ -1,34 +1,32 @@
-# Turbopack: Move turbopack out of `pnpm build` and into a `pnpm build-all` command
+# Turbopack: Separate native binary build from JS build
 
 ## Problem
 
-The current build setup forces the Turbopack native binary compilation to run during `pnpm build`, which causes pain for developers who have already compiled a custom version of Turbopack with specific profiles or flags. There's no way to build just the JavaScript parts without also triggering a potentially unnecessary native recompilation.
+The current `pnpm build` command triggers both JavaScript compilation and Turbopack native binary compilation via the `next-swc` package. Developers who have already compiled a custom Turbopack binary have no way to build just the JavaScript parts without also triggering a potentially unnecessary native recompilation.
 
-## What You Need to Do
+The root cause is that the `next-swc` package's `build` script calls `maybe-build-native.mjs`, and the root `pnpm build` command's Turbo pipeline includes the `next-swc` `build` task, which causes native compilation to run as part of every build.
 
-You need to separate the Turbopack native build from the standard JavaScript build workflow:
+## Expected Behavior
 
-1. **Add a `pnpm build-all` command** at the workspace root that builds both JS and Rust code (including the Turbopack native binary). This should call a renamed task `build-native-auto` in the next-swc package.
+The build system should provide two distinct commands:
 
-2. **Rename the build script** in `packages/next-swc/package.json` from `build` to `build-native-auto` (it runs `maybe-build-native.mjs`).
+- **`pnpm build`** — builds all JavaScript code only (no Rust/Turbopack native compilation)
+- **`pnpm build-all`** — builds all JavaScript and Rust code, including the Turbopack native binary
 
-3. **Update `packages/next-swc/turbo.json`** (rename to `turbo.jsonc` with trailing commas) to change the task name from `build` to `build-native-auto`, and add a comment explaining that "auto" checks for precompiled turbopack before building.
+The root `package.json` should have a `build-all` script that runs a Turbo pipeline including both JS builds and a `build-native-auto` task.
 
-4. **Update `AGENTS.md`** to document the new workflow:
-   - `pnpm build` should build all JS code only
-   - `pnpm build-all` should build all JS and Rust code
-   - Update the "after switching branches" section to use `build-all`
-   - Update the "when editing Turbopack" section to use `build-all`
+The `next-swc` package should expose a `build-native-auto` script (invoking `maybe-build-native.mjs`). The native build step should be decoupled from the standard `build` pipeline so that `pnpm build` only builds JS.
 
-## Files to Look At
+The Turborepo task configuration for `next-swc` should define a `build-native-auto` task (for use by `build-all`) and include a comment explaining that the "auto" script checks for a precompiled Turbopack binary before building. Since comments are needed, the configuration should use a JSON-with-comments format.
+
+`AGENTS.md` should document:
+- The scope of `pnpm build` ("build all JS code") versus `pnpm build-all` (JS and Rust)
+- Using `pnpm build-all` after switching branches
+- Using `pnpm build-all` when editing Turbopack/Rust code
+
+## Files Involved
 
 - `package.json` — root workspace scripts
 - `packages/next-swc/package.json` — next-swc package scripts
-- `packages/next-swc/turbo.json` — turborepo task configuration (rename to turbo.jsonc)
-- `AGENTS.md` — developer guide that needs updating
-
-## Notes
-
-- The `build-native-auto` script checks if there's already an up-to-date precompiled version of turbopack available before performing the build
-- The turbo.jsonc file should have trailing commas (hence the .jsonc extension)
-- Make sure the AGENTS.md documentation clearly distinguishes when to use `pnpm build` vs `pnpm build-all`
+- `packages/next-swc/turbo.json` — Turborepo task configuration for next-swc
+- `AGENTS.md` — developer documentation

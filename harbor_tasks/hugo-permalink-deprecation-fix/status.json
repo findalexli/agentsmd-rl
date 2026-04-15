@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T04:20:33.578688",
-  "total_time": 10637.52,
-  "sandbox_id": "ir1rih0ze3ingai5oi2cr",
+  "validated_at": "2026-04-15T04:37:30.870759",
+  "total_time": 1894.19,
+  "sandbox_id": "iw2sidgbt6r34bsq7y7nd",
   "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "docker_build": {
       "status": "completed",
@@ -80,17 +81,28 @@
       "backend": "fireworks",
       "time": 54.03,
       "notes": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.32,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] pass_to_pass_coverage @ eval_manifest.yaml: no p2p regression guards \u2014 agent can delete failing code path and 'win'\"]"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.27,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3823.72,
-      "at": "2026-04-09T21:22:12.200215"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -122,6 +134,14 @@
       "backend": "fireworks",
       "time": 10637.52,
       "at": "2026-04-10T04:20:33.578688"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1894.19,
+      "at": "2026-04-15T04:37:30.870759"
     }
   ]
 }

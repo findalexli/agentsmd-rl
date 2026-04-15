@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant files (moe.py, conversion_mapping.py, core_model_loading.py), the key functions (_can_use_grouped_mm, _build_checkpoint_conversion_mapping), the class Force16BytesAlignment, and the utility is_torch_less_or_equal. The test for ruff and format checks target only these named files. The test for docs (weightconverter.md) and tests/vlm_tester.py are mentioned in the instruction. All assert'd specifics (function names, class names, file paths) are discoverable from "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: (1) use is_torch_less_or_equal to version-gate, (2) remove Force16BytesAlignment from _build_checkpoint_conversion_mapping, (3) completely remove the Force16BytesAlignment class. This tells the agent exactly WHAT to change rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes: _can_use_grouped_mm returns False for misaligned tensors, Force16BytesAlignment is not used in mappings. An alternative implementation (e.g., checking alignment differently, using a different version check mechanism) would still pass as long as the behavior is correct. Tests don't assert on specific line positions or internal helper function names beyond the public API."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call _can_use_grouped_mm with actual tensors, invoke _build_checkpoint_conversion_mapping and inspect returned objects, run ruff as subprocesses, and use py_compile. They test behavior, not just text patterns in files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_misaligned_weight_returns_false and test_misaligned_input_returns_false create intentionally misaligned tensors and assert _can_use_grouped_mm returns False. The original code doesn't check alignment, so it would return True (assuming grouped_mm is available). A stub returning None or default wouldn't satisfy 'assert result is False'. test_force16bytes_removed_from_mappings inspects actual converter operations."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory is not accessible from within the container during agent execution (it's hidden). Tests call actual functions with real tensor objects and check behavioral outcomes, not fixture strings. The agent cannot simply grep for expected values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) runtime alignment check in _can_use_grouped_mm \u2014 tested by misaligned tensor tests, (2) removal of Force16BytesAlignment from mappings \u2014 tested by test_force16bytes_removed_from_mappings, (3) version gating with is_torch_less_or_equal \u2014 tested via _mock_old_torch. All explicit requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI), each test has a descriptive docstring, and tags like [static], [pr_diff], [agent_config], [repo_tests] are used."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, class names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact functions to modify (_can_use_grouped_mm), exact classes to remove (Force16BytesAlignment), exact functions to use (is_torch_less_or_equal), and exact files. Combined with the 'Expected behavior' section giving step-by-step implementation instructions, this is excessive localization that removes the need for the agent to diagnose the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

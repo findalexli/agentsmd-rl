@@ -6,12 +6,19 @@ vLLM's CPU backend supports thread affinity binding via `VLLM_CPU_OMP_THREADS_BI
 
 ## Problem
 
-After thread binding is established, other parts of the codebase (or downstream libraries) may call `torch.set_num_threads()`. This disrupts the carefully configured thread binding, leading to performance degradation on multi-socket CPU systems. The thread affinity set up during `init_device()` gets overridden, and threads may migrate across NUMA nodes.
+After thread binding is established in `init_device()`, other parts of the codebase (or downstream libraries) may call `torch.set_num_threads()`. This disrupts the carefully configured thread binding, leading to performance degradation on multi-socket CPU systems. The thread affinity set up during `init_device()` gets overridden, and threads may migrate across NUMA nodes.
 
 ## Expected Behavior
 
-Once CPU thread binding has been configured in `init_device()`, subsequent calls to `torch.set_num_threads()` should not be allowed to disrupt the binding. The system should protect the thread configuration and inform developers via logging if something attempts to change it.
+Once CPU thread binding has been configured in `init_device()`, subsequent calls to `torch.set_num_threads()` must not change the thread count. Additionally, the system must emit a log warning (at WARNING level or higher) when `torch.set_num_threads` is called after thread binding, so that developers are informed when something attempts to change the thread configuration. The warning message must mention `set_num_threads` or the word `skip`.
 
-## Relevant Files
+## Implementation Requirements
 
-- `vllm/v1/worker/cpu_worker.py` — `CPUWorker.init_device()` method, specifically the section after `init_cpu_threads_env` is called
+- The file `vllm/v1/worker/cpu_worker.py` must continue to define the `CPUWorker` class with its `init_device` method.
+- The method `init_device` must still call `init_worker_distributed_environment` and `set_random_seed`.
+- The Python syntax must be valid (no syntax errors).
+- The code must pass the repository's pre-commit checks:
+  - ruff lint (no violations)
+  - typos (no typos)
+  - SPDX license header (valid format)
+  - mypy type checking (must pass with `--ignore-missing-imports --follow-imports=silent`)

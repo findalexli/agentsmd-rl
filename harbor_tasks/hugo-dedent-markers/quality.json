@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_dedent_called_in_content_toC checks for 'DedentMarkers' in 'hugolib/page__content.go' (instruction mentions contentToC function but the exact file path is only partially implied); test_assert_no_render_shortcodes_artifacts_exists greps for 'AssertNoRenderShortcodesArtifacts' which is mentioned in instruction but the agent must create it somewhere with no guidance on which file; test_hugolib_rendershortcodes_test runs "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (context markers leaking when indented) and acceptance criteria (function signature, behavior) but doesn't specify exact implementation details like regex patterns, line numbers to change, or specific code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce a specific exported function name 'DedentMarkers' in a specific package 'markup/goldmark/hugocontext', require it to be called from 'hugolib/page__content.go' (grep-based check), require 'AssertNoRenderShortcodesArtifacts' to exist as a grep match, and require 'TestRenderShortcodesCodeBlock' test to exist. An alternative correct fix (e.g., using a different function name, placing the dedent logic inline, or in a different file) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_dedent_called_in_content_toC is purely a grep for 'DedentMarkers' in a file (text search, no execution). test_assert_no_render_shortcodes_artifacts_exists is a grep for a string. However, the majority of tests (DedentMarkers function tests, build tests, TestRenderShortcodesCodeBlock) do execute code. Since some tests are purely text-based asserts, this is a partial fail."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (DedentMarkers behavior tests) check specific input\u2192output transformations that require actual implementation. A stub returning the input unchanged would fail test_dedent_markers_strips_leading_spaces. A stub returning empty bytes would fail test_dedent_markers_preserves_non_markers."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh and /solution/apply_fix.py in the container. The agent could read these files to discover the exact fix. The Dockerfile copies the solution directory and the solve.sh references '/solution/apply_fix.py'. There's no evidence these files are removed or made inaccessible before the agent runs."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: DedentMarkers function with spaces, tabs, non-markers, multiple markers; integration in contentToC; AssertNoRenderShortcodesArtifacts existence; TestRenderShortcodesCodeBlock; existing tests passing; go vet/gofmt."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_dedent_markers_strips_leading_spaces, etc.), have docstrings, and are logically grouped by functionality (unit tests for DedentMarkers, integration tests, pass-to-pass tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names 'hugolib/page__content.go' as the file where DedentMarkers must be called from within the 'contentToC' function. This reveals exact file and function location, which is part of the localization task the agent should figure out."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

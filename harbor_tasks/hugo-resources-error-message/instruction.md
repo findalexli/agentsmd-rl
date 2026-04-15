@@ -2,44 +2,43 @@
 
 ## Problem
 
-When calling image methods (like `Width`, `Height`, `Resize`, etc.) on SVG resources in Hugo, the error message is not helpful. Currently, the code panics with either:
+When calling image methods (like `Width`, `Height`, `Resize`, etc.) on SVG resources in Hugo, the error message is not helpful. Currently, the code produces generic error messages that don't tell users:
 
-- "this method is only available for raster images" (for SVG files)
-- "this method is only available for image resources" (for other non-image resources)
-
-This doesn't tell users:
 1. Which resource caused the problem
 2. What the resource's actual media type is
 3. How to properly check if a resource supports image operations before calling them
 
+The old error messages were:
+- "this method is only available for raster images" (for SVG files)
+- "this method is only available for image resources" (for other non-image resources)
+
 ## Task
 
-Improve the error message in the `getImageOps()` method in `resources/transform.go` to provide:
+Find the code in the Hugo repository that handles image operations on resources and improve the error message to provide:
 
 1. **Resource identification**: Include the resource name in the error
 2. **Media type information**: Show the actual media type of the resource
-3. **Actionable guidance**: Tell users which reflection methods to use for checking resource capabilities (`reflect.IsImageResource`, `reflect.IsImageResourceProcessable`, `reflect.IsImageResourceWithMeta`)
+3. **Actionable guidance**: Tell users which reflection methods to use for checking resource capabilities
 
-The error should use `fmt.Sprintf` to format a message like:
-```
-resource "<name>" of media type "<type>" does not support this method: use reflect.IsImageResource, reflect.IsImageResourceProcessable, or reflect.IsImageResourceWithMeta to check if the resource supports this method before calling it
-```
+The improved error message should reference these three reflection methods:
+- `reflect.IsImageResource`
+- `reflect.IsImageResourceProcessable`
+- `reflect.IsImageResourceWithMeta`
 
-## Files to Modify
+The error message should use `fmt.Sprintf` for formatting and follow Go conventions for error messages with quoted strings (using `%q` verb or similar).
 
-- `resources/transform.go` - Update the `getImageOps()` method on the `resourceAdapter` type
+## Requirements
 
-## Testing
-
-The relevant test is in `resources/resources_integration_test.go` - look for the test that checks the error message when calling `Width` on an SVG resource.
-
-When running the tests with `go test -v -run TestSVGResource ./resources/...`, the test should pass after your changes.
+- The old error messages "this method is only available for raster images" and "this method is only available for image resources" should no longer be used
+- The improved error message should include the resource name and media type
+- The improved error message should mention the three reflection helper methods
+- Use `fmt.Sprintf` to format the error message
 
 ## Context
 
-The `getImageOps()` method is called by various image operation methods on resources. When a user template calls `.Width` or similar methods on an SVG (which doesn't have a fixed width/height), this code path is triggered.
+This issue affects the Hugo static site generator's resource handling. When template authors call `.Width` or similar methods on an SVG resource (which doesn't have a fixed width/height), they receive an unhelpful error.
 
 The goal is to help template authors understand:
 - What went wrong (they called an image method on a non-raster resource)
 - Which resource was involved
-- How to prevent the error by checking resource type first
+- How to prevent the error by checking resource type first using the reflection methods

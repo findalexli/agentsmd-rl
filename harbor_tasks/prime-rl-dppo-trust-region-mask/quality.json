@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific field names like 'dppo_mask_low' and 'dppo_mask_high' (test_dppo_config_fields), assert old fields 'ipo_mask_low'/'ipo_mask_high' are removed (test_old_ipo_config_removed), and check metrics keys like 'is_masked' (test_mask_positive_adv_ignores_low_violation). The instruction.md mentions 'DPPO-style' prefix and 'Config field names reflect the current algorithm' but never explicitly states the exact new field names 'dppo_mask_low'/'dppo_mask_high' or the old field names 'ipo"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (unconditional masking) and expected behavior (advantage-gated masking, renamed config fields) without specifying exact code changes like 'change line X to Y' or giving the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable/field names: 'dppo_mask_low', 'dppo_mask_high' must exist as config fields (test_dppo_config_fields), and 'ipo_mask_low'/'ipo_mask_high' must NOT exist (test_old_ipo_config_removed). An alternative correct fix using different field names (e.g., 'dppo_low_threshold', 'dppo_high_threshold') would fail these tests. The tests also check specific metrics keys like 'is_masked', 'is_masked_low', 'is_masked_high' which are implementation-specific."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import modules, construct config objects, call default_loss_fn with torch tensors, and check behavioral outputs (loss values, masking metrics). They execute code rather than just grepping file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_mask_positive_adv_ignores_low_violation assert is_masked==0.0 for positive advantages with low-side violations, which would fail with the original unconditional masking. A stub returning default values wouldn't produce the correct LossOutputs with proper metrics."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/prime-rl as solve.sh is applied there. The agent could potentially read the hidden test file or solution. Additionally, the Dockerfile doesn't remove /solution/ or prevent access to test fixtures."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three explicitly required behaviors from instruction.md are tested: advantage-gated masking (test_mask_positive_adv_ignores_low_violation, test_mask_negative_adv_ignores_high_violation), config field renaming (test_dppo_config_fields, test_old_ipo_config_removed), and correct metrics (test_mask_metrics_correct_counts)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names, grouped by category (Gates/pass_to_pass, fail-to-pass config renaming, fail-to-pass behavioral), and include docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files to look at (loss.py, trainer.py, test_loss.py) which is appropriate given the task domain. It doesn't specify exact line numbers or exact code changes. The files mentioned are naturally relevant to the described problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized: field renames in trainer.py, masking logic change in loss.py, and corresponding test updates. No full-file rewrites or contradictions with other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

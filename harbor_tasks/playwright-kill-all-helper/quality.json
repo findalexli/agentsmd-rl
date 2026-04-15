@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: command name 'kill-all', variable name 'killAll', description 'Forcefully kill all daemon processes', category 'session', file paths commands.ts and program.ts, function killAllDaemons (implied by 'Implement a function'), process detection patterns 'run-mcp-server' and '--daemon-session', platform handling (Windows/Unix), SKILL.md and session-management.md paths and their required content including exact phrases like 'playwright-cli kill-all' and '"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive: it specifies the exact variable name 'killAll', exact description string, exact file paths, exact function behavior, exact documentation format including the exact comment string '# forcefully kill all daemon processes (for stale/zombie processes)'. This is more of a step-by-step implementation guide than a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_kill_all_command_declared checks for exact string 'const killAll = declareCommand', test_kill_all_implemented_in_program checks for exact function name 'killAllDaemons', test_skill_md_follows_existing_format checks the exact format 'playwright-cli kill-all'. An alternative correct implementation using a different variable name (e.g., 'killAllDaemons') or different function name would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all tests are text-matching: they read file contents and assert substrings. test_typescript_compiles does run tsc compilation, but the remaining 7 tests are purely 'assert X in open(path).read()' pattern with no behavioral execution of the kill-all command."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass because tests check for specific strings in specific files (e.g., 'const killAll = declareCommand' in commands.ts, 'killAllDaemons' function in program.ts, 'kill-all' in SKILL.md). These require actual code/doc additions. The TypeScript compilation test also ensures syntactic correctness."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright and solve.sh is in /solution/. An agent could read /solution/solve.sh or the patch content to extract the exact implementation. Additionally, since tests are purely text-matching, the agent could simply write the exact expected strings into the files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires the function to 'report how many processes were killed' and 'gracefully handle cases where no processes are found', but no test verifies this runtime behavior. Tests only check static text patterns in source files."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_typescript_compiles, test_kill_all_command_declared, etc.) and each has a docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names ('killAll'), exact function names (implied 'killAllDaemons'), exact file paths, exact description strings, and exact documentation comment text. This goes beyond describing what's needed and prescribes the exact implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized additions to commands.ts, program.ts, SKILL.md, and session-management.md without full-file rewrites and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

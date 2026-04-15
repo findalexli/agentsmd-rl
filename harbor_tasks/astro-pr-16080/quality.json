@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests import specific paths like '/workspace/astro/packages/astro/dist/runtime/server/render/page.js' (renderPage), '/workspace/astro/packages/astro/dist/runtime/server/render/queue/pool.js' (NodePool), and construct mock objects with specific fields like '_experimentalQueuedRendering', 'compressHTML', 'shouldInjectCspMetaTags', etc. Tests also reference specific test files like 'test/units/render/queue-rendering.test.js', 'test/units/render/queue-pool.test.js', 'test/units/render/queue-batching"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptom (HTML escaped incorrectly for .html pages with queuedRendering) and expected behavior, but does not specify the exact fix. It mentions 'astro:html' marker and that content is returned as a plain string, but doesn't say to use markHTMLString or where exactly to add the check."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test checks behavioral output: whether renderPage produces unescaped '<script' for astro:html components and escaped '&lt;script' for regular components. Alternative fixes (e.g., wrapping in HTMLString at a different point, checking the flag in buildRenderQueue, or modifying the queue builder) would all pass these behavioral assertions as long as the output is correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute Node.js code that imports and calls renderPage(), inspects the HTTP response text, runs actual builds (pnpm run build), and runs unit test suites. They are not simple file content checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p test (test_render_page_preserves_html_in_queued_rendering) actually invokes renderPage with a mock htmlPageFactory that has 'astro:html' = true, then checks that the output contains '<script src=\"/assets/app.js\"></script>' unescaped. On the buggy base commit, this fails because the output is escaped. A stub/no-op implementation would not pass since the base code actively escapes the HTML."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /solution/solve.sh in the container and contains the exact git patch. An agent could read this file (cat /solution/solve.sh) and apply the patch directly. There's no evidence of the solution directory being removed or made inaccessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) .html pages with astro:html=true should not be escaped with queuedRendering \u2014 tested by test_render_page_preserves_html_in_queued_rendering; (2) regular non-.html pages should still be escaped \u2014 tested by test_render_page_still_escapes_html_in_regular_components. Both explicit requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining fail-to-pass vs pass-to-pass semantics. Each test has a clear comment about what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is a bug fix in rendering logic, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names specific implementation details: 'renderPage() function in the Astro SSR runtime', 'vite-plugin-html', 'astro:html marker property set to true on their factory function', and mentions the runtime includes 'utilities for handling HTML string safety'. While it doesn't name the exact file path or line, it significantly narrows the search space by naming the exact function, the exact marker property, and hinting at the escaping utility pattern."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

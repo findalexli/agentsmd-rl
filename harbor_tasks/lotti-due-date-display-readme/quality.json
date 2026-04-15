@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, _ANALYZE_CARD script checks for 'hasDueDate' variable assignment gated by '!isCompleted', and _ANALYZE_WRAPPER checks for specific patterns like '!isCompleted && status.isUrgent' and 'urgentColor' ternary. While instruction.md mentions these patterns, the tests also check things like 'pubspec.yaml' name field being 'lotti', 'analysis_options.yaml' validity, and specific metainfo XML struct"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'hasDueDate variable assignment must be gated by completion status (check !isCompleted)', 'isUrgent must be gated by completion status (e.g., !isCompleted && status.isUrgent pattern)', 'urgentColor must be null for completed/rejected tasks (ternary check for isCompleted)', and 'Replace \"Coming Soon: Deep Dive\" text'. These are direct implementation instructions, not just descriptions of broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The _ANALYZE_CARD test uses regex to find specific variable names like 'hasDueDate' and checks it contains '!isCompleted' or 'isCompleted'. The _ANALYZE_WRAPPER test checks for exact patterns like '!isCompleted' in the isUrgent assignment and 'isCompleted' in the urgentColor assignment. An alternative correct fix that uses different variable names or a different structure (e.g., early return, wrapping in a conditional widget, using a different boolean variable name) would fail these regex-based "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (_ANALYZE_CARD, _ANALYZE_WRAPPER) are purely text-based analysis using regex on source code. They use patterns like re.search(r'(TaskDone|TaskRejected)', body) and check for string patterns in variable assignments. They never import, compile, or execute the Dart code. The pass_to_pass tests similarly check balanced braces and string presence. While some tests run subprocess commands (flake8, pytest), the core behavioral tests for the bug fix are entirely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific code patterns that don't exist in the original source (TaskDone/TaskRejected references in _buildDateRow, !isCompleted gating of hasDueDate, etc.). A stub/no-op implementation would not add these patterns, so the tests would fail without genuine implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/lotti as a git repo where solve.sh applies a patch. The agent could potentially read the solve.sh or solution directory if accessible. Also, since tests are regex-based text matching, the agent could grep for the expected patterns in test_outputs.py (which checks for specific strings like 'TaskDone', '!isCompleted') and just insert those exact strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires documentation updates to CHANGELOG.md (mentioning 'due date', 'completed'/'rejected'), README.md (removing 'Coming Soon: Deep Dive', adding 'meet-lotti' blog reference with substack link), but the visible test file doesn't appear to test all these README/CHANGELOG requirements (the test file was truncated, but the visible tests focus on Dart files, YAML, XML, and CI). The meet-lotti link requirement and CHANGELOG content checks may be missing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear function names (test_syntax_check, test_modified_dart_files_exist, test_test_files_exist_for_modified, etc.), separated into pass_to_pass and fail_to_pass sections with comments, and each test has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and other identifiers in instruction.md appear correct and consistent with the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact methods ('_buildDateRow'), exact variable names ('hasDueDate', 'isUrgent', 'urgentColor'), exact patterns ('!isCompleted && status.isUrgent'), and exact files. This goes beyond identifying the buggy area and specifies the exact implementation approach, which is excessive leakage for a coding task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not primarily a config-edit task; it involves code changes across multiple files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact import strings like 'from integrations.resolver_org_router import resolve_org_for_repo', 'from storage.saas_conversation_store import SaasConversationStore', 'from openhands.integrations.provider import ProviderHandler', 'from openhands.utils.conversation_summary import get_default_conversation_title', and exact string literals like 'Failed to resolve org'. While instruction.md mentions the function/class names, it does not specify the exact import paths (e.g., 'integrations.r"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially provides a step-by-step implementation guide: 'Use ProviderHandler.verify_repo_provider()', 'Call resolve_org_for_repo()', 'Use SaasConversationStore.get_resolver_instance()', 'Generate conversation ID with uuid4().hex', 'Create ConversationMetadata with trigger=LINEAR', 'Call start_conversation()'. It specifies exactly what to replace (create_new_conversation with start_conversation), the exact new imports needed, and the exact pattern to follow. This is a complete so"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for exact source text patterns like 'await resolve_org_for_repo(' (test_resolve_org_for_repo_called), 'SaasConversationStore.get_resolver_instance' (test_get_resolver_instance_called), 'uuid4().hex' (test_conversation_id_generation), 'trigger=ConversationTrigger.LINEAR' (test_conversation_metadata_created), 'provider_handler.verify_repo_provider' (test_provider_handler_verify_repo_provider_called), exact import paths, and specific variable names like 'resolved_org_id'. An alternative"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads the source file as text and checks for string patterns: 'assert \"...\" in source'. No test imports the module, instantiates the class, calls any method, or verifies runtime behavior. Examples: test_resolve_org_for_repo_imported does 'assert \"from integrations.resolver_org_router import resolve_org_for_repo\" in source', test_start_conversation_called does 'assert \"await start_conversation(\" in source'."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all tests are pure text-matching on source code, a stub implementation that simply contains the right import statements and comment strings with the expected patterns (e.g., a file with all the right imports and a method body containing 'await resolve_org_for_repo(', 'SaasConversationStore.get_resolver_instance', etc. as dead code or comments) would pass all tests without implementing any actual functionality."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/OpenHands after the gold patch is applied via solve.sh. The agent could read the solution file or the patch directly. Additionally, since tests only check for string patterns in source code, the agent could grep the test file for expected strings and inject them without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The tests cover all behaviors described in instruction.md: imports, provider resolution, org routing, resolver instance creation, conversation ID generation, metadata creation, error handling with logging, and the switch from create_new_conversation to start_conversation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestLinearViewImports, TestLinearViewRoutingLogic, TestLinearViewErrorHandling, TestLinearViewStructure) with clear method names and docstrings explaining each assertion's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact method to modify (create_or_update_conversation), the exact file path, the exact functions to call (verify_repo_provider, resolve_org_for_repo, get_resolver_instance, start_conversation), exact imports needed, and the exact pattern to follow. This goes far beyond identifying the buggy component \u2014 it's a complete implementation specification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

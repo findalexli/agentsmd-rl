@@ -18,12 +18,26 @@ Lines like `[label]: /url invalid` should be parsed as regular paragraphs. Only 
 
 ```markdown
 [valid]: /url "Title"      ← valid link reference definition
-[valid]: /url 'Title'      ← valid link reference definition  
+[valid]: /url 'Title'      ← valid link reference definition
 [valid]: /url (Title)      ← valid link reference definition
 [valid]: /url              ← valid (no title)
 [invalid]: /url garbage    ← should be a paragraph, NOT a link ref def
 ```
 
-## Files to Look At
+## Verification
 
-- `crates/biome_markdown_parser/src/syntax/link_block.rs` — Contains `skip_destination_tokens`, the function that parses the destination portion of link reference definitions. The loop that scans destination tokens needs to correctly stop at whitespace boundaries when the following content is not a title.
+The task is verified by running a checker that parses markdown input and inspects the syntax tree. The checker outputs:
+- `LINK_REF_DEF` when the syntax tree contains a `MD_LINK_REFERENCE_DEFINITION` node
+- `NOT_LINK_REF_DEF` otherwise
+
+The following inputs must produce `NOT_LINK_REF_DEF`:
+- `[label]: /url invalid`
+- `[a]: /url not-title`
+- `[b]: /url some extra text`
+- `[c]: http://example.com garbage`
+
+The following inputs must produce `LINK_REF_DEF`:
+- `[d]: /url "title"`
+- `[e]: /url 'title'`
+- `[f]: /url (title)`
+- `[g]: /url`

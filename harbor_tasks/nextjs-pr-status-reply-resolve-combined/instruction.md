@@ -17,11 +17,15 @@ Additionally, the current `replyToThread()` function uses a GraphQL mutation (`a
 
 1. A new `reply-and-resolve-thread` subcommand should combine both actions into a single command:
    ```
-   node scripts/pr-status.js reply-and-resolve-thread <threadId> "Done -- ..."
+   node scripts/pr-status.js reply-and-resolve-thread <threadNodeId> <body>
    ```
-   It should validate that both `threadId` and `body` arguments are provided, printing a usage message and exiting non-zero if either is missing.
+   It should validate that both `threadNodeId` and `body` arguments are provided, printing a usage message of the form:
+   ```
+   Usage: ... reply-and-resolve-thread <threadNodeId> <body>
+   ```
+   and exiting non-zero if either is missing.
 
-2. The `replyToThread()` function should be refactored to use the REST API for posting replies, which always publishes immediately (never attaches to a pending review).
+2. The `replyToThread()` function should be refactored to use the REST API for posting replies, which always publishes immediately (never attaches to a pending review). The implementation must use a REST endpoint URL matching the pattern `/pulls/.*/(comments|replies)`. The old GraphQL mutation `addPullRequestReviewThreadReply` must not be called.
 
 3. The `generateThreadMd()` function should include the new combined command in the generated `thread-N.md` files for unresolved threads.
 

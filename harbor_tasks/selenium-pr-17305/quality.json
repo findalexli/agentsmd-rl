@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All file paths (v143/V143Domains.cs, v144/V144Domains.cs, v145/V145Domains.cs), field names (network, javaScript, target, log), type names (Lazy<V143Network>, etc.), property names (Network, JavaScript, Target, Log), and the exact patterns tested are all explicitly documented in instruction.md's Required Implementation Details section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md provides the exact implementation: the precise field declarations ('private readonly Lazy<V143Network> network;'), the exact constructor initialization code ('this.network = new Lazy<V143Network>(() => new V143Network(domains.Network, domains.Fetch));'), and the exact property accessor code ('public override DevTools.Network Network => this.network.Value;'). This leaves nothing for the agent to reason about - it's a copy-paste exercise."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact field names like 'network', 'javaScript', 'target', 'log' (test_v143_has_lazy_network_field etc.), exact use of Lazy<T> type (not alternatives like simple null-check caching), exact 'this.network.Value' pattern in property getters, and exact constructor initialization pattern with 'new Lazy<V143Network>(() => new V143Network'. A correct alternative using simple backing fields with null-coalescing would fail all tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads file content as text and uses regex pattern matching (re.search). No test compiles, executes, or calls any code. For example, test_v143_has_lazy_network_field does: content = read_file(...); assert re.search(pattern, content). This is purely textual assertion."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for patterns that don't exist in the base commit (e.g., 'private readonly Lazy<V143Network> network;' and 'this.network.Value'). A stub or no-op would not introduce these patterns into the source files, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/selenium with the solve.sh script. The agent could read solution/solve.sh (which contains the exact patches) or simply grep for test patterns in test_outputs.py to determine exactly what text patterns to insert. The tests are pure text-matching so copying the solution directly works."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: lazy fields for all 4 properties, constructor initialization with factory lambdas, property accessors returning .Value, consistency across all 3 versions, API compatibility (public override properties), and absence of new-instance-in-getter bug."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS'), descriptive function names (test_v143_has_lazy_network_field), and docstrings indicating test category (fail_to_pass/pass_to_pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves C# source code editing, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, class names, and patterns in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files (V143Domains.cs, V144Domains.cs, V145Domains.cs), provides exact field declarations, exact constructor code, and exact property accessor code. This goes far beyond describing what's broken - it provides the complete line-by-line solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

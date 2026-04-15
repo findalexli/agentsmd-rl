@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'entry_point_to_js_chunk_idx' (test_entry_point_to_chunk_mapping, test_mapping_populated_during_chunk_creation), the use of 'maxInt' sentinel values (test_css_entry_point_guard), the specific pattern of writing mapping near 'js_chunks.getOrPut(js_chunk_key)' (test_mapping_populated_during_chunk_creation), and the Handler struct's parameter naming conventions. The instruction mentions the Handler st"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (mismatch between entry point ID space and JS chunk array size causing out-of-bounds) and points to the relevant code area, but does not prescribe the specific fix (adding a mapping array, using sentinel values, etc.). A developer must still reason about the solution approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests are tightly coupled to the gold solution's implementation. test_entry_point_to_chunk_mapping looks for 'alloc(u32/??u32, entry_points.len)' or specific HashMap patterns. test_mapping_populated_during_chunk_creation requires a write pattern 'something[entry_id...] =' near 'js_chunks.getOrPut'. test_css_entry_point_guard requires specific guard patterns including 'maxInt'. An alternative fix using e.g. a separate boolean array, or filtering CSS entries before iteration, or restructuring the "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All f2p tests (test_handler_next_no_direct_param_as_index, test_css_entry_point_guard, test_entry_point_to_chunk_mapping, test_mapping_populated_during_chunk_creation) use regex pattern matching on source code text via subprocess Python scripts. None compile or execute the Zig code, run the bundler, or test actual behavior. They are purely textual assertions on source code patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that don't exist in the original source (e.g., entry_point_to_js_chunk_idx mapping, maxInt sentinel guards, not using parameter directly as chunks[] index). A stub or no-op change would fail these tests since they require structural changes to the Handler.next method and surrounding code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun's container at solve.sh path, and the gold patch is a git diff. An agent could read /solution/solve.sh (if mounted) to see the exact patch. Additionally, since tests are pure regex checks on source code, an agent could grep test files or environment files to discover the expected patterns and surgically insert matching code."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes a crash when mixing CSS and JS entry points in bun build. No test actually runs bun build with mixed entry points to verify the crash is fixed. All tests are static source code analysis."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, categorized with comments like [static], [pr_diff], [agent_config], and each test function has a clear single purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in Zig source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the file 'src/bundler/linker_context/computeChunks.zig', the 'Handler' struct, its 'next' method, and describes the specific mechanism of the bug (entry point ID space vs JS chunk array size mismatch). It also says 'Look at the Handler struct and its next method near the bottom of computeChunks' \u2014 this is very specific localization guidance that goes beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

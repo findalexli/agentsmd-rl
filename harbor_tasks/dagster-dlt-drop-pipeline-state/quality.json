@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the file path (dagster_dlt/resource.py), the exact comment strings required, the method names (dlt_pipeline.drop(), drop_pending_packages(), restore_from_destination), and the ordering requirement (before run()). All assert'd literals and paths in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation: check restore_from_destination, call dlt_pipeline.drop() when enabled, call dlt_pipeline.drop_pending_packages() when disabled, with exact comment strings. Requirements 5-7 dictate exact comment text. This leaves virtually no reasoning for the agent about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_drop_behavior_with_restore_enabled checks for exact string 'if dlt_pipeline.config.restore_from_destination:' and specific structural patterns (if/else branches with exact method calls). An alternative correct fix using e.g. a helper method, different variable names, or negated condition logic would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) are ALL purely text/string matching on file content with no behavioral execution. They only check 'assert X in content' patterns. The P2P tests do run linting and imports but don't test the actual bug fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All F2P tests are purely text-matching on file content. An agent could simply insert the exact comment strings and method call strings as dead code (e.g., in a comment block or unreachable branch) and pass all F2P tests without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/dagster's solve.sh which contains the exact git diff patch. The agent could read solution/solve.sh to see the exact patch to apply. Additionally, the test fixtures are all literal strings visible in the test file, and the instruction itself contains enough to pattern-match without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that the fix actually prevents stale state interference between runs (the core bug), but no test verifies this behavioral requirement. All F2P tests are text-matching only, and P2P tests only check linting and imports."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, F2P vs P2P sections are separated with comments, and test names describe their purpose (e.g., test_drop_called_before_run, test_comment_documentation_present)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify (resource.py), exact method names to call (dlt_pipeline.drop(), drop_pending_packages()), exact attribute to check (dlt_pipeline.config.restore_from_destination), and exact comment strings. This goes well beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

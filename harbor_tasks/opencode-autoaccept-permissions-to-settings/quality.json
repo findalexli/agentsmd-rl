@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key identifiers tested: data-action='prompt-permissions' (to be removed), data-action='settings-auto-accept-permissions' (to be added), Switch component, usePermission context, toggleAccept/acceptLabel (to be removed), toggleAutoAcceptDirectory/enableAutoAccept/disableAutoAccept (session/directory handling), and the exact file paths prompt-input.tsx, settings-general.tsx, and the e2e test files."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what should be moved and where, but does not give exact code changes, line numbers, or copy-paste solutions. A developer must reason about how to implement the Switch, wire up the permission context, decode URL params, and update e2e tests."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_auto_accept_toggle_in_settings requires a Switch component with 'checked' or 'onChange' props AND data-action='settings-auto-accept-permissions'. test_settings_uses_permission_context requires importing specifically 'usePermission' by that exact name. test_settings_toggle_handles_session_and_directory requires the exact strings 'toggleAutoAcceptDirectory' and 'enableAutoAccept'/'disableAutoAccept' or 'toggleAutoAccept'. An alternative corre"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are AST-based text inspection (checking for presence/absence of specific identifiers, attributes, and imports in source files) or plain string matching (test_settings_toggle_handles_session_and_directory uses 'in src' checks). While AST parsing is more sophisticated than raw text search, none of these tests actually execute the components, render them, or verify runtime behavior. The typecheck test does execute compilation, but the core behavioral tests are static analysi"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass: test_permissions_button_removed_from_composer checks the original file still has its original content minus specific code, test_auto_accept_toggle_in_settings requires specific JSX elements with specific attributes, test_prompt_input_not_stubbed requires >1000 lines, and the typecheck test requires valid TypeScript compilation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/opencode as solve.sh with the full git patch. An agent could read solution/solve.sh (if accessible in the container) or discover the expected patterns by examining test_outputs.py which contains all the exact strings and AST patterns being checked."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: removal of old toggle from prompt-input (test_permissions_button_removed, test_prompt_toggle_accept_removed), addition to settings (test_auto_accept_toggle_in_settings), permission context usage (test_settings_uses_permission_context), session/directory handling (test_settings_toggle_handles_session_and_directory), and typecheck/unit test passing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves UI component refactoring, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, data-action values, and component names in the instruction match what's used in the tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names internal implementation details: 'acceptLabel memo', 'toggleAccept function', 'TooltipKeybind-wrapped Button', 'data-action=\"prompt-permissions\"', 'data-action=\"settings-auto-accept-permissions\"', 'SettingsRow', 'Switch component', and the onMouseDown selector reference. These are specific enough to directly guide implementation rather than describe the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

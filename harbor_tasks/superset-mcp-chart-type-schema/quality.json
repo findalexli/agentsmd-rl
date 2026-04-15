@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (file paths like MODULE_PATH, function names like _get_chart_type_schema_impl, constant names like VALID_CHART_TYPES, dict names like _CHART_TYPE_ADAPTERS and _CHART_EXAMPLES, chart type keys, config class names, string literals like 'adapter is None', 'error', 'valid_chart_types', decorator names, license text patterns, import paths) are explicitly documented in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides the exact implementation details: the complete dict structure of _CHART_TYPE_ADAPTERS with all key-value pairs, the exact function signatures, the exact conditional check 'adapter is None', the exact response schema keys, and even the exact import statements. This is not describing 'what's broken' but rather dictating the exact code to write line-by-line. However, this is a greenfield implementation task rather than a bug fix, so the detailed spec is arguably appropriate"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to match exact syntax like `r'[\"\\']xy[\"\\']\\s*:\\s*TypeAdapter\\(XYChartConfig\\)'` (TestXYChartTypeAdapter), requiring exact formatting of dict entries. Tests also assert exact string 'adapter is None' must appear in source code (TestInvalidTypeHandling), and exact string 'if include_examples' must appear (TestIncludeExamplesParameter). A correct alternative using e.g. `_CHART_TYPE_ADAPTERS.get(chart_type)` with `if not adapter:` or `if adapter is None` with different whitespace wou"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads the file as text and checks for string/regex patterns (e.g., `assert 'adapter is None' in content`, `re.search(pattern, content)`, `assert '_CHART_EXAMPLES' in content`). No test imports the module, calls any function, or checks runtime behavior. This is purely text-matching with no execution."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A file containing the right string literals without any actual working implementation would pass many tests. For example, TestChartExamplesDefined just checks `'_CHART_EXAMPLES' in content` and regex patterns for `\"chart_type\": \"xy\"` etc. A file with those strings in comments would pass. TestInvalidTypeHandling just checks strings 'adapter is None', '\"error\"', '\"valid_chart_types\"' exist in text."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset and solve.sh is accessible. The agent could read the test file at tests/test_outputs.py to see exactly what strings/patterns are checked and produce a file matching those patterns without understanding the task. Since tests are purely text-based, the agent could also grep for expected fixture strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires the tool to actually produce correct JSON Schema via adapter.json_schema(), delegate from get_chart_type_schema to _get_chart_type_schema_impl, and return proper response dicts. None of this runtime behavior is tested - only text patterns in source code are checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestGetChartTypeSchemaModuleExists, TestXYChartTypeAdapter, TestInvalidTypeHandling, etc.) with clear docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents exact response schemas for both valid and invalid chart type responses, specifying required keys ('chart_type', 'schema', 'examples' for success; 'error', 'valid_chart_types', 'hint' for error)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "This is a greenfield implementation task where the instruction specifies what to build and where. The file paths given are the target files to create/modify, not hints about where a bug exists."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code implementation task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

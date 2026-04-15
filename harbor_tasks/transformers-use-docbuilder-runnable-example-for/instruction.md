@@ -2,26 +2,39 @@
 
 ## Problem
 
-The GLM-ASR model documentation at `docs/source/en/model_doc/glmasr.md` has several code examples that are broken and not set up as runnable doc tests:
+The GLM-ASR model documentation at `docs/source/en/model_doc/glmasr.md` contains code examples that crash when executed. The examples have correctness issues and none are configured as runnable doc-builder test blocks.
 
-1. The "advanced" usage example incorrectly uses `GlmAsrForConditionalGeneration.from_pretrained()` to create the **processor** instead of `AutoProcessor.from_pretrained()`. It also never instantiates the model, so the example would crash.
-2. The "audio array" example imports `load_dataset` from `datasets` but is missing the `Audio` import it needs.
-3. The "batched" example uses a simplified `apply_transcription_request` call pattern that doesn't demonstrate the full chat template workflow.
-4. None of the code fences are marked as runnable using doc-builder's `runnable:<label>` syntax, so they cannot be tested with `pytest`.
+Additionally, the project's build configuration does not properly support the documentation workflow — there is no `docs` install extra, and the doc-builder dependency is pinned to an outdated source.
 
-Additionally, the project has no `docs` install extra in `setup.py`, so there's no clean way to install `hf-doc-builder`. The dependency version table still points to the old PyPI release instead of the current git main branch.
+## Requirements
 
-## Expected Behavior
+### Setup configuration
 
-- All Python code fences in the GLM-ASR doc should be marked with `runnable:<label>` and include appropriate `# pytest-decorator:` lines.
-- The code examples should be correct and complete — each should work end-to-end if executed.
-- `setup.py` should define an `extras["docs"]` entry that installs `hf-doc-builder`, and the `testing` extras should include it.
-- The `hf-doc-builder` dependency should point to the git main branch URL.
-- After fixing the code and setup, update the relevant project documentation to reflect the new runnable examples workflow — contributors should know how to write and test runnable doc examples.
+`setup.py` must define:
 
-## Files to Look At
+- An `extras["docs"]` entry that installs `hf-doc-builder` (use the existing `deps_list()` helper).
+- The `extras["testing"]` definition must concatenate its base dependency tuple with the docs extras using this pattern: `extras["testing"] = (...) + extras["docs"]` where the parenthesized group contains the existing testing dependencies.
 
-- `docs/source/en/model_doc/glmasr.md` — the broken GLM-ASR usage examples
+`src/transformers/dependency_versions_table.py` must use the following value for the `"hf-doc-builder"` key:
+
+```
+hf-doc-builder @ git+https://github.com/huggingface/doc-builder.git@main
+```
+
+### GLM-ASR documentation examples
+
+All Python code fences in `docs/source/en/model_doc/glmasr.md` should be marked as runnable using doc-builder's `runnable:<label>` syntax. Each runnable block needs a `# pytest-decorator:` line referencing `transformers.testing_utils.slow` and `transformers.testing_utils.require_torch`.
+
+The code examples themselves must be self-contained and execute correctly end-to-end. Several examples currently crash due to bugs — incorrect object construction, missing imports, and incomplete code paths. Fix each example so it runs without errors.
+
+### Contributor documentation
+
+- Update the documentation build section of `CONTRIBUTING.md` to reflect the new install command for doc dependencies and to add guidance on writing and testing runnable doc examples with `pytest`.
+- Add a "Run runnable Markdown blocks" subsection to `docs/source/en/testing.md` explaining how to execute runnable code fences from documentation pages using pytest.
+
+## Files to look at
+
+- `docs/source/en/model_doc/glmasr.md` — the GLM-ASR usage examples
 - `setup.py` — package extras and dependency definitions
 - `src/transformers/dependency_versions_table.py` — the dependency version lookup table
 - `CONTRIBUTING.md` — contributor guide (documentation build section)

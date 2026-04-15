@@ -18,4 +18,10 @@ The existing behavior for non-loopback bypass targets (like `example.com`) shoul
 
 ## Additional Task
 
-The project's developer skill documentation (under `.claude/skills/playwright-dev/`) should be extended with a new skill document covering how to upload fixes to GitHub — including branch naming conventions, conventional commit message format, and pushing. Update the main skill index to link to the new document.
+The project's developer skill documentation (under `.claude/skills/playwright-dev/`) should be extended with a new skill document at `.claude/skills/playwright-dev/github.md` covering how to upload fixes to GitHub. The document must include:
+
+- Branch naming convention: branches should be named with a `fix-` prefix followed by the issue number (e.g., `fix-12345`)
+- Conventional commit message format: commit titles should use `fix(scope): description` or `feat(scope): description` syntax
+- Commit body format: include a `Fixes:` line referencing the GitHub issue URL
+
+The main skill index at `.claude/skills/playwright-dev/SKILL.md` must be updated to link to the new `github.md` document in its table of contents.

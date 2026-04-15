@@ -28,9 +28,31 @@ Any inductor-compiled MPS kernel that uses `ModularIndexing` with
 A concrete example: run SDPA with `n_head = 6` and `n_embd = 384` through
 `torch.compile` on MPS — the output will contain NaN values.
 
-## Expected Behavior
+## Required Solution Components
 
-The codegen should detect the problematic pattern and emit code that prevents
-the Metal compiler from applying its buggy optimization on the fused
-division-modulo expression. The `c10/metal/utils.h` header should provide
-the necessary primitive.
+The fix has two parts:
+
+### 1. Codegen change (`torch/_inductor/codegen/mps.py`)
+
+The `_print_ModularIndexing` method must detect when the fused
+division-modulo pattern is problematic (div is a power of two such as 65536
+AND mod is not a power of two) and emit a function call instead of bare `%`
+to prevent the Metal compiler from applying its buggy optimization.
+
+For all other cases (e.g., div is 1, or mod is a power of two, or div is not
+a power of two), the existing behavior should be preserved.
+
+### 2. Utility header change (`c10/metal/utils.h`)
+
+A new safe-modulo function must be added to the `c10::metal` namespace. This
+function must:
+
+- Perform the modulo/remainder operation correctly on integral types
+- Use an optimization barrier (e.g., `volatile`, `optnone`,
+  `__attribute__((noinline))`, inline `asm`, or similar) to prevent the Metal
+  compiler from fusing the division and modulo operations
+- Be usable from MPS device code
+
+The function name is flexible (examples: `safe_mod`, `mod_safe`, `safe_modulo`,
+`safe_remainder`), but it must appear in `c10/metal/utils.h` and contain an
+optimization barrier near its definition.

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the CLI entry point file (packages/router-cli/src/index.ts), the commands (generate, watch, --help), yargs, process.argv, and hints at hideBin/yargs helpers. The structural tests check for 'hideBin' and 'yargs/helpers' which are discoverable from the hints about yargs helpers and process.argv. All test-asserted specifics (file paths, command names, expected behaviors) are mentioned or discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptoms (silent failure, no output) and gives hints about process.argv and yargs helpers, but does not explicitly say 'add hideBin(process.argv)' or 'change line X to Y'. A developer still needs to reason about what specific change to make."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_yargs_receives_argv asserts the exact string 'yargs(hideBin(process.argv))' and test_yargs_import_exists asserts 'hideBin' and 'from \\'yargs/helpers\\''. An alternative correct fix like `yargs(process.argv.slice(2))` would pass all behavioral tests but fail these structural tests, penalizing a valid alternative solution."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The majority of tests (test_cli_help_shows_usage, test_cli_recognizes_generate_command, test_cli_recognizes_watch_command, build/lint/types tests) execute subprocesses and check behavioral output. The two structural tests (test_yargs_import_exists, test_yargs_receives_argv) are text-matching but are supplementary to the behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_cli_help_shows_usage, test_cli_recognizes_generate_command, test_cli_recognizes_watch_command) run the actual CLI binary and check for non-empty meaningful output. A stub/no-op implementation would produce empty output and fail these assertions (e.g., 'silently_exits' check would trigger)."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router and solve.sh is accessible in the container. The agent could read the solution patch or grep for the expected test fixture strings. Additionally, the structural tests assert exact strings ('hideBin', 'yargs(hideBin(process.argv))') that could be found by examining the test files if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors explicitly required by instruction.md (--help shows help text, generate attempts to run, watch attempts to run) are tested by test_cli_help_shows_usage, test_cli_recognizes_generate_command, and test_cli_recognizes_watch_command respectively."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, have docstrings explaining the purpose and expected behavior (with/without fix), and are categorized as fail-to-pass vs pass-to-pass vs structural/gated in comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a CLI tool, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (packages/router-cli/src/index.ts) which is the obvious CLI entry point for the task domain, and mentions process.argv and yargs helpers as hints but doesn't specify exact line numbers or the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

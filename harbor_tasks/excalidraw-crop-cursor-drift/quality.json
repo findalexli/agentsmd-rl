@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific literals like 'image.naturalWidth / uncroppedSize.width', 'getUncroppedWidthAndHeight(croppingElement)', variable name 'uncroppedSize', removal of 'vectorScale' entirely (not just from imports), and 'Math.max(this.state.zoom.value, 2)'. While instruction.md hints at naturalWidth/naturalHeight and getUncroppedWidthAndHeight, it never mentions the exact variable name 'uncroppedSize', never says to remove vectorScale entirely from the file (test_vector_function_used_directly c"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'Use the image's natural dimensions (naturalWidth/naturalHeight) relative to the uncropped element size', 'Apply the correct scaling ratio to the drag offset vector', 'Remove any zoom-based scaling', and hints to import getUncroppedWidthAndHeight. This essentially describes the exact fix rather than just describing the bug behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'uncroppedSize' (test_uncropped_size_variable_created), exact expression 'image.naturalWidth / uncroppedSize.width' (test_natural_width_scaling_used), complete absence of 'vectorScale' anywhere in file (test_vector_function_used_directly). An alternative correct fix using a different variable name (e.g., 'originalDims') or inlining the function call would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_vectorScale_import_removed, test_getUncroppedWidthAndHeight_import_added, test_natural_width_scaling_used, test_uncropped_size_variable_created, test_zoom_scaling_removed, and test_vector_function_used_directly are ALL pure text-matching (reading file content and checking string presence). The p2p tests (TypeScript compilation, linting, unit tests) do verify behavior, but the f2p tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code changes (removal of vectorScale, addition of getUncroppedWidthAndHeight, specific scaling expressions). A stub or no-op implementation would not pass these since the original file contains vectorScale and lacks the required patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace's solve.sh (solution/solve.sh), and the agent could read it. Additionally, since tests are pure text matching, the agent could grep test_outputs.py for the expected strings and insert them verbatim into App.tsx without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes fixing cursor drift by using natural dimensions, removing zoom-based scaling, and importing getUncroppedWidthAndHeight \u2014 all of which are tested via the f2p and p2p tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (import changes, scaling logic, compilation/lint checks, unit test suites), and annotated with f2p/p2p labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in TypeScript code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names the exact file (App.tsx), mentions specific functions (vectorScale, getUncroppedWidthAndHeight), specific properties (naturalWidth/naturalHeight), and the specific import source (@excalidraw/element). This goes well beyond identifying the buggy module \u2014 it essentially localizes the exact code and describes the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four files tested (api.v1.projects.$projectRef.$env.ts, buildImage.ts, CONTRIBUTING.md, supervisor/README.md), describes the API_ORIGIN vs APP_ORIGIN issue, the localhost/host.docker.internal Docker problem on macOS, and the incomplete build instructions. The key concepts (processEnv, apiUrl, localhost replacement, platform detection) are all discoverable from the named files and described problems."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problems (no separate API origin config, localhost unreachable in Docker on macOS, incomplete build docs) but does not specify exact code changes like 'add API_ORIGIN ?? APP_ORIGIN' or 'create normalizeApiUrlForBuild function'. The agent must reason about what to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_normalize_localhost_darwin extracts a function via regex matching exactly 'function normalizeApiUrlForBuild(apiUrl...)' and uses new Function() to execute its body. An alternative correct implementation using a different function name (e.g., 'fixDockerUrl'), a class method, an inline replacement, or an arrow function would fail this regex match. Similarly, test_api_origin_preferred_over_app_origin uses a regex to extract the apiUrl expression and requires it to use 'processEnv.API_ORIGIN' i"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests extract code from files and actually execute it via Node.js subprocess calls, evaluating the expressions and function bodies with mock environments. They check runtime output, not just text patterns. Pass-to-pass tests also execute Node for syntax/structure checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests would fail on the base repo: test_api_origin_preferred_over_app_origin would fail because the original code only uses APP_ORIGIN (no API_ORIGIN fallback), test_normalize_localhost_darwin would fail because normalizeApiUrlForBuild doesn't exist, and test_normalize_preserves_localhost_linux similarly fails. A stub/no-op cannot pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/trigger.dev/../solution/solve.sh (or a similar container path). The Dockerfile doesn't remove it, and the agent could potentially read /solution/solve.sh to see the exact patch. Additionally, the test file at tests/test_outputs.py contains the exact expected outputs and implementation patterns, which the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) API_ORIGIN support with APP_ORIGIN fallback - tested by test_api_origin_preferred_over_app_origin, (2) localhost\u2192host.docker.internal on macOS - tested by test_normalize_localhost_darwin and test_normalize_preserves_localhost_linux, (3) updated build docs - implicitly tested via CONTRIBUTING.md checks. All key behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (fail-to-pass pr_diff, fail-to-pass config_edit, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes and documentation updates, not structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files which is appropriate for the task domain, but doesn't specify exact line numbers or exact code changes. The 'Files to Look At' section is a reasonable scoping aid rather than solution leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The config edits in CONTRIBUTING.md and supervisor/README.md are localized single-line changes, not full-file rewrites, and don't contradict other task files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

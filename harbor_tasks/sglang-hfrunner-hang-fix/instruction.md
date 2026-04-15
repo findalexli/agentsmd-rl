@@ -8,11 +8,7 @@ In `python/sglang/test/runners.py`, the `HFRunner.forward()` method calls `self.
 
 File: `python/sglang/test/runners.py`, in the `HFRunner` class, `forward()` method.
 
-## What to Fix
-
-Modify the `forward()` method so that instead of blocking indefinitely on `self.out_queue.get()`, it periodically checks whether the subprocess (`self.model_proc`) is still alive. If the subprocess has died and the output queue is empty, raise a descriptive `RuntimeError` indicating the subprocess exit code.
-
 ## Expected Behavior
 
-- If the subprocess is healthy, `forward()` returns the result from the queue as before.
-- If the subprocess dies before producing output, `forward()` raises a `RuntimeError` with a message that includes the subprocess exit code, rather than hanging indefinitely.
+- If the subprocess is healthy and produces output, `forward()` returns the result from the queue as before.
+- If the subprocess dies before producing output, `forward()` must raise a `RuntimeError` whose message includes the subprocess exit code, rather than hanging indefinitely.

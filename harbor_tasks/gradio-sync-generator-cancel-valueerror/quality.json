@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions SyncToAsyncIterator, safe_aclose_iterator, the import path gradio.utils, the aclose method with retry_interval/timeout parameters, the specific ValueError messages ('generator already executing', 'some other error'), and ruff/syntax checks. All test-specific behaviors (retry on 'already executing', timeout raising ValueError, propagating non-matching ValueError, safe_aclose with async generators) are discoverable from instruction.md. The specific helper classes (FakeIter"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug and expected behavior (retry logic with timeout/interval parameters on aclose) but does not specify exact code changes, line numbers, or the specific implementation approach (e.g., moving retry logic from safe_aclose_iterator into SyncToAsyncIterator.aclose). The developer must still reason about where and how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: that aclose retries on 'generator already executing' ValueError, times out correctly, propagates other errors, and accepts retry_interval/timeout kwargs. The method signature parameters (retry_interval, timeout) are specified in instruction.md. Alternative implementations (e.g., different loop structures, using time.time vs time.monotonic, keeping retry logic in safe_aclose_iterator while also adding it to aclose) would all pass as long as they implement the de"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call SyncToAsyncIterator.aclose() with actual iterator objects, run asyncio.run(), check close_call_count and _closed state, use pytest.raises for exception checking, and run subprocesses for syntax/lint checks. No test merely greps source code for strings."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub aclose() that just calls self.iterator.close() would fail test_aclose_retries_on_already_executing (ValueError raised on first call), test_not_stub explicitly checks this case, and test_aclose_timeout_raises requires specific timeout behavior. A pass/None stub would also fail since FakeIterator wouldn't have _closed=True."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/gradio in the container as the gold patch can be applied via solve.sh. While solve.sh itself is in solution/ (which may not be accessible), the agent could potentially read the test file at tests/test_outputs.py to understand exact expected behavior, or inspect the git history. More critically, the solution/solve.sh file exists in the container and could be read directly if the agent explores the filesystem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: imports succeed (test_repo_gradio_imports), retry on 'generator already executing' (test_aclose_retries_on_already_executing), timeout raises ValueError (test_aclose_timeout_raises), non-matching ValueError propagated immediately (test_aclose_propagates_non_matching_valueerror), safe_aclose_iterator with async generators (test_safe_aclose_works_with_async_generator), and syntax/ruff checks (test_syntax_check, test_repo_ruff_check, test_repo_ruff_form"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass/static, Fail-to-pass pr_diff, Pass-to-pass regression/anti-stub), descriptive function names, and docstrings explaining each test's purpose and category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Python code behavior, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or method signatures across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions gradio/utils.py and specific class/function names (SyncToAsyncIterator, safe_aclose_iterator) which are the public API surface, not internal implementation details. It does not mention specific line numbers or the exact code change needed (moving retry logic from safe_aclose_iterator into aclose)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

@@ -19,10 +19,27 @@ The session flag is also named `-b` (for "browser") which is confusing since the
 
 ## Files to Look At
 
+### MCP source files
 - `packages/playwright/src/mcp/terminal/daemon.ts` — daemon server startup logic
 - `packages/playwright/src/mcp/terminal/program.ts` — CLI session management, argument parsing
 - `packages/playwright/src/mcp/program.ts` — main MCP program entry, daemon startup path
 - `packages/playwright/src/mcp/terminal/helpGenerator.ts` — CLI help text generation
 - `packages/playwright/src/mcp/browser/browserContextFactory.ts` — browser launch error handling
+- `packages/playwright/src/mcp/browser/browserServerBackend.ts` — browser server backend
+- `packages/playwright/src/mcp/browser/context.ts` — browser context implementation
+- `packages/playwright/src/mcp/extension/cdpRelay.ts` — CDP relay extension
+- `packages/playwright/src/mcp/sdk/server.ts` — SDK server implementation
+
+### MCP module structure
+- `packages/playwright/src/mcp/terminal/DEPS.list` — terminal module dependency constraints
+
+### Documentation files
+- `packages/playwright/src/skill/SKILL.md` — skill documentation
+- `packages/playwright/src/skill/references/session-management.md` — session management reference
+
+### Test files
+- `tests/mcp/cli-isolated.spec.ts` — CLI isolated tests
+- `tests/mcp/cli-misc.spec.ts` — CLI miscellaneous tests
+- `tests/mcp/cli-session.spec.ts` — CLI session tests
 
 After making the code changes, update the relevant skill documentation files to reflect the flag rename. The project's dev instructions specify that CLI command changes should be accompanied by documentation updates.

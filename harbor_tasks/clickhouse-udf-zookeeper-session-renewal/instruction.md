@@ -16,35 +16,30 @@ When a Keeper connection blip or session jitter occurs:
 
 **Function:** `UserDefinedSQLObjectsZooKeeperStorage::refreshObjects`
 
-The bug is in the retry loop that refreshes user-defined SQL objects from ZooKeeper. Currently, `object_names` is fetched once before the retry loop begins, and the same `zookeeper` session handle is used throughout all retry iterations.
+**Bug Description:** The retry loop that refreshes user-defined SQL objects from ZooKeeper uses a ZooKeeper session handle that was obtained once before the retry loop begins. When `ZooKeeperRetriesControl` triggers a retry due to a transient Keeper error, the code continues using the same potentially-expired session handle instead of obtaining a fresh one. This means each retry iteration repeats the operation with the same stale session, causing crashes when the session has been finalized.
 
-## Expected Fix
+## Expected Behavior
 
-The fix should:
+When the retry mechanism triggers a retry iteration:
+1. A fresh ZooKeeper session should be obtained via the `zookeeper_getter` mechanism
+2. The fresh session should be used for all ZooKeeper operations in that retry iteration
+3. Any watches or object lists should be re-established on the fresh session
+4. The session renewal must happen inside the retry loop, not outside it
 
-1. **Move `getObjectNamesAndSetWatch` inside the retry loop** - So that object list and watches are re-established on a fresh session each retry
+## Code Style Requirements
 
-2. **Renew the ZooKeeper session on each retry** - Use `zookeeper_getter.getZooKeeper().first` to obtain a fresh session when `retries_ctl.isRetry()` is true
+The fix must follow ClickHouse coding standards:
 
-3. **Use a `current_zookeeper` variable** - Instead of the function parameter `zookeeper`, use a local variable that can be updated with the fresh session on retry
-
-4. **Follow ClickHouse code style** - Use Allman-style braces (opening brace on new line)
-
-5. **Never use sleep** for synchronization - This is explicitly forbidden by ClickHouse coding rules
-
-## Pattern Reference
-
-This fix follows the same pattern used by backup coordination code and other retry loops in the ClickHouse codebase. When retrying ZooKeeper operations:
-
-- Check if this is a retry iteration via the retries control object
-- If so, obtain a fresh ZooKeeper session via the getter
-- Re-fetch any watches/state needed on the new session
-- Use the fresh session for all operations in that iteration
+1. **Allman brace style** - Opening braces for control structures (if, for, while, etc.) must be on a new line
+2. **No tabs** - Use spaces for indentation
+3. **No sleep calls** - Never use `sleep()`, `usleep()`, or `std::this_thread::sleep_for()` for synchronization or race condition handling
+4. **Use LOG_* macros** - Use ClickHouse logging macros (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR) instead of std::cout/std::cerr
+5. **No raw assert()** - Use CH_ASSERT or other ClickHouse assertion mechanisms
 
 ## Testing
 
 The fix should ensure that:
 - The code compiles correctly
-- Session renewal happens inside the retry loop
-- All ZooKeeper operations use the potentially-refreshed session handle
-- Code follows ClickHouse style rules
+- Session renewal happens inside the retry loop when `retries_ctl.isRetry()` indicates a retry iteration
+- All ZooKeeper operations use the session handle that may have been refreshed
+- Code follows ClickHouse style rules (Allman braces, no tabs, no sleep calls)

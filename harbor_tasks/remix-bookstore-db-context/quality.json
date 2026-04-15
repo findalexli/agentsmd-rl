@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key files (database.ts, auth.ts, context.db.ts, books.tsx, cart.tsx, admin.books.tsx, README.md, context.ts), the Database symbol from 'remix/data-table', the context.set/get pattern, and the removal of module augmentation. The account.tsx file is tested implicitly through test_repo_bookstore_account_tests but isn't listed in 'Files to Look At' \u2014 however, the instruction says 'Files to Look At' not 'exhaustive list', and the pattern description is sufficient to discover"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'store the database handle using context.set(Database, db) instead of context.db = db', 'read the database back with get(Database) instead of destructuring db', and 'Import Database from remix/data-table'. This tells the agent precisely WHAT to change and HOW, leaving minimal reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for specific patterns that are inherent to the task specification itself: importing Database from 'remix/data-table', using context.set(Database, ...), and get(Database). These are the canonical API patterns described in the task, not arbitrary implementation choices. Any correct solution must use these exact APIs since they're the framework's standard context pattern."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_database_middleware_context_api, test_handlers_use_get_database_pattern, test_auth_middleware_uses_get_database, test_no_module_augmentation, test_readme_documents_new_pattern, test_readme_no_old_context_db) are primarily regex/string matching on file contents (readFileSync + regex test), not executing the code. While pass_to_pass tests do run typecheck, lint, and actual test suites, the core behavioral tests that distinguish pass from fail are text-matching only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass these tests. The f2p tests check for specific code patterns (Database import, context.set(Database,...), get(Database)), absence of old patterns (context.db=, db destructuring), deletion of a file, and README content changes. The existing codebase uses the old pattern, so doing nothing fails. A trivial stub would also fail the pass_to_pass typecheck and test suite runs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/remix and solve.sh is accessible in the container. The agent could read the solution patch or grep for the expected patterns. Additionally, the test fixture strings ('get(Database)', 'context.set(Database') are literal in the test file which could be discovered by reading test_outputs.py if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: middleware uses context.set(Database, db), handlers use get(Database), module augmentation file is deleted, README is updated to reflect new pattern and doesn't reference old pattern. The pass_to_pass tests ensure nothing is broken."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (pass_to_pass/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff behavioral, fail_to_pass/pr_diff README), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, commands, and package references in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction lists every specific file to modify and exactly what changes to make in each (e.g., 'context.set(Database, db) instead of context.db = db'). While listing files is somewhat justified for a refactoring task, the instruction goes beyond localizing the problem to prescribing the exact code transformations."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

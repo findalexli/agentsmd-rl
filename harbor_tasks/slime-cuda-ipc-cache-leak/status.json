@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:06:23.252700",
-  "total_time": 1182.38,
-  "sandbox_id": "ic7r6bui4dgwcf65kr313",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:52:14.746143",
+  "total_time": 1092.68,
+  "sandbox_id": "il2ufif4ybmz0tehuup89",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -57,17 +59,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.39,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:141: test `test_syntax_check` has 1 assert(s), all pass on a stub impl', 'A:[A] test_not_tautological @ tests/test_outputs.py:190: test `test_hf_named_tensors_released_in_loop` has 3 assert(s), al', 'A:[A] test_not_tautological @ tests/test_outputs.py:235: test `test_send_hf_params_exists` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:243: test `test_send_to_colocated_engine_structure` has 2 assert(s), a', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: numpy, ruff, black, isort, autoflake']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.63,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1395.13,
-      "at": "2026-04-09T14:51:26.162327"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +112,14 @@
       "backend": "fireworks",
       "time": 1182.38,
       "at": "2026-04-12T04:06:23.252700"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1092.68,
+      "at": "2026-04-15T05:52:14.746143"
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: (1) test_stream_stripped_from_kwargs looks for a function named '_call_client_create' and expects kwargs.pop('stream', None) style removal; (2) test_sse_generator_format looks for an inner async generator function inside 'chat_completions' that yields SSE events and calls model_dump_json(); (3) test_response_model_allows_streaming checks for 'response_model=None' in decorator area or 'StreamingResponse' in return an"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptoms and required behaviors but does not specify exact code changes like 'add kwargs.pop(\"stream\", None)' or 'add response_model=None'. It describes what's broken and what correct behavior looks like."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests are highly specific to the gold solution's structure: test_stream_stripped_from_kwargs extracts code from '_call_client_create' and exec's it expecting specific pop/del patterns; test_sse_generator_format requires an inner async generator function inside chat_completions (not a standalone function); test_response_model_allows_streaming checks for exact string 'response_model=None' in decorator. An alternative correct fix (e.g., filtering stream in the endpoint before calling _call_client_c"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_response_model_allows_streaming is purely textual \u2014 it checks for string 'response_model=None' in the decorator area via string matching, with no execution. test_stream_stripped_from_kwargs does exec extracted code snippets (partial behavioral), and test_sse_generator_format extracts and runs an async generator. But test_response_model_allows_streaming is entirely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check meaningful behaviors: test_stream_stripped_from_kwargs verifies that stream is correctly popped from kwargs across 6 scenarios; test_sse_generator_format verifies actual SSE output format with data: prefix, JSON content, and [DONE] sentinel; test_response_model_allows_streaming checks for response_model=None. A stub/no-op implementation would fail all of these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/AReaL as a git repo, and solve.sh applies a patch. An agent could read the solution directory or the test file at tests/test_outputs.py to discover exactly what patterns the tests look for (e.g., 'response_model=None', kwargs.pop pattern) and reproduce them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) stream field isolation \u2014 tested by test_stream_stripped_from_kwargs; (2) SSE format compliance \u2014 tested by test_sse_generator_format; (3) streaming response support without validation errors \u2014 tested by test_response_model_allows_streaming; (4) behavior under stream parameter combinations \u2014 tested by 6 scenarios in test_stream_stripped_from_kwargs."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names (test_syntax_check, test_stream_stripped_from_kwargs, test_sse_generator_format, test_response_model_allows_streaming), grouped by gate vs fail-to-pass with comments, and each has a docstring explaining purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the SSE format schema: 'data: {json}\\n\\n' with JSON containing 'id' and 'content' fields, and termination 'data: [DONE]\\n\\n'. The behavior table for stream parameter combinations is also clearly documented."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file 'areal/experimental/openai/proxy/proxy_rollout_server.py' and the exact endpoint '/chat/completions'. It also specifies that the 'stream' field must be stripped from kwargs before the OpenAI client call, and that the response must use SSE format \u2014 these are implementation-level hints rather than just symptom descriptions."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

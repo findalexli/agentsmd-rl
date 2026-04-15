@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The test `test_isBidi_in_test_signature` checks that the test function signature includes `isBidi`, and `test_bidi_cookie_rejection_condition` checks for `|| isBidi` combined with `browserName === 'chromium'` and `value === 'None'`. The instruction.md never mentions `isBidi` as a fixture parameter, nor does it specify that the condition should use `|| isBidi`. It only vaguely says to 'handle the case where cookies... are rejected when running under the BiDi protocol'. The specific variable name "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (the test doesn't account for BiDi protocol) and what the expected outcome is (test should handle BiDi, expectations file should not list it), but does not prescribe the exact code change like 'add isBidi to the condition' or 'change line X to Y'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests are extremely specific to the gold solution's implementation: `test_isBidi_in_test_signature` requires `isBidi` in the function signature line, and `test_bidi_cookie_rejection_condition` requires the exact pattern `|| isBidi` on the same line as `browserName === 'chromium'` and `value === 'None'`. An alternative correct fix (e.g., using a helper function, a separate `if` block for BiDi, or a different variable name like `isUsingBidi`) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (`test_isBidi_in_test_signature`, `test_bidi_cookie_rejection_condition`, `test_bidi_expectation_removed`) are all text-matching tests \u2014 they read file contents and check for specific string patterns (e.g., `sigLine.includes('isBidi')`, `joined.includes('|| isBidi')`, `not in content`). None of them execute the test or verify actual cookie behavior. The pass-to-pass tests do run builds/linting but those aren't the behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific changes: adding `isBidi` to the signature, modifying the condition, and removing the line from expectations. A stub or no-op would not pass since the original code lacks `isBidi` in the signature and condition, and the expectations file still contains the test entry."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/playwright` (the solve.sh is a shell script with the exact patch). An agent could read `solution/solve.sh` if accessible in the container, or grep for the patch content. Additionally, the test checks are pure string matching, so an agent could just pattern-match the expected strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires two behaviors: (1) updating the test logic to handle BiDi protocol and (2) removing the test from the BiDi expectations file. Both are tested via `test_bidi_cookie_rejection_condition`/`test_isBidi_in_test_signature` and `test_bidi_expectation_removed`."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests) with clear docstrings and descriptive function names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing test files and expectation lists, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are all correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction says 'the set-cookie test around line 1155 in the SameSite test function' \u2014 giving an approximate line number. While the files to look at are reasonable for the domain, specifying 'around line 1155' is localization leakage that narrows the search significantly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is highly localized: one line change in the spec file and one line removal in the expectations file. It doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

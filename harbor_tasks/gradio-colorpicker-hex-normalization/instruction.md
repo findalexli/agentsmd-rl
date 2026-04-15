@@ -9,22 +9,30 @@ The `ColorPicker` component in Gradio is documented to return hex strings (e.g. 
 - Typing an HSL value (e.g. `hsl(0, 10%, 20%)`) also passes it through unchanged
 - Only directly editing the hex input produces the expected hex format
 
-## Relevant Files
+## Relevant Files and Components
 
-- `js/colorpicker/shared/utils.ts` — contains the `hsva_to_rgba()` conversion function and `format_color()` utility
-- `js/colorpicker/shared/Colorpicker.svelte` — the component UI, including the text input's `onchange` handler
+The colorpicker is located in `js/colorpicker/shared/`. This directory contains:
+- `utils.ts` — contains color conversion utilities including `hsva_to_rgba()` and `format_color()`
+- `Colorpicker.svelte` — the component UI, which should import from `@gradio/atoms` (including `BlockTitle`) and have input handling with `bind:value` or `onchange`
+- `events.ts` — must export a `click_outside` handler with TypeScript type annotations for parameters (e.g., `Node`, `MouseEvent`) and return type (`void`)
 
-## Reproduction
+## Required Changes
 
-1. Create a simple Gradio app with a `ColorPicker` component
-2. Open the color picker dialog and click anywhere on the color gradient
-3. Observe that the component's `value` is an `rgba(...)` string instead of a hex string
-4. Switch to the RGB or HSL text input mode and type a value
-5. Observe that the raw input string is passed as the value without normalization
+1. **Color normalization function**: Create a `normalize_color` function in `utils.ts` that converts any valid color format (RGB, HSL, named colors like "red", shorthand hex like "#f00") to a 6-digit hex string (`#rrggbb`). The function must have explicit TypeScript type annotations: `(color: string): string`.
+
+2. **Gradient click output**: The color conversion that produces values when clicking the gradient must return hex strings (`#rrggbb`) instead of `rgba(...)` strings.
+
+3. **Text input normalization**: The text input's change handler in the Svelte component must normalize user input to hex format before setting the component value, rather than passing raw input through unchanged.
 
 ## Expected Behavior
 
-The component value sent to the backend should always be a hex string (`#rrggbb`), regardless of how the user selects or inputs the color. The display format (Hex/RGB/HSL toggle) should only affect what the user *sees* in the text input, not the underlying value.
+- `normalize_color('rgb(255, 0, 0)')` should return `'#ff0000'`
+- `normalize_color('hsl(0, 100%, 50%)')` should return `'#ff0000'`
+- `normalize_color('red')` should return `'#ff0000'`
+- `normalize_color('#f00')` should return `'#ff0000'`
+- The color value sent to the backend must always be a 6-digit hex string (`#rrggbb`), regardless of how the user selects or inputs the color
+- The display format (Hex/RGB/HSL toggle) should only affect what the user sees in the text input, not the underlying value
+- Invalid color inputs should be handled gracefully (return a string, not throw an error)
 
 ## Related Issue
 

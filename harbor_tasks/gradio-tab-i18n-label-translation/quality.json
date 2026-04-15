@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific internals not mentioned in instruction.md: the file path 'js/core/src/init.svelte.ts', the function name '_gather_initial_tabs', the property path 'node.props.props.i18n', and the specific data structure shape (initial_tabs dictionary keyed by parent tab ID). The instruction only describes the high-level bug with a Python reproduction script and never mentions these JavaScript internals."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md only describes the symptom (tab labels not translated when using i18n) and expected behavior. It does not specify which file to change, which function to modify, or what the fix should look like."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests extract the specific function '_gather_initial_tabs' from the specific file and test it in isolation. They require the i18n function to be read from 'node.props.props.i18n' and applied to the label within that specific function. An alternative valid fix (e.g., applying i18n translation at a different layer, such as in the Svelte component rendering or in the Tabs component itself) would not pass these tests even if it correctly fixed the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests extract the JavaScript function, execute it in Node.js with mock data, and verify behavioral output (translated labels, call counts). The pass-to-pass tests run actual build/test commands. Tests are not simple text-matching on source files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_i18n_translation_applied, test_i18n_function_actually_called, test_multiple_tabs_all_translated) check that labels are transformed by the i18n function. A stub that returns the raw label unchanged would fail because tests assert labels like 'Leon'/'Gato' instead of 'lion'/'cat', and assert call counts > 0."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo/../solution/solve.sh (or wherever mounted) and contains the exact git patch. An agent could read this file to obtain the answer. Additionally, the test extraction script writes to /tmp/_gather_initial_tabs.js which is predictable, though this is less of a concern than the solution file exposure."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires tab labels to be translated with i18n and backward compatibility when no i18n is configured. Tests cover translation (test_i18n_translation_applied, test_multiple_tabs_all_translated), verify the function is actually called (test_i18n_function_actually_called), and test_no_i18n_preserves_raw_label covers backward compatibility."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (pass-to-pass vs fail-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories ([static], [pr_diff])."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is a bug fix in a UI framework, not a task that produces structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md does not name any specific file, function, or line number. It only describes the bug symptom with a Python reproduction script, which is appropriate for a bug report."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (JavaScript source fix), not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

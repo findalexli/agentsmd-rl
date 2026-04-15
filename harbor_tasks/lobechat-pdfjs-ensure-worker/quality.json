@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all file paths (src/libs/pdfjs/index.tsx, worker.ts, pdf.worker.ts, PDF/index.tsx, PdfPreview.tsx, CLAUDE.md), the variable name 'workerSrc', the function 'ensureWorker()', the template literal format with npmmirror.com URL, and the CLAUDE.md restructuring with 'Trigger condition', 'Workflow:', and 'ToolSearch'. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction tells the agent exactly what to implement: 'Define a const workerSrc template literal using the format https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs', 'Define an ensureWorker() function that checks if pdfjs.GlobalWorkerOptions.workerSrc is set', 'Export a wrapper Document component that calls ensureWorker() in its body'. This is the complete solution specification, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: 'const workerSrc' as a template literal (regex match), 'ensureWorker()' as a specific function call string, 'GlobalWorkerOptions.workerSrc' in content. An alternative valid fix could use a different variable name (e.g., 'WORKER_URL'), a different function name (e.g., 'initWorker'), or set workerSrc directly in the Document wrapper without a separate function \u2014 all would fix the bug but fail the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_ensure_worker_sets_src extracts the workerSrc template and executes it via Node.js subprocess to verify it correctly sets the worker source with version interpolation. While many tests are text-based checks, the core behavioral test actually executes code. The pass-to-pass tests run eslint, vitest, and other subprocess-based verifications."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_ensure_worker_sets_src) require creating a new file with specific functional code that is executed via Node.js. A stub file would not contain the required template literal, ensureWorker function, or pass the Node execution check. The deletion tests require actual file removal. The import tests require modifying existing files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/lobe-chat in the container environment (applied via solve.sh). The agent could read the gold patch from the solution directory or inspect git history. Additionally, the test file itself at tests/test_outputs.py contains exact expected strings that could be matched directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: creating the unified module with workerSrc/ensureWorker/Document wrapper (test_ensure_worker_sets_src), removing old files (test_old_worker_files_removed), updating imports in both viewer components (test_pdf_viewer_imports_unified, test_pdf_preview_imports_unified), CLAUDE.md restructuring (test_claude_md_linear_section_updated), and Document still being rendered (test_pdf_viewers_still_use_document)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_ensure_worker_sets_src, test_old_worker_files_removed, etc.), have docstrings explaining the rationale, and are clearly separated into behavioral fix tests and pass-to-pass CI checks with a section comment."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces source code files and documentation, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, commands, and function names in the instruction match those referenced in the tests. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details including the exact URL template format, exact function names (ensureWorker), exact variable names (workerSrc), and exact section headings for CLAUDE.md ('Trigger condition', 'Workflow:', 'ToolSearch'). This goes beyond identifying the buggy area and prescribes the exact solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task involving source files and documentation, not configuration file edits in the agentmd-edits sense."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

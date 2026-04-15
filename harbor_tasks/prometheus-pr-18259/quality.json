@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'func (t *testRunner) atomicWrite' (test_atomicwrite_function_exists), exact call signatures 't.atomicWrite(dst, content)' and 't.atomicWrite(file, []byte(data))' (test_copyfileto_uses_atomicwrite, test_writestring_uses_atomicwrite), exact loop syntax 'for retries := 0; ; retries++' and 'retries >= 5' and 'time.Sleep(50 * time.Millisecond)' (test_atomicwrite_has_retry_logic), and exact string 'os.Crea"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly tells the agent: use atomic write via temp file + rename, use t.TempDir() for temp file location, add retry logic for Windows rename. The Hints section says 'Atomic file writes are typically done by writing to a temp file and renaming it' and 'Use t.TempDir() for temporary file locations' and 'Consider retry logic for the rename operation on Windows'. This essentially prescribes the exact solution approach rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation strings: 'func (t *testRunner) atomicWrite' as the function name, 't.atomicWrite(dst, content)' and 't.atomicWrite(file, []byte(data))' as exact call signatures, 'for retries := 0; ; retries++' as exact loop syntax, 'retries >= 5' as exact retry count, 'time.Sleep(50 * time.Millisecond)' as exact sleep duration, and 'os.CreateTemp(t.TempDir()' as exact temp file creation. An alternative correct fix (e.g., naming the function 'atomicFileWrite', using 'retries > 4"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_atomicwrite_function_exists, test_copyfileto_uses_atomicwrite, test_writestring_uses_atomicwrite, test_atomicwrite_has_retry_logic, and test_atomicwrite_uses_tempdir are purely textual assertions (searching for exact strings in source code via 'assert ... in content'). While some tests do execute subprocesses (test_file_sd_tests_compile, test_file_sd_tests_run, test_go_vet_passes), the majority of fail_to_pass tests are text-matching only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific new code (atomicWrite function, its usage in copyFileTo/writeString, retry logic, TempDir usage) that doesn't exist in the original codebase, so a stub or no-op wouldn't pass them. test_file_sd_tests_run also executes the actual Go tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/prometheus as solve.sh content could be accessible. More critically, the agent could read the test file tests/test_outputs.py to discover the exact strings being asserted (e.g., 'func (t *testRunner) atomicWrite', 'for retries := 0; ; retries++', etc.) and simply insert those exact strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: atomic writes (test_atomicwrite_function_exists), copyFileTo/writeString using atomic writes (test_copyfileto_uses_atomicwrite, test_writestring_uses_atomicwrite), Windows retry logic (test_atomicwrite_has_retry_logic), temp files outside watched directory (test_atomicwrite_uses_tempdir), compilation, test passing, go vet, and go fmt."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically grouped by concern (function existence, usage patterns, retry logic, compilation, execution)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Go test code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact functions to modify (copyFileTo, writeString on testRunner struct), the exact file (discovery/file/file_test.go), and prescribes the exact solution approach (write to temp file then rename, use t.TempDir(), add retry logic). This goes beyond identifying the buggy area and essentially describes the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

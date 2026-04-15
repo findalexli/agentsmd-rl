@@ -1,43 +1,70 @@
-# Add Summon Extension Tutorial and Documentation
+# Update Documentation for Skills-to-Summon Extension Rename
+
+## Background
+
+In goose v1.25.0, the "Skills" built-in extension was renamed to "Summon". The documentation repository needs updates to reflect this change across multiple files.
 
 ## Problem
 
-The goose documentation currently references the "Skills" extension in multiple places, but the extension has been renamed to "Summon" in v1.25.0+. This creates confusion for users:
+Multiple documentation files still reference the old "Skills" extension name and link to `skills-mcp` documentation. The documentation needs:
+1. A new documentation page for the Summon extension
+2. A deprecation notice on the existing Skills extension page
+3. Updated references across tutorials and guides
 
-1. The Skills extension documentation needs a deprecation notice
-2. A new Summon extension documentation page needs to be created
-3. Multiple documentation files still reference "Skills" instead of "Summon"
-4. Tutorial files (playwright-skill.md, remotion-video-creation.md) need to reference the new extension name
+## Tasks
 
-## Expected Behavior
+### 1. Create Summon extension documentation
 
-1. Create a new `summon-mcp.md` file with:
-   - Proper YAML frontmatter (title, description)
-   - Configuration section showing how to enable the extension
-   - Example Usage section with a retro web skill example
-   - References to skills, recipes, and subagents
+Create `documentation/docs/mcp/summon-mcp.md` — a new documentation page for the Summon extension. The page should:
+- Include YAML frontmatter with `title` and `description` fields, referencing "Summon" in the title
+- Be comprehensive (substantial content, well over 500 characters)
+- Follow the same documentation structure and conventions as other extension pages in the `documentation/docs/mcp/` directory
+- Include a section on how to configure/enable the extension
+- Include a section with example usage demonstrating the extension (e.g., loading a skill and delegating to a subagent)
+- Reference the three key concepts the extension provides: skills, recipes, and subagents
+- Include a reference to the screenshot image `summon-retro-site.png` in the results section
 
-2. Add a deprecation notice to `skills-mcp.md` indicating it's deprecated and only available in v1.16.0 - v1.24.0
+### 2. Deprecate Skills extension documentation
 
-3. Update `using-extensions.md` to reference "Summon" instead of "Skills" in the built-in extensions list
+Update `documentation/docs/mcp/skills-mcp.md` to add a deprecation notice:
+- Indicate that the Skills extension is deprecated
+- Point users to the Summon extension as a replacement, linking to summon-mcp
 
-4. Update `using-skills.md` to reference the Summon extension (v1.25.0+)
+### 3. Update the built-in extensions list
 
-5. Update `playwright-skill.md` to use `extensionName="Summon"` and reference summon-mcp
+Update `documentation/docs/getting-started/using-extensions.md`:
+- Replace references to the Skills extension with Summon
+- Update links from skills-mcp to summon-mcp
 
-6. Update `remotion-video-creation.md` to reference summon-mcp and use the new `load | summon` format
+### 4. Update the skills usage guide
 
-7. Add the `summon-retro-site.png` screenshot to the static images directory
+Update `documentation/docs/guides/context-engineering/using-skills.md`:
+- Replace the Skills extension reference with the Summon extension (noting v1.25.0+)
+- Link to summon-mcp documentation
 
-## Files to Look At
+### 5. Update the Playwright tutorial
 
-- `documentation/docs/mcp/skills-mcp.md` — Add deprecation caution notice
-- `documentation/docs/getting-started/using-extensions.md` — Update built-in extensions list
-- `documentation/docs/guides/context-engineering/using-skills.md` — Update extension reference
-- `documentation/docs/tutorials/playwright-skill.md` — Update extension references
-- `documentation/docs/tutorials/remotion-video-creation.md` — Update extension references
-- `documentation/static/img/` — Add screenshot image
+Update `documentation/docs/tutorials/playwright-skill.md`:
+- Replace all references to the Skills extension with Summon
+- Update any code blocks or component references that use the old extension name to use the new one
+- Update links from skills-mcp to summon-mcp
 
-## Files to Create
+### 6. Update the Remotion tutorial
 
-- `documentation/docs/mcp/summon-mcp.md` — New Summon extension documentation
+Update `documentation/docs/tutorials/remotion-video-creation.md`:
+- Replace all references to the Skills extension with Summon
+- Update any code blocks or command examples to reflect the Summon extension
+- Update links from skills-mcp to summon-mcp
+
+### 7. Add screenshot image
+
+Place a valid PNG image file named `summon-retro-site.png` in `documentation/static/img/`. The image should be at least 1000 bytes.
+
+## Files
+
+- `documentation/docs/mcp/` — Extension documentation directory
+- `documentation/docs/getting-started/using-extensions.md` — Built-in extensions list
+- `documentation/docs/guides/context-engineering/using-skills.md` — Skills usage guide
+- `documentation/docs/tutorials/playwright-skill.md` — Playwright tutorial
+- `documentation/docs/tutorials/remotion-video-creation.md` — Remotion tutorial
+- `documentation/static/img/` — Static images directory

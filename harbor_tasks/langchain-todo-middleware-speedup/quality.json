@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: the file path, WriteTodosInput class name, StructuredTool.from_function usage, args_schema=WriteTodosInput, infer_schema=False, exact import lines, removal of from __future__ import annotations, removal of TYPE_CHECKING, _write_todos function, runtime: ToolRuntime parameter, and performance requirement. All assert targets in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact import lines to use, exact class definitions (WriteTodosInput(BaseModel) with todos: list[Todo] = Field(description=...)), exact method signatures (StructuredTool.from_function with args_schema=WriteTodosInput, infer_schema=False), and the exact function name _write_todos with its parameter types. This is effectively the complete solution specification, leaving almost no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact import line strings like 'from langchain_core.tools import InjectedToolCallId, StructuredTool, tool', exact function name 'def _write_todos(', exact string 'runtime: ToolRuntime', 'class WriteTodosInput(BaseModel):', 'todos: list[Todo] = Field(description='. An alternative correct fix using a different function name, different import ordering, or a class-based tool definition would fail these text-matching tests despite being functional"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_imports_no_type_checking_for_runtime, test_imports_structured_tool, test_imports_pydantic, test_imports_tool_runtime, test_no_future_annotations, test_write_todos_input_model_exists, test_standalone_write_todos_function, test_structured_tool_in_init are all pure text-matching (assert 'string' in content). While some behavioral tests exist (test_todo_list_middleware_instantiation, test_tool_is_structured_tool, etc.), the majority are string-in-file checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral tests (test_todo_list_middleware_instantiation, test_tool_is_structured_tool, test_write_todos_input_schema, test_initialization_performance) actually run the code and verify functional behavior. A stub returning None or empty collections would not pass these tests as they check isinstance, tool.name, schema properties, and performance."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/langchain/solution/solve.sh or could be discovered by examining the test file at tests/test_outputs.py which contains exact strings to match. The agent could read the gold patch from solve.sh and apply it directly, or simply grep for the expected strings in test_outputs.py and produce matching code."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: fast instantiation (test_initialization_performance), StructuredTool type (test_tool_is_structured_tool), WriteTodosInput schema (test_write_todos_input_schema), direct imports (test_imports_no_type_checking_for_runtime), existing tests pass (test_repo_unit_tests, test_repo_todo_tests), lint checks (test_repo_lint_package)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_imports_no_type_checking_for_runtime, test_initialization_performance, etc.) and each has a docstring explaining what it checks. They are logically grouped from static checks to behavioral tests to integration tests."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the WriteTodosInput Pydantic model schema with exact field names and types (todos: list[Todo] with Field(description=...))."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to modify, exact import lines to use, exact class and function names to create, and exact method calls (StructuredTool.from_function with specific kwargs). This goes far beyond describing what's broken\u2014it provides the complete implementation blueprint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

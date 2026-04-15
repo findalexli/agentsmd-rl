@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes all four behavioral expectations that map to the test assertions (different promises return false, promise vs object returns false, same reference returns true, nested objects with different promises return false). The thenable test is also covered by the 'handle all Promise-like objects (anything with a .then method)' note."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (Promise-like objects incorrectly compared as equal) and expected behavior, but does not specify the exact fix (e.g., adding an isPromiseLike helper function or the specific code to insert). A developer must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The f2p tests (e.g., test_deepequal_different_promises) don't actually import/execute the code from the source file. Instead they read the source file and check `src.includes('isPromiseLike(a) || isPromiseLike(b)')` \u2014 a literal string match for a specific implementation detail. An alternative correct fix (e.g., checking `a instanceof Promise || b instanceof Promise`, or using a differently-named helper, or inlining the check as `typeof a.then === 'function'`) would fail these tests because the s"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests do NOT import or execute the actual deepEqual function from the source. They read the source file as text, check for the literal string 'isPromiseLike(a) || isPromiseLike(b)', and conditionally enable promise checking in a locally-defined deepEqual. This is effectively `assert 'isPromiseLike(a) || isPromiseLike(b)' in source_text` \u2014 a text-matching test, not a behavioral test."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests reconstruct a local deepEqual function and only add promise handling if the source contains the exact string 'isPromiseLike(a) || isPromiseLike(b)'. If an agent simply adds that string as a comment without fixing the actual function, the test's local reimplementation would still pass. The tests don't execute the actual code, so a stub or trivially wrong implementation that includes the magic string would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/router/solution/solve.sh (the solve script is in the container's filesystem) or simply grep the test file to discover that tests check for the literal string 'isPromiseLike(a) || isPromiseLike(b)' and insert that string to pass without understanding the bug. The solution directory appears accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors from the instruction (different promises \u2192 false, promise vs object \u2192 false, same reference \u2192 true, nested objects with different promises \u2192 false) are tested, plus thenable handling and repo-level tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_deepequal_different_promises, test_deepequal_same_promise, etc.) with docstrings indicating F2P vs P2P classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is appropriate for this task domain. It doesn't specify exact line numbers or the specific code fix needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

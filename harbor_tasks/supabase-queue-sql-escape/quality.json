@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests require `import { literal }` from `@supabase/pg-meta/src/pg-format` (or similar path), and assert specific patterns like `literal(queueName)`, `literal(payload)`, `literal(delay)`, `literal(messageId)`, `literal(afterTimestamp)` on specific lines containing `pgmq.send`, `pgmq.archive`, `pgmq.delete`. The instruction.md never mentions the `literal()` function, the `pg-format` module, or the specific escaping mechanism to use. The `delay` parameter is also never mentioned in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (raw interpolation of user-controlled values into SQL) and says values must be 'properly escaped,' but does not specify the exact fix (e.g., does not say 'use literal() from pg-format'). A developer would still need to figure out the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert `import { literal }` must appear in all four files, and that specific lines must contain exact patterns like `literal(queueName)`, `literal(payload)`, `literal(delay)`, `literal(messageId)`, `literal(afterTimestamp)`. An alternative correct fix using parameterized queries, a different escaping function, or even the same `literal` function imported differently (e.g., `import { literal } from 'pg-format'` vs the expected path) would fail these text-matching assertions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "While `test_literal_escapes_sql_injection` does execute the `literal()` function via tsx and verify its behavioral output, the majority of f2p tests (test_send_payload_escaped, test_query_timestamp_escaped, test_archive_params_escaped, test_delete_params_escaped) are purely textual checks (`assert 'literal(queueName)' in line`, `assert \"'${queueName}'\" not in src`). They never execute the mutations or verify that SQL injection is actually prevented at runtime."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The base commit has raw `'${queueName}'` interpolation and no `import { literal }` \u2014 these f2p tests would fail on the base commit. A stub or no-op implementation wouldn't add the required `literal()` calls and imports, so it would also fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in `/workspace/supabase/_eval_tmp.ts` territory, and more critically, `solution/solve.sh` contains the full git patch. An agent could read `/solution/solve.sh` (if accessible in the container) or the test file itself to discover exactly what patterns are expected (e.g., `literal(queueName)`) and match them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires escaping user-controlled values in four files for four operations, and the tests cover all four files and operations, plus the escaping behavior of the literal function itself."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, agent_config, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to fix SQL injection, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction match those in the tests and solution without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the four affected files, which is appropriate given the task domain (fixing SQL injection in specific queue operations). It does not name specific lines or the exact fix mechanism."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

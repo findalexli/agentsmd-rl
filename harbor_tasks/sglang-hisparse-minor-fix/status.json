@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:54:00.287299",
-  "total_time": 1662.11,
-  "sandbox_id": "iouv1s67jv2o81ey1xzmk",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:57:43.211500",
+  "total_time": 1577.57,
+  "sandbox_id": "izvv1scfpa6itm4o6v2cv",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -67,17 +69,29 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.41,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:111: test `test_batch_is_full_reset_after_hisparse` has 1 assert(s), a', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.76,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 419.93,
-      "at": "2026-04-09T15:04:51.485988"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -109,6 +123,14 @@
       "backend": "fireworks",
       "time": 1662.11,
       "at": "2026-04-12T03:54:00.287299"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1577.57,
+      "at": "2026-04-15T05:57:43.211500"
     }
   ]
 }

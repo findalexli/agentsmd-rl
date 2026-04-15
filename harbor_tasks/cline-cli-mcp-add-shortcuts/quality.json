@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all key file paths (cli/src/utils/mcp.ts, cli/src/index.ts, cli/src/utils/mcp.test.ts, cli/src/index.test.ts), required exports (export async function addMcpServerShortcut, export interface McpAddOptions, export interface AddMcpServerResult), literal strings ('return \"streamableHttp\"', 'ServerConfigSchema.parse(config)', 'already exists', 'Use --type http', 'Looks like you provided a URL'), function names (addMcpServer, initializeCliContext), and schema details ("
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive, specifying exact export signatures ('export async function addMcpServerShortcut'), exact literal strings to include ('return \"streamableHttp\"', 'ServerConfigSchema.parse(config)'), exact function names in specific files ('async function addMcpServer' in index.ts), and exact import patterns ('from \"./utils/mcp\"'). This goes beyond describing what's broken and dictates the exact implementation, leaving little reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'export async function addMcpServerShortcut' in mcp.ts, exact string 'return \"streamableHttp\"' in mcp.ts, exact string 'ServerConfigSchema.parse(config)' in mcp.ts, exact string 'from \"./utils/mcp\"' in index.ts, exact string 'async function addMcpServer(' in index.ts, and 'describe(\"mcp command\"' in index.test.ts. An alternative correct implementation using different function names, a different validation approach, or different i"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The vast majority of fail-to-pass tests (test_mcp_exports_addMcpServerShortcut, test_mcp_exports_McpAddOptions, test_mcp_http_maps_to_streamableHttp, test_mcp_uses_ServerConfigSchema, test_mcp_validates_url_without_type, test_mcp_checks_duplicate_names, etc.) are purely string-matching assertions like `assert 'export async function addMcpServerShortcut' in content`. Only the pass-to-pass tests (test_repo_cli_utils_tests, etc.) actually execute code via subprocess. No fail-to-pass test imports, c"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since tests only check for string presence in source files (e.g., 'assert \"already exists\" in content'), an agent could create a file containing all required strings as comments or dead code without any functional implementation, and all fail-to-pass tests would pass. For example, a mcp.ts file with only comments containing the required strings would satisfy most tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /workspace/cline after solve.sh runs, and the test file test_outputs.py is accessible at the test path. An agent could read the solution file or grep for the exact fixture strings needed. Since tests only check for string presence, the agent could simply copy strings from test_outputs.py into source files to pass all assertions."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Key behaviors like actual config file writing, duplicate detection runtime behavior, URL validation runtime behavior, and correct JSON schema output are not functionally tested - only checked via string presence in source. The instruction requires 'The command should correctly add both stdio and HTTP servers' but no test actually runs the command and verifies output."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_mcp_utility_module_exists, test_mcp_http_maps_to_streamableHttp, etc.) and include docstrings categorizing them as fail-to-pass or pass-to-pass. The file has a clear header comment explaining what it validates."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the settings file JSON schema: '{ mcpServers: { [name]: { command, args?, type } } }' and specifies that remote servers include a 'url:' field, with type values 'stdio' and 'streamableHttp'."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, variable names, or other identifiers in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'return \"streamableHttp\"' for HTTP transport, 'ServerConfigSchema.parse(config)', exact export signatures, and exact function names in specific files. This goes beyond naming files/modules and dictates internal implementation choices."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code creation task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

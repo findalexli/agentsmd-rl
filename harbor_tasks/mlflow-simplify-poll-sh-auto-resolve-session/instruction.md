@@ -6,11 +6,25 @@ The Copilot polling script (`.claude/skills/copilot/poll.sh`) currently requires
 
 ## Expected Behavior
 
-`poll.sh` should accept just two arguments — `repo` (in `owner/repo` format) and `pr_number` — and internally resolve the most recent agent session for that repo and PR. The `gh agent-task list` command can be used to query sessions and filter by repository and PR number client-side (since `--repo` isn't supported). Take the most recent session by `createdAt`.
+`poll.sh` should accept just two arguments — `repo` (in `owner/repo` format) and `pr_number` — and internally resolve the most recent agent session for that repo and PR. The script must use `gh agent-task list --json` to retrieve session data, filter by `repository` and `pullRequestNumber` fields using jq, sort by `createdAt`, and extract the `id` of the most recent session.
 
-The existing polling loop and mark-ready-for-review logic should remain unchanged.
+Specifically:
+- The script must call `gh agent-task list` with `--json` output containing at least the fields `id`, `repository`, `pullRequestNumber`, and `createdAt`
+- The jq filter must select sessions matching the given `repository` and `pullRequestNumber`, sort by `createdAt`, and take the last (most recent)
+- The `id` field of the selected session becomes the session ID for polling
 
-## Files to Look At
+The existing polling loop (`while true`) and mark-ready-for-review logic (`gh pr ready`) should remain unchanged.
 
-- `.claude/skills/copilot/poll.sh` — the polling script that needs its interface simplified
-- `.claude/skills/copilot/SKILL.md` — the skill documentation that describes how to use poll.sh; update it to reflect the new simpler interface and ensure the `allowed-tools` list covers any new CLI commands used
+## Files to Modify
+
+### `.claude/skills/copilot/poll.sh`
+- Change the argument interface: the first argument (`$1`) should be assigned to a variable `repo=` and the second argument (`$2`) to a variable `pr_number=` (not `session_id`)
+- Remove any `session_id="$1"` assignment
+- Add a session resolution block that calls `gh agent-task list`, filters by `repository` and `pullRequestNumber` using jq, sorts by `createdAt`, and extracts the session `id`
+- Retain the existing `while true` polling loop and `gh pr ready` calls
+
+### `.claude/skills/copilot/SKILL.md`
+- Add `gh agent-task list:*` to the `allowed-tools` list
+- Update the polling section to show the simplified 2-argument usage (`poll.sh "<owner>/<repo>" <pr_number>`) without any `session_url` extraction
+- The polling section should describe the session resolution as automatic (using words like "automatic" or "auto")
+- Remove any `session_url=` or `session_id="${session_url` patterns from the polling documentation

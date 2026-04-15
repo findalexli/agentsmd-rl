@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:09:32.725807",
-  "total_time": 1534.04,
-  "sandbox_id": "iw6ufd000xav5ern4tteq",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:54:58.197908",
+  "total_time": 1275.93,
+  "sandbox_id": "ivjc3gpwodmrb4f1jmdhp",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -63,17 +65,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:75: test `test_syntax_check` has 1 assert(s), all pass on a stub impl ', 'A:[A] test_not_tautological @ tests/test_outputs.py:238: test `test_repo_python_syntax` has 1 assert(s), all pass on a stu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 152.38,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "fireworks",
-      "time": 1280.71,
-      "at": "2026-04-09T14:49:31.749452"
-    },
     {
       "verdict": "pass",
       "nop": 0,
@@ -105,6 +118,14 @@
       "backend": "fireworks",
       "time": 1534.04,
       "at": "2026-04-12T04:09:32.725807"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1275.93,
+      "at": "2026-04-15T05:54:58.197908"
     }
   ]
 }

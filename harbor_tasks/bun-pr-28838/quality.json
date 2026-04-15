@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_http_parser_has_duplicate_content_length_check asserts exact strings like 'for (HttpRequest::Header *h = req->headers;', 'contentLengthString.data() == nullptr', 'h->value.length() != contentLengthString.length()'. test_http_parser_rejects_empty_content_length asserts 'h->value.length() == 0'. test_http_parser_returns_400_on_conflict asserts 'HTTP_ERROR_400_BAD_REQUEST' (instruction says 'HTTP 400' but not th"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (duplicate Content-Length headers not checked) and the desired behavior (reject conflicting ones per RFC 9112 6.3), but does not specify exact code lines, variable names, or specific implementation patterns to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: 'for (HttpRequest::Header *h = req->headers;' (exact loop syntax), 'contentLengthString.data() == nullptr' (exact null check), 'h->value.length() != contentLengthString.length()' (exact comparison pattern), 'h->value.length() == 0' (exact empty check). An alternative correct fix using different variable names, iterators, or comparison logic would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test is a text-matching test using patterns like `'string' in content` or checking for exact substrings in file contents. No test compiles the C++ code, runs the HTTP parser, sends actual HTTP requests, or executes the TypeScript script. All tests are purely `assert 'foo' in open(path).read()` style."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply writes the expected string patterns into the files (e.g., adding comments containing 'for (HttpRequest::Header *h = req->headers;' and 'contentLengthString.data() == nullptr' etc.) would pass all tests without implementing any actual security fix. The tests only check for text presence, not behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it). The agent could read this file to discover exact code patterns. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them as comments without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires the script to 'support both human-readable and JSON output modes', 'handle pagination manually for GraphQL', 'show summary counts by type', 'label each entry with its kind', etc. Tests only check for presence of '--paginate' and 'graphql' strings, not actual script behavior. The HTTP fix behavior (actually rejecting requests) is also not tested via execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into two categories ('Code behavior tests' and 'Config/documentation update tests') with clear comments, descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "fail",
+      "reason": "The instruction specifies JSON output fields (when, user, kind, location, body, url, resolved, outdated) for the pr-comments script, but tests only check for 'resolved' and 'outdated' strings in CLAUDE.md, not that the actual script produces this schema. The schema is documented but not validated."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (HttpParser.h) which is appropriate for the task domain, but does not specify exact line numbers or exact code patterns to use. The file path is necessary context, not leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch for CLAUDE.md appends a new section (localized addition), package.json adds one line, and HttpParser.h modifies a specific section. These are localized changes that don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "structured_data_schema"
+  ],
+  "pass_count": 5,
+  "fail_count": 7
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp), the specific functions tested (readableStreamToArray, readableStreamToText, readableStreamToArrayBuffer, readableStreamToBytes, onCloseDirectStream, onFlushDirectStream, readableStreamToArrayBufferDirect), and describes the null vs undefined comparison issue, sink guard issue, and C++ exception handling issue. The test for C++ checks functions like readableStreamToText, readableStreamToForm"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix details: 'The current comparison operator does not exclude null' (implying change !== to !=), 'onCloseDirectStream and onFlushDirectStream access this.$sink without checking if it's already been cleaned up' (implying add a guard), 'readableStreamToArrayBufferDirect does not lock the stream' (implying add locking), and 'do not check for exceptions afterward' (implying add RETURN_IF_EXCEPTION). These are specific enough to be the fix itself rather than jus"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use regex to check for specific implementation patterns. For example, test_null_excluded_from_direct_stream_path checks for specific operators like '!=' vs '!==' against 'undefined' or 'null'. test_close_direct_stream_sink_guard checks for specific patterns like 'var X = this.$sink; if (!X) return;' or optional chaining '?.' \u2014 an alternative fix using a different guard pattern (e.g., 'if (this.$sink === undefined) return') would fail. test_stream_locked_on_direct_consumption checks for"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are essentially text-matching with regex on source files. test_null_excluded_from_direct_stream_path extracts operators via regex and evaluates JS semantics in Python (not executing JS). test_close_direct_stream_sink_guard and test_flush_direct_stream_sink_guard use regex to find guard patterns. test_cpp_exception_handling_after_call compiles a C program that does string matching on source. While the C compilation adds a layer, the core check is still 'does this string appear in the f"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that are absent in the base commit. For example, the base code uses !== for null comparison (which the test correctly identifies as buggy), and the sink guard is missing in the base. A stub or no-op wouldn't pass these pattern-matching tests since they check actual source file contents."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/bun level and the agent could read solution/solve.sh if it exists in the container. Additionally, since tests are pure source-file regex checks, the agent could grep the test file (tests/test_outputs.py) to discover exactly what patterns are expected and make minimal targeted edits to match."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four issues described in instruction.md are tested: null exclusion in readableStreamTo* functions, sink guards in onCloseDirectStream and onFlushDirectStream, stream locking in readableStreamToArrayBufferDirect, and C++ exception handling after call()."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_null_excluded_from_direct_stream_path, test_close_direct_stream_sink_guard, etc.), grouped into pass-to-pass and fail-to-pass sections with clear comments, and each has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing source code bugs, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction and tests appear correct and consistent with the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact functions and exact nature of the fix: 'initializeArrayBufferStream sets underlyingSource to null \u2014 not undefined. The current comparison operator does not exclude null' directly points to changing !== to !=. It also names onCloseDirectStream, onFlushDirectStream, and readableStreamToArrayBufferDirect with specific descriptions of what's missing in each."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

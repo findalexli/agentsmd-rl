@@ -9,7 +9,7 @@ Additionally, the CLI's console output during `install` and workspace setup is p
 ## Expected Behavior
 
 1. The CLI should support `open` (launch browser without a URL) and `goto` (navigate to a URL) as distinct operations, while still allowing `open https://...` as a shorthand.
-2. Console output for the install flow should use emoji prefixes (`✅` for success, `❌` for errors) and wrap file paths in backticks for clarity.
+2. Console output for the install flow should use emoji status prefixes — the Unicode character U+2705 (✅, "CHECK MARK") for success messages and U+274C (❌, "CROSS MARK") for error messages. File path references in output should be wrapped in literal backtick characters for clarity.
 3. The project's skill documentation file should be updated to reflect the open/goto split, show `close` in usage examples, and fix the install command syntax.
 
 ## Files to Look At

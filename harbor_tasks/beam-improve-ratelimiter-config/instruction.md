@@ -16,8 +16,59 @@ The README only lists Python pipeline examples but the rate limiter also works w
 
 3. **Documentation**: After making the code changes, update the README to document the new variables and add Java pipeline examples.
 
-## Files to Look At
+## Terraform Module Structure
 
-- `examples/terraform/envoy-ratelimiter/ratelimit.tf` — main resource definitions
-- `examples/terraform/envoy-ratelimiter/variables.tf` — input variable declarations
-- `examples/terraform/envoy-ratelimiter/README.md` — module documentation with variable reference table
+The module uses the following Terraform files in `examples/terraform/envoy-ratelimiter/`:
+
+- `ratelimit.tf` — main Kubernetes resource definitions (ConfigMap, Redis, Rate Limiter, HPA, services)
+- `variables.tf` — input variable declarations
+- `gke.tf` — GKE cluster configuration with private cluster support
+- `outputs.tf` — output values including cluster name and load balancer IP
+- `prerequisites.tf` — GCP project services and API enablement
+- `provider.tf` — Terraform provider configuration
+- `README.md` — module documentation
+
+## Required Variables (variables.tf)
+
+The following variables must be defined in `variables.tf`:
+
+- `project_id` — GCP project ID
+- `vpc_name` — VPC network name
+- `subnet_name` — subnet name
+- `ratelimit_config_yaml` — rate limit configuration YAML
+- A **namespace** variable (string type, default `"envoy-ratelimiter"`) to specify the Kubernetes namespace for deployment
+- An **enable_metrics** variable (boolean type, default `false`) to control whether the statsd-exporter sidecar is deployed
+
+## Required Outputs (outputs.tf)
+
+The module must define the following outputs in `outputs.tf`:
+
+- `cluster_name` — the GKE cluster name
+- `load_balancer_ip` — the external load balancer IP address
+
+## gke.tf Requirements
+
+The GKE cluster resource must include `private_cluster_config` block and reference the following variables: `var.cluster_name`, `var.control_plane_cidr`, `var.deletion_protection`.
+
+## Kubernetes Resources (ratelimit.tf)
+
+The following Kubernetes resources must exist in `ratelimit.tf`:
+
+- `kubernetes_deployment` named `ratelimit`
+- `kubernetes_deployment` named `redis`
+- `kubernetes_service` named `ratelimit`
+- `kubernetes_service` named `redis`
+- `kubernetes_config_map` named `ratelimit_config`
+- `kubernetes_horizontal_pod_autoscaler_v2`
+
+All Kubernetes resources must set `namespace = var.<namespace_var>` where `<namespace_var>` is the namespace variable defined in variables.tf.
+
+## Conditional Metrics Sidecar
+
+The statsd-exporter sidecar container must only be deployed when metrics are enabled. This requires using Terraform's `dynamic` block with `for_each` gated on the enable_metrics variable. When metrics are disabled, the `USE_STATSD` environment variable must be set to `"false"`.
+
+## Files to Modify
+
+- `examples/terraform/envoy-ratelimiter/ratelimit.tf` — add namespace resources, conditional sidecar
+- `examples/terraform/envoy-ratelimiter/variables.tf` — add namespace and enable_metrics variables
+- `examples/terraform/envoy-ratelimiter/README.md` — document new variables and add Java examples

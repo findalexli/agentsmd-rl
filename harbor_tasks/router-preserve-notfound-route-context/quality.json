@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All file paths (packages/react-router/src/Match.tsx, packages/solid-router/src/Match.tsx, packages/solid-router/src/not-found.tsx, packages/vue-router/src/Match.tsx), function names (getNotFound), and literal string patterns (error.routeId ??= matchState.routeId, notFoundError.routeId ??=, etc.) checked in tests are explicitly named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact implementation details: 'error.routeId ??= matchState.routeId' appearing twice, 'getNotFound' function name, '(error as any)?.cause' pattern, 'error.routeId ??= matchData.value?.routeId as any' - these are the exact code changes, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_react_match_assigns_routeId_onCatch assert exact string 'error.routeId ??= matchState.routeId' via _file_contains. An alternative correct fix using e.g. 'error.routeId = error.routeId ?? matchState.routeId' or a different variable name would fail. test_solid_notFound_exports_getNotFound checks for exact string 'export function getNotFound' and '(error as any)?.cause'. test_vue_match_assigns_routeId checks for exact string 'error.routeId ??= matchData.value?.routeId as any'."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_react_match_assigns_routeId_onCatch, test_react_match_assigns_routeId_in_fallback, test_solid_match_uses_getNotFound_helper, test_solid_notFound_exports_getNotFound, test_vue_match_assigns_routeId) are ALL text-matching via _file_contains checking for literal strings in source files. While pass-to-pass tests run actual test suites, the core f2p tests are purely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check if specific strings exist in files (e.g., test_react_match_assigns_routeId_onCatch checks 'error.routeId ??= matchState.routeId' in Match.tsx). An agent could simply append a comment containing that string to the file, or add dead code containing the pattern, without actually fixing the bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router accessible to the agent. The agent could read solve.sh or the gold patch from /solution/ directory. Also, since f2p tests are pure string matching, the agent could grep test files to find the exact strings being checked and insert them as dead code."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (React routeId assignment in onCatch and fallback, Solid getNotFound helper with cause unwrapping, Vue routeId assignment) are tested, plus pass-to-pass tests verify existing test suites, types, and eslint pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments ('Fail-to-pass tests' and 'Pass-to-pass tests'), each has a descriptive docstring explaining purpose, and naming follows clear conventions."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files, exact code patterns ('error.routeId ??= matchState.routeId'), exact function names to create ('getNotFound'), and exact locations within those files (onCatch handler, fallback handler). This goes far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

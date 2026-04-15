@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the UPDATE statements for log and dag tables, batch_alter_table, the nullable=False constraint, and the upgrade function. All test-asserted specifics (file path, function name, string literals like 'UPDATE log SET event', 'UPDATE dag SET is_stale = false', 'disable_sqlite_fkeys', 'batch_alter_table', 'nullable=False') are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The UPDATE statements that set default values for NULL rows must execute while foreign key checks are disabled' and mentions 'The disable_sqlite_fkeys context manager is available for temporarily disabling foreign key checks.' This essentially tells the agent the exact fix: move the UPDATE statements inside the disable_sqlite_fkeys context manager. A competent developer doesn't need to reason about what to change \u2014 the instruction spells it out."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_update_log_inside_disable_sqlite_fkeys and test_update_dag_inside_disable_sqlite_fkeys use AST walking to check that op.execute('UPDATE log...') and op.execute('UPDATE dag...') calls are inside the disable_sqlite_fkeys with-block. An alternative correct fix that, e.g., uses raw connection.execute() instead of op.execute(), or uses text() wrappers, or disables FK checks via a different mechanism (direct PRAGMA calls) would fail these tests. The tests are tightly coupled to the gol"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test inspects the source text of the migration file using ast.parse, string searching, or line-number comparisons. No test actually imports the migration, runs it against a SQLite database, or executes any subprocess. Tests like test_sqlite_fk_pragma_ignored_with_active_transaction just check line ordering in source code. This is purely textual/structural verification, not behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_update_log_inside_disable_sqlite_fkeys, test_update_dag_inside_disable_sqlite_fkeys, test_sqlite_fk_pragma_ignored_with_active_transaction) would fail on the original unpatched code where UPDATE statements are outside the context manager. A stub/no-op wouldn't pass since the original file exists and has a specific structure that fails these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/airflow with the solve.sh script accessible in the container. The agent could read /solution/solve.sh or the gold patch directly. Additionally, the tests only check file content, so the agent could grep test files to discover exactly what structure is expected."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that UPDATE statements execute inside disable_sqlite_fkeys context, that the migration completes on SQLite with FK relationships, and the tests verify the structural placement of UPDATEs inside the context manager, valid syntax, and correct UPDATE content."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into four classes (TestMigration0097Structure, TestSQLiteForeignKeyBehavior, TestMigrationSyntax, TestUpdateStatementContent) with descriptive names and docstrings explaining the purpose of each test."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing a migration file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, SQL statements, and variable names are all correctly spelled and consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact migration file path, states 'The disable_sqlite_fkeys context manager is available,' and says 'The UPDATE statements that set default values for NULL rows must execute while foreign key checks are disabled.' This directly reveals the fix location and approach, going beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Python migration file, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

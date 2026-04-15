@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:15:06.355054",
-  "total_time": 1374.56,
-  "sandbox_id": "iz42s8fb6971s7cj5nf79",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:26:50.949374",
+  "total_time": 988.76,
+  "sandbox_id": "iopmsr1au17bltdlpoatm",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,30 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.43,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:149: test `test_codegen_mps_imports` has 1 assert(s), all pass on a st', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: sympy, filelock, typing-extensions, pyyaml, ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.68,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 310.35,
-      "at": "2026-04-09T15:03:01.922349"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +113,14 @@
       "backend": "fireworks",
       "time": 1374.56,
       "at": "2026-04-12T06:15:06.355054"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 988.76,
+      "at": "2026-04-15T05:26:50.949374"
     }
   ]
 }

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all key specifics: file paths (tests/setupAfterEnv.ts, tests/shared/focusTest.tsx), type names (SnapshotTarget, FocusableRef), function names (formatHTML, getElement), variable names (cloneNodes), and the exact type signatures and patterns tested. The tests check for exact strings like 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]' which is explicitly described in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Define a SnapshotTarget type for DOM elements (union of HTMLElement, DocumentFragment, HTMLCollection, NodeList, Node[])', 'Replace as any with as HTMLElement', 'Define a FocusableRef type with focus: () => void and blur: () => void methods', 'Use querySelector<HTMLElement>()', etc. These are specific implementation directives, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact string matching like 'function formatHTML(nodes: SnapshotTarget)' and 'const getElement = (container: HTMLElement): HTMLElement => {' and 'type FocusableRef = {'. Alternative correct fixes using interfaces instead of type aliases (e.g., 'interface FocusableRef {'), different formatting, or different variable names would fail these tests despite being equally valid TypeScript improvements."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_snapshot_target_type_exists, test_format_html_uses_proper_types, test_print_uses_type_assertion, test_focusable_ref_type_exists, test_focus_test_ref_uses_proper_type, test_get_element_returns_typed_element, test_fire_event_calls_without_nonnull_assertion) are ALL pure text matching using 'assert X in content'. While there are some pass-to-pass tests that run tsc/eslint, the core f2p tests are entirely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific type definitions and signatures that don't exist in the original code. A stub or no-op wouldn't pass because the original files don't contain 'type SnapshotTarget', 'type FocusableRef', 'querySelector<HTMLElement>', etc. The agent must actually modify the files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/ant-design/tests/test_outputs.py (or solution/solve.sh if accessible) to see exact expected strings like 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]'. The tests use literal string matching so the agent could grep for expected values and insert them verbatim without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: SnapshotTarget type definition, formatHTML parameter typing, cloneNodes typing, SnapshotTarget assertions in print functions, FocusableRef type, createRef typing, getElement return type, querySelector generic, null check, removal of non-null assertions, and compilation/lint checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings (e.g., 'test_snapshot_target_type_exists' with 'Fail-to-pass: SnapshotTarget type must be defined'). Tests are logically grouped by file and concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves TypeScript type modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, type names, and commands appear correct and consistent between instruction.md and the test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'Define a SnapshotTarget type (union of HTMLElement, DocumentFragment, HTMLCollection, NodeList, Node[])', 'Replace as any with as HTMLElement in cloneNode calls', 'let cloneNodes: Node | Node[]' equivalent guidance. This goes beyond identifying the problem area to specifying the exact solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "fail",
+      "reason": "The gold solution modifies package.json to add pnpm overrides, overrides, and resolutions for @sinonjs/fake-timers, which is not mentioned anywhere in instruction.md. This is a hidden config change that contradicts the task scope described to the agent."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage",
+    "config_edit_scope_bounded"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

@@ -2,21 +2,13 @@
 
 ## Problem Description
 
-The Popconfirm component currently supports semantic styling through `classNames` and `styles` props for various elements (root, container, title, content, arrow). However, the **icon element** is missing from this semantic styling system.
+The Popconfirm component currently supports semantic styling through `classNames` and `styles` props for the root, container, title, content, and arrow elements. However, the **icon element** is missing from this semantic styling system.
 
-Users cannot apply custom CSS classes or inline styles to the confirmation icon via the semantic API.
-
-## Files to Modify
-
-You need to modify the following files in `components/popconfirm/`:
-
-1. **index.tsx** - Define `PopconfirmSemanticType` with `icon` field support in both `classNames` and `styles`
-2. **PurePanel.tsx** - Apply `classNames?.icon` and `styles?.icon` to the icon `<span>` element
-3. **demo/_semantic.tsx** - Add icon to the semantics documentation list
+When users pass `classNames={{ icon: 'my-class' }}` or `styles={{ icon: { color: 'blue' } }}` to Popconfirm, these values should be applied to the confirmation icon element, but currently they have no effect.
 
 ## Expected Behavior
 
-After your changes, users should be able to:
+Users should be able to customize the icon element through the semantic API. The following usage pattern should work:
 
 ```tsx
 <Popconfirm
@@ -28,36 +20,48 @@ After your changes, users should be able to:
 </Popconfirm>
 ```
 
-The icon element should receive both the custom class name and the inline styles.
+The icon wrapper element should receive both the base styling class (e.g., `ant-popconfirm-message-icon`) and any custom class name passed via `classNames.icon`. The inline styles passed via `styles.icon` should be applied to the icon wrapper's style attribute.
 
-## Type Requirements
+## Type Definition Requirements
 
-The type definition should extend the base semantic types:
+The semantic type definitions must be updated to include `icon` support:
 
-```typescript
-type PopconfirmSemanticType = {
-  classNames?: PopoverSemanticType['classNames'] & {
-    icon?: string;
-  };
-  styles?: PopoverSemanticType['styles'] & {
-    icon?: React.CSSProperties;
-  };
-};
-```
+- The type definition must be named `PopconfirmSemanticType`
+- It must also export `PopconfirmSemanticAllType` for use in component props
+- `classNames` should accept an `icon` field with type `string`
+- `styles` should accept an `icon` field with type `React.CSSProperties`
 
-## Implementation Notes
+The internal interface used for the overlay component's props must reference `PopconfirmSemanticAllType['classNames']` and `PopconfirmSemanticAllType['styles']` for its classNames and styles properties.
 
-- The icon span in `PurePanel.tsx` currently has a static className: `\`${prefixCls}-message-icon\``
-- Use `clsx()` to combine the base class with the optional `classNames?.icon`
-- Apply `styles?.icon` to the style prop of the icon span
-- The `OverlayProps` interface in `PurePanel.tsx` should reference `PopconfirmSemanticAllType` instead of `PopoverSemanticAllType`
+## Files to Modify
 
-## Testing
+The implementation should modify files within `components/popconfirm/`:
 
-The repository has existing tests in `components/popconfirm/__tests__/semantic.test.tsx`. Your implementation should pass these tests when they are updated to check for icon semantic styling.
+1. The main component entry file that defines `PopconfirmSemanticType`
+2. The panel implementation file that renders the icon element
+3. The demo file `demo/_semantic.tsx` that documents semantic elements
+4. The test file `__tests__/semantic.test.tsx` that validates semantic styling
+
+## Test Fixture Requirements
+
+The semantic test file must include assertions with these exact fixture values:
+
+**Static tests:**
+- `icon: 'custom-icon'` for classNames testing
+- `icon: { color: 'blue' }` for styles testing
+
+**Dynamic (function-based) tests:**
+- `icon: 'dynamic-icon'` for classNames testing
+- `icon: { color: props.placement === 'top' ? 'green' : 'transparent' }` for styles testing
+
+The demo documentation must include `icon` in the semantics list with the name `'icon'`.
+
+## Verification
 
 You can verify your changes work by running:
 
 ```bash
 npm test -- --testPathPattern=popconfirm/__tests__/semantic
 ```
+
+All repository tests (lint, TypeScript, unit tests) should also pass after your changes.

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
-  "nop_reward": 0,
+  "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:34:40.883574",
-  "total_time": 3255.67,
-  "sandbox_id": "i75zwpxmauv6x9ti67h64",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:16:48.540831",
+  "total_time": 1504.99,
+  "sandbox_id": "ikzxvqomz18voscuh2rgl",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,6 +35,27 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 568.87
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.38,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:207: test `test_modified_files_deps_updated` has 1 assert(s), all pass', 'A:[A] test_not_tautological @ tests/test_outputs.py:763: test `test_session_flag_in_error_messages` has 1 assert(s), all p']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.69,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
@@ -43,6 +66,14 @@
       "backend": "fireworks",
       "time": 3255.67,
       "at": "2026-04-12T04:34:40.883574"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1504.99,
+      "at": "2026-04-15T05:16:48.540831"
     }
   ]
 }

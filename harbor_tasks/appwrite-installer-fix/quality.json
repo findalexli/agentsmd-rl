@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all file paths, method names (hasExplicitCliParams, performInstallation, trackSelfHostedInstall), key names ('ip' vs 'hostIp'), specific calls (Runtime::enableCoroutine(SWOOLE_HOOK_ALL), setConnectTimeout(5000), setTimeout(5000), Coroutine::getCid(), go()), and UI changes that the tests assert on. Every test-asserted specific is discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'Add Runtime::enableCoroutine(SWOOLE_HOOK_ALL)', 'Add setConnectTimeout(5000) and setTimeout(5000)', 'Change the key from hostIp to ip', 'Add a $responseSent flag', 'wrap the tracking call in a go() coroutine', and 'Add a hasExplicitCliParams() method'. These are exact fixes, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact method signature 'private function hasExplicitCliParams(): bool', exact parameter '?callable $onComplete = null', exact variable name '$responseSent', exact string 'go(function ()' in content, 'Coroutine::getCid()' literal, '$hostIp !== false' exact string. Alternative correct fixes (e.g., using a different method name, different parameter approach, different coroutine detection) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests are pure text searches: reading file content and asserting substrings like 'assert \"Runtime::enableCoroutine(SWOOLE_HOOK_ALL)\" in content', 'assert \"@gethostbyname\" in content', 'assert \"go(function ()\" in content'. No tests import/call the PHP code or execute it to verify behavior. Only p2p tests run 'php -l' for syntax checking."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are text-matching (e.g., checking if a string like 'Runtime::enableCoroutine(SWOOLE_HOOK_ALL)' exists in a file), an agent could simply append the required strings as comments or dead code to pass all tests without actually implementing any bug fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests are pure string matching, the agent could grep test files for expected strings and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 11 issues described in instruction.md have corresponding test coverage: coroutine enabling, CLI params, DNS error suppression, IP key, timeouts, onComplete callback, coroutine tracking, upgrade detection, step-4 template, step-5 text, and CSS upgrade mode."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (PASS-TO-PASS TESTS, FAIL-TO-PASS TESTS), descriptive function names (test_swoole_coroutine_enabled, test_has_explicit_cli_params_method), and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing PHP code/templates/CSS, not producing structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, method names, and commands in the instruction are consistent with the actual repository structure and test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact method signatures ('hasExplicitCliParams()'), exact variable names ('$responseSent'), exact API calls ('setConnectTimeout(5000)'), and exact implementation patterns ('wrap in go() coroutine'). This goes well beyond identifying what's broken and essentially dictates the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a configuration-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

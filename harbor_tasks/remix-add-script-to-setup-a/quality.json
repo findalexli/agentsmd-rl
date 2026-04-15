@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions map to specifics mentioned in instruction.md: file paths (scripts/utils/process.ts, scripts/setup-installable-branch.ts, package.json, .github/workflows/nightly.yml, README.md, CONTRIBUTING.md), string literals (logAndExec, gitignore, dependencies, parseArgs/argv, schedule, setup-installable-branch, ## Installation, nightly, remix-run/remix#, path:, Nightly), and behavioral requirements (capture mode returning string, default returning string) are all described in the instruc"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what functionality is needed (capture mode for logAndExec, script behavior, workflow triggers, documentation sections) but does not give exact code implementations or line-by-line changes. The developer must reason about how to implement each piece."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_setup_script_exists checks for exact string 'logAndExec' in the script, 'gitignore' (case-insensitive), 'dependencies', and 'parseArgs' or 'argv'. These are explicitly required by instruction.md, but the test for 'gitignore' uses content.lower() which is flexible. However, tests like test_contributing_nightly_section assert exact strings like 'Nightly' (capital N) and 'setup-installable-branch' which are implementation-specific names mandated by the task. These are reasonable since the inst"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_logandexec_capture_returns_output and test_logandexec_default_returns_string actually execute the code via subprocess with node --experimental-strip-types and check runtime behavior (return type and value). test_repo_lint, test_repo_typecheck, test_repo_build etc. run actual build/lint commands. While some tests (test_setup_script_exists, test_readme_installation_section, etc.) are text-based, the critical behavioral tests do execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_logandexec_capture_returns_output requires logAndExec('echo CAPTURE_WORKS', true) to return a string containing 'CAPTURE_WORKS' \u2014 a stub returning empty string or undefined would fail. test_logandexec_default_returns_string requires the return type to be 'string' \u2014 the original void-returning function would fail. test_setup_script_exists requires specific content in a file that doesn't exist yet. These cannot be satisfied by stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container at /workspace or is accessible. The Dockerfile doesn't explicitly prevent access to /solution/. Additionally, the test file itself at tests/test_outputs.py contains the exact fixture strings and expected behaviors. An agent could read these files to reverse-engineer the solution without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: logAndExec capture mode, logAndExec default return, setup script existence with key strings, package.json registration, nightly workflow with schedule/script reference, README installation section, CONTRIBUTING nightly section, plus pass-to-pass repo checks (lint, typecheck, build, format, changes:validate)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_logandexec_capture_returns_output, test_readme_installation_section), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change at a functional level (add capture mode to logAndExec, create new script, etc.) without specifying exact line numbers or giving the complete implementation code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it's a code creation/modification task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

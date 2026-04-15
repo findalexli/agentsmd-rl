@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (python/sglang/test/runners.py), the class (HFRunner), the method (forward()), the blocking call (self.out_queue.get()), and the expected behavior (raise RuntimeError with subprocess exit code). Tests check these same elements. The specific exit codes tested (1, 42, 137, -9, -15, -11) are not named in the instruction, but these are just parameterized values testing the described behavior of including the exit code in the error message, which is discoverable from th"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (forward() hangs when subprocess dies) and what the expected behavior is (raise RuntimeError with exit code), but does not prescribe the specific implementation (e.g., polling with timeout, using queue_mod.Empty, the while True loop pattern). A developer must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: (1) RuntimeError is raised when process is dead, (2) the error message contains the exit code string, (3) it doesn't hang (completes in <15s), (4) normal operation still works. Alternative implementations (e.g., threading with a watcher, checking process before get, using different timeout values, different polling strategies) would all pass these tests as long as they raise RuntimeError with the exit code. Tests don't assert on specific variable names, line po"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the forward() method body via AST parsing, construct executable scripts with mock objects, run them as subprocesses, and check return codes and runtime behavior. Only test_syntax_check and test_not_stub do static analysis, which is appropriate for gate tests. The core fail-to-pass tests execute the actual code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., 'return None' or 'pass') would fail test_forward_returns_when_alive (which checks the result equals the queued payload) and would fail test_dead_process_raises_runtime_error (which requires a RuntimeError to be raised). The original buggy code (blocking self.out_queue.get()) would hang and fail test_no_hang_on_dead_process. No trivial stub satisfies all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sglang's git history context and solve.sh is at solution/solve.sh in the container. An agent could potentially read /solution/solve.sh (if mounted) or inspect the git log. The Dockerfile doesn't explicitly remove solution/ files or restrict access. Additionally, the agent could grep the test file at tests/test_outputs.py to see the exact mock infrastructure and expected behavior, reverse-engineering the precise solution pattern needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies two behaviors: (1) normal operation returns queue result as before, tested by test_forward_returns_when_alive; (2) dead subprocess raises RuntimeError with exit code, tested by test_dead_process_raises_runtime_error, test_dead_process_negative_exitcode, and test_no_hang_on_dead_process. Both required behaviors are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (Gates, Fail-to-pass, Pass-to-pass regression, anti-stub), each test has a descriptive name and docstring, and annotations like [static], [pr_diff], [repo_tests] classify each test's category."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a hanging bug in a Python method, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (python/sglang/test/runners.py), class/method names (HFRunner, forward), and error type (RuntimeError) are all spelled correctly and consistently across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file, class, and method, which is appropriate since the bug location is explicitly part of the task description (not something the agent needs to discover). It doesn't specify exact line numbers or the specific fix mechanism."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

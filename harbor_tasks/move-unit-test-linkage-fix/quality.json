@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'shared::{gas::GasMeter, linkage_context}', 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();', 'linkage_context::LinkageContext::new(linkage_table).unwrap();', and 'StoredPackage::from_module_for_testing_with_linkage('. While instruction.md describes the general approach, it does not name the exact method 'from_module_for_testing_with_linkage' (singular 'module') \u2014 it only vaguely says 'a method that accepts linkage context"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to: import linkage_context from move_vm_runtime::shared, create a linkage table with identity mapping using packages.keys(), create LinkageContext::new(linkage_table), and change to a method that accepts linkage context with cloned linkage_context. This is essentially the complete solution, leaving virtually no reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings: 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();' in test_linkage_table_construction, 'linkage_context::LinkageContext::new(linkage_table).unwrap();' in test_linkage_context_creation, exact import pattern 'shared::{gas::GasMeter, linkage_context}' in test_linkage_context_import_present. Any alternative correct implementation using different variable names, different collect patterns, or different import formatting would fail th"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_linkage_context_import_present, test_linkage_table_construction, test_linkage_context_creation, test_stored_package_with_linkage, test_old_method_not_used, test_linkage_context_passed_to_stored_package) are all pure text-matching assertions using 'assert pattern in content'. While there are pass-to-pass tests that compile/run the code (test_code_compiles, test_unit_tests_run), the core f2p tests only check file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string presence in file content. An agent could simply insert the exact strings as comments or dead code without understanding the bug, and all f2p tests would pass. The compilation tests (pass-to-pass) would catch some issues, but the f2p tests themselves are trivially satisfiable by string insertion."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/sui (the solve.sh applies a git patch there), and the agent could read the solution/solve.sh file or the test file itself (tests/test_outputs.py) to extract the exact literal strings being asserted. The tests check for exact string patterns that are visible in the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (import linkage_context, create linkage table, create LinkageContext, update package loading, compilation verification) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_linkage_context_import_present, test_linkage_table_construction, etc.), have docstrings explaining fail-to-pass vs pass-to-pass nature, and are logically grouped."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies Rust source code, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in instruction.md and tests appear consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact function to modify (setup_test_storage), the exact file path (external-crates/move/crates/move-unit-test/src/test_runner.rs), the exact module to import (linkage_context from move_vm_runtime::shared), and describes the exact code changes step by step. This is excessive localization that eliminates the debugging/localization aspect of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

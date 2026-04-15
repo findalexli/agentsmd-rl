@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact import line, exact string patterns for type assertions, the file path (use-form.ts in @mantine/form), ESLint passing, and Jest tests passing \u2014 all of which correspond to the test assertions. The tests check for specific strings like 'import type { FormPathValue, LooseKeys }' and 'previousValue: getPath(path, previousValues) as FormPathValue<', all of which are explicitly stated in the Acceptance Criteria."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: add 'import type { FormPathValue, LooseKeys } from ./paths.types', use 'as FormPathValue<Values, LooseKeys<Values>>' type assertions on specific lines. It tells the agent exactly what code to write, leaving no reasoning about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact string patterns like 'previousValue: getPath(path, previousValues) as FormPathValue<' and the exact import line. An alternative correct fix that used a different type assertion approach (e.g., generic parameter on getPath, a wrapper function, or different formatting) would fail the string-matching tests even if it achieved the same type safety."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The two fail-to-pass tests (test_form_watch_types_import_present and test_form_watch_callback_has_type_assertions) are purely text-matching tests using 'assert ... in content' on the source file. They do not compile TypeScript, run the code, or verify type-checking behavior. The pass-to-pass tests (ESLint, Jest) do execute code but are not fail-to-pass."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for literal string presence in the source file. An agent could simply append the import line and the exact assertion strings as dead code/comments to pass both test_form_watch_types_import_present and test_form_watch_callback_has_type_assertions without actually fixing any bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/mantine's solve.sh and the test file itself contains the exact strings being checked. An agent could read tests/test_outputs.py or solution/solve.sh to extract the exact strings needed (e.g., 'import type { FormPathValue, LooseKeys } from ./paths.types;') and insert them into the file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) type-only import \u2014 tested by test_form_watch_types_import_present, (2) type assertions \u2014 tested by test_form_watch_callback_has_type_assertions, (3) runtime behavior unchanged \u2014 tested by Jest tests, (4) ESLint passing \u2014 tested by test_eslint_passes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_form_watch_types_import_present, test_form_watch_callback_has_type_assertions, etc.), have docstrings explaining what each test verifies and whether it's fail-to-pass or pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves TypeScript source code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact code patterns to insert (e.g., 'previousValue: getPath(path, previousValues) as FormPathValue<') which effectively identifies the exact lines in use-form.ts to modify, going far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

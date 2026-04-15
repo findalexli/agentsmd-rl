@@ -1,33 +1,52 @@
-# ToolRegistry service bypasses Effect dependency graph via async facades
+# ToolRegistry Service: Effect Dependency Graph Refactoring
 
 ## Context
 
-The `ToolRegistry` service in `packages/opencode/src/tool/registry.ts` is responsible for discovering, filtering, and initializing tools for the AI agent. It uses Effect for structured concurrency and dependency injection.
+The `ToolRegistry` service in `packages/opencode/src/tool/registry.ts` discovers, filters, and initializes tools for the AI agent. It uses the Effect library for structured concurrency and dependency injection.
 
 The `Plugin` service in `packages/opencode/src/plugin/index.ts` manages plugin lifecycle and hooks.
 
 ## Problem
 
-The ToolRegistry's `layer` definition has several issues related to improper Effect usage:
+The ToolRegistry's layer definition bypasses Effect's dependency tracking by using async convenience facades instead of yielding services through the Effect protocol. This breaks structured concurrency, error channels, and dependency injection for `Config.Service` and `Plugin.Service`.
 
-1. **Async facade leakage in state init**: Inside the `InstanceState.make` closure, the code wraps config directory scanning and plugin listing in a single `Effect.promise(async () => { ... })` block. Within that block, it calls `Config.directories()`, `Config.waitForDependencies()`, and `Plugin.list()` — all async convenience facades. Since this code is already inside an `Effect.gen` generator, it should yield the `Config.Service` and `Plugin.Service` directly and call their methods through the Effect protocol. This breaks Effect's dependency tracking and error channels.
+Symptoms include:
+- Config and plugin services are obtained via module-level async calls instead of Effect dependency injection
+- Concurrent tool initialization uses `Promise.all` instead of Effect concurrency primitives
+- Helper functions that should be part of the Effect layer are plain async functions
 
-2. **`all()` helper is async instead of effectful**: The `all()` function that assembles the tool list is defined as a plain `async function` that calls `Config.get()` (the async facade). It should be an Effect function that yields the config service.
+## Requirements
 
-3. **`tools()` uses Promise.all instead of Effect.forEach**: The `tools` method wraps `Promise.all(allTools.filter(...).map(async ...))` inside `Effect.promise`. Each tool init and plugin trigger call should be structured as Effect operations using `Effect.forEach` with concurrency, not a promise-based map.
+The refactored code must satisfy all of the following:
 
-4. **Missing layer composition**: Because the ToolRegistry should yield `Config.Service` and `Plugin.Service` directly in its generators, the layer needs proper composition that provides these dependencies. The `Plugin` module's layer also needs its `defaultLayer` to be accessible for this composition.
+1. **No async facades in state initialization**: The `InstanceState.make` closure must not call module-level async facades such as `Config.directories()`, `Config.waitForDependencies()`, or `Plugin.list()` directly.
 
-5. **Missing return type on tools facade**: The public `tools()` async function lacks an explicit return type annotation, which causes circular type inference issues with some tool types.
+2. **`all` helper must be Effectful**: Any function that assembles the tool list and calls `Config.get()` or equivalent must be defined as an Effect function (using `Effect.fn` or `Effect.gen`), not a plain `async function`.
 
-## Files to modify
+3. **Effect concurrency for tool init**: Concurrent tool initialization must not use `Promise.all`. It must use Effect concurrency primitives (`Effect.forEach` or `Effect.all`).
 
-- `packages/opencode/src/tool/registry.ts` — the main ToolRegistry service
-- `packages/opencode/src/plugin/index.ts` — the Plugin module (layer export visibility)
+4. **Services yielded via Effect protocol**: The layer generator must obtain `Config.Service` and `Plugin.Service` through the Effect dependency graph (using `yield*` on the service references), not through async facade calls.
+
+5. **Effect.fn usage**: The registry code must use `Effect.fn` for named/traced effect operations at least 3 times.
+
+6. **Effect.fnUntraced usage**: The registry code must use `Effect.fnUntraced` for internal or anonymous helper effects.
+
+7. **Exported defaultLayer in Plugin**: The `Plugin` module must export a `defaultLayer` constant.
+
+8. **Exported defaultLayer in ToolRegistry**: The `ToolRegistry` module must export a `defaultLayer` constant that composes `Config.defaultLayer` and `Plugin.defaultLayer`.
+
+9. **Explicit return type on tools facade**: The public `tools()` async function must have an explicit return type annotation.
+
+10. **Typecheck passes**: The repository's TypeScript typecheck (`bunx turbo typecheck`) must pass with no errors.
+
+11. **Tool registry tests pass**: The test suite `bun test test/tool/registry.test.ts` must pass.
+
+## Files to examine
+
+- `packages/opencode/src/tool/registry.ts` — ToolRegistry service
+- `packages/opencode/src/plugin/index.ts` — Plugin module
+- `packages/opencode/AGENTS.md` — Project Effect conventions
 
 ## Guidance
 
-- Refer to `packages/opencode/AGENTS.md` for the project's Effect conventions, especially the rules about yielding Effect services vs using async facades.
-- The `InstanceState.make` closure is an Effect generator — use `yield*` to call service methods.
-- For concurrent tool initialization, use `Effect.forEach` with `{ concurrency: "unbounded" }`.
-- The layer graph needs `Config.defaultLayer` and `Plugin.defaultLayer` provided to the ToolRegistry layer.
+Refer to `packages/opencode/AGENTS.md` for the project's Effect conventions. The rules about yielding Effect services versus using async facades are important for this refactoring.

@@ -8,13 +8,37 @@ Additionally, the PR number auto-detection only tries `gh pr view`, which fails 
 
 ## Expected Behavior
 
-1. After test verification completes, the skill should automatically update labels on the PR to indicate the verification result. There should be two mutually exclusive labels — one for when tests correctly fail without the fix (reproduction confirmed), and one for when tests pass without the fix (reproduction failed). The labels should toggle: adding one should remove the other.
+1. **Label Management Function**: Create a PowerShell function named `Update-VerificationLabels` that:
+   - Takes a `-ReproductionConfirmed` boolean parameter
+   - Uses two label constants: `$LabelConfirmed` set to `"ai-reproduction-confirmed"` and `$LabelFailed` set to `"ai-reproduction-failed"`
+   - Uses variables `$labelToAdd` and `$labelToRemove` to implement toggle logic
+   - Uses GitHub REST API with `DELETE` method to remove the opposite label
+   - Uses GitHub REST API with `POST` method to add the appropriate label
+   - Checks `$LASTEXITCODE` for error handling
+   - Has a guard for when PR number is `"unknown"`
 
-2. PR number auto-detection should have a fallback mechanism that works across forks.
+2. **Label Constants**: Define `$LabelConfirmed` and `$LabelFailed` in the script with values:
+   - `$LabelConfirmed = "ai-reproduction-confirmed"`
+   - `$LabelFailed = "ai-reproduction-failed"`
 
-3. The skill's SKILL.md documentation should be updated to describe the new label management feature, including what labels are used, when they're applied, and how they behave.
+3. **Function Calls**: Call `Update-VerificationLabels` with `-ReproductionConfirmed` parameter:
+   - Call with `$true` when tests correctly fail without the fix (reproduction confirmed)
+   - Call with `$false` when tests pass without the fix (reproduction failed)
+   - Must be called on all 4 verification code paths in the script
 
-## Files to Look At
+4. **PR Detection Fallback**: Improve PR number auto-detection:
+   - Keep `gh pr view` as the primary detection method
+   - Add fallback using `gh pr list --head` that works across forks
+   - Use a variable named `$foundPR` to track whether a PR was found
 
-- `.github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1` — the PowerShell verification script that needs the label management function and improved PR detection
-- `.github/skills/verify-tests-fail-without-fix/SKILL.md` — skill documentation that should be updated to cover the new feature
+5. **Documentation Update**: Update `SKILL.md` to include:
+   - A section titled exactly `## PR Labels`
+   - Both label names: `ai-reproduction-confirmed` and `ai-reproduction-failed`
+   - Description of toggle behavior (adding one label removes the other)
+   - A table describing the labels
+   - Updated workflow steps mentioning "PR labels"
+
+## Files to Modify
+
+- `.github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1` — add the `Update-VerificationLabels` function, label constants, function calls on all paths, and improved PR detection with `$foundPR` variable
+- `.github/skills/verify-tests-fail-without-fix/SKILL.md` — add `## PR Labels` section with both label names and toggle behavior description

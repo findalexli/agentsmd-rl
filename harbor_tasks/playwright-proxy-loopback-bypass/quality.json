@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/playwright-core/src/server/chromium/chromium.ts), the variable name (bypassesLoopback), the literal strings (localhost, 127.0.0.1, ::1, <-loopback>), the config files (.claude/skills/playwright-dev/github.md, SKILL.md), and the documentation requirements (branch naming, conventional commit, Fixes: line). All test assertions reference specifics that are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The corrected code must define a `const` named `bypassesLoopback` and use `!bypassesLoopback` in the conditional that decides whether to push `<-loopback>`.' This tells the agent exactly WHAT to change (introduce a const named bypassesLoopback, use it with ! in the conditional), leaving very little reasoning about the fix itself."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_proxy_bypass_logic_structure requires 'const bypassesLoopback' and '!bypassesLoopback' as literal strings. test_bypassesLoopback_variable_exists requires 'bypassesLoopback' in content. A correct alternative fix using a different variable name (e.g., 'hasLoopbackBypass') or different structure (e.g., inline condition checking all four values) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test is purely text-based: reading file contents and checking for string patterns (e.g., 'assert \"bypassesLoopback\" in content', 'assert \"const bypassesLoopback\" in content', regex searches on file text). No test imports, compiles, or executes the TypeScript code to verify actual proxy bypass behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_chromium_file_not_empty, test_chromium_ts_syntax, test_skill_md_structure_valid) pass on the unmodified repo without any changes. A stub that only creates github.md and adds a reference to SKILL.md while inserting the string 'const bypassesLoopback' and '!bypassesLoopback' anywhere in the file (even in a comment) would pass all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/playwright and the solve.sh script is in /solution/solve.sh. The agent could read /solution/solve.sh (or the patch within it) to get the exact fix. Additionally, since tests are purely text-matching, the agent could just insert the expected strings as comments without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three required behaviors from the instruction are tested: (1) the proxy bypass logic fix with bypassesLoopback variable, (2) creation of github.md with required content, (3) updating SKILL.md to reference github.md."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into three commented categories (Code Behavior Tests, Config/Documentation Update Tests, Anti-Regression Tests) with descriptive function names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file (chromium.ts), the exact variable name to create ('bypassesLoopback'), the exact usage pattern ('!bypassesLoopback in the conditional'), and the exact values to check (localhost, 127.0.0.1, ::1, <-loopback>). This is essentially a complete specification of the fix, not just a description of what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff for SKILL.md is a localized change (adding one line to the Table of Contents) and the new github.md file is self-contained. The solve.sh rewrites SKILL.md entirely but preserves structure; this doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

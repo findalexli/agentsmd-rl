@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions reference file paths (packages/element/src/distribute.ts, packages/excalidraw/actions/actionDistribute.tsx, packages/excalidraw/wysiwyg/textWysiwyg.tsx), function names (distributeElements, updateBoundElements), import patterns (Scene, from ./binding), and string literals (simultaneouslyUpdated: group, scene.mutateElement, newElementWith) that are explicitly named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Replace newElementWith with scene.mutateElement in both code paths', 'After each mutation, call updateBoundElements(element, scene, { simultaneouslyUpdated: group })', 'Add a scene: Scene parameter', 'Import updateBoundElements from \"./binding\"', and 'call updateBoundElements(container, app.scene) immediately after each mutateElement call'. This is a complete implementation specification, not a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details like 'updateBoundElements(element, scene' as a literal string, 'simultaneouslyUpdated: group' as a literal string, 'import type { Scene }' exact syntax, 'scene.mutateElement' exact string, and absence of 'newElementWith'. An alternative correct fix using different variable names (e.g., 'el' instead of 'element'), different import style (e.g., 'import { Scene }' without 'type'), or different call patterns would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of tests (test_distribute_imports_*, test_distribute_uses_*, test_distribute_calls_*, test_wysiwyg_*) are purely text-matching with `assert 'string' in open(path).read()` or regex on file content. While there are compilation/lint/test-runner tests, the core f2p tests checking the actual fix are all string-in-file checks, not behavioral execution tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The pass-to-pass tests (test_repo_typecheck, test_repo_lint, test_repo_distribute_tests, test_repo_binding_tests, test_repo_wysiwyg_tests) run actual test suites that would fail if the code changes broke functionality. A stub/no-op change wouldn't pass the existing distribute tests after removing newElementWith. The typecheck test ensures type correctness of the new Scene parameter."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/excalidraw (solution/solve.sh is mounted or accessible in the container). The agent could read the gold patch from the solution directory or grep test files to discover exact expected strings like 'updateBoundElements(element, scene' and 'simultaneouslyUpdated: group'."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: imports of updateBoundElements and Scene in distribute.ts, scene parameter addition, mutateElement usage, updateBoundElements calls in both code paths, app.scene passing in actionDistribute.tsx, and updateBoundElements calls after mutateElement in textWysiwyg.tsx."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, logically grouped by feature area (distribute imports, distribute behavior, action distribute, wysiwyg), and include a comment section header for pass-to-pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to TypeScript files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and commands in instruction.md and tests match the actual codebase correctly."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact function signatures, exact import statements, and exact call patterns (e.g., 'call updateBoundElements(element, scene, { simultaneouslyUpdated: group })'). This goes far beyond identifying the buggy area \u2014 it specifies the complete implementation down to parameter names and import sources."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

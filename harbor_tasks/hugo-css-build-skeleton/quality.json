@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (header.css, footer.css, main.css, css.html, js.html), required string contents (border-bottom, margin-bottom, border-top, margin-top, @import statements, css.Build, js.Build, minify/sourceMap options, cond patterns, 'linked', 'none', 'external' exclusion, targetPath exclusion), and the exact conditional patterns tested. All asserted specifics in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like the precise value '(cond hugo.IsDevelopment false true)' for minify and '(cond hugo.IsDevelopment \"linked\" \"none\")' for sourceMap, exact @import syntax, and that targetPath must be removed. This tells the agent exactly WHAT to write rather than describing broken behavior to diagnose."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_js_html_uses_cond_dict_pattern asserts the exact string '(cond hugo.IsDevelopment false true)' and '(cond hugo.IsDevelopment \"linked\" \"none\")' in the file content. An alternative correct implementation using e.g. 'cond (hugo.IsDevelopment) false true' or different whitespace/formatting would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While many tests do check file content via string matching, there are also execution-based tests: test_repo_go_build compiles Hugo, test_repo_go_vet runs go vet, test_repo_gofmt checks formatting, test_repo_css_build_tests and test_repo_create_package_tests run Go test suites, and test_skeleton_templates_valid builds a Hugo site with the skeleton theme in both development and production modes. Not every test is text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (file content checks for header.css, footer.css, main.css imports, css.html and js.html patterns) require actual file creation/modification with specific content. A stub or empty file would fail these assertions. The Go build/test tests also verify real compilation and test execution."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/hugo with solution/solve.sh containing the complete gold patch. The agent could read this file (cat /workspace/hugo/../../solution/solve.sh or similar path traversal) or simply execute it to pass all tests. No measures prevent reading the solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: component CSS files existence and content, main.css imports and no inline styles, css.html css.Build usage with options, js.html options pattern, no targetPath, no 'external', and Hugo build verification."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_header_css_exists, test_css_html_uses_css_build, etc.), each has a docstring explaining its purpose, and they are logically grouped by concern (file existence, template content, build verification)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces CSS files, HTML templates, and build artifacts - not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, commands, variable names, and configuration keys in the instruction match those used in tests and solution without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation values like '(cond hugo.IsDevelopment false true)' and '(cond hugo.IsDevelopment \"linked\" \"none\")', exact @import syntax, and that targetPath must not exist - these are implementation-level hints that go beyond describing the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/template editing task, not an agentmd-edits configuration task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

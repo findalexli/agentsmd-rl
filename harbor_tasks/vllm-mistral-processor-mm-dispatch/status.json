@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:31:13.263911",
-  "total_time": 1203.14,
-  "sandbox_id": "i5thhq4r3rvl8p6jwavel",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:17:08.824123",
+  "total_time": 619.2,
+  "sandbox_id": "inazh8k3r83je68rsqjgo",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -61,17 +63,27 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.54,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:167: test `test_get_hf_processor_preserved` has 1 assert(s), all pass ', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:29: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest, pytest-json-ctrf, ruff, regex, mypy']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.12,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1587.01,
-      "at": "2026-04-09T14:54:38.114629"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -103,6 +115,14 @@
       "backend": "fireworks",
       "time": 1203.14,
       "at": "2026-04-12T06:31:13.263911"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 619.2,
+      "at": "2026-04-15T06:17:08.824123"
     }
   ]
 }

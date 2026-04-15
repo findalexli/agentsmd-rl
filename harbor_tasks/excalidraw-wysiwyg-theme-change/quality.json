@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (packages/excalidraw/wysiwyg/textWysiwyg.tsx), variable names (LAST_THEME, unsubOnChange), API calls (app.onChangeEmitter.on, app.state.theme !== LAST_THEME), and the exact FIXME comment string. All asserted specifics in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: 'Declare a module-level variable: let LAST_THEME = app.state.theme', 'Use app.onChangeEmitter.on(...)', 'Store the unsubscribe function in a variable named unsubOnChange', and 'Include the comment FIXME after we start emitting updates from Store for appState.theme'. This is a complete specification of the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'let LAST_THEME = app.state.theme', 'app.onChangeEmitter.on', 'app.state.theme !== LAST_THEME', 'unsubOnChange()', and the exact FIXME comment. An alternative correct fix using different variable names (e.g., 'previousTheme'), different subscription mechanisms, or different comment text would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_last_theme_variable_exists, test_last_theme_updated_in_style_function, test_onchange_emitter_subscription_exists, test_unsub_onchange_cleanup_exists, test_fixme_comment_present) are ALL pure string-in-file checks using 'assert X in content'. They do not import, call, or execute the code to verify behavior. The pass-to-pass tests do run subprocesses but the f2p tests are entirely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests check for literal strings in the source file. An agent could pass all f2p tests by simply appending a comment block containing all the required strings (e.g., '// let LAST_THEME = app.state.theme; app.onChangeEmitter.on; app.state.theme !== LAST_THEME; unsubOnChange(); FIXME after we start emitting updates from Store for appState.theme') without implementing any actual fix. The brace/paren balance check in test_target_file_syntax_valid wouldn't catch this."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace and solution/solve.sh in the container. The agent could read it directly. Additionally, since tests only check for literal strings in the file, the agent could grep test_outputs.py for the expected strings and insert them as comments without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (LAST_THEME tracking, updateWysiwygStyle update, onChangeEmitter subscription, cleanup, FIXME comment) are tested, plus pass-to-pass tests verify existing tests still pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_last_theme_variable_exists, test_onchange_emitter_subscription_exists, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md match those referenced in tests and solution without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names ('LAST_THEME', 'unsubOnChange'), exact API calls ('app.onChangeEmitter.on'), exact placement ('module-level variable in the function scope'), and the exact FIXME comment text. This goes far beyond identifying the buggy file and essentially dictates the complete implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

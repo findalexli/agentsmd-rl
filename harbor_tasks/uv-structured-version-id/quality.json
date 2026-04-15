@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names VersionId, from_url, DisplaySafeUrl, the file path crates/uv-distribution-types/src/id.rs, the crate uv_redacted, the expected equality semantics for archive URLs (ignore hash fragments, preserve subdirectory), Git URLs (ignore irrelevant fragments like egg=, preserve subdirectory), and the .unwrap() convention. All test-specific behaviors (archive hash ignoring, subdirectory preservation, git fragment ignoring, no .unwrap() in production) are discoverable from the instruct"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (hash fragments cause different VersionId values) and the expected behavior (structured identity semantics) but does not prescribe the exact code changes, enum variants, or helper functions to add. A developer must still reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The injected Rust tests only call the public API VersionId::from_url and check equality/inequality of results. They don't assert on specific enum variant names (ArchiveUrl, Git, etc.), internal helper functions, or implementation details. Alternative correct implementations (e.g., stripping fragments before hashing, different enum structures, different parsing approaches) would all pass as long as the equality semantics are correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests inject Rust test code that is compiled and executed via cargo test, calling VersionId::from_url and asserting on equality/inequality of returned values. The Python tests also run cargo check, cargo fmt, cargo clippy, and cargo test as subprocesses. The only text-based check is test_no_unwrap_in_production_code which inspects source for .unwrap(), but the behavioral tests are execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests assert that VersionId::from_url returns equal values for URLs differing only in hash fragments and different values for URLs with different subdirectories. A stub/default implementation (e.g., returning a fixed value) would fail test_archive_urls_different_subdirectories_differ which asserts inequality. The existing code before the fix would fail the equality tests since it uses CanonicalUrl which includes fragments."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/solution/solve.sh (or wherever Harbor mounts it) and the gold patch is in the container. The agent could read /solution/solve.sh or inspect the test file at tests/test_outputs.py to see the exact injected Rust tests and the BENCHMARK_RUST_TESTS constant, then craft a solution to match. There's no evidence of measures preventing the agent from reading these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: (1) archive URLs with different hashes should be equal (tested), (2) subdirectory semantics preserved (tested for both same and different subdirectories), (3) Git URLs with irrelevant fragments should be equal (tested), (4) no .unwrap() in production code (tested). Local path/directory identity is mentioned but not tested, which is a minor gap, but all explicitly required behaviors have corresponding tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections with clear comments (Gates pass_to_pass/static, Gates pass_to_pass/repo_tests, Fail-to-pass pr_diff, Pass-to-pass agent_config). Each test function has a descriptive docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (crates/uv-distribution-types/src/id.rs), the exact type (VersionId), the exact method (from_url), and even specifies the crate for the argument type (uv_redacted). While naming the file is somewhat justified, the instruction also details the exact identity semantics for each URL kind (Archive, Git, Path, Directory) which closely mirrors the gold solution's enum variants. The AGENTS.md .unwrap() convention reference further narrows the implementati"
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

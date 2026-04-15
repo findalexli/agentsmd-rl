@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md explicitly names the target file (tokenizer_communicator_mixin.py), the function (update_weights_from_ipc), the reference function (update_weights_from_distributed), and all five required patterns (async with self.is_pause_cond:, is_paused = self.is_pause, lock_context =, nullcontext(), async with lock_context:). The linting tools (ruff F401/F821, black, isort, codespell, pre-commit) are also mentioned. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly lists the exact code patterns the solution must contain: 'async with self.is_pause_cond:', 'is_paused = self.is_pause', 'lock_context =', 'nullcontext()', 'async with lock_context:'. It also says to match the pattern in update_weights_from_distributed. This effectively tells the agent exactly what code to write rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact string patterns like 'lock_context =' and 'is_paused = self.is_pause' via ast.unparse. An alternative correct fix could use different variable names (e.g., 'paused = self.is_pause', 'ctx =') or a different structure (e.g., an if/else with two separate async with blocks) and still correctly fix the deadlock but would fail the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_update_weights_from_ipc_uses_pause_check and test_pattern_matches_reference_implementation) only check for string patterns in ast.unparse output. They never instantiate the class, call the function, or verify the deadlock is actually resolved. The pass-to-pass tests run syntax/lint checks but don't test behavior either."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (pass/return None) would not contain the required patterns like 'async with self.is_pause_cond:', 'nullcontext()', etc., so the f2p tests would fail for stubs. The test_not_stub test also explicitly checks for non-trivial function body."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/sglang's git history or the agent could read solve.sh at /solution/solve.sh if it exists in the container. The Dockerfile doesn't remove the /solution directory. Also, since tests check for exact string patterns listed in instruction.md, the agent can just pattern-match without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (the five patterns, consistency with update_weights_from_distributed, syntax validity, linting checks) are tested by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/static, Fail-to-pass, Pass-to-pass), descriptive names, and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or pattern strings across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (tokenizer_communicator_mixin.py), the exact function (update_weights_from_ipc), the exact reference function (update_weights_from_distributed), and the exact code patterns to insert. This goes well beyond naming the buggy component \u2014 it specifies the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

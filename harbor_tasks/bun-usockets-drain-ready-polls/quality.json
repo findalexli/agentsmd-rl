@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file paths (epoll_kqueue.c, internal.h), function names (us_internal_drain_ready_polls, us_loop_run, us_loop_run_bun_tick, us_internal_dispatch_ready_polls), the constant LIBUS_MAX_READY_POLLS, the drain counter value 48, the decrement pattern, saturation check (num_ready_polls == LIBUS_MAX_READY_POLLS), zero timeout structs, KEVENT_FLAG_IMMEDIATE, and the replacement of hardcoded 1024. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to implement: the function name, signature ('static void us_internal_drain_ready_polls(struct us_loop_t *loop)'), drain counter initialized to 48 with --drain_count pattern, exact saturation check, exact zero timeout struct, exact placement of calls. This is a complete implementation specification, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: the exact function name 'us_internal_drain_ready_polls' with exact signature (test_drain_function_exists), exact variable naming patterns like 'drain_count' (test_drain_has_iteration_cap), the specific decrement pattern '--drain_count' (same test), and exact call ordering between dispatch and drain (test_drain_called_after_dispatch_in_both_functions). An alternative correct fix using different function names, variable names, or a do-while loo"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the C source file as text and uses regex/string matching (e.g., 'assert \"LIBUS_MAX_READY_POLLS\" in body', regex for function signatures, string find for function names). No test compiles, links, or executes the code. This is purely textual assertion."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would fail because the tests check for specific code patterns: the drain function with a while loop, dispatch calls inside it, re-poll calls, saturation checks, iteration caps, and proper call ordering in existing functions. Simply adding an empty function would not pass test_drain_logic_implemented."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun's container at solve.sh, and the agent could read /solution/solve.sh or examine the test file at tests/test_outputs.py to see exactly what patterns are being checked. The tests are purely text-based regex checks, so the agent could pattern-match the expected strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: hardcoded 1024 removal, drain function existence with correct signature, drain logic (while loop, dispatch call, re-poll), zero timeout usage, iteration cap, saturation check, and drain called after dispatch in both functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_hardcoded_1024_removed, test_drain_function_exists, etc.), docstrings explaining each test's purpose, and section comments categorizing them as gates vs fail-to-pass vs pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces C source code modifications, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and constants are consistently and correctly spelled throughout the instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact function signature, exact file locations, exact variable names (drain_count = 48), exact patterns (--drain_count), and exact placement of calls. This goes well beyond naming the buggy file \u2014 it provides a complete implementation blueprint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

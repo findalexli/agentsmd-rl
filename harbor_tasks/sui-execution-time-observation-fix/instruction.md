@@ -1,30 +1,26 @@
 # Fix Panic in Execution Time Estimator
 
-There's a bug in the execution time estimator that causes a panic (assertion failure) when the number of execution timings exceeds the number of PTB (Programmable Transaction Block) commands.
+The codebase has a bug that causes a panic (assertion failure) when execution produces more timings than there are PTB (Programmable Transaction Block) commands. This occurs when transactions involve shared objects and coin reservations.
 
-## Problem
+## Problem Description
 
-In `crates/sui-core/src/authority/execution_time_estimator.rs`, the `process_execution_time_observation` function has an assertion that can fail:
+When the system processes execution time observations, there is an edge case where the number of execution timings can exceed the number of original commands in the transaction. The current implementation contains an assertion that fails in this scenario, causing a panic instead of handling it gracefully.
 
-```rust
-assert!(tx.commands.len() >= timings.len());
-```
+## Requirements
 
-This assumption doesn't hold when transactions involve shared objects and coin reservations - the execution can produce more timings than the original PTB commands.
-
-## Your Task
-
-Fix this issue by:
-1. Removing the panic-inducing assertion
-2. Adding defensive logic to handle the case where `timings.len() > tx.commands.len()`
-3. When there are excess timings, slice to use only the trailing timings (the last `tx.commands.len()` entries)
-4. Adding appropriate warning logs when this edge case occurs
-
-The fix should preserve the existing epoch store check (the early return when epoch is ending) and maintain compatibility with the existing function signature.
+1. **Remove the panic-inducing assertion** that fails when timings exceed commands
+2. **Handle the edge case gracefully** - when there are more timings than commands, the code should continue execution rather than panic
+3. **Emit a warning log** containing these exact literal strings:
+   - `"execution produced more timings than the original PTB commands"`
+   - `"executed_commands"`
+   - `"original_commands"`
+4. **Preserve existing functionality**:
+   - The function `record_local_observations_timing` must remain callable with its current signature (accepting parameters including a timings slice, total_duration, and gas_price)
+   - The epoch store upgrade check with the log message `"epoch is ending, dropping execution time observation"` must remain as an early return
+5. **Code quality**: The fix must pass `cargo check -p sui-core` and `cargo fmt --check`
 
 ## Hints
 
-- Look for the `process_execution_time_observation` function in `execution_time_estimator.rs`
-- The defensive approach should use the last N timings where N = number of commands
-- Consider what logging would be helpful for debugging this edge case in production
-- Ensure the code compiles with `cargo check -p sui-core`
+- The bug is in the execution time observation handling code
+- Look for code that processes execution timings in relation to PTB commands
+- The warning log should include field names `executed_commands` and `original_commands` to indicate the count mismatch

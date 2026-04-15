@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (ci/jobs/collect_statistics.py), the hardcoded strings to remove (clickhouse-test-stat-url, etc.), the Settings constants to use (SECRET_CI_DB_URL, etc.), the import sources (ci.praktika.settings, ci.praktika.info), the variable name 'info', the CIDB constructor keywords (url, user, passwd), and the removal of the Secret import. All test assertions reference values discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exactly what to replace with what: remove Secret import, add Info from ci.praktika.info and Settings from ci.praktika.settings, use 'info.get_secret(Settings.SECRET_CI_DB_*)' pattern, use CIDB(url=, user=, passwd=). The Constraints section essentially dictates the exact implementation. This goes beyond describing what's broken and specifies the fix in detail."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific details: test_info_get_secret_used checks for literal 'info.get_secret(' string (requiring lowercase variable name 'info'), test_settings_constants_used checks for exact strings 'Settings.SECRET_CI_DB_URL' etc. in source text, test_no_secret_class_import checks for exact string 'from ci.praktika import Secret'. An alternative correct fix using e.g. 'ci_info = Info()' or 'ci_info.get_secret(' would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_no_hardcoded_secret_names, test_settings_constants_used, test_info_get_secret_used, test_no_secret_class_import) are all purely text-matching: 'assert X in content' or 'assert X not in content' on the source file. Only test_syntax_valid and test_repo_black_formatting execute the code/subprocess, but these are pass-to-pass. No test actually imports or runs the module to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty file would fail test_cidb_initialized_with_variables (no CIDB call found), test_settings_constants_used (missing Settings strings), test_info_get_secret_used (missing info.get_secret pattern), etc. The tests require specific content changes that can't be satisfied by a no-op."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read solution/solve.sh to get the exact patch. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py to discover exact strings to include/exclude without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All constraints listed in instruction.md are tested: removal of hardcoded names, Settings import, Info import, Settings constants usage, info.get_secret pattern, CIDB keyword args, and removal of old Secret import."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, individually documented with docstrings, and separated into fail-to-pass and pass-to-pass categories with clear comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves editing a Python source file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (ci/jobs/collect_statistics.py), the exact hardcoded strings to find, the exact replacement pattern, the exact variable name to use ('info'), and even references specific other files (runner.py, cidb_cluster.py) as templates. The Constraints section is essentially a step-by-step implementation guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch (solve.sh) makes localized changes: removing one import, adding two imports, and replacing a ~17-line block. It doesn't rewrite the entire file."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

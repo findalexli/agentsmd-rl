@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (ComposeCompilerGradlePluginExtension.kt, ComposeFeatureFlags.kt, ComposeCompilerSubplugin.kt), all property/flag names (generateFunctionKeyMetaClasses, enableIntrinsicRemember, etc.), the deprecation levels (ERROR/WARNING), the version string 'Kotlin 2.5.0', and the DEPRECATION_ERROR suppress annotation. The test file ExtensionConfigurationTest.kt is also mentioned. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exactly what to change: e.g., 'generateFunctionKeyMetaClasses \u2192 ERROR level', 'Change from @Deprecated(\"message\") to @Deprecated(message = \"...\", level = DeprecationLevel.ERROR)', '@Suppress annotation needs to use \"DEPRECATION_ERROR\" instead of just \"DEPRECATION\"'. This is the complete fix specification, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_deprecated_annotation_multiline_format use a regex pattern checking for old-style '@Deprecated(\"...\")\\n\\s*val' format. An alternative valid fix could use single-line @Deprecated with named parameters (e.g., @Deprecated(message=\"...\", level=DeprecationLevel.ERROR) on one line before val) and still be correct Kotlin but fail the regex. Also test_suppress_deprecation_error_in_subplugin asserts 'at least 3' DEPRECATION_ERROR counts, which is implementation-specific."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads file content and checks for string patterns (e.g., 'level = DeprecationLevel.ERROR' in annotation_content, content.count('\"DEPRECATION_ERROR\"')). No test compiles the code, runs Gradle, imports modules, or checks actual runtime/compile-time behavior. This is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings like 'level = DeprecationLevel.ERROR' and 'Kotlin 2.5.0' that don't exist in the original files. A stub or no-op implementation would not add these strings, so the tests would fail without the actual fix being applied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The /solution/ directory contains solve.sh and apply_fix.py which the agent could read directly. The test file at tests/test_outputs.py contains all expected strings and patterns. An agent could read these files to determine exact changes needed without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: deprecation levels for all 9 listed flags/properties, version mentions, @Suppress annotation updates, and multi-line format requirement."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_generateFunctionKeyMetaClasses_deprecation_level), grouped with a section comment ('Fail-to-pass tests'), and each has a docstring explaining the expected behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies source code annotations, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, property names, annotation names, and version strings all match correctly between instruction.md and the test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files and exact properties with their exact target deprecation levels (e.g., 'generateFunctionKeyMetaClasses \u2192 ERROR level'). It also specifies the exact @Suppress string change ('DEPRECATION_ERROR' instead of 'DEPRECATION'). This leaves no localization or reasoning work for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies specific annotations in 3-4 files with localized changes to deprecation annotations and suppress annotations, not full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

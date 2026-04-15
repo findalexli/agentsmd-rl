@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:26:54.773081",
-  "total_time": 1997.2,
-  "sandbox_id": "iqgf61sgh1rni445a4hr1",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:32:51.833395",
+  "total_time": 1950.75,
+  "sandbox_id": "ifppmslaknqgf49xavmj6",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -57,17 +59,28 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.61,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:344: test `test_top_level_imports` has 1 assert(s), all pass on a stub', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.75,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 6569.0,
-      "at": "2026-04-09T03:26:46.003765"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +112,14 @@
       "backend": "fireworks",
       "time": 1997.2,
       "at": "2026-04-12T06:26:54.773081"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1950.75,
+      "at": "2026-04-15T06:32:51.833395"
     }
   ]
 }

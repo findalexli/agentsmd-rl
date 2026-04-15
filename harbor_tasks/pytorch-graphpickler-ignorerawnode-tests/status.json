@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:07:21.963631",
-  "total_time": 1251.5,
-  "sandbox_id": "icbvrlf3f9pjrl5o9oa42",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:20:36.195298",
+  "total_time": 740.41,
+  "sandbox_id": "iskzfckez4170muljrd3n",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -58,17 +60,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:6', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:55: test `test_syntax_check` only reads file text; invoke the', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:151: test `test_has_ignore_raw_node_tests` only reads file te', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:177: test `test_default_raises_covered` only reads file text;', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:216: test `test_raw_node_in_meta` only reads file text; invok', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, sympy, dill, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.36,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 306.73,
-      "at": "2026-04-09T15:02:58.314602"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -100,6 +114,14 @@
       "backend": "fireworks",
       "time": 1251.5,
       "at": "2026-04-12T06:07:21.963631"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 740.41,
+      "at": "2026-04-15T05:20:36.195298"
     }
   ]
 }

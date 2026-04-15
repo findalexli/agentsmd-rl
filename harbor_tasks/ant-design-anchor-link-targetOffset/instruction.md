@@ -2,7 +2,7 @@
 
 ## Problem
 
-The `Anchor` component currently only supports a global `targetOffset` prop that applies to all links equally. Users need the ability to set different scroll offsets for individual `Anchor.Link` items.
+The `Anchor` component currently only supports a global `targetOffset` prop that applies to all links equally. Users need the ability to set different scroll offsets for individual `Anchor.Link` items. For example, in a documentation page, the first heading might need a 64px offset while subsequent headings need only 32px.
 
 ## Goal
 
@@ -13,29 +13,50 @@ Add a `targetOffset` prop to `Anchor.Link` that allows each link to have its own
 1. **`components/anchor/AnchorLink.tsx`** - Add `targetOffset` prop to the component and interface
 2. **`components/anchor/Anchor.tsx`** - Update the context interface and logic to handle per-link offsets
 
-## Key Requirements
+## Required Changes
 
-1. **Interface Update**: `AnchorLinkBaseProps` should have an optional `targetOffset?: number` property
+### 1. Interface Update (AnchorLink.tsx)
 
-2. **Context Interface**: Update `AntAnchor` interface:
-   - `registerLink` should accept an optional `targetOffset` parameter
-   - `scrollTo` should accept an optional `targetOffset` parameter
+The `AnchorLinkBaseProps` interface must include an optional `targetOffset?: number` property.
 
-3. **Storage**: The `Anchor` component needs to track per-link offsets. Add a ref to store `Record<string, number>` mapping link hrefs to their targetOffsets.
+### 2. Context Interface Update (Anchor.tsx)
 
-4. **Registration**: When `AnchorLink` mounts or updates:
-   - Pass its `targetOffset` to `registerLink`
-   - Include `targetOffset` in the useEffect dependency array
+The `AntAnchor` interface must be updated:
+- `registerLink` must accept an optional second parameter: `targetOffset?: number`
+- `scrollTo` must accept an optional second parameter: `targetOffset?: number`
 
-5. **Scroll Behavior**: When a link is clicked:
-   - `AnchorLink` should pass its `targetOffset` to `scrollTo`
-   - `handleScrollTo` in `Anchor.tsx` should use the link-level offset with this precedence: `linkOffset > globalTargetOffset > offsetTop > 0`
+### 3. Storage Mechanism (Anchor.tsx)
 
-6. **Active Link Detection**: The `getInternalCurrentAnchor` function needs to:
-   - Accept the per-link offsets map as a parameter
-   - Use link-level offset when calculating if a section is active (with fallback to global offset)
+The `Anchor` component must store per-link offsets. Declare a ref that maps link hrefs (strings) to their targetOffset values (numbers). The type should be `Record<string, number>`.
 
-7. **Cleanup**: When a link unmounts, clean up its stored targetOffset.
+### 4. Registration (AnchorLink.tsx)
+
+When `AnchorLink` mounts or updates:
+- Pass its `targetOffset` to the `registerLink` context function
+- The useEffect that calls `registerLink` must depend on both `href` and `targetOffset` so re-registration occurs when targetOffset changes
+
+### 5. Scroll Behavior (Anchor.tsx)
+
+When a link is clicked, the scroll offset calculation must follow this precedence:
+1. The link's own targetOffset (passed to scrollTo)
+2. The global targetOffset from Anchor props
+3. The offsetTop from Anchor props
+4. Default to 0
+
+### 6. Active Link Detection (Anchor.tsx)
+
+The `getInternalCurrentAnchor` function must:
+- Accept the per-link offsets map as a parameter
+- When checking if a section is active, use the link-level offset if available, otherwise fall back to the global offset
+- Pass the per-link offsets map when calling this function
+
+### 7. Cleanup (Anchor.tsx)
+
+When a link unmounts (in `unregisterLink`), the stored targetOffset for that link must be removed from the per-link offsets map to prevent memory leaks.
+
+### 8. AnchorLink Click Handler (AnchorLink.tsx)
+
+When an AnchorLink is clicked, it must pass its `targetOffset` to the `scrollTo` context function.
 
 ## Testing
 

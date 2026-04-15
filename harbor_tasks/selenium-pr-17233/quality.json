@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the class (Lazy<T>), file path, the bug (RuntimeException wrapped in InitializationException), expected behavior (RuntimeException re-thrown directly, checked exceptions still wrapped, normal operation unaffected). All test assertions check these described behaviors. The test uses Lazy.InitializationException which is discoverable from the described behavior and the file path given."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (RuntimeException incorrectly wrapped) and expected behavior, but does not specify the exact code change (e.g., 'add catch (RuntimeException e) { throw e; } before catch (Exception e)'). A developer must reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests verify behavioral outcomes (exception types thrown, values returned) not implementation details. Alternative fixes like checking `instanceof RuntimeException` in the catch block and rethrowing, or using a different control flow, would all pass the tests as long as RuntimeExceptions propagate unwrapped."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests compile and execute Java code, creating Lazy instances and calling .get(), then checking exception types and return values at runtime. They do not merely grep source files for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_runtime_exception_not_wrapped, test_runtime_exception_various_types) verify that RuntimeExceptions are NOT wrapped in InitializationException. A stub or default implementation would fail because the original code wraps all exceptions. The tests explicitly fail (System.exit(1)) if InitializationException is caught."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/selenium (the solve.sh is in solution/solve.sh which may be accessible in the container). An agent could read the gold patch from the solution directory or inspect the test files to discover the exact fix needed. There's no evidence the /solution/ directory is excluded from the agent's filesystem access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors from instruction.md are tested: RuntimeException re-thrown directly (test_runtime_exception_not_wrapped, test_runtime_exception_various_types), checked exceptions still wrapped (test_checked_exception_still_wrapped), normal operation unaffected (test_lazy_normal_operation)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_runtime_exception_not_wrapped, test_checked_exception_still_wrapped, etc.), each has a docstring explaining what it tests and whether it's fail_to_pass or pass_to_pass, and they are logically grouped by behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing exception handling in a Java class, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (java/src/org/openqa/selenium/concurrent/Lazy.java), class names (Lazy, InitializationException), and method names (get, lazy) are all correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names only the file (Lazy.java) which is the obvious and only file to examine for this task. It does not mention specific line numbers or the exact code change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert specific implementation details not discoverable from instruction.md alone. For example, test_w_with_m_is_month_name checks that the BUGGY version returns true for ('%W', false, false, false) while the FIXED version returns false - this requires the agent to produce code containing BOTH a _BUGGY and _FIXED implementation with those exact function names. The tests also compile embedded C++ code with specific function signatures (containsOnlyFixedWidthMySQLFormatters_BUGGY and con"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md essentially states the fix: it names the exact arrays (variable_width_formatter, variable_width_formatter_M_is_month_name) and says '%W' should be moved from conditional to unconditional checking. The statement 'The fix should ensure %W is always detected as variable-width, independent of the conditional flag checks' combined with listing the specific arrays tells the developer exactly what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests embed their own C++ implementations of both BUGGY and FIXED versions and compile/run them independently. They do NOT import or test the agent's actual changes to formatDateTime.cpp. The test_w_with_m_is_month_name test checks that the embedded BUGGY function returns true and FIXED returns false - this is testing the test's own embedded code, not any code the agent writes. Any agent fix to the actual source file would be irrelevant to test outcomes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests compile C++ code and execute it as subprocesses, checking return codes. They do call/execute code rather than just checking file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The tests compile and run their OWN embedded C++ code (FUNCTION_LOGIC constant), not the agent's code. The embedded code contains both BUGGY and FIXED implementations hardcoded in the test file. The tests will pass or fail based on the test's own embedded code, regardless of what the agent does to the actual source files. A no-op solution would pass all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/ClickHouse and solution/solve.sh is accessible in the container. The agent could read solve.sh or the gold patch directly. Additionally, since tests don't verify the agent's actual changes (they test embedded code), the agent could do nothing and still pass."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that the fix be applied to the actual source code in formatDateTime.cpp, but the tests never verify the actual source file was modified - they only test their own embedded C++ implementations."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_w_with_m_is_month_name, test_w_with_various_flags, test_m_with_m_is_month_name, test_fixed_width_formatters) and have clear docstrings/comments explaining what each tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact arrays to modify (variable_width_formatter, variable_width_formatter_M_is_month_name, etc.) and describes the precise structural change needed: moving 'W' from conditional to unconditional checking. This is excessive localization for a bug-fixing task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

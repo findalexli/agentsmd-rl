@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: rope_theta extraction from rope_parameters with default 1000000, dynamic layer index from num_hidden_layers, SafeTensorIO usage, shared weight mapping structure, MTP parameter name conversion mappings, and shared weight export. All asserted paths, class names, and mapping keys are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies exact mapping entries (e.g., 'mtp.layers.0.enorm.weight \u2192 model.layers.{n}.enorm.weight'), the exact default value (1000000), the exact class to use (SafeTensorIO from mbridge.core.safetensor_io), and the exact shared mapping structure. This goes beyond describing what's broken and prescribes the specific implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details like _SHARED_STATE_DICT_MAPPING being an instance attribute with exact key names, _convert_mtp_param method existing and returning specific list values, and _get_safetensor_io returning a SafeTensorIO instance. An alternative correct fix (e.g., using a different internal data structure or method name for MTP conversion) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute actual code via subprocess.run(), instantiate GLM4MoELiteBridge objects, call methods like _convert_mtp_param and _get_safetensor_io, and verify return values and attribute states. They do not simply grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require actual implementation: a stub GLM4MoELiteBridge(pass) would fail test_rope_theta_patched (no rope_theta set), test_shared_mapping_dynamic_layers (uses parent's hardcoded 61), test_convert_mtp_direct_names (_convert_mtp_param doesn't exist), etc."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution is in solve.sh (a shell script applying a git patch), not directly readable as a Python file. Tests execute behavioral checks via subprocess, and the agent would need to understand the bridge pattern to implement correctly rather than just copying fixture strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six behaviors described in instruction.md are tested: rope_theta extraction (test_rope_theta_patched), dynamic layer index (test_shared_mapping_dynamic_layers), SafeTensorIO (test_safetensor_io_standard), MTP param conversion (test_convert_mtp_direct_names, test_convert_mtp_transformer_names), and shared weight export (test_weight_to_hf_shared)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (Gates, Pass-to-pass, Fail-to-pass) with clear comments, descriptive function names, and docstrings explaining base commit vs gold patch behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes to a Python bridge class, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (slime_plugins/mbridge/glm4moe_lite.py, slime/backends/megatron_utils/model_provider.py), class names (GLM4MoELiteBridge, DeepseekV3Bridge, SafeTensorIO), and parameter names are consistently spelled correctly throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (slime_plugins/mbridge/glm4moe_lite.py), exact method names to implement (_convert_mtp_param, _weight_to_hf_format), exact class to import (SafeTensorIO from mbridge.core.safetensor_io), and exact mapping entries. This goes well beyond identifying the buggy module and effectively specifies the solution architecture."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

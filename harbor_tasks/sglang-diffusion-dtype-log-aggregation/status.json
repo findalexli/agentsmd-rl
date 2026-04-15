@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:47:05.787241",
-  "total_time": 2234.95,
-  "sandbox_id": "ipbbt34dh1menpy2ky6wb",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:06:14.330607",
+  "total_time": 2181.83,
+  "sandbox_id": "ipyvs5ut9xb6eehsugqe3",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:229: test `test_quantized_dtypes_not_redefined_in_loop` has 1 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:247: test `test_aggregated_summary_after_loop` has 1 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:456: test `test_logger_uses_init_logger` has 2 assert(s), all pass on ', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 29.64,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1214.65,
-      "at": "2026-04-09T14:48:25.697222"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +104,14 @@
       "backend": "fireworks",
       "time": 2234.95,
       "at": "2026-04-12T03:47:05.787241"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2181.83,
+      "at": "2026-04-15T06:06:14.330607"
     }
   ]
 }

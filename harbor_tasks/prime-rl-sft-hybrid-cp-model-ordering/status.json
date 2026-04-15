@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:49:14.067633",
-  "total_time": 1225.99,
-  "sandbox_id": "i1pnzh4eo3k2px5et8w0o",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:20:56.566993",
+  "total_time": 1156.47,
+  "sandbox_id": "i7ib8dn6vmd7569cnvhq6",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,6 +51,24 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.77,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:328: test `test_setup_hybrid_cp_retained` has 1 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:349: test `test_setup_model_present` has 1 assert(s), all pass on a st', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:14: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.3,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
@@ -83,6 +103,14 @@
       "backend": "fireworks",
       "time": 1225.99,
       "at": "2026-04-12T05:49:14.067633"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1156.47,
+      "at": "2026-04-15T05:20:56.566993"
     }
   ]
 }

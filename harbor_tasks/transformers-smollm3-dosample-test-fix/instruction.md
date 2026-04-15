@@ -18,6 +18,16 @@ The SmolLM3 model has a non-standard default generation configuration shipped on
 
 The integration tests should produce deterministic, reproducible text generation output so that string/token comparisons are reliable across runs.
 
+## Test Requirements
+
+The following conditions must all be satisfied for the tests to pass:
+
+1. **`test_model_3b_generation` expected text**: The old expected text fragment `"pulls objects toward the center of the Earth"` must not appear in the test method `test_model_3b_generation`. (This text was generated under non-deterministic conditions and must be updated.)
+
+2. **Greedy decoding parameter**: All `generate()` calls in `test_model_3b_generation` and `test_model_3b_long_prompt` (3 or more calls total) must include `do_sample=False` as an explicit keyword argument with literal value `False`. The model's `generation_config.json` has `do_sample=True` by default; without this explicit parameter, greedy decoding is not guaranteed.
+
+3. **No temperature parameter**: The `temperature` keyword argument must not appear in any `generate()` call in the affected test methods. Using `temperature=0` does not override `do_sample=True` from the model's default generation config.
+
 ## Hints
 
 - Look at how the `generate()` calls request deterministic output

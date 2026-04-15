@@ -8,7 +8,13 @@ There is no mechanism to persist snapshot test failures from CI as downloadable 
 
 ## What Needs to Change
 
-1. **CI workflow** (`.github/workflows/test.yml`): Configure the test jobs (Linux, macOS, Windows) to write pending insta snapshots to a separate directory and upload them as artifacts when tests fail. The `insta` crate supports this via the `INSTA_UPDATE` and `INSTA_PENDING_DIR` environment variables — but the current insta version in the project may need to be updated to support `INSTA_PENDING_DIR`.
+1. **CI workflow** (`.github/workflows/test.yml`): Configure the test jobs to write pending insta snapshots to a separate directory and upload them as artifacts when tests fail.
+
+   The relevant jobs are `cargo-test-linux` and `cargo-test-windows`. In each job's nextest step, set these env vars:
+   - `INSTA_UPDATE`: `new`
+   - `INSTA_PENDING_DIR`: a path relative to the workspace (e.g., `${{ github.workspace }}/pending-snapshots`)
+
+   Add an upload-artifact step that runs only on `failure()`. The artifact name must contain `pending-snapshots` (e.g., `pending-snapshots-linux`, `pending-snapshots-windows`).
 
 2. **Local apply script**: Create a bash script at `scripts/apply-ci-snapshots.sh` that:
    - Downloads pending snapshot artifacts from a CI run (auto-detecting the PR for the current branch, or accepting a run ID as argument)
@@ -16,6 +22,7 @@ There is no mechanism to persist snapshot test failures from CI as downloadable 
    - Applies them locally using `cargo-insta`
    - Supports both `accept` and `review` modes
    - Requires `gh`, `cargo-insta`, and `git`
+   - Exits non-zero with an error message that mentions both `accept` and `review` when given an invalid action argument
 
 3. **Documentation**: After implementing the above, update the relevant project documentation to inform contributors about this new workflow for updating snapshots from CI failures.
 

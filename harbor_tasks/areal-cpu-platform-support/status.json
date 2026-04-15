@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:17:29.264057",
-  "total_time": 2137.2,
-  "sandbox_id": "ikxpj15gmlaessbxu6oyj",
+  "validated_at": "2026-04-15T03:26:21.011993",
+  "total_time": 769.97,
+  "sandbox_id": "io4bwqfbof8982dpgrpgs",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,27 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.82,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] test_not_tautological @ tests/test_outputs.py:82: test `test_repo_syntax_all_modules` has 1 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:101: test `test_repo_cpu_platform_importable` has 1 assert(s), all pas', 'A:[A] test_not_tautological @ tests/test_outputs.py:454: test `test_no_wildcard_imports` has 1 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:533: test `test_repo_trailing_whitespace` has 1 assert(s), all pass on', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.56,
+      "tier_a_fails": [
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 497.33,
-      "at": "2026-04-09T20:26:45.934144"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 2137.2,
       "at": "2026-04-11T18:17:29.264057"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 769.97,
+      "at": "2026-04-15T03:26:21.011993"
     }
   ]
 }

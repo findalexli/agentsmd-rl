@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (slime/ray/rollout.py), the function (_make_group), and the three call sites. Tests check for router params in _make_group's signature, that call sites pass router info, and behavioral independence \u2014 all discoverable from the instruction's description of the closure bug, the function name, and the file path."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (closure captures mutable variables instead of values) and the expected behavior (each group connected to correct router), but does not prescribe the exact fix such as 'add router_ip and router_port parameters'. A developer must still decide how to solve it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_make_group_accepts_router_params asserts `any('router' in p for p in params)` checking for parameter names containing 'router'. test_all_call_sites_pass_router_info checks for positional args or keyword args with 'router' in the name. An alternative correct fix \u2014 e.g., passing a config dict with a non-'router' key name like 'endpoint_ip'/'endpoint_port', or using default argument binding to capture the value \u2014 would fail these tests. The tests are tightly coupled to the gold solution's spec"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests like test_make_group_uses_param_router_not_closure and test_multi_model_router_independence actually extract the function source, exec it with mock objects, call it, and verify that ServerGroup receives the correct values. This is behavioral testing, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests would fail on the original code: test_make_group_accepts_router_params checks for router params in the signature (original has none), test_make_group_uses_param_router_not_closure verifies param values override closure values, test_all_call_sites_pass_router_info checks that call sites pass router arguments. A stub/no-op would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/slime as a mounted repo, and solve.sh is in /solution/solve.sh. An agent could read /solution/solve.sh directly or grep for the patch content. The Dockerfile doesn't remove or protect these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that each engine group connects to the correct router regardless of iteration order, and that the dependency not rely on mutable closure state. Tests verify: router params in signature, correct values passed through (not closure), multi-model independence, and all call sites updated."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names and docstrings, grouped into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff) \u2014 behavioral tests', and 'Pass-to-pass \u2014 repo CI/CD checks' sections with clear comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the function (_make_group) and file (slime/ray/rollout.py) and describes the three call sites, but this is appropriate for the task domain \u2014 the bug is specifically about this function's closure behavior. It doesn't give line numbers or the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

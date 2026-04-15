@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific function names like 'getAllJobs', 'getFailedJobs', 'categorizeJobs', 'generateReport', 'getFlakyTests' (test_pr_status_functions_parseable), but instruction.md never mentions these function names. It only vaguely references 'job fetching/pagination, job filtering, job categorization, report generation, and flaky test detection' without naming the actual functions. Tests also check for 'FAILED_CONCLUSIONS' constant (test_repo_pr_status_failure_conclusions_constant), 'execAsy"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (API errors silently swallowed, some failure types invisible) and what the expected behavior should be, but does not specify exact code changes like line numbers or specific variable names to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The hidden tests assert the existence of a specific constant named 'FAILED_CONCLUSIONS' (test_repo_pr_status_failure_conclusions_constant checks for this exact string). An alternative correct fix could use a different variable name (e.g., 'FAILURE_TYPES', 'failedStatuses') or inline the check, but would fail the test. Tests also check for specific retry-related strings like 'attempt' and 'retry' (test_repo_pr_status_retry_logic), constraining implementation choices."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many tests are purely text-based searches: test_repo_pr_status_failure_conclusions_constant checks 'FAILED_CONCLUSIONS' in source text, test_repo_pr_status_retry_logic checks for strings 'attempt' and 'retry' in source, test_repo_pr_status_failure_conclusions_in_flaky checks for 'timed_out' in source. These are `assert X in open(path).read()` pattern without executing the actual logic."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The pass_to_pass tests verify structural properties (syntax, function existence, prettier formatting) that a stub file would not satisfy - the original file must be maintained and modified. The fail_to_pass tests check for specific new content (FAILED_CONCLUSIONS, retry logic) that wouldn't exist in the original."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to extract the exact changes needed. No evidence of the solution being removed or protected from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'The report table should clearly indicate when a job's conclusion type differs from a standard failure' but no visible test checks for the conclusion tag appended to job names in the report table (the gold patch adds conclusionTag logic in generateIndexMd)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, and comments indicating their category (e.g., '[static] pass_to_pass', '[repo_tests] pass_to_pass'). Test functions are clearly named for what they check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing a script that generates reports, not producing structured data with a specific schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions 'job fetching/pagination, job filtering, job categorization, report generation, and flaky test detection' as key areas, which are general functional areas rather than specific line numbers or exact code locations."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

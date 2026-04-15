@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Every test asserts on file paths, variable names, function names, and literal strings that are explicitly named in instruction.md. For example, `raw_ptr<ElectronBrowserContext> browser_context_`, `browser_context_{browser_context}`, `if (!browser_context)`, `browser_context_ = nullptr`, `DCHECK(browser_context != nullptr)`, `browser_.reset()`, `js_env_.reset()`, the test name `does not crash on exit with live session wrappers`, and `import { once } from 'node:events'` are all specified in the in"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix: 'browser_context_ should be declared as raw_ptr<ElectronBrowserContext>', 'The constructor should initialize browser_context_ as browser_context_{browser_context}', 'Dispose() should capture browser_context() in a local variable declared as ElectronBrowserContext* const browser_context = this->browser_context()', etc. This is a complete specification of the solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details like exact variable declarations (`raw_ptr<ElectronBrowserContext> browser_context_`), exact initialization syntax (`browser_context_{browser_context}`), exact local variable capture pattern (`ElectronBrowserContext* const browser_context = this->browser_context()`), and exact return expression (`browser_context_`). An alternative correct fix using e.g. `std::optional`, a different variable name, or `WeakPtr` would fail these tests despite bei"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads source files and checks for string patterns using `assert ... in content` or regex matching. No test compiles the code, runs executables, or checks runtime behavior. For example, `test_raw_ptr_used_for_browser_context` just does `assert 'raw_ptr<ElectronBrowserContext> browser_context_' in content`."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all tests are text-matching against source files, an agent could simply write the exact strings the tests look for into the files without understanding the bug or producing a working fix. For instance, writing `browser_context_ = nullptr;` anywhere in the OnBeforeMicrotasksRunnerDispose function body passes `test_onbefore_microtasks_dispose_nullifies_browser_context` regardless of whether it actually fixes the use-after-free."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/electron as a git repo, and the agent could read the solution/solve.sh file or the test file tests/test_outputs.py to discover exactly what strings to write. The tests only check for literal strings in files, so grepping for expected patterns would trivially reveal the answer."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (raw_ref removal, raw_ptr usage, null checks, early return, nullification, DCHECK assertions, shutdown resets, regression test) are tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (fail-to-pass tests for the bug fix), and each test function name clearly indicates what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies C++ and TypeScript source code; it does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and type names in the instruction match those used in the tests and solution without typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact code changes including variable declarations, initialization syntax, function body modifications, and exact line-level changes like 'browser_context_ should be declared as raw_ptr<ElectronBrowserContext>' and 'Dispose() should capture browser_context() in a local variable declared as ElectronBrowserContext* const browser_context = this->browser_context()'. This goes far beyond naming files/functions."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

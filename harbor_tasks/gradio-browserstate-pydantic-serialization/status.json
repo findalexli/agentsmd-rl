@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
-  "nop_reward": 0,
-  "gold_reward": 1,
-  "validated_at": "2026-04-10T03:30:26.403811",
-  "total_time": 7630.14,
-  "sandbox_id": "io8d7iwk1lztcg43rs80r",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T04:10:50.806547",
+  "total_time": 1038.58,
+  "sandbox_id": "irv9iulzvrqg1kgroklpo",
   "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -56,18 +57,27 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 54.02
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.47,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pydantic, gradio-client, ruff, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.54,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "completed",
-      "nop": 0,
-      "gold": 1,
-      "backend": "fireworks",
-      "time": 300,
-      "at": "2026-04-10T05:45:00.000000",
-      "notes": "p2p_enrichment completed - 8 p2p tests pass, 3 f2p tests fail as expected on base commit. Added semgrep security check."
-    },
     {
       "verdict": "pass",
       "nop": 0,
@@ -99,6 +109,14 @@
       "backend": "fireworks",
       "time": 7630.14,
       "at": "2026-04-10T03:30:26.403811"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1038.58,
+      "at": "2026-04-15T04:10:50.806547"
     }
   ]
 }

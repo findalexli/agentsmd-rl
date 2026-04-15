@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T07:40:29.045364",
-  "total_time": 4135.54,
-  "sandbox_id": "ic2kr2e1fq4ndeslrknix",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:39:50.456276",
+  "total_time": 1768.74,
+  "sandbox_id": "idj2oj1accb8s6ve21x6k",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -56,17 +58,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abundon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1.23,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:250: test `test_changeset_for_workers_playground` has 1 assert(s), all']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.69,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1656.58,
-      "at": "2026-04-10T15:54:28.562525"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 4135.54,
       "at": "2026-04-12T07:40:29.045364"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1768.74,
+      "at": "2026-04-15T06:39:50.456276"
     }
   ]
 }

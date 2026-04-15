@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:25:05.932209",
-  "total_time": 1219.02,
-  "sandbox_id": "i6572avdlp5y1j9fmbmf7",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:29:01.896107",
+  "total_time": 930.2,
+  "sandbox_id": "iif6c3ody8z0nyglt92pa",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,28 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.42,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:306: test `test_repo_key_functions_exist` has 2 assert(s), all pass on']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.93,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 256.8,
-      "at": "2026-04-09T20:22:45.426734"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +104,14 @@
       "backend": "fireworks",
       "time": 1219.02,
       "at": "2026-04-11T18:25:05.932209"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 930.2,
+      "at": "2026-04-15T03:29:01.896107"
     }
   ]
 }

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_same_object_reference_used checks for literal 'const bundlerOptions = {' in plugin.ts; test_bundler_options_key_removed checks that 'export const bundlerOptionsKey' and 'export const isRolldown' are removed from utils.ts; test_plugin_sets_both_bundler_options checks for exact strings 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions'. The instruction says to 'set both rollupOptions and roll"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (version detection at import time fails in pnpm workspaces) and the expected behavior (set both rollupOptions and rolldownOptions) but does not prescribe exact code changes, line numbers, or specific implementation steps."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_same_object_reference_used requires exactly 'const bundlerOptions = {'; test_plugin_sets_both_bundler_options requires exactly 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions'. An alternative correct fix using a different variable name (e.g., 'const sharedOptions = {' with 'rollupOptions: sharedOptions') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_bundler_options_key_removed, test_plugin_imports_correct_utils, test_plugin_sets_both_bundler_options, test_plugin_sets_both_bundler_options_for_server, and test_same_object_reference_used are ALL purely text-matching tests using 'assert X in open(path).read()' with no execution or behavioral verification. While test_typescript_compiles, test_package_builds, etc. do run subprocesses, the fail-to-pass tests are entirely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that wouldn't be present in stub/default implementations. A stub file wouldn't contain 'rollupOptions: bundlerOptions' or 'const bundlerOptions = {' - these require actual implementation work."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router (accessible in the container as solve.sh references it). The agent could read the solution/solve.sh file to see the exact patch. Additionally, since the tests are pure string matching, the agent could grep the test file to find the exact strings expected (e.g., 'rollupOptions: bundlerOptions') and write code to match."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: builds succeed for both environments (tested by test_package_builds), both rollupOptions and rolldownOptions set (tested by test_plugin_sets_both_bundler_options and _for_server), TypeScript compiles (test_typescript_compiles), ESLint passes (test_eslint_passes), unit tests pass (test_unit_tests_pass)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks (e.g., 'FAIL-TO-PASS: bundlerOptionsKey export should be removed from utils.ts'), logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the package name 'start-plugin-core' and the general detection mechanism ('rolldownVersion' in vite) but doesn't specify exact files like utils.ts or plugin.ts, nor exact line numbers. It describes the problem domain without pinpointing the exact buggy lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

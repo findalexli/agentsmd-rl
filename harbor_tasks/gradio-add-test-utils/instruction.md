@@ -8,38 +8,70 @@ The `@gradio/tootils` package (`js/tootils/`) provides unit testing utilities fo
 
 2. **No way to test file uploads or drag-and-drop.** Components accept files via `<input type="file">` or drag-and-drop, but there's no helper to set files on inputs or simulate drops with real file data.
 
-3. **The `listen` helper has a race condition.** Events dispatched during component mount (before `listen()` is called) are silently lost. There's no way to capture mount-time events.
+3. **The `listen` helper has a race condition.** Events dispatched during component mount (before `listen()` is called) are silently lost. There's no mechanism to capture and replay mount-time events.
 
 4. **No `mock_client` helper.** Components that use the Gradio client for uploads need a mock client, but each test has to create its own.
 
 5. **No test fixtures.** Tests that need file data (images, text, audio, video, PDF) have to construct `FileData` objects manually every time.
 
-Additionally, the `js/tootils/README.md` is completely wrong — it describes `@gradio/button` instead of the actual tootils package, and contains no useful API documentation.
+6. **Missing Vitest browser commands.** No browser-mode commands exist for the three file operations (capturing downloads, setting file inputs, simulating drag-and-drop).
 
-## Expected Behavior
+7. **Documentation is incorrect.** The README describes the wrong package entirely and lacks API documentation.
 
-1. **`download_file(selector)`** — A utility that clicks an element and captures the resulting file download, returning the suggested filename and text content. Should use Vitest browser commands running server-side with Playwright access.
+## Required Implementation
 
-2. **`upload_file(files, selector?)`** — Sets files on a file input using Playwright's `setInputFiles()` under the hood. Accepts `FileData` fixtures.
+### Test Fixtures
 
-3. **`drop_file(files, selector)`** — Simulates drag-and-drop by reading fixture files from disk, constructing a `DataTransfer` with `File` objects, and dispatching `dragenter`/`dragover`/`drop` events.
+Create test fixture constants named exactly:
+- `TEST_TXT`
+- `TEST_JPG`
+- `TEST_PNG`
+- `TEST_MP4`
+- `TEST_WAV`
+- `TEST_PDF`
 
-4. **Event buffering in `render`** — The dispatcher should buffer all events from mount time. `listen(event, { retrospective: true })` should replay buffered events onto the mock.
+Each should be a `FileData` instance pointing to files in `test/test_files/`.
 
-5. **`mock_client()`** — Returns a mock client with upload (echo-back) and stream (no-op) methods.
+### File Operation Utilities
 
-6. **Test fixtures** — Pre-built `FileData` instances for common file types (text, image, audio, video, PDF) pointing to existing files in `test/test_files/`.
+Implement three async utilities:
+- `download_file` - clicks an element and captures the resulting file download, returning the suggested filename and text content
+- `upload_file` - sets files on a file input using Playwright's `setInputFiles()`
+- `drop_file` - simulates drag-and-drop by constructing a `DataTransfer` with `File` objects and dispatching `dragenter`/`dragover`/`drop` events
 
-7. **Browser commands must be registered** in `js/spa/vite.config.ts` so the server-side commands are available to tests.
+### Browser Commands
 
-8. **The package.json** should export the new `./download-command` entry point.
+Register these Vitest browser command names:
+- `expect_download`
+- `set_file_inputs`
+- `drop_files`
 
-9. **The README** should be completely rewritten to accurately document `@gradio/tootils` — covering `render`, `listen` (including retrospective mode), `cleanup`, `fireEvent`, `download_file`, `upload_file`, `drop_file`, `mock_client`, test fixtures, and re-exports.
+### Event Buffering
 
-## Files to Look At
+Implement event buffering using an array named `event_buffer` to store all dispatched events from mount time. The `listen` helper must accept a `retrospective` option that replays buffered events onto the mock when enabled.
 
-- `js/tootils/src/render.ts` — Main render utility; needs event buffering, retrospective listen, mock_client, and re-exports
-- `js/tootils/src/` — Add new modules here: download.ts, download-command.ts, fixtures.ts
-- `js/tootils/package.json` — Needs new export entry
-- `js/spa/vite.config.ts` — Register browser commands
-- `js/tootils/README.md` — Rewrite with accurate, comprehensive API documentation
+The `event_buffer.push` method must be used to add events to the buffer.
+
+### Mock Client
+
+Create a `mock_client` function that returns an object with:
+- `upload` method (echo-back behavior)
+- `stream` method (no-op)
+
+### Package Configuration
+
+The package must include an export entry for `./download-command`.
+
+### Documentation
+
+Completely rewrite the README.md to accurately document `@gradio/tootils`, covering:
+- `render` function and its parameters (Component, props)
+- `listen` helper with the `retrospective` option for replaying buffered events
+- `cleanup`, `fireEvent`
+- `download_file`, `upload_file`, `drop_file` utilities
+- `mock_client` helper
+- Test fixtures (`TEST_TXT`, `TEST_JPG`, `TEST_PNG`, `TEST_MP4`, `TEST_WAV`, `TEST_PDF`)
+- Reference to the `test/test_files/` directory where fixture files live
+- Re-exports from testing-library
+
+The README must reference `@gradio/tootils` as the package name and must NOT reference `@gradio/button`.

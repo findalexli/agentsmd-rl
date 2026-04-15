@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific undiscoverable details: test_uses_nexttestsetup requires 'nextTestSetup' (instruction only says 'look at how other e2e tests set up instances'), test_uses_fixture_directory requires '__dirname' pattern, test_single_fixture_executes_correctly expects specific handler behavior (Response.json with {id: req-id}), test_multiple_fixture_executes_correctly expects {nestedId: 'nested-'+id} pattern. The instruction never specifies nextTestSetup by name, __dirname usage, or the exact"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (race condition, inline code, per-test instance creation) and what the fix should achieve, but doesn't specify exact code changes like 'use nextTestSetup' or 'add __dirname'. The hints mention looking at other tests but don't prescribe the exact solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_uses_nexttestsetup asserts the literal string 'nextTestSetup' must appear in the test file. An alternative correct fix using createNext in beforeAll/afterAll (which also eliminates the race condition) would fail this test. test_uses_fixture_directory asserts '__dirname' must appear, but a correct fix could use path.join or a different directory reference pattern."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_single_fixture_executes_correctly and test_multiple_fixture_executes_correctly actually execute the fixture files via Node.js subprocess with vm.runInContext, testing real handler behavior. However, several other tests (test_no_inline_route_code, test_uses_nexttestsetup, test_uses_fetchViaHTTP, etc.) are text-based. Since at least some f2p tests execute code, this passes."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_single_fixture_executes_correctly requires a real handler that reads 'req-id' header and returns it as {id}, and test_multiple_fixture_executes_correctly requires nested AsyncLocalStorage returning {id, nestedId: 'nested-'+id}. A stub returning empty/default values would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js's solution/solve.sh (mounted in container), and no measures prevent the agent from reading it. The agent could also grep test_outputs.py to discover exact expected values like 'nextTestSetup', '__dirname', 'nested-' prefix pattern, etc."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) instance creation happens once with longer timeout - tested by test_no_per_test_instance_creation and test_uses_nexttestsetup; (2) fixture files exist - tested by test_single/multiple_fixture_executes_correctly; (3) race condition eliminated - tested by test_no_per_test_instance_creation. All required behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-grouped with clear section comments (fail_to_pass, pass_to_pass, config-derived), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces test files and fixture files, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the test file (which is the obvious target), describes the bug conceptually, and gives general hints about looking at other tests. It doesn't name specific lines or the exact fix (nextTestSetup, __dirname)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

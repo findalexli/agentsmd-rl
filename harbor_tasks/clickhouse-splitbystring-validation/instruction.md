@@ -1,29 +1,40 @@
-# Task: Fix Empty String Validation in TokenizerFactory
+# Task: Add Empty String Separator Validation to a String Tokenizer
 
 ## Problem Description
 
-The `splitByString` tokenizer in ClickHouse does not properly validate its separator arguments. When an empty string is passed as a separator (either directly or within an array of separators), it can lead to unexpected behavior.
+In the ClickHouse codebase, the tokenizer responsible for splitting strings by separator arguments (`splitByString`) does not validate whether separator arguments are empty strings. When an empty string is passed as a separator — either as a direct argument or within an array of separators — the tokenizer proceeds without raising an error, leading to unexpected behavior.
 
-## What Needs to Be Fixed
+Additionally, the existing error message for an empty separators array uses unclear wording that should be improved.
 
-The tokenizer factory needs to validate that:
-1. Empty strings cannot be used as separators
-2. When an array of separators is provided, each element must be validated to ensure it's not empty
+## Requirements
 
-## Where to Look
+### Empty String Separator Validation
 
-The relevant code is in:
-- **File**: `src/Interpreters/TokenizerFactory.cpp`
-- Look for the `registerTokenizers` function
-- Find the code handling `SplitByStringTokenizer`
+When the tokenizer processes separators and encounters an empty string, it must throw an exception with `ErrorCodes::BAD_ARGUMENTS`. The exception message must contain the exact text:
 
-## Expected Behavior
+```
+the empty string cannot be used as a separator
+```
 
-When the `splitByString` tokenizer is created with an empty string separator, it should throw an exception with `ErrorCodes::BAD_ARGUMENTS` and a clear error message explaining that empty strings cannot be used as separators.
+### Array Element Validation
 
-## Additional Notes
+When an array of separators is provided, each element must be individually validated before being added to the result vector. Inside the loop that iterates over the array elements, the implementation must:
 
-- The error message should clearly indicate the issue
-- The validation should happen for each separator in the array, not just checking if the array itself is empty
-- Follow the existing code style in the repository (Allman-style braces)
-- Use proper terminology: refer to logical errors as "exceptions" not "crashes"
+1. Extract each separator's string value using `castAs<String>` and store the result in a `const auto &` reference variable named `value_as_string`
+2. Check whether `value_as_string.empty()` returns true
+3. If the value is empty, throw the exception described in the Empty String Separator Validation section
+
+### Improved Error Message for Empty Separators Array
+
+The existing check that rejects empty separator arrays should be updated to use the following error message text:
+
+```
+the separators argument cannot be empty
+```
+
+## Code Style
+
+- Use Allman-style braces: opening braces must appear on their own line after control statements (`for`, `if`, etc.)
+- Refer to logical errors as "exceptions", not "crashes" in any comments
+- Use 4 spaces for indentation (no tabs)
+- No trailing whitespace

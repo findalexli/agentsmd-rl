@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (package.json, scripts/build-jsc.ts, scripts/build/clean.ts, scripts/build/deps/webkit.ts, scripts/build/source.ts, scripts/build/CLAUDE.md), the specific strings tested (BUN_WEBKIT_PATH, webkitSrcDir, homedir, worktree, kind: \"local\", path, hint, --target=WebKit, build.ts, build-jsc.ts, WebKitBuild), and the specific behaviors (delete build-jsc.ts, update package.json scripts, remove WebKitBuild references, add path/hint properties, reformat table). All "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to do: add a webkitSrcDir() function, return kind: 'local' with path and hint properties, add 'path?: string' and 'hint?: string' to local source type, use source.path and source.hint in resolveDep(), import homedir for ~ expansion. These are implementation-level details that constitute telling the agent WHAT to change rather than describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details like the exact function name 'webkitSrcDir' (test_webkit_ts_has_env_var), exact property names 'source.path' and 'source.hint' (test_source_ts_has_path_hint), exact string 'kind: \"local\"' with specific quoting (test_webkit_ts_local_source_with_path), and 'homedir' import (test_webkit_ts_has_env_var). An alternative correct implementation using e.g. 'getWebkitSourceDirectory' or 'os.homedir()' differently or 'sourcePath'/'sourceHint' would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests use `assert 'X' in content` text-matching patterns (e.g., test_webkit_ts_has_env_var checks for string 'BUN_WEBKIT_PATH' in file content, test_source_ts_has_path_hint checks for 'source.path' in file content). Only test_build_jsc_ts_deleted (file existence) and test_package_json_uses_build_ts (JSON parsing) go beyond pure text matching. The TypeScript syntax checks use subprocess execution but are pass-to-pass tests. No test actually imports, calls, or executes the "
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_claude_md_table_reformatted could be satisfied without any reformatting if the original file already contains the checked strings like '`build.ts`', '`clean.ts`', '`source.ts`', '`deps/*.ts`' in the Module inventory section. The test only checks that certain entries exist in the table, not that it was actually reformatted with wider columns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/bun's git history context and solve.sh is at /solution/solve.sh. An agent could read /solution/solve.sh directly to see the gold patch, or could grep test files in /workspace for expected strings. There are no anti-cheating measures preventing access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six major behaviors from instruction.md are tested: package.json updates (test_package_json_uses_build_ts), build-jsc.ts deletion (test_build_jsc_ts_deleted), clean.ts WebKitBuild removal (test_clean_ts_no_webkit_build), webkit.ts BUN_WEBKIT_PATH support (test_webkit_ts_has_env_var, test_webkit_ts_local_source_with_path), source.ts path/hint (test_source_ts_has_path_hint), and CLAUDE.md reformatting (test_claude_md_table_reformatted)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Pass-to-Pass Tests, Fail-to-Pass Tests), descriptive function names, and docstrings explaining what each test validates."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task involves package.json (JSON schema) and the instruction specifies the exact script names and flag values (--target=WebKit, --profile) that should appear, which is validated in test_package_json_uses_build_ts."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact function names (webkitSrcDir()), exact property names (path, hint), exact type annotations (path?: string, hint?: string), exact return structure (kind: 'local' with path and hint), and exact import requirements (homedir for ~ expansion). These are implementation-level details that go far beyond describing the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code editing task, not a config-only edit task in the agentmd-edits sense."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

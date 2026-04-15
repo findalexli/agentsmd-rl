@@ -6,12 +6,18 @@ AReaL currently supports WandB, SwanLab, and TensorBoard for experiment tracking
 
 ## Expected Behavior
 
-A new `TrackioConfig` dataclass should be added to the configuration system, following the same patterns as the existing tracking backends (`WandBConfig`, `SwanlabConfig`, `TensorBoardConfig`). The config should support at minimum:
-- A mode field (`"disabled"`, `"online"`, `"local"`) defaulting to disabled
-- Project name and run name fields
-- A space ID field for HF Spaces deployment
+A new `TrackioConfig` dataclass should be added to the configuration system, following the same patterns as the existing tracking backends (`WandBConfig`, `SwanlabConfig`, `TensorBoardConfig`). The config should support:
+- A mode field with exactly three valid values: `"disabled"`, `"online"`, and `"local"`. The default must be `"disabled"`. Invalid modes must raise `ValueError` with a descriptive message.
+- Project name field (optional, can default to `None`)
+- Run name field (optional, can default to `None`)
+- A space ID field for HF Spaces deployment (optional, can default to `None`)
 
-The `StatsLogger` class should integrate trackio for the full lifecycle: initialization, logging metrics on each commit, and cleanup on close. The combined logging helper function in `logging.py` should also include trackio with a graceful fallback when the package is not installed.
+The `StatsLogger` class should integrate trackio for the full lifecycle:
+- On `init()`: if trackio mode is not `"disabled"`, call `trackio.init(project=..., name=...)` with the project and name from the trackio config (falling back to experiment_name and trial_name respectively)
+- On `commit()`: call `trackio.log(item, step=...)` for each log entry when trackio is enabled
+- On `close()`: call `trackio.finish()` when trackio is enabled
+
+The combined logging helper function in `logging.py` should also call `trackio.log(data, step=...)` with a graceful fallback (try/except with `pass`) when trackio is not installed.
 
 ## Files to Look At
 

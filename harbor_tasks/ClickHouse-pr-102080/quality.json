@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all key elements tested: the comment 'Large files checked into git', MAX_FILE_SIZE=$((5 * 1024 * 1024)), LARGE_FILE_WHITELIST array with specific entries, STAT_FMT_FLAG/-c/-f, STAT_FMT, 'git ls-files', the exact warning message text, 'download them at test time or build from source', and the file path ci/jobs/scripts/check_style/various_checks.sh. All assert'd strings and variable names are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact variable names (MAX_FILE_SIZE, STAT_FMT_FLAG, STAT_FMT, LARGE_FILE_WHITELIST), exact values ('$((5 * 1024 * 1024))'), exact detection commands ('stat -c \\'%s %n\\' /dev/null'), exact format strings ('%s %n' for GNU, '%z %N' for BSD), exact flag characters ('-c' for GNU, '-f' for BSD), and exact warning text. This is essentially dictating the implementation rather than describing the desired behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_large_file_check_exists assert on gold-specific implementation details: exact variable names (MAX_FILE_SIZE, STAT_FMT_FLAG, STAT_FMT, LARGE_FILE_WHITELIST), exact expressions ('MAX_FILE_SIZE=$((5 * 1024 * 1024))'), and exact strings ('git ls-files'). An alternative correct implementation using e.g. 'find' instead of 'git ls-files', or a different variable name like 'SIZE_LIMIT', or using 'du' for size checking, would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, test_large_file_warning_message) are purely text-matching: they read the script file and assert substrings exist. test_large_file_check_logic does test behavior but reimplements the logic in Python rather than executing the actual shell script. Only test_various_checks_runs executes the script but is a pass-to-pass test."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_large_file_check_logic (a fail-to-pass test) doesn't execute the shell script at all \u2014 it reimplements the logic in Python. A stub implementation that simply appends the required comment strings and variable names to the shell script would pass test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, and test_large_file_warning_message without any actual functional implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ClickHouse (the solve.sh is visible in the container), and the agent could read it or the test file at tests/test_outputs.py to discover exact expected strings. Since tests are purely string-matching, the agent could simply append the literal expected strings as comments to pass all fail-to-pass tests without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires 'efficient bulk operations (avoiding fork-per-file)' via xargs, but no test verifies this. The instruction requires the check to actually work end-to-end (print warnings for large files), but no fail-to-pass test actually runs the shell script against a repo with large files. test_large_file_check_logic reimplements logic in Python instead of testing the actual script."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'test_large_file_check_exists', 'test_whitelist_comprehensive') and include fail-to-pass vs pass-to-pass annotations in their docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces shell script output (warning messages), not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact stat detection command ('stat -c \\'%s %n\\' /dev/null'), exact variable names and values, exact format strings for GNU ('%s %n') and BSD ('%z %N'), and exact flag characters. This goes well beyond identifying the file to modify and effectively dictates the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch appends ~40 lines to the end of various_checks.sh, which is a localized addition that doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

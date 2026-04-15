@@ -6,13 +6,13 @@ The Gradio website uses Cloudflare Pages Functions to serve markdown content to 
 
 The two exported functions — `serveDocMarkdown` and `serveGuideMarkdown` — are currently making unnecessary subrequests. Each function:
 
-1. Detects that the request is from an LLM crawler
-2. Makes a `fetch()` call to the same origin's API endpoint (e.g., `/api/markdown/<doc>`)
+1. Detects that the request is from an LLM crawler (user-agents containing "bot", "crawler", "spider", or requests with `Accept: text/markdown`)
+2. Makes a `fetch()` call to the same origin's API endpoint
 3. Parses the JSON response
 4. Extracts the `markdown` field
 5. Constructs a new `Response` with custom headers
 
-This is wasteful because these functions run as prerendered Cloudflare Pages routes. The intermediate fetch-parse-rewrite cycle doubles the number of requests for every LLM markdown page view. The markdown API endpoints already exist and can serve the content directly — the functions just need to point LLM clients there without proxying the response body.
+This fetch-parse-rewrite cycle doubles the number of requests for every LLM markdown page view. The intermediate subrequest is wasteful because the API endpoints already exist and can serve the content directly.
 
 ## Relevant Files
 
@@ -20,4 +20,15 @@ This is wasteful because these functions run as prerendered Cloudflare Pages rou
 
 ## Expected Behavior
 
-LLM requests to doc and guide pages should be handled with minimal overhead — no unnecessary subrequests or response body proxying. Non-LLM requests should continue to fall through to `next()` unchanged.
+For LLM requests:
+- `serveDocMarkdown` must return an HTTP 3xx redirect response with a `Location` header pointing to `/api/markdown/<doc>` (where `<doc>` is the doc parameter from the request)
+- `serveGuideMarkdown` must return an HTTP 3xx redirect response with a `Location` header pointing to `/api/markdown/guide/<guide>` (where `<guide>` is the guide parameter from the request)
+- Neither function should make `fetch()` subrequests for LLM requests
+
+For non-LLM requests:
+- Both functions must fall through to `next()` unchanged, allowing normal page rendering
+
+## Code Quality Requirements
+
+- The modified TypeScript file must be formatted with Prettier using the configuration at `.config/.prettierrc.json` and ignore patterns from `.config/.prettierignore`
+- The Cloudflare Pages Functions must build successfully with `wrangler pages functions build`

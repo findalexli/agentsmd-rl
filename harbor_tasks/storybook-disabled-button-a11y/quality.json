@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions check for exact strings and patterns that are explicitly specified in instruction.md: aria-disabled attribute pattern, onClick blocking pattern, $disabled transient prop, cursor styling expression, opacity styling expression, file path, and build/typecheck commands."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction gives the exact code to write: `aria-disabled={disabled || readOnly ? 'true' : undefined}`, `onClick={disabled || readOnly ? undefined : handleClick}`, `$disabled?: boolean;`, exact cursor and opacity expressions. This is not describing what's broken \u2014 it's dictating the exact implementation line by line."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact string matching (e.g., `assert \"aria-disabled={disabled || readOnly ? 'true' : undefined}\" in content`). An alternative correct fix like `aria-disabled={disabled || readOnly ? true : undefined}` (boolean instead of string 'true') or `aria-disabled={(disabled || readOnly) ? 'true' : undefined}` (extra parens) would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_button_uses_aria_disabled, test_disabled_button_click_handler_blocked, test_styled_button_uses_transient_disabled_prop, test_styled_button_uses_disabled_prop_for_styling) are all purely text-matching via `assert '...' in content` on the source file. They do not import, render, or execute the component. The p2p tests do run builds/typechecks, but all f2p tests are text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not contain the required exact strings like `aria-disabled={disabled || readOnly ? 'true' : undefined}`. The f2p tests check for specific new code patterns that don't exist in the original file, so doing nothing would fail them."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/storybook accessible in the container (solve.sh applies a patch there). The agent could read solution/solve.sh or the test file itself (tests/test_outputs.py) to extract the exact strings being asserted and copy them verbatim into the source file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: aria-disabled usage, no native disabled, click handler blocking, $disabled transient prop, cursor/opacity styling, TypeScript compilation, prettier formatting, and build checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_button_uses_aria_disabled, test_disabled_button_click_handler_blocked, etc.), each has a docstring explaining its purpose, and they are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a React component, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (Button.tsx), gives exact code snippets to insert (e.g., `aria-disabled={disabled || readOnly ? 'true' : undefined}`), exact prop names (`$disabled`), and exact styling expressions. This goes far beyond identifying the buggy module \u2014 it's a step-by-step implementation guide."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

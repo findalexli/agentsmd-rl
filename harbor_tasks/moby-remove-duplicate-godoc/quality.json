@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_godoclint_enabled_in_config checks for the exact linter name 'godoclint', but instruction.md only says 'Enable a godoc linter' without naming 'godoclint' specifically. (2) Tests check specific files local_unix.go and local_windows.go for the exact string '// Package local provides the default implementation for volumes', but instruction.md doesn't name these specific files or this exact string. (3) test_local_package_has_pro"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (duplicate package documentation) and what to do (resolve duplicates, enable a godoc linter) but doesn't specify exact lines to change, exact file modifications, or the specific linter name 'godoclint'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_godoclint_enabled_in_config and test_golangci_config_valid assert specifically for 'godoclint' as the linter name. An agent could reasonably choose a different godoc-related linter (e.g., 'godot') based on the instruction's vague 'Enable a godoc linter' wording. Also, test_local_package_has_proper_doc asserts the canonical doc must be in local.go specifically, but an alternative valid fix could place it in any single file."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include behavioral checks: test_go_code_compiles runs 'go build', test_go_vet runs 'go vet', test_go_fmt runs 'go fmt', and test_local_unit_tests runs actual Go unit tests. While some tests do text-matching (checking file contents), the suite is not exclusively text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_godoclint_enabled_in_config, test_unix_file_no_package_doc, test_windows_file_no_package_doc) check for real changes: godoclint must be present and uncommented in the config, and duplicate doc comments must be removed from specific files. A stub/no-op implementation would not pass these since the base commit has the duplicate docs and lacks godoclint."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/moby (same repo) as solution/solve.sh in the container environment. The agent could potentially read /solution/solve.sh if it's mounted. Additionally, the test file at tests/test_outputs.py contains the exact string to remove ('// Package local provides the default implementation for volumes') and the exact linter name ('godoclint'), which the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: duplicate doc removal (test_unix_file_no_package_doc, test_windows_file_no_package_doc), linter enablement (test_godoclint_enabled_in_config, test_golangci_config_valid), go build/vet/fmt success, and valid YAML."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings. They are labeled as 'Fail-to-pass' or 'Pass-to-pass' indicating their purpose. The module docstring explains the PR context."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Go source files and YAML config, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md says to audit files in 'daemon/volume/local/' directory without naming the specific buggy files (local_unix.go, local_windows.go). It doesn't name the exact linter 'godoclint' either. The directory is naturally scoped by the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff to .golangci.yml is localized: adding one line for 'godoclint' and a minor comment fix on 'gocritic'. It doesn't rewrite the whole file or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

@@ -14,15 +14,42 @@ Add OpenTelemetry-based metrics to the MCP actions backend plugin, following the
 
 Both metrics should use the Backstage `MetricsService` (from `@backstage/backend-plugin-api/alpha`) and follow OTel conventions for bucket boundaries and attribute names.
 
+### Metric Schema
+
+The operation duration histogram requires these attributes on each recorded value:
+- `mcp.method.name` — the MCP method being invoked (e.g., `'tools/list'`, `'tools/call'`)
+- `gen_ai.tool.name` — the tool name for `tools/call` calls
+- `gen_ai.operation.name` — must be `'execute_tool'` for tool invocation operations
+- `error.type` — the error type; use `'tool_error'` when a `CallToolResult` has `isError=true`
+
+The session duration histogram requires these attributes:
+- `mcp.protocol.version` — the MCP protocol version in use
+- `network.transport` — the transport layer (e.g., HTTP)
+
+### Bucket Boundaries
+
+The histograms must use OTel-standard bucket boundaries for duration histograms: `[0.01, 0.05, 0.1, 1, 10, 60, 300]` (seconds), sorted ascending, minimum `0.01`, maximum `300`.
+
+### Instrumented Handlers
+
+In `McpService`, both `tools/list` and `tools/call` handlers must record operation duration. The timing mechanism must capture high-resolution wall-clock time. The duration must be computed as the difference between the end time and start time, and recorded in a `finally` block to ensure it fires even on error.
+
+In the streamable router, session duration is measured from request start to connection close, using the same high-resolution timing approach and bucket boundaries.
+
+### Metrics Service Integration
+
+The Backstage `MetricsService` is accessed via `metricsServiceRef`. Both `McpService.create()` and `createStreamableRouter()` must accept a `metrics` parameter and use it to create histograms. The `plugin.ts` file must inject `metricsServiceRef` and pass the metrics service to both.
+
 ## Files to Look At
 
 - `plugins/mcp-actions-backend/src/services/McpService.ts` — Core service that handles MCP tool listing and invocation
 - `plugins/mcp-actions-backend/src/routers/createStreamableRouter.ts` — HTTP router for the streamable transport
 - `plugins/mcp-actions-backend/src/plugin.ts` — Plugin wiring (needs to inject the metrics service)
+- `plugins/mcp-actions-backend/src/metrics.ts` — New shared module for metrics type definitions and bucket boundaries (create this)
 
 ## Additional Requirements
 
-- Create a shared metrics module for type definitions and bucket boundaries
+- Create a shared metrics module (`metrics.ts`) that exports the bucket boundaries array and defines the metric attribute interfaces
 - The plugin's README should be updated to document the new metrics so users know what telemetry data is emitted
 - Don't forget the changeset file (see `.changeset/` for examples)
 - Error handling must properly record `error.type` in metrics — use the OTel MCP spec distinction between thrown exceptions (use error name) and `CallToolResult` with `isError=true` (use `'tool_error'`)

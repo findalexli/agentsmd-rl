@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file (CookieMap.cpp), the method (toJSON), the crash cause (numeric cookie names triggering putDirect on array indices), the need for index-safe insertion variants, and the dedup/hasProperty optimization. Tests check for putDirectMayBeIndex usage, absence of bare putDirect, absence of hasProperty, exception scopes, loops, object construction \u2014 all discoverable from the instruction's description of the bug, the file, the method, and the suggested pattern (following FormDa"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (putDirect crashes on numeric keys) and hints at the pattern used elsewhere, but does not specify exact replacement functions like putDirectMayBeIndex, nor does it say to use HashSet for deduplication. A developer must still reason about which safe variant to use and how to restructure dedup."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests accept multiple safe variants (putDirectMayBeIndex, putDirectIndex, putByIndex, put, defineOwnProperty) and multiple dedup strategies (HashSet, std::set, std::unordered_set, or simply removing hasProperty). The tests don't assert on specific variable names, line positions, or the exact gold implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test reads the source file text and uses regex pattern matching (e.g., checking for 'putDirect' vs 'putDirectMayBeIndex' strings, counting non-blank lines, searching for 'hasProperty'). No test actually compiles or executes the C++ code. All tests are effectively 'assert pattern in open(path).read()' with no behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty toJSON body or returning jsUndefined) would fail multiple tests: test_not_stub requires >=8 non-blank lines, test_tojson_preserves_functionality requires object construction + exception handling + iteration, test_put_inside_loop requires insertion calls inside loops. The f2p tests specifically check that bare putDirect is absent and safe variants are present, which a no-op wouldn't satisfy."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/bun alongside the agent's working directory. The gold patch is applied via solve.sh which is in /solution/solve.sh. An agent could read the Dockerfile or /solution/solve.sh to discover the exact patch. Additionally, the tests only do static text analysis, so the agent could grep test_outputs.py patterns to reverse-engineer what strings to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: replacing bare putDirect with index-safe variants (test_no_bare_putdirect_in_tojson, test_all_insertion_paths_safe), avoiding hasProperty for dedup (test_dedup_avoids_hasproperty), and preserving core functionality (test_tojson_preserves_functionality, test_not_stub, test_other_methods_preserved)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, config-derived, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a C++ method in a runtime; it does not produce structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (CookieMap.cpp) and method (toJSON), which is appropriate since the bug is specific to that method. It doesn't specify exact line numbers or the exact replacement code. Mentioning that other parts of the codebase handle this correctly is a reasonable hint, not solution leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

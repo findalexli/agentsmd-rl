@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md names all key specifics tested: '$blockPattern', 'preg_replace_callback', '$blockMatch', '$entryPattern', '$updated = true', 'preg_quote($platform', '\\Throwable', 'No changes to commit, SDK is up to date', '1.9.x', '$existingPrUrl' with default '', 'preg_match(\"#(https://github\"', removal of 'cleanupTarget', 'chmod -R u+w' and 'rm -rf', and the specific console output patterns with 2-space indentation. All asserted strings and patterns in tests are discoverable from instructio"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates implementation details: use a variable named '$blockPattern', use 'preg_replace_callback' with callback receiving '$blockMatch', use '$entryPattern' inside the callback, set '$updated = true', use 'preg_quote($platform, \"/\")'. These are exact code-level directives, not descriptions of what's broken. Similarly for updateExistingPr, it specifies exact parameter names, default values, and regex patterns."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names and implementation details: test_updateSdkVersion_uses_block_scoping checks for '$blockPattern' in content, test_block_scoped_version_update_logic checks for 'function ($blockMatch)' and '$entryPattern' and '$updated = true'. An alternative correct fix using different variable names (e.g., '$scopePattern', '$match', '$pattern', '$replaced') would fail these tests despite being equally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_supported_versions_includes_1_9_x, test_updateSdkVersion_uses_block_scoping, test_empty_git_commit_handling, test_updateExistingPr_signature_updated, test_updateExistingPr_extracts_pr_from_error, test_cleanupTarget_removed, test_console_output_formatting_improved, test_block_scoped_version_update_logic) ALL use the pattern `assert 'X' in content` or `re.search(pattern, content)` on file text. None import, call, or execute the PHP code to verify behavior. The pass-to-"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific strings and patterns that don't exist in the original file (e.g., '$blockPattern', 'preg_replace_callback', '1.9.x' in the versions array, '$existingPrUrl' parameter). A stub or no-op wouldn't add these strings to the file, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container and downloads the fixed file from GitHub. An agent could read /workspace/appwrite/../solution/solve.sh or directly curl the merge commit's file. Additionally, since tests are pure text matching, the agent could grep the test file to discover exact expected strings and insert them."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six behavioral requirements from instruction.md are tested: version scoping (tests 2,8), empty commit handling (test 3), 1.9.x version (test 1), updateExistingPr changes (tests 4,5), cleanupTarget removal (test 6), and console formatting (test 7)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each tests. They are logically grouped by feature area (version update, git commit, PR update, cleanup, formatting, validation)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names ('$blockPattern', '$blockMatch', '$entryPattern', '$updated'), exact method signatures ('$existingPrUrl = \"\"'), exact regex patterns ('preg_match(\"#(https://github\"'), and exact string literals ('No changes to commit, SDK is up to date'). This goes far beyond naming the buggy file/method \u2014 it prescribes the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits or config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_semantic_test_file_updated asserts specific strings like \"icon: 'custom-icon'\", \"icon: { color:\", and \"icon: 'dynamic-icon'\" in semantic.test.tsx, but instruction.md never mentions these exact fixture values or that semantic.test.tsx needs to be modified with those specific strings. Also, test_overlay_props_use_correct_type checks for 'PopconfirmSemanticAllType' which is mentioned in implementation notes but the exact patterns like \"classNames?: PopconfirmSemanticAllType['classNames']\" are "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states implementation details: 'Use clsx() to combine the base class with the optional classNames?.icon', 'Apply styles?.icon to the style prop of the icon span', 'The OverlayProps interface in PurePanel.tsx should reference PopconfirmSemanticAllType instead of PopoverSemanticAllType', and provides the exact type definition code. This tells the agent exactly what to change rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to match exact syntax patterns like r'className=\\{clsx\\(`\\$\\{prefixCls\\}-message-icon`, classNames\\?\\.icon\\)\\}' and r'style=\\{styles\\?\\.icon\\}'. An alternative correct fix using different formatting (e.g., extra spaces, variable extraction, or different clsx argument order) would fail these regex checks despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_icon_classnames_applied, test_icon_styles_applied, test_type_definition_includes_icon, test_overlay_props_use_correct_type, test_semantic_demo_updated, test_semantic_test_file_updated) are ALL string/regex matching on file contents using open(path).read() with no code execution. They never import, render, or call the component."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check file content via string matching. An agent could pass test_semantic_test_file_updated by simply appending comment strings like \"icon: 'custom-icon'\" to the test file without any real implementation. Similarly, adding dead code strings to PurePanel.tsx could pass the regex checks without functional correctness."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/ant-design and solve.sh is accessible. The agent could read solution/solve.sh to see the exact patch. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact regex patterns and craft matching strings without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (classNames.icon, styles.icon, type definition, OverlayProps update, demo update) are tested, plus additional pass-to-pass tests for linting, TypeScript, and existing unit tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings clearly indicating what each test checks (e.g., 'Fail-to-pass: Verify that classNames?.icon is applied')."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves modifying React component code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names implementation details like 'The icon span in PurePanel.tsx currently has a static className: `${prefixCls}-message-icon`', 'Use clsx() to combine the base class', and 'The OverlayProps interface in PurePanel.tsx should reference PopconfirmSemanticAllType instead of PopoverSemanticAllType'. These are exact code-level hints beyond what's needed to describe the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

@@ -1,18 +1,31 @@
-# Bug: Website markdown API endpoints break behind Cloudflare Functions
+# Bug: "Copy as Markdown" feature fails when deployed
 
-The Gradio website has internal API endpoints that serve documentation pages as markdown for the "Copy as Markdown" feature:
-
-- `js/_website/src/routes/api/markdown/[doc]/+server.ts` — serves component/API docs
-- `js/_website/src/routes/api/markdown/guide/[guide]/+server.ts` — serves guide pages
-
-These endpoints currently wrap the markdown content inside a JSON response (using SvelteKit's `json()` helper), returning `{"markdown": "...content..."}`. The client component at `js/_website/src/lib/components/DocsCopyMarkdown.svelte` then parses this with `response.json()` and extracts the `.markdown` field.
-
-**The problem**: When the site is deployed behind Cloudflare Functions, the "Copy as Markdown" feature breaks. The Cloudflare Functions forwarding layer doesn't properly handle these responses — the markdown content never reaches the client, and the copy button silently fails. The issue is in how the API endpoints format and return the markdown content, which is incompatible with Cloudflare's forwarding expectations.
-
-**Expected behavior**: The "Copy as Markdown" button should work correctly when the site is served through Cloudflare Functions. The markdown content should be returned in a format that Cloudflare can forward without modification, and the client should be able to consume the response correctly.
+The Gradio website has internal API endpoints that serve documentation pages as markdown for the "Copy as Markdown" feature. When the site is deployed, the copy button silently fails — the markdown content never reaches the client.
 
 ## Files to investigate
 
 - `js/_website/src/routes/api/markdown/[doc]/+server.ts` — doc markdown endpoint
 - `js/_website/src/routes/api/markdown/guide/[guide]/+server.ts` — guide markdown endpoint
-- `js/_website/src/lib/components/DocsCopyMarkdown.svelte` — client that fetches markdown
+- `js/_website/src/lib/components/DocsCopyMarkdown.svelte` — client component that fetches markdown
+
+## Required behavior
+
+The API endpoints must be modified to:
+
+1. Define a constant named `MARKDOWN_HEADERS` with:
+   - `"Content-Type": "text/markdown; charset=utf-8"`
+   - `"X-Robots-Tag": "noindex"`
+
+2. Return markdown content using `new Response()` with the `MARKDOWN_HEADERS` headers, not the `json()` helper
+
+3. Remove the `json` import from `@sveltejs/kit` since it is no longer needed
+
+4. Return error responses as plain text `new Response("Error message", { status: ... })` instead of JSON-wrapped errors
+
+The client component must be modified to:
+
+1. Use `response.text()` instead of `response.json()` to read the response
+
+2. Remove the pattern of extracting `.markdown` from parsed JSON — the response body should be used directly as the markdown string
+
+After these changes, the "Copy as Markdown" button should successfully retrieve and copy the markdown content.

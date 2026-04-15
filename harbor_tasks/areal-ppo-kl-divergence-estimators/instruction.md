@@ -2,40 +2,42 @@
 
 ## Context
 
-AReaL's PPO actor (`areal/trainer/ppo/actor.py`) tracks various training diagnostics
-via `stats_tracker` — proximal policy approximation metrics, version staleness, etc.
-
-One important missing diagnostic is **KL divergence estimation** between the
-inference-time policy and the training-time policy. When running "true on-policy" RL
-(where the rollout policy and training policy may drift), monitoring KL divergence
-helps detect and quantify policy drift.
+AReaL's PPO actor tracks various training diagnostics via `stats_tracker` — proximal
+policy approximation metrics, version staleness, etc. One important missing diagnostic is
+**KL divergence estimation** between the inference-time policy and the training-time
+policy. When running "true on-policy" RL (where the rollout policy and training policy
+may drift), monitoring KL divergence helps detect and quantify policy drift.
 
 ## Problem
 
-The function `_log_proximal_approximation_stats` in `areal/trainer/ppo/actor.py`
-already has access to both `logprobs` (current/training-time policy log-probabilities)
-and `old_logp` (behavior/inference-time policy log-probabilities), but it does not
-compute or log any KL divergence estimators between them.
+The function that handles `logprobs` and `old_logp` tracking has access to both
+policy log-probabilities but does not compute or log any KL divergence estimators
+between them.
 
-Three standard estimators should be tracked:
+The `log_ratio = logprobs.float() - old_logp.float()` is the fundamental quantity.
+Three standard estimators should be computed from this:
 
-1. **Direct estimator**: the simplest first-order estimator
-2. **Taylor (second-order) estimator**: a quadratic approximation
-3. **Dual estimator**: based on the convex conjugate / Donsker-Varadhan bound
+1. **Direct estimator**: `direct = -log_ratio`
+2. **Taylor (second-order) estimator**: `taylor = log_ratio² / 2`
+3. **Dual estimator**: `dual = exp(log_ratio) - 1 - log_ratio`
 
-All three are functions of the log-ratio between the two policies. They should be
-logged under the existing `stats_tracker` scope used by this function, using
+All three should be registered with `stats_tracker.stat()` using
 `denominator="n_valid_tokens"` for proper per-token averaging.
 
 ## Requirements
 
-- Add the KL divergence estimators inside `_log_proximal_approximation_stats`
-- Only compute when `logprobs` is available (not None)
-- Use `.float()` and `.detach()` appropriately (follow existing patterns in the function)
-- Register all three estimators with `stats_tracker.stat()`
-- The computation should be within the existing `stats_tracker.scope("compute_logp")` block
+- Only compute the KL estimators when `logprobs` is available (not None)
+- Use `.detach()` on tensors to prevent gradient tracking (the log_ratio itself
+  should be detached before computing estimators)
+- Register all three estimators with `stats_tracker.stat()`, e.g.:
+  `stats_tracker.stat(kl_div_direct=..., kl_div_taylor=..., kl_div_dual=..., denominator="n_valid_tokens")`
+- Follow the existing patterns for float conversion and detachment used by other
+  stats in the same function
 
-## References
+## Verification
 
-- See the existing stats logging patterns in `_log_proximal_approximation_stats`
-- The `stats_tracker` API: `stats_tracker.stat(name=tensor, denominator="key")`
+The implemented estimators can be verified against these expected values for
+`logprobs=[-1.0, -2.0, -3.0]` and `old_logp=[-1.5, -2.5, -3.5]`:
+- direct should equal `[-0.5, -0.5, -0.5]`
+- taylor should equal `[0.125, 0.125, 0.125]`
+- dual should be non-negative for all valid inputs

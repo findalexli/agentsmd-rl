@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths, the exact literal strings to add ('OnPush is enabled by default'), the exact patterns to remove (e.g., 'ChangeDetectionStrategy.OnPush,'), the enum member 'OnPush = 0', the property 'changeDetection?', and references to 'Eager' and 'default'/'optional' proximity checks. The git commit SHA (c1261b02...) is only checked in test_repo_git_valid which is a pass_to_pass gate about the environment, not something the agent needs to discover. All behavi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md section 'Expected Behavior After Fix' essentially states the exact fix: it specifies the exact text 'OnPush is enabled by default' must appear in JSDoc comments, exact strings that must NOT appear, and that 'Eager' must appear near 'optional' and 'OnPush' near 'default'. This tells the agent precisely WHAT to change (add specific text, remove specific patterns), leaving very little reasoning about what the fix should be."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for exact string containment ('OnPush is enabled by default') and absence of specific patterns, plus proximity checks (first mention of OnPush near 'default', first mention of Eager near 'optional'). These are flexible enough that different phrasings/restructurings of the surrounding documentation would all pass, as long as the key phrases are present and forbidden patterns removed. The tests don't assert on specific line numbers or exact paragraph content."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests are almost entirely text-matching: checking for string presence/absence in files (e.g., 'OnPush is enabled by default' in content, absence of 'ChangeDetectionStrategy.OnPush,'), balanced braces, file existence. While there are some structural checks (TypeScript syntax via tsc, balanced brackets/comments), the core f2p tests are all `assert 'foo' in content` or `assert 'foo' not in content` with no behavioral execution of the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that specific strings like 'OnPush is enabled by default' are present and that patterns like 'ChangeDetectionStrategy.OnPush,' are absent. A stub/no-op implementation (leaving files unchanged) would fail these tests because the original files don't contain 'OnPush is enabled by default' and do contain the forbidden patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/angular's solution/solve.sh (mounted in container), and the agent could read it. Additionally, the test file at tests/test_outputs.py contains all the exact fixture strings ('OnPush is enabled by default', the forbidden patterns, proximity requirements), so the agent could grep the test file to discover exact expected values without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md's 'Expected Behavior After Fix' section (points 1-4) are tested: JSDoc content checks, absence of deprecated patterns, proximity checks for 'default' and 'optional' near OnPush and Eager respectively."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_syntax_check, test_onpush_default_jsdoc_constants, test_changedetection_property_jsdoc_directives, etc.), clear docstrings explaining what each test verifies, and logical grouping with section comments (Gates, Pass-to-pass, Fail-to-pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves documentation/code edits, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and string patterns in instruction.md and tests are consistent and correct. No typos detected in paths like 'packages/core/src/change_detection/constants.ts' or pattern strings."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact enum member ('OnPush = 0'), the exact property ('changeDetection?'), the exact text to add ('OnPush is enabled by default'), and the exact strings to remove from specific files. This goes beyond describing what's broken and essentially specifies the exact edits needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch (solve.sh) applies localized diffs to specific sections of each file\u2014modifying JSDoc comments, removing code blocks, and changing specific phrases\u2014rather than rewriting entire files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

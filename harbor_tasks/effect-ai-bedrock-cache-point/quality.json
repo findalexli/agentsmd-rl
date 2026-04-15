@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/ai/amazon-bedrock/src/AmazonBedrockLanguageModel.ts), the function (prepareMessages), the constants/functions (getCachePoint, BEDROCK_CACHE_POINT), and the case blocks (case \"user\" and case \"assistant\"). All test-asserted specifics like getCachePoint(message), BEDROCK_CACHE_POINT, content.push, and the file path are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially tells the agent exactly what to do: add a getCachePoint check with content.push(BEDROCK_CACHE_POINT) to the user case block, mirroring the assistant case block. It says 'the user case block is missing this logic' and 'should have cache point handling equivalent to the assistant block.' This leaves almost no reasoning about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific patterns: regex matching 'if (getCachePoint(message)) { content.push(BEDROCK_CACHE_POINT)' inside the user case block. An alternative correct fix that uses a different structure (e.g., a helper function, a ternary, or pushing via a shared utility) would fail the regex pattern match in test_user_message_has_cache_point_check even if functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The primary fail-to-pass test (test_user_message_has_cache_point_check) is purely textual: it reads the source file and does regex/string matching on the content. It does not import, call, or execute the code. The tsc test does run a subprocess but only checks compilation, not runtime behavior. No test actually invokes prepareMessages with a user message containing a cache point and checks the output."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass because the test checks for specific getCachePoint(message) calls and if-block patterns within the user case block of the actual source file. Simply doing nothing or returning empty values wouldn't add that text to the source."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/effect as solve.sh's gold patch, and the agent could read solution/solve.sh (or the git diff within it) to see exactly what lines to add. The tests only check source file text, so the agent could also grep the test file for the expected patterns and reverse-engineer the exact code to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires cache point handling in the user case block equivalent to the assistant case, and TypeScript compilation should pass. Both are tested (text pattern matching for the cache point logic, and tsc --noEmit for compilation)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_user_message_has_cache_point_check, test_assistant_message_has_cache_point_check, test_source_structure, test_typescript_check) and have docstrings explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (AmazonBedrockLanguageModel.ts), the exact function (prepareMessages), the exact case block ('case \"user\"'), and the exact fix pattern (getCachePoint check pushing BEDROCK_CACHE_POINT). This goes well beyond identifying what's broken \u2014 it specifies exactly where and how to fix it."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

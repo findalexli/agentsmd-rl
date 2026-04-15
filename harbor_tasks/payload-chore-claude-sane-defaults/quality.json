@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all file paths (.claude/hooks/post-edit.sh, .claude/settings.json, CLAUDE.md), required literal strings (case, esac, *.ts, *.md, package.json, prettier, eslint), schema keys (hooks.PostToolUse, matcher with Edit|Write, permissions.allow), required content (kv-redis, R2, Quick Start, pnpm run prefix, pnpm turbo), and minimum counts (at least 10 permissions, at least 3 pnpm run commands). All test assertions are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides extremely detailed implementation specifics: exact case/esac routing (*.ts \u2192 eslint --fix, *.md \u2192 prettier --write, package.json \u2192 sort-package-json), the exact JSON schema for settings.json including nested structure, the exact matcher string 'Edit|Write', and specific CLAUDE.md changes like adding 'kv-redis' and 'R2'. This goes beyond describing what's broken and prescribes exactly what to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for behavioral properties (bash syntax validity, case/esac presence, specific substrings, JSON schema structure, permission count \u226510) rather than exact line-by-line content. Alternative implementations with different ordering, additional entries, different formatting tool invocations (npx vs direct), or different case patterns would still pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the hook script via subprocess with JSON stdin (test_post_edit_hook_extracts_filepath, test_post_edit_hook_handles_null_input), validate bash syntax via 'bash -n', parse JSON settings, and check both textual content and behavioral correctness. Not every test is pure text-matching; several involve actual execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass: test_post_edit_hook_case_matching requires specific literal strings (case, esac, *.ts, *.md, package.json, prettier, eslint); test_settings_json_hooks_configured requires specific JSON structure; test_claude_md_pnpm_run_prefix requires at least 3 'pnpm run' prefixed commands with zero bare commands. These require substantive implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file directly (cat /solution/solve.sh) and execute it to pass all tests without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: hook script creation and syntax, case/esac matching, null input handling, settings.json hooks and permissions, CLAUDE.md kv-redis, R2 storage, Quick Start section, pnpm run prefix, and pnpm turbo guidance."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, post-edit hook behavior, settings.json config, CLAUDE.md documentation updates), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The JSON schema for settings.json is fully documented in instruction.md with the required structure (hooks.PostToolUse array, permissions.allow list) and key requirements."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'Uses a case/esac construct to route files by extension', exact file-to-tool mappings ('*.ts files \u2192 run eslint --fix'), and the exact JSON schema for settings.json. For a configuration task, this prescribes the solution rather than describing the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff in CLAUDE.md is localized (specific lines for kv-redis, R2, Quick Start section, pnpm run prefixes) and doesn't contradict other files. The new files (.claude/hooks/post-edit.sh, .claude/settings.json) are self-contained additions."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 9,
+  "fail_count": 3
+}

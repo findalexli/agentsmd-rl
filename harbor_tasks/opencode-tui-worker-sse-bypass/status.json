@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T02:43:54.909096",
-  "total_time": 1507.25,
-  "sandbox_id": "ihta8pbc6vjs1xtkreay5",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:56:32.267736",
+  "total_time": 1118.51,
+  "sandbox_id": "i7ilnuyz7ruyt2qcrpgj5",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -57,17 +59,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.4,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:882: test `test_repo_tsc_syntax_validation` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:945: test `test_repo_worker_file_structure` has 2 assert(s), all pass ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.33,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 14505.11,
-      "at": "2026-04-10T05:25:00.982038"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +112,14 @@
       "backend": "fireworks",
       "time": 1507.25,
       "at": "2026-04-12T02:43:54.909096"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1118.51,
+      "at": "2026-04-15T04:56:32.267736"
     }
   ]
 }

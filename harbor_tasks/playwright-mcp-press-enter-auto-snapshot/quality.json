@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files (keyboard.ts, SKILL.md) with exact paths, describes the expected behavior (waitForCompletion for Enter, snapshot inclusion, non-Enter keys unchanged), and mentions updating SKILL.md workflow steps. The test specifics (waitForCompletion, setIncludeSnapshot, Core workflow section, step count, export structure) are all derivable from the instruction's description of expected behavior and the referenced codebase patterns (pressSequentially/browser_type with submit"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (Enter key doesn't wait for navigation or include snapshot) and points to existing patterns (waitForCompletion in pressSequentially) but doesn't specify exact code changes like 'add if (params.key === \"Enter\")' or line numbers. A developer must still reason about implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The _NODE_PRESS_TEST script uses a very specific regex to extract the press tool's handle function body: `const\\s+press\\s*=\\s*defineTabTool\\(\\{[\\s\\S]*?handle:\\s*async\\s*\\([^)]*\\)\\s*=>\\s*\\{([\\s\\S]*?)\\n\\s*\\},\\n\\}\\);`. It then evaluates the body in a mock context that requires specific method names like `tab.waitForCompletion` and `response.setIncludeSnapshot`. While these are the existing API methods in the codebase, an alternative correct fix that restructures the code differently (e.g., wrapping"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The key f2p tests (test_enter_key_waits_for_completion, test_enter_key_auto_snapshots, test_non_enter_keys_press_directly) extract the handle function and EXECUTE it via Node.js with mock objects, checking actual call logs. The repo tests run npm install, build, eslint as subprocesses. Some tests do text inspection (SKILL.md checks, structure checks) but the core behavioral tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty handle function or just `await tab.page.keyboard.press(params.key)`) would not produce 'waitForCompletion' or 'setIncludeSnapshot' in the call log, so test_enter_key_waits_for_completion and test_enter_key_auto_snapshots would fail. The SKILL.md tests would also fail on the original file content which has 4 numbered steps including a Snapshot step."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright (via solve.sh which is in solution/). The agent could potentially access /solution/solve.sh if it's mounted in the container, read the exact patch, and apply it directly. The Dockerfile doesn't show any mechanism to prevent reading the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: Enter key waits for navigation (test_enter_key_waits_for_completion), Enter key includes snapshot (test_enter_key_auto_snapshots), non-Enter keys work normally (test_non_enter_keys_press_directly), and SKILL.md is updated (test_skill_md_no_separate_snapshot_step, test_skill_md_workflow_step_count)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass static, Pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying TypeScript source code and a Markdown file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and commands in instruction.md are all correct and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files (keyboard.ts and SKILL.md) which is appropriate given the task domain. It doesn't specify line numbers or exact code changes, only describes the pattern to follow from existing code (waitForCompletion, snapshot)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code+docs editing task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

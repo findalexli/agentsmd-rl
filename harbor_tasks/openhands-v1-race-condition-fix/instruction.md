@@ -10,30 +10,30 @@ There's a race condition in the OpenHands frontend where clicking "New Conversat
 - This causes inconsistent behavior and potentially missing features
 - The bug is timing-dependent and hard to reproduce consistently
 
-## Root Cause
+## Observed Behavior
 
 The `useCreateConversation` hook checks `settings?.v1_enabled` to decide between V1 and V0 APIs. If settings haven't loaded yet, `settings` is `undefined`, causing `!!undefined?.v1_enabled` to evaluate to `false` — silently routing through the legacy V0 code path.
 
-Additionally, `DEFAULT_SETTINGS.v1_enabled` defaults to `false` on the frontend while the backend defaults to `true`, creating a mismatch.
+The frontend defaults `v1_enabled` to `false` in its settings, but the backend defaults it to `true`, creating a mismatch between frontend and backend behavior.
 
-## Files to Modify
+## Required Changes
 
-1. **`frontend/src/services/settings.ts`** - Change `DEFAULT_SETTINGS.v1_enabled` from `false` to `true`
-2. **`frontend/src/hooks/mutation/use-create-conversation.ts`** - Wait for settings to load before deciding V0 vs V1, use proper fallback
-3. **`frontend/src/hooks/query/use-settings.ts`** - Export `getSettingsQueryFn` for use in the mutation hook
+The following specific changes are needed to fix this issue:
 
-## Requirements
+1. **`frontend/src/services/settings.ts`** — The `DEFAULT_SETTINGS` object contains a `v1_enabled` property that must be `true` (not `false`) to align with the backend default
 
-The fix should:
-- Align frontend default with backend default (`v1_enabled: true`)
-- Wait for settings to be available before deciding which API to use
-- Fall back to `DEFAULT_SETTINGS` if settings fetch fails (e.g., 404 for new users)
-- Still respect explicit `v1_enabled: false` for organizations that have V1 disabled
-- Use the organization ID in the query key for proper caching
+2. **`frontend/src/hooks/query/use-settings.ts`** — The `getSettingsQueryFn` function must be exported so it can be used by other hooks
 
-## Hints
+3. **`frontend/src/hooks/mutation/use-create-conversation.ts`** — This hook must:
+   - Wait for settings to be available before deciding which API to use
+   - Use a query-key pattern that includes the organization ID for proper cache isolation
+   - Fall back to `DEFAULT_SETTINGS` when settings cannot be fetched (e.g., 404 for new users who don't have settings yet)
+   - Respect explicit `v1_enabled: false` for organizations that have V1 disabled
 
-- Look at how TanStack Query's `ensureQueryData` works for waiting on queries
-- The fix should use a try/catch to handle settings fetch failures
-- You'll need to import `useSelectedOrganizationId` to get the organization context
-- Make sure to export the query function from `use-settings.ts` so it can be used in the mutation
+## Technical Notes
+
+- The backend defaults `v1_enabled` to `true`, so the frontend should match this default
+- The TanStack Query `ensureQueryData` helper can be used to wait for a query to complete before proceeding
+- When settings fetch fails, a sensible fallback is to use the default settings object
+- The organization ID should be included in the query key to ensure proper cache per-organization
+- The existing `!!settings?.v1_enabled` pattern silently fails when settings is `undefined` — a different approach is needed

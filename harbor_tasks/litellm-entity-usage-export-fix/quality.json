@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the exact function name 'resolveEntityDisplay' (test_resolve_entity_display_added), the exact removal of 'extractTeamIdFromApiKeyBreakdown' (test_extract_team_id_from_api_key_breakdown_removed), exact test names like 'should fall back to the entity key when there is no team alias mapping' and 'should use entity key as alias when no team alias map is provided', and exact entity key strings 'team-1'/'team-2'. The instruc"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The hints section in instruction.md essentially describes the fix: 'The fix likely involves a function that resolves entity display values differently based on entity type' and 'For non-team exports, the entity key itself should be used as the display ID, not data extracted from API key metadata.' Combined with naming the buggy function 'extractTeamIdFromApiKeyBreakdown' pattern, this narrows the solution significantly."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce gold-specific implementation details: test_extract_team_id_from_api_key_breakdown_removed requires the exact string 'extractTeamIdFromApiKeyBreakdown' to be absent, test_resolve_entity_display_added requires the exact function name 'resolveEntityDisplay' to be present, and test_test_file_uses_entity_keys_not_entity1_entity2 requires exact strings 'team-1'/'team-2'. An alternative correct fix (e.g., named 'getEntityDisplayInfo' or using different test entity keys) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "4 out of 9 tests (test_extract_team_id_from_api_key_breakdown_removed, test_resolve_entity_display_added, test_entity_usage_export_test_file_updated, test_test_file_uses_entity_keys_not_entity1_entity2) are purely text-matching with `assert 'string' in open(path).read()`. While 5 tests do run vitest, the structural tests are pure string checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests that run vitest (test_new_fallback_test_runs_and_passes, test_alias_test_runs_and_passes) require actual test code to exist and pass with correct assertions, not just stubs. The structural tests require specific code changes that can't be satisfied by no-ops."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution files are copied from /solution/fixed_utils.ts and /solution/fixed_utils.test.ts as shown in solve.sh. An agent could simply run 'cp /solution/fixed_utils.ts ...' and 'cp /solution/fixed_utils.test.ts ...' to pass all tests. The /solution/ directory exists in the container with the gold patch files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes that entity ID and alias columns should show correct values for non-team types, and the vitest behavioral tests verify this through the test suite execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Structural f2p', 'Behavioral f2p', 'Pass-to-pass'), descriptive function names, and docstrings explaining base vs fixed behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing export utility functions but the instruction doesn't need to document CSV/JSON schema since this is a bug fix task, not a data format specification task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in file paths, function names, or test names across the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names specific functions: 'getEntityBreakdown', 'generateDailyData', 'generateDailyWithKeysData', 'generateDailyWithModelsData', and describes the bug pattern of extracting 'team_id' from 'api_key_breakdown'. The hints section further narrows by saying 'Look for functions that extract team_id or key_alias from api_key_breakdown'. This over-localizes the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

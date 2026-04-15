@@ -11,11 +11,21 @@ Create a Python script at `scripts/setup_primer_project.py` that automates this 
 2. Clone the project to a specified directory (respecting pinned revisions)
 3. Create a `.venv` and install the project's dependencies
 
-The script should use the `mypy-primer` package to access the project registry (specifically `get_projects()` from `mypy_primer.projects`). It should be runnable via `uv run scripts/setup_primer_project.py <project-name> <directory>`.
+The script must:
+- Expose a `main()` function with at least 3 substantive statements (argument parsing, project lookup, and orchestration logic)
+- Expose a `find_project()` function at the module level that takes a project name string and returns the corresponding project object from the mypy_primer registry
+- Accept a `--help` flag that displays usage information including a 'project' argument description
+- Exit with a non-zero status and print "not found" to stderr when given an unknown project name
+- Be runnable via `uv run scripts/setup_primer_project.py <project-name> <directory>`
+
+The script should use the `mypy-primer` package to access the project registry (specifically `get_projects()` from `mypy_primer.projects`).
 
 Don't forget to:
-- Add `mypy-primer` as a dependency in `scripts/pyproject.toml` with a git source pointing to `hauntsaninja/mypy_primer`
-- Update the project's agent instructions (`CLAUDE.md`) to document this new workflow so that AI assistants know to use this script when asked to reproduce ty ecosystem changes
+- Add `mypy-primer` as a dependency in `scripts/pyproject.toml` with a git source pointing to `hauntsaninja/mypy_primer` (configure under `[tool.uv.sources]` with `git = "https://github.com/hauntsaninja/mypy_primer"`)
+- Update the project's agent instructions (`CLAUDE.md`) to document this new workflow so that AI assistants know to use this script when asked to reproduce ty ecosystem changes. The CLAUDE.md update must:
+  - Include an "ecosystem" section
+  - Reference the literal string `setup_primer_project`
+  - Show the exact command `uv run scripts/setup_primer_project.py`
 
 ## Files to Look At
 

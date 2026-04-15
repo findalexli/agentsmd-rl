@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T01:17:28.329371",
-  "total_time": 1491.34,
-  "sandbox_id": "inafjczbkwy36a1h1h287",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:53:36.072733",
+  "total_time": 1246.27,
+  "sandbox_id": "iuhd2lfyafqi6qhrft3c4",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,17 +59,28 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:66: test `test_allowlist_recognizes_awk` has 3 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:73: test `test_allowlist_recognizes_awk_variants` has 3 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:97: test `test_detect_awk_with_value_flags` has 3 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:148: test `test_existing_interpreters_still_detected` has 6 assert(s),', 'lint_tier_b:1']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.25,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 13411.55,
-      "at": "2026-04-10T05:06:47.508748"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +112,14 @@
       "backend": "fireworks",
       "time": 1491.34,
       "at": "2026-04-12T01:17:28.329371"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1246.27,
+      "at": "2026-04-15T04:53:36.072733"
     }
   ]
 }

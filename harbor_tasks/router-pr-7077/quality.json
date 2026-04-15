@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'error.routeId ??= matchState.routeId' (exact string), 'export function getNotFound(' (exact function signature), 'const notFoundError = getNotFound(error)' (exact variable assignment), '.cause' property usage, and 'matchData.value' (Vue reactivity pattern). The instruction mentions none of these specific strings or patterns."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug (notFound() error loses context crossing error boundary) and hints at where to look (CatchBoundary onCatch handler, information lost when re-thrown), but does not specify the exact fix like 'add error.routeId ??= matchState.routeId'. It only describes what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact string 'error.routeId ??= matchState.routeId' in React/Vue, exact function name 'getNotFound' with 'export function getNotFound(' in Solid, exact line 'const notFoundError = getNotFound(error)'. An alternative correct fix (e.g., using a different variable name, different assignment operator, or different helper function name) would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix) are ALL text-matching tests using patterns like `assert 'error.routeId ??= matchState.routeId' in content`. They read file contents and check for string presence, never importing, calling, or executing the code. The pass-to-pass tests do run subprocesses, but every f2p test is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A trivial 'fix' that simply appends the expected strings as comments to the relevant files (e.g., adding '// error.routeId ??= matchState.routeId' to Match.tsx) would pass all f2p tests without actually fixing the bug, since tests only check for string presence in file contents."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/router/solution/solve.sh (if it exists in the container from the Dockerfile setup) or simply grep the test file at tests/test_outputs.py to discover the exact strings being asserted (e.g., 'error.routeId ??= matchState.routeId') and paste them into the source files without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: route-thrown notFound() renders correct notFoundComponent, existing tests pass, TypeScript compilation succeeds. The tests cover all three framework fixes and include pass-to-pass tests for TypeScript compilation, ESLint, and unit tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into classes (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix, TestPassToPass) with descriptive method names and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code bug fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (packages/react-router/src/Match.tsx, etc.), function names (isNotFound, getNotFound), and other identifiers appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact buggy files ('packages/react-router/src/Match.tsx', 'packages/solid-router/src/Match.tsx', 'packages/solid-router/src/not-found.tsx', 'packages/vue-router/src/Match.tsx') and tells the agent to look at 'CatchBoundary onCatch handler' and that 'Solid wraps thrown values in an Error object'. This significantly narrows the search space beyond what the task domain would suggest."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

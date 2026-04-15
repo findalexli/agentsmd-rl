@@ -1,25 +1,21 @@
-# Fix writer lock deadlock in update_weights_from_ipc during pause_generation
+# Fix writer lock deadlock during pause_generation
 
-## Problem
+## Symptom
 
-The `update_weights_from_ipc` function in the tokenizer manager has a deadlock bug that occurs when the scheduler is in `pause_generation` mode.
+When `pause_generation` is active, the `update_weights_from_ipc` function in `python/sglang/srt/managers/tokenizer_communicator_mixin.py` deadlocks. The function acquires `model_update_lock.writer_lock` unconditionally. When the scheduler is paused, existing readers are blocked on `is_pause_cond` waiting for the scheduler to resume, and the scheduler cannot resume until the weight update completes — creating a circular wait.
 
-When the scheduler is paused, existing readers are blocked waiting on `is_pause_cond`. If `update_weights_from_ipc` tries to acquire the `writer_lock` in this state, it will deadlock because:
-1. The writer lock cannot be acquired while readers hold the lock
-2. The readers are stuck waiting for the scheduler to resume (on `is_pause_cond`)
-3. The scheduler won't resume until the weight update completes
+## Task
 
-This creates a circular dependency that hangs the weight update operation.
+Fix the deadlock in `update_weights_from_ipc` so it no longer hangs when the scheduler is paused. After the fix, calling this function during an active `pause_generation` should complete successfully rather than deadlocking.
 
-## Expected Behavior
+Tests verify the modified `update_weights_from_ipc` function source (via `ast.unparse`) contains all of these patterns:
 
-When the scheduler is paused, `update_weights_from_ipc` should skip acquiring the writer lock (using `nullcontext()` instead) because:
-- No concurrent inference can race when the scheduler is paused
-- Readers are already blocked on `is_pause_cond`
-- The writer lock acquisition would deadlock
+- `async with self.is_pause_cond:`
+- `is_paused = self.is_pause`
+- `lock_context =`
+- `nullcontext()`
+- `async with lock_context:`
 
-## Files to Look At
+Tests also verify consistency with the `update_weights_from_distributed` function in the same file, which already handles the paused state correctly — the same patterns must appear in both functions.
 
-- `python/sglang/srt/managers/tokenizer_communicator_mixin.py` — Contains `update_weights_from_ipc` function that needs fixing
-
-Look at how similar functions like `update_weights_from_distributed` handle this same scenario. They check `is_pause` before acquiring the lock and use `nullcontext()` when paused.
+The modified file must remain syntactically valid and pass `ruff` (F401, F821), `black`, `isort`, `codespell`, and `pre-commit` checks.

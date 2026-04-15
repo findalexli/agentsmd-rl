@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_docker_bootstrap_excludes_frontend checks for 'superset-frontend' in docker-bootstrap.sh, and test_css_sourcemap_disabled_in_dev_mode checks cssSourceMap is exactly False. The instruction mentions CSS sourceMap should be disabled but doesn't specify the exact loader option name (sourceMap: false on css-loader). More critically, the instruction says nothing about removing '--without-threads' from the flask run command (which the gold patch does), and test_repo_lint / test_repo_custom_rules /"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior to implement (env var DISABLE_TS_CHECKER, watch patterns, CSS sourcemap changes) but doesn't specify exact code changes like 'change line X to Y'. A developer must reason about how to implement the changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes: whether ForkTsCheckerWebpackPlugin is present/absent, whether cssSourceMap is false, whether watchOptions.ignored contains specific patterns, and whether a string appears in a file. Alternative implementations (e.g., different variable names for the boolean check, different code structure) would pass as long as they produce the same behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_docker_bootstrap_excludes_frontend is purely text-based: `assert 'superset-frontend' in content`. It reads the file and checks for a substring without any execution. However, most other tests do execute webpack config via Node.js subprocess, so this is a partial failure."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_disable_ts_checker_with_true, test_disable_ts_checker_with_one, test_disable_ts_checker_case_insensitive) assert hasTsChecker is False, which requires actual implementation of the DISABLE_TS_CHECKER logic. test_css_sourcemap_disabled_in_dev_mode requires changing sourceMap to false. test_watch_ignored_includes_new_patterns requires adding specific patterns. A stub/default implementation would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset and the agent could read solution/solve.sh if it exists in the container. Additionally, the gold patch is a git apply that could be discovered. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires docker-compose-light.yml to set DISABLE_TS_CHECKER=true by default, but no test verifies the docker-compose-light.yml file content. The instruction also specifies development mode only behavior but tests don't verify that production mode is unaffected by DISABLE_TS_CHECKER."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments ('Fail-to-pass tests', 'Pass-to-pass tests'), have descriptive names, and include docstrings indicating their category (fail_to_pass/pass_to_pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is about webpack configuration changes, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (superset-frontend/webpack.config.js, docker-compose-light.yml, docker/docker-bootstrap.sh), variable names (DISABLE_TS_CHECKER), and patterns are all consistently spelled correctly across instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify (superset-frontend/webpack.config.js, docker-compose-light.yml, docker/docker-bootstrap.sh), specifies exact glob patterns to add ('**/.temp_cache', '**/coverage', etc.), and describes implementation details like the exact boolean parsing logic (['true', '1'] case insensitive). This significantly narrows the solution space beyond what's needed for a behavioral description."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes to three files (webpack.config.js, docker-compose-light.yml, docker-bootstrap.sh) with targeted modifications rather than full-file rewrites, and doesn't contradict the instruction."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

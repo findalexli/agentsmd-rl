@@ -14,8 +14,22 @@ Currently, when the handler dispatches agent commands for both streaming and non
 
 ## Expected behavior
 
-HTTP ingress callers should always be treated as non-owners. Requested HTTP scopes should not be able to upgrade the caller's owner status. This applies to both the streaming and non-streaming execution paths in `handleOpenResponsesHttpRequest`.
+HTTP ingress callers should always be treated as non-owners. Requested HTTP scopes should not be able to upgrade the caller's owner status. Both the streaming and non-streaming execution paths must pass an explicit non-owner indicator (not a hardcoded `true`) to the underlying agent command dispatcher.
 
-## Relevant files
+## Implementation requirements
 
-- `src/gateway/openresponses-http.ts` — the `runResponsesAgentCommand` helper and `handleOpenResponsesHttpRequest` function
+The fix must satisfy all of the following constraints:
+
+1. **Non-owner indicator must flow from parameters**: The parameter controlling owner status must be received from callers and passed through to the agent command dispatcher — it must not be hardcoded as a literal `true` inside the helper function.
+
+2. **Strict boolean typing**: The owner-status parameter must be explicitly typed as `boolean` in the function signature or type definition (no implicit `any`, no union including `any`).
+
+3. **No sentinel defaults**: The owner-status parameter must not use silent sentinel defaults like `?? true` or `?? false`.
+
+4. **Both call sites must pass non-owner values**: Both streaming and non-streaming paths in the handler must pass a non-owner value (something other than literal `true`).
+
+5. **Configuration preserved**: The `allowModelOverride: true` configuration in the file must remain intact.
+
+6. **No suppressions**: The file must not contain `@ts-nocheck`, `eslint-disable`, or `oxlint-ignore` suppressions.
+
+7. **No stub code**: The file must contain at least 400 lines and the helper function must have a substantial body (not be a stub or empty).

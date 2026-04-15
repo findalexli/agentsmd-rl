@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details undiscoverable from instruction.md: test_iteration_count_increased checks for exact pattern 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)'; test_fallback_code_removed checks for removal of specific fallback patterns like 'lineSegment(bezierEquation(c, 0), bezierEquation(c, 1 / 20))' and removal of 'lineSegmentIntersectionPoints' import; test_unused_import_removed checks for specific import string. None of these specifics (function name solveWithAnalyticalJacob"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md only describes symptoms (convergence issues, solver failing) and asks agent to identify and fix the issue. It does not specify changing iteration counts, removing fallback code, or any specific code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_iteration_count_increased asserts the exact regex pattern 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)' \u2014 an alternative fix that improves convergence differently (e.g., changing tolerance, using a different algorithm, increasing to 5 iterations) would fail. test_fallback_code_removed and test_unused_import_removed assert specific code removals that alternative correct fixes might not perform."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_iteration_count_increased, test_fallback_code_removed, test_unused_import_removed) are purely text-matching via regex/string search on file contents with no code execution. While some pass-to-pass tests run builds/typechecks, the core f2p tests are 'assert pattern in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_iteration_count_increased can be satisfied by a simple text substitution (s/3/4/) without understanding the convergence bug. test_fallback_code_removed can be satisfied by deleting lines containing specific strings. These are text-match tests, not behavioral tests that verify intersection accuracy."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/excalidraw (or could be at /solution/solve.sh in the container). The test file test_outputs.py contains the exact regex patterns and literal strings being checked, so the agent could grep for these and apply them directly. The agent could read test_outputs.py to discover the exact expected pattern 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)'."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: fix convergence issue, remove unnecessary code, maintain type safety, pass test suite. Tests check iteration count change, fallback removal, typecheck, lint, prettier, build, and curve tests \u2014 covering all stated requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_iteration_count_increased, test_fallback_code_removed, etc.) with docstrings explaining what each tests and why, including notes about fail-to-pass vs pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md mentions 'math package' and 'curve intersection logic' which are reasonable domain-level hints. It doesn't name specific files, line numbers, or function names like solveWithAnalyticalJacobian."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

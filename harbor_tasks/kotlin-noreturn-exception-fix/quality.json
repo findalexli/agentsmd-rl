@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check specific patterns like 'void RUNTIME_NORETURN HandleCurrentExceptionWhenLeavingKotlinCode' in .h/.cpp but 'HandleCurrentExceptionWhenLeavingKotlinCode() RUNTIME_NORETURN' in .kt (attribute placement differs). The instruction says 'Mark with RUNTIME_NORETURN attribute in all relevant locations' but doesn't specify that the .kt file needs RUNTIME_NORETURN AFTER the function signature rather than before. Also, tests check for Common.h defining RUNTIME_NORETURN, ThrowException and SetKon"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'Mark HandleCurrentExceptionWhenLeavingKotlinCode with the RUNTIME_NORETURN attribute in all relevant locations' and lists the exact three files to modify. It even specifies the validation criteria matching the exact changes needed. This tells the agent exactly WHAT to change rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use exact regex patterns: test_exceptions_h_has_noreturn requires 'void\\s+RUNTIME_NORETURN\\s+HandleCurrentExceptionWhenLeavingKotlinCode' (attribute between void and function name), while test_c_adapter_exporter_has_noreturn requires 'void\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\(\\s*\\)\\s+RUNTIME_NORETURN\\s*;' (attribute after parentheses). An equally correct alternative like placing [[noreturn]] or using a different attribute position that Clang also accepts would fail these regex"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_exceptions_h_has_noreturn, test_exceptions_cpp_has_noreturn, test_c_adapter_exporter_has_noreturn) and test_all_three_locations_consistent all exclusively use regex/string matching on file contents. No test compiles the code or verifies the warning is actually suppressed. The subprocess tests (clang checks) are pass-to-pass tests that don't verify the actual fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific RUNTIME_NORETURN annotations that don't exist in the original source files. A stub/no-op implementation would not add these annotations and would fail the regex checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin's parent or solution/ directory. The solve.sh contains the exact sed commands. An agent could read solution/solve.sh to extract the exact changes. Additionally, the test file itself at tests/test_outputs.py contains the exact regex patterns the agent needs to match."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies three validation criteria (RUNTIME_NORETURN in .h declaration, .cpp definition, and .kt generated code), and all three are tested by corresponding f2p tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear comments separating 'FAIL-TO-PASS TESTS', 'STRUCTURAL TESTS', 'PASS-TO-PASS TESTS', 'NEW P2P TESTS', and 'STATIC P2P TESTS'. Function names are descriptive."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying source code files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, macro names, and commands appear correct and consistent across instruction.md, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names all three exact files to modify, specifies the exact attribute to add (RUNTIME_NORETURN), and even provides validation criteria that mirror the test assertions. This goes well beyond describing the bug \u2014 it provides a complete specification of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving source file edits, not configuration file changes."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

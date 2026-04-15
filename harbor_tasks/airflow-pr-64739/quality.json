@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key paths: workers.celery.extraContainers, workers.kubernetes.extraContainers, workers.extraContainers, the files pod-template-file.kubernetes-helm-yaml, values.yaml, values.schema.json, NOTES.txt, and the requirements for priority, fallback, deprecation warning, schema updates, and default values. All assert'd keys and file paths in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change at a requirements level (add new config paths, priority logic, deprecation warning, schema updates) but doesn't specify exact line changes, template syntax, or implementation details. A developer must still reason about how to implement the Helm template logic."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_deprecation_warning_for_legacy_extra_containers asserts exact strings like 'DEPRECATION WARNING' and '.Values.workers.extraContainers' in NOTES.txt content. An alternative correct implementation using a different warning format (e.g., 'Deprecation Notice' or 'WARNING: Deprecated') or checking via a helper template would fail. Similarly, the test checks for literal text rather than rendered behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_deprecation_warning_for_legacy_extra_containers reads NOTES.txt as raw text and asserts on string presence ('DEPRECATION WARNING', '.Values.workers.extraContainers') without rendering the template. test_values_yaml_has_kubernetes_extra_containers_default and test_values_yaml_has_celery_extra_containers_default just check key existence in YAML files. Multiple tests are pure text/file inspection rather than behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests require actual structural changes: test_kubernetes_extra_containers_in_pod_template runs helm template and checks for a container that wouldn't exist without modifying the pod template; test_values_schema_has_kubernetes_extra_containers requires new schema keys that don't exist by default; test_kubernetes_extra_containers_priority_over_legacy requires priority logic. A stub/no-op wouldn't pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow as solve.sh content could potentially be accessed. More critically, the agent could read /solution/solve.sh (if mounted) to extract the exact patch. The Dockerfile doesn't remove or protect solution files from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six explicit requirements from the instruction are tested: (1) kubernetes.extraContainers in pod-template, (2) new path priority over legacy, (3) legacy fallback works, (4) deprecation warning, (5) schema updates for both celery and kubernetes, (6) default values for both new paths."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, and each test has a descriptive name and docstring explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the JSON schema paths (values.schema.json) and YAML structure (values.yaml) that need to be updated, and the tests verify the exact schema keys."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, configuration keys, or variable names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to investigate (which is appropriate for a Helm chart task) but doesn't specify exact line numbers or template syntax changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized to specific sections of values.yaml, values.schema.json, pod-template-file, and NOTES.txt \u2014 not full-file rewrites. Changes are consistent across files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

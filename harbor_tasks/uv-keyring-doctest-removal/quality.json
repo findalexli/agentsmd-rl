@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant file paths (README.md, lib.rs, mock.rs, Cargo.toml), describes the wrong 'keyring::' imports, the .await-in-sync-fn issue, and the doctest macro. The tests check these same files and conditions. The specific regex patterns (e.g., `(?<![_a-zA-Z])keyring::`) are implementation details of the test checks that follow directly from the described problem of wrong crate references. All assert'd paths and behavioral expectations are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (wrong imports, missing async context, broken code examples) but does not prescribe the exact fix. It says examples should 'either compile correctly or be removed/replaced with prose', leaving the agent to decide the approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: no 'keyring::' references in code blocks, no .await without async context, code compiles, clippy passes, etc. Alternative fixes (e.g., replacing imports with uv_keyring::, removing code blocks entirely, adding 'no_run'/'ignore' annotations, removing the doctest macro) would all pass. The tests don't assert on gold-specific implementation details like exact line content."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Multiple tests run actual cargo commands (cargo check, cargo clippy, cargo fmt, cargo test), verifying compilation and behavior. The f2p tests do inspect file text, but they check semantic properties (wrong crate references, missing async context in code blocks) rather than just matching literal strings. The mix of execution-based and content-based tests is appropriate."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_readme_no_wrong_crate_imports, test_readme_no_await_in_sync_fn, test_mock_no_wrong_crate_refs) fail on the original code because the original files contain 'keyring::' references and .await in sync fn main. A stub/no-op change would not fix these. The agent must actually modify the problematic code blocks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/uv as solve.sh is applied there, and the gold patch is in solution/solve.sh which may be accessible in the container. An agent could potentially read /solution/solve.sh or inspect the test file at tests/test_outputs.py to see exactly what patterns are checked (e.g., the regex `(?<![_a-zA-Z])keyring::`) and craft a minimal text substitution without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires 'cargo test --doc -p uv-keyring should pass without compilation errors' and that documentation examples compile correctly or be removed. The tests cover compilation (cargo check), linting (clippy), formatting (fmt), the specific wrong imports, the async issue, and mock.rs references. The doctest passing is implicitly verified through the compilation checks after fixing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)'), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files to look at (README.md, lib.rs, mock.rs, Cargo.toml) which is appropriate given the task domain. It describes the problems at a conceptual level without specifying exact line numbers or exact fixes. Mentioning the `doctest!` macro and file locations is necessary context, not leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes across a few files (removing a dev-dependency, removing a doctest macro call, fixing imports in README, and replacing code blocks with prose in mock.rs). Changes are scoped and don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

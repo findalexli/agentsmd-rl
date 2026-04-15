@@ -21,5 +21,12 @@ Both the simple (top-level) config mode and per-environment config mode must be 
 
 ## Files to Look At
 
-- `packages/wrangler/src/type-generation/index.ts` — The type generation logic. Look at how existing bindings (e.g., `vpc_services`, `vectorize`) are handled in `collectCoreBindings` and `collectCoreBindingsPerEnvironment` for the pattern to follow.
+- `packages/wrangler/src/type-generation/index.ts` — The type generation logic. The file contains two main functions:
+  - `collectCoreBindings` — registers each binding using an `addBinding` helper function. For example, `vpc_services` bindings call `addBinding(binding, "Fetcher", "vpc_services", envName)` to map the binding to its TypeScript type.
+  - `collectCoreBindingsPerEnvironment` — registers each binding by pushing objects to a `bindings` array with `{ bindingCategory, name, type }` properties. For example, `vpc_services` calls `bindings.push({ bindingCategory: "vpc_services", name: binding, type: "Fetcher" })`.
+
+  Both functions currently lack handling for AI Search config keys. They need to handle:
+  - `ai_search_namespaces` config → type `"AiSearchNamespace"`
+  - `ai_search` config → type `"AiSearchInstance"`
+
 - `packages/wrangler/src/__tests__/type-generation.test.ts` — The test file already has mock data for `ai_search_namespaces` and `ai_search` bindings but the expected output doesn't include them.

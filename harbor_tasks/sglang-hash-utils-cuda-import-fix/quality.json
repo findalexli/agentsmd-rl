@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific import paths like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py and cache_controller.py (test_import_sites_updated), and assert functions are removed from hicache_storage.py (test_hicache_storage_functions_removed). The instruction says 'You may need to modify' these files but never specifies that functions must be moved to utils.py specifically, that hicache_storage.py must have the function definitions removed, or that the exact import path 'from"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (CUDA dependency chain via imports) and the goal (hash functions importable without CUDA) but does not specify exact code changes, line numbers, or the precise solution approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_import_sites_updated asserts exact strings like 'from sglang.srt.mem_cache.utils import get_hash_str' in radix_cache.py. An alternative correct fix placing the functions in a different module (e.g., sglang.srt.mem_cache.hash_utils) would fail this test despite being functionally correct. test_hicache_storage_functions_removed requires function definitions be removed from hicache_storage.py, ruling out a valid approach of keeping them there but importing from utils."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include behavioral verification: test_hash_functions_correctness and test_hash_bigram_mode extract, compile, and execute the functions with real inputs and check outputs. test_modified_files_syntax runs py_compile subprocess. test_modified_files_lint runs ruff. Not every test is text-only; there is substantial execution-based testing."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_not_stub checks that function bodies have >= 3 non-trivial statements, preventing stubs. test_hash_functions_correctness verifies actual SHA256 computation against expected values. A stub returning None or empty string would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sglang (the solve.sh applies a patch there), and the Dockerfile does not remove /solution/. An agent could read solve.sh or the gold patch to discover the exact changes needed. The test fixture values (SHA256 hashes) are deterministic but the agent could also grep test files for expected paths and strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires hash functions be importable without CUDA, remain functionally identical, and be accessible from utils. Tests verify all of these: function correctness, placement in utils.py, import path updates, and syntax/lint checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named and grouped by concern: test_syntax_check, test_import_hash_utils_from_utils, test_hash_functions_correctness, test_hash_bigram_mode, test_import_sites_updated, test_hicache_storage_functions_removed, test_not_stub, etc."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and module names in instruction.md are consistent and correct (radix_cache.py, cache_controller.py, hicache_storage.py, utils.py, get_hash_str, hash_str_to_int64)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names all four files to modify: 'radix_cache.py, cache_controller.py, hicache_storage.py, and utils.py'. While it doesn't specify line numbers, naming utils.py as a target file strongly hints at the solution of moving functions there, reducing the localization challenge that should be part of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

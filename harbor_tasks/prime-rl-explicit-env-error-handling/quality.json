@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Several test-specific details are not discoverable from instruction.md alone. For example: test_orchestrator_imports_no_get_is_truncated checks the exact import line starting with 'from prime_rl.utils.vf' and that 'get_is_truncated' is absent \u2014 while the instruction mentions not calling a helper function, it doesn't name 'get_is_truncated' explicitly in the import context (it does mention it in Verification Criteria). However, test_trajectories_return_type_annotation asserts the exact string 'de"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md Verification Criteria section is extremely prescriptive: it specifies the exact pattern '-> list[TrainingSample] | None:', the exact check 'if train_example is not None:', the exact subscript access 'rollout[\"is_truncated\"]', and that the import line should not include 'get_is_truncated'. These are essentially the exact code changes needed, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_trajectories_return_type_annotation asserts the exact string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' must appear in the file. An alternative correct fix using 'Optional[list[TrainingSample]]' or 'list[TrainingSample] | None' with different parameter annotations would fail. Similarly, test_orchestrator_imports_no_get_is_truncated does a text search on the import section rather than testing behavior."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests actually import and call the functions (interleave_rollout, branch_rollout) via subprocess, checking return values and behavior. While test_orchestrator_imports_no_get_is_truncated and test_trajectories_return_type_annotation are text-based checks, the majority of tests execute code and verify behavioral outcomes."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by stubs: test_interleave_rollout_zeros_completion_mask_on_error requires non-None return with all-False completion_mask when error is set (a stub returning None would fail); test_interleave_rollout_returns_none_for_empty_trajectory requires None return for empty trajectory (the original code would crash, not return None); test_upstream_trajectory_tests_pass requires existing tests to still pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/prime-rl and the Dockerfile doesn't remove it. The solve.sh is in solution/ directory. An agent could potentially read /solution/solve.sh or examine the gold patch to extract the exact changes needed. The test file is also at a known path that could be read."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: returning None for empty trajectories (tested), zeroing completion_mask on error (tested), type annotations (tested), None check before iteration (tested via text check of orchestrator), truncation field access (tested via import check), and error metrics logging (partially tested via test_orchestrator_logs_error_metrics). Test fixtures with error=None are checked via test_upstream_trajectory_tests_pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names, and comments separating them into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', and 'Pass-to-pass (repo_tests / static)' sections."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in instruction.md are all correctly spelled and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The Verification Criteria section specifies exact code patterns like '-> list[TrainingSample] | None:', 'if train_example is not None:', and 'rollout[\"is_truncated\"]'. The instruction also names exact files and the specific import line to modify. This goes beyond describing what's broken and essentially specifies the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task, not a config-edit task. The gold patch does include config file additions (math_python configs, pyproject.toml), but these are ancillary and not tested."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

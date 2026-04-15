@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path `extensions/cli/src/commands/review/resolveReviews.test.ts`, the directories `.continue/agents/` and `.continue/checks/`, the deduplication approach using `Set` and `seen`, and all key behaviors tested. The test file path, function names like `resolveReviews`, and string literals like `checks`, `.continue`, `seen`, `Set` are all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly prescribes implementation details: 'Use a Set-based deduplication approach with a `seen` tracker for filenames', 'Scan both directories in that order (agents first, then checks)'. These are not just behavioral requirements but dictate the exact implementation approach (Set named 'seen'), which maps directly to what the tests assert (`'seen' in source and 'Set' in source`)."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_agents_and_checks_deduplication asserts `'seen' in source and 'Set' in source` \u2014 requiring the exact variable name 'seen' and the use of 'Set'. An alternative correct fix using a Map, plain object, Array.includes, or a variable named 'visited' or 'encountered' would fail this test. test_resolveFromLocal_is_iterative_over_two_dirs counts occurrences of '.continue' string literals, which is fragile to alternative implementations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_resolveFromLocal_scans_checks_dir, test_resolveFromLocal_is_iterative_over_two_dirs, test_agents_and_checks_deduplication, and test_doc_comments_updated all just read source code text and check for string presence (`'checks' in source`, `'seen' in source`, counting `.continue` occurrences). Only test_resolveReviews_vitest actually executes the code. The majority of fail-to-pass tests are pure text-matching, not behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation that does nothing would not pass the tests \u2014 the source file must contain specific strings like 'checks', 'seen', 'Set', and multiple '.continue' references. test_resolveReviews_vitest requires actual vitest tests to pass. These cannot be satisfied by a no-op."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/continue and the agent could read the solve.sh or solution directory. The tests are mostly string-matching on source code, so the agent could simply grep the test file (or solution) to find exactly what strings to insert into the source file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five requirements from the instruction (scan both dirs, deduplicate with precedence, update docs, add unit tests, error handling) have corresponding tests: test_resolveFromLocal_scans_checks_dir, test_resolveFromLocal_is_iterative_over_two_dirs, test_agents_and_checks_deduplication, test_doc_comments_updated, and test_resolveReviews_vitest."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings explaining what they verify and the expected pass/fail conditions on base vs fixed commits. They are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states to 'Use a Set-based deduplication approach with a `seen` tracker for filenames' \u2014 this names the exact implementation variable (`seen`) and data structure (`Set`) that the tests check for, which goes beyond describing what's broken and into specifying the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent/config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

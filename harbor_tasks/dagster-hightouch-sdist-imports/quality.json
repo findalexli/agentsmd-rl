@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (dagster_hightouch/__init__.py, resources.py, ops.py, component.py, utils.py, pyproject.toml), the specific import strings being checked (e.g., 'from dagster_hightouch.resources', 'from dagster_shared.libraries'), the package import requirement, __all__ exports accessibility, ruff==0.11.5 linting, and the test directory dagster_hightouch_tests/. All test assertions map to named requirements in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fixes: 'convert to absolute imports using the dagster_hightouch. package prefix', specifies exact import statements like 'from dagster_hightouch.resources', 'from dagster_hightouch import utils', 'from dagster_shared.libraries import DagsterLibraryRegistry', and says to remove pyproject.toml. This is a direct specification of WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for presence of absolute import patterns and absence of relative import patterns, which any correct fix must satisfy. The specific strings checked (e.g., 'from dagster_hightouch.resources') are the only correct way to express absolute imports for this package. Alternative correct fixes would all need to use these same import paths."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_no_relative_imports_in_init, test_no_relative_imports_in_resources, test_no_relative_imports_in_ops, test_no_relative_imports_in_component, and test_no_relative_imports_in_utils are purely text-based checks (assert 'string' in/not in open(path).read()). While some tests do execute the code (test_package_imports_successfully, test_all_exports_available, test_repo_tests_pass), the majority of fail-to-pass tests are text-only assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by stub implementations. test_package_imports_successfully actually imports dagster_hightouch and checks it works. test_all_exports_available checks all __all__ items are accessible. The text-based tests check for specific import pattern changes that require actual code modifications. test_pyproject_toml_removed checks file absence."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/dagster/python_modules/libraries/dagster-hightouch via the solve.sh script, and the Dockerfile doesn't remove the /solution directory. An agent could potentially read solution/solve.sh if it exists in the container. Additionally, the test file at tests/test_outputs.py contains all the exact strings and patterns needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 11 requirements from instruction.md are tested: absolute imports in all files (tests 3-7), library registration (test 9), package imports (test 2), exports accessible (test 10), no pyproject.toml (test 8), ruff linting/formatting (tests 12-13), and repo tests pass (test 11, 14, 15)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (e.g., test_no_relative_imports_in_init, test_package_imports_successfully), include docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Python package imports and packaging, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, package names, import statements, and commands in the instruction are correctly spelled and consistent with the actual codebase structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify (__init__.py, resources.py, ops.py, component.py, utils.py), the exact import lines to change (e.g., 'from .resources' \u2192 'from dagster_hightouch.resources'), and even which file to delete (pyproject.toml at the exact path). This removes the need for any bug localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Python source file edits and file deletion, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The test `test_method_signature_updated` checks that `getOrCreate` signature was changed to accept a ref parameter, and `test_setunlessalreadyset_method_exists` greps for 'SetUnlessAlreadySet' in series.go. The instruction does mention SetUnlessAlreadySet and hints at signature changes, but the specific requirement that getOrCreate must accept a ref parameter (chunks.HeadSeriesRef) is not explicitly stated in instruction.md \u2014 only hinted at obliquely. Also, tests like `test_existing_agent_tests`"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'The stripeSeries type must implement a method named SetUnlessAlreadySet' \u2014 this names the exact method the solution must add. It also says 'The fix may involve a new method that combines existence check with conditional insertion,' which directly describes the solution approach. This goes beyond describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_setunlessalreadyset_method_exists does `grep 'SetUnlessAlreadySet' tsdb/agent/series.go` \u2014 any correct alternative fix that uses a different method name (e.g., 'GetOrCreate', 'AtomicInsert', 'CASSet') would fail this test. The tests also run TestStripeSeries_SetUnlessAlreadySet and TestSetUnlessAlreadySetConcurrentSameLabels which are gold-patch-specific test names that must exist exactly."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute `go test`, `go build`, `go vet`, or `go fmt` as subprocesses and check return codes. test_setunlessalreadyset_method_exists uses grep but also has a go doc path. The overwhelming majority of tests verify behavior through execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_concurrent_append_same_labels run actual Go tests that verify concurrent append behavior produces exactly one series. A stub implementation wouldn't pass these Go-level tests which check for race conditions and correct series deduplication."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/prometheus after solve.sh runs, but more critically, the gold patch is in solution/solve.sh which is accessible in the container. An agent could read /solution/solve.sh to extract the exact patch. The Dockerfile doesn't remove or protect the solution directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors from instruction.md (one series in memory, one WAL record, same canonical ref, cleanup of losing refs) are tested through the concurrent append tests and SetUnlessAlreadySet tests, plus compilation and vet checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., 'Fail-to-pass: Verifies concurrent appends...'). They are logically grouped into fail-to-pass and pass-to-pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact method 'SetUnlessAlreadySet' that must be added to stripeSeries, and names the exact affected files and methods (getOrCreate, GetOrSet, stripeSeries). It also specifies the exact test function names. This goes well beyond naming the domain \u2014 it localizes the fix to specific methods and prescribes the solution's API."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

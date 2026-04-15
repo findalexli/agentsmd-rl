@@ -12,11 +12,21 @@ The `scripts/buildkite-failures.ts` script shows BuildKite CI failures for the b
 
 ## Expected Behavior
 
-- `--help` / `-h` should print comprehensive usage showing all supported input formats (build number, branch, PR URL, `#number`) and all options (`--wait`, `--flaky`, `--warnings`).
+- `--help` / `-h` should print comprehensive usage and exit 0. The help text must include:
+  - All supported input formats: build number, branch name, PR URL, and `#number` shorthand
+  - The `--wait` flag with explanation of polling behavior (waiting for build completion)
+  - The `--flaky` flag for flaky test handling
+  - The `--warnings` flag for warning display
+  - Documentation that failed job logs are saved to files matching pattern `/tmp/bun-build-{number}-{platform}-{step}.log`
+
 - `--wait` should poll the build status every ~10 seconds and show progress updates until the build completes, fails, or shows failures early.
-- Failed job logs should be fetched from BuildKite's public API and saved to `/tmp/bun-build-{number}-{platform}-{step}.log`, with a brief error summary shown inline.
+
+- Failed job logs should be fetched from BuildKite's public API (buildkite.com) and saved to `/tmp/bun-build-{number}-{platform}-{step}.log`, with a brief error summary shown inline.
+
 - Failures should be grouped by type (build failures, test failures, other) with duration and links.
+
 - Canceled and in-progress builds should display appropriate status messages.
+
 - After making the code changes, **update the project's CLAUDE.md** to document this script's usage so that contributors and AI agents know how to debug CI failures. The documentation should include representative usage examples.
 
 ## Files to Look At

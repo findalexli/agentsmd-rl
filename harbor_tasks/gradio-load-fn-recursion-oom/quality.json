@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests reference specific file paths (gradio/external.py, gradio/external_utils.py), function names (from_model, handle_hf_error), and exact patterns like kwargs.pop('fn', ...) variable naming, TooManyRequestsError, specific if-branch and raise-statement counts (>=2 ifs, >=3 raises). While instruction.md mentions kwargs.pop('fn', ...) and some error handling requirements, it never mentions the file paths gradio/external.py or gradio/external_utils.py, the function name 'from_model', or the functi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states 'The code should include a kwargs.pop(\"fn\", ...) pattern to extract a function from keyword arguments' and provides very specific implementation requirements for the error handler (at least 2 if-branches, at least 3 raise statements, specific regex patterns for 401 errors, TooManyRequestsError for 429). This essentially dictates the implementation approach rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_closure_no_self_recursion explicitly checks the AST for a variable assigned via kwargs.pop('fn', ...) and then uses that variable name in a subprocess simulation. The gold solution renames 'fn' to 'interface_fn'. If an agent used a different approach (e.g., wrapping the function, using a different variable name pattern not involving .pop('fn',...), or restructuring the code differently), the AST-based test would fail. The test asserts on the specific pattern of 'pop_var = kwargs.pop(\"fn\", ."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call handle_hf_error, execute subprocess simulations of the closure pattern, parse ASTs to verify structural properties, and check actual runtime behavior (recursion, exception handling). They are not purely text-matching tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests verify real behavior: test_closure_no_self_recursion runs a subprocess that would hit recursion limit with the buggy code; test_stop_iteration_handled verifies StopIteration is caught and converted to Error (a stub would leak StopIteration); test_empty_exception_non_empty_message verifies non-empty messages for bare exceptions (a stub raising Error('') would fail)."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists in the container and contains the exact gold patch. An agent could read /repo/../solution/solve.sh or the solution directory to obtain the exact fix. There's no evidence the solution directory is excluded from the agent's filesystem access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: kwargs.pop('fn') pattern (test_closure_no_self_recursion), StopIteration handling (test_stop_iteration_handled), non-empty error messages (test_empty_exception_non_empty_message), 401/auth errors (test_401_error_still_handled), 429/TooManyRequests (test_too_many_requests_still_handled), if-branches and raise counts (test_handle_hf_error_not_stub)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining each test's purpose and mapping to evaluation categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in Python code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies exact implementation details: 'kwargs.pop(\"fn\", ...)' pattern, exact error handler structure with '>=2 if-branches and >=3 raise statements', specific regex patterns for error messages. These effectively localize the fix to specific code patterns and functions without the agent needing to debug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

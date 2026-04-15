@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the files (network.ts, commands.ts, .github/copilot-instructions.md), the parameter names (filter, requestHeaders, requestBody, static replacing includeStatic), the function renderRequest(), the CLI options (--filter, --request-headers, --request-body), and the documentation requirements. All test-asserted specifics (schema keys, file paths, CLI option names, copilot-instructions content themes) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior to add (filtering, headers, body display, rename) and which files to modify, but does not specify exact code changes, line numbers, or implementation details like 'use new RegExp()' or specific string formatting."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce very specific implementation details: test_filter_regex_applied checks for literal patterns 'params.filter', 'new RegExp(', and '.test(' in source code via regex. test_schema_has_new_params checks exact patterns like 'filter: z.string' and 'requestBody: z.boolean'. test_render_request_headers_and_body extracts and executes the renderRequest function with specific parameter signatures (mock, true, true) and checks for exact strings 'Request headers' and 'Request body'. An alternativ"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_render_request_headers_and_body extracts and actually executes the renderRequest function via Node.js subprocess, checking behavioral output. test_repo_build and lint tests run actual build/lint processes. However, several tests (test_schema_has_new_params, test_static_replaces_include_static, test_cli_new_options, test_filter_regex_applied) are purely text-based source inspection. Since there's a mix and the key behavioral test does execute code, this passes."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests require substantive implementation: test_render_request_headers_and_body executes the function and checks output includes header/body sections; test_filter_regex_applied checks for RegExp construction in source; test_schema_has_new_params checks for new schema declarations; test_copilot_instructions_created checks for file existence and content. None can be satisfied by stub/no-op implementations."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/playwright via the gold patch applied by solve.sh. The agent could read the solution file if it exists in the container, or could grep test files at tests/test_outputs.py to see exact expected strings and patterns. The Dockerfile doesn't prevent access to /solution/ or test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: filter parameter (test_filter_regex_applied, test_schema_has_new_params), requestHeaders/requestBody (test_render_request_headers_and_body, test_schema_has_new_params), rename includeStatic->static (test_static_replaces_include_static), CLI options (test_cli_new_options), and copilot-instructions.md (test_copilot_instructions_created)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (pass_to_pass static gate, pass_to_pass repo CI/CD gates, fail_to_pass behavioral, fail_to_pass schema & rename), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces code changes and a markdown file, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (packages/playwright-core/src/tools/backend/network.ts, packages/playwright-core/src/tools/cli-daemon/commands.ts, .github/copilot-instructions.md), parameter names, and command names are all consistent between instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files and functions relevant to the task domain (renderRequest, network.ts, commands.ts) but doesn't specify exact line numbers or precise code to write. The file hints are appropriate given the task scope."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

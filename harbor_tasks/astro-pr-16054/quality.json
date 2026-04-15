@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths tested (base-pipeline.ts, vite-plugin.ts, app/dev/app.ts, vite-plugin-app/app.ts, virtual/dev.ts, createAstroServerApp.ts), the literal strings 'astro:middleware-updated', 'server.watcher.on(\"change\",...)', 'hot.send' with event name, and the linting requirements. The method name 'clearMiddleware' is not explicitly named in the instruction, but it is a natural consequence of the described behavior ('middleware to reload'). However, tests assert on the specifi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the HMR event type must be 'astro:middleware-updated', the watcher must use 'server.watcher.on(\"change\", ...)', the event must be sent via 'hot.send'. It also lists all 6 specific files that need changes. This is essentially telling the agent exactly what to implement and where."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to assert specific method names like 'clearMiddleware' (e.g., test_pipeline_has_clear_middleware_method, test_clear_middleware_unsets_resolved_middleware). An alternative correct fix could use a different method name (e.g., 'resetMiddleware', 'invalidateMiddleware') or a different approach (e.g., invalidating a Vite module instead of clearing a cache). These alternatives would fail the regex-based tests despite being correct fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all f2p tests are purely text-matching: they read file contents and use regex assertions like `re.search(r'clearMiddleware\\s*\\(', content)`. The only execution-based tests are the linter checks (TestRepoLint). No test imports, instantiates, or calls the actual code to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since tests only check for the presence of strings in files via regex, an agent could simply append a comment like `// clearMiddleware() resolvedMiddleware = undefined` or add dead code containing the matched patterns to each file. The regex `re.search(r'clearMiddleware\\s*\\(', content)` would match even a commented-out or never-called function."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/astro as a git repo and solve.sh is at /solution/solve.sh. The agent could read /solution/solve.sh to get the exact patch, or simply grep test files to discover the exact regex patterns being checked and write matching code without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'editing a middleware file during astro dev should cause the middleware to reload on the next request' but no test actually starts a dev server and verifies that middleware changes take effect. The e2e test from the gold patch is not included in test_outputs.py."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestPipelineClearMiddleware, TestMiddlewarePluginConfigureServer, etc.) with clear docstrings distinguishing f2p from p2p tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, command names, and variable names in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction lists all 6 specific files that need changes and describes exact implementation patterns (HMR event name, watcher pattern, hot.send usage). This goes well beyond describing what's broken and essentially prescribes the solution architecture."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

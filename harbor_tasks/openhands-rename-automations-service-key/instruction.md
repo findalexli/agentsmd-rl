@@ -1,34 +1,29 @@
-# Task: Rename Environment Variable
+# Task: Fix Environment Variable Name Mismatch
 
 ## Problem
 
-The enterprise service routes in `enterprise/server/routes/service.py` are reading the service API key from an environment variable with the wrong name. The code currently uses `AUTOMATIONS_SERVICE_API_KEY` but should use `AUTOMATIONS_SERVICE_KEY` to match the helm chart configuration.
+The enterprise service authentication is failing because the code is reading from an environment variable that doesn't match the Helm chart configuration.
 
-## What Needs to Change
-
-Update `enterprise/server/routes/service.py` to:
-
-1. Change the module-level constant from `AUTOMATIONS_SERVICE_API_KEY` to `AUTOMATIONS_SERVICE_KEY`
-2. Update the `os.getenv()` call to read from `'AUTOMATIONS_SERVICE_KEY'` instead of `'AUTOMATIONS_SERVICE_API_KEY'`
-3. Update the `validate_service_api_key` function to use the new variable name
-4. Update the `service_health` function to use the new variable name
-5. Update the module docstring to reference the correct environment variable name
-6. Update log messages that reference the old environment variable name
-
-## Files to Modify
-
-- `enterprise/server/routes/service.py` - Main file requiring changes
+The Helm chart is configured to inject `AUTOMATIONS_SERVICE_KEY` as the environment variable for service API authentication. However, the current implementation appears to be looking for a different variable name.
 
 ## Expected Behavior
 
-After the change:
-- The code should read the service API key from the `AUTOMATIONS_SERVICE_KEY` environment variable
-- All references to the old variable name should be removed
-- The health endpoint should correctly report `service_auth_configured` based on the new env var
-- The authentication validation should work with the new env var name
+After the fix:
+- The service should read the API key from the `AUTOMATIONS_SERVICE_KEY` environment variable
+- The health endpoint should report whether service authentication is configured based on whether `AUTOMATIONS_SERVICE_KEY` is set
+- When authentication is not configured, the log message should reference `AUTOMATIONS_SERVICE_KEY`
+- The authentication validation should compare incoming API keys against the value from `AUTOMATIONS_SERVICE_KEY`
 
-## Notes
+## Files to Locate and Modify
 
-- This is a simple rename/refactor - no functional logic changes needed
-- The tests in `enterprise/tests/unit/routes/test_service.py` have already been updated to use the new name (you don't need to modify tests)
-- Focus only on `enterprise/server/routes/service.py`
+Find and update the file in the enterprise server routes that handles service authentication. The file should reference the `AUTOMATIONS_SERVICE_KEY` environment variable consistently throughout:
+- The module-level constant name
+- The `os.getenv()` call
+- The authentication validation logic
+- The health check endpoint
+- The module docstring
+- Log messages
+
+## Testing
+
+The repository has existing unit tests at `enterprise/tests/unit/routes/test_service.py` that verify the expected behavior with the correct environment variable name.

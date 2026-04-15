@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file `scripts/llms-generate.mjs`, the function `sanitizeMarkdown`, and describes the escaping behavior for backslashes, backticks, and template variables. All test-asserted specifics (file path, function name, escaping behaviors) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (backslashes not escaped) and what correct behavior looks like, but does not specify the exact fix (e.g., it doesn't say 'add .replace(/\\\\/g, \\'\\\\\\\\\\')' or 'add this line before the backtick replace'). A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral output (backslash counts, presence of escaped sequences) rather than implementation details. An agent could add the backslash replace at different positions, use a different regex pattern, or use a different approach entirely, and the tests would still pass as long as backslashes are doubled in output."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the sanitizeMarkdown function, execute it via Node.js subprocess, and check the output behavior. They also run `node --check` for syntax validation. This is behavioral testing, not simple text matching on source."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (e.g., test_backslash_escaping_basic, test_backslash_escaping_multiple) pass specific inputs containing backslashes and assert the output has doubled backslashes. A stub or no-op implementation would return the input unchanged, failing these assertions (e.g., output_backslash_count >= input_backslash_count * 2 would fail)."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router and the solve.sh is in /solution/solve.sh within the container. An agent could read /solution/solve.sh to see the exact gold patch (the diff with the `.replace(/\\\\/g, '\\\\\\\\')` line), or inspect it to learn the fix directly. No measures prevent this."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) backslash escaping works, (2) existing backtick escaping still works, (3) template variable escaping still works, (4) various backslash content handled. All of these are tested (backslash tests, test_backtick_escaping, test_template_variable_escaping, Windows path and LaTeX tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with comments, and each test has a descriptive name and docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function (which is the natural scope of the task), but does not specify the exact buggy line number or the exact code change needed. Saying 'look at sanitizeMarkdown in scripts/llms-generate.mjs' is appropriate localization for this task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

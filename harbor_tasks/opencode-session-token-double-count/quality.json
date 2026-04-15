@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the Session.getUsage function, its return schema (tokens.input, tokens.output, tokens.cache.read, tokens.cache.write, tokens.total, tokens.reasoning, cost), the provider-specific metadata structures (anthropic, bedrock), the model.api.npm field values, and the relevant file path. All test-asserted keys, function names, and provider identifiers are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes symptoms (cached tokens counted twice, inflated totals) and expected behavior but does not specify the exact code change needed. A developer must reason about whether to subtract cache tokens from input and whether to use SDK totalTokens vs recomputing."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests call Session.getUsage with specific inputs and check output values (tokens.input, tokens.total, tokens.cache.read, etc.). They don't assert on variable names, line positions, or internal helper functions. Any correct fix that produces the right numerical outputs would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests write TypeScript files and execute them with `bun run`, then parse JSON output and assert on computed values. They also run `bun build` to check syntax. This is behavioral testing via execution, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check specific numerical computations (e.g., input=1000, cached=200, expected input=800). A stub returning default values (0 or empty) would fail these assertions. The buggy code returns input=1000 instead of 800 for Anthropic, so the tests genuinely verify the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/opencode as solve.sh (if copied into the container), and the test file test_outputs.py contains the complete expected behavior with exact test values. The agent could read test_outputs.py (at its path in the container) to extract exact expected values. Additionally, the agent could grep for fixture values in the test file to understand exactly what to implement without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies 5 expected behaviors for getUsage (accurate non-cached input, cache breakdowns, accurate totals, reasoning tokens, cost). Tests cover input subtraction for Anthropic/Bedrock/generic providers, total token accuracy for Anthropic/Vertex/Bedrock, cache extraction, reasoning tokens, and cost calculations."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear function names (test_anthropic_input_subtracts_cache, test_bedrock_total_uses_sdk_value, etc.), section comments (Gates, Fail-to-pass, Pass-to-pass), and descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The return value schema of getUsage is fully documented in instruction.md with field names and types (tokens.input integer, tokens.output integer, tokens.cache.read integer, etc.)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or provider identifiers in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (packages/opencode/src/session/index.ts) and function (Session.getUsage), which is appropriate for the task domain. It doesn't specify exact line numbers or the specific code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only bug fix task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:15:10.241046",
-  "total_time": 1691.0,
-  "sandbox_id": "i189ryjfx68o039rntmxq",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:26:58.598137",
+  "total_time": 1756.08,
+  "sandbox_id": "i7aq6l1qepj7y0b4ltoyt",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,27 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:66: test `test_new_models_resolve_in_tokenizer_mapping` has 1 assert(s', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: pyyaml, ruff', 'B:[B] no_network_during_tests @ tests/test.sh:4: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.25,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 5340.55,
-      "at": "2026-04-09T03:06:17.643414"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +110,14 @@
       "backend": "fireworks",
       "time": 1691.0,
       "at": "2026-04-12T06:15:10.241046"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1756.08,
+      "at": "2026-04-15T06:26:58.598137"
     }
   ]
 }

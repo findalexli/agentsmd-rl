@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert many specifics not discoverable from instruction.md: exact string 'RequireFrom(Box<ConstantString>)' as enum variant, 'rel.as_str()', 'parent().join(rel', 'JsValue::Url(rel', 'JsValueUrlKind::Relative', 'RequireFrom(Box::new', 'rel.clone()', 'createRequire(' format string, 'module.html#modulecreaterequirefilename' doc link, specific test case names like 'module_create_require_destructure_namespace', 'entry_name' variable, '{entry_name}' format string, 'input.mjs' mapping, and specif"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the 'WellKnownFunctionKind enum' and 'value_visitor_inner function' as targets, and describes the exact mechanism (classifying JS expressions, reference analysis resolving require calls). While it doesn't give line-by-line changes, it essentially describes the architectural approach of the fix rather than just the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details: 'RequireFrom(Box<ConstantString>)' variant name, 'rel.as_str()', 'parent().join(rel', 'JsValue::Url(rel', 'JsValueUrlKind::Relative', 'RequireFrom(Box::new', 'rel.clone()', specific display format 'createRequire(\\'' and exact doc URL. An alternative correct fix using different naming (e.g., 'RequireWithBase'), different destructuring patterns, or different internal implementation would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test reads source files and checks for string patterns using assertions like 'assert X in src'. No test compiles Rust code, runs Turbopack, executes subprocesses, or tests actual module resolution behavior. The tests explicitly acknowledge this: 'No Rust toolchain is available in the Docker image'."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply writes the expected strings into the source files (e.g., inserting 'RequireFrom(Box<ConstantString>)' text) would pass all tests without implementing any actual bug fix. The tests only check for string presence in files, not behavioral correctness."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists at /workspace and could be read by the agent. The test file at tests/test_outputs.py contains all expected strings the agent needs to match. The agent could simply grep for test assertions and insert matching strings into source files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md describes the behavioral problem (resolving CJS modules with createRequire(new URL(...))) but the tests never verify this resolution behavior \u2014 they only check for source code string patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-grouped with clear docstrings, categorized as [static] pass_to_pass and [pr_diff] fail_to_pass, and have descriptive function names like test_require_from_variant_in_enum and test_url_pattern_mapped_to_require_from."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies Rust source code, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in instruction.md appear correct and consistent with the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files and functions: 'WellKnownFunctionKind enum', 'value_visitor_inner function' in analyzer/mod.rs, and the reference analysis in references/mod.rs. It also mentions specific test cases in unit.rs that were 'previously disabled'. This significantly narrows the solution space beyond just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Rust source files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

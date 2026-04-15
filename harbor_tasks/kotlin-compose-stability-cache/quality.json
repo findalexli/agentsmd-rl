@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', 'return cache[fullSymbol]!!', 'cache[fullSymbol] = result', and 'currentlyAnalyzing.contains(symbol)'. The instruction.md describes these concepts at a high level but does not specify these exact variable names (e.g., 'fullSymbol'), exact syntax (e.g., 'cache[fullSymbol]!!'), or the exact cache field declaration. A developer could not discover these exact string"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact implementation steps: add a cache field, check cache with fullSymbol, store results with cache[fullSymbol] = result, create a new private overload with specific parameters, use 'symbol' (not 'fullSymbol') in the new method for circular dependency checking. This is essentially a step-by-step implementation guide, not just a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', 'return cache[fullSymbol]!!', 'cache[fullSymbol] = result'. An alternative correct fix using e.g., HashMap, a different variable name, containsKey() instead of 'in', or cache.getValue() instead of cache[fullSymbol]!! would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test (test_cache_field_exists, test_cache_check_in_stabilityOf, test_cache_write_after_computation, test_new_overloaded_stabilityOf_method, test_new_method_uses_symbol_for_circular_check, test_no_fullSymbol_in_new_method, test_stability_inferencer_class_structure) uses only string matching on file content (assert '...' in content or re.search). No test compiles, runs, or executes the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings that do not exist in the original file (e.g., the cache field, cache lookup patterns). A stub/no-op implementation would not add these strings, so these tests would fail without actual changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/kotlin (accessible via solve.sh or /tmp/stability_cache.patch). The agent could also read the test file to discover the exact literal strings being asserted (e.g., 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()') and simply insert them into the file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five key requirements from instruction.md (cache field, cache check, cache write, refactored method, correct parameter usage) are tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_cache_field_exists, test_cache_check_in_stabilityOf, etc.), have docstrings with fail-to-pass/pass-to-pass labels, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies source code in a compiler plugin; it does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names the exact file path, the exact class (StabilityInferencer), the exact method (stabilityOf), the exact key type (SymbolForAnalysis), and specifies that the 'symbol parameter (not the full symbol with type arguments)' should be used \u2014 these are implementation-level details that essentially specify the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single Kotlin source file, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

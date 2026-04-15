@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check many specifics not mentioned in instruction.md: test_pyproject_toml_valid checks for 'project' and 'dependencies' keys in pyproject.toml; test_config_files_valid checks all TOML config files; test_all_python_syntax checks all .py files; test_repo_unit_training_env, test_repo_unit_training_logger, test_repo_unit_training_world, test_repo_unit_inference_config run specific test files not mentioned in instructions. The instruction doesn't mention these existing test files or that they m"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact implementation details: 'saves to {ckpt.path}/step_{step}/trainer.pt', 'CheckpointConfig should have resume_step (int, ge=1)', 'save as pytorch_model.bin', 'replace PathConfig with direct Path fields', 'add clean bool', specific field names like 'save_async', 'rollout_path', 'weights_path'. These are not descriptions of what's broken but precise specifications of what to change to what."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests primarily check that existing tests pass (pass_to_pass), syntax is valid, imports work, and linting passes. They don't assert on gold-specific variable names or implementation details of the new checkpoint feature. Alternative correct implementations that maintain backward compatibility would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run pytest, ruff lint, py_compile, import modules, and parse TOML files \u2014 all behavioral checks via subprocess execution or actual code invocation, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Most tests are pass_to_pass tests that check existing functionality still works. The solution (gold patch) only modifies README.md. A stub/no-op implementation (or even doing nothing at all to the codebase if the base commit already passes) could pass many of these tests. The tests don't verify any new checkpoint resume behavior was actually implemented."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/prime-rl as a git repo. The agent could run 'cat /workspace/prime-rl/solve.sh' or inspect the solution directory. Also, the gold patch only changes README.md, so the agent could simply look at the diff or solution file to find the exact text to add."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes 10 major features (CheckpointManager classes, save/load methods, weight checkpoint module, config changes, orchestrator integration, trainer integration, etc.) but the tests only verify syntax, imports, linting, and existing unit tests pass. No test verifies checkpoint save/load, resume_step config, orchestrator checkpointing, or weights.py functionality."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_repo_ruff_lint, test_syntax_check, test_import_training_modules, etc.), have docstrings explaining what they check and their category (pass_to_pass), and are grouped by type (gates, static checks)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in instruction.md filenames, paths, commands, or variable names."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names every file to modify, exact class names to create, exact field names and types (e.g., 'resume_step (int, ge=1)'), exact file paths for checkpoints ('{ckpt.path}/step_{step}/trainer.pt'), and the exact filename change ('pytorch_model.bin' instead of 'model.pt'). This goes far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch only modifies README.md with localized additions (checkpointing section and minor heading changes). It's a bounded edit that doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

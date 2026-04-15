@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test functions check for the exact variable name 'bypassesLoopback' (e.g., _eval_bypass_logic checks 'const bypassesLoopback'), the exact string literals 'rule === \"localhost\"', 'rule === \"127.0.0.1\"', 'rule === \"::1\"' in source code. Tests also check for `.claude/skills/playwright-dev/github.md` and `.claude/skills/playwright-dev/SKILL.md` content like 'fix-' prefix, 'Fixes:' line, and 'fix(scope)' format, but the "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (force-adding <-loopback> when loopback addresses are already in bypass) and expected behavior, but does not specify the exact code change, variable names, or line numbers to modify."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests in _eval_bypass_logic_v2 explicitly check for the gold-specific variable name 'const bypassesLoopback' and exact string patterns like \"rule === 'localhost'\" in the source code. An alternative correct fix using a different variable name (e.g., 'loopbackBypassed') or different check syntax (e.g., using .includes() or a Set) would fail these tests even if functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "_eval_bypass_logic_v2 does NOT execute the actual code; it checks if certain strings exist in source ('src.includes(\"const bypassesLoopback\")') and then SIMULATES the logic in a separate JavaScript block based on whether 'hasFix' is true. Multiple tests like test_bypass_localhost_not_forced check behavior via simulation, not actual execution of the modified code. The 'hasFix' flag is determined by text matching, making this a text-based check disguised as behavior testing."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The pass-to-pass tests (ESLint, TypeScript transpile, syntax checks) would fail if the agent broke the file. The fail-to-pass tests check that loopback bypass values prevent <-loopback> from being added - a stub/no-op wouldn't pass since the base code always adds <-loopback> for these values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/playwright via the solve.sh script content visible in the task definition. The agent could read the gold patch from the Dockerfile-cloned repo or potentially inspect test files to determine exact variable names needed. The _eval_bypass_logic_v2 function explicitly reveals the expected variable name 'bypassesLoopback' and the exact string patterns to match."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: (1) loopback addresses should prevent <-loopback> force-add \u2014 tested by test_bypass_localhost_not_forced, test_bypass_127_not_forced, test_bypass_ipv6_not_forced; (2) non-loopback should still get <-loopback> \u2014 tested by test_bypass_example_still_forced; (3) github.md doc \u2014 tested by test_github_skill_doc_exists and related tests; (4) SKILL.md update \u2014 tested by test_skill_index_links_github."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_bypass_localhost_not_forced, test_repo_eslint_chromium, etc.), docstrings explaining each test, and helper functions with clear documentation. Tests are logically grouped into syntax checks, pass-to-pass repo tests, fail-to-pass behavior tests, and documentation tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction are accurate and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction points to the correct file (chromium.ts) and describes the proxy bypass logic area, which is appropriate for the task domain. It doesn't specify exact line numbers or the exact variable/code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized: a 2-line change in chromium.ts, a new github.md file, and a 1-line addition to SKILL.md. These are bounded, non-contradictory changes."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 4
+}

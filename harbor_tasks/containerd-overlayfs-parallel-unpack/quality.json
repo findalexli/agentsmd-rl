@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all literal strings checked in tests: the function signature 'func bindToOverlay(mounts []mount.Mount) []mount.Mount' is implied by the documented behavior, 'len(mounts) != 1 || mounts[0].Type != \"bind\"', 'Type: \"overlay\"', 'if o != \"rbind\"', 'upperdir=\"+mounts[0].Source', 'i > 0 && parallel && unpack.SnapshotterKey == \"overlayfs\"', 'mounts = bindToOverlay(mounts)', 'containerd/issues/13030', and 'TODO: this is a temporary workaround' are all explicitly stated"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: exact condition checks ('len(mounts) != 1 || mounts[0].Type != \"bind\"'), exact literal values ('Type: \"overlay\"', 'Source: \"overlay\"'), exact option filtering ('if o != \"rbind\"'), exact function name ('bindToOverlay'), and exact integration pattern ('mounts = bindToOverlay(mounts)'). This leaves no reasoning for the developer \u2014 the solution is fully specified."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details like the specific function name 'func bindToOverlay(mounts []mount.Mount) []mount.Mount', exact condition string 'len(mounts) != 1 || mounts[0].Type != \"bind\"', exact filter 'if o != \"rbind\"', and exact integration pattern 'if i > 0 && parallel && unpack.SnapshotterKey == \"overlayfs\"'. An alternative correct fix (e.g., inline code, different function name, different condition ordering) would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_bind_to_overlay_single_bind, test_bind_to_overlay_passthrough, test_bind_to_overlay_multiple, test_parallel_unpack_invokes_bind_to_overlay, test_imports_correct, and test_no_regression_unpack_logic are ALL pure text-matching tests using 'assert ... in content' on file contents. Only test_unit_unpacker, test_build, test_vet, test_go_fmt, and test_go_mod_verify execute code. The majority of f2p tests are text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The text-matching tests (test_bind_to_overlay_single_bind, etc.) can be satisfied by simply pasting the exact code strings into the file without understanding the bug. The test_unit_unpacker test runs Go tests that are also part of the patch, so those test files must also be created by the agent \u2014 but the Go tests themselves could pass with stub code if the function signature matches and returns expected values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/containerd as solve.sh, and the agent could read solution/solve.sh or the test file tests/test_outputs.py to see exactly what strings to insert. The tests are pure string matching, so the agent could grep test_outputs.py for the expected literals and paste them into the source file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (detect conditions, convert bind to overlay, pass through unchanged, integration call, reference comment) are tested either via string matching or Go unit tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, organized by aspect of the fix (single bind, passthrough, multiple mounts, integration, build, vet, etc.)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact code patterns including exact condition strings, exact function signatures, exact literal values, and exact integration patterns. While it doesn't say 'line 530', it provides the complete implementation specification down to string-level detail."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

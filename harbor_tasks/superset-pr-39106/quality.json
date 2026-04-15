@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names the file path (superset/mcp_service/auth.py), function (_setup_user_context), and all key literal strings/behaviors tested: 'user = g.user' removal, 'break' removal, 'g.pop(\"user\", None)', 'MCP user resolution failed' log message, absence of 'falling back to middleware-provided', and '_cleanup_session_on_error()' before raise in DB retry path. All test assertions reference specifics discoverable from instruction.md's Verification section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md Verification section essentially dictates the exact implementation: 'Remove any fallback assignment of user = g.user', 'Remove any break statement', 'Add a call to g.pop(\"user\", None)', 'Log an error message containing \"MCP user resolution failed\"', 'Add a call to _cleanup_session_on_error() before the raise'. This is a step-by-step recipe of what to change, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to extract the ValueError handler block and check for specific strings like 'g.pop(\"user\"', exact absence of 'break', exact absence of 'user = g.user', and exact presence of '_cleanup_session_on_error' within 200 chars of 'DB connection failed on retry'. An alternative correct fix (e.g., using 'del g.user' or 'g.user = None' instead of g.pop, or using a different cleanup approach) would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single f2p test (test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_clears_guser, test_valueerror_handler_does_not_break, test_valueerror_logs_error_not_warning, test_cleanup_session_called_on_db_error) works by reading the file content with open() and doing string/regex matching. None imports or calls the actual code. The only 'execution' tests are syntax check and linting (p2p)."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific changes against the buggy base commit (e.g., 'user = g.user' must be absent, 'break' must be absent, 'g.pop' must be present, 'MCP user resolution failed' must be present). A stub or no-op would not satisfy these since the base file contains the buggy patterns that must be changed."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset as a git repo, and solve.sh is a shell script that could potentially be accessed. More critically, the agent could simply read the test file at tests/test_outputs.py to see exactly what string patterns are checked and match them without understanding the bug. The tests are pure text-matching, making pattern-matching cheating trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors listed in instruction.md's Expected Behavior and Verification sections are covered by tests: fallback removal, break removal, g.pop call, error logging, absence of fallback warning string, and _cleanup_session_on_error call."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_valueerror_handler_removes_fallback_logic, test_valueerror_handler_clears_guser), have descriptive docstrings with f2p/p2p annotations, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code for a security fix, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in instruction.md are consistent with the actual codebase and test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md Verification section names exact implementation details: specific strings to add/remove ('g.pop(\"user\", None)', '_cleanup_session_on_error()'), specific statements to remove ('user = g.user', 'break'), and exact log message text. This goes far beyond naming the file and function."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

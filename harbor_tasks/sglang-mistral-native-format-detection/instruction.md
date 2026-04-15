@@ -2,24 +2,34 @@
 
 ## Problem
 
-When launching `mistralai/Mistral-Small-4-119B-2603`, the server crashes with an `AttributeError` because attention weight tensors (e.g. `w_kc`) are `None`.
+When launching models in the Mistral family (e.g. `Mistral-Small-4-119B-2603`), the server crashes with an `AttributeError` because attention weight tensors (e.g. `w_kc`) are `None`.
 
 ## Root Cause
 
-Mistral Small 4 ships with **both** `params.json` (native Mistral format) and `config.json` (HuggingFace format) in its model repository. This creates a mismatch between how the config is loaded and how the weights are loaded:
+Mistral models may ship with both `params.json` (native Mistral format) and `config.json` (HuggingFace format) in the same model repository. This creates a mismatch:
 
-1. **Config loading**: The model name matches patterns in `hf_transformers_utils.py` that trigger the native Mistral config loader (which reads `params.json` and expects native weight names like `layers.X.attention.wkv_b.weight`).
+1. **Config loading**: Some Mistral models are routed through a native config loader that reads `params.json` and expects native weight names like `layers.X.attention.wkv_b.weight`.
 
-2. **Weight loading**: The format detection function in `python/sglang/srt/server_args.py` (`_is_mistral_native_format`) sees both `params.json` and `config.json` and returns `False` — defaulting to HuggingFace format. This means weights load with HF-style names (e.g. `language_model.model.layers.X.self_attn.kv_b_proj.weight`).
+2. **Weight loading**: The format detection logic currently returns `False` (HuggingFace format) whenever **both** `params.json` and `config.json` are present. This causes weights to load with HF-style names (e.g. `language_model.model.layers.X.self_attn.kv_b_proj.weight`) instead of native-style names.
 
-3. **Result**: The weight remapping regex cannot match the HF names against the native-format expectations, so all weights are skipped as "Unrecognized" — attention projection weights are never loaded, and the server crashes.
-
-## Where to Look
-
-- `python/sglang/srt/server_args.py` — the `_is_mistral_native_format()` method. This is where the format detection logic lives. Currently it returns `False` whenever both `params.json` and `config.json` exist, with no exceptions.
-
-- `python/sglang/srt/hf_transformers_utils.py` — contains name-based checks that route certain models (like Mistral Large 3 and similar architectures) through a native config loader. The format detection in `server_args.py` needs to be aware of which models get routed through this path.
+3. **Result**: The weight remapping fails to match, attention projection weights are never loaded, and the server crashes with an `AttributeError`.
 
 ## Expected Behavior
 
-Models that are routed through the native Mistral config loader should also use native weight format, even when both `params.json` and `config.json` are present. The format detection logic should recognize these models and return `True` so that `load_format` is set to `"mistral"`.
+The format detection should correctly identify which models use Mistral native format, even when both config files are present:
+
+- **Should return True (Mistral native format) for**: `Mistral-Small-4-119B-2603`, `Mistral-Large-3-2503`, `Leanstral-22B-v0.1`, `Mistral-Small-4-Base` — these models are routed through the native config loader and require native weight format.
+
+- **Should return False (HuggingFace format) for**: `Mistral-7B-Instruct-v0.3`, `Codestral-Mamba-22B-v0.1`, `Pixtral-12B-2409`, `Mistral-Small-3-24B`, `Mistral-Nemo-Instruct-2407` — these models should default to HF format even when `params.json` is present.
+
+- **Should return True when only `params.json` is present** (no `config.json`), regardless of model name.
+
+- **Should return False when neither file is present**, or when only `config.json` is present without `params.json`.
+
+## Validation
+
+After fixing the bug:
+- `Mistral-Small-4-119B-2603`, `Mistral-Large-3-2503`, `Leanstral-22B-v0.1`, `Mistral-Small-4-Base` — with both `params.json` and `config.json` present → format detection returns `True`
+- `Mistral-7B-Instruct-v0.3`, `Codestral-Mamba-22B-v0.1`, `Pixtral-12B-2409`, `Mistral-Small-3-24B`, `Mistral-Nemo-Instruct-2407` — with both `params.json` and `config.json` present → format detection returns `False`
+- Any model with only `params.json` (no `config.json`) → format detection returns `True`
+- Any model with neither file or only `config.json` → format detection returns `False`

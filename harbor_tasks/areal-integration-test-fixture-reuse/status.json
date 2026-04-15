@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:21:30.445744",
-  "total_time": 1082.58,
-  "sandbox_id": "i8emz1kiyj9ac9n8sammh",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:29:46.849278",
+  "total_time": 975.7,
+  "sandbox_id": "i60o2vaengwv4hnsdf8vs",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,28 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.44,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:11', 'A:[A] test_not_tautological @ tests/test_outputs.py:392: test `test_gpu_skipif_has_reason` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:440: test `test_repo_py_compile` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:476: test `test_repo_no_bare_excepts` has 1 assert(s), all pass on a s', 'A:[A] test_not_tautological @ tests/test_outputs.py:493: test `test_repo_no_unused_imports` has 1 assert(s), all pass on a', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: pyyaml']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.25,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 267.5,
-      "at": "2026-04-09T20:22:56.128021"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 1082.58,
       "at": "2026-04-11T18:21:30.445744"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 975.7,
+      "at": "2026-04-15T03:29:46.849278"
     }
   ]
 }

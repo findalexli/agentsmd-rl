@@ -2,27 +2,35 @@
 
 ## Problem
 
-The Next.js repository currently uses `CLAUDE.md` as the main agent instruction file. However, we want to:
-1. Rename it to `AGENTS.md` to benefit more coding agents (not just Claude)
-2. Keep `CLAUDE.md` as a symlink to `AGENTS.md` for backwards compatibility with Claude Code
+The Next.js repository currently has a `CLAUDE.md` file containing agent instructions. However, some agent tools look for `AGENTS.md` instead. Both files need to work correctly:
+- Tools looking for `AGENTS.md` should find the full agent instructions
+- Tools looking for `CLAUDE.md` should still work (backwards compatibility)
 
-Additionally, both files need to be added to `.alexignore` to avoid linting issues.
+Additionally, both filenames need to be ignored by the alex lint tool to avoid linting issues.
 
 ## Expected Behavior
 
 After the change:
-- `AGENTS.md` should exist with the full agent instructions content
-- `CLAUDE.md` should be a symbolic link pointing to `AGENTS.md`
-- `.alexignore` should include both `AGENTS.md` and `CLAUDE.md`
+- `AGENTS.md` should exist as a regular file containing the full agent instructions
+- `CLAUDE.md` should still be readable and return the same content as `AGENTS.md`
+- `.alexignore` should list both `AGENTS.md` and `CLAUDE.md`
+
+## Verification
+
+The agent instructions file should contain these sections:
+- "# Next.js Development Guide" header
+- "Git Workflow" section
+- "Build Commands" section
+- "Testing" section
+- "Linting and Types" section
+
+The file should be substantial (more than 5000 characters).
+
+`.alexignore` should contain the strings `AGENTS.md` and `CLAUDE.md` on separate lines.
 
 ## Files to Look At
 
-- `CLAUDE.md` — currently contains the full agent instructions (will become a symlink)
-- `.alexignore` — currently only ignores `CLAUDE.md`, needs to also ignore `AGENTS.md`
-- Need to create `AGENTS.md` with the content from the original `CLAUDE.md`
+- `CLAUDE.md` — currently contains the full agent instructions
+- `.alexignore` — currently only ignores `CLAUDE.md`
 
-## Implementation Notes
-
-- On Unix systems, use `ln -s AGENTS.md CLAUDE.md` to create the symlink
-- The symlink must correctly resolve (e.g., `cat CLAUDE.md` should show the same content as `AGENTS.md`)
-- `.alexignore` should list both files on separate lines
+The content that needs to be preserved is the full content currently in `CLAUDE.md`.

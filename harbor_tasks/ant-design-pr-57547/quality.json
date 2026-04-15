@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (file path components/table/hooks/useSelection.tsx, variable name mergedSelectedKeyList, pattern mergedSelectedKeys ?? EMPTY_LIST, function calls like updatePreserveRecordsCache(mergedSelectedKeyList), dependency arrays, conductCheck usage) are explicitly named in instruction.md's detailed fix steps."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md provides the exact solution in steps 1-6: 'Create a variable named mergedSelectedKeyList', 'define using mergedSelectedKeys ?? EMPTY_LIST', 'pass mergedSelectedKeyList instead of mergedSelectedKeys', exact dependency arrays, exact return statements. This leaves no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'mergedSelectedKeyList', exact string 'mergedSelectedKeys ?? EMPTY_LIST', exact call 'updatePreserveRecordsCache(mergedSelectedKeyList)', exact dependency array 'mergedSelectedKeyList, checkStrictly, keyEntities, isCheckboxDisabled'. An alternative fix using e.g. 'safeSelectedKeys = mergedSelectedKeys || []' would fail all f2p tests despite being correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list, test_no_direct_mergedselectedkeys_in_effect) all use pattern 'assert <string> in content' on the source file text without executing the component or testing runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply inserts the exact text strings (e.g. comments containing 'mergedSelectedKeyList', 'mergedSelectedKeys ?? EMPTY_LIST', etc.) into the file without actually fixing the bug would pass all f2p tests, since they only check for string presence in file content."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/antd adjacent to the repo (solution/solve.sh contains the exact patch). An agent could read /solution/solve.sh or the patch content to extract the exact changes needed. Additionally, the test fixture strings are all visible in the instruction.md itself."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six explicit fix requirements from instruction.md (variable creation, nullish coalescing, useEffect update, useMemo return, conductCheck argument, dependency array) are each tested by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, etc.), have docstrings explaining pass_to_pass vs fail_to_pass, and a module-level docstring explaining the bug context."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a React component bug, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands throughout the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (components/table/hooks/useSelection.tsx), exact variable names to create (mergedSelectedKeyList), exact patterns to use (mergedSelectedKeys ?? EMPTY_LIST), exact function calls to modify, and exact dependency arrays \u2014 this goes far beyond naming the buggy file."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single TypeScript source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (`.github/scripts/verify-playwright-new-tests-and-snapshots.sh`, `.github/workflows/ci-e2e-playwright.yml`, `playwright/README.md`, `.agents/skills/playwright-test/SKILL.md`), the JSON filename (`flake-verification-results.json`), schema keys (`status`, `message`, `files`, `repeat_count`), required strings (`usage`, `--repeat-each`, `--retries=0`, `write_results`, `best practices`, `gotcha`, `getByRole`, `getByTestId`, `page object model`, `test.step`, `f"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to build (a verification script, workflow updates, documentation consolidation) with requirements, but does not specify exact code, line numbers to change, or implementation details like specific bash logic. A developer must still reason about how to implement it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like `test_verification_script_repeat_each` assert `'write_results' in content` which checks for a specific function name. The instruction does say 'Must include a write_results function or logic to write results' but the test only checks for the literal string 'write_results' (with a fallback to 'results' in content.lower()). More critically, `test_verification_script_detects_changed_specs` asserts exact strings like `'git diff' in content` and `'playwright/' in content or 'playwright/**'"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many fail-to-pass tests are purely text-based: `test_verification_script_detects_changed_specs` does `assert 'git diff' in content`, `test_verification_script_repeat_each` does `assert '--repeat-each' in content`, `test_workflow_has_verification_step` does `assert 'verify-playwright-new-tests-and-snapshots' in content`, `test_skill_md_references_readme` reads file text and checks for string presence. Only `test_verification_script_validates_args` and `test_shell_script_syntax` actually execute t"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by stub/empty files. `test_shell_script_syntax` requires valid bash. `test_verification_script_validates_args` actually runs the script and checks exit codes and output. Text-matching tests require specific content strings that wouldn't appear in empty or default files. A stub implementation would not pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/posthog` as `solution/solve.sh` (or accessible via the container). The agent could potentially read the gold patch from the solution directory. The Dockerfile doesn't show explicit removal of solution files, and the test file itself is at `tests/test_outputs.py` which contains all expected strings the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from instruction.md are tested: script creation and syntax, argument validation, git diff usage, repeat-each flag, workflow integration, results JSON schema, SKILL.md references, and README.md best practices/gotchas content. The coverage is comprehensive."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (e.g., `test_verification_script_validates_args`), and docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact JSON schema for `flake-verification-results.json` with fields `status` (string), `message` (string), `files` (array), and `repeat_count` (number), and the exact filename. Tests verify these schema keys."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and command references are consistent between instruction.md and test assertions. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes requirements at the feature level without pointing to specific lines in existing files. It names target files but that's appropriate since the task is about creating/modifying those specific files."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch shows localized changes: a new script file, targeted edits to SKILL.md (removing specific lines, adding references), additions to README.md, and additions to the workflow YAML. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 3
+}

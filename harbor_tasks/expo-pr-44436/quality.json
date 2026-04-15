@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names SecureRandom.hex(12), define_singleton_method(:generate_available_uuid_list), local_podspecs_dir, .podspec.json, xcfw_info, rm_rf(pod_dir), Info.plist, the file paths (installer.rb, precompiled_modules.rb), perform_post_install_actions context, module Pod, class Installer \u2014 all specifics asserted in the tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'Using SecureRandom.hex(12)', 'Defining a singleton method generate_available_uuid_list on the project object', 'using a variable named local_podspecs_dir', 'removed with rm_rf(pod_dir)', 'detected via an xcfw_info path check'. These are not descriptions of what's broken but precise implementation instructions that match the gold patch exactly."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_installer_defines_uuid_singleton_method checks for the exact string 'define_singleton_method(:generate_available_uuid_list)', test_installer_uses_securerandom_for_uuids checks for 'SecureRandom.hex(12)', test_precompiled_clears_local_podspecs checks for the variable name 'local_podspecs_dir', test_precompiled_clears_stale_pod_dir checks for 'xcfw_info' and 'rm_rf(pod_dir)'. An alternative correct fix using different variable names or a diff"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All four f2p tests are purely text-matching: they open .rb files and assert specific strings exist in content (e.g., 'SecureRandom.hex(12) in content', 'local_podspecs_dir in content'). No test imports, calls, or executes the Ruby code to verify behavior. The p2p tests do run 'ruby -c' for syntax checks, but f2p tests are entirely string-in-file checks."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "An agent could simply append a comment or dead code containing the magic strings (e.g., '# SecureRandom.hex(12)', '# local_podspecs_dir', '# xcfw_info', '# rm_rf(pod_dir)', '# define_singleton_method(:generate_available_uuid_list)') to pass all f2p tests without implementing any actual fix. The tests only check string presence, not functional behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is at /solution/solve.sh and /solution/gold.patch in the container. The agent could read these files directly (cat /solution/gold.patch) and apply the exact patch. There are no measures preventing access to the /solution/ directory."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (UUID singleton method, SecureRandom usage, local podspecs clearing, stale pod dir removal) are tested. The tests cover both the UUID collision fix and the stale cache fix."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (f2p vs p2p), descriptive function names, and detailed docstrings explaining what each test verifies and why it fails on the base commit."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact implementation details: specific method names (define_singleton_method(:generate_available_uuid_list)), exact function calls (SecureRandom.hex(12)), specific variable names (local_podspecs_dir, xcfw_info), and specific operations (rm_rf(pod_dir)). This goes far beyond describing what's broken and into prescribing the exact code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

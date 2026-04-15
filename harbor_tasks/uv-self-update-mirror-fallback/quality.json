@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (crates/uv-bin-install/src/lib.rs), the Binary enum, manifest_urls method, should_try_next_url method, the constants VERSIONS_MANIFEST_MIRROR and VERSIONS_MANIFEST_URL, and the error variants ManifestParse, ManifestUtf8, Download, ManifestFetch, Stream. The tests check for these same elements (Self::Uv arm in manifest_urls, VERSIONS_MANIFEST_MIRROR/URL constants, and the error variant mappings in should_try_next_url). All test-asserted specifics are discoverable fr"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially states the exact fix: (1) add VERSIONS_MANIFEST_MIRROR URL before VERSIONS_MANIFEST_URL in the Uv variant's manifest_urls, and (2) add ManifestParse and ManifestUtf8 to should_try_next_url returning true. It specifies which method, which enum variants, and the ordering. This leaves almost no reasoning for the developer about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties (does the Uv arm contain VERSIONS_MANIFEST_MIRROR, does it appear before VERSIONS_MANIFEST_URL, do ManifestParse/ManifestUtf8 map to true in should_try_next_url) rather than exact line positions or specific variable names. Alternative implementations that achieve the same behavior (e.g., different formatting, different arm structure) would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests use subprocess to run Python scripts that parse the Rust source text with regex (searching for patterns like 'VERSIONS_MANIFEST_MIRROR' in extracted function bodies, checking if variant names appear near '=> true'). They never compile or execute the Rust code. This is essentially sophisticated text matching, not behavioral verification \u2014 the code is never actually run."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The base commit has Self::Uv using only VERSIONS_MANIFEST_URL (no mirror) and should_try_next_url not including ManifestParse/ManifestUtf8. A stub or no-op would not pass these tests since they check for the presence of specific patterns that don't exist in the original code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/uv via the solve.sh patch, and the agent could read solution/solve.sh if it exists in the container. Additionally, the test scripts contain the exact expected patterns (VERSIONS_MANIFEST_MIRROR, ManifestParse mapping to true), which could be reverse-engineered by reading the test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both behaviors described in the instruction are tested: (1) the Uv variant using VERSIONS_MANIFEST_MIRROR before VERSIONS_MANIFEST_URL, and (2) ManifestParse and ManifestUtf8 triggering fallback in should_try_next_url."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_uv_mirror_url, test_uv_canonical_fallback, test_mirror_before_canonical, test_manifest_parse_fallback, test_manifest_utf8_fallback, test_existing_fallbacks_preserved) with docstrings explaining the before/after behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying Rust source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact methods (manifest_urls, should_try_next_url), the exact file (crates/uv-bin-install/src/lib.rs), the exact error variants to modify (ManifestParse, ManifestUtf8), and the exact constants to use (VERSIONS_MANIFEST_MIRROR, VERSIONS_MANIFEST_URL). This goes well beyond naming the buggy module \u2014 it pinpoints the exact locations and changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

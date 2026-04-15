@@ -1,34 +1,58 @@
-# AI Assistant Results Make Page Unresponsive
+# AI Assistant Results Performance Fix
 
 ## Problem
 
 When using the AI Assistant in Supabase Studio with queries returning 1000+ rows, the page becomes unresponsive. Chrome traces show that every keystroke takes approximately 250ms to process, with 70,000+ function calls per long task.
 
-The issue is in the `Results` component used to display SQL query results. Currently, each table cell has its own `ContextMenu_Shadcn_` component instance. Each Radix ContextMenu registers a `keydown` listener on `document` via `useEffect`. With large result sets, this creates thousands of document-level event listeners.
+The performance bottleneck is in the Results component and QueryBlock component used to display SQL query results.
 
-## Expected Behavior
+## Files to Modify
 
-- The AI Assistant should remain responsive when displaying large query results (1000+ rows)
-- Typing in the AI Assistant input should not have noticeable lag
-- The context menu (right-click on cell) should still work correctly
-- Firefox should render the DataGrid properly (currently not rendering in some cases)
-- QueryBlock results should not show a double scrollbar
+- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx`
+- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts`
+- `apps/studio/components/ui/QueryBlock/QueryBlock.tsx`
 
-## Files to Look At
+## Requirements
 
-- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx` — The main Results component that renders query results
-- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts` — Utility functions for formatting cell values
-- `apps/studio/components/ui/QueryBlock/QueryBlock.tsx` — QueryBlock that wraps Results in some contexts
+### Results.tsx
 
-## Additional Context
+The Results component must be refactored with the following:
 
-The Results component:
-- Uses `react-data-grid` for table rendering
-- Has a right-click context menu on each cell with "Copy cell content" and "View cell content" options
-- Uses Radix UI's ContextMenu primitives via `ContextMenu_Shadcn_` imports from the `ui` package
-- Currently creates the context menu inside the cell formatter function
+- Import `useCallback`, `useMemo`, and `useRef` from React (in addition to existing imports)
+- Import `formatCellValue` and `formatClipboardValue` from `./Results.utils`
+- Define a ref named `contextMenuCellRef` (typed as an object with `column` and `value` fields, or null)
+- Define a ref named `triggerRef` (typed as `HTMLDivElement`)
+- Define a function named `handleContextMenu` wrapped in `useCallback`
+- Wrap the `columns` definition in `useMemo`
+- Render a single `<ContextMenu_Shadcn_>` component at the component level (outside `renderCell`)
+- The `renderCell` callback must NOT contain `ContextMenu_Shadcn_` or `ContextMenu_Shadcn`
+- The renderCell function should call `formatCellValue` to display cell values
 
-Related areas to verify after the fix:
-- AI Assistant with large query results (1000+ rows)
-- SQL Editor results panel
-- QueryBlock in various contexts (Table Editor SQL preview, etc.)
+### Results.utils.ts
+
+The utility file must export the following functions:
+
+- `formatClipboardValue` — formats values for clipboard: returns empty string for null, `JSON.stringify` for objects/arrays, string representation for primitives
+- `formatCellValue` — formats values for display: returns `'NULL'` for null, value as-is for strings, `JSON.stringify` for others
+- `formatResults` (already exists, keep it)
+- `convertResultsToCSV` (already exists, keep it)
+- `convertResultsToMarkdown` (already exists, keep it)
+- `convertResultsToJSON` (already exists, keep it)
+- `getResultsHeaders` (already exists, keep it)
+
+### QueryBlock.tsx
+
+- The component must include the CSS class `flex-1`
+- The container `<div>` wrapping `<Results rows={results}>` must have both CSS classes `flex flex-col` and `max-h-64` on the same line
+
+### Test Files
+
+Create the following test files:
+
+- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.test.ts`
+- `apps/studio/tests/components/SQLEditor/Results.utils.test.ts` — must contain `describe('formatClipboardValue'` and/or `describe('formatCellValue'`
+- `apps/studio/tests/components/SQLEditor/Results.test.tsx` — must test that only one context menu is rendered regardless of row count, using a variable named `contextMenuMountCount` with the assertion `expect(contextMenuMountCount).toBe(1)`
+
+### Formatting
+
+- All code must pass `pnpm run test:prettier`

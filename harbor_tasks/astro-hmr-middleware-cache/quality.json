@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all 6 file paths, the method name `clearMiddleware()` with `void` return type, the HMR event name `astro:middleware-updated`, the `configureServer` hook, `server.watcher.on('change', ...)`, `import.meta.hot.on()`, the debug log message `Middleware cache cleared due to file change`, and delegation patterns like `this.pipeline.clearMiddleware()`. All assert'd specifics in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: specific method signatures (`clearMiddleware(): void`), exact field to clear (`this.resolvedMiddleware`), exact delegation pattern (`this.pipeline.clearMiddleware()`), exact HMR event name, exact debug log string, exact hook names. This leaves almost no reasoning about WHAT to change \u2014 it's a step-by-step recipe."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex patterns asserting exact method signatures like `clearMiddleware(): void` with `this.resolvedMiddleware = undefined`, exact delegation `this.pipeline.clearMiddleware()`, exact HMR event string `astro:middleware-updated`, exact variable name `normalizedSrcDir`, and exact log message `Middleware cache cleared due to file change`. An alternative correct fix using different naming (e.g., `resetMiddleware()`, different cache field name, different event name) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_pipeline_clear_middleware_method_exists, test_dev_app_clear_middleware_method_exists, test_vite_plugin_app_clear_middleware_method_exists, test_middleware_vite_plugin_has_configure_server, test_dev_entrypoint_has_hmr_listener, test_create_astro_server_app_has_hmr_listener) are ALL text-matching tests using regex on file content or `assert 'string' in content`. None import, call, or execute the code to verify behavior. The build/lint tests are pass-to-pass, not fail-t"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are pure text/regex matching, an agent could satisfy them by inserting dead code blocks with the right string patterns (e.g., adding a never-called `clearMiddleware(): void { this.resolvedMiddleware = undefined }` method) without actually fixing the HMR bug. No test verifies that middleware is actually re-resolved after a file change."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The /solution/solve.sh and /solution/apply_fix.py are present in the container. An agent could read these files (e.g., `cat /solution/apply_fix.py`) to get the exact gold patch. Additionally, since tests are text-matching, the agent could grep test files for the expected patterns and insert them verbatim."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'changes to src/middleware.ts are not picked up automatically' and editing middleware should 'take effect on the next request without requiring a server restart.' No test verifies this actual behavior \u2014 that a changed middleware is picked up on the next request. Tests only check for code patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_pipeline_clear_middleware_method_exists), have docstrings explaining purpose, and are marked as FAIL-TO-PASS vs PASS-TO-PASS. The structure is clear and organized."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or method names across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names all 6 exact files to modify, exact method names and signatures (`clearMiddleware(): void`), exact field names (`resolvedMiddleware`), exact HMR event name (`astro:middleware-updated`), and exact debug log string. This goes well beyond describing what's broken \u2014 it specifies the exact implementation details including internal variable names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

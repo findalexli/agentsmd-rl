@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:44:55.146704",
-  "total_time": 1592.44,
-  "sandbox_id": "ivlfnw4sxqlph9ga2ryc6",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:22:33.423683",
+  "total_time": 913.33,
+  "sandbox_id": "i37lvwz1jrmr2kgnvo2i2",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -32,6 +34,25 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 484.27
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] pass_to_pass_coverage @ eval_manifest.yaml: no p2p regression guards \u2014 agent can delete failing code path and 'win'\", 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pytest, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 15.09,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
@@ -50,6 +71,14 @@
       "backend": "fireworks",
       "time": 1592.44,
       "at": "2026-04-12T06:44:55.146704"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 913.33,
+      "at": "2026-04-15T06:22:33.423683"
     }
   ]
 }

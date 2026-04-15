@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings like 'inner class Value(val value: T)', 'state.continuation.resume(Value(value))', 'handleActions<Value>', '__continuation(false, null)', '__continuation(true, _result.value)', 'convertBlockPtrToKotlinFunction<(kotlin.Boolean, kotlin.native.internal.NativePtr)->Unit>', '{ arg0, arg1 in', 'if arg0 {', 'continuation(.some(element))', 'continuation(.none)', and 'int32_t (^continuation)(bool, void * _Nullable )'. While instruction.md describes the general approach "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact implementation approach: 'Add an inner Value wrapper class', 'Change emit() to wrap values in Value(value)', 'Change next() return type from T? to Value?', 'Update the C bridge function to pass a boolean flag plus value', specific callback signatures like '(bool, void * _Nullable)', and Swift logic like 'Pass .some(element) when flag is true, .none when false'. This is a complete solution specification, not just a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation-specific strings like 'inner class Value(val value: T)', 'handleActions<Value>' (count >= 2), '__continuation(true, _result.value)', '{ arg0, arg1 in', 'if arg0 {', 'continuation(.some(element))'. An alternative correct fix (e.g., using a sealed class Result instead of Value, using different variable names in closures, or using a different boolean-checking pattern) would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test reads file contents and checks for literal string presence (e.g., 'assert \"inner class Value(val value: T)\" in content'). No test compiles the code, runs it, or verifies actual behavior. The only test that runs a subprocess is test_swift_format_syntax which is pass-to-pass. All behavioral verification is done via text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are string-matching tests, an agent could simply write the exact expected strings into the files without understanding the bug. For example, writing 'inner class Value(val value: T)' somewhere in a comment would pass test_value_wrapper_class_exists. The tests don't verify the code compiles or runs correctly."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace and contains solve.sh with the complete gold patch. The agent could read /solution/solve.sh (or the patch within it) to obtain the exact expected strings. Additionally, the agent could read test_outputs.py to find the exact literal strings being asserted and simply insert them into the files."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'a Flow<Elem?> that emits [Element1, null, Element2, null, Element3] should correctly produce all 5 elements when consumed from Swift via asAsyncSequence()'. This actual runtime behavior is never tested - only string patterns in source files are checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_value_wrapper_class_exists, test_c_header_bool_parameter), have docstrings indicating FAIL-TO-PASS vs PASS-TO-PASS, and each tests a distinct aspect of the fix."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying source code files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact class names ('Value'), exact method signatures ('suspend fun next(): Value?'), exact callback signatures ('(bool, void * _Nullable)'), and exact Swift patterns ('.some(element)', '.none'). This goes far beyond identifying the buggy area and specifies the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

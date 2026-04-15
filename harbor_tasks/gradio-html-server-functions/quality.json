@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Several test specifics are undiscoverable from instruction.md: (1) test_syntax_check checks 'client/js/src/client.ts' which is never mentioned in instructions; (2) test_skill_md_documents_server_functions checks for '### `HTML(`' section splitting and 'server_functions' within that section - while the instruction mentions updating SKILL.md and the header format, the exact splitting logic is implicit; (3) test_not_stub asserts len(stmts) >= 5 in __init__, an implementation detail not described; ("
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (accept server_functions parameter, include it in string representation, update SKILL.md) without specifying exact code changes, line numbers, or implementation details. A developer must reason about how to implement the feature."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: that server_functions is stored as an attribute, that str() contains 'server_functions' and function names, and that SKILL.md documents it. Alternative implementations (e.g., using __repr__ instead of __str__, different internal storage patterns) could pass as long as they store the attribute and produce appropriate string output. The __str__ test checks for substring presence, not exact format."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Core f2p tests (test_html_accepts_server_functions, test_html_str_shows_server_functions, test_html_without_server_functions) import and instantiate the HTML class, call str(), and check behavioral properties. test_skill_md_documents_server_functions is text-based but that's appropriate for documentation. test_repo_html_tests runs actual pytest. Not every test is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass: test_html_accepts_server_functions checks html.server_functions is not None and contains the function; test_html_str_shows_server_functions checks str(html) contains 'server_functions' and 'my_server_func'; test_html_without_server_functions checks default is None. A default HTML() without the parameter would raise TypeError, and a pass-through wouldn't produce the right __str__ output."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio's solve.sh path structure (solution/solve.sh is in the task bundle). While the Dockerfile doesn't explicitly copy solution/ into the container, if the agent can access the task directory or read /solution/solve.sh, it could extract the exact patch. Also, the test file at tests/test_outputs.py reveals exact assertions the agent could reverse-engineer."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: accepting server_functions parameter (test_html_accepts_server_functions), storing it (same test), string representation containing 'server_functions' and function names (test_html_str_shows_server_functions), defaulting to None (test_html_without_server_functions), and SKILL.md documentation (test_skill_md_documents_server_functions)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Config-derived, Pass-to-pass, Anti-stub), descriptive function names, and docstrings explaining each test's purpose. Tags like [static], [pr_diff], [agent_config], [repo_tests] categorize test types."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a Python component class and documentation, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names gradio/components/html.py and .agents/skills/gradio/SKILL.md as files to modify, which is appropriate given the task domain. It doesn't specify exact line numbers or the precise code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md edit is localized - adding 'server_functions' parameter to the HTML component signature section. The gold diff only modifies specific lines in html.py, SKILL.md, and test_html.py without full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

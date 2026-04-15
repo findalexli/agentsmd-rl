@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific details not mentioned in instruction.md: the file path 'superset/models/helpers.py', the function name 'get_sqla_query', the keyword 'force_type_check=True', the variable 'applied_adhoc_filters_columns', and the exact parameter name 'template_processor=template_processor'. The instruction only vaguely mentions 'adhoc_column_to_sqla' and 'template_processor' but not the specific file, the get_sqla_query function, or force_type_check."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (template_processor not being passed through in a certain code path) but does not specify the exact file, line number, or the precise code change needed. It asks the agent to investigate and find where the template processor is not being passed through."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex and AST parsing to check that 'template_processor=template_processor' appears in the specific adhoc_column_to_sqla call that has 'force_type_check=True'. An alternative correct fix (e.g., rendering the template earlier in the pipeline, or passing the processor via a different mechanism like a context variable) would fail these tests even if it correctly fixes the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_adhoc_column_filter_passes_template_processor, test_jinja_template_in_adhoc_filter_would_be_processed) use regex on file content and AST inspection of source code structure. They never import, instantiate, or call any code. They are purely textual/structural checks like `assert 'template_processor=template_processor' in match`."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for the presence of 'template_processor' in a specific call site that doesn't have it on the base commit. A stub or no-op wouldn't add this parameter to the source file, so the tests would fail without the actual fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/superset's solve.sh (accessible at /solution/solve.sh or similar path in the container). The agent could read the gold patch directly. Additionally, since tests just check for string patterns in source code, the agent could grep test files for the expected patterns and apply them mechanically."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes that template_processor should be passed to adhoc_column_to_sqla in the filter code path, and the tests verify exactly this behavior (that the parameter is present in that call)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'Fail-to-pass' and 'Pass-to-pass' sections with descriptive names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact method 'adhoc_column_to_sqla' and its 'template_processor' parameter, and describes the specific code path (adhoc column filters / cross-filters). While it doesn't name the exact file, it significantly narrows the search space, especially combined with mentioning 'query generation code paths'."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

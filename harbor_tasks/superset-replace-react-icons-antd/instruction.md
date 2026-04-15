@@ -2,44 +2,39 @@
 
 ## Problem
 
-The `plugin-chart-table` and `plugin-chart-pivot-table` plugins currently depend on the `react-icons` package (83MB) just for 3 sort indicator icons. Since the project already uses Ant Design components throughout, these icons should be replaced with equivalent icons from `@ant-design/icons`, allowing the removal of the unnecessary dependency.
+The `plugin-chart-table` and `plugin-chart-pivot-table` plugins currently include `react-icons` as a direct dependency. This package is large (83MB) and is used only for 3 sort indicator icons. The project already uses Ant Design throughout and `@ant-design/icons` is available as a transitive dependency.
 
-## Files to Modify
+**Goal**: Remove the `react-icons` dependency and replace the sort indicator icons with equivalent icons from `@ant-design/icons`.
 
-You need to modify files in two plugin directories:
+## What to Change
 
-1. **`plugins/plugin-chart-table/`** - The main table chart component
-   - `src/TableChart.tsx` - Contains the `SortIcon` component that renders sort indicators
-   - `package.json` - Has the `react-icons` dependency that should be removed
+Both plugins have sort indicator icons that are currently rendered using `react-icons/fa` imports. These imports and the associated dependency must be removed.
 
-2. **`plugins/plugin-chart-pivot-table/`** - The pivot table chart component
-   - `src/react-pivottable/TableRenderers.tsx` - Contains sort indicator logic for pivot tables
-   - `package.json` - Has the `react-icons` dependency that should be removed
+### Files to Update
 
-## Current Icon Usage
+For each plugin, you need to update:
+1. The `package.json` `dependencies` section — remove the `react-icons` entry
+2. The source file(s) that import from `react-icons/fa` — update imports and icon usage
 
-Both files currently import sort icons from `react-icons/fa`:
-- `FaSort` - for unsorted/neutral state
-- `FaSortUp` - for ascending sort
-- `FaSortDown` - for descending sort
+### What the Tests Check
 
-These should be replaced with equivalent Ant Design icons from `@ant-design/icons`:
-- `ColumnHeightOutlined` - for unsorted/neutral state (double-ended arrow)
-- `CaretUpOutlined` - for ascending sort
-- `CaretDownOutlined` - for descending sort
+The tests verify the following for each plugin:
 
-## Requirements
+**Table plugin (`plugins/plugin-chart-table/`)**:
+- `package.json` has no `react-icons` in `dependencies`
+- `src/TableChart.tsx` does not import from `react-icons/fa` or reference `FaSort`
+- `src/TableChart.tsx` imports `CaretUpOutlined`, `CaretDownOutlined`, and `ColumnHeightOutlined` from `@ant-design/icons`
+- `src/TableChart.tsx` contains JSX for the three antd icon components
 
-1. Remove `react-icons` from both package.json `dependencies`
-2. Replace all react-icons imports with imports from `@ant-design/icons`
-3. Update the icon component usage to use the new antd icon components
-4. Ensure TypeScript compilation passes
-5. Ensure the code follows the project's linting rules
-6. Keep the same functionality - only the icon components should change
+**Pivot table plugin (`plugins/plugin-chart-pivot-table/`)**:
+- `package.json` has no `react-icons` in `dependencies`
+- `src/react-pivottable/TableRenderers.tsx` does not import from `react-icons/fa` or reference `FaSort`
+- `src/react-pivottable/TableRenderers.tsx` imports `CaretUpOutlined`, `CaretDownOutlined`, and `ColumnHeightOutlined` from `@ant-design/icons`
+- `src/react-pivottable/TableRenderers.tsx` uses these icons appropriately for sort indicators
 
-## Notes
+## Verification
 
-- Look at the `SortIcon` component in `TableChart.tsx` - it's a simple functional component
-- In the pivot table's `TableRenderers.tsx`, the sort icon selection is done via a dynamic component assignment
-- The project already uses `@ant-design/icons` elsewhere, so it will already be available as a transitive dependency
-- Follow the existing code style in each file for imports and JSX syntax
+After making changes:
+1. `npm run plugins:build` should pass (TypeScript compilation)
+2. `npm test -- --testPathPatterns=plugin-chart-table --maxWorkers=1` should pass
+3. `npm test -- --testPathPatterns=plugin-chart-pivot-table --maxWorkers=1` should pass

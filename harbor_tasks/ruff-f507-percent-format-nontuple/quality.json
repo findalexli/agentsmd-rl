@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific implementation details not fully discoverable from instruction.md: test_no_panic_unwrap_in_target_function, test_no_local_imports_in_target_function, test_no_unreachable_in_target_function, and test_no_allow_lint_suppression all extract the function 'percent_format_positional_count_mismatch' from 'crates/ruff_linter/src/rules/pyflakes/rules/strings.rs' \u2014 while the instruction mentions cargo commands and constraints, it never names this specific file path or function name"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (F507 not firing for non-tuple RHS) and desired behavior but does not specify the exact code change, line numbers, or implementation approach (e.g., it doesn't mention ResolvedPythonType or the specific Rust type inference API to use)."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests verify behavior (F507 fires/doesn't fire for specific inputs) and code-quality constraints (no panic, no unwrap, no local use, no unreachable, no #[allow]). These constraints are broad enough that alternative correct implementations (e.g., using match statements, different type-checking approaches) would pass. Tests don't assert on specific variable names or internal helpers like ResolvedPythonType."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the ruff binary via subprocess (_f507_diagnostics runs 'ruff check' on temp files) and verify diagnostic output. Code quality tests read source but check for behavioral constraints (no panic/unwrap patterns), not mere text matching of the solution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Fail-to-pass tests like test_f507_literal_int assert that running ruff on '%s %s' % 42 produces exactly 1 F507 diagnostic. A stub/default implementation (the existing code at the base commit) produces 0 diagnostics for these cases, so these tests cannot pass without implementing the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/ruff with solve.sh accessible. The gold patch is in solution/solve.sh which the agent could read. Additionally, the Dockerfile and test file reference the exact commit hash b8fad8312fde560943653811ae3e16e22b99dfc7, but there's no evidence that /solution/ is blocked from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: literal non-tuple RHS triggering F507 (int, string, bool, None, float, ellipsis, unary/binary ops), variables/attributes/calls/subscripts NOT triggering F507, single placeholder NOT triggering, existing tuple mismatches still firing, plus code quality constraints."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names (test_f507_literal_int, test_no_f507_variable_rhs), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a linter rule and doesn't produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions test fixture and snapshot file paths (which are standard for ruff development) but doesn't name the exact Rust source file (strings.rs) or the specific function to modify. The note says 'Only the Rust implementation needs to be changed' which is a reasonable scope hint without pinpointing the exact location."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Rust source, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_merge_step_combines_runners looks for a step with 'merge' in its name (case-insensitive) within a job containing 'process_new_failures', and checks the merge script isn't a simple 'cp' of '_1.json'. The instruction mentions a merge step but doesn't specify the step must have 'merge' in its name. Also, test_merge_step_combines_runners creates mock runner output files with a specific naming pattern (e.g., new_failures_w"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to change at a design level (read env vars, partition tests, add setup job, merge step) but does not give exact code, line numbers, or literal replacement text. A developer must still reason about implementation details."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: partitioning produces correct coverage (12 tests, no duplicates), output is keyed by model name, merge combines runner outputs. They accept both 0-indexed and 1-indexed schemes, don't assert specific variable names or helper function names, and check structural properties rather than implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the script via subprocess.run, parse JSON output, and verify behavioral properties. test_merge_step_combines_runners extracts and executes the merge shell script. Only test_yaml_syntax and test_python_syntax do static checks, but the f2p tests all involve actual execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation cannot pass: test_partition_across_runners requires 12 unique tests split across 3 runners with no runner getting all 12; test_output_keyed_by_model requires dict output with specific model keys and 12 tests; test_merge_step_combines_runners executes actual merge logic and checks combined output. The original code (no partitioning) would output all 12 tests for every runner, failing the partition test."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers and solve.sh is in /solution/solve.sh. The Dockerfile doesn't remove the solution directory. An agent could potentially read test_outputs.py from /tests/ or the solution from /solution/solve.sh if these are mounted in the container, though instruction says the agent sees only instruction.md. However, the gold patch is in solve.sh which could be accessible at runtime."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: partitioning via env vars (test_partition_across_runners, test_partition_with_different_runner_counts), backward compatibility implicit in single-runner test, output schema (test_output_keyed_by_model), merge step (test_merge_step_combines_runners), and syntax checks. The workflow's setup job and max_num_runners input are partially tested via YAML parsing but the dynamic matrix isn't directly verified \u2014 however the core behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear docstrings, helper functions (_create_fixtures, _run_script, _count_tests), and descriptive names. Comments indicate test categories (static/pass_to_pass vs pr_diff/fail_to_pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the JSON output schema with an example showing the top-level model keys, 'single-gpu' arrays, and test entry objects with 'test'/'line' and 'bad_commit' fields."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md. File paths (utils/check_bad_commit.py, .github/workflows/check_failed_tests.yml), env var names (run_idx, n_runners), and CLI args are all consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files (which are obvious from the task domain) and describes what structural changes are needed, but doesn't specify exact line numbers, exact code to write, or specific internal implementation details like function signatures."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code+workflow editing task, not a config-only edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

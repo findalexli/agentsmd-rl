@@ -12,7 +12,27 @@ This leads to unnecessary network requests, slower initial renders, and wasted r
 - When an accordion is **closed** (`open=false`), its child components should **not** be pre-loaded. They should only load when the accordion is opened.
 - Open accordions and the default/selected tab should continue to load their children normally.
 
-## Files to Look At
+## Implementation Requirements
 
-- `js/core/src/init.svelte.ts` — Contains `make_visible_if_not_rendered`, the recursive function that makes previously hidden component subtrees visible when a parent container is activated (e.g., tab click). Currently recurses into all children unconditionally.
-- `js/core/src/_init.ts` — Contains `determine_visible_components`, which decides which components are visible at initial page load. Handles tabs and tab items but has no specific handling for accordion components.
+### In `js/core/src/init.svelte.ts`
+
+The `make_visible_if_not_rendered` function currently recurses into all children unconditionally. Modify it to:
+
+1. Accept an `is_target_node` parameter (boolean) to distinguish when a node is the direct target of visibility vs. being visited through recursion.
+
+2. For **tabs nodes** (`node.type === "tabs"`):
+   - Determine the selected tab ID using `node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id`
+   - When iterating over children, only recurse into `tabitem` children (`child.type === "tabitem"`) whose ID matches the selected ID (`child.props.props.id === selectedId` or `child.id === selectedId`)
+   - Skip recursing into unselected tab items
+
+3. For **accordion nodes** (`node.type === "accordion"`):
+   - When `node.props.props.open === false` and `is_target_node` is false, do not recurse into children (lazy load)
+   - When the accordion is open, recurse into children normally using `node.children.forEach`
+
+### In `js/core/src/_init.ts`
+
+The `determine_visible_components` function currently has no accordion-specific handling. Modify it to:
+
+1. Handle `component.type === "accordion"` separately from other component types.
+2. Add accordion components to `visible_components` at initial page load.
+3. Only call `process_children_visibility` for accordions when `component.props.open !== false`.

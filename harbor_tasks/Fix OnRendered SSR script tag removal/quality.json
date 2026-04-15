@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (packages/react-router/src/Match.tsx, packages/react-router/tests/Scripts.test.tsx, packages/solid-router/src/Match.tsx), all literal strings checked by tests (return null, useLayoutEffect(() => {, isServer ?? router.isServer, type: 'onRendered', prevHrefRef, resetKey, router.emit, <script></script>, suppressHydrationWarning), build commands, and the 'needs to run' or 'committed' substring for solid-router. The test for solid-router checks 'need"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md essentially specifies the exact implementation: it requires exact strings like 'return null', 'useLayoutEffect(() => {', 'isServer ?? router.isServer', specific identifiers like 'prevHrefRef' and 'resetKey', and states the script tag must be removed. This tells the developer exactly WHAT to change (replace script tag rendering with returning null, use useLayoutEffect, add prevHrefRef tracking, etc.) rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'useLayoutEffect(() => {' (an alternative could use useEffect or a differently formatted arrow function), 'isServer ?? router.isServer' (could be written as router.isServer || isServer), 'prevHrefRef' (could be named previousHrefRef or lastHrefRef), and 'resetKey' (could be named renderKey). A correct alternative fix using different variable names or slightly different patterns would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_onrendered_returns_null_no_script_tag, test_onrendered_emits_event_via_effect, test_ssr_output_no_sentinel_script, test_typescript_types_correct, and test_solid_router_consistency are ALL purely text-matching tests (assert 'string' in open(path).read()). While test_build_succeeds and test_unit_tests_pass do execute subprocesses, the majority of f2p tests only inspect source text, not behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The build and unit test execution tests (test_build_succeeds, test_unit_tests_pass, p2p tests) would not pass with a stub implementation. The source code text checks also require specific non-trivial content that wouldn't be present by default. The base commit likely has the old script tag implementation, so tests checking for 'return null' and absence of '<script' + 'suppressHydrationWarning' together would fail on the unmodified code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh exists in the container at /workspace and could be read by the agent. Additionally, the test file test_outputs.py contains all the exact strings being checked, so the agent could grep for expected values. The text-matching nature of most tests means the agent could pattern-match fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All acceptance criteria from instruction.md are covered by tests: Match.tsx content checks, Scripts.test.tsx sentinel removal, solid-router comment update, build verification, and unit test execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_onrendered_returns_null_no_script_tag, test_ssr_output_no_sentinel_script, etc.), have docstrings explaining what they verify, and are logically grouped into functional tests and pass-to-pass tests with clear section comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces source code changes, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and string literals in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths (packages/react-router/src/Match.tsx), exact strings that must appear ('return null', 'useLayoutEffect(() => {', 'isServer ?? router.isServer'), and exact identifiers (prevHrefRef, resetKey). This goes far beyond naming the buggy module \u2014 it prescribes the exact implementation details of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

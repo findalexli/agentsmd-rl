@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:10:47.581937",
-  "total_time": 1007.21,
-  "sandbox_id": "is03223l7lb3stxaefnxi",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:54:05.505218",
+  "total_time": 1012.1,
+  "sandbox_id": "ioguylhhwrzj3jw18hch0",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -66,17 +68,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:252: test `test_decoder_layer_threads_topk` has 2 assert(s), all pass ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 28.25,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 8276.22,
-      "at": "2026-04-10T00:17:04.254517"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -108,6 +121,14 @@
       "backend": "fireworks",
       "time": 1007.21,
       "at": "2026-04-12T04:10:47.581937"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1012.1,
+      "at": "2026-04-15T05:54:05.505218"
     }
   ]
 }

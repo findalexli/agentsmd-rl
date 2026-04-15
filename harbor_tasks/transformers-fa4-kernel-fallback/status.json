@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:49:20.627873",
-  "total_time": 1240.41,
-  "sandbox_id": "i9itdjk76ttut7qmygfzb",
+  "validated_at": "2026-04-15T06:24:16.427590",
+  "total_time": 1799.66,
+  "sandbox_id": "ij0fdvnhnxc4tlgme1329",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,30 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:121: test `test_fa4_not_skipped_in_loop` has 1 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:342: test `test_no_copied_from_edits` has 1 assert(s), all pass on a s', 'A:[A] test_not_tautological @ tests/test_outputs.py:368: test `test_no_modular_file_edits` has 1 assert(s), all pass on a ', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: \".[quality]\", 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: pyyaml, pytest, pytest-json-ctrf', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 32.98,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1466.65,
-      "at": "2026-04-09T14:52:37.790954"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +113,14 @@
       "backend": "fireworks",
       "time": 1240.41,
       "at": "2026-04-12T05:49:20.627873"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1799.66,
+      "at": "2026-04-15T06:24:16.427590"
     }
   ]
 }

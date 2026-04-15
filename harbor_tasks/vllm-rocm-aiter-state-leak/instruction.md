@@ -1,24 +1,23 @@
 # AITER State Leak Between ROCm MOE Tests
 
-## Problem
+## Symptom
 
-When running the shared fused MOE routed-transform tests on ROCm (AMD GPUs), tests that disable AITER (`use_rocm_aiter=False`) can produce incorrect results if they run in the same process after a test that enabled AITER (`use_rocm_aiter=True`). The observed symptom is large numerical differences (e.g. max_diff=0.277) between results that should be nearly identical.
-
-The root cause is that AITER state leaks between tests through multiple paths:
-
-1. **Conditional environment setup in the test fixture** — In `tests/kernels/moe/test_shared_fused_moe_routed_transform.py`, the AITER-related environment variables and state refresh are only performed when AITER is being *enabled*. When a subsequent test wants AITER *disabled*, no cleanup or override happens, so stale class-level state from the prior test persists and the kernel silently uses the wrong backend.
-
-2. **Missing state reset in the shared cleanup path** — `vllm/distributed/parallel_state.py` provides a cleanup function that resets environment caches between tests, but it does not touch the AITER ops class-level cached state. Since pytest's monkeypatch only restores `os.environ`, the cached class variables survive across tests.
-
-3. **Unsafe environment dict mutation in a related test** — `tests/kernels/moe/test_routing_simulator.py` directly mutates a shared environment dictionary in a way that is not automatically restored at test teardown, which can pollute state for later tests in the same process.
+When running fused MOE routed-transform tests on ROCm (AMD GPUs), tests that disable AITER can produce incorrect results if they run after a test that enabled AITER. The observed symptom is large numerical differences (e.g. max_diff=0.277) between results that should be nearly identical. The root cause is that AITER-related class-level state persists across tests in the same process.
 
 ## Expected Behavior
 
 - Each ROCm MOE test should run with a clean AITER state regardless of what ran before it in the same process.
-- Environment variable overrides in test fixtures should be properly cleaned up at teardown.
+- Environment variable overrides set in test fixtures should be correctly applied at teardown regardless of the `use_rocm_aiter` parameter value.
+- Test teardown should not leave class-level cached environment state that persists to subsequent tests.
 
-## Files to Investigate
+## Background
 
-- `tests/kernels/moe/test_shared_fused_moe_routed_transform.py`
-- `vllm/distributed/parallel_state.py`
-- `tests/kernels/moe/test_routing_simulator.py`
+The ROCm AITER backend (`rocm_aiter_ops`) reads environment variables (`VLLM_ROCM_USE_AITER`, `VLLM_ROCM_USE_AITER_MOE`) at construction time and caches them as class-level attributes. The `parallel_state` module provides a cleanup function that is called between tests to reset environment-related caches.
+
+## To Investigate
+
+1. In the test fixture for routed-input transforms: verify that AITER-related environment variables are set for all ROCm test cases (not only those where the parameter enables AITER). Both `VLLM_ROCM_USE_AITER` and `VLLM_ROCM_USE_AITER_MOE` must be set correctly before the ops module is imported.
+
+2. In the parallel state cleanup path: verify that it resets all environment-dependent class-level caches used by the AITER backend, so that cached state matches `os.environ` after cleanup.
+
+3. In the routing simulator integration test: verify that environment variable overrides use patterns that are automatically cleaned up at teardown, not direct dictionary mutations that survive past test scope.

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names the target file (tpl/internal/templatefuncsRegistry.go), the deprecated APIs (parser.ParseDir, doc.New), the required new function signature (func parseDir(fset *token.FileSet, dir string) returning []*ast.File), the required patterns (parser.ParseFile(fset, with parser.ParseComments, doc.NewFromFiles(fset, astFiles,), the required import (go/ast), and all build/test/vet/gofmt commands. Every string and pattern checked in the tests is discoverable from instruc"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies the exact function signature 'func parseDir(fset *token.FileSet, dir string)' returning '[]*ast.File', the exact call patterns 'parser.ParseFile(fset,' with 'parser.ParseComments', and 'doc.NewFromFiles(fset, astFiles,'. This tells the agent exactly WHAT to write rather than just describing what's broken. The verification criteria essentially dictate the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_parse_dir_helper_exists checks for exact string 'func parseDir(fset *token.FileSet, dir string)', test_uses_doc_new_from_files checks for exact string 'doc.NewFromFiles(fset, astFiles,' (requiring the variable name 'astFiles'), test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile(fset,'. A correct alternative using e.g. 'parsedFiles' instead of 'astFiles', or a different helper signature, would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_parse_dir_helper_exists, test_uses_doc_new_from_files, test_parse_dir_uses_parser_parse_file, test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_ast_import_added, and test_parse_dir_not_exported are all pure text-matching (reading file content and checking for string presence). While some tests do execute subprocesses (go build, go test, go vet, gofmt), the majority of fail-to-pass tests are text assertions only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original file (e.g., parseDir helper, doc.NewFromFiles, go/ast import). A stub or no-op wouldn't add these patterns. Additionally, go build and go test must pass, ensuring the code actually compiles and functions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/hugo's container at solution/solve.sh. The agent could read this file or the test file at tests/test_outputs.py to see exactly what strings are checked. The Dockerfile doesn't remove or protect these paths."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 11 verification criteria listed in instruction.md are tested: deprecated API removal (tests 1-2), new code patterns (tests 3-6), and build/quality checks (tests 7-11)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_no_deprecated_parser_parse_dir, test_code_compiles), include docstrings with fail-to-pass/pass-to-pass annotations, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Go source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, function names, and variable names in instruction.md are all correct and consistent with the test file."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names the exact file (tpl/internal/templatefuncsRegistry.go) and specifies exact function signatures, call patterns, and variable names (e.g., 'astFiles'). This goes well beyond identifying what's broken and dictates the precise implementation, which is hint leakage for what should be a coding task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

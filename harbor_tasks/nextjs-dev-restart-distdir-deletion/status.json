@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:07:14.437709",
-  "total_time": 1876.53,
-  "sandbox_id": "iy0hwbiuhatm7fa1lgjtn",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:43:00.925539",
+  "total_time": 1065.39,
+  "sandbox_id": "i8sl5fu8je852caukn1y5",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -61,17 +63,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.32,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:235: test `test_repo_node_syntax_check` has 1 assert(s), all pass on a', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pytest-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.76,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3732.18,
-      "at": "2026-04-09T23:01:20.541336"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -103,6 +117,14 @@
       "backend": "fireworks",
       "time": 1876.53,
       "at": "2026-04-12T00:07:14.437709"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1065.39,
+      "at": "2026-04-15T04:43:00.925539"
     }
   ]
 }

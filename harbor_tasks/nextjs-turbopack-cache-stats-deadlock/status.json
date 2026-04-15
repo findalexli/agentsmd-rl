@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:41:37.351680",
-  "total_time": 1128.72,
-  "sandbox_id": "iu9crwcscmj19fr5nix6p",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:48:43.092589",
+  "total_time": 1024.21,
+  "sandbox_id": "i9pza5ghtxfa5g2ejq79v",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -63,17 +65,29 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.32,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:6', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:75: test `test_deadlock_pattern_removed` only reads file text', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:139: test `test_task_name_from_storage` only reads file text;', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:208: test `test_cargo_feature_split` only reads file text; in', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:322: test `test_formatsizes_struct_exists` only reads file te']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.58,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 11717.84,
-      "at": "2026-04-10T04:38:33.916422"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -105,6 +119,14 @@
       "backend": "fireworks",
       "time": 1128.72,
       "at": "2026-04-12T00:41:37.351680"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1024.21,
+      "at": "2026-04-15T04:48:43.092589"
     }
   ]
 }

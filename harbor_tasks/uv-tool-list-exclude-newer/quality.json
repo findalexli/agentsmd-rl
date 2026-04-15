@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four files tested (crates/uv-cli/src/lib.rs, crates/uv/src/settings.rs, crates/uv/src/commands/tool/list.rs, crates/uv/src/lib.rs), the struct names (ToolListArgs, ToolListSettings), the function (list()), and the concept of exclude_newer, --exclude-newer, ResolverInstallerOptions, and option merging. All asserted identifiers (exclude_newer, ToolListArgs, ToolListSettings, ResolverInstallerOptions, .combine()) are discoverable from the instruction's description of the p"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (--exclude-newer not supported in uv tool list --outdated) and the expected behavior, plus which files to look at. It does not specify exact code changes, line numbers, or implementation details like using .combine() or adding specific struct fields."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_options_combined_in_list checks for '.combine(' in source text; test_list_fn_receives_resolver_options checks for 'ResolverInstallerOptions' in the function signature; test_settings_resolves_exclude_newer checks for 'ResolverInstallerOptions' in the struct body. An alternative correct implementation could, e.g., pass just an ExcludeNewer field directly instead of ResolverInstallerOptions, or merge options without using .combine() (e.g., man"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_exclude_newer_arg_defined, test_settings_resolves_exclude_newer, test_list_fn_receives_resolver_options, test_options_combined_in_list) all read source files and check for string patterns like 'exclude_newer' in body, 'ResolverInstallerOptions' in sig, '.combine(' in src. They do not execute the code or test actual behavior. The compilation tests (cargo check/test --no-run) verify compilation but not runtime behavior of --exclude-newer."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for structural changes (exclude_newer field in ToolListArgs, exclude_newer handling in ToolListSettings, resolver options in list() signature, .combine() usage). A stub/no-op implementation would not add these fields/patterns to the source code, so these tests would fail without actual implementation work."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/uv as a git repo, and solve.sh is at a predictable path. An agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what string patterns are being checked and satisfy them minimally. The tests only check for string presence in source files, making it trivial to game by inserting comments containing the expected strings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'The CLI flag should take precedence over filesystem configuration, and both should take precedence over tool-specific stored options.' No test verifies this precedence behavior at runtime. Also, no test verifies that UV_EXCLUDE_NEWER environment variable or uv.toml configuration actually works with 'uv tool list --outdated'."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Repo CI/CD), descriptive function names, and detailed docstrings explaining what each test checks and why it would fail on the base commit."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CLI argument/flag implementation, not structured data output like JSON/CSV/API."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or struct names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files, struct names (ToolListArgs, ToolListSettings), function name (list()), and even the specific method (resolve()) to modify. While listing relevant files is reasonable, specifying 'ToolListSettings struct and its resolve() method' and 'The list() function that checks for outdated tools' significantly narrows the search space beyond what the task domain requires."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths like PEP613_ALIAS_RS = 'crates/ty_python_semantic/src/types/infer/builder/post_inference/pep_613_alias.rs' and check for no panic!/unwrap/unreachable! and no local imports. While the instruction.md does mention the new module path and the constraints about panic/unwrap/unreachable and imports, the tests also check POST_INFERENCE_MOD (mod.rs registration) implicitly via compilation, and the specific test function `test_no_local_imports_in_new_module` checks a h"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (Literal[-3.14] not flagged, TypeAlias = var1 not flagged) and where the new module should go, but does not specify the exact code changes or line-level fixes needed. The agent must reason about the Rust implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests test_no_panic_unwrap_in_new_module and test_no_local_imports_in_new_module assert on the existence and content of a specific file path (pep_613_alias.rs). An alternative correct fix might implement the PEP-613 validation directly in builder.rs or type_expression.rs without creating this specific new module, but would fail these tests. The task mandates a specific architectural choice (new module at exact path) that constrains implementation unnecessarily for testing purposes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core behavioral tests (test_literal_negative_float_invalid, test_literal_negative_complex_invalid, test_type_alias_variable_ref_invalid, etc.) execute `cargo run --bin ty -- check` on actual Python code and inspect the output. Compilation and test suite tests also execute real builds. Only test_no_panic_unwrap_in_new_module and test_no_local_imports_in_new_module do text inspection, but they are supplementary config/style checks, not the main behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_literal_negative_float_invalid, test_literal_negative_complex_invalid, test_type_alias_variable_ref_invalid) check that the ty type checker produces 'invalid-type-form' diagnostics for specific invalid code. A stub/no-op implementation would not produce these diagnostics, so these tests cannot be trivially satisfied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh file exists at /workspace/ruff or could be accessible in the container. The agent could potentially read the gold patch from the test harness or solution directory. There's no evidence of the solution directory being removed or protected in the Dockerfile."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: Literal[-3.14] and Literal[-3j] flagged as invalid, Literal[-3] and Literal[+7] remain valid, TypeAlias = var1 flagged, valid type aliases not flagged, new module constraints, compilation, formatting, clippy, mdtests, and unit tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Repo CI/CD, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact path for the new module: 'crates/ty_python_semantic/src/types/infer/builder/post_inference/pep_613_alias.rs' and mentions it must be registered in 'the parent directory's mod.rs'. This is very specific architectural guidance that goes beyond describing what's broken, effectively directing the agent to a particular implementation structure rather than letting them find it."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

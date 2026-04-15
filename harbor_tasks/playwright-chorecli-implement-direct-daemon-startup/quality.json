@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths like MCP_DIR / 'extension' / 'cdpRelay.ts', MCP_DIR / 'sdk' / 'server.ts', MCP_DIR / 'browser' / 'browserServerBackend.ts', MCP_DIR / 'browser' / 'context.ts', and test files like 'cli-isolated.spec.ts', 'cli-misc.spec.ts', 'cli-session.spec.ts'. Tests also check for specific content like 'throwBrowserIsNotInstalledError' (test_session_flag_renamed_in_code checks for '-s'), DEPS.list structure with 'strict' markers, and balanced braces/parens. While many files"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (direct daemon startup via stdout, rename -b to -s, better error messages) without specifying exact code changes, line numbers, or implementation details. The agent must figure out how to implement these changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests check for very specific implementation details. For example, test_session_flag_renamed_in_code asserts '-s' appears and '-b' does not appear in program.ts (an alternative might use '--session' as the short flag). test_browser_error_handling_improved checks for 'throwBrowserIsNotInstalledError' - a gold-specific function name that an alternative correct implementation might name differently (e.g., 'throwBrowserNotFoundError'). test_daemon_startup_refactored checks for specific strings l"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The vast majority of tests are purely text-based file content checks: `assert 'string' in file.read_text()`, `assert 'string' not in file.read_text()`, checking balanced braces, checking file sizes. No test actually runs the TypeScript code, spawns the daemon, tests the CLI, or verifies runtime behavior. Every single test is a static file content assertion."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Many pass_to_pass tests (test_syntax_check, test_all_modified_files_exist, test_typescript_syntax_valid, test_mcp_module_structure, test_documentation_files_valid, test_test_files_valid) check that files exist and have basic structure. These would pass on the unmodified base commit without any changes, since the files already exist. A stub that doesn't implement the fix would pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container and uses `git show e0e7f41e80247f857e97cb23f4833d2eee2122fe:...` to fetch exact gold file contents. An agent could read /solution/solve.sh, extract the merge commit SHA, and run the same git show commands to get the exact expected files. Additionally, the test file itself contains the target commit SHA and hints about expected content (e.g., 'throwBrowserIsNotInstalledError', 'READY', 'ERROR' markers)."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies that the daemon should 'launch the browser context directly at startup', 'signal success or failure back to the parent via stdout markers', and 'exit cleanly if the browser context closes'. None of these runtime behaviors are actually tested - tests only check for string patterns in source files, not actual daemon behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped into categories (Gates/pass_to_pass/static, and fail_to_pass behavioral checks), and each test function has a clear purpose explained in its docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code/documentation changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct with no obvious typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists files to look at but doesn't specify exact line numbers or specific code changes. The file list is reasonable given the scope of the task (daemon startup refactor + flag rename across the codebase)."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-change task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_without_root_bound_applied asserts the literal string 'scope.without_root_bound()' appears in display.rs, and test_fix_has_proper_comment asserts the exact phrase 'Display registry objects are global objects'. While the comment phrase is mentioned in instruction.md requirement #2, the method name 'without_root_bound()' is never mentioned in instruction.md. The agent would have no way to discover this specific method name from the instruction alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction describes the problem as 'the system incorrectly applies the object's own version constraint to the Display registry lookup' and says the Scope type 'controls version bounding for object lookups' \u2014 this strongly hints at the exact fix (remove/bypass version bounding on the scope). Combined with requirement #2 mandating the exact comment phrase 'Display registry objects are global objects', this practically spells out the solution rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_without_root_bound_applied asserts the exact string 'scope.without_root_bound()' and checks it appears before 'Object::latest' in the display_v2 function. An alternative correct fix (e.g., passing a modified scope parameter, creating a new unbound scope, or restructuring the lookup differently) would fail this test even if it correctly fixes the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The F2P tests test_without_root_bound_applied and test_fix_has_proper_comment are purely text-matching tests (reading file content and asserting string presence). test_code_compiles does run cargo check, but the core behavioral verification is text-based. No test actually exercises the display_v2 function's runtime behavior to verify the bug is fixed."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_code_compiles (F2P) would pass on the unmodified base commit since the code compiled before the fix. The bug was a logic error, not a compilation error. A no-op change that just adds the required comment and a dead-code call to without_root_bound() could pass all F2P tests without actually fixing the scoping bug."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/sui's accessible filesystem via solve.sh or solution/ directory. The agent could read tests/test_outputs.py to discover the exact strings being asserted ('scope.without_root_bound()' and 'Display registry objects are global objects') and simply insert those strings into the file without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement #4 mentions 'cargo clippy -p sui-indexer-alt-graphql' and 'scripts/git-checks.sh' and 'cargo xlint' \u2014 these are tested. However, the core behavioral requirement (Display v2 formats correctly render for older versioned objects) is never actually tested at runtime."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_code_compiles, test_without_root_bound_applied, etc.), have docstrings explaining purpose, and are labeled as F2P or P2P in comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a code bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact file to modify (display.rs), mentions the Scope type and its location (scope.rs), describes the root version bound mechanism, and requires a specific comment phrase that describes the fix rationale. This collectively over-constrains the solution space beyond just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

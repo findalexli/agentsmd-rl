@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like `async function resolveAndInstall(nameOrChannel: string)`, `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })`, `browserRegistry.install(executables)`, `await resolveAndInstall('ffmpeg')`, `await resolveAndInstall('chromium')`, and the exact import path `import { getAsBooleanFromENV } from '../../server/utils/env'`. While instruction.md mentions resolveBrowsers, getAsBooleanFromENV, and the env module path, it does not specify the exact function si"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states to 'Extract a resolveAndInstall() helper that uses resolveBrowsers()', 'Use this helper in both ensureConfiguredBrowserInstalled() and findOrInstallDefaultBrowser()', and 'Ensure ffmpeg is properly resolved and installed as a dependency'. It also specifies passing `{ shell: 'no' }` option. This describes exactly WHAT to change, not just what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact function signature `async function resolveAndInstall(nameOrChannel: string)`, exact call `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })`, exact variable name in `browserRegistry.install(executables)`, and exact calls like `await resolveAndInstall('ffmpeg')`. An alternative correct fix using a different helper name (e.g., `installBrowser`), different parameter name, or inlining the logic would fail these tests despite be"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_env_var_check_exists, test_resolve_and_install_helper_exists, test_ffmpeg_dependency_installation, test_chromium_uses_resolve_and_install, test_not_stub) are ALL purely string-matching via `assert 'exact string' in src`. While test_repo_build does compile the code, the behavioral tests never actually run the daemon with the env var set to verify skip behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since the f2p tests are pure string-matching on source code, an agent could satisfy them by inserting the exact expected strings as dead code (e.g., in comments or unreachable branches) without actually implementing the bug fix. For example, adding `// async function resolveAndInstall(nameOrChannel: string)` would partially satisfy checks. The build test provides some guard but doesn't verify runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is present at /workspace/playwright in the container via solve.sh (hidden but potentially accessible). The agent could read the solution directory or the git history. Additionally, since tests are pure string-matching, the agent could grep test files (if accessible) to find the exact strings needed and insert them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'When PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD environment variable is set (to any truthy value), the daemon should skip browser installation entirely.' No test actually runs the daemon with this env var set to verify the skip behavior. Tests only check for the presence of the string in source code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear grouping comments (Gates, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies TypeScript source code and does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact function names to create (`resolveAndInstall()`), exact method calls to use (`resolveBrowsers()` with `{ shell: 'no' }`), exact import paths (`../../server/utils/env`), and exact functions to modify (`ensureConfiguredBrowserInstalled()`, `findOrInstallDefaultBrowser()`). This goes well beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

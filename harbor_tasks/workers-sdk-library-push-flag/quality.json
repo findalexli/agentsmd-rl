@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the enum member (LIBRARY_PUSH = \"library_push\"), the CLI argument name (\"library-push\"), the boolean type, hidden flag, the permission string (\"library_push\"), the validation logic behavior, the relevant files, and the function parameter pattern. All assert targets in tests (file paths, string literals, patterns) are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: the enum member must be 'LIBRARY_PUSH = \"library_push\"', the validation error message should only mention --push and --pull, and the permission string is 'library_push'. While it describes requirements, it is extremely prescriptive about the exact code changes needed, essentially dictating the solution rather than describing a problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_permission_passed_to_api asserts the exact string '...(credentialsArgs.libraryPush ? [\"library_push\"] : [])' must appear in the file. An equally correct alternative like 'if (credentialsArgs.libraryPush) permissions.push(\"library_push\")' would fail this test. test_validation_logic uses a specific regex pattern requiring the exact format '!...pull && !...push && !...libraryPush' which would reject valid alternatives like checking an array of flags."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_library_push_enum_exists, test_cli_argument_definition, test_function_parameter, test_validation_logic, test_permission_passed_to_api, and test_enum_matches_api_values are all purely text-matching (assert 'X' in open(path).read()). While test_wrangler_unit_tests and test_typescript_compiles do execute subprocesses, the majority of fail-to-pass tests are string-in-file checks with no execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings/patterns that don't exist in the base code (e.g., LIBRARY_PUSH, library-push argument, libraryPush parameter). A stub or no-op implementation wouldn't add these strings to the source files, so these tests would fail without real implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/workers-sdk (the solve.sh applies a patch there). The agent could read solution/solve.sh which contains the exact git patch. Additionally, since most tests are string-matching on file contents, the agent could simply insert the exact expected strings without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors in the instruction are tested: enum member (test_library_push_enum_exists, test_enum_matches_api_values), CLI argument with boolean type and hidden flag (test_cli_argument_definition), function parameter (test_function_parameter), validation logic (test_validation_logic), API permission passing (test_permission_passed_to_api), and existing tests still pass (test_wrangler_unit_tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_library_push_enum_exists, test_cli_argument_definition, etc.), each has a docstring explaining what it checks and why, and they are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves adding a CLI flag and enum member, not producing structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, commands, and variable names in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files (registries.ts and ImageRegistryPermissions.ts) which is appropriate given the task domain. It doesn't specify exact line numbers or internal implementation details beyond the required API contract."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

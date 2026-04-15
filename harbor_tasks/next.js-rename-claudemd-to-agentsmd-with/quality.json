@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all key specifics tested: AGENTS.md as a regular file, CLAUDE.md as a symlink pointing to AGENTS.md, .alexignore containing both filenames, the expected sections (Next.js Development Guide header, Git Workflow, Build Commands, Testing, Linting and Types), and the 5000 character minimum. The pass-to-pass tests check pre-existing repo state (readme.md symlink, git log, pnpm config, no broken symlinks) which are infrastructure checks not requiring instruction disclosure. T"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the solution: 'AGENTS.md should exist as a regular file containing the full agent instructions', 'CLAUDE.md should still be readable and return the same content as AGENTS.md' (implying symlink), and '.alexignore should list both AGENTS.md and CLAUDE.md'. The title itself says 'Rename CLAUDE.md to AGENTS.md with Symlink'. This tells the agent exactly what to do (rename file, create symlink, update .alexignore) rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes: AGENTS.md exists as a regular file with specific content, CLAUDE.md is a symlink pointing to 'AGENTS.md', and .alexignore contains both strings. There's essentially one correct way to achieve this (rename + symlink + alexignore update), and the tests don't assert on implementation-specific details like exact file ordering or specific line numbers in .alexignore."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mix of behavioral checks: subprocess calls (cat, git status), symlink resolution (os.readlink, is_symlink()), file existence and type checks (is_file()), and content reading. test_symlink_resolves_correctly uses subprocess to verify OS-level symlink functionality. While some tests do read file content, they also verify file types, symlink targets, and subprocess behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests cannot be satisfied by stubs: test_agents_md_exists requires AGENTS.md to exist as a regular file (not symlink) with specific content; test_claude_md_is_symlink requires CLAUDE.md to be an actual symlink pointing to 'AGENTS.md'; test_alexignore_updated requires .alexignore to contain both strings; test_agents_md_has_content checks for >5000 chars of specific content. These require actual file system changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or similar path in the container). The agent could read the solution script. Additionally, the solve.sh contains the exact content to write to AGENTS.md, and the agent could grep for expected test strings in the test files. The Dockerfile doesn't appear to remove the solution directory, and the tests directory could be inspected for exact assertions."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: AGENTS.md as regular file with content (test_agents_md_exists, test_agents_md_has_content), CLAUDE.md readable and same content (test_claude_md_is_symlink, test_symlink_resolves_correctly), .alexignore containing both filenames (test_alexignore_updated), and content verification sections (test_agents_md_has_content)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear separation between pass-to-pass (repo baseline checks) and fail-to-pass (PR behavioral checks), with descriptive function names and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves file system operations (renaming, symlinking, editing config), not structured data production."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the implementation approach in the title ('with Symlink') and in the expected behavior section. It names the exact files to modify and what to do with each. For a task where the agent should reason about the solution, this is excessive guidance."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized: rename CLAUDE.md to AGENTS.md, create a symlink CLAUDE.md -> AGENTS.md, and add one line to .alexignore. These are small, bounded changes that don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 3
+}

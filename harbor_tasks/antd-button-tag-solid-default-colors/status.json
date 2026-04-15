@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:09:47.877069",
-  "total_time": 3298.56,
-  "sandbox_id": "i396s41rxxt53eee6u8s4",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:58:23.271487",
+  "total_time": 2692.24,
+  "sandbox_id": "ilv2h4jkodbkwncct7x7d",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,30 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 1.18,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `apt-get install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.91,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1565.31,
-      "at": "2026-04-09T20:44:33.828622"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -91,6 +106,14 @@
       "backend": "fireworks",
       "time": 3298.56,
       "at": "2026-04-11T18:09:47.877069"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2692.24,
+      "at": "2026-04-15T03:58:23.271487"
     }
   ]
 }

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names `gradio.utils`, `get_interface_ip`, the `__doc__` attribute check, `ruff format --check gradio/utils.py`, `ruff check gradio/ --select E9,E1,F`, and the requirement that existing imports/functionality continue working. The tests check these same things plus pass_to_pass tests for existing repo functionality (imports, CLI, versions, existing util functions). The specific utility functions checked in test_repo_utils_functions_exist (get_function_description, etc.) are pre-exi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to do: add a function named `get_interface_ip` to `gradio/utils.py` with a docstring. This is the complete fix \u2014 there's no reasoning needed about what's broken or what to change. The instruction says 'must contain a function named get_interface_ip' with a non-None __doc__ attribute, which is literally the entire solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests only check that `get_interface_ip` exists as an attribute of `gradio.utils` and has a non-None `__doc__`. Any implementation (stub with `pass`, actual IP detection, any docstring content) would pass. Tests don't assert on specific line positions, variable names, or implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess.run to actually execute Python code (`import gradio.utils; assert hasattr(...)`, `assert gradio.utils.get_interface_ip.__doc__ is not None`), run ruff commands, run pytest on existing test suites, and check CLI functionality. They import and inspect actual runtime behavior, not just file text."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass test (test_fail_to_pass_docstring_added) only checks that `get_interface_ip` exists and has a non-None docstring. A stub implementation `def get_interface_ip(): \"\"\"stub\"\"\"\n    pass` satisfies this completely. The function doesn't need to actually return an IP address or do anything meaningful."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio (or rather the solve.sh is available in the container's solution/ directory). The Dockerfile doesn't remove solution files. An agent could potentially read /solution/solve.sh to find the exact fix. Additionally, the task is so explicitly specified in instruction.md that no 'cheating' is even necessary \u2014 the instruction IS the solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: function existence (hasattr check), docstring presence (__doc__ not None), ruff format check on gradio/utils.py, ruff check on gradio/ with E9,E1,F selectors, and existing imports/functionality via multiple pass_to_pass tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with clear section comments ('Pass-to-Pass Tests', 'NEW Pass-to-Pass Tests - CI/CD Enrichment'), descriptive docstrings indicating fail_to_pass vs pass_to_pass, and source references to CI workflows."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (`gradio/utils.py`), the exact function name (`get_interface_ip`), and the exact property to set (docstring). Since the 'task' is to add a missing function, telling the agent exactly which file and function name eliminates all localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

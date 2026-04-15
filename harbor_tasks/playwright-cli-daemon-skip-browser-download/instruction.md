@@ -2,23 +2,31 @@
 
 ## Problem
 
-The CLI daemon currently does not respect the `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` environment variable. When this environment variable is set, browser installation should be skipped on daemon startup, but currently the daemon proceeds to check and install browsers regardless.
+The CLI daemon in `packages/playwright-core/src/tools/cli-daemon/program.ts` has the following issues:
 
-Additionally, the browser installation logic in `ensureConfiguredBrowserInstalled()` and `findOrInstallDefaultBrowser()` is repetitive and manually checks for executable existence before installing. This logic should be refactored to use the `resolveBrowsers()` helper which properly handles browser dependencies (like ffmpeg).
+1. **Missing env var check**: The `ensureConfiguredBrowserInstalled()` function does not check the `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` environment variable. When this variable is set to a truthy value, the function should return early without performing any browser installation, but currently it always proceeds regardless.
+
+2. **Fragile, duplicated installation logic**: Both `ensureConfiguredBrowserInstalled()` and `findOrInstallDefaultBrowser()` contain manually written browser installation code that checks for executable existence using `fs.existsSync` before calling `browserRegistry.install()`. This pattern does not resolve browser dependencies such as `ffmpeg`.
+
+3. **Missing ffmpeg dependency**: When `findOrInstallDefaultBrowser()` finds an already-installed browser, it returns the channel name without ensuring that `ffmpeg` is also installed.
 
 ## Expected Behavior
 
-1. When `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` environment variable is set (to any truthy value), the daemon should skip browser installation entirely in `ensureConfiguredBrowserInstalled()`.
+1. At the very start of `ensureConfiguredBrowserInstalled()`, the `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` environment variable must be checked. The utility function `getAsBooleanFromENV` (importable from `../../server/utils/env`) should be used for this check. When the variable is truthy, the function must return immediately without any browser operations.
 
-2. The browser installation logic should be refactored to:
-   - Extract a `resolveAndInstall()` helper that uses `resolveBrowsers()` to resolve browsers and their dependencies
-   - Use this helper in both `ensureConfiguredBrowserInstalled()` and `findOrInstallDefaultBrowser()`
-   - Ensure ffmpeg is properly resolved and installed as a dependency when a browser is found
+2. The manual `fs.existsSync` checks on executable paths should be removed from both functions. Browser installation should instead go through `browserRegistry.resolveBrowsers()` to resolve executables along with their dependencies, followed by `browserRegistry.install()`. The `{ shell: 'no' }` option should be passed to `resolveBrowsers()`.
 
-## Files to Look At
+3. The installation logic using `resolveBrowsers()` and `install()` should be factored into a shared async helper function that accepts a name or channel string parameter, to avoid duplication between the two call sites.
 
-- `packages/playwright-core/src/tools/cli-daemon/program.ts` — The CLI daemon program that handles browser installation on startup. Look at `ensureConfiguredBrowserInstalled()` and `findOrInstallDefaultBrowser()` functions.
+4. When `findOrInstallDefaultBrowser()` finds an installed browser channel, `ffmpeg` must also be resolved and installed before the function returns.
 
-## Implementation Notes
+5. In the chromium fallback path of `findOrInstallDefaultBrowser()`, the old pattern `!fs.existsSync(chromiumExecutable?.executablePath()!)` must be removed. Chromium installation should go through the same consolidated approach.
 
-The `getAsBooleanFromENV()` utility is available from `../../server/utils/env` for checking environment variables. The `resolveBrowsers()` method on `browserRegistry` can resolve browsers with their dependencies by passing `{ shell: 'no' }` option.
+## File
+
+- `packages/playwright-core/src/tools/cli-daemon/program.ts`
+
+## Constraints
+
+- The codebase must pass ESLint and build successfully after changes.
+- `browserRegistry` is already imported in the file and provides `resolveBrowsers()` and `install()` methods.

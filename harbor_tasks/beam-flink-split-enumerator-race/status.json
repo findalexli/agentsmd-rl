@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T02:16:56.902889",
-  "total_time": 3220.32,
-  "sandbox_id": "ikvqkiiob2sr3eznk7rd6",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T03:30:31.853218",
+  "total_time": 953.74,
+  "sandbox_id": "iz5n8ep85bf1x2mnt9hs2",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -54,17 +55,28 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 48.28
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.83,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:155: test `test_handle_split_request_blocks_on_uninitialized` has 2 as']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.68,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 65.18,
-      "at": "2026-04-09T14:29:16.309754"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -96,6 +108,14 @@
       "backend": "fireworks",
       "time": 3220.32,
       "at": "2026-04-10T02:16:56.902889"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 953.74,
+      "at": "2026-04-15T03:30:31.853218"
     }
   ]
 }

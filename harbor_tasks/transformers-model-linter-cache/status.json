@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:53:28.369121",
-  "total_time": 967.66,
-  "sandbox_id": "i822iz9akb5otyr6ez0kc",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:21:35.949733",
+  "total_time": 1593.98,
+  "sandbox_id": "izd3tibgwafftgm5gg08s",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -56,17 +58,28 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.68,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:206: test `test_check_repo_runs_linter` has 2 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:272: test `test_gitignore_excludes_cache` has 1 assert(s), all pass on', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: ruff', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: rich, ruff, pytest, pytest-json-ctrf, 2>']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.22,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1488.44,
-      "at": "2026-04-09T14:52:59.559259"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 967.66,
       "at": "2026-04-12T05:53:28.369121"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1593.98,
+      "at": "2026-04-15T06:21:35.949733"
     }
   ]
 }

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact constant name 'DEFAULT_STOP_GRACE_PERIOD' with value 60, exact method signature 'private Duration getStopGracePeriod()', exact field names 'containerStopTimeout' and 'videoContainerStopTimeout', exact Require.nonNull strings like 'Container stop timeout', exact field name 'stopGracePeriod' in DockerSessionFactory, exact ConfigValue name 'stop-grace-period', and the exact string 'stop-grace-period must be a n"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to fix at a high level, but doesn't specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact variable names (containerStopTimeout, videoContainerStopTimeout, stopGracePeriod), exact constant name (DEFAULT_STOP_GRACE_PERIOD), exact Require.nonNull strings, exact method visibility ('private Duration getStopGracePeriod'), and exact field modifiers ('private final Duration'). An alternative correct fix using different names (e.g., 'browserStopTimeout', 'STOP_TIMEOUT_DEFAULT') would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single test uses only `assert X in source` or `re.search(pattern, source)` on file contents read as text. No test imports, compiles, or executes any Java code. The test_java_source_compiles_syntax_check only checks brace balance, not actual compilation."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since tests only check for string/regex presence in source files, an agent could pass all tests by simply inserting the expected strings as comments or dead code without implementing any actual functionality. For example, adding '// DEFAULT_STOP_GRACE_PERIOD = 60' and '// private Duration getStopGracePeriod()' as comments could satisfy many tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/selenium after cloning, and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact patch, or read test_outputs.py to see all expected strings and simply insert them. Since tests are text-matching only, the agent can match literal fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors described in instruction.md are tested: configurable stop grace period (tests 1-3, 6-8), try-finally exception safety (test 5), and readFully fix for stream parsing (test 9)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped into 'fail_to_pass' and 'pass_to_pass' categories with clear comments separating them."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies Java source code and does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions file names and method names (DockerSession.stop(), parseMultiplexedStream()) but these are appropriate for the task domain. It mentions Duration.ofMinutes(1) and skipBytes() as the buggy patterns, which is describing the problem rather than the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

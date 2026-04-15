@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific file paths (e.g., packages/playwright-core/src/tools/cli-client/program.ts, packages/playwright-core/src/tools/cli-daemon/commands.ts, packages/playwright-core/src/tools/cli-client/session.ts, packages/playwright-core/src/tools/mcp/config.ts, packages/playwright-core/src/tools/cli-client/skill/SKILL.md), specific string patterns like 'const attach = declareCommand', 'attachTarget && (args.cdp || args.endpoint || args.extension)', 'cliArgs.cdp', 'cdpEndpoint: options"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md's 'Implementation Notes' section essentially specifies the exact fix: 'CLI argument parsing (in the client program) must include cdp as a recognized global option', 'The attach command's schema (declared via declareCommand) must include a cdp field', 'The daemon must register an --cdp flag via its .option() method', 'Session code must pass the cdp argument to daemon via cliArgs.cdp', 'Config resolution must map the CLI cdp option to cdpEndpoint', and 'Conflict detection should"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_attach_conflict_detection checks for the exact string 'attachTarget && (args.cdp || args.endpoint || args.extension)'; test_config_cdp_endpoint_in_isolation checks for exact strings 'cdpEndpoint: options.cdp' or 'cdpEndpoint: cliOptions.cdp'; test_session_passes_cdp_to_daemon checks for 'cliArgs.cdp'. An alternative correct implementation using different variable names (e.g., 'target' instead of 'attachTarget', or 'params.cdp' instead of"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All 8 fail-to-pass tests exclusively use string matching on source files (e.g., 'assert \"cdp:\" in src', 'assert \"attachTarget && (args.cdp || args.endpoint || args.extension)\" in src'). None of them import/call the code, execute the CLI, or inspect runtime behavior. They are purely textual grep-style checks."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all fail-to-pass tests are string-in-file checks, an agent could pass them by simply appending comment blocks containing the required strings to the relevant files. For example, adding a comment '// cdpEndpoint: options.cdp' to config.ts would pass test_config_cdp_endpoint_in_isolation without implementing any actual functionality."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory is mounted in the container (solve.sh references /solution/fix.js). An agent could read /solution/solve.sh or /solution/fix.js to discover the exact patch. Additionally, since tests are pure string matching, an agent could grep test files or the solution to find the exact strings needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction.md requirement #4 states conflicting usage 'should produce an error', but tests only check that the conflict detection string pattern exists in source code (test_attach_conflict_detection), not that an error is actually produced at runtime. Similarly, requirement #1 about accepting --cdp option is only tested via string presence, not by actually running the CLI with --cdp."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'FAIL TO PASS TESTS' and 'PASS TO PASS TESTS' sections with comments, each test has a descriptive docstring, and test names clearly indicate what they check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CLI option additions and code modifications, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The Implementation Notes section names exact mechanisms: 'declareCommand', 'cliArgs.cdp', '.option() method', 'cdpEndpoint', and describes exact flow through specific layers (client program, daemon, session, config). This goes well beyond describing what's broken and effectively specifies the implementation at each layer."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

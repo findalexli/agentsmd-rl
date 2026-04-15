@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific function names like `stream_sse_v1plus`, `ServerMessage`, specific variable names like `pending_messages_per_event`, and specific initialization patterns (deque vs list). The instruction.md never mentions `stream_sse_v1plus`, `ServerMessage`, `pending_messages_per_event`, or `popleft`. It only vaguely describes 'pending message queues' and 'plain Python list objects'. An agent cannot discover these specific identifiers from the instruction alone."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (O(n) front removal from lists causing quadratic degradation) and says operations should be O(1), but does not explicitly say 'use deque' or 'change line X to Y'. A developer must reason about the appropriate data structure and code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_pending_init_uses_deque and test_type_annotation_uses_deque use AST parsing to assert that `deque` appears in specific type annotations and initializations. An alternative correct fix using, e.g., a custom O(1) queue wrapper class or an index-based approach instead of deque would fail these tests. The tests enforce the specific `deque` implementation choice."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_pending_init_uses_deque and test_type_annotation_uses_deque are purely AST-based text/structure checks that parse source code and assert 'deque' appears in annotations and assignments. They do not execute the code behaviorally. test_ruff_lint_check is also a static analysis check. While test_stream_sse_deque_single, test_stream_sse_deque_fifo, and test_stream_sse_deque_varied_protocols do execute code, the majority of fail-to-pass tests are text inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral tests (test_stream_sse_deque_single, test_stream_sse_deque_fifo, test_stream_sse_deque_varied_protocols) pass deque objects to stream_sse_v1plus and assert on specific output values. Without changing the code from list.pop(0) to deque.popleft(), passing a deque would cause an AttributeError (deque has popleft but the code calls pop(0) \u2014 actually pop(0) works on deque too). Wait \u2014 deque does support pop(0)? No, deque doesn't have pop(0) with index argument. Actually, deque.pop() on"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/gradio with a solve.sh in /solution/. The Dockerfile doesn't remove these paths. An agent could potentially read the solution patch or grep for expected test values. The solve.sh is in the solution/ directory which the agent might access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires O(1) queue operations by updating data structures, initializations, type annotations, and consumption sites. Tests cover all of these: initialization (test_pending_init_uses_deque), type annotations (test_type_annotation_uses_deque), consumption behavior (test_stream_sse_deque_single/fifo/varied_protocols), and consistency (test_ruff_lint_check, test_syntax_check)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear names, docstrings, and comments grouping them into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to fix a performance bug, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to investigate (client.py and utils.py) which is reasonable scope, but does not name specific line numbers, function names like stream_sse_v1plus, or variable names like pending_messages_per_event. It describes the problem abstractly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

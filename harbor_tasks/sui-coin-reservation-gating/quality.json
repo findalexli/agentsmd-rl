@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_get_owned_coins_has_protocol_gating requires a variable named 'coin_reservations_enabled' and the exact pattern 'if !coin_reservations_enabled { HashMap::new() }'. The instruction never mentions this variable name or this specific pattern. test_get_object_read_has_protocol_gating requires a specific regex pattern combining ObjectRead::NotExists with enable_coin_reservation_obj_refs() using '&&', which is an implem"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides very specific implementation hints: 'self.load_epoch_store_one_call_per_task().protocol_config()' is the exact call chain to use, 'enable_coin_reservation_obj_refs()' is the exact method name, and the hints describe exactly where and how to add the checks (e.g., 'in the NotExists branch'). This goes beyond describing what's broken and tells the agent exactly what code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_get_owned_coins_has_protocol_gating asserts the exact variable name 'coin_reservations_enabled' and the exact pattern 'if !coin_reservations_enabled { HashMap::new() }'. An alternative correct fix could use an inline check like 'if !self.load_epoch_store_one_call_per_task().protocol_config().enable_coin_reservation_obj_refs() { HashMap::new() }' without ever defining a 'coin_reservations_enabled' variable, and it would fail the test despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating are pure text-matching tests using regex on file contents (re.search on source code). They do not execute the code or test behavior. While test_cargo_check and test_clippy_passes do execute subprocesses, the core behavioral tests (f2p tests) are text-matching only."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_cargo_check and test_clippy_passes would pass on the unmodified codebase (pass_to_pass). The f2p tests (test_get_object_read_has_protocol_gating, test_get_owned_coins_has_protocol_gating) check for text patterns, so they fail initially. However, an agent could satisfy them by adding dead code comments or unused variables containing the required strings without actually fixing the bug, since there's no behavioral execution test."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/sui with the gold patch available in solution/solve.sh. The agent could read the solve.sh script or the patch contents directly. Additionally, since tests are pure text-matching on source files, the agent could grep for the expected patterns and insert matching strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies behavior: 'When enable_coin_reservation_obj_refs() is true, both methods should continue to work as before (returning fake coins)'. No test verifies the true/enabled case still works. Tests only check that gating code exists textually, not that it actually prevents fake coins when disabled or allows them when enabled."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_cargo_check, test_get_object_read_has_protocol_gating, etc.), have docstrings explaining what they verify, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data outputs like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (crates/sui-json-rpc/src/authority_state.rs), exact methods (get_object_read, get_owned_coins), exact API calls (self.load_epoch_store_one_call_per_task().protocol_config().enable_coin_reservation_obj_refs()), and describes the exact location within each method where changes should be made (e.g., 'the NotExists branch'). This is excessive localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

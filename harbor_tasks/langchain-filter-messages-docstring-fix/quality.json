@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (libs/core/langchain_core/messages/utils.py), the function (filter_messages), and the specific incorrect parameter names (incl_names, incl_types, excl_ids) and their correct replacements (include_names, include_types, exclude_ids). The tests check for these exact patterns, the file path, and run the repo's existing unit tests \u2014 all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'The example uses parameter names like incl_names, incl_types, and excl_ids - but the actual function parameters are named include_names, include_types, and exclude_ids. Update the docstring example to use the correct full parameter names.' This is a direct 'replace X with Y' instruction, leaving no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check that incorrect param names are absent and correct ones are present via regex in the docstring, plus behavioral execution tests. Any correct fix that replaces the three wrong parameter names with the three correct ones in the docstring would pass \u2014 there's essentially only one correct fix for this bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While test_docstring_example_uses_correct_params does text inspection (regex on docstring), test_docstring_example_with_correct_params_runs and test_old_params_cause_typeerror actually execute the code via subprocess, and test_repo_filter_messages_unit/test_repo_messages_utils_unit run the actual unit test suite. The tests combine both text and behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test (test_docstring_example_uses_correct_params) checks that the docstring contains 'include_names=', 'include_types=', 'exclude_ids=' and does NOT contain 'incl_names=', 'incl_types=', 'excl_ids='. A stub/no-op would not pass since the base commit has the wrong parameter names in the docstring."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/langchain's solve.sh (solution/solve.sh) which contains the exact sed commands. An agent could read the solution file or grep for the expected fixture strings. Additionally, the instruction itself already reveals the exact fix, making it trivially solvable without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires (1) the docstring example runs without TypeError and (2) the example matches the actual function signature. Both are tested via test_docstring_example_uses_correct_params, test_docstring_example_with_correct_params_runs, and test_old_params_cause_typeerror."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_docstring_example_uses_correct_params, test_old_params_cause_typeerror, etc.), have module-level docstring, and each test function has a descriptive docstring explaining its purpose and fail-to-pass/pass-to-pass classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a docstring, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, parameter names, and function names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (libs/core/langchain_core/messages/utils.py), the exact function (filter_messages), and the exact wrong-to-right parameter name mappings (incl_names\u2192include_names, incl_types\u2192include_types, excl_ids\u2192exclude_ids). This leaves zero localization or diagnosis work for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (docstring fix), not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is marked as '(missing)', so the agent sees no task description at all. Tests assert specific file paths (core/src/manager/utils/status.tsx), function names (getChangeDetectionStatus, getGroupDualStatus), constants (CHANGE_DETECTION_STATUS_TYPE_ID), and export names (statusPriority) that are completely undiscoverable from a missing instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely, so there is nothing to leak \u2014 but also nothing to guide the agent. This is a FAIL because the task is broken: the agent has zero information about what to do."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use grep to assert exact function signatures like 'export function getChangeDetectionStatus', 'export function getGroupDualStatus', exact usage of 'filter', 'getMostCriticalStatusValue', 'getDescendantIds', and return shape keywords 'change' and 'test'. An alternative correct implementation using different internal helper names or different filtering approaches would fail these grep-based checks."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests use grep/subprocess to check for text patterns in source code (e.g., test_change_detection_status_filters_by_typeid checks for 'filter' string, test_change_detection_uses_most_critical checks for 'getMostCriticalStatusValue' string). Only test_repo_esbuild_status actually executes/compiles the code. No test imports and calls the functions to verify runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply contains the right keywords (e.g., 'export function getChangeDetectionStatus' with a body containing 'CHANGE_DETECTION_STATUS_TYPE_ID', 'filter', 'getMostCriticalStatusValue' as comments or dead code) would pass all grep-based tests without implementing any real logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/storybook in the container (solve.sh applies a patch there). The agent could read solution/solve.sh directly or inspect the gold patch to know exactly what to write. Additionally, since tests are purely grep-based, the agent could reverse-engineer exact expected strings from the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing, so no behavior is explicitly required. There is nothing to verify tests cover."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings indicating fail-to-pass vs pass-to-pass categories, and clear grouping by functionality (change detection status, group dual status, repo CI checks)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces TypeScript source code modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names within the test and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "not_applicable",
+      "reason": "instruction.md is missing entirely, so there is nothing to evaluate for hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single TypeScript source file, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 2,
+  "fail_count": 7
+}

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T17:36:56.490403",
-  "total_time": 1327.02,
-  "sandbox_id": "i2rabt7is7iukgos4v9mh",
+  "validated_at": "2026-04-15T03:26:11.837937",
+  "total_time": 757.06,
+  "sandbox_id": "iseznr71dfrl4msn4nima",
   "backend": "fireworks",
-  "pipeline": "agents",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -62,17 +64,31 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.56,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:12', 'A:[A] test_not_tautological @ tests/test_outputs.py:24: test `test_anchor_link_interface_has_targetOffset` has 1 assert(s)', 'A:[A] test_not_tautological @ tests/test_outputs.py:39: test `test_registerLink_signature_updated` has 1 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:54: test `test_scrollTo_signature_updated` has 1 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:69: test `test_linkTargetOffsetRef_exists` has 1 assert(s), all pass o', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.46,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 2,
+      "fail_count": 8
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1381.28,
-      "at": "2026-04-09T22:22:09.807619"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -104,6 +120,14 @@
       "backend": "fireworks",
       "time": 1327.02,
       "at": "2026-04-11T17:36:56.490403"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 757.06,
+      "at": "2026-04-15T03:26:11.837937"
     }
   ]
 }

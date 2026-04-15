@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_write_warn_executes checks for a function named 'Write-Warn' specifically, but instruction.md only says 'consistent warning helper' without specifying the exact function name 'Write-Warn'. test_host_app_uses_write_warn checks that BuildAndRunHostApp.ps1 contains 'Write-Warn' (the truncated test likely uses string search). test_review_pr_has_git_checkout checks for 'git checkout' in Re"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md is extremely prescriptive: it specifies exact commands to add to post-gate.md ('git checkout HEAD -- .', 'git clean -fd --exclude=CustomAgentLogsTmp/'), exact model version replacement ('claude-opus-4.5' to 'claude-opus-4.6'), exact timeout change (2 minutes to 10 minutes), and exact file paths. It also specifies that the warning helper should follow the pattern of Write-Success/Write-Error/Write-Info. This leaves very little reasoning for the developer."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for gold-specific implementation details. test_write_warn_executes asserts the function is named exactly 'Write-Warn' (not 'Write-Warning-Custom' or 'Write-WarningMessage'). test_host_app_uses_write_warn likely checks for the literal string 'Write-Warn' in the file. An alternative correct fix using a different function name like 'Write-CustomWarning' would fail. Similarly, tests checking for exact strings like 'git clean -fd' or 'git checkout HEAD' in markdown files constrain the sol"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "While some tests do execute PowerShell (test_write_warn_executes actually calls Write-Warn and checks output, test_shared_utils_valid_syntax sources the file), many fail-to-pass tests are pure text searches: test_host_app_uses_write_warn likely checks 'Write-Warn' string in file, test_post_gate_has_cleanup_rules checks for string presence in markdown, test_plan_template_model_updated checks for 'claude-opus-4.6' string, test_try_fix_skill_has_state_warning checks string in SKILL.md. These are 'a"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_write_warn_executes require an actual function implementation that produces output \u2014 a stub/empty function wouldn't produce 'hello check' in output. test_emulator_timeout_increased requires a specific numeric change. These cannot be satisfied by default/stub implementations."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh in the container (per the task structure). An agent could read this file and apply the exact patch. The Dockerfile doesn't remove or protect the solution directory. Additionally, the test file at tests/test_outputs.py reveals exact expected strings and function names that the agent could grep for and match directly."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction item 2 mentions Review-PR.ps1 needs to 'restore the working tree between phases' and fix 'external pipe mechanism for log capture which can cause process hangs', but the tests (truncated) may not fully verify the pipe mechanism fix. Item 5's specific requirements about CustomAgentLogsTmp exclusion from cleanup may or may not be fully tested. The instruction mentions Build-AndDeploy.ps1 iOS simulator architecture detection but no test appears to verify this."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly organized into sections with comments: 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)', and 'Fail-to-pass'. Each test function has a descriptive docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code/config changes, not structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the actual repository structure shown in tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names exact files, exact strings to change ('claude-opus-4.5' to 'claude-opus-4.6'), exact commands to add ('git checkout HEAD -- .', 'git clean -fd --exclude=CustomAgentLogsTmp/'), exact timeout values (2 minutes to 10 minutes), and exact function naming patterns (Write-Success, Write-Error, Write-Info). This is excessive localization that removes the need for the agent to diagnose the problems."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes across multiple files \u2014 each change is a small targeted edit (string replacements, function additions, section insertions), not full-file rewrites. The changes don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

@@ -8,31 +8,9 @@ The Airflow Helm chart currently has a single `workers.affinity` field that appl
 2. Users cannot configure different affinity rules for each type of worker
 3. The single field conflates two distinct use cases
 
-The `workers.affinity` field needs to be deprecated and replaced with two new fields:
+The `workers.affinity` field should be deprecated and replaced with two new fields:
 - `workers.celery.affinity` - for Celery worker pods
 - `workers.kubernetes.affinity` - for pods created via pod-template-file (KubernetesExecutor)
-
-## Files to Modify
-
-### chart/files/pod-template-file.kubernetes-helm-yaml
-This template file is used by KubernetesExecutor to create task pods. The affinity logic needs to be updated to check for `workers.kubernetes.affinity` first, falling back to the deprecated `workers.affinity` for backwards compatibility.
-
-### chart/templates/NOTES.txt
-Add a deprecation warning that appears when users have set the old `workers.affinity` field, directing them to use the new fields instead.
-
-### chart/values.schema.json
-Add JSON schema definitions for the new `workers.celery.affinity` and `workers.kubernetes.affinity` fields. Update the description of the deprecated `workers.affinity` field to indicate it's deprecated.
-
-### chart/values.yaml
-Add the new `affinity: {}` fields under both `workers.celery` and `workers.kubernetes` sections. Add deprecation comments to the old `workers.affinity` field.
-
-### Test files (optional, if needed)
-The existing tests are in:
-- `helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py`
-- `helm-tests/tests/helm_tests/airflow_core/test_worker.py`
-- `helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py`
-
-These tests use `render_chart()` and `jmespath` to verify rendered Helm templates.
 
 ## Requirements
 
@@ -40,8 +18,16 @@ These tests use `render_chart()` and `jmespath` to verify rendered Helm template
 2. **New fields must work**: Setting `workers.kubernetes.affinity` should apply to pod-template-file
 3. **Backwards compatibility**: The old `workers.affinity` field must continue to work for both cases
 4. **Precedence**: New specific fields should take precedence over the old field when both are set
-5. **Deprecation warning**: NOTES.txt should warn users when `workers.affinity` is used
-6. **Schema updates**: values.schema.json must include the new field definitions
+5. **Deprecation warning**: NOTES.txt should warn users when `workers.affinity` is used, mentioning `workers.celery.affinity` and `workers.kubernetes.affinity` as alternatives
+6. **Schema updates**: values.schema.json must include the new field definitions with `type: object` for both `workers.celery.affinity` and `workers.kubernetes.affinity`
+7. **Deprecation documentation**: values.yaml should mark `workers.affinity` as deprecated and reference the new fields
+
+## Files to Modify
+
+- `chart/files/pod-template-file.kubernetes-helm-yaml` - template file used by KubernetesExecutor to create task pods
+- `chart/templates/NOTES.txt` - add deprecation warning for `workers.affinity`
+- `chart/values.schema.json` - add schema definitions for new fields
+- `chart/values.yaml` - add new fields under `workers.celery` and `workers.kubernetes`
 
 ## Testing
 
@@ -60,10 +46,3 @@ helm template test-release chart/ --show-only templates/workers/worker-deploymen
 ```
 
 The repo has a test suite in the `helm-tests/` directory that you can run with pytest.
-
-## Hints
-
-- Look at how `workers.kubernetes.nodeSelector` and `workers.celery.nodeSelector` are implemented for a similar pattern
-- The `or` function in Helm templates evaluates left-to-right and returns the first non-empty value
-- The pod-template-file template is at `chart/files/pod-template-file.kubernetes-helm-yaml` (note: it's a template file used by Helm, but not rendered as part of `helm template` output directly - it's used at runtime by KubernetesExecutor)
-- Check the existing `workers.kubernetes.priorityClassName` and `workers.celery.priorityClassName` pattern

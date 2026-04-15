@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All file paths (e.g., src/Interpreters/Cache/FileCache.cpp, IFileCachePriority.h, etc.), struct names (SegmentToLoad), field names (offset, size, kind, cache_it), variable names (failed_to_fit, segments), phase comments, parameter names (is_initial_load, best_effort, is_startup), and the check call (main_priority->check(cache_state_guard.lock())) are explicitly mentioned in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact implementation: a helper struct named 'SegmentToLoad' with specific fields, a vector named 'segments' with 'segments.push_back', a counter named 'failed_to_fit' with '++failed_to_fit', exact phase comment strings, and the exact verification call 'main_priority->check(cache_state_guard.lock())'. This is not describing what's broken but dictating the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact struct name 'struct SegmentToLoad', exact variable 'std::vector<SegmentToLoad> segments', exact call 'segments.push_back', exact counter '++failed_to_fit', exact phase comment strings like 'Phase 1: scan and parse all segment files'. An alternative correct fix (e.g., using a different struct name, different container, or different comment wording) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail_to_pass test uses pattern `assert 'string' in open(path).read()` \u2014 pure text matching. No test compiles, executes, or calls any code. Tests like test_three_phase_loading_structure check for exact comment strings, test_segment_to_load_struct_exists checks for 'struct SegmentToLoad' as text, etc."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply inserts the expected text strings (phase comments, struct definition, variable declarations) into the source files without implementing any actual optimization would pass all f2p tests, since they only do text matching."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh downloads and applies a patch from GitHub. The agent could read /workspace/ClickHouse's solution/solve.sh (if accessible) or simply grep the test file to find all expected literal strings and insert them. The instruction.md itself also gives away every exact string the tests check for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (three-phase comments, SegmentToLoad struct, parameter renaming across all files, failed_to_fit counter, main_priority->check call, Allman braces) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_best_effort_renamed_in_interface, test_three_phase_loading_structure), grouped logically, and have docstrings indicating pass_to_pass vs fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves C++ source code modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact struct names, exact variable names, exact phase comment strings, and the exact verification call \u2014 far beyond what's needed to describe the problem. This is effectively giving the complete solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

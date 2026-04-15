@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (schemas.py, list_databases.py, app.py, mcp_core.py, test_database_tools.py), variable names (DATABASE_DEFAULT_COLUMNS, DEFAULT_DATABASE_COLUMNS), function names (parse_filters, parse_columns, create_mock_database, _humanize_timestamp), literal strings ('created_by_fk', 'changed_by_fk', 'charts/dashboards/databases', '(chart, dataset, dashboard, database)', 'created_by_fk with the user'), and specific patterns (field_validator, datetime.now(time"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact fixes: 'add validators named parse_filters and parse_columns', 'import DATABASE_DEFAULT_COLUMNS, from schema_discovery', 'use datetime.now(timezone.utc)', 'checking dt.tzinfo', specific type annotations like 'database_id: int = 1', and exact strings like 'charts/dashboards/databases'. This goes well beyond describing what's broken \u2014 it tells the agent exactly WHAT to change and HOW."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'created_by_fk with the user' in content, exact format 'DATABASE_DEFAULT_COLUMNS,' with trailing comma, exact string 'list_databases(filters=[{{\"col\": \"created_by_fk\"' in app.py, exact string '(chart, dataset, dashboard, database)' in docstring. An alternative correct fix using different wording/formatting would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every test reads file content and checks for string presence: e.g., 'assert \"created_by_fk\" in content', 'assert \"def parse_filters\" in content', 'assert \"DATABASE_DEFAULT_COLUMNS,\" in content'. The only behavioral tests are syntax checks via py_compile subprocess calls. No test imports the modules, instantiates classes, or calls functions to verify actual behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All tests are text-matching on file contents (assert 'X' in open(path).read()). An agent could simply append comments or dead code containing the expected strings to each file without implementing any actual fix. For example, adding '# created_by_fk with the user' as a comment would pass the description test."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/superset (solve.sh path) and the agent could read test_outputs.py to discover exact strings being asserted (like 'created_by_fk with the user', 'DATABASE_DEFAULT_COLUMNS,', etc.) and simply insert those strings into files. The tests only check string presence, making this trivially exploitable."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All seven categories of fixes described in instruction.md (DatabaseFilter fields, validators, duplicate constants, timezone handling, type annotations, app instructions, docstring) have corresponding test classes that check for the described changes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into descriptive classes (TestDatabaseFilterCreatedBy, TestListDatabasesRequestValidators, TestDuplicateDefaultColumnsRemoved, etc.) with clear docstrings on each test method."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modifications, not structured data output (JSON/CSV/API/DB schema)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and commands in instruction.md are consistent with those checked in tests and the repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: exact validator names 'parse_filters' and 'parse_columns', exact import 'DATABASE_DEFAULT_COLUMNS,' with trailing comma, exact parameter 'default_columns=DATABASE_DEFAULT_COLUMNS', exact type annotations 'database_id: int = 1', and exact strings to include in app.py. This goes far beyond identifying the buggy file/module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

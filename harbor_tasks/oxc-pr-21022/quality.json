@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction lists all file paths tested (RUST_GENERATOR, GENERATED_JS_FILES, SOURCE_CODE_TS), the exact string patterns asserted (e.g., 'utf8Slice, latin1Slice', 'utf8Slice.call(uint8, pos, end)', '{ utf8Slice } = Buffer.prototype'), the cargo check/test commands, and the absence conditions (no TextDecoder, decodeStr, textDecoder). All test specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact replacement patterns: 'must use utf8Slice.call(uint8, pos, end)', 'must contain { utf8Slice, latin1Slice } = Buffer.prototype', 'must use utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen)'. These are the exact code strings to write, leaving no reasoning about WHAT to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'utf8Slice.call(uint8, pos, end)' and '{ utf8Slice, latin1Slice } = Buffer.prototype'. An alternative correct fix using e.g. 'Buffer.prototype.utf8Slice.call(uint8, pos, end)' directly without destructuring, or using different variable naming/spacing, would fail these text-matching assertions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_generated_js_use_utf8slice, test_no_textdecoder_in_generated_js, test_source_code_ts_uses_utf8slice, test_rust_generator_uses_utf8slice, etc.) are entirely 'assert X in open(path).read()' pattern-matching on file contents. While pass-to-pass tests do run cargo check/test, the core fail-to-pass tests never execute the JS code or import modules."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings like 'utf8Slice.call(uint8, pos, end)' that don't exist in the base commit files. A stub/no-op implementation would not add these strings, so the tests would fail without actual changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/oxc or could be accessed via the solve.sh. The agent could also read the test file at tests/test_outputs.py to see exact expected strings and simply write those strings into the files. The tests are pure text-matching, so an agent could match fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (Rust generator patterns, generated JS patterns, source_code.ts patterns, no TextDecoder/decodeStr, cargo check compilation, comments referencing utf8Slice) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (fail-to-pass, pass-to-pass, integration), named descriptively (test_rust_generator_uses_utf8slice, test_no_textdecoder_in_generated_js, etc.), and have docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code file modifications, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, and variable names in instruction.md and tests match consistently with no apparent typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact file paths, exact string patterns to use (e.g., 'utf8Slice.call(uint8, pos, end)'), and exact patterns to remove. It even specifies 'STR_DESERIALIZER_BODY' internal constant name and the exact destructuring syntax. This goes far beyond describing the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

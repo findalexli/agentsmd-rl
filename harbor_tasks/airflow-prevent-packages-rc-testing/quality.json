@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (scripts/in_container/install_airflow_and_providers.py), both function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), the import needed (datetime), the --exclude-newer option, --pre flag, and the extend pattern. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to use 'extend' instead of 'append', to add '--exclude-newer' with datetime.now().isoformat(), to add 'from datetime import datetime', and to modify both specific functions. This is essentially the complete solution specification, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: test_both_functions_use_extend_not_append checks that .extend() is used (not .append()), test_exclude_newer_in_first_function and test_exclude_newer_in_second_function check for .extend() calls containing '--exclude-newer' as a constant string in a list/tuple. An alternative correct fix using .append() calls or f-strings like f'--exclude-newer={timestamp}' would fail these AST-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_exclude_newer_in_first_function, test_exclude_newer_in_second_function, test_both_functions_use_extend_not_append, test_datetime_import_exists) all parse the file's AST and check for structural patterns in the source code. They never import the module, call the functions, or verify runtime behavior. This is essentially checking text/structure rather than behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific AST patterns (extend calls with --exclude-newer, datetime import) that don't exist in the original code. A stub or no-op implementation would fail because the original file uses append('--pre') and lacks the datetime import."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is in /workspace/airflow's git history context and solve.sh is accessible at solution/solve.sh. The agent could read the solution file or grep for the expected patterns. Additionally, the instruction itself essentially gives away the complete solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction (datetime import, --exclude-newer in both functions, consistent updates) are tested by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_datetime_import_exists, test_exclude_newer_in_first_function, etc.) and have docstrings explaining what each verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a Python script; it does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, function names, and variable names in the instruction are correct and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names both exact functions (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), tells exactly what to change (append to extend, add --exclude-newer with datetime.now().isoformat()), and specifies the exact import to add. This goes far beyond naming the file."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

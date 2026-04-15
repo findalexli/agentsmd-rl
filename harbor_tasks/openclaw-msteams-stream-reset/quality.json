@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific API details not fully described in instruction.md: (1) test_media_text_stripped checks that payloads with mediaUrl/mediaUrls have their text field deleted (payload.text === undefined), which is only vaguely mentioned as 'text field stripped'; (2) test_group_chat_passthrough checks conversationType === 'groupChat' passthrough for both text and media payloads returning payload objects with correct text; (3) test_pending_finalize_awaited checks that stream.finalize() is called"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix mechanism: 'a state flag that tracks whether tokens have been received never resets after the first segment is handled' and 'must track whether the stream has been finalized and must not re-suppress a finalized stream.' This tells the developer exactly what to change: reset the streamReceivedTokens flag and add an isFinalized guard check in preparePayload. While it doesn't give exact line numbers, it describes the precise code changes needed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (first_suppressed, second_returned, second_text_correct, early_finalized, etc.) through the public API rather than asserting on specific variable names or internal implementation details. An alternative fix using different internal variable names or a different mechanism to achieve the same behavior would still pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use _run_node_test() which actually imports and executes the TypeScript module via Node.js with --experimental-strip-types, calling createTeamsReplyStreamController, onPartialReply, preparePayload, and finalize methods. The anti-stub test (test_min_implementation_size) does check file text, but the core behavioral tests execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests exercise specific multi-step behavioral sequences: test_stream_received_tokens_reset checks that after first suppression (r1===undefined), second call returns payload (r2!==undefined); test_is_finalized_guard checks the same even when onPartialReply fires again; test_pending_finalize_awaited checks stream.isFinalized is true after preparePayload. A stub returning constant values (always undefined or always a payload) would fail at least one of the paired assertions (first_"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openclaw and solve.sh contains the exact git patch. An agent could read solution/solve.sh (if accessible in the container) or could examine the gold patch to produce the exact fix. The Dockerfile doesn't remove the solution directory or restrict access to it."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: first segment suppression, second segment delivery after tool call gap, media payload text stripping, group chat passthrough, finalize() completion, and the isFinalized guard preventing re-suppression."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections marked by comments (fail_to_pass, pass_to_pass, static/anti-stub), descriptive function names (test_stream_received_tokens_reset, test_is_finalized_guard, etc.), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing a TypeScript controller module, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact target file 'extensions/msteams/src/reply-stream-controller.ts', the exact method 'preparePayload()', and describes the exact bug mechanism ('a state flag that tracks whether tokens have been received never resets'). It also specifies adding an isFinalized check and that finalize() should be called eagerly. This goes beyond describing symptoms and into describing the solution approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

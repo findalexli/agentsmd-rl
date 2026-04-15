@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_value_class_test_data_exists checks for 'inlineClassWithRef' in Swift file and 'val foo: Foo' in Kotlin file; test_golden_files_contain_inline_cast uses regex patterns like 'INLINE_CLASS_WITH_REF', 'VALUE_CLASS'; test_generated_test_class_has_valueclass checks for exact annotation format '@TestMetadata(\"valueClass\")' and method structure. While instruction.md gives general guidance, exact string literals like 'inlineC"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: 'Add an import for containingDeclaration', 'Check if the containing class is an inline class (isInline property on KaNamedClassSymbol)', 'If it is an inline class, append \" as Any?\" to the generated code string'. It also specifies exact golden file paths and what to change in them. This is essentially a step-by-step implementation guide, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_isInline_check_present asserts exact import path 'import org.jetbrains.kotlin.analysis.api.components.containingDeclaration', checks 'isInline' literal in source, checks '\" as Any?\"' literal, and verifies isInline appears in the bridges property section. An alternative correct fix (e.g., using a different API to detect inline classes, or using a different cast approach) would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests are text-matching: test_isInline_check_present does 'assert \"isInline\" in content' and string checks on file content; test_golden_files_contain_inline_cast uses regex on file text; test_value_class_test_data_exists reads files and checks string presence; test_generated_test_class_has_valueclass checks string presence. Only test_kotlin_compilation_sir_light_classes actually executes code (Gradle build), but it catches TimeoutExpired and skips. The majority are pure text pattern mat"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_value_class_test_data_exists and test_generated_test_class_has_valueclass can be passed by simply creating files with the expected strings without any actual bug fix. test_golden_files_contain_inline_cast can be passed by sed-replacing strings in golden files without fixing the actual code logic. These tests verify file content, not runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/kotlin (solve.sh is in solution/). An agent could read the solution file or the test file itself (tests/test_outputs.py) to discover exact expected strings like 'inlineClassWithRef', exact import paths, and regex patterns. The tests check for literal strings that could be trivially matched by reading the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four main requirements from instruction.md are tested: modifying SirInitFromKtSymbol.kt (test_isInline_check_present, test_kotlin_compilation_sir_light_classes), updating golden files (test_golden_files_contain_inline_cast), creating test data (test_value_class_test_data_exists), and updating generated test class (test_generated_test_class_has_valueclass)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, docstrings explaining purpose, and a module-level docstring. The structure is clear and informative."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modification, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md appear correct and consistent with the test expectations and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (SirInitFromKtSymbol.kt), the exact property to modify ('bridges' property of SirRegularInitFromKtSymbol), the exact import to add ('containingDeclaration'), and the exact code change ('append \" as Any?\" to the generated code string'). This is complete solution leakage, not just file/module identification."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

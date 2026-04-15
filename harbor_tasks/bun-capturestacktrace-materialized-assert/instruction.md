@@ -1,8 +1,8 @@
-# Bug: `Error.captureStackTrace` crashes when error info is already materialized
+# Bug: `Error.captureStackTrace` produces incorrect stack traces
 
 ## Summary
 
-Calling `Error.captureStackTrace(err)` on an error object whose `.stack` property has already been accessed causes a crash during garbage collection. The crash manifests as an assertion failure: `ASSERT(!m_errorInfoMaterialized)` inside `computeErrorInfo` when GC's `finalizeUnconditionally` encounters unmarked stack frames.
+When `Error.captureStackTrace(err)` is called on an error object whose `.stack` property has already been accessed, the resulting `err.stack` may be empty, missing, or reflect the wrong capture point. In debug builds of the JavaScript engine, this can also cause an assertion failure during garbage collection.
 
 ## Reproduction
 
@@ -11,28 +11,43 @@ function foo() {
   const err = new Error("test");
   // Force materialization by reading .stack
   const s = err.stack;
-  // Now replace frames — this triggers the crash
+  // Now call captureStackTrace
   Error.captureStackTrace(err);
-  return err.stack;
+  return err.stack; // may be empty or stale
 }
 
 foo();
-// In a debug build: assertion failure in finalizeUnconditionally
-// In a release build: use-after-free / intermittent crash under GC pressure
 ```
 
-The crash is more likely to trigger under GC pressure (e.g., in a loop or with `gc()` calls), because the dangling `m_stackTrace` pointer from `setStackFrames` is only problematic once GC tries to finalize the error instance.
+## Expected Behavior
 
-## Affected file
+`Error.captureStackTrace(err)` must produce a correct `.stack` value regardless of whether `err.stack` was previously accessed. The stack trace must reflect the location where `captureStackTrace` was called, not a previously materialized or empty value.
 
-`src/bun.js/bindings/FormatStackTraceForJS.cpp` — the `errorConstructorFuncCaptureStackTrace` function.
+## Implementation Requirements
 
-## Root cause
+The fix is in `src/bun.js/bindings/FormatStackTraceForJS.cpp`, in the `errorConstructorFuncCaptureStackTrace` function. The following patterns must be present:
 
-When `.stack` is first accessed on an `ErrorInstance`, JSC materializes the error info (computes the stack string from frames, sets `m_errorInfoMaterialized = true`, and clears `m_stackTrace`). The current `captureStackTrace` implementation unconditionally calls `setStackFrames()` after materialization, which sets a new `m_stackTrace` while `m_errorInfoMaterialized` remains `true`. JSC's `computeErrorInfo` has an assertion that `m_stackTrace` is null when `m_errorInfoMaterialized` is true — this invariant is violated, causing the assertion failure.
+### Branching structure
+- The function must use a **positive** `hasMaterializedErrorInfo()` conditional (an `if` with a corresponding `else` branch) to distinguish already-materialized errors from non-materialized ones.
 
-The key constraint is that JSC's `ErrorInstance` enforces an invariant: when `m_errorInfoMaterialized` is true, `m_stackTrace` must be null. The current code violates this by calling `setStackFrames()` unconditionally after `materializeErrorInfoIfNeeded()`.
+### Materialized path (inside `if hasMaterializedErrorInfo()`)
+- Must call `computeErrorInfoToJSValue` to compute the error info
+- Must call `putDirect` to eagerly set the `.stack` property
+- Must NOT call `setStackFrames` (that belongs in the non-materialized path)
 
-## Expected behavior
+### Non-materialized path (inside `else`)
+- Must call `setStackFrames` to install the new stack frames
+- Must call `deleteProperty` to remove the existing `.stack` property before installing a custom accessor
+- Must call `putDirectCustomAccessor` to install a lazy accessor for `.stack`
+- Must preserve `RETURN_IF_EXCEPTION` for exception safety
 
-`Error.captureStackTrace(err)` should work correctly regardless of whether `err.stack` was previously accessed. The resulting `.stack` property should reflect the new capture point, and no assertion failures or crashes should occur during garbage collection.
+### General requirements
+- Function must have at least 35 non-blank, non-comment lines
+- Must use at least 4 distinct JSC API calls
+- Code must use spaces for indentation (no tabs)
+- File must include `#include "root.h"`
+- File must end with a newline and have no trailing whitespace
+
+## Affected Component
+
+The `errorConstructorFuncCaptureStackTrace` host function in the JavaScriptCore bindings for Bun.

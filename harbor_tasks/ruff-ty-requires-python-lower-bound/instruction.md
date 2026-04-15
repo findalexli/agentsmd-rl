@@ -8,9 +8,28 @@ This affects any project whose `requires-python` doesn't map to a version that t
 
 ## Expected Behavior
 
-ty should handle `requires-python` specifiers that reference Python 2 versions or unsupported future versions without panicking. For Python 2 specifiers, ty should resolve to the lowest supported Python 3 version. For completely unsupported future versions, ty should produce a clear error message explaining that no supported Python version is included.
+1. **For Python 2 specifiers** (e.g., `requires-python = "==2.7"`): ty should resolve to the lowest supported Python 3 version (3.7) without panicking. The exit code should not be 101 (Rust panic code) and output should not contain "panic".
+
+2. **For unsupported future versions** (e.g., `requires-python = "==44.44"`): ty should produce a non-zero exit code and display a clear error message. The error message must contain either:
+   - The word "supported", OR
+   - The phrase "does not include"
+   Example: "does not include any Python version supported by ty"
+
+3. **Code style requirements** (per AGENTS.md guidelines):
+   - Avoid using `.unwrap()`, `panic!()`, or `unreachable!()` patterns in the function handling requires-python resolution
+   - Rust imports should always go at the top of files, never locally inside functions
 
 ## Files to Look At
 
-- `crates/ty_project/src/metadata/pyproject.rs` — contains `resolve_requires_python()` which parses the `requires-python` field and converts it to a `PythonVersion`. This function directly uses the version numbers from the specifier without checking if they're actually supported by ty.
-- `crates/ty_project/src/metadata.rs` — project metadata discovery that calls into `pyproject.rs` to resolve the Python version from `pyproject.toml`.
+- `crates/ty_project/src/metadata/pyproject.rs` — handles parsing of `pyproject.toml` metadata
+- `crates/ty_project/src/metadata.rs` — project metadata discovery
+
+## Technical Context
+
+The issue occurs during project metadata discovery when ty encounters a `requires-python` specifier that doesn't directly map to a supported Python version. Currently, ty only supports Python versions 3.7 and above. When processing version specifiers like `==2.7` or `==44.44`, the code should handle these gracefully rather than crashing.
+
+## Error Message Requirements
+
+When encountering a `requires-python` specifier that doesn't include any Python version supported by ty (such as `==44.44`), the error message must contain either:
+- The word "supported" (e.g., "does not include any Python version supported by ty")
+- The phrase "does not include"

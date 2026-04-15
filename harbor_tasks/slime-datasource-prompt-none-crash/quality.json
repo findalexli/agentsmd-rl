@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names both relevant files (slime/rollout/data_source.py and slime/ray/rollout.py), the RolloutDataSource class, the constructor crash with None dataset path, the __len__ TypeError, the AttributeError on shuffle during checkpoint load, and the router health check issue. The test for router health check uses AST inspection for 'disable_health_check' attribute, which is implied by the instruction's mention of disabling the health check. All key behavioral specifics are discoverable "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (crashes when path is None, __len__ crashes, load crashes with shuffle, health check not disabled) but does not specify exact code changes like 'add a None check on line X' or 'change condition to include args.prompt_data is not None'. A developer must reason about how to implement the guards."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_router_disables_health_check uses AST inspection to look for a specific attribute assignment 'router_args.disable_health_check = True' with exact attribute name 'disable_health_check' and value True. An alternative correct fix might use a different mechanism (e.g., passing it as a constructor argument, setting it in a dict, or using a different attribute name). Additionally, the test checks for the exact string 'disable_health_check' as an ast.Attribute attr value, which constrains the impl"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests actually instantiate RolloutDataSource, call len(), call load(), and execute the code. The router test uses AST parsing (not just string matching) to verify structural code properties. Pass-to-pass tests compile files and run linters/test suites as subprocesses. Tests are behavioral, not pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_constructor_none_prompt_data creates a RolloutDataSource with None prompt_data and checks ds.dataset is None \u2014 a stub that always sets self.dataset=None would pass this, but would fail the existing repo tests (test_repo_chunked_gae, test_repo_plugin_contracts). test_len_returns_zero_when_dataset_none checks len() returns 0 when dataset is None \u2014 the original code crashes here. test_load_no_crash_when_dataset_none_shuffle_true verifies no AttributeError on shuffle \u2014 the original code crashes"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/slime's container as solve.sh in the solution/ directory. An agent could potentially read /solution/solve.sh (if accessible) to get the exact patch. The Dockerfile doesn't explicitly remove or protect the solution directory from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four bugs described in the instruction are tested: constructor crash (test_constructor_none_prompt_data), __len__ TypeError (test_len_returns_zero_when_dataset_none), checkpoint load AttributeError (test_load_no_crash_when_dataset_none_shuffle_true), and router health check (test_router_disables_health_check)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff), descriptive function names, and docstrings explaining each test's purpose. Helper functions are separated at the top."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing Python code bugs, not producing structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (slime/rollout/data_source.py, slime/ray/rollout.py), class names (RolloutDataSource), and attribute names are consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files and class but doesn't specify exact line numbers or exact code changes. Mentioning 'RolloutDataSource class in slime/rollout/data_source.py' and '_start_router in slime/ray/rollout.py' is appropriate given the task domain \u2014 the agent still needs to find the specific lines and determine the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Python source file modifications, not configuration file edits."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

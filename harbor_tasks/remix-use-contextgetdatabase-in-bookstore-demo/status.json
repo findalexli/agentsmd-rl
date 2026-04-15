@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T07:32:02.271030",
-  "total_time": 2310.1,
-  "sandbox_id": "ikaxh4h7iz36w050j4u8m",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:46:18.042680",
+  "total_time": 1790.96,
+  "sandbox_id": "ivp0jt7z10tw5hwxup0tn",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -56,17 +58,29 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:172: test `test_handlers_use_get_database` only reads file te', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:203: test `test_type_augmentation_removed` only reads file te', 'lint_tier_b:1']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.49,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 600,
-      "at": "2026-04-10T00:00:00"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +112,14 @@
       "backend": "fireworks",
       "time": 2310.1,
       "at": "2026-04-12T07:32:02.271030"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1790.96,
+      "at": "2026-04-15T05:46:18.042680"
     }
   ]
 }

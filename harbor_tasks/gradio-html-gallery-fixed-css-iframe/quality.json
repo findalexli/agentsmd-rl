@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (utils.ts, +page.svelte, ComponentEntry.svelte, guide .md), function signatures (needs_iframe, build_srcdoc, clickOutside), required behaviors (position:fixed detection, dark mode class, script escaping, head/CSS inclusion), and schema details (component object shape, props, dark boolean). All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides exact function signatures ('needs_iframe(css_template: string | undefined): boolean'), exact implementation details ('escape </script by replacing it with <\\\\/script'), exact HTML structure requirements ('<!DOCTYPE html>', '<html> with class=\"dark\"'), and exact import paths. This goes well beyond describing what's broken \u2014 it prescribes exactly what code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (does needs_iframe return true/false for given inputs, does build_srcdoc produce HTML with certain properties) rather than asserting exact implementation details. Alternative implementations using different regex patterns, different HTML structures, or different escaping approaches would pass as long as behavior matches."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The behavioral tests use _run_node() to actually execute TypeScript code via Node.js, calling needs_iframe() and build_srcdoc() functions and checking their return values. Some tests (guide, svelte files) do use text matching, but the core function tests execute code. This is a mixed approach but the critical f2p tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub needs_iframe returning false would fail test_needs_iframe_detects_fixed_css (expects true for position:fixed). A stub build_srcdoc returning empty string would fail test_build_srcdoc_produces_valid_html (checks for DOCTYPE, html, head, body tags and rendered prop values). No default return satisfies all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/gradio as a git repo, and solve.sh is in /solution/solve.sh in the container. The agent could potentially read /solution/solve.sh or the test file at tests/test_outputs.py to extract expected values and reverse-engineer the solution. The Dockerfile doesn't restrict access to these paths."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires '@children' slot handling with BaseButton 'Click Me' in both Svelte components, but the visible test file (truncated) doesn't appear to test for children/slot behavior in the rendered components. Also, iframe sandbox='allow-scripts' attribute is required but not tested behaviorally."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass needs_iframe, Fail-to-pass build_srcdoc, Pass-to-pass), descriptive function names (test_needs_iframe_detects_fixed_css, test_build_srcdoc_dark_mode), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces HTML/CSS/JS code and Svelte components, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and variable names in the instruction match those used in the tests. No typos detected in critical identifiers."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact file paths, exact function signatures with parameter types, exact escape sequences ('<\\\\/script'), exact HTML elements to include, and exact import paths. This is excessive localization that removes the need for the agent to reason about where and what to change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

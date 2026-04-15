@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all three files (settings.ts, use-settings.ts, use-create-conversation.ts), the specific changes needed (v1_enabled: true, export getSettingsQueryFn, ensureQueryData, DEFAULT_SETTINGS fallback, organizationId in query key), and the import sources. All test-asserted specifics like useSelectedOrganizationId, DEFAULT_SETTINGS, getSettingsQueryFn, ensureQueryData, try/catch pattern, and queryKey format are mentioned or strongly implied in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'v1_enabled property must be true', 'getSettingsQueryFn function must be exported', 'Use a query-key pattern that includes the organization ID', 'ensureQueryData helper can be used to wait for a query', 'Fall back to DEFAULT_SETTINGS'. These are not descriptions of what's broken but precise prescriptions of what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'export const getSettingsQueryFn' in use-settings.ts, exact string 'await queryClient.ensureQueryData' in use-create-conversation.ts, exact string 'settings = DEFAULT_SETTINGS', exact regex pattern 'queryKey: [\"settings\", organizationId]', exact import paths like 'import { getSettingsQueryFn } from \"#/hooks/query/use-settings\"'. An alternative correct fix (e.g., using fetchQuery, a different variable name, or a wrapper function) "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_default_settings_v1_enabled, test_getSettingsQueryFn_exported, test_use_create_conversation_uses_ensureQueryData, test_use_create_conversation_has_fallback, test_use_create_conversation_uses_organizationId, test_use_create_conversation_imports) are ALL pure text-matching with regex/string searches on file contents. While there are pass-to-pass tests that run builds/typechecks/tests, the f2p tests that verify the actual fix are entirely 'assert X in open(path).read()'"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since the f2p tests only check for string presence in source files (e.g., 'ensureQueryData in content', 'settings = DEFAULT_SETTINGS in content'), an agent could add dead code comments or unused imports containing the required strings and pass all f2p tests without actually fixing the race condition. The pass-to-pass tests (typecheck, build, lint) provide some guard but wouldn't catch semantically incorrect implementations that happen to compile."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /solution/solve.sh in the container (the Dockerfile doesn't remove it). An agent could read this file and apply the exact gold patch. Additionally, the tests grep for exact fixture strings that could be discovered by reading the test file at /workspace/tests/test_outputs.py."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: v1_enabled default changed to true, getSettingsQueryFn exported, ensureQueryData usage, DEFAULT_SETTINGS fallback, organizationId in query key, and proper imports. The pass-to-pass tests also verify typecheck/lint/build/existing tests pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with descriptive names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing source code files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact variable names (DEFAULT_SETTINGS, getSettingsQueryFn, ensureQueryData), exact property values (v1_enabled: true), and exact patterns (organizationId in query key). This goes far beyond describing what's broken \u2014 it's a step-by-step implementation guide under 'Required Changes'."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

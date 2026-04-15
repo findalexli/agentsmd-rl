@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all. Tests assert on specific functions (is_code_file, is_config_file, is_agent_instruction_file, is_doc_file), specific file paths ('Makefile', 'script', 'src/main.py', 'CLAUDE.md', 'README.md', 'docs/guide.md'), and specific module paths (taskforge.config). None of these are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely, so it neither leaks nor describes the problem. However, since the agent sees nothing, the rubric cannot be satisfied \u2014 there is no instruction to evaluate. The absence itself is a fundamental failure of the task."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (is_code_file('Makefile') is True, is_code_file('script') is True) rather than implementation details. Multiple correct fixes (e.g., removing the extension check, changing the return value, restructuring the logic) would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call functions (is_code_file, is_config_file), run subprocess commands (py_compile, python -c), and check return values \u2014 they do not merely grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p test test_edge_case_handling asserts is_code_file('Makefile') is True and is_code_file('script') is True. The buggy base code returns False for these (files without extensions). A stub returning None or False would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/taskforge relative paths or could be discovered. More critically, solve.sh is mounted/available and contains the exact patch including the old and new code. The agent could read /solution/solve.sh to find the exact fix. Additionally, the Dockerfile copies taskforge/ code into the container, and there's no evidence that /solution/ or /tests/ directories are excluded from the container filesystem."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing, so there are no explicit requirements to compare against tests. This rubric cannot be satisfied."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_edge_case_handling, test_no_regression, test_repo_python_syntax, etc.), docstrings explaining purpose (e.g., 'Fail-to-pass', 'Pass-to-pass'), and section comments separating CI/CD tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the test and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely \u2014 it cannot be evaluated for hint leakage. The absence itself is the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not an agentmd-edits/config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

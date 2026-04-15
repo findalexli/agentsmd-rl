@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (directive_ext.rs, lib.rs, html.rs, SKILL.md, AGENTS.md), all 8 Svelte directive variants, all 4 Vue directive types, function names (parse_directive_string_value, parse_directive_text_expression, initializer), method chains (.value().ok()?.initializer()), types (HtmlAttributeInitializerClause, AnySvelteDirective), EmbeddingKind variants, inner_string_text(), TextSize::from(1), cast_ref patterns, and documentation requirements. Every specific asserted in "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies exact function names (parse_directive_string_value, parse_directive_text_expression), exact method chains (.value().ok()?.initializer()), exact offset values (TextSize::from(1)), exact API calls (inner_string_text(), as_html_attribute_single_text_expression()), and exact implementation patterns (cast_ref for each type). This goes far beyond describing what's broken \u2014 it prescribes the exact implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact function names 'parse_directive_string_value' and 'parse_directive_text_expression', exact method 'inner_string_text()', exact expression 'TextSize::from(1)', exact pattern 'directive.initializer()', exact count of 'EmbeddingKind::Vue' >= 4, exact method 'as_html_attribute_single_text_expression'. An alternative correct implementation using different helper names or different extraction approaches would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test uses string matching (e.g., 'assert \"mod directive_ext\" in lib_rs', checking for string patterns in source files via regex). No test compiles the Rust code, runs the linter, or executes the actual behavior. All tests are variants of 'assert pattern in open(path).read()'."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation could pass: creating files with the exact string patterns checked (e.g., a directive_ext.rs with a match block containing all 8 variant names and .value().ok()?.initializer() repeated 8 times) without any actual working logic. The tests only check for string presence, not compilation or execution."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/biome as solve.sh applies a patch there. The agent could read test_outputs.py (though stated as hidden, the Dockerfile doesn't prevent access), or more critically, the tests only check for string patterns in files \u2014 the agent could write files containing the expected strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that 'Running biome lint --only=noUnusedVariables on a .vue or .svelte file should report zero warnings' \u2014 this core behavioral requirement is never tested. Tests only check file contents via string matching, not actual linter behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names (test_directive_ext_initializer, test_vue_directive_tracking, etc.), grouped by concern (gates, code behavior, documentation), and each has a docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and commands in the instruction appear correct and consistent with the test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact function signatures (parse_directive_string_value, parse_directive_text_expression), exact internal method chains, exact offset calculations, and exact file modification locations. This constitutes heavy implementation leakage beyond what's needed to describe the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The config/documentation edits (AGENTS.md, SKILL.md files) are localized additions, not full-file rewrites, and are consistent with the task description."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

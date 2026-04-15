@@ -2,21 +2,23 @@
 
 ## Problem
 
-The default trust region mask in `default_loss_fn` (`src/prime_rl/trainer/rl/loss.py`) masks tokens unconditionally in both directions -- both high-side (probability increased too much) and low-side (probability decreased too much) violations are masked regardless of whether the advantage is positive or negative.
+The default trust region mask in `default_loss_fn` (`src/prime_rl/trainer/rl/loss.py`) masks tokens whenever the probability difference exceeds a threshold, without considering the sign of the advantage. Tokens are masked for both "high-side" (probability increased too much) and "low-side" (probability decreased too much) violations regardless of whether the advantage is positive or negative.
 
-Based on ablation results, this should use DPPO-style advantage-conditioned masking: for tokens with positive advantage, only mask high-side violations (upweight trust region); for tokens with negative advantage, only mask low-side violations (downweight trust region).
-
-Additionally, the config fields and internal variable names use the outdated `ipo_` prefix and should be renamed to `dppo_` to reflect the algorithm. This is a breaking config change.
+This unconditional masking causes valid tokens to be incorrectly excluded. For example, a token with positive advantage that has its probability increased (a "high-side" violation) should be allowed through, not masked.
 
 ## Expected Behavior
 
-- Trust region mask is conditioned on advantage sign
-- Config fields use `dppo_mask_low` / `dppo_mask_high` instead of `ipo_mask_low` / `ipo_mask_high`
-- Masking metrics (`is_masked_high`, `is_masked_low`) reflect advantage-conditioned gating
-- Unit tests updated to use new field names
+- Trust region masking is gated by advantage sign: positive advantages only gate high-side violations, negative advantages only gate low-side violations
+- Config field names reflect the current algorithm (DPPO-style), not the previous algorithm prefix
+- Metrics exposed by the loss function correctly reflect which tokens were masked and why
 
 ## Files to Look At
 
-- `src/prime_rl/trainer/rl/loss.py` -- `default_loss_fn` with the masking logic
-- `src/prime_rl/configs/trainer.py` -- `DefaultLossConfig` with threshold fields
-- `tests/unit/train/rl/test_loss.py` -- tests referencing config fields
+- `src/prime_rl/trainer/rl/loss.py` — `default_loss_fn` with the masking logic
+- `src/prime_rl/configs/trainer.py` — `DefaultLossConfig` with threshold fields
+- `tests/unit/train/rl/test_loss.py` — tests referencing config fields
+
+## Constraints
+
+- The fix must preserve backward compatibility for any other callers of `default_loss_fn` that use the current config field names
+- All existing unit tests must pass with their current import patterns

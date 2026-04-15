@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction explicitly names the 21 CHECKERS keys, the --list/--fix/--keep-going flags, the 'nknown' error message substring, the new make targets (check-code-quality, check-repository-consistency), the files to modify (Makefile, utils/checkers.py, .ai/AGENTS.md, setup.py, etc.), and the tomli dependency. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what the module should do and its interface (CHECKERS dict, CLI flags, make targets), but does not specify exact implementation details like line numbers, internal helper functions, or exact code to write. A developer still needs to reason about how to implement the module and wire it into the Makefile."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_makefile_check_code_quality assert 'checkers.py' in output and 'ruff_check' in output of `make -n`. test_makefile_check_repository_consistency asserts 'copies' and 'deps_table' in output. test_makefile_check_repo_keep_going asserts '--keep-going' in output. test_makefile_fix_repo_fix asserts '--fix' in output. These constrain the exact Makefile recipe structure \u2014 an alternative correct implementation that wraps checkers.py differently (e.g., via a shell script, or using different"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute subprocesses (subprocess.run with python, make -n, ruff), import the module, check return codes, and verify CLI behavior. While some tests check `make -n` output for string presence, most tests verify actual execution behavior (imports, CLI flags, exit codes)."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require real implementation: test_checkers_module_imports requires a CHECKERS dict with 21 specific keys, test_checkers_cli_lists_all requires --list output containing specific names, test_checkers_rejects_unknown requires non-zero exit code with 'nknown' message, and Makefile tests require new targets with specific content. A stub/empty implementation would not pass these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/transformers as the gold patch could be applied via solve.sh. The Dockerfile copies the repo and the solution/solve.sh is present in the container context. An agent could potentially read /solution/solve.sh or inspect the test file at tests/test_outputs.py to extract the exact expected implementation. The tests check for specific strings like 'nknown' which could be pattern-matched from the test file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: CHECKERS dict with 21 keys (tested), --list flag (tested), --fix flag (tested via make fix-repo), --keep-going flag (tested via make check-repo), unknown checker rejection with 'nknown' (tested), new CI make targets (tested), AGENTS.md updates (tested in truncated portion likely), and tomli dependency (tested in truncated portion). All major behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section headers (pass_to_pass health checks, fail_to_pass behavioral tests), descriptive function names (test_checkers_module_imports, test_checkers_cli_lists_all), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The CHECKERS dictionary schema (exactly 21 named keys) is explicitly documented in instruction.md's Expected Behavior section."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "The instruction uses 'nknown' deliberately (substring of 'Unknown') matching the test assertion. File paths, variable names, and checker names are consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files to modify but doesn't specify exact line numbers or exact code changes. The files listed are the natural scope of the task. The AGENTS.md changes are described at a high level (clarify check-repo description, remove outdated claim) rather than giving exact text."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies specific sections of .circleci/config.yml, Makefile, and .ai/AGENTS.md with localized changes. The diffs are targeted and don't rewrite entire files. No contradictions with other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 2
+}

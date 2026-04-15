@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (rpc_server.py, local.py, slurm.py), the function (configure()), the key names ('error' vs 'detail'), the exact error message strings, and the requirement for >=2 error-extraction call sites in each scheduler. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: change 'detail' to 'error' in configure() responses, and change .get('detail', ...) to .get('error', ...) in local.py and slurm.py. It even gives the exact error message strings. A developer doesn't need to reason about what to change \u2014 the instruction tells them precisely."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex to find expressions matching specific patterns like `response.json().get(\"[^\"]+\", \"Unknown error\")` and then eval them. An alternative correct fix that uses a different extraction pattern (e.g., `response.json()[\"error\"]` with a try/except, or a helper function) would fail the regex-based tests even though it correctly extracts the error. The tests are tightly coupled to the gold patch's implementation style."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_server_configure_uses_error_key actually executes the configure() function with mocked Flask objects and checks the returned dict. test_local_scheduler_reads_error_key and test_slurm_scheduler_reads_error_key eval() extracted expressions against a mock response. test_server_client_key_consistency does a round-trip execution test. These go beyond pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass: test_server_configure_uses_error_key requires configure() to return specific error messages under the 'error' key. test_not_stub requires >=250/200 statements. The scheduler tests require >=2 matching extraction expressions that successfully retrieve the error string. None of these can be satisfied by trivial stubs."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/solution/solve.sh in the container (from the Dockerfile setup), and the agent could read it directly to see the exact patch. There's no evidence the solution directory is removed or made inaccessible. Additionally, the test fixture strings (exact error messages) are spelled out in instruction.md, making pattern-matching trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three requirements from instruction.md are tested: (1) configure() uses 'error' key with specific messages, (2) local.py has >=2 extraction sites using 'error', (3) slurm.py has >=2 extraction sites using 'error'. The consistency test also verifies round-trip alignment."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The JSON response schema is documented in instruction.md: error responses must use an 'error' key with specific string values. The exact schema keys and messages are specified."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or error message strings across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files (rpc_server.py, local.py, slurm.py), the exact function (configure()), the exact key change ('detail' \u2192 'error'), and the exact error message strings. This goes well beyond describing what's broken and essentially provides the complete fix specification, removing the need for the agent to localize the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

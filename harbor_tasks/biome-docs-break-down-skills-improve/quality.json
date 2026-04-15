@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (.claude/skills/changeset/SKILL.md, .claude/skills/pull-request/SKILL.md, justfile, .claude/skills/biome-developer/SKILL.md, .claude/skills/testing-codegen/SKILL.md, .claude/skills/README.md), required frontmatter fields (name, description, compatibility), exact section headings (## Purpose, ## Changeset Format, ## Writing Guidelines, ## AI Assistance Disclosure, ## Choose the Target Branch, ## PR Title, ## Pre-PR Checklist), the recipe name (new-changeset-em"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create and what sections/fields are required, but does not give exact file contents, line-by-line changes, or specific prose to write. The agent must reason about the actual content of each skill document, the justfile recipe syntax, and how to restructure the README."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for structural elements (frontmatter fields, section headings, recipe existence, keyword presence) rather than exact prose. Alternative implementations with different wording, ordering, or additional content would pass as long as they include the required structural elements. The tests use pattern matching (regex for recipe, 'in' checks for sections) that accommodate varied implementations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all fail-to-pass tests are purely text-matching: they open files and check for substring presence (e.g., 'assert \"## Purpose\" in body', 'assert \"patch\" in text', 'assert \"WRONG\" in text or \"Wrong\" in text'). No test imports code, executes the justfile recipe, or verifies any runtime behavior. The subprocess calls are just running python3 -c with string checks. Even test_justfile_new_changeset_empty_recipe only regex-matches the recipe text rather than executing it."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass because tests require specific file existence, specific frontmatter fields with exact values (name=changeset, name=pull-request), specific section headings, specific keywords (patch, minor, major, WRONG, CORRECT, DO, DON'T), and recipe definitions with specific content. An agent must create meaningful content to satisfy all checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/biome (the solve.sh is visible in the container context), and the test file test_outputs.py contains inline Python scripts with all expected assertion strings. An agent could read the test file or solution to extract exact expected values. The Dockerfile does not remove these files or restrict access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All six requirements from the instruction are tested: changeset skill creation and content, pull-request skill creation and content, Code Comments guidance in biome-developer, new-changeset-empty justfile recipe, testing-codegen cleanup (changeset removal + reference addition + description update), and README updates (new entries in table and directory tree, testing-codegen entry update)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_changeset_skill_valid_frontmatter, test_pull_request_skill_valid_frontmatter, etc.), docstrings explaining each test's purpose, and clear separation between pass-to-pass gate tests and fail-to-pass behavioral tests with section comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces markdown/config files rather than structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, commands, variable names, and section headings in the instruction are consistent and correctly spelled, matching what the tests expect."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction specifies what sections and fields to create but doesn't reveal exact line numbers or internal implementation details. The file paths mentioned are the natural targets for the task domain (skills organization), not obscure locations that would shortcut problem-solving."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch (solve.sh) makes localized changes: adds a recipe to justfile via sed, creates two new files, and modifies specific sections of existing files. The changes are scoped and don't contradict the test expectations or instruction."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
+}

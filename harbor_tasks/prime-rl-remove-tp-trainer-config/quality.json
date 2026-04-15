@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four file paths (trainer.py, parallel_dims.py, rl.py, sft/train.py), the class names (ModelConfig, ParallelDims), the field to remove (tp), and mentions CHANGELOG.md. The tests check these same files and classes. Specific details like required fields (dp_replicate, dp_shard, cp, pp, ep, world_size) and file size thresholds are implementation details that follow naturally from 'remove tp from these files while keeping everything else intact.' The CHANGELOG requirement is"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT to remove (the tp field and its references) and WHERE, but doesn't give exact line numbers, exact replacement code, or the precise diff. A developer still needs to reason about how to update calculations, mesh construction, validation logic, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests primarily check: (1) tp is not a field in ModelConfig, (2) tp is not in ParallelDims, (3) 'tp' doesn't appear in certain files, (4) files compile/lint/format, (5) CHANGELOG mentions tp removal. These are outcome-based checks. Alternative implementations (e.g., different validation messages, different calculation restructuring) would all pass as long as tp is removed and files remain valid."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many tests are purely text/AST-based pattern matching rather than behavioral execution. For example, tests check 'tp' not in source text, field names via AST parsing, file sizes, etc. While some tests do compile checks and linting (subprocess execution), the core fail-to-pass tests like checking 'tp' absence are essentially `assert 'tp' not in source` or AST field enumeration \u2014 not behavioral verification. Tests like test_repo_ruff_check and test_repo_py_compile do execute code, but the f2p test"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (empty files, pass-only classes) would fail the file size checks (parallel_dims.py > 5000 bytes, trainer.py > 15000 bytes), the required field checks (dp_replicate, dp_shard, cp, pp, ep, world_size must exist), ruff linting, and format checks. The tests require substantive, correct code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/prime-rl (solution/solve.sh is meant to be hidden but the Dockerfile sets WORKDIR to /workspace/prime-rl). More critically, the test file itself is at a discoverable location and the agent could potentially read test_outputs.py to understand exactly what assertions are made. The solve.sh contains the exact git patch which could be read if accessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four requirements from the instruction are tested: (1) tp removed from ModelConfig, (2) tp removed from ParallelDims, (3) downstream calculations updated (rl.py and sft/train.py checked for tp absence), (4) CHANGELOG.md documented. The tests cover each stated requirement."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_syntax_check, test_repo_py_compile, test_repo_parallel_dims_ast, etc.), docstrings explaining what each checks, and comments indicating test categories like [static] pass_to_pass and [repo_tests] pass_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring/removal, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, class names, field names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact files (src/prime_rl/configs/trainer.py, src/prime_rl/trainer/parallel_dims.py, src/prime_rl/configs/rl.py, src/prime_rl/trainer/sft/train.py), exact classes (ModelConfig, ParallelDims), exact field names (tp), exact properties (tp_enabled, non_data_parallel_size, seq_len_divisor), and even describes specific calculations like 'multiplies by tp when computing non_data_parallel_size.' This eliminates the localization challenge entirely."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

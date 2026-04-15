@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings like 'genFocusOutline', 'genFocusStyle', '...genFocusStyle(token)', \"'&:hover, &:focus-visible'\", \"'&:focus-visible': genFocusOutline(token)\", 'focusTrap: false', and the exact import path pattern from '../../style'. The instruction mentions 'check components/style/ for available focus helpers' but never names genFocusOutline or genFocusStyle specifically. Tests also check for @rc-component/image version ~1.9.0 in package.json, which is not mentioned in the ins"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (no focus-visible styles, focus escaping inline preview) and general requirements but doesn't specify exact code changes like 'change line X to Y' or 'add this exact string'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details: the literal string '...genFocusStyle(token)', the exact selector string '&:hover, &:focus-visible', the exact expression \"'&:focus-visible': genFocusOutline(token)\", and specific function names genFocusOutline/genFocusStyle. An alternative correct fix using different focus utility functions, different selector syntax, or inline styles would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (TestFocusVisibleStyles, TestDependencyUpgrade, TestDocumentation, TestSemanticDemo) are ALL pure text/string matching: they open files and assert substrings exist. None of them import code, render components, or check actual behavior. The pass_to_pass tests do run subprocesses (TypeScript compilation, ESLint, unit tests), but all fail_to_pass tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific strings that don't exist in the base commit (e.g., genFocusOutline is not in the original style file, focusTrap is not in docs or demo). A stub/no-op implementation would not add these strings, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/antd after applying the gold patch via solve.sh. The agent could read the test file at tests/test_outputs.py to discover exact strings being asserted (like 'genFocusOutline', 'genFocusStyle', 'focusTrap: false', '~1.9') and simply insert those strings without understanding the bug. Additionally, solution/solve.sh contains the complete patch."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) focus-visible styles for thumbnail wrapper, preview buttons, toolbar buttons \u2014 tested in TestFocusVisibleStyles; (2) use existing focus utilities \u2014 tested via import checks; (3) focus trap control for inline previews \u2014 tested in TestSemanticDemo; (4) documentation updates \u2014 tested in TestDocumentation. All major requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into classes (TestFocusVisibleStyles, TestDependencyUpgrade, TestDocumentation, TestSemanticDemo, TestTypeScriptCompilation, TestCodeQuality, TestRepoTests) with descriptive docstrings and method names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code/style changes and documentation updates, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names affected files (components/image/style/index.ts, components/image/demo/_semantic.tsx) which is reasonable since the task domain makes them obvious. It mentions checking components/style/ for helpers but doesn't name the exact functions or line numbers."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-edit-only task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

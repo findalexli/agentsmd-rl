@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (utils.ts, plugin.ts, preview-server-plugin/plugin.ts), the specific variable/function names (isRolldown, bundlerOptionsKey, getBundlerOptions), the import pattern ('import * as vite from vite'), the detection mechanism ('rolldownVersion' in vite), and the fallback logic (rolldownOptions/rollupOptions). All assert'd specifics in tests are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states exact implementation details: 'Check if rolldownVersion exists in the vite module', 'Export a computed key bundlerOptionsKey that returns rolldownOptions for Vite 8+ or rollupOptions for Vite 7', 'Export a helper function getBundlerOptions(build) that reads build.rolldownOptions or build.rollupOptions', 'Replace hardcoded rollupOptions: with computed [bundlerOptionsKey]:'. This is a step-by-step solution, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation details like 'isRolldown = \\'rolldownVersion\\' in vite', 'bundlerOptionsKey = isRolldown', 'export function getBundlerOptions', 'import * as vite from \\'vite\\'', 'build?.rolldownOptions ?? build?.rollupOptions', and exact import statements. An alternative correct fix using different variable names, a different detection approach (e.g., semver check), or a different function signature would fail these string-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, test_bundlerOptionsKey_returns_correct_key, test_plugin_imports_bundler_utils, etc.) are ALL 'assert X in open(path).read()' pattern \u2014 pure text matching with no code execution, no imports, no behavioral verification. The p2p tests do run subprocesses (build, lint, typecheck), but every f2p test is text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are string-matching against file contents, a stub implementation that simply writes the exact expected strings into the files (without any real logic) would pass all f2p tests. The tests don't verify that getBundlerOptions actually works correctly at runtime."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router's git history accessible via solve.sh, and the agent could read the test file at tests/test_outputs.py to see exact expected strings (e.g., 'isRolldown = \\'rolldownVersion\\' in vite') and write them verbatim. The tests are pure string matching so the agent can match literal fixture strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires adding detection utilities, updating plugin.ts for client/server configs, and updating preview-server-plugin. All these are tested via string matching plus build/lint/type checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (utils exports, plugin imports, preview server, compilation checks), and annotated with f2p/p2p markers."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, commands, and function names are all consistent and correctly spelled across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact line numbers ('~line 247 client, ~line 267 server', '~line 30'), exact variable names to create (bundlerOptionsKey, getBundlerOptions, isRolldown), and exact replacement patterns ([bundlerOptionsKey]: instead of rollupOptions:). This goes far beyond describing what's broken."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

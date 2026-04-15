@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests reference the specific file path 'ext/node/polyfills/internal/child_process.ts' and the specific function name 'escapeShellArg' with its exact signature marker 'function escapeShellArg(arg: string): string {'. The instruction.md never mentions this file path or function name \u2014 it only vaguely says 'Deno's Node.js compatibility polyfill layer for child_process'. Tests also reference specific spec test paths like 'tests/specs/node/child_process_shell_escape/main.ts' which are not mentioned i"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (shell metacharacters not escaped) and lists which characters need escaping, but does not specify the exact code change, line number, or regex to modify. A developer must still locate the relevant code and determine how to fix it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests extract the escapeShellArg function, force the Windows path, and check behavioral properties (whether args are changed/unchanged). Any correct fix that properly quotes/escapes the listed metacharacters would pass \u2014 the tests don't assert on specific quoting style, exact regex patterns, or implementation details beyond the function existing with the expected signature."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the escapeShellArg function from source, instantiate it via new Function, call it with test arguments, and check behavioral results (whether output differs from input). They also run actual deno commands as subprocesses. This is behavioral testing, not mere text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_win_escape_ampersand_pipe, test_win_escape_angle_brackets_caret, test_win_escape_exclamation_parens) assert that escapeShellArg returns a modified (changed=true) value for metacharacter-containing args. The base implementation returns these unchanged, so a stub/default would fail. The fix must actually modify the function's behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/deno as solve.sh content is described, and the agent could potentially read the solution directory or grep for the patch. More critically, the test script reads SOURCE_FILE directly and extracts the function \u2014 an agent could simply apply the gold patch by reading the solution/solve.sh file if it's accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires escaping of &, |, <, >, ^, !, (, ) \u2014 all tested. It requires plain args to pass through unchanged \u2014 tested. It requires existing escaping (spaces, quotes, backslashes) to still work \u2014 tested. It requires deno lint and fmt to pass \u2014 tested. Existing spec tests must pass \u2014 tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is about fixing a shell escaping bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug domain ('Deno's Node.js compatibility polyfill layer for child_process') without naming the exact file path or function. The agent must locate the buggy code themselves."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

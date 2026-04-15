@@ -1,11 +1,13 @@
 The `interpolate_pos_encoding` method in `PerceiverTrainablePositionEncoding` (in `src/transformers/models/perceiver/modeling_perceiver.py`) has a bug that makes positional encoding interpolation a no-op when called with a different resolution than training.
 
-The method computes `new_height` and `new_width` from the existing position embeddings (the source grid dimensions), then passes those same values as the `size` argument to `nn.functional.interpolate`. This means it interpolates from `(new_height, new_width)` to `(new_height, new_width)` -- effectively doing nothing.
+When `PerceiverTrainablePositionEncoding` is trained at one image resolution and then asked to produce positional encodings for a different resolution (via `interpolate_pos_encoding`), the method returns embeddings with the same shape as the source grid — the interpolation does nothing. This causes `PerceiverForImageClassificationLearned` to produce incorrect results on images whose resolution differs from the training resolution.
 
-The correct behavior (matching the pattern used in other vision models like ViT, DeiT, etc.) is to pass the target dimensions `(height, width)` to `nn.functional.interpolate` so that the position embeddings are actually resized to match the input resolution.
-
-This causes `PerceiverForImageClassificationLearned` to produce incorrect results when given images at a different resolution from what the model was trained on with `interpolate_pos_encoding=True`.
+Expected behavior: positional encodings should be resized to match the target resolution, similar to how ViT, DeiT, and other vision models handle this. The output tensor's first dimension should equal `height * width`, not the original `index_dims[0] * index_dims[1]`.
 
 ## File to Modify
 
 - `src/transformers/models/perceiver/modeling_perceiver.py`
+
+## Verification
+
+The fix can be verified by checking that calling `interpolate_pos_encoding` with different `height`/`width` than the training `index_dims` produces output tensors whose first dimension equals `height * width`, not the original `index_dims[0] * index_dims[1]`. For example, interpolating from a 4×4 source grid (16 positions) to an 8×8 target should yield 64 positions.

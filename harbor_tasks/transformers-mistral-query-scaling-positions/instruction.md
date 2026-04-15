@@ -1,22 +1,21 @@
-# Bug: Incorrect query scaling in Mistral4 and Ministral3 attention
+# Bug: Incorrect query scaling in attention layers
 
 ## Summary
 
-The query scaling logic in `Mistral4Attention` and `Ministral3Attention` computes position-dependent scaling factors using **absolute sequence positions** derived from the cache length. This is incorrect for padded or packed sequences (e.g., continuous batching), where the actual position of each token may differ from its index in the sequence dimension.
-
-## Affected files
-
-- `src/transformers/models/ministral3/modeling_ministral3.py` — `get_llama_4_attn_scale()` and `Ministral3Attention.forward()`
-- `src/transformers/models/ministral3/modular_ministral3.py` — same functions (modular source)
-- `src/transformers/models/mistral4/modeling_mistral4.py` — `get_llama_4_attn_scale()` and `Mistral4Attention.forward()`
-- `src/transformers/models/mistral4/modular_mistral4.py` — same functions (modular source)
-
-## Details
-
-The `get_llama_4_attn_scale` function computes a position-dependent scaling factor for queries. Currently, the attention `forward()` method constructs a 1D range of absolute positions from `past_seen_tokens`, which does not reflect the true positions of tokens in padded or packed batches. The caller already has access to the correct per-token positions, but this information is not being passed through.
-
-Additionally, the tensor reshaping in `get_llama_4_attn_scale` does not properly account for the batch dimension, which means the scaling factor cannot broadcast correctly against the 4D query tensor `(batch, heads, seq, head_dim)`.
+Attention layers in certain Mistral-family models apply a position-dependent scaling factor to query states. The current implementation uses absolute sequence positions derived from cache length rather than the actual per-token positions provided by the caller. Additionally, the scaling factor's shape does not broadcast correctly against the 4D query tensor.
 
 ## Expected behavior
 
-The scaling function should use the actual per-token position information (which accounts for padding, packing, etc.) and produce a tensor shape that broadcasts correctly with the 4D query states.
+The `get_llama_4_attn_scale` function must:
+
+1. Accept a **2D tensor** of shape `(batch_size, seq_len)` representing the actual position of each token in the batch (accounting for padding, packing, etc.)
+2. Compute scaling using the formula: `1 + beta * log(1 + floor(position / max_position))`
+3. Return a **4D tensor** of shape `(batch_size, 1, seq_len, 1)` that broadcasts correctly with query states of shape `(batch, heads, seq, head_dim)`
+
+When different batch items have different position sequences, their scaling factors must differ accordingly.
+
+The `forward()` method of the attention classes must accept an explicit `position_ids` parameter and pass it to the scaling function instead of computing absolute positions internally.
+
+## Affected models
+
+The same scaling logic appears in multiple model files under `src/transformers/models/` for Mistral4 and Ministral3 architectures. All must be corrected consistently.

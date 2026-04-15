@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific template paths like 'templates/workers/worker-hpa.yaml' and 'templates/workers/worker-kedaautoscaler.yaml', and run repo test files like 'helm-tests/tests/helm_tests/other/test_hpa.py' and 'helm-tests/tests/helm_tests/airflow_core/test_worker.py::TestWorkerHPAAutoScaler'. These exact paths and test class names are not mentioned in instruction.md. Also, the test test_celery_hpa_disabled_when_keda_enabled asserts that exactly 1 doc is returned with kind ScaledObject, but i"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (new config path, precedence rules, backward compatibility) without specifying exact code changes, line numbers, or implementation details."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests verify rendered Helm output (HPA resource fields, metrics, behavior) rather than implementation details. Alternative implementations (different template logic, different helper naming) would produce the same rendered output and pass the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess to run 'helm template' and parse the YAML output, then inspect the rendered Kubernetes resources using jmespath. They also run the repo's own pytest test suites. This is behavioral verification, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "F2P tests like test_new_celery_hpa_config_path_exists assert that docs are returned (len >= 1) and kind is HorizontalPodAutoscaler. A stub that doesn't modify the chart template would render 0 documents for the new config path, failing the assertion. The base commit doesn't support workers.celery.hpa, so these tests require actual implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (accessible in the container), and solve.sh is a complete implementation guide. An agent could read /solution/solve.sh or the tests themselves at /tests/test_outputs.py to extract the exact expected values and implementation approach."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behaviors from instruction.md are tested: new celery HPA path, replica counts, default metrics, custom metrics, behavior config, executor gating, KEDA mutual exclusion, scale target reference, backward compatibility, worker sets, HPA disabled by default, and JSON schema (via repo tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with descriptive names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact YAML schema for HPA configuration including specific field names (enabled, minReplicaCount, maxReplicaCount, metrics, behavior) and the expected default metrics structure. JSON schema requirements are also specified."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the feature to implement and expected behavior without naming specific template files, line numbers, or internal helper functions that would localize the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies specific sections of values.yaml, values.schema.json, and the worker-hpa template \u2014 all localized changes consistent with the feature being added. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 2
+}

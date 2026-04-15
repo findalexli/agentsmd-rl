@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details like `utils.escapeRegExp` being exported from `./packages/router-generator/dist/cjs/utils.cjs` (the CJS build output path), and test_escape_regexp_escapes_various_metacharacters checks exact output strings like '\\\\+page'. While instruction.md mentions escapeRegExp and gives examples, it doesn't specify the CJS distribution path. Also test_asterisk_token_in_nested_routes uses `*index` token which is mentioned in instruction but the exact file struct"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'The generator should export an escapeRegExp function from packages/router-generator/src/utils.ts that escapes regex metacharacters in token strings' and gives exact expected behavior including 'escapeRegExp('+page') should return '\\\\+page''. It also explains the root cause ('uses token values as literal strings in regular expression patterns without escaping'). This tells the developer exactly what to implement (export an escapeRegExp function) and where (utils."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests explicitly check for a function named `escapeRegExp` exported from utils (`test_escape_regexp_function_exists`). An alternative correct fix could inline the escaping logic directly in getRouteNodes.ts without exporting a named function from utils, or use a different function name like `escapeRegexSpecialChars`. Such alternatives would fix the bug but fail the tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call the escapeRegExp function via Node.js subprocess execution, run the Generator to produce route trees, and then inspect both the return codes and the generated file content. The integration tests (test_nested_route_with_plus_layout_token, etc.) actually execute the route generator."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_escape_regexp_function_exists checks that the function exists and is callable (a stub module without it fails). test_escape_regexp_escapes_plus checks the output contains escaped +. test_escape_regexp_escapes_various_metacharacters checks exact output for 10 different inputs. The integration tests verify that route generation produces correct paths. None can be satisfied by a no-op or default return."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/router and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh (if accessible in the container) to see the exact patch. Additionally, the agent could grep the test file at tests/test_outputs.py to discover expected values and reverse-engineer the solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: (1) escapeRegExp exported from utils.ts, (2) escaping all listed metacharacters, (3) correct path generation with +page/+layout tokens. All three are tested: test_escape_regexp_function_exists, test_escape_regexp_escapes_various_metacharacters, and the integration tests for nested routes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names (test_escape_regexp_function_exists, test_nested_route_with_plus_layout_token, etc.), docstrings explaining what each tests and why, and comments marking fail_to_pass tests. Well organized."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output; it modifies source code to fix a bug."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files to modify ('packages/router-generator/src/utils.ts - Utility functions (where escapeRegExp must be exported)') and specifies the exact function name and its expected behavior. It also names getRouteNodes.ts. This goes beyond describing what's broken and tells the agent exactly where and what to implement."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific patterns like `SCOPE_EXIT(\\s*for\\s*\\(\\s*const\\s+auto\\s+&\\s+task\\s*:\\s*tasks\\s*\\)\\s*task->tryExecute()` (test_scope_exit_present), the exact comment string 'Ensure all already-scheduled tasks are drained on any exit path' (test_task_drain_comment_present), method names tryExecute() and wait() (test_try_execute_and_wait_pattern), and file paths like 'src/DataTypes/Serializations/DeserializationTask.h' and 'src/DataTypes/Serializations/tests/gtest_object_serialization.cpp'."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially describes the exact fix: use a scope-guarded cleanup (SCOPE_EXIT), for each task first execute pending work then wait, with a specific comment string, placed before the scheduling loop. Combined with requirements 1-4, this narrows the solution to essentially one implementation. The instruction goes beyond describing what's broken and prescribes the fix in detail."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use very specific regex patterns like `SCOPE_EXIT(\\s*for\\s*\\(\\s*const\\s+auto\\s+&\\s+task\\s*:\\s*tasks\\s*\\)\\s*task->tryExecute()` which mandate exact variable naming ('task', 'tasks'), exact method names (tryExecute, wait), exact macro name (SCOPE_EXIT), and exact loop structure (range-based for with const auto &). An alternative correct fix using a different cleanup mechanism (e.g., a custom RAII guard class, or try-catch), different variable names, or calling methods in a different order wo"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_scope_exit_present, test_task_drain_comment_present, test_try_execute_and_wait_pattern) are purely text-matching via regex on file content \u2014 `re.search(scope_exit_pattern, content)` and string containment checks. No test compiles, links, or runs the code to verify the bug is actually fixed. The syntax check test allows missing includes to pass, so it doesn't truly verify compilation."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply appends the exact SCOPE_EXIT text block and comment string to the file (without understanding the bug or placing it correctly in the function) would pass all three fail-to-pass tests, since they only do regex/string matching on file content without verifying correct placement or behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/clickhouse/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the tests check for exact string patterns like 'Ensure all already-scheduled tasks are drained on any exit path' which is stated verbatim in instruction.md, so the agent can trivially match the fixture string by copying it from the instructions. The agent could also grep test files for the expected patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requirement 4 says 'Place the cleanup guard before the task scheduling loop so it protects against partial scheduling failures' but no test verifies the placement relative to the scheduling loop \u2014 the regex tests only check the SCOPE_EXIT block exists somewhere in the file."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_scope_exit_present, test_task_drain_comment_present, etc.), docstrings explaining purpose, and clear FAIL-TO-PASS vs PASS-TO-PASS categorization in comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact comment text to include ('Ensure all already-scheduled tasks are drained on any exit path'), describes the exact cleanup pattern (execute then wait on each task), and says to use the 'ClickHouse idiom for scope-guarded cleanup' which directly points to SCOPE_EXIT. This essentially reveals the exact implementation rather than just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a C++ source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

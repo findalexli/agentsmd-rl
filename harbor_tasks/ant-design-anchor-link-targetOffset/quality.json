@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md describes all the specific changes tested: AnchorLinkBaseProps with targetOffset, registerLink/scrollTo signatures, linkTargetOffsetRef, getInternalCurrentAnchor with per-link offsets, cleanup in unregisterLink, useEffect dependencies, and passing targetOffset in click handlers. All test-asserted specifics (variable names, function signatures, patterns) are discoverable from the detailed instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md essentially dictates the exact implementation: specific variable names (linkTargetOffsetRef), exact function signatures (registerLink with targetOffset?: number), exact precedence chain (targetOffsetParams ?? targetOffset ?? offsetTop ?? 0), exact cleanup code (delete linkTargetOffsetRef.current[link]), and exact dependency arrays ([href, targetOffset]). This is not describing what's broken but prescribing the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details via regex: exact variable name 'linkTargetOffsetRef' (test_linkTargetOffsetRef_exists), exact parameter name 'newTargetOffset' (test_registerLink_stores_targetOffset), exact expression 'targetOffsetParams ?? targetOffset ?? offsetTop ?? 0' (test_handleScrollTo_uses_link_targetOffset), exact expression '_linkTargetOffset?.[link] ?? _offsetTop' (test_getInternalCurrentAnchor_uses_link_offset). A correct alternative using different variable names"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_anchor_link_interface_has_targetOffset through test_getInternalCurrentAnchor_called_with_linkTargetOffset) exclusively use regex pattern matching on source file text via open(path).read(). None import, call, or execute the code to verify behavior. They are pure text-matching tests."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are text-matching (regex on source files), a stub implementation is irrelevant \u2014 the tests can be satisfied by simply writing the exact text patterns they expect into the files, without any functional implementation. An agent could insert dead code matching the patterns without implementing actual behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/ant-design after solve.sh runs, and the agent could read solution/solve.sh or tests/test_outputs.py to see the exact regex patterns expected. Since tests are pure text-matching, the agent could grep the test file for the expected patterns and write matching code without understanding the feature."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires scroll behavior precedence and active link detection with per-link offsets, but no test actually verifies these runtime behaviors. Tests only check source code text patterns, not actual scrolling or active link detection behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Fail-to-pass: AnchorLinkBaseProps interface must have targetOffset property') and grouped into fail-to-pass and pass-to-pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code modifications, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact variable names (linkTargetOffsetRef), exact function signatures, exact precedence chains, and exact parameter names (newTargetOffset, targetOffsetParams, _linkTargetOffset). This goes far beyond naming files to modify \u2014 it dictates the implementation at the code level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

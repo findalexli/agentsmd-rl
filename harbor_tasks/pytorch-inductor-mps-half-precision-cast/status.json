@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:15:39.176346",
-  "total_time": 1439.98,
-  "sandbox_id": "ibigc5r4b9g9nwgu9rxnp",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:54:04.660903",
+  "total_time": 2660.29,
+  "sandbox_id": "idjbpzvdrowjh5gws1nct",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -32,6 +34,25 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 143.2
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.7,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:29: test `test_claude_md_uses_two_space_indent` has 2 assert(s), all p', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:9: unpinned pip deps: pytest, ruff, mypy, hatchling']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 18.26,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 3
     }
   },
   "history": [
@@ -58,6 +79,14 @@
       "backend": "fireworks",
       "time": 1439.98,
       "at": "2026-04-12T06:15:39.176346"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2660.29,
+      "at": "2026-04-15T05:54:04.660903"
     }
   ]
 }

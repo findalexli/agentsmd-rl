@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings not fully specified in instruction.md. For example: test_js_config_error_handling asserts '.catch((err) => {' exact syntax, 'err.message +=' exact pattern, and 'getUnsupportedTypeScriptModuleLoadHint(err, path)' with exact parameter names. test_tsdown_config_define asserts exact string 'define: { \"import.meta.vitest\": \"undefined\" }'. test_vitest_config_includes_source asserts exact string 'includeSource: [\"./src-js/**/*.ts\"]'. test_cli_ts_import_updated"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies implementation details like: 'The pattern should use .catch() with an error parameter, access err.message, and use throw err', the exact function name 'getUnsupportedTypeScriptModuleLoadHint', exact test description strings, exact file paths to create, and exact config values. This goes well beyond describing what's broken \u2014 it prescribes the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_js_config_error_handling checks for exact '.catch((err) => {' syntax (not '.catch(error => {' or '.catch((error) => {'), exact 'err.message +=' pattern, and 'getUnsupportedTypeScriptModuleLoadHint(err, path)' with exact parameter name 'path'. test_tsdown_config_define and test_vitest_config_includes_source check exact whitespace/formatting. An equally correct alternative using different variable names or formatting would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The F2P tests (test_js_config_directory_structure, test_cli_ts_import_updated, test_node_version_has_inline_tests, test_js_config_error_handling, test_node_version_function_signature, test_package_json_test_command, test_tsconfig_has_vitest_types, test_tsdown_config_define, test_vitest_config_includes_source) are almost entirely text-matching tests using 'assert X in open(path).read()' or os.path.exists checks. While some P2P tests run subprocesses (test_typescript_compiles, test_inline_vitest_t"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific file existence, specific content patterns, and removal of old files. A stub/no-op implementation would not create the required directory structure or file contents, so these tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/oxc/apps/oxfmt (or could be found via the solve.sh). The agent could read test_outputs.py to discover exact assert strings and directly write files matching those patterns. The tests only check for literal string presence, making it trivial to match fixture strings without understanding the refactoring."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from instruction.md are tested: directory structure, import updates, inline tests presence, error handling pattern, function naming, package.json update, tsconfig types, tsdown define, vitest includeSource, TypeScript compilation, and test execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings (e.g., 'F2P: js_config/ directory exists with correct files', 'P2P: TypeScript compiles without errors'). They are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies exact implementation details: '.catch() with an error parameter, access err.message, and use throw err', exact function name 'getUnsupportedTypeScriptModuleLoadHint', exact test description strings, exact file locations. This goes beyond naming the buggy module to prescribing the exact code pattern."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "Config edits (package.json, tsconfig.json, tsdown.config.ts, vitest.config.ts) are localized changes (adding a field, changing a script command) rather than full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

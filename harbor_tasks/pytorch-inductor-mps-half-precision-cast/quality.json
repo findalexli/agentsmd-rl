@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (CLAUDE.md), the repo path (/workspace/repo), the indentation change (4-space to 2-space), the specific conditions (no line starting with exactly 4 spaces, at least one line with 2-space indent), and the pass_to_pass tests (test_harness_utils, test_log_parsers_java, test_cli smoke, swebench importable). All test assertions correspond to discoverable information from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired outcome (convert 4-space to 2-space indentation) but does not specify exact implementation details like specific sed/python commands or line numbers. The agent must still decide how to perform the conversion."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The test_claude_md_uses_two_space_indent function checks that no line starts with exactly 4 spaces (but not 8), and that some line starts with exactly 2 spaces (but not 4). However, the gold solution collapses ALL levels of 4-space indentation (4, 8, 12...) into a single 2-space indent. An alternative correct fix that preserves nesting (e.g., 4->2, 8->4, 12->6) would produce lines starting with exactly 4 spaces (from originally 8-space lines), which would FAIL the test assertion at the check `if"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass test (test_claude_md_uses_two_space_indent) only reads the file and checks text patterns \u2014 it does `Path(...).read_text()` and inspects line prefixes. It never executes the file or tests behavioral consequences. The pass_to_pass tests do execute subprocesses, but the core task verification is purely text-based inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass test checks that the original 4-space indentation is gone and 2-space indentation exists. A stub/no-op would leave the original 4-space lines intact and fail the assertion. The agent must actually modify the file."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/repo/../solution/solve.sh (or mounted at a known path). The Dockerfile copies repo to /workspace/repo and the solve.sh is accessible. An agent could potentially read the solution file. Additionally, the test only checks simple text patterns (no 4-space lines, some 2-space lines), so the agent could trivially match the fixture by just stripping all leading whitespace and adding 2 spaces to any previously-indented line."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) no lines with exactly 4-space indent \u2014 tested; (2) at least one line with 2-space indent \u2014 tested; (3) existing tests pass \u2014 tested via pass_to_pass tests for harness_utils, log_parsers_java, cli smoke, and swebench import."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly separated into 'FAIL TO PASS' and 'PASS TO PASS' sections with descriptive names and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves editing a markdown file's indentation, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file CLAUDE.md which is the obvious target of the task. It doesn't reveal specific line numbers or implementation details beyond describing the indentation change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold solution only modifies CLAUDE.md's indentation, which is a localized change to a single file. The diff doesn't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

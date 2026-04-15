@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions check for strings, values, field names, file paths, and ordering requirements that are explicitly documented in instruction.md. The exact PHP array structure, import statement, switch case, file paths, and positioning requirements are all specified."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly provides the complete PHP array to insert, the exact import line, the exact switch case code, and the exact position (after Kotlin, before GraphQL). This is a complete solution specification, not a problem description \u2014 the agent needs zero reasoning about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The task is essentially a config-editing task where the solution is tightly specified (exact field values, exact strings). There's effectively one correct way to implement it, so the tests matching exact strings is appropriate \u2014 alternative correct fixes would use the same values since they're specified requirements."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_rust_sdk_config_exists, test_rust_sdk_config_values, test_rust_language_import, test_rust_switch_case, test_rust_sdk_array_structure, test_switch_case_order) are purely text-matching with patterns like `assert \"'key' => 'rust'\" in content`. Only test_php_syntax_valid, test_composer_autoload_works, test_pint_linter, and test_phpstan_analysis execute code. The core fail-to-pass tests never import or execute the PHP configuration."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass the tests since they check for specific strings like \"'key' => 'rust'\", \"case 'rust':\", and \"use Appwrite\\SDK\\Language\\Rust;\" that don't exist in the base repository. The agent must actually add these entries."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/appwrite/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the instruction.md itself contains the complete solution verbatim, so an agent could simply copy-paste from the instructions without understanding anything."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: config fields/values, import statement, switch case, PHP syntax, ordering after Kotlin/before GraphQL, and linting/static analysis."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_rust_sdk_config_exists, test_switch_case_order, etc.), have docstrings explaining what they verify and whether they're fail-to-pass or pass-to-pass, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The exact PHP array schema for the Rust SDK configuration is fully documented in instruction.md with all field names and values."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md specifies the exact files to modify, exact position (after Kotlin, before GraphQL), exact code blocks to insert, and complete array structures. This goes far beyond naming the relevant module \u2014 it provides the full implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a localized insertion of a new array entry in sdks.php and a few lines in SDKs.php, not a full-file rewrite. It doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 4
+}

@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file implicitly (padString.cpp with leftPad/rightPad functions), the three argument names ('string', 'length', 'pad_string'), their exact description strings ('String or FixedString', 'UInt*', 'String'), the validators (isStringOrFixedString, isInteger, isString), and the API (validateFunctionArguments, FunctionArgumentDescriptors). All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact new description strings to use: 'String or FixedString' for string arg, 'UInt*' for length arg, 'String' for pad_string arg. It also names the exact validators and argument names. This is effectively telling the agent exactly what to change to what \u2014 no reasoning about the fix is needed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests use regex patterns that match the structure of FunctionArgumentDescriptor entries with TypeValidator casts, extracting the description string. Any correct fix that changes the description strings to the specified values in the same code structure would pass. The tests don't assert on line numbers or other implementation details beyond the descriptor format."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_string_argument_description, test_length_argument_description, test_pad_string_argument_description) are all pure text/regex pattern matching on source code: they read the file and assert string contents. The behavioral test (test_padstring_syntax_valid) only checks syntax validity, not the actual fix. No test executes the functions or checks error messages behaviorally."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that description strings changed from their original wrong values ('Array', 'const UInt*', 'Array') to the correct values ('String or FixedString', 'UInt*', 'String'). A stub or no-op would leave the original wrong values, which would fail the assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or similar path in the container). The agent could read the solution patch directly. Additionally, the test file at tests/test_outputs.py contains explicit comments stating the exact old and new values ('was \"Array\" -> should be \"String or FixedString\"'), so grepping test files reveals the answer trivially."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires changing three description strings and following existing code style. The tests verify all three description string changes plus code style checks (trailing whitespace, tabs, Allman braces, include format), covering the stated requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section headers (BEHAVIORAL TEST, FAIL-TO-PASS TESTS, PASS-TO-PASS TESTS, AGENT CONFIG TESTS), descriptive function names, and detailed docstrings explaining what each test checks and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing C++ source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact function (getReturnTypeImpl implied), the exact argument descriptor names, the exact validator function names, and the exact replacement strings. While it doesn't give line numbers, it specifies the fix so precisely that localization is trivial \u2014 the agent just needs to find FunctionArgumentDescriptors in the leftPad/rightPad implementation file."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

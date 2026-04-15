@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/solid-router/src/useBlocker.tsx), the types (LegacyPromptProps, PromptProps, BlockComponent), the export pattern (export const Block: BlockComponent = function Block(...)), and all relevant interface/type names that tests assert on. The tests check for strings and patterns all described in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly provides the exact target code: 'export const Block: BlockComponent = function Block(opts: PromptProps | LegacyPromptProps): SolidNode { // existing implementation }'. This is the complete solution, not just a description of what's broken. The agent doesn't need to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details like '= function Block(' in test_block_has_function_implementation, and the exact regex pattern 'export const Block: BlockComponent = function Block\\(([^)]+)\\)' in test_block_uses_correct_param_type. An alternative correct fix using an arrow function (e.g., 'export const Block: BlockComponent = (opts: PromptProps | LegacyPromptProps): SolidNode => {') would fail these tests despite being functionally equivalent."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests (test_block_export_uses_const_arrow, test_no_deprecated_function_overload, test_block_has_function_implementation, test_legacy_prompt_props_still_exists, test_useBlocker_hook_exports, test_prompt_props_type_exists, test_block_uses_correct_param_type) are purely text-based assertions using string matching and regex on file content. Only test_repo_eslint_solid_router and test_repo_unit_tests_blocker execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific patterns that don't exist in the original code (e.g., 'export const Block: BlockComponent' and '= function Block(') and check for absence of the deprecated overload. A stub or no-op wouldn't pass these since the original file has the old pattern."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router's solve.sh (solution/solve.sh), and the agent could read it. Additionally, the exact expected strings are visible in the test file at tests/test_outputs.py, and the instruction itself provides the exact target code, making it trivial to match the fixture without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: const declaration (test_block_export_uses_const_arrow), BlockComponent interface (same test), arrow function syntax with named function expression (test_block_has_function_implementation), removal of deprecated overload (test_no_deprecated_function_overload), unchanged types (test_legacy_prompt_props_still_exists, test_prompt_props_type_exists), and compilation (test_repo_eslint_solid_router)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating their purpose (e.g., 'F2P' vs 'P2P' labels). The file has a module-level docstring explaining the task."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves refactoring TypeScript code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or type names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides the exact before and after code snippets, including the precise target file path. While naming the file is acceptable for a single-file refactoring task, providing the exact resulting code is excessive hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

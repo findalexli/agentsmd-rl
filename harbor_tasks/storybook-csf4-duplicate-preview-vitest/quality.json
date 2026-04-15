@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test assertions reference file paths (utils.ts, index.ts), function names (requiresProjectAnnotations), variable names (isCSF4, previewOrConfigFile, areProjectAnnotationRequired), and string literals (setup-file-with-project-annotations, isCsfFactoryPreview) that are explicitly mentioned in instruction.md's Required Changes section."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix: 'Accept exactly 2 parameters: testConfig and finalOptions', 'NOT accept an isCSF4 parameter', 'NOT declare a previewOrConfigFile variable', 'NOT conditionally add the preview file to setup files', 'NOT call isCsfFactoryPreview()', 'NOT declare a const isCSF4 variable', 'Return true by default'. This is a step-by-step implementation guide, not a problem description. A developer doesn't need to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_no_csf4_param_in_requires_project_annotations checks for exactly 2 parameters; test_no_preview_file_loading_for_csf4_detection checks for absence of 'const isCSF4' and 'isCsfFactoryPreview(' as string patterns; test_setup_files_no_preview_injection checks for absence of 'const previewOrConfigFile'. An alternative correct fix might rename the function, inline it, restructure the logic differently (e.g., using a different deduplication mec"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are purely textual: test_no_preview_file_loading_for_csf4_detection uses 'assert \"isCsfFactoryPreview(\" not in src' and 'assert \"const isCSF4\" not in src'; test_setup_files_no_preview_injection uses 'assert \"const previewOrConfigFile\" not in src' and 'assert \"&& previewOrConfigFile\" not in src'. While two tests use TypeScript AST parsing (which is slightly better), they still only inspect structure, not runtime behavior. No test actually imports, instantiates, or runs the"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation of requiresProjectAnnotations that simply does 'export async function requiresProjectAnnotations(testConfig: any, finalOptions: any) { return true; }' would pass test_no_csf4_param_in_requires_project_annotations (2 params, no isCSF4), test_no_csf4_conditional_return_in_utils (no isCSF4 refs), test_requires_project_annotations_still_exported (exported), and test_requires_project_annotations_returns_true_by_default ('return true' present). The text-matching tests on index.ts"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/storybook as a git repo where solve.sh is accessible if the agent reads /solution/solve.sh. The Dockerfile doesn't remove or protect the solution directory. Additionally, since tests are purely textual/structural checks, the agent could read the test file patterns and mechanically remove the specific strings being checked for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicit requirements from instruction.md are tested: 2 parameters for requiresProjectAnnotations, no isCSF4 references, no previewOrConfigFile variable, no isCsfFactoryPreview calls, no const isCSF4, preserved areProjectAnnotationRequired, preserved setup-file-with-project-annotations reference, function still exported, return true default path, and TypeScript parse validity."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining the rationale for each check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying TypeScript source files, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, variable names, and function names in the instruction match those referenced in the tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact files AND provides extremely specific implementation details: 'Accept exactly 2 parameters', 'NOT declare a previewOrConfigFile variable', 'NOT call isCsfFactoryPreview()', 'NOT declare a const isCSF4 variable', 'Return true by default'. This goes far beyond naming the relevant files \u2014 it specifies the exact code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying TypeScript source files, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

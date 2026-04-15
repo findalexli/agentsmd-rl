@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (`providers/openlineage/src/airflow/providers/openlineage/utils/utils.py`), the class (`DagRunInfo`), the parent class (`InfoJsonEncodable`), the mechanism (`includes` list), and the two fields (`partition_key`, `partition_date`). All test assertions reference these same identifiers, which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (missing partition fields in serialized output) and the mechanism (includes list), but does not say 'add these strings to the includes list' or specify exact line numbers. A developer must still reason about what change to make."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use AST parsing (get_dagruninfo_includes) to extract the `includes` list and check for 'partition_key' and 'partition_date' as string constants. An alternative correct fix that uses a different mechanism (e.g., overriding a method, using `renames`, dynamically computing the includes, or using a tuple instead of list assigned differently) would fail the AST-based extraction. The test specifically requires these strings appear as constants in a statically-parseable `includes = [...]` ass"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core f2p tests (test_includes_has_partition_key, test_includes_has_partition_date, etc.) all use AST parsing to read source text rather than importing DagRunInfo, instantiating it with a mock DagRun, and checking the serialized output. They never import or call the actual code. The subprocess tests only check linting/compilation, not behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that 'partition_key' and 'partition_date' are in the DagRunInfo.includes list. A stub or default implementation (the original code without the fix) would not have these strings, so the tests would fail without the actual fix being applied."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (mounted in container) as solve.sh in the solution/ directory. The agent could read /solution/solve.sh to see the exact patch. Additionally, the test file itself at tests/test_outputs.py reveals exactly what strings ('partition_key', 'partition_date') need to be added to which class's includes list, making it trivial to grep for the answer."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that partition_key and partition_date appear in serialized DagRunInfo output. The tests verify both fields are in the includes list, and check code quality/syntax. All explicitly stated requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into three classes (TestDagRunInfoIncludes, TestCodeQuality, TestRepoCICommands) with descriptive names and docstrings indicating pass_to_pass vs fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a Python class's includes list, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, class names, field names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (`providers/openlineage/src/airflow/providers/openlineage/utils/utils.py`), the exact class (`DagRunInfo`), and the exact mechanism (`includes` list). It also names the exact fields to add (`partition_key`, `partition_date`). This essentially tells the agent exactly what to change and where, leaving almost no localization work."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:21:03.229097",
-  "total_time": 1308.0,
-  "sandbox_id": "iavh9hj1umktynsunw28w",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:33:02.095222",
+  "total_time": 1170.92,
+  "sandbox_id": "i8w8q516hoqt2lr5yi9qa",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -56,17 +58,29 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.29,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: transformers, peft']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.66,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 344.44,
-      "at": "2026-04-09T22:04:53.044632"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +112,14 @@
       "backend": "fireworks",
       "time": 1308.0,
       "at": "2026-04-11T18:21:03.229097"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1170.92,
+      "at": "2026-04-15T03:33:02.095222"
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the three files (useMergedPreviewConfig.ts, index.tsx, PreviewGroup.tsx), the hook useMergedMask, the concept of maskClosable/closable, and the configuration levels. All test-asserted specifics (file paths, key concepts like maskClosable, mergedMaskClosable, useMergedMask, Omit, 'maskClosable') are discoverable from the instruction's description of the problem domain and the files mentioned."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (mask.closable not being respected) and points to relevant files/hooks, but does not specify exact code changes like 'add maskClosable to the return type' or 'destructure mergedMaskClosable'. It says 'useMergedMask hook already returns the closable state, but it may not be properly passed through' which is a hint but not a precise fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact variable names like 'mergedMaskClosable' (test_maskclosable_destructured_from_usemergedmask), exact string 'maskClosable: mergedMaskClosable' (test_maskclosable_passed_to_return_object), and exact type signature 'maskClosable?: boolean' (test_maskclosable_in_hook_return_type). An alternative correct fix using different variable names (e.g., 'closableFromMask', 'isMaskClosable') would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_maskclosable_in_hook_return_type, test_maskclosable_destructured_from_usemergedmask, test_maskclosable_passed_to_return_object, test_image_preview_type_omits_maskclosable, test_previewgroup_type_omits_maskclosable, test_maskclosable_in_dependency_array) are ALL text-matching assertions using `assert 'string' in open(path).read()`. None of them import, call, or execute the code to verify behavior. The pass-to-pass tests do run subprocesses (lint, jest), but all f2p te"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests check for specific strings in source files. An agent could simply append comment lines like '// maskClosable?: boolean' or add dead code containing the exact strings without actually fixing the bug. For example, test_maskclosable_in_hook_return_type just checks `'maskClosable?: boolean' in content` which could be satisfied by a comment."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/antd/../solution/solve.sh (or wherever mounted). The agent could read it. Additionally, since tests are pure string matching (e.g., checking for 'mergedMaskClosable' in file content), the agent could grep test files to find exact strings needed and insert them as dead code or comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies that setting mask.closable: false should prevent closing the preview on mask click, and mask.closable: true should allow it. No test actually verifies this runtime behavior \u2014 no test renders the component and simulates a click on the mask to check if the preview closes or stays open."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., test_maskclosable_in_hook_return_type), have docstrings explaining what they check, and are logically grouped by concern (hook structure, type definitions, linting, unit tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a UI component bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the three relevant files which is reasonable for the task domain. It mentions useMergedMask 'already returns the closable state' which is a moderate hint but doesn't specify exact lines or the precise code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

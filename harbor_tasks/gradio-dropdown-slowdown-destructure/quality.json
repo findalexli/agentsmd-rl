@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_effect_handles_all_value_branches checks for 'choices_values.includes', 'Array.isArray(value)', and requires >=3 assignments of both input_text and selected_index in an $effect block. test_selected_indices_is_derived requires a $derived declaration for selected_indices. test_template_uses_selected_indices_variable checks for {selected_indices} shorthand in template. The instruction mentions $state but never specif"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the fix: restructure input_text and selected_index from array destructuring of $derived to standalone declarations, and pre-compute selected_indices as a variable instead of inline ternary. It even states 'The current implementation uses a pattern that combines input_text and selected_index in a single derivation' and 'computes selected_indices inline as selected_index === null ? [] : [selected_index]'. This tells the agent exactly what to change and how."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce very specific implementation patterns: test_input_text_standalone_state requires regex match for 'let\\s+input_text\\s*=\\s*\\$state', test_selected_index_standalone_state requires 'let\\s+selected_index\\s*=\\s*\\$state', test_selected_indices_is_derived requires 'let\\s+selected_indices\\s*=\\s*\\$derived'. An alternative fix using different variable naming, a single $effect with a helper function, or using $derived.by instead of $state+$effect would fail these tests despite being functional"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every single fail-to-pass test is a regex search over source text. They all read the file content and use re.search to check for string patterns. None execute the component, render it, or test actual behavior. For example, test_no_array_destructure_from_derived just checks if a regex pattern exists in the file text."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply writes a .svelte file containing the right string patterns (e.g., 'let input_text = $state(\"\")' and 'let selected_index = $state(null)' and an $effect block with the right keywords) would pass all tests without actually fixing any performance bug. The tests only check text patterns, not runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the exact gold patch. An agent could simply read and apply it. Additionally, tests are pure regex checks on file content, so the agent could grep test files (if accessible) to determine exact patterns needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Dropdown with hundreds of elements should open instantly without freezing' but no test verifies performance. The instruction mentions avoiding 'O(N) redundant computations' but no test measures computation count or timing. Tests only check syntactic patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear grouping comments ([pr_diff] fail_to_pass, [static] pass_to_pass), descriptive function names, and detailed docstrings explaining what each test checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a Svelte component, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (js/dropdown/shared/Dropdown.svelte), the exact variable names (input_text, selected_index, selected_indices), the exact buggy pattern ('let [input_text, selected_index] = $derived.by(...)'), and even the exact inline ternary ('selected_index === null ? [] : [selected_index]'). This goes far beyond identifying the problem area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Svelte component, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

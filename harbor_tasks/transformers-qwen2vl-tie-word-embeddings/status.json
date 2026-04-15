@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:02:30.574423",
-  "total_time": 1237.32,
-  "sandbox_id": "itens45ricmnodnvf3fjo",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:11:37.006674",
+  "total_time": 928.45,
+  "sandbox_id": "iqmb5xlsf7f53y8e4fl0o",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,6 +35,24 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 268.11
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.41,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:201: test `test_modernvbert_init_type_hint` has 4 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:220: test `test_modular_init_type_hint` has 4 assert(s), all pass on a', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:14: unpinned pip deps: ruff', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: \".[quality]\", 2>']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.52,
+      "tier_a_fails": [
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
@@ -43,6 +63,14 @@
       "backend": "fireworks",
       "time": 1237.32,
       "at": "2026-04-12T06:02:30.574423"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 928.45,
+      "at": "2026-04-15T06:11:37.006674"
     }
   ]
 }

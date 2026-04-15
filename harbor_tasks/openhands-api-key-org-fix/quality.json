@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert exact variable names like 'org_id = user.current_org_id', 'user_auth = self.user_context.user_auth', 'api_key_org_id is not None', 'org_id = api_key_org_id', and 'org_id=org_id'. The instruction.md describes the behavior and mentions method/class names but does not specify these exact variable names or the exact string patterns the tests check for. For example, 'org_id = api_key_org_id' as a literal string is not mentioned in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (wrong org_id used), the root cause, and the desired behavior, but does not prescribe exact code changes like 'change line X to Y'. The developer must still reason about implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use string matching for exact variable names: 'org_id = user.current_org_id', 'user_auth = self.user_context.user_auth', 'api_key_org_id is not None', 'org_id = api_key_org_id', 'org_id=org_id'. An alternative correct fix using different variable names (e.g., 'target_org_id', 'effective_org_id', or 'key_org') or different code structure would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org, test_code_imports_and_syntax) all use string matching on source code (e.g., `assert 'org_id = user.current_org_id' in source_code`). They never import, instantiate, or call the actual class/method. This is purely textual verification, not behavioral testing."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific string patterns that don't exist in the original source file (the base commit). A stub or no-op implementation would not contain the required patterns like 'api_key_org_id is not None' or 'user_auth = self.user_context.user_auth', so the tests would fail without implementing the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch is in /workspace/OpenHands (solve.sh applies patch -p1 from that directory). The agent could read solution/solve.sh if accessible, or could examine the test file at tests/test_outputs.py to see exactly which string patterns are expected and produce a file matching those patterns without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires the code to 'pass ruff linting and formatting per the enterprise config at enterprise/dev_config/python/ruff.toml'. While there appears to be a ruff test in the truncated test file, the core behavioral requirements (API key org used, legacy fallback, cookie auth fallback) are only tested via string matching, not by actually running the code with mock objects to verify the correct org_id is used."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org), docstrings explaining scenarios, and clear grouping with '# ===== Fail-to-Pass Tests (regression tests) =====' comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in Python code, not producing structured data output like JSON/CSV/API responses."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the method (save_app_conversation_info) and class (SaasSQLAppConversationInfoService) but doesn't specify exact line numbers or the exact code to write. The file path is implied by the class name and service injector pattern, which is reasonable for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -6,7 +6,7 @@ When loading Mixture-of-Experts (MoE) models on CPU and running inference, `torc
 
 ## Context
 
-The codebase currently attempts to solve alignment issues during weight loading by cloning misaligned tensors as a conversion operation (`Force16BytesAlignment` in `src/transformers/core_model_loading.py`). This approach is applied in `src/transformers/conversion_mapping.py` for several MoE architectures (e.g., `qwen3_moe`, `mixtral`, `minimax_m2`).
+The codebase currently attempts to solve alignment issues during weight loading by cloning misaligned tensors as a conversion operation (`Force16BytesAlignment` in `src/transformers/core_model_loading.py`). This approach is applied in `src/transformers/conversion_mapping.py` (via `_build_checkpoint_conversion_mapping`) for several MoE architectures (e.g., `qwen3_moe`, `mixtral`, `minimax_m2`).
 
 However, this weight-conversion approach has fundamental limitations:
 - It doesn't cover all loading paths (e.g., memory-mapped/lazy loading from safetensors)
@@ -26,10 +26,15 @@ The relevant function that decides whether to use `grouped_mm` is `_can_use_grou
 
 The code should detect when CPU tensors are misaligned and fall back to the non-`grouped_mm` path instead of crashing. The fragile weight-conversion-time alignment enforcement should be replaced with a robust runtime check.
 
+Specifically:
+1. The version-gating function `is_torch_less_or_equal` (imported from `transformers.utils.import_utils`) should be used to check if PyTorch version is <= 2.10.0 before applying alignment checks
+2. The function `_build_checkpoint_conversion_mapping` in `src/transformers/conversion_mapping.py` should no longer use `Force16BytesAlignment` in any converter operations
+3. The class `Force16BytesAlignment` in `src/transformers/core_model_loading.py` should be completely removed
+
 ## Relevant files
 
-- `src/transformers/integrations/moe.py` — `_can_use_grouped_mm()` function
-- `src/transformers/core_model_loading.py` — `Force16BytesAlignment` class
-- `src/transformers/conversion_mapping.py` — uses of `Force16BytesAlignment` in weight converters
+- `src/transformers/integrations/moe.py` — contains the `_can_use_grouped_mm()` function
+- `src/transformers/core_model_loading.py` — contains the `Force16BytesAlignment` class
+- `src/transformers/conversion_mapping.py` — contains `_build_checkpoint_conversion_mapping()` which builds weight converters
 - `docs/source/en/weightconverter.md` — documentation for `Force16BytesAlignment`
 - `tests/vlm_tester.py` — test helper with `intermediate_size` that may trigger alignment issues

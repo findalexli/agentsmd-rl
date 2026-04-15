@@ -2,12 +2,10 @@
 
 ## Bug Description
 
-When Bun's error-creation functions (`createErrorInstance`, `createTypeErrorInstance`,
-`createSyntaxErrorInstance`, `createRangeErrorInstance`) format an error message, the
-`{f}` formatter may call into JavaScript — for example, via `Symbol.toPrimitive`. If
-the formatting itself throws a JavaScript exception (such as "Cannot convert a symbol
-to a string"), the catch branch returns a fallback format string but **leaves the
-exception pending on the VM**.
+When Bun's error-creation functions format an error message, the `{f}` formatter may call
+into JavaScript — for example, via `Symbol.toPrimitive`. If the formatting itself throws a
+JavaScript exception (such as "Cannot convert a symbol to a string"), the catch branch
+returns a fallback format string but **leaves the exception pending on the VM**.
 
 When the error-throwing path subsequently tries to throw the newly created error via
 `throwValue` → `JSC__VM__throwError`, it hits an internal `assertNoException` check
@@ -24,16 +22,27 @@ try { Bun.jest().expect(v).toBeFalse(); } catch {}
 Running this script causes Bun to crash with an assertion failure instead of
 gracefully handling the error.
 
-## Relevant Code
+## Expected Behavior
 
-The bug is in `src/bun.js/bindings/JSGlobalObject.zig`. Look at the four
-`create*ErrorInstance` functions — each has a `catch` branch that handles formatting
-failures. The catch branches return a fallback error instance but do not clean up the
-VM's exception state before doing so.
+After fixing, error creation functions that encounter a JS exception during message
+formatting should complete gracefully without crashing — the pending exception must
+be cleared before the fallback error is returned.
 
-There are already other call sites in the same file that properly clear the exception
-state in similar situations — look at the existing usage pattern for guidance.
+## Scope
 
-Additionally, three of the four catch branches return a generic error instance type
-instead of the specific error type matching their function name (e.g.,
-`createTypeErrorInstance` should return a TypeError, not a generic Error).
+The four functions that create error instances in `src/bun.js/bindings/JSGlobalObject.zig`
+are in scope: `createErrorInstance`, `createTypeErrorInstance`, `createSyntaxErrorInstance`,
+`createRangeErrorInstance`.
+
+The `createDOMExceptionInstance` function is **not** in scope and should not be modified.
+
+## Valid Solution
+
+A correct fix must satisfy all of the following:
+
+1. The catch block in each of the four error functions clears any pending JS exception
+   before returning the fallback error instance.
+2. `createTypeErrorInstance` returns a TypeError-typed instance from its catch block.
+3. `createSyntaxErrorInstance` returns a SyntaxError-typed instance from its catch block.
+4. `createRangeErrorInstance` returns a RangeError-typed instance from its catch block.
+5. `createErrorInstance` returns an appropriate generic error from its catch block.

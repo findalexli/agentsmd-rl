@@ -6,7 +6,11 @@ When using Microsoft Edge (Chromium-based), closing a browser context while down
 
 ## Expected Behavior
 
-When a browser context is closed, any ongoing downloads should be cancelled before the context is actually disposed. The `Download` class should expose a way to cancel itself, and the Chromium browser context should use this to cancel all active downloads before sending the `disposeBrowserContext` command.
+1. **Add a `cancel()` method to the `Download` class.** The browser context already exposes a `cancelDownload(uuid)` method that cancels a download given its UUID. The new `cancel()` method should delegate to this by accessing the page's browser context and calling `cancelDownload` with the download's UUID. The UUID must be accessed as a stored instance field (via `this.<field>`) rather than as a closure-captured constructor parameter.
+
+2. **Use public naming for the cancel method.** Per the project's `CLAUDE.md` (lines 99-102), methods that are used in other files must use public naming — no underscore prefix. Since `cancel()` will be called from `crBrowser.ts`, it must be `cancel()` not `_cancel()`.
+
+3. **Cancel all downloads before context disposal.** In `CRBrowserContext`, before sending the `Target.disposeBrowserContext` command, iterate over the context's `_downloads` collection (a `Set` of `Download` instances that each download registers itself in during construction) and call `cancel()` on each one.
 
 ## Files to Look At
 

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (NothingFoundInfo.tsx), describes the behavior (open in new tab, security best practices for external links), and hints at HTML attributes. The tests check for target=\"_blank\" and rel=\"noopener noreferrer\" which are standard security best practices discoverable from the hints about 'security attributes for links opening in new tabs' and 'correct HTML syntax'."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (link doesn't open correctly, security concerns) and gives hints (look at HTML attributes, security attributes for new tabs, correct HTML syntax) but never states the exact fix like 'change target=\"blank\" to target=\"_blank\"' or 'add rel=\"noopener noreferrer\"'. A developer must reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex patterns like r'<Link[^>]*\\srel=\"noopener noreferrer\"[^>]*>' which require the exact string rel=\"noopener noreferrer\" with that exact attribute order. An alternative correct fix using rel=\"noreferrer noopener\" (reversed order) would fail test_link_has_rel_noopener_noreferrer and test_link_attributes_combined, even though both orderings are equally valid and secure."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, test_link_attributes_combined) are purely text-based: they read the file and check for string patterns via regex. They don't render the component, execute it, or verify runtime behavior. The pass_to_pass tests do run lint/test/format subprocesses, but ALL f2p tests are 'assert pattern in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for target=\"_blank\" and rel=\"noopener noreferrer\" which are not present in the original file (which has target=\"blank\" and no rel attribute). A stub or no-op would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow (solution/solve.sh is mapped into the container's environment). The agent could read the gold patch from solve.sh or inspect the test file at tests/test_outputs.py to see the exact expected strings (target=\"_blank\" and rel=\"noopener noreferrer\") and apply them directly without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) link opens in new tab - tested via target=\"_blank\" check, (2) security best practices - tested via rel=\"noopener noreferrer\" check, (3) passes linting/type-checking - tested via lint, test, and format checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_link_has_correct_target_attribute, test_link_has_rel_noopener_noreferrer, etc.), have docstrings explaining what they verify, and are annotated with (fail_to_pass) and (pass_to_pass) labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing an HTML/JSX component, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, commands, and variable names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file, which is appropriate since the task domain is narrowly scoped. It doesn't name the exact buggy line or the specific attribute values that need changing."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (fixing a TSX component), not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

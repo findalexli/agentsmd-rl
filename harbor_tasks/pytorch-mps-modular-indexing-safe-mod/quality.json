@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_mps_ast_valid checks for specific method names like '_print_FloorDiv', '_print_Min', '_print_Max' which aren't mentioned in the instruction. test_modular_indexing_method_signature checks for 'x, div, mod' unpacking pattern. test_utils_h_key_functions_exist checks for 'floor_divide' and 'fmod' functions. While instruction.md mentions the files, it doesn't enumerate all these specific m"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'detect when div is a power of two such as 65536 AND mod is not a power of two' and 'emit a function call instead of bare %'. It specifies adding a 'safe-modulo function' with 'volatile, optnone, __attribute__((noinline)), inline asm' optimization barriers. It names the exact method (_print_ModularIndexing) and exact file locations. This describes WHAT to change with high specificity."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests check for gold-specific implementation details. The hidden tests check for 'safe_mod' (or similar names from a small set) in utils.h, check for 'c10::metal::safe_mod' in codegen output, and verify the specific power-of-two detection logic with div=65536. Tests like test_mps_modular_indexing_behavior likely assert on the exact output format 'c10::metal::safe_mod(...)'. An alternative fix using a different approach (e.g., casting to float, using a different decomposition, or restructuring th"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests do execute code: they use ast.parse, py_compile.compile, subprocess.run to execute Python, extract methods via AST and call them (_extract_method), and run ruff linting. The behavioral tests (test_mps_modular_indexing_behavior) extract and execute the actual _print_ModularIndexing method. This is behavioral verification, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p behavioral tests like test_mps_modular_indexing_behavior actually call the extracted _print_ModularIndexing method and check its output for specific cases (div=65536, non-power-of-two mod). A stub implementation returning None or empty string would fail these assertions. The safe_mod function must exist in utils.h with an optimization barrier."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/pytorch and the agent could read solution/solve.sh if it exists in the container. The gold patch is a simple git apply, and the agent could grep for the expected test fixture values or read the test file to determine exactly what assertions to satisfy. The Dockerfile doesn't remove solution/ files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires (1) codegen change to detect power-of-two div with non-power-of-two mod and emit a function call, and (2) a safe-modulo function in utils.h with an optimization barrier. Tests verify both: behavioral tests check codegen output for safe_mod calls in the problematic case, and utils.h tests check for the function existence and optimization barrier keywords."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_mps_syntax, test_utils_h_balanced_braces, etc.), grouped into 'Pass-to-pass (static)' and 'Pass-to-pass (repo_tests)' sections with clear comments, and each has a docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes (Python codegen and C++ header), not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (torch/_inductor/codegen/mps.py, c10/metal/utils.h), function names (_print_ModularIndexing, floor_divide, fmod), and variable names are all correctly spelled and consistent between instruction.md and the test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact method '_print_ModularIndexing' in 'MetalExprPrinter', specifies the exact file paths, describes the exact condition (div=65536, non-power-of-two mod), and even suggests specific implementation techniques (volatile, optnone, etc.). This goes beyond describing what's broken and into prescribing the exact localization and approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Python and C++ source files, not configuration files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

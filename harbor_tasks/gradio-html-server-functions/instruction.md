@@ -2,31 +2,38 @@
 
 ## Problem
 
-The gr.HTML component currently supports custom HTML templates with JavaScript interactivity via `js_on_load`, but it cannot directly call server-side Python functions from that JavaScript. Users need a way to expose specific Python functions to their custom HTML components so they can fetch data from the backend.
+The gr.HTML component needs to accept a list of Python functions that can be exposed to custom HTML components. Currently, there is no way to pass server-side functions to the HTML component.
 
 ## Expected Behavior
 
-Add a `server_functions` parameter to `gr.HTML` that accepts a list of Python functions. These functions should be callable from within the `js_on_load` script via a `server` object. For example:
+Add a `server_functions` parameter to `gr.HTML` that accepts a list of Python functions. The component should:
 
+1. Accept and store the `server_functions` parameter (defaulting to `None` when not provided)
+2. Include `server_functions` information when converted to a string representation - the output must contain the literal string "server_functions" and the function names (accessible via the function's `__name__` attribute) when functions are present
+
+For example, given:
 ```python
-def list_files(path):
-    return os.listdir(path)
+def my_server_func():
+    return "result"
 
-gr.HTML(
-    html_template="<div>...</div>",
-    js_on_load="""
-        const files = await server.list_files('/some/path');
-        // files contains the result from the Python function
-    """,
-    server_functions=[list_files],
-)
+html = gr.HTML(value="test", server_functions=[my_server_func])
 ```
+
+Converting the HTML object to a string (via `str(html)` or `print(html)`) should produce output that contains both:
+- The literal string "server_functions"
+- The function name "my_server_func"
 
 ## Files to Look At
 
 - `gradio/components/html.py` — The HTML component definition
-- `.agents/skills/gradio/SKILL.md` — Agent skill documentation (must be updated to reflect the new parameter)
+- `.agents/skills/gradio/SKILL.md` — Agent skill documentation (must be updated to reflect the new parameter in the HTML component section)
 
-## Additional Requirements
+## Documentation Requirements
 
-After implementing the code changes, update the `.agents/skills/gradio/SKILL.md` file to document the new `server_functions` parameter in the HTML component signature, consistent with the existing documentation style.
+When updating `.agents/skills/gradio/SKILL.md`, document the `server_functions` parameter within the HTML component signature section. The HTML component documentation section uses a header with the format:
+
+```
+### `HTML(`
+```
+
+Add the `server_functions` parameter to the documented signature within this section.

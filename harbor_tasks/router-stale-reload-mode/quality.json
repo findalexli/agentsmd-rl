@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics asserted by tests: file paths (route.ts, router.ts, load-matches.ts, index.ts, fileRoute.ts in react/solid/vue), exact type names (LoaderStaleReloadMode, RouteLoaderEntry, RouteLoaderObject, ResolveRouteLoaderFn), exact literal strings ('background' | 'blocking'), exact property names (defaultStaleReloadMode, staleReloadMode, shouldReloadInBackground), and the exact handler extraction pattern. The test names for behavior tests (object-form loader, backgrou"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact implementation pattern: 'typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler', the exact variable name 'shouldReloadInBackground', the exact condition 'prevMatch.status === \"success\" && shouldReloadInBackground', and exact type definitions. This is not describing what's broken but dictating the exact code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_load_matches_handles_object_loader assert the exact string 'typeof routeLoader === \\'function\\' ? routeLoader : routeLoader?.handler' via text search. test_load_matches_uses_should_reload_in_background asserts the exact variable name 'shouldReloadInBackground'. test_route_loader_object_type_exists asserts exact string 'staleReloadMode?: LoaderStaleReloadMode'. A correct alternative using different variable names (e.g., 'isBackgroundReload') or different handler extraction pattern"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many tests are purely text-based: test_types_exported, test_route_loader_object_type_exists, test_resolve_route_loader_fn_type_exists, test_loader_stale_reload_mode_type_defined, test_router_options_has_default_stale_reload_mode, test_load_matches_handles_object_loader, test_load_matches_uses_should_reload_in_background, test_load_matches_respects_stale_reload_mode, and test_fileroute_uses_route_loader_entry all just do `assert 'string' in open(path).read()`. While some tests (test_object_loader"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The behavioral tests (test_object_loader_handler_runs, test_background_stale_reload_default, test_blocking_stale_reload_loader_level, etc.) run repo tests that don't exist in the base commit - they look for specific test names like 'supports object-form loader handler'. These tests would fail because the test files don't exist, but they'd also fail for a stub. However, the text-matching tests (test_types_exported, etc.) could be passed by simply appending strings to files without any real implem"
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/router via solve.sh which downloads and applies the PR patch. The agent could read solve.sh or simply curl the patch URL (https://github.com/TanStack/router/pull/6921.patch) directly. The solution directory exists in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (types exported, object-form loader, blocking mode, background mode, router default, loader override, framework integration, TypeScript compilation) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped logically (type checks, file content checks, behavioral tests, build/lint tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces TypeScript code changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files (load-matches.ts, route.ts, router.ts, fileRoute.ts), exact variable names (shouldReloadInBackground), and exact code patterns ('typeof routeLoader === \"function\" ? routeLoader : routeLoader?.handler'). This goes far beyond describing the feature and into dictating the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

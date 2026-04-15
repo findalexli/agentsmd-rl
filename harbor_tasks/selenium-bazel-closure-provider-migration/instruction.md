@@ -1,31 +1,40 @@
-# Fix Bazel Starlark Provider Access
+# Fix Bazel Starlark Provider Migration for Bazel 7+ Compatibility
 
-The `javascript/private/header.bzl` file uses deprecated Bazel provider access patterns that are incompatible with Bazel 7+. The build fails with the legacy struct field access pattern.
+The repository uses deprecated Bazel provider access patterns that are incompatible with Bazel 7+. You need to migrate the code to use the modern Starlark provider API.
 
-## Problem
+## Background
 
-The file accesses the `closure_js_binary` provider using deprecated Bazel 6.x syntax:
-- It uses `getattr(d, "closure_js_binary", None)` to check for provider presence
-- It accesses `d.closure_js_binary.bin` to get the binary path
+In Bazel 6.x and earlier, providers could be accessed via struct field access on targets. In Bazel 7+, providers must be accessed using the modern provider symbol API:
+- Load the provider symbol from its defining module
+- Check for provider presence using: `ProviderSymbol in target`
+- Access provider fields using: `target[ProviderSymbol].field_name`
 
-This pattern was removed in Bazel 7. The modern Starlark API requires using the provider symbol directly.
+## Required Changes
 
-## What You Need to Do
+1. In `javascript/private/header.bzl`, add a load statement to import `ClosureJsBinaryInfo` from `@rules_closure//closure/private:defs.bzl`
 
-Update `javascript/private/header.bzl` to use the modern Starlark provider API:
+2. Find all locations that check for the Closure JS binary provider presence using legacy patterns and replace with the modern `in` check pattern
 
-1. Load the `ClosureJsBinaryInfo` provider from `@rules_closure//closure/private:defs.bzl`
-2. Replace the `getattr(d, "closure_js_binary", None)` check with the modern provider check pattern
-3. Replace `d.closure_js_binary.bin` with the modern provider access pattern
+3. Find all locations that access the `bin` field through legacy struct field access and replace with the modern bracket access pattern
 
-The file implements a `_closure_lang_file_impl` function that iterates over `ctx.attr.deps` and extracts binary information from dependencies that have the Closure JS binary provider.
+## Specific Requirements
 
-## Key Information
+After your changes, the file must contain ALL of the following patterns:
 
-- The `ClosureJsBinaryInfo` provider is defined in `@rules_closure//closure/private:defs.bzl`
-- In modern Starlark, providers are checked with `ProviderSymbol in target`
-- Provider fields are accessed with `target[ProviderSymbol].field_name`
+- The load statement: `load("@rules_closure//closure/private:defs.bzl", "ClosureJsBinaryInfo")`
+- The provider check pattern: `ClosureJsBinaryInfo in d`
+- The provider access pattern: `d[ClosureJsBinaryInfo].bin`
+- The binaries.update() call must use: `binaries.update({name: d[ClosureJsBinaryInfo].bin})`
 
-## Expected Outcome
+The variable `d` comes from the loop `for d in ctx.attr.deps:`. The provider check must be inside this loop.
 
-After the fix, the file should use modern provider patterns that are compatible with Bazel 7+ while maintaining the same functionality of collecting binary paths from dependencies.
+The file must NOT contain any of these deprecated patterns:
+- `getattr(d, "closure_js_binary", None)`
+- `d.closure_js_binary.bin`
+
+## Verification
+
+After making the changes, the Bazel build should pass:
+- `bazel build //javascript/private:all` should succeed
+- `bazel build //javascript/private:gen_file` should succeed
+- `bazel run //:buildifier -- -mode=check javascript/private/header.bzl` should pass

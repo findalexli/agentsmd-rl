@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all. Tests assert specific details like ':param name:' in the docstring, the file path 'src/requests/utils.py', the function signature 'def default_user_agent(name=\"python-requests\"):', and 'Example:' or 'library name and version' strings. None of these are discoverable from the empty instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely, so there is nothing to leak \u2014 but this also means there is no task description at all, which is a fundamental failure. The agent has zero guidance."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test checks for ':param name:' and either 'Example:' or 'library name and version' in the docstring. Multiple different docstring wordings could satisfy these flexible checks, so the test doesn't over-constrain to one specific gold solution."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass test (test_docstring_added_fail_to_pass) is purely text-based: it reads the file and checks for string patterns like ':param name:' and 'Example:' in the source text. While pass-to-pass tests do execute code (subprocess calls, imports), the core fail-to-pass test does not execute or call the function to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass test checks for ':param name:' and 'Example:' or 'library name and version' in the docstring. A stub or no-op wouldn't have these strings; the original function's docstring lacks them, so the test would fail without the actual change."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/requests/../solution/solve.sh (or a similar path). The agent could read /solution/solve.sh to find the exact patch. Additionally, the test fixture strings (':param name:', 'Example:', 'library name and version') are directly in test_outputs.py which might be accessible, allowing the agent to reverse-engineer the expected content."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing, so there is no explicitly required behavior to compare against tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with clear grouping (fail_to_pass vs pass_to_pass sections), descriptive names (test_docstring_added_fail_to_pass, test_repo_ruff_check_pass_to_pass, etc.), and comments separating sections."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves adding documentation to a Python function, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names in the test and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely \u2014 there's nothing to evaluate for hint leakage, but this is a fundamental task definition failure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/documentation edit task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

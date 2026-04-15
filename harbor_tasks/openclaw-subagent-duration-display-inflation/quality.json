@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (src/shared/subagents-format.ts, src/agents/subagent-control.ts, src/auto-reply/reply/commands-subagents/shared.ts), the function formatDurationCompact, the canonical implementation path src/infra/format-time/format-duration.ts, expected behaviors (formatDurationCompact(30_000) \u2192 '30s', formatDurationCompact(90_000) \u2192 '1m30s'), and the requirement that callers handle undefined. All test assertions reference specifics discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (duplicate formatter, lack of second-level granularity, callers not handling undefined) and mentions the canonical implementation exists, but does not prescribe the exact fix (e.g., doesn't say 'replace with re-export' or 'change line X to Y'). A developer still needs to decide HOW to fix it."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_no_duplicate_implementation asserts that if a local function formatDurationCompact exists in subagents-format.ts, its body must be \u226410 lines. This strongly constrains toward the gold solution's re-export approach. An alternative correct fix could rewrite the local function with proper second-level precision (which might exceed 10 body lines), and this would fail the test despite being a valid fix. Also test_callers_handle_undefined checks for the specific pattern 'formatDurationCompact(...)"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core tests (test_seconds_precision, test_minute_second_precision, test_hour_format, test_edge_cases_no_crash) actually evaluate the formatDurationCompact function via Node.js subprocess execution and check returned values. While some tests (test_callers_handle_undefined, test_no_duplicate_implementation) do text inspection, the primary behavioral tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_seconds_precision, test_minute_second_precision, test_callers_handle_undefined, test_no_duplicate_implementation) cannot be satisfied by stub implementations. test_seconds_precision explicitly asserts val != '1m' and checks for second-level precision. A stub returning a constant would fail these regex checks."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /solution/solve.sh in the container and contains the exact gold patch. An agent could read this file (cat /solution/solve.sh) and apply it directly. There's no evidence of measures preventing access to /solution/."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in the instruction are tested: second-level precision for sub-minute durations, combined minute+second format, callers handling undefined, and the duplicate implementation issue."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, section comments separating fail-to-pass from pass-to-pass categories, and clear grouping (behavioral tests, regression tests, repo CI tests)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task is about fixing a formatting function, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the canonical implementation file 'src/infra/format-time/format-duration.ts' and describes the exact bug mechanism ('dividing by 60,000 and then rounding up with Math.max(1, ...)'). It also lists other callers (bash-tools, sandbox-display, usage-render) and says there's a 'duplicate'. This effectively tells the agent to replace the local implementation with a re-export from the canonical path, which is the gold solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

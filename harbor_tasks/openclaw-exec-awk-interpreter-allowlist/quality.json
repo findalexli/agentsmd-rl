@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths like 'src/infra/exec-inline-eval.ts' and 'src/infra/exec-approvals-allowlist.ts' (in test_no_ts_nocheck, test_no_any_type_annotations, etc.), and function names like 'isInterpreterLikeAllowlistPattern' (test_allowlist_imports_interpreter_check). The instruction mentions some function names (detectInterpreterInlineEvalArgv, describeInterpreterInlineEval) and describes isInterpreterLikeAllowlistPattern implicitly via 'Allowlist filtering', but never explicitly n"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (awk-family programs not handled as interpreters) and the expected behavior, but does not specify exact code changes, line numbers, or specific implementation details like 'add X to line Y'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_allowlist_imports_interpreter_check asserts that the string 'isInterpreterLikeAllowlistPattern' must appear in 'src/infra/exec-approvals-allowlist.ts'. An alternative correct implementation could use a differently-named function or inline the check, and would fail this test. Similarly, tests assert the exact flag string '<program>' and exact description format '<variant> inline program', which constrains implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests actually import and call functions via tsx execution (detectInterpreterInlineEvalArgv, isInterpreterLikeAllowlistPattern, describeInterpreterInlineEval) and check return values. While test_allowlist_imports_interpreter_check and the code-quality tests do text-search, the core behavioral tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning None/null for _detect_inline would fail test_detect_awk_inline_positional (which asserts hit is not None). A stub returning False for _check_allowlist would fail test_allowlist_recognizes_awk (which asserts True). The fail-to-pass tests require non-trivial correct behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace with solve.sh containing the full git patch. An agent could read /workspace/openclaw or the solve.sh file (if accessible at /solution/solve.sh or similar path) and apply the patch directly. The Dockerfile does not remove the solution directory or restrict access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction's explicit requirements (inline program detection, interpreter recognition for awk/gawk/mawk/nawk, allowlist filtering, edge cases like -f, -F, --, and the return value schema) are all covered by corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with descriptive section comments (fail-to-pass core recognition, inline eval detection, integration wiring, pass-to-pass existing behavior, agent_config rules) and each test function has a clear docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the return value schema of detectInterpreterInlineEvalArgv with keys (executable, normalizedExecutable, flag, argv) and the format for describeInterpreterInlineEval. Tests verify these schema elements."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the domain and function interfaces but does not name specific buggy lines or files. It references function names that are part of the public API, which is appropriate for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

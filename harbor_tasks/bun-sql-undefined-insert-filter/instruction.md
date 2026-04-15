@@ -17,15 +17,33 @@ The `sql()` template tag helper in Bun's SQL module treats `undefined` values as
 - `undefined` values in single-object INSERTs should cause the column to be omitted entirely, letting the database use its DEFAULT value.
 - In bulk inserts, ALL items should be checked when determining which columns to include. A column should be included if ANY item has a defined value for it.
 - Items that have `undefined` for a column that other items defined should use `null` for that column's value in the VALUES clause.
-- If ALL values for ALL columns are `undefined`, throw a `SyntaxError`.
+- If ALL values for ALL columns are `undefined`, throw a `SyntaxError` with message `"Insert needs to have at least one column with a defined value"`.
 
-## Files to Look At
+## Implementation Requirements
 
-- `src/js/internal/sql/shared.ts` — shared SQL utilities; consider extracting common logic here
-- `src/js/internal/sql/sqlite.ts` — SQLite adapter's INSERT query builder
-- `src/js/internal/sql/mysql.ts` — MySQL adapter's INSERT query builder
-- `src/js/internal/sql/postgres.ts` — PostgreSQL adapter's INSERT query builder
+Create a shared function in `src/js/internal/sql/shared.ts` named `buildDefinedColumnsAndQuery` with the following signature:
 
-The undefined-to-NULL conversion happens in each adapter's INSERT handling code (look for `columnCount` and `binding_values.push` in the INSERT section).
+```typescript
+function buildDefinedColumnsAndQuery<T>(
+  columns: (keyof T)[],
+  items: T | T[],
+  escapeIdentifier: (name: string) => string,
+): { definedColumns: (keyof T)[]; columnsSql: string }
+```
 
-After fixing the code, update the project's testing documentation (`test/CLAUDE.md`) to add guidance about preferring `.toEqual` for asserting on nested/complex objects instead of many individual `.toBe` calls — this pattern comes up naturally when testing bulk SQL results.
+The function must:
+1. Return `definedColumns`: an array of column keys that have at least one defined (non-undefined) value across all items
+2. Return `columnsSql`: a SQL fragment string formatted as `("col1", "col2") VALUES` with column names escaped via `escapeIdentifier`
+3. For single items: include a column only if that item has a defined value for it
+4. For bulk inserts (array of items): include a column if ANY item has a defined value for it
+
+All three adapters must import and use this function:
+- `src/js/internal/sql/sqlite.ts` — must import `buildDefinedColumnsAndQuery` from `internal/sql/shared` and use `definedColumns` from its return value
+- `src/js/internal/sql/mysql.ts` — must import `buildDefinedColumnsAndQuery` from `internal/sql/shared` and use `definedColumns` from its return value
+- `src/js/internal/sql/postgres.ts` — must import `buildDefinedColumnsAndQuery` from `internal/sql/shared` and use `definedColumns` from its return value
+
+## Documentation Update
+
+After fixing the code, update `test/CLAUDE.md` to add guidance about preferring `.toEqual` for asserting on nested/complex objects instead of many individual `.toBe` calls. The guidance must include:
+- Mentions of "Nested" or "complex object" when discussing equality assertions
+- A `.toEqual(` usage example demonstrating the pattern

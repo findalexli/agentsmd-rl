@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:01:09.993359",
-  "total_time": 997.21,
-  "sandbox_id": "iiokkm7vb6tovbmfczy9h",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:23:40.181396",
+  "total_time": 957.83,
+  "sandbox_id": "icju158v4byvmy07yd68y",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,6 +35,28 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 176.31
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:147: test `test_allgather_size_guard_present` has 2 assert(s), all pas', 'A:[A] test_not_tautological @ tests/test_outputs.py:164: test `test_allgather_continue_present` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:294: test `test_allgather_copy_present` has 2 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:306: test `test_allgather_loop_structure` has 2 assert(s), all pass on', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.5,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 2,
+      "fail_count": 8
     }
   },
   "history": [
@@ -43,6 +67,14 @@
       "backend": "fireworks",
       "time": 997.21,
       "at": "2026-04-12T06:01:09.993359"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 957.83,
+      "at": "2026-04-15T05:23:40.181396"
     }
   ]
 }

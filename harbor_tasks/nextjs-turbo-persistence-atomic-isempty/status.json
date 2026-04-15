@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T00:41:35.321516",
-  "total_time": 1280.47,
-  "sandbox_id": "ixnv3012cohfdxb5a17qg",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:58:30.352991",
+  "total_time": 1642.51,
+  "sandbox_id": "iadb5w8zw191uc28ao30h",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -49,17 +51,30 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:200: test `test_struct_has_atomic_bool` only reads file text;', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:247: test `test_isempty_lock_free` only reads file text; invo', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:298: test `test_atomic_synced_on_mutation` only reads file te']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.24,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 11618.5,
-      "at": "2026-04-10T04:36:54.585850"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +106,14 @@
       "backend": "fireworks",
       "time": 1280.47,
       "at": "2026-04-12T00:41:35.321516"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1642.51,
+      "at": "2026-04-15T04:58:30.352991"
     }
   ]
 }

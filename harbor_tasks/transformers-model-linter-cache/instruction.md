@@ -10,18 +10,43 @@ The Makefile also has several legacy targets (`check-model-rules`, `check-model-
 
 ## What Needs to Change
 
-1. **Add a content-aware cache to the model linter** so that files whose content (and enabled rule set) have not changed since the last clean run are skipped automatically. The cache should be stored as a JSON file next to the script and should be invalidatable via a CLI flag.
+### 1. Add a content-aware cache to the model linter
 
-2. **Create a new `make typing` target** that runs only the type checker and model structure rules. Move type checking out of `make style` into this new target. Ensure `make check-repo` also runs the model linter (without the error-ignore prefix so violations are not silently swallowed).
+Add caching to `utils/check_modeling_structure.py` so that files whose content and enabled rule set have not changed since the last clean run are skipped automatically. The cache is a JSON file located alongside the script. Its schema is a flat dictionary mapping file-path strings to hash-digest strings, for example: `{"src/transformers/models/foo/modeling_foo.py": "a1b2c3...", ...}`. When the cache file is missing, it should be treated as an empty cache (all files are checked).
 
-3. **Remove the redundant Makefile targets** (`check-model-rules`, `check-model-rules-pr`, `check-model-rules-all`).
+Implement the following top-level helper functions in the script:
 
-4. **Update agent config files and documentation** to reference `make typing` instead of `make style` for type-checking workflows:
-   - `.ai/AGENTS.md`
-   - `.ai/skills/add-or-fix-type-checking/SKILL.md`
-   - `docs/source/en/pr_checks.md`
+- **`_content_hash(text: str, enabled_rules: set[str]) -> str`** — computes a deterministic hex digest (at least 32 hex characters) from the file text and the set of enabled rule IDs. The result must be sensitive to text changes and to rule-set changes, but **insensitive to the order of rules** (i.e., set semantics — `{"A","B"}` and `{"B","A"}` produce the same hash). Repeated calls with identical inputs must return the same value.
 
-5. **Add the cache file pattern to `.gitignore`** so the local cache is never committed.
+- **`_load_cache() -> dict[str, str]`** — reads and returns the JSON cache dictionary from disk. Returns `{}` when the cache file does not exist or cannot be parsed.
+
+- **`_save_cache(data: dict[str, str]) -> None`** — writes the cache dictionary to the JSON file on disk.
+
+The cache file path must be stored as a **module-level variable** whose value contains both `".json"` and `"cache"` (case-insensitive).
+
+Add a `--no-cache` CLI flag that bypasses the cache and re-checks every file. The `--help` output must mention this cache-related option. The existing `parse_args()` function must continue to support all of its current flags: `--list-rules`, `--no-progress`, `--changed-only`, and `--base-ref`.
+
+### 2. Create a new `make typing` target
+
+Create a Makefile target named `typing` that runs only the type checker (`python utils/check_types.py`) and the model structure linter (`python utils/check_modeling_structure.py`). Move the type-checker invocation out of `make style` so that `make style` handles only ruff formatting and linting.
+
+Ensure `make check-repo` also invokes `check_modeling_structure.py` **without** the Make `-\ ` error-ignore prefix (so that violations are not silently swallowed). Remove the old error-prefixed invocation of `check_modeling_structure.py` from `check-repo`.
+
+### 3. Remove the redundant Makefile targets
+
+Remove these legacy targets from the Makefile: `check-model-rules`, `check-model-rules-pr`, `check-model-rules-all`.
+
+### 4. Update agent config files and documentation
+
+Update the following files to reference `make typing` instead of `make style` for type-checking workflows:
+
+- `.ai/AGENTS.md` — must contain the string `make typing`
+- `.ai/skills/add-or-fix-type-checking/SKILL.md` — must contain the string `make typing`
+- `docs/source/en/pr_checks.md` — must document `make typing`
+
+### 5. Add the cache file to `.gitignore`
+
+Add an entry to `.gitignore` that excludes the model linter cache file. The entry should match a `.json` file containing `"cache"` in its name, or reference `check_modeling_structure` and `"cache"`.
 
 ## Relevant Files
 

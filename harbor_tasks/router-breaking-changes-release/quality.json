@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'const isBreaking' variable name (test_conventional_commit_regex_breaking), 'conventionalMatch[3]' and 'conventionalMatch[4]' exact group indices (test_conventional_commit_regex_breaking, test_regex_index_updated_for_message), exact string 'const bucket = isBreaking ? \"breaking\" : type' (test_bucket_logic_for_breaking_changes), 'groups[bucket]' (test_bucket_logic_for_breaking_changes). The instruction only describ"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'The regex for parsing needs to handle the `!` marker', mentions updating the regex to parse optional `!` before the colon, says to add a 'breaking' bucket, and instructs to look at 'type ordering/type labels arrays'. It also states the breaking changes section should appear first. This is very close to specifying the exact fix rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact implementation strings like 'const bucket = isBreaking ? \"breaking\" : type', 'const isBreaking', 'conventionalMatch[3]', 'conventionalMatch[4]', and 'groups[bucket]'. An alternative correct implementation using different variable names (e.g., 'isBreakingChange', 'category' instead of 'bucket') or different logic structure (e.g., if/else instead of ternary) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_type_labels_includes_breaking, test_bucket_logic_for_breaking_changes, and test_regex_index_updated_for_message all exclusively use string-in-file checks (assert 'X' in content). Only test_breaking_change_parsing_simulation actually executes code, but it runs a self-contained Node script unrelated to the actual modified file. The majority of f2p tests are pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The text-matching tests (test_conventional_commit_regex_breaking, test_bucket_logic_for_breaking_changes, etc.) can be trivially satisfied by adding dead-code comments containing the expected strings (e.g., '// const isBreaking = ...; const bucket = isBreaking ? \"breaking\" : type; groups[bucket]') without actually implementing the feature correctly."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/ directory exists in the container at /workspace, and solution/solve.sh contains the exact gold patch. An agent could read this file and apply it directly. Additionally, since most tests are text-matching, the agent could grep the test file for expected strings and insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction's four requirements (regex update, breaking changes section, section ordering, non-breaking categorization) are all tested: regex parsing, typeOrder/typeLabels inclusion, bucket logic, and the simulation test verifies non-breaking commits stay in their sections."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_conventional_commit_regex_breaking, test_type_order_includes_breaking, etc.) and have docstrings explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces release notes in markdown format, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the file to modify (scripts/create-github-release.mjs) and tells the agent to look at 'the conventional commit parsing logic and the type ordering/type labels arrays' and 'the regex for parsing'. This significantly narrows the localization effort."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a JavaScript script, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

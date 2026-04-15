@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all file paths (cli/src/utils/slash-commands.ts, cli/src/components/ChatView.tsx, cli/src/components/QuitCommand.test.tsx, cli/src/utils/slash-commands.test.ts), function names (createCliOnlySlashCommands, getStandaloneSlashCommandName, getStandaloneSlashCommandToExecute, filterCommands, handleCliOnlySlashCommand), variable names (exactMatches, prefixMatches, fuzzyFilter(remaining)), interface names (StandaloneSlashCommandExecutionInput), test description stri"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially dictates the exact implementation: specific function names (createCliOnlySlashCommands, getStandaloneSlashCommandName, getStandaloneSlashCommandToExecute), exact variable names (exactMatches, prefixMatches), exact code patterns (fuzzyFilter(remaining), useState<SlashCommandInfo[]>(() => createCliOnlySlashCommands())), interface names (StandaloneSlashCommandExecutionInput), and extracted function names (handleCliOnlySlashCommand). This leaves virtually no reasoning abo"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names 'exactMatches' and 'prefixMatches' in test_filter_commands_function_exists, exact pattern 'fuzzyFilter(remaining' via string matching, exact string 'useState<SlashCommandInfo[]>(() => createCliOnlySlashCommands())' in test_chatview_uses_new_utilities, and exact function name 'handleCliOnlySlashCommand'. An alternative correct fix using different variable names or a different filtering approach would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_filter_commands_function_exists, test_get_standalone_slash_command_name_exists, test_get_standalone_slash_command_to_execute_exists, test_create_cli_only_slash_commands_exists, test_slash_commands_test_file_exists, test_quit_command_test_file_updated, test_chatview_uses_new_utilities, test_slash_commands_utilities_exported) ALL use `assert 'string' in open(path).read()` pattern with no code execution. The p2p tests (test_cli_vitest_tests_pass etc.) do run subprocesses, but th"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All f2p tests check for string presence in source files. A stub file containing the right export signatures and variable names (e.g., 'export function createCliOnlySlashCommands() { return []; }') with the right string patterns would pass all f2p tests without implementing actual bug fix logic. The p2p test test_cli_vitest_tests_pass has escape hatches for module/import issues and 'no tests found'."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/cline accessible via solve.sh which downloads the PR patch. An agent could: (a) read /solution/solve.sh to find the PR URL and apply the patch directly, (b) examine the test file at tests/test_outputs.py to see exact string assertions and craft minimal files matching them, or (c) simply curl the PR patch from the URL in solve.sh."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (synchronous CLI command initialization, standalone detection, execution conditions, deterministic filtering, ChatView integration, test file creation/updates) are tested by the test suite through either string matching or subprocess execution."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (function existence checks, file content checks, subprocess execution tests), and clearly indicate what they verify (e.g., 'f2p' vs 'p2p' annotations)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces source code files, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, function names, and commands are consistently spelled throughout instruction.md and test files with no apparent typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: exact variable names (exactMatches, prefixMatches), exact code patterns ('fuzzyFilter(remaining'), exact useState initialization ('useState<SlashCommandInfo[]>(() => createCliOnlySlashCommands())'), and exact function names to extract (handleCliOnlySlashCommand). This goes far beyond describing what's broken and into prescribing exact code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

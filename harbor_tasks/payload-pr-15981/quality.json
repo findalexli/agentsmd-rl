@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific file path (packages/payload/src/collections/operations/update.ts), the condition to change (shouldSaveDraft || isTrashAttempt), the test collection path (test/trash/collections/Posts/index.ts), the config path (test/trash/config.ts), the types file (test/trash/payload-types.ts), field name (localizedField), localization config keys (localization:, locales:), and the exact string 'localizedField?: string | null'. All assert targets in the tests are discoverable "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'The corrected condition should read `shouldSaveDraft || isTrashAttempt`' \u2014 this is the exact fix, not just a description of what's broken. It tells the agent precisely what code to write."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_fix_applied asserts the exact string 'shouldSaveDraft || isTrashAttempt' in update.ts, and test_update_ts_context checks its position relative to 'versionsWhere'. An alternative correct fix (e.g., using a different variable name, restructuring the conditional, or extracting the logic into a helper function) would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_fix_applied, test_posts_collection_has_localized_field, test_trash_config_has_localization, test_payload_types_include_localized_field, test_update_ts_context) are ALL text-matching assertions using 'assert X in open(path).read()'. None of them import, call, or execute the code to verify actual behavior. The ESLint and unit test pass-to-pass tests do execute code, but the f2p tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests are string-presence checks in files. An agent can satisfy them by simply inserting the literal strings (e.g., adding 'shouldSaveDraft || isTrashAttempt' as a comment, or appending 'localizedField' text) without actually fixing the bug or understanding the logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/payload_repo (accessible via solve.sh path). The agent could read the solution patch or simply grep for the expected assertion strings ('shouldSaveDraft || isTrashAttempt', 'localizedField', etc.) from the test file. Since tests are purely text-matching, the agent can pass by inserting literal strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes a behavioral bug (localized field data lost when bulk-trashing drafts), but no test actually executes the bulk trash operation or checks that localized data is preserved. All tests only check for text patterns in source files."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_fix_applied, test_posts_collection_has_localized_field, etc.) with docstrings indicating fail-to-pass vs pass-to-pass, and grouped logically."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output (JSON/CSV/API/DB schema)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (packages/payload/src/collections/operations/update.ts), quotes the buggy condition, and states the exact fix ('The corrected condition should read `shouldSaveDraft || isTrashAttempt`'). This is full solution leakage, not just pointing to the relevant module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized, minimal changes: a one-line fix in update.ts, adding a field to Posts/index.ts, adding a localization block to config.ts, and updating payload-types.ts. None contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

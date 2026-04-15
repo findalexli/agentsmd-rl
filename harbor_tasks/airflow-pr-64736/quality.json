@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the component file path, the hooks (useDagRunServiceGetDagRun, useDagVersionServiceGetDagVersions), the URL params (dagId, runId), the data shape (dag_versions), the conditional logic (runId and runData), and the sorting requirement. All test assertions check for these named elements or behavioral outcomes derivable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the developer to 'destructure runId from useParams alongside the existing dagId', to 'Destructure its return as { data: runData }', to use the hook's 'enabled' option, and gives the exact conditional logic pattern 'When runId is defined and runData is available: use runData.dag_versions (sorted by version number descending)'. This is essentially a step-by-step implementation guide, not just a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_component_filters_versions_conditionally asserts the exact regex pattern 'runId\\s*!==\\s*undefined\\s*&&\\s*runData|runId\\s*&&\\s*runData' which requires the specific variable name 'runData' and exact conditional expression style. A correct alternative using e.g. 'dagRunData' or 'if (runId) { ... }' instead of a ternary would fail. test_component_extracts_runid_from_params also requires exact destructuring pattern 'const {.*runId.*} = useParams'."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_component_imports_dag_run_service, test_component_extracts_runid_from_params, and test_component_filters_versions_conditionally are purely text-based checks (regex/string matching on source code). While test_vitest_dagversionselect_filtering does execute the component, the majority of f2p tests are 'assert X in open(path).read()' style without execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The vitest test (test_vitest_dagversionselect_filtering) actually renders the component and checks that only 2 items appear when a DagRun is selected vs 3 when not. A stub/no-op implementation would show all 3 versions in both cases, failing the assertion for 2 items."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow's git history or as solve.sh in the container. The agent could read the test file at the written path (src/components/DagVersionSelect.test.tsx after it's created) or grep for the exact regex patterns used in the text-based tests to craft a matching solution without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: filtering versions when runId is present, showing all versions otherwise, TypeScript compilation, ESLint passing, Prettier formatting, and existing tests passing. All of these are covered by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_component_imports_dag_run_service, test_vitest_dagversionselect_filtering, etc.) with docstrings explaining what each verifies and whether it's a fail_to_pass or pass_to_pass check."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying a React component, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, API names, and commands in the instruction are all accurate and match the codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file ('airflow-core/src/airflow/ui/src/components/DagVersionSelect.tsx'), the exact variable names to use ('runData', 'runId'), and the exact hooks and their parameters. It even specifies 'use the hook's enabled option' and the sorting direction. This goes well beyond identifying the buggy area."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a TypeScript component, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

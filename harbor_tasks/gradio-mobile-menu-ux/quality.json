@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the file path (js/_website/src/lib/components/Header.svelte), the required overlay with fixed/absolute positioning, close button with aria-label containing 'close'/'dismiss', Search and ThemeToggle components appearing twice, decoupling of reactive state ($: show_nav = click_nav || $store), desktop elements (logo, /docs, /guides, Community), and navigation links. All test assertions map to behaviors described in the instruction. The test for anti-stub (line/element coun"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken and what the correct behavior should be (overlay, close button, dual components, decoupled state) but doesn't specify exact code changes, line numbers to modify, or specific implementation details like CSS class names to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for structural properties (overlay with fixed/absolute + full-screen classes, aria-label containing close/dismiss, component count >= 2, link count >= 2) rather than gold-specific implementation details. Multiple alternative implementations using different CSS classes (e.g., 'fixed inset-0' vs 'absolute top-0 left-0 w-full h-full') or different overlay structures would pass. The state decoupling test uses a flexible regex pattern rather than checking for specific variable names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests parse the Svelte file using the actual Svelte compiler (svelte.parse) via a Node subprocess, walking the AST to verify structural properties like overlay elements, component instances, and attribute values. The state decoupling test uses regex on the script block but checks for the absence of a specific reactive pattern. This is AST-based structural analysis, not simple string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The base commit file lacks the overlay, close button, dual Search/ThemeToggle, and has the coupled reactive statement. A stub or empty file would fail the anti-stub check (>100 lines, >15 elements), the overlay check, close button check, dual component check, and link count check. The original file also has the coupling pattern that test_state_decoupled catches."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace as solve.sh is applied there, and the gold patch content is in solution/solve.sh. An agent could potentially read /solution/solve.sh (if accessible in the container) to extract the exact patch. The Dockerfile doesn't show any mechanism to remove or protect the solution directory from the agent."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from the instruction are tested: (1) full-screen overlay (test_fullscreen_overlay), (2) accessible close button (test_close_button_accessible), (3) Search/ThemeToggle on mobile (test_search_and_theme_on_mobile), (4) state decoupling (test_state_decoupled), (5) desktop elements preserved (test_desktop_elements_preserved)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies. Tests are categorized by type (static, pr_diff)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying a Svelte UI component, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, component names (Search, ThemeToggle, Header.svelte), CSS class names, and attribute names are all correctly spelled throughout the instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (Header.svelte) which is appropriate for a single-component task. It mentions the reactive pattern conceptually ('$: show_nav = click_nav || $store') as a description of what's wrong, but doesn't specify exact line numbers or the exact fix. The file is already obvious from the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

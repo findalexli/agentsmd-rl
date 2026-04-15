@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the file path (crates/sui-core/src/authority.rs), the functions (dry_exec_transaction, simulate_transaction), the variable name pattern (is_gasless), the call to check_transaction_input, and the gasless detection logic. All test-asserted specifics like 'let is_gasless =', 'if is_gasless {', '!is_gasless', 'sui_transaction_checks::check_transaction_input(' are discoverable from the instruction's description of required behavior and implementation notes."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to use 'sui_transaction_checks::check_transaction_input' directly for gasless transactions, to use '!is_gasless' conditions, and to add gasless checks in two specific functions. It essentially prescribes the exact implementation approach rather than just describing the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: 'let is_gasless =' (exact variable name), 'if is_gasless {' (exact conditional syntax), '!is_gasless' (exact negation pattern), 'sui_transaction_checks::check_transaction_input(' (exact function call). An alternative correct fix using e.g. 'let gasless =' or 'if !needs_gas' or inlining the check without a variable would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All f2p tests (test_dry_exec_has_gasless_check, test_dry_exec_skips_mock_gas_for_gasless, test_simulate_skips_mock_gas_for_gasless, test_gasless_uses_check_transaction_input) are purely text-matching via grep or string-in-file checks. No test compiles the code, runs it, or verifies actual behavior. The pass-to-pass tests (rustfmt, license, git-checks) do execute subprocesses but don't test the fix behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub that simply adds 'let is_gasless = false; if is_gasless { sui_transaction_checks::check_transaction_input(); }' as dead code in both functions, plus '!is_gasless' in simulate_transaction, would pass all f2p tests without actually fixing the bug, since the tests only check for string presence."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/sui (solution/solve.sh is mounted or available in the container). The agent could read the gold patch from the solution directory, or simply grep the test file to discover the exact strings being asserted ('let is_gasless =', 'if is_gasless {', '!is_gasless', 'sui_transaction_checks::check_transaction_input(') and insert them as dead code."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires 'Preserve existing behavior: Non-gasless transactions with empty gas should continue to work as before (mock gas injection)' but no test verifies this. Also, no test verifies the actual runtime behavior of gasless transactions passing validation correctly."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings explaining what each verifies, and comments separating f2p tests from pass-to-pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies Rust source code and doesn't produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, variable names, or function references across instruction.md and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file to modify (crates/sui-core/src/authority.rs), the exact two functions (dry_exec_transaction, simulate_transaction), the exact condition to check ('transaction.gas().is_empty()'), and the exact replacement approach ('use sui_transaction_checks::check_transaction_input directly'). This goes well beyond identifying the module and essentially localizes and prescribes the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Rust source, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

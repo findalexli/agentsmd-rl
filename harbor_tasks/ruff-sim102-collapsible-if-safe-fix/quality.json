@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_preview_function_defined asserts the exact string 'is_collapsible_if_fix_safe_enabled' must exist in preview.rs. While instruction.md mentions preview.rs and 'preview-gated feature flags', it never names this specific function. A developer reading only instruction.md could reasonably choose a different function name (e.g., 'is_sim102_safe_fix_enabled'). Also, test_no_unwrap_or_panic checks preview.rs for unwrap/panic/unreachable patterns referencing AGENTS.md line 79, and test_rust_imports_"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the problem (fix is always Unsafe) and desired behavior (Safe in preview, Unsafe otherwise) but does not specify exact code changes, line numbers, or specific implementation details like function signatures."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_preview_function_defined requires the exact function name 'is_collapsible_if_fix_safe_enabled' in preview.rs. An alternative correct implementation using a different function name (e.g., 'is_sim102_fix_safe') or a different mechanism (e.g., inline check of settings.preview in collapsible_if.rs without a preview.rs function) would fail this test despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core behavioral tests (test_fix_safe_in_preview, test_fix_unsafe_without_preview, test_fix_safe_in_preview_varied_inputs) build the binary and run it as a subprocess, inspecting JSON output for actual fix applicability. While test_preview_function_defined and test_no_unwrap_or_panic are text-based, the majority of tests execute code and verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_fix_safe_in_preview asserts applicability == 'safe' with --preview. On the base commit, SIM102 always returns 'unsafe', so a stub/no-op would fail. test_preview_function_defined checks for a new function that doesn't exist on the base commit. These cannot be satisfied without implementing the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/ruff as solve.sh content is applied via the gold patch. The agent could potentially read /solution/solve.sh (if mounted) or examine the test file at tests/test_outputs.py to discover the exact function name 'is_collapsible_if_fix_safe_enabled' and other implementation details. No evidence of measures preventing access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors specified in instruction.md are tested: Safe in preview (test_fix_safe_in_preview), Unsafe without preview (test_fix_unsafe_without_preview), and preview function in preview.rs (test_preview_function_defined)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining each test's purpose and relationship to the PR."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output; it modifies Rust source code in a linter project."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the two files to modify (collapsible_if.rs and preview.rs), which is appropriate since they are the natural files for this change. It doesn't specify exact line numbers, function signatures, or implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Rust source files, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

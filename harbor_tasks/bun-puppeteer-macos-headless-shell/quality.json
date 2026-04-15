@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact file path (test/integration/next-pages/test/dev-server-puppeteer.ts), describes all five behavioral issues (headless mode, executablePath, chmod permissions, finite timeouts, retry delay), and mentions platform-awareness (macOS vs Linux). All test assertions map to behaviors described in the instruction. The specific variable name 'isMacOS' is not mentioned but is a natural implementation choice for 'platform-aware' logic."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fixes: 'headless mode should be made platform-aware so that macOS avoids the .app bundle entirely', 'executablePath behavior should be re-evaluated for correctness on macOS', 'downloaded browser binaries may lack execute permissions' (implying chmod), 'timeout and protocolTimeout are set to 0... should fail fast', 'delay between launch retries is only 1 second, which is insufficient'. These are not just descriptions of what's broken but prescriptions of what"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_macos_headless_shell_mode requires a variable named exactly 'isMacOS' (regex: r'const\\s+isMacOS\\s*='), test_executable_path_excluded_on_macos expects a specific spread expression pattern with executablePath, test_chmod_cached_binaries expects execSync calls with backtick template strings containing specific binary names. An alternative correct fix using different variable names (e.g., 'isDarwin') or different chmod approaches (e.g., fs.chmo"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Several tests use _run_node() to actually evaluate JavaScript expressions extracted from the source code, checking runtime behavior (e.g., test_macos_headless_shell_mode evaluates the headless expression with different isMacOS values, test_chmod_cached_binaries creates temp files and verifies chmod makes them executable). This goes beyond pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests verify specific behavioral properties that cannot be satisfied by stub/default implementations. For example, test_macos_headless_shell_mode requires evaluating to 'shell' on macOS and true on Linux, test_finite_timeouts requires timeout > 0, test_retry_delay_increased requires delay > 1000ms. The original code has headless:true, timeout:0, and 1000ms delay, so these would all fail without the fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun as a git repo where the agent operates, and solve.sh is at /solution/solve.sh in the container. An agent could read /solution/solve.sh (if accessible) or the test file at tests/test_outputs.py to extract exact expected patterns. The Dockerfile doesn't show any restriction preventing access to these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from instruction.md are tested: headless mode (test_macos_headless_shell_mode), executablePath exclusion on macOS (test_executable_path_excluded_on_macos), chmod permissions (test_chmod_cached_binaries), finite timeouts (test_finite_timeouts), and retry delay (test_retry_delay_increased). Pass-to-pass tests cover regression checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass (pr_diff) \u2014 core behavioral fixes' and 'Pass-to-pass (pr_diff) \u2014 regression checks'), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing a TypeScript test configuration file, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names only the relevant file (dev-server-puppeteer.ts), which is appropriate since there's only one file to edit. It doesn't specify exact line numbers or exact code changes, though it does describe the nature of the fixes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is a localized edit to a single file (dev-server-puppeteer.ts), modifying specific launch configuration options and adding chmod commands. It's not a full-file rewrite."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 3
+}

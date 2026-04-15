@@ -2,40 +2,33 @@
 
 ## Problem
 
-The `refreshObjects()` method in `UserDefinedSQLObjectsZooKeeperStorage` has a bug where it captures the `object_names` list and the `zookeeper` session handle **before** the retry loop. When a transient Keeper error occurs and the `ZooKeeperRetriesControl` triggers a retry:
+In `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`, the `refreshObjects()` method has a bug that causes crashes or inconsistent state when ZooKeeper sessions expire during retry attempts.
 
-1. The old ZooKeeper session may have expired
-2. The `object_names` list may be stale
-3. Watches are set on the expired session, not the fresh one
+### Symptom
 
-This can lead to crashes or inconsistent state when the system tries to use a stale ZooKeeper session.
+The method captures the ZooKeeper session handle and the list of object names *before* entering the retry loop. When a transient Keeper error triggers a retry:
 
-## Location
+- The ZooKeeper session may have expired between the first attempt and the retry
+- The cached object names list is stale
+- Watches set on the expired session are invalid for the new session
 
-**File**: `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`
+This means the retry operates on an expired session with stale data, leading to crashes or incorrect behavior.
 
-**Function**: `UserDefinedSQLObjectsZooKeeperStorage::refreshObjects()`
+## Expected behavior
 
-## What needs to change
+After the fix, the following should hold:
 
-The fix requires restructuring the retry logic so that:
+- Object names and watches must be fetched using a live ZooKeeper session, not one captured before retries began
+- When a retry occurs, a fresh ZooKeeper session should be obtained and used for all subsequent operations within the retry loop
+- `tryLoadObject()` calls within the retry loop should use the current (potentially refreshed) session handle, not the stale one originally passed to the method
 
-1. **Move `getObjectNamesAndSetWatch` inside the retry loop** - The object list must be re-fetched on each retry attempt to ensure watches are set on the live session.
+## Code context
 
-2. **Obtain a fresh ZooKeeper session on retry** - When a retry is triggered (detected via `retries_ctl.isRetry()`), get a fresh session handle via `zookeeper_getter.getZooKeeper()`.
+The `refreshObjects()` method in `UserDefinedSQLObjectsZooKeeperStorage` uses the following components:
 
-3. **Use the fresh session for all operations** - The `tryLoadObject()` calls inside the retry loop should use the current (potentially refreshed) session handle, not the original one passed to the function.
-
-## Key components
-
-- `zookeeper_getter` - A function object that returns a fresh ZooKeeper session
-- `retries_ctl` - The `ZooKeeperRetriesControl` object managing the retry loop
-- `getObjectNamesAndSetWatch()` - Must be called inside the retry loop
-- `tryLoadObject()` - Must use the current session handle
-
-## Hints
-
-- Look for the `retryLoop` lambda in the `refreshObjects` method
-- The `zookeeper_getter` is a member variable that can provide a fresh session
-- `retries_ctl.isRetry()` tells you if this is a retry attempt
-- You'll need to declare a `current_zookeeper` variable to hold the session handle
+- `ZooKeeperRetriesControl` with its `retryLoop()` method for retry management
+- A `zookeeper_getter` member that can provide fresh ZooKeeper sessions
+- `getObjectNamesAndSetWatch()` to fetch object names and register watches
+- `tryLoadObject()` to load individual UDF objects from ZooKeeper
+- `setAllObjects()` to update the stored objects
+- `LOG_DEBUG` for debug logging

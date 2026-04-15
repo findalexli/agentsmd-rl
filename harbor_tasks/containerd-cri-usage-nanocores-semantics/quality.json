@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_uint64Ptr_helper_exists expects a 'uint64Ptr' helper function; test_stats_collector_returns_pointer expects '&usageNanoCores' pattern; test_container_stats_nil_check expects variable named 'nanoUsage' with specific nil check pattern; test_error_returns_use_nil expects at least 2 occurrences of 'return nil, fmt.Errorf'. These specific variable names, helper function names, and exact patterns are not discoverab"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (return nil/unset instead of 0) and the scenarios, but does not specify exact code changes like 'change return type to *uint64' or 'add uint64Ptr helper'. A developer must still reason about the implementation approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_uint64Ptr_helper_exists requires a function named exactly 'uint64Ptr'; test_stats_collector_returns_pointer requires exactly '&usageNanoCores'; test_container_stats_nil_check requires variable named 'nanoUsage'; test_getUsageNanoCores_returns_pointer requires exact function signature pattern. An alternative correct fix (e.g., using a wrapper struct, different variable names, or inline pointer creation) would fail these regex-based tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail_to_pass tests (test_getUsageNanoCores_returns_pointer, test_nil_return_on_first_sample, test_nil_return_on_zero_or_negative_interval, test_nil_return_on_counter_backwards, test_container_stats_nil_check, test_sandbox_stats_nil_check, test_error_returns_use_nil, test_stats_collector_returns_pointer, test_test_expects_nil_for_first_sample) are purely regex-based text searches on source files with no code execution. Only test_unit_tests_pass and build/vet tests actually execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific patterns (e.g., *uint64 return type, nil returns, nil checks) that do not exist in the original codebase. A stub or no-op would not introduce these patterns into the source files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/containerd accessible in the container, and solve.sh is a shell script. An agent could read /solution/solve.sh or the git patch directly. Additionally, since tests are regex-based on source files, an agent could grep test_outputs.py for the exact regex patterns and make minimal textual changes to pass without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (first sample unset, zero/negative interval unset, backwards counter unset, distinguish zero from no-data) are tested, along with compilation, vet, and unit test requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_nil_return_on_first_sample, test_nil_return_on_counter_backwards, etc.), have docstrings explaining the scenario, and are annotated with fail_to_pass/pass_to_pass labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves Go source code changes, not structured data output like JSON/CSV/API."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, commands, and variable names in instruction.md and tests are all consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files (container_stats_list.go, sandbox_stats_linux.go, etc.) and the function GetUsageNanoCores, but these are the natural domain files. It doesn't specify exact line numbers or the precise code change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

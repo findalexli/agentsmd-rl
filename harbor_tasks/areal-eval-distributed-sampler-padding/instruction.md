@@ -1,4 +1,4 @@
-# Validation dataloader uses wrong sampler, causing biased evaluation metrics
+# Fix Validation DataLoader Padding Issue
 
 ## Bug Description
 
@@ -16,6 +16,14 @@ For **validation** dataloaders (i.e., when the config is a validation dataset co
 - **Not drop the last batch** — the sampler should use `drop_last=False`.
 
 Training dataloaders should continue to use the standard `DistributedSampler` with `drop_last=True` as before.
+
+## Implementation Requirements
+
+The solution must:
+- Create a sampler class named `EvalDistributedSampler` (subclass of `DistributedSampler`) that handles the no-padding behavior for validation
+- All parameters of `EvalDistributedSampler.__init__` must have explicit type annotations
+- `dataloader.py` must contain no `print()` statements (use `areal.utils.logging.getLogger()` for debugging)
+- `create_dataloader` must dispatch `EvalDistributedSampler` when given a `ValidDatasetConfig`
 
 ## Relevant Files
 

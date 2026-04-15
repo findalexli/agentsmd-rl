@@ -1,12 +1,12 @@
-# DISTINCT ON generates invalid SQL with NULL instead of wildcard
+# DISTINCT ON generates invalid SQL
 
 ## Problem
 
-When compiling PRQL queries that use `group ... (take 1)` targeting PostgreSQL, the generated SQL contains `DISTINCT ON (...) NULL` instead of `DISTINCT ON (...) *`. This produces incorrect SQL — PostgreSQL's `DISTINCT ON` clause requires a valid projection, and `NULL` as a column expression is semantically wrong here.
+When compiling PRQL queries that use `group ... (take 1)` targeting PostgreSQL, the generated SQL for `DISTINCT ON` is malformed. The `SELECT` list in the `DISTINCT ON` CTE produces a `NULL` expression instead of projecting columns from the source table.
 
 For example, this PRQL:
 
-```
+```prql
 prql target:sql.postgres
 
 from tab1
@@ -14,16 +14,22 @@ group col1 (take 1)
 derive {x = col1 + 1}
 ```
 
-Generates a CTE with `DISTINCT ON (col1) NULL` when it should produce `DISTINCT ON (col1) *`.
+Produces output containing `SELECT DISTINCT ON (col1) NULL` — the `NULL` is wrong because it should include all columns from `tab1`.
 
-The same issue occurs when `DISTINCT ON` is combined with `aggregate` — the projection in the CTE gets a `NULL` placeholder instead of a wildcard.
+The same issue occurs when `DISTINCT ON` is combined with `aggregate`:
+
+```prql
+prql target:sql.postgres
+
+from t1
+group {id, name} (take 1)
+aggregate {c = count this}
+```
+
+This also produces `NULL` in the `DISTINCT ON` projection instead of projecting all columns from `t1`.
 
 ## Expected Behavior
 
-The SQL generator should emit `*` (wildcard) instead of `NULL` in the `SELECT` list when the projection for a `DISTINCT ON` subquery is empty or contains only a `NULL` placeholder.
+For both query patterns above, the compiled SQL must produce valid `DISTINCT ON` CTEs where the `SELECT` list includes all source table columns (i.e., a full column projection). The `NULL` literal must not appear as the select-list expression in the `DISTINCT ON` clause.
 
-## Files to Look At
-
-- `prqlc/prqlc/src/sql/gen_query.rs` — the SQL code generation pipeline where `DISTINCT ON` and projections are assembled
-
-After fixing the code generation, update the project's `CLAUDE.md` to document the preferred testing approach for this kind of bug fix — the project currently lacks guidance on when contributors should write inline unit tests vs full integration tests.
+Fix the PRQL compiler so that `DISTINCT ON` SQL generation produces valid, semantically correct PostgreSQL output for these query patterns.

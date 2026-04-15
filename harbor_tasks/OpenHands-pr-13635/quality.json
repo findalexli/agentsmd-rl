@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is '(missing)' \u2014 it contains no content at all. Tests assert on specific file paths (e.g., 'frontend/src/components/features/sidebar/user-actions.tsx'), specific identifiers ('useShouldShowUserFeatures', 'UserContextMenu', 'menuResetCount', 'shouldShowUserActions', 'UserAvatar', 'useMe'), regex patterns, and structural requirements that are completely undiscoverable from an empty instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing entirely, so there's nothing to leak \u2014 but the absence of any instruction means the task is broken. The agent has zero guidance, making this rubric fail by default since the task cannot function as intended."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_use_should_show_user_features_hook_removed assert 'useShouldShowUserFeatures not in content', test_context_menu_always_rendered checks for specific regex 'r\"<UserContextMenu\\s+key=\\{menuResetCount\\}\"', and test_context_menu_div_always_present checks for exact string '\"opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto\"'. An alternative valid fix (e.g., using a different CSS strategy or restructuring the component differently) would fail these te"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_use_should_show_user_features_hook_removed, test_context_menu_always_rendered, test_context_menu_div_always_present, test_component_imports_clean) are all 'assert string in/not in open(path).read()' style checks \u2014 pure text matching with no code execution or behavioral verification. While some pass-to-pass tests do run subprocesses (build, lint, typecheck), the core f2p tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for removal of 'useShouldShowUserFeatures' and structural changes around UserContextMenu rendering. A stub/no-op wouldn't pass these since the original file contains the conditional pattern they check against."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace's solve.sh (solution/solve.sh), and the agent could read it. Additionally, the test file itself at tests/test_outputs.py contains the exact patterns being checked (e.g., the opacity class string, the regex patterns), which the agent could grep to construct a passing solution without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing, so there is no explicitly required behavior to test against."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_use_should_show_user_features_hook_removed, test_context_menu_always_rendered, etc.), docstrings, clear comments separating 'fail-to-pass' from 'pass-to-pass' sections, and a labeled section header for repo CI/CD checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a React component file, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the test and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "not_applicable",
+      "reason": "instruction.md is missing entirely, so there's nothing to evaluate for hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a React component, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 3,
+  "fail_count": 6
+}

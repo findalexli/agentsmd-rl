@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_deepequal_import_in_scripts asserts the exact string \"import { deepEqual } from '@tanstack/router-core'\"; (2) test_scripts_ast_usestore_has_deepequal asserts at least 2 occurrences of 'deepEqual,'; (3) test_headutils_ast_usestore_has_deepequal asserts at least 5 occurrences of 'deepEqual,'. The instruction mentions 'Find an existing equality function in @tanstack/router-core' but never names 'deepEqual' specifically, nor spe"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (unnecessary re-renders) and gives investigation steps but does not specify the exact fix. It hints at finding an equality function but doesn't say 'add deepEqual as third argument to useStore calls'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_deepequal_import_in_scripts checks for the exact string \"import { deepEqual } from '@tanstack/router-core'\" \u2014 an alternative correct fix that imports deepEqual differently (e.g., as part of a larger import statement, or via a re-export, or using a different but equivalent deep equality function) would fail. Similarly, tests count exact occurrences of 'deepEqual,' strings, which is implementation-specific."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_deepequal_import_in_scripts, test_deepequal_import_in_headutils, test_scripts_ast_usestore_has_deepequal, and test_headutils_ast_usestore_has_deepequal are purely text/string-matching checks (reading file content and counting substrings). While there are also compilation/unit test/lint tests, the fail-to-pass tests are entirely text-based assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (import checks and string counting) could be trivially satisfied by just adding the import statement and inserting 'deepEqual,' as comments or dead code without actually fixing the re-render behavior. No test actually verifies that re-renders are reduced."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/router's sibling path and solve.sh is in the container. The agent could read /solution/solve.sh to discover the exact patch. Also, the test fixture strings (like the exact import statement) are in test_outputs.py which could be read."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction asks to fix unnecessary re-renders by adding equality checks, run type checks, unit tests, and lint \u2014 all of which are tested. The core behavioral fix (reduced re-renders) isn't directly tested, but the instruction's verification steps are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'AST-based verification that useStore calls in Scripts.tsx have deepEqual argument') and logically grouped by file and verification type."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the affected files (Scripts.tsx, headContentUtils.tsx) which is appropriate since the task is about fixing those specific components. It doesn't specify exact lines or the exact function name 'deepEqual'."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

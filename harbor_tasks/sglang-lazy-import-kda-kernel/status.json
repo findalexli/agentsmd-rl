@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:56:41.880012",
-  "total_time": 1711.21,
-  "sandbox_id": "i52cblbbc5n4w9kht2bbj",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:14:19.872735",
+  "total_time": 2565.03,
+  "sandbox_id": "i226qm3x82qzhf875rkm1",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -57,17 +59,27 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:228: test `test_triton_import_still_toplevel` has 1 assert(s), all pas', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: numpy, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.29,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1187.78,
-      "at": "2026-04-09T14:47:58.933582"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -99,6 +111,14 @@
       "backend": "fireworks",
       "time": 1711.21,
       "at": "2026-04-12T03:56:41.880012"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2565.03,
+      "at": "2026-04-15T06:14:19.872735"
     }
   ]
 }

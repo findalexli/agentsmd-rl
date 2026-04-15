@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific patterns not fully discoverable from instruction.md. For example, test_header_footer_guard_exists checks for the exact regex `ItemsSource.IsHeader(position) || ItemsSource.IsFooter(position)` \u2014 the instruction never mentions `ItemsSource.IsHeader`/`ItemsSource.IsFooter` methods. test_guard_has_correct_comment checks for specific phrases like 'header index adjustment' and 'ArgumentOutOfRangeException' which are only partially mentioned. The copilot-instructions tests ch"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details: 'add a guard that skips header and footer ViewHolders before they enter the selection-tracking system; include a comment explaining why the guard is needed (mentioning that header/footer holders should not participate in selection, and that accessing them causes ArgumentOutOfRangeException)'. It also specifies exact content for copilot-instructions.md including specific bash commands (`git diff --name-only --diff-filter=U`, `head -1`, `LC"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_header_footer_guard_exists uses a strict regex pattern `if\\s*\\(\\s*ItemsSource\\.IsHeader\\(\\s*position\\s*\\)\\s*\\|\\|\\s*ItemsSource\\.IsFooter\\(\\s*position\\s*\\)\\s*\\)` that requires the exact expression form. An alternative correct fix (e.g., checking holder type via `is` pattern matching, or using a different API to determine header/footer status, or reversing the order to IsFooter || IsHeader) would fail this test."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_header_footer_guard_exists, test_guard_has_correct_comment) are pure text/regex searches on file content: `re.search(guard_pattern, content)`. They do not execute the code or verify behavior. test_adapter_compiles_with_fix does run a build, but the primary behavioral assertions are text-matching. The copilot-instructions tests are also pure text checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns (guard with IsHeader/IsFooter) and specific comments that don't exist in the base code. A stub or no-op implementation would not contain these patterns, so the tests would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/maui (the solve.sh is applied there), and the agent could read solution/solve.sh if it exists in the container. The Dockerfile doesn't remove the solution directory. Additionally, the exact regex patterns tested could be found by reading the test file at tests/test_outputs.py."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: the header/footer guard in the adapter (test_header_footer_guard_exists), the explanatory comment (test_guard_has_correct_comment), the copilot-instructions Code Review section (test_repo_copilot_instructions_exists), and compilation (test_adapter_compiles_with_fix)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, Fail-to-pass/pr_diff, Pass-to-pass/regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file to modify (`SelectableItemsViewAdapter.cs`) and specifies implementation details like 'add a guard that skips header and footer ViewHolders' and exact bash commands for copilot-instructions.md. While the file is somewhat obvious from the task domain, the level of specificity (exact guard logic, exact comment content, exact bash patterns) constitutes significant hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch for copilot-instructions.md appends content to the end of the file (localized addition), and the adapter change inserts a small guard block after line 29. Neither is a full-file rewrite."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

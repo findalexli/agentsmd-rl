@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:38:09.381952",
-  "total_time": 783.34,
-  "sandbox_id": "i7ofum4umesvrdr3lke2v",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:29:40.644929",
+  "total_time": 968.93,
+  "sandbox_id": "ipmjv9q4yzk99ec3hibl7",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -58,17 +60,29 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:472: test `test_trackio_config_post_init_validation` has 3 assert(s), ', 'A:[A] test_not_tautological @ tests/test_outputs.py:498: test `test_trackio_config_has_docstring` has 2 assert(s), all pas', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:17: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.58,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 394.34,
-      "at": "2026-04-09T22:05:42.850381"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -100,6 +114,14 @@
       "backend": "fireworks",
       "time": 783.34,
       "at": "2026-04-11T18:38:09.381952"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 968.93,
+      "at": "2026-04-15T03:29:40.644929"
     }
   ]
 }

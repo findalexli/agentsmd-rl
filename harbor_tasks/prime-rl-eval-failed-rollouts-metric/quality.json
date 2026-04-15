@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the metric key 'failed_rollouts', the format 'eval/{env_name}/failed_rollouts', the files eval_utils.py and vf_utils.py, the functions evaluate_env() and generate()/evaluate(), the 'N/M groups failed' log format, and the monitor.log() API with 'progress/ckpt_step' and 'step' keys. All test assertions (checking for 'fail' in key names, checking value=3 or 8, checking 'groups failed' in log warnings) are discoverable from these instruction details."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (missing failure tracking) and expected behavior (track failed_rollouts, log in all-fail case, aggregate warning) but does not specify exact code changes, line numbers to modify, or specific implementation approach like 'add total_inputs = len(...)' before the evaluate call."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for any key containing 'fail' (case-insensitive) with the correct integer value, not specifically 'failed_rollouts'. The aggregate warning test checks for the pattern 'N/M groups failed' which is explicitly specified in the instruction. Alternative implementations (different variable names, different placement) would pass as long as the metric value and log pattern are correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess execution (_run_py) to actually import and run the code with mocked dependencies, calling evaluate_env() via asyncio.run() and checking mock_monitor.log call arguments and mock_logger.warning calls. The test_syntax_check uses compile() which is also behavioral. These are not simple text/string searches on source files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The base code (before fix) would fail these tests: test_failed_rollouts_normal_metrics fails because no 'fail' key exists in metrics; test_failed_rollouts_all_fail fails because monitor.log is never called in the all-fail branch; test_generate_aggregate_failure_warning fails because no aggregate warning with 'groups failed' pattern is logged. A stub/no-op implementation cannot satisfy these."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace (the solve.sh writes to REPO='/workspace') and the gold patch is in solution/solve.sh. The Dockerfile doesn't remove the solution directory. An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to extract the exact expected behavior and fixture values. The agent could also grep for test expectations in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three explicit requirements from the instruction are tested: (1) failed_rollouts metric in normal case, (2) monitor.log called in all-fail case with failure count, (3) aggregate 'N/M groups failed' warning in generate(). The env-specific key format 'eval/{env_name}/failed_rollouts' is also tested in the all-fail case."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive names (test_failed_rollouts_normal_metrics, test_failed_rollouts_all_fail, test_generate_aggregate_failure_warning), detailed docstrings explaining scenarios and expected behavior, and comments marking them as [static] pass_to_pass or [pr_diff] fail_to_pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the metrics schema for monitor.log() calls: keys containing 'fail', the 'eval/{env_name}/failed_rollouts' format, and required standard keys 'progress/ckpt_step' and 'step'. This matches what the tests verify."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths (src/prime_rl/orchestrator/eval_utils.py, src/prime_rl/orchestrator/vf_utils.py), function names (evaluate_env, generate, evaluate), metric keys (failed_rollouts, eval/{env_name}/failed_rollouts), and other identifiers are all consistent between instruction and tests with no typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the files and functions to investigate (eval_utils.py evaluate_env(), vf_utils.py generate()/evaluate()) which is appropriate for a focused bug fix task. It does not specify exact line numbers or the precise code changes needed, leaving the agent to determine implementation details."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Python source files, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

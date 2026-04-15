@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all four file paths, the specific functions/classes (e.g., _compute_server_args, _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS, _get_metrics_router_addr, init_wandb_secondary, GenerateState, dp_rank_context), the key literals (enable_metrics, follow_bootstrap_room, round_robin, sglang_enable_metrics), and the contextmanager import. All test-asserted specifics are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fixes: 'setting enable_metrics=True in the server kwargs', 'enable_metrics key must be added to _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS', 'should use follow_bootstrap_room instead of round_robin', 'This guard should be removed', etc. These are not descriptions of broken behavior but prescriptions of exact code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use AST inspection to check for specific implementation details. For example, test_enable_metrics_in_server_kwargs checks for enable_metrics as a key in a dict literal with value True. test_prefill_load_balance_method checks for specific assignment patterns. An alternative correct fix (e.g., setting enable_metrics via a function call, or using a variable) would fail these AST-based tests even if functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all tests are static AST/text analysis: checking string presence in source code (e.g., 'sglang_enable_metrics not in body'), checking AST structure of dict literals, checking import statements as text. No test actually imports/calls the code, instantiates objects, or verifies runtime behavior. The only execution-based tests are ruff linting and a GAE subprocess test (pass_to_pass)."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for changes from the base commit state. A stub or no-op wouldn't pass because the base code contains the sglang_enable_metrics guard, lacks enable_metrics in kwargs, uses round_robin, and contains dp_rank_context. The agent must actively modify the code to pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it). An agent could read this file to obtain the exact patch. Additionally, test_outputs.py is at a predictable path and could be read to reverse-engineer exact requirements."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from the instruction are tested: enable_metrics in server kwargs, enable_metrics in allowlist, follow_bootstrap_room for prefill, removal of CLI flag gates in rollout.py and wandb_utils.py, and removal of dp_rank_context dead code including the contextmanager import."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (e.g., test_enable_metrics_in_server_kwargs, test_dp_rank_context_removed) and each has a docstring explaining what it checks. They are logically grouped by the file/feature they verify."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code modifications, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and CLI flag names in the instruction all match what appears in the tests and solution. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact variable names (_EXTERNAL_ENGINE_SKIP_CHECK_FIELDS), exact values to set (enable_metrics=True, follow_bootstrap_room), exact methods to remove (dp_rank_context), and exact imports to remove (from contextlib import contextmanager). This goes well beyond describing the bug domain and effectively specifies the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

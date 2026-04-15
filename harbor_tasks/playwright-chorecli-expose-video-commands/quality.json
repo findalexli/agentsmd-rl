@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (video.ts, tracing.ts, tools.ts, config.d.ts, program.ts, commands.ts, SKILL.md), variable names (videoStart, videoStop, startVideo, stopVideo), tool names (browser_start_video, browser_stop_video), capability names (devtools, tracing), command names (video-start, video-stop), the declareCommand pattern, commandsArray export, .includes('tracing') check, and --caps help text requirements. All specifics asserted in tests are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to change: 'replace tracing with devtools in the union type', 'program.ts must contain a check that looks for tracing using .includes(\"tracing\") and maps it to devtools', exact declareCommand patterns with specific toolName values, exact variable names for commandsArray. This is prescribing the fix, not just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable names 'videoStart' and 'videoStop' in commandsArray (test_video_commands_registered), exact string \"toolName: 'browser_start_video'\" with specific quoting, exact regex patterns for declareCommand structure. An alternative correct implementation using different variable names or string quoting would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are pure text/regex checks: test_video_tool_module_exists reads file and checks string presence, test_video_commands_registered uses regex on source text, test_devtools_capability_replaces_tracing inspects source strings, test_caps_cli_help_includes_devtools checks line content. No test actually imports, compiles, or executes the TypeScript code to verify runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty implementation would not pass: test_video_tool_module_exists requires video.ts to exist and contain specific strings, test_video_commands_registered requires specific declareCommand patterns in commands.ts, test_devtools_capability_replaces_tracing requires capability changes in tracing.ts. These cannot be satisfied by default/empty values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/playwright accessible to the agent via solve.sh content at a known path. The agent could also read the test file at tests/test_outputs.py to see exactly what strings/patterns are checked, then produce matching text without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: video.ts creation (test_video_tool_module_exists), terminal commands (test_video_commands_registered), capability rename (test_devtools_capability_replaces_tracing), CLI help (test_caps_cli_help_includes_devtools), backward compat (test_tracing_to_devtools_backward_compat), SKILL.md update (implied by truncated tests), tools.ts registration (implied)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-structured with descriptive function names (test_video_tool_module_exists, test_devtools_capability_replaces_tracing, etc.), docstrings explaining purpose, and comments grouping them into categories (Gates pass_to_pass, Fail-to-pass pr_diff)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, variable names, command names, and capability names in the instruction are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files, exact capability values to change, exact method patterns like '.includes(\"tracing\")', exact variable names for exports, and exact declareCommand patterns. This goes well beyond describing the problem domain and into specifying the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

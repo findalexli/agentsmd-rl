@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path, both function names, the `--pre` and `--exclude-newer` flags, `datetime.now().isoformat()`, `.extend()`, the console message text, and the `pre_release` field. All test-asserted specifics (function names, flag names, ISO timestamp format, pre_release True/False behavior) are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'use .extend() to add both --pre and --exclude-newer with the timestamp together', 'Add --exclude-newer flag followed by datetime.now().isoformat()', 'Import datetime from the datetime module', and 'Update the console print message to mention airflow and providers'. This is a step-by-step implementation guide, not a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: presence of '--pre' and '--exclude-newer' in the command list, ISO timestamp format via regex, and correct mocking of datetime.now(). Alternative implementations (e.g., using .append() twice instead of .extend(), different import styles) would still pass as long as the flags appear in the command."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import the module, create InstallationSpec objects, call the actual functions (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), capture executed commands via mocked run_command, and assert on the command contents. This is behavioral testing, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests assert that '--exclude-newer' appears in the command list and is followed by an ISO-format timestamp. A stub or no-op implementation would not add these flags, so the original buggy code (which only appends '--pre') would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/airflow and solve.sh is accessible in the container. An agent could read the gold patch from solution/solve.sh (or similar paths) to extract the exact fix. There are no apparent measures preventing access to solution files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: (1) import of datetime, (2) --exclude-newer with timestamp in both functions when pre_release=True, (3) correct console message mentioning 'airflow and providers', (4) no flags when pre_release=False. The console message test is present (test_console_message_mentions_providers in the truncated portion)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized in a class TestPreReleaseExcludeNewer with descriptive method names and docstrings (e.g., 'F2P:', 'P2P:' prefixes indicating test categories). The structure is clear and well-organized."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a Python script's behavior; it does not produce structured data like JSON/CSV/API/DB outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, flag names, and variable names in the instruction are all correct and match the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (scripts/in_container/install_airflow_and_providers.py), the exact two functions to modify, and gives precise implementation details including which method to use (.extend()), what to import (datetime from datetime), and exact flag strings. This goes beyond identifying the buggy file into specifying exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

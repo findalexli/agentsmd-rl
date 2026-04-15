@@ -27,25 +27,25 @@ console.log(`Leaked Script objects: ${after - before}`);
 
 The same leak occurs with `vm.compileFunction("return 1")` (leaks `FunctionExecutable` objects) and `new vm.SourceTextModule("export const a = 1;")` (leaks `NodeVMSourceTextModule` objects).
 
+## Implementation Requirements
+
+The fix must satisfy all of the following requirements:
+
+1. **Header includes**: The solution must include the JavaScriptCore weak reference headers:
+   - `#include <JavaScriptCore/Weak.h>`
+   - `#include <JavaScriptCore/WeakInlines.h>`
+
+2. **Owner reference type**: The member field storing the back-reference to the owner must use `Weak<SomeType>` instead of `Strong<SomeType>` to avoid creating a GC root that prevents collection.
+
+3. **Owner getter null check**: The `owner()` accessor must check whether the weak reference is still alive before returning it. If the referenced object has been collected, the getter must return a safe fallback value using one of:
+   - `jsUndefined()`
+   - `jsNull()`
+   - `JSValue()` (empty/undefined JSValue)
+
+4. **Owner setter guards**: When setting the owner via setter method or constructor, the code must verify the value is a valid GC cell before creating the weak reference. Use `isCell()` or `isObject()` checks on the `JSValue` before assignment to `Weak<>`.
+
+5. **Regression test**: Add a test that verifies `vm.Script`, `vm.compileFunction`, and `vm.SourceTextModule` objects are properly garbage-collected when no longer referenced.
+
 ## Where to look
 
-The issue is in `src/bun.js/bindings/NodeVMScriptFetcher.h`. The `NodeVMScriptFetcher` class holds a back-reference to the owning script/function/module wrapper. This back-reference creates an uncollectable reference cycle:
-
-```
-Script (JSCell)
-  -> m_source (SourceCode)
-  -> SourceProvider
-  -> SourceOrigin
-  -> RefPtr<NodeVMScriptFetcher>
-  -> back-reference to owner  <-- GC root, prevents collection
-  -> Script (cycle!)
-```
-
-The back-reference is keeping the owner alive as a GC root, but the owner simultaneously keeps the fetcher alive through the source code chain. Neither can ever be freed.
-
-## Requirements
-
-1. Break the reference cycle so that `vm.Script`, `vm.SourceTextModule`, and `vm.compileFunction` results are properly garbage-collected when no user code retains a reference.
-2. The `owner()` accessor must still return the correct value when the owner is reachable (e.g., during `import()` inside a running script).
-3. If the owner has already been collected, `owner()` should return a safe fallback value.
-4. Add a regression test that verifies the leak is fixed for `vm.Script`, `vm.compileFunction`, and `vm.SourceTextModule`.
+The leak is in the Bun JavaScriptCore bindings related to script fetching. Look for classes that extend `JSC::ScriptFetcher` and hold back-references to script/function/module wrapper objects. The problematic code creates uncollectable reference cycles between the fetcher and its owner.

@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T02:32:06.645552",
-  "total_time": 4130.13,
-  "sandbox_id": "i8mj2u8h3opq1apw9kxr1",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T03:47:31.950910",
+  "total_time": 1285.41,
+  "sandbox_id": "id97x5y5lnbw3223rjtko",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -41,17 +42,29 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.29,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:275: test `test_no_std_usage_near_fix` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:284: test `test_no_inline_import_near_fix` has 1 assert(s), all pass o']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.16,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 749.95,
-      "at": "2026-04-09T20:30:58.545105"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -83,6 +96,14 @@
       "backend": "fireworks",
       "time": 4130.13,
       "at": "2026-04-10T02:32:06.645552"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1285.41,
+      "at": "2026-04-15T03:47:31.950910"
     }
   ]
 }

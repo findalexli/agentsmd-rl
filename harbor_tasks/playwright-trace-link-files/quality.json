@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_cli_program_catches_errors asserts the exact string 'cliProgram().catch(logErrorAndExit)' \u2014 the function name 'logErrorAndExit' is never mentioned in instruction.md. test_opentrace_creates_link_file_for_trace_files relies on a '.link' file mechanism that is never described in the instruction. test_loadtrace_reads_link_file also depends on '.link' file indirection not mentioned in instruction.md. The instructi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states implementation details like 'The unzipProgress parameter should be optional' and 'should accept an optional traceFile parameter' \u2014 these directly prescribe the fix rather than just describing what's broken. However, the .link file mechanism is not leaked. The CLI fix ('catch errors from cliProgram()') is somewhat prescriptive but borderline. Overall the parameter changes are explicit solution specifications."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_cli_program_catches_errors asserts the exact string 'cliProgram().catch(logErrorAndExit)' \u2014 an alternative like wrapping in try/catch or using a different error handler name would fail. test_trace_loader_accepts_optional_tracefile checks for the exact string 'traceFile?:' in source code. test_trace_loader_optional_unzipprogress checks for 'unzipProgress?:'. These are implementation-specific assertions that reject valid alternatives (e.g., using a different parameter name or an options objec"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are pure text-matching: test_trace_loader_accepts_optional_tracefile asserts 'traceFile?:' in source text; test_trace_loader_optional_unzipprogress asserts 'unzipProgress?:' in source; test_cli_program_catches_errors asserts exact string in source. test_opentrace_creates_link_file_for_trace_files and test_loadtrace_reads_link_file run Node scripts but these scripts only simulate the expected logic \u2014 they don't actually import or call the real openTrace/loadTrace functions"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_opentrace_creates_link_file_for_trace_files and test_loadtrace_reads_link_file run standalone Node scripts that simulate the logic independently \u2014 they don't call the actual functions, so they pass regardless of whether the bug fix is actually implemented. The text-matching tests (traceFile?, unzipProgress?, cliProgram().catch) only require adding strings to source files, which a trivial stub in a comment would satisfy."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/playwright's git history or solve.sh. The agent could read solution/solve.sh (if accessible) or simply grep test_outputs.py for the exact strings being asserted ('traceFile?:', 'cliProgram().catch(logErrorAndExit)', etc.) and insert them into the source files. The test scripts for .link files don't even test real code, so the agent doesn't need to understand the bug at all."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction describes 5 behaviors. Behavior 1 (openTrace handles .trace files) is only tested via a simulated script, not the actual function. Behavior 5 (tracingStop validates traceLegend) is tested via text matching (the test is truncated but appears to check for 'if (!trace...' string). Real behavioral verification of these features is missing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (gates/pass_to_pass, fail-to-pass, regression), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names exact file paths and even specific function signatures to change (e.g., 'load() method in packages/playwright-core/src/utils/isomorphic/trace/traceLoader.ts', 'openTrace() in packages/playwright-core/src/tools/trace/traceUtils.ts', 'cliProgram() call in packages/playwright-core/src/cli/program.ts'). It also prescribes the exact fix for the optional parameters and CLI error handling."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

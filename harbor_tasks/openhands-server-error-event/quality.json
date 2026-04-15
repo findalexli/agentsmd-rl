@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific file paths (e.g., src/types/v1/core/events/conversation-state-event.ts, src/types/v1/type-guards.ts, src/contexts/conversation-websocket-context.tsx, src/types/v1/core/openhands-event.ts, src/mocks/mock-ws-helpers.ts, __tests__/conversation-websocket-handler.test.tsx), specific function names (isServerErrorEvent, isDisplayableErrorEvent, createMockServerErrorEvent), and specific literal strings (e.g., 'should update error message store on ServerErrorEvent'). The ins"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is expected (error banner, analytics, budget errors, clearing) without specifying exact code changes, line numbers, or specific implementation details like function names or file paths to modify."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact function names like 'isDisplayableErrorEvent' and 'isServerErrorEvent', exact file locations like 'src/types/v1/type-guards.ts', exact mock helper name 'createMockServerErrorEvent', and exact test description strings like 'should update error message store on ServerErrorEvent'. An alternative correct implementation (e.g., using a different guard name like 'isErrorEvent', putting the guard in a different file, or naming the mock differen"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail_to_pass tests (test_server_error_event_type_exists, test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists, test_websocket_context_uses_displayable_error, test_openhands_event_includes_server_error, test_mock_helper_includes_server_error, test_websocket_handler_tests_exist) are purely text-based: they read files and assert on string contents like 'assert \"ServerErrorEvent\" in content'. Only the pass_to_pass tests (typecheck, lint, build, vitest run) actua"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests only check for string presence in files. For example, test_server_error_event_type_exists just checks that 'ServerErrorEvent' appears in a file. An agent could add a comment containing the literal strings (e.g., '// ServerErrorEvent kind: \"ServerErrorEvent\" source: \"environment\" code: string detail: string') without implementing any actual functionality, and the text-matching tests would pass. The behavioral tests (vitest run) are pass_to_pass, not fail_to_pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/OpenHands with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover exactly what strings and file paths to target, then create stub files matching those patterns without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction mentions analytics/telemetry tracking and budget/credit error i18n handling as required behaviors, but no tests verify analytics tracking or i18n localized message substitution for budget/credit errors."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings that explain what each test verifies, including tags like (fail_to_pass) and (pass_to_pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the ServerErrorEvent schema with its four fields (kind, source, code, detail) and their types/values."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem and expected behavior without naming specific internal files, line numbers, or exact function names to create. It mentions ConversationErrorEvent as context but doesn't prescribe the exact implementation structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

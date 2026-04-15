@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific patterns like the exact SCOPE_EXIT body structure `SCOPE_EXIT(for (const auto & task : tasks) task->tryExecute(); for (const auto & task : tasks) task->wait(););` and a specific comment pattern `Ensure all already-scheduled tasks are drained.*exit path.*exception`. While instruction.md mentions using SCOPE_EXIT, tryExecute(), wait(), and adding a comment about exception safety, it does not specify the exact regex-matchable comment text or the exact loop structure (e.g."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'Add cleanup code after the task_size calculation (around line 553)', 'Ensure the cleanup runs on all exit paths using appropriate RAII mechanisms', 'Call tryExecute() and wait() on all tasks to ensure completion', and even specifies to use SCOPE_EXIT macro. This is essentially telling the agent exactly what code to write, not just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_scope_exit_added uses `full_pattern` regex that asserts the exact structure: `SCOPE_EXIT\\s*\\(\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s+:\\s+tasks\\)\\s+task->tryExecute\\(\\);\\s*for\\s*\\(const\\s+auto\\s+&\\s+task\\s+:\\s+tasks\\)\\s+task->wait\\(\\);\\s*\\);` \u2014 this rejects alternatives like using index-based loops, separate helper functions, try-catch with RAII wrapper, or even adding braces around the for loop bodies."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The primary fail-to-pass tests (test_scope_exit_added, test_fix_positioned_correctly, test_raii_cleanup) all use regex pattern matching on source file text content (`re.search(pattern, content)`). They never compile, execute, or test runtime behavior. test_file_compiles attempts a clang syntax check but the test comments acknowledge it will fail due to missing includes and only checks for specific error strings in stderr."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass since the tests check for specific code patterns (SCOPE_EXIT, tryExecute, wait, specific comment text) that don't exist in the original file. The agent must actually add the specific code to pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace solution/solve.sh in the container and contains the exact patch. An agent could read this file directly (`cat /workspace/solution/solve.sh` or similar) to discover the exact fix. The tests also contain the exact regex patterns the agent could grep for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: SCOPE_EXIT usage, tryExecute/wait calls, explanatory comment, correct positioning after task_size, RAII pattern, Allman brace style, and no sleep usage."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive function names (test_scope_exit_added, test_no_sleep_for_race_fix, test_allman_braces, etc.), docstrings explaining what each test verifies, and labels like 'Fail-to-pass' and 'Pass-to-pass'."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying C++ source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md specifies 'around line 553', names the exact function `deserializeBinaryBulkStatePrefix`, tells to add code 'immediately after' the `task_size` calculation, specifies using `SCOPE_EXIT` macro, and even lists the exact method calls (`tryExecute()` and `wait()`). This goes well beyond describing the bug and effectively prescribes the exact solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

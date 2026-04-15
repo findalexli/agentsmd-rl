@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (src/Controls/Maps/src/Controls.Maps.csproj, src/Controls/Maps/README.md), required literal strings (PackageReadmeFile, Microsoft.Maui.Controls.Maps, 'Maps and mapping support', UseMauiMaps, etc.), platform directories (net, net-android, net-ios, etc.), and structural requirements (PublicAPI files with #nullable enable headers). All test assertions map to content described in the instructions."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent to add PackageReadmeFile property, add a <None> item with Pack='true', specifies exact content requirements (e.g., must include 'dotnet add package Microsoft.Maui.Controls.Maps', must show 'UseMauiMaps()'), and tells them exactly which XML elements to add to the csproj. This is essentially a step-by-step implementation guide rather than a problem description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for presence of required content (strings like 'UseMauiMaps', 'MapClicked', links, minimum length) and XML structure, but don't assert exact line positions, specific variable names, or implementation details that would exclude valid alternatives. Different README wordings and csproj organizations would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests are overwhelmingly text/file-content checks: parsing XML with ET.parse, reading file contents with read_text(), checking string presence with 'in content', and verifying file existence. The README tests (test_readme_content_*, test_readme_documentation_link, etc.) are purely 'assert X in open(path).read()' style checks. No code is imported, compiled, or executed to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (README creation, PackageReadmeFile addition to csproj) cannot be satisfied without actually creating the README file and modifying the csproj. A stub/empty file would fail the 500-character minimum, content checks, and XML structure requirements."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/maui's solve.sh path referenced in the container. The agent could read /solution/solve.sh (or the test file at tests/test_outputs.py) to see exactly what strings and structures are checked, then produce matching output without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: README length (500+ chars), installation instructions, UseMauiMaps, feature coverage (pin/polygon/polyline/circle/MapClicked/MapType/IsShowingUser), code examples, documentation link, markdown structure, csproj metadata preservation, PackageReadmeFile declaration, and None item with Pack=true."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear naming (test_readme_exists, test_readme_content_*, test_csproj_*), grouped by category (gates, repo CI gates, fail-to-pass), and include docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a markdown README and XML csproj modifications, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact XML elements to add (PackageReadmeFile, <None> with Pack='true'), the exact file path for the README, and detailed content requirements. For a task where the agent should figure out what to change, this provides too much implementation detail."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is localized: adding a PackageReadmeFile property and a None item to the existing csproj, plus creating a new README file. It doesn't rewrite the entire csproj or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 4
+}

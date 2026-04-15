@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T05:38:08.977179",
-  "total_time": 1373.89,
-  "sandbox_id": "ih8y849u7oew5tj9ztyuo",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:20:02.416558",
+  "total_time": 1132.76,
+  "sandbox_id": "iqr4t1mg227ynd0u9xonp",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -71,17 +73,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:399: test `test_evaluate_delegates_to_generate` has 2 assert(s), all p', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: numpy, pandas, pyyaml, pytest, pytest-json-ctrf', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 27.11,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 200.28,
-      "at": "2026-04-09T15:01:11.757378"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -113,6 +126,14 @@
       "backend": "fireworks",
       "time": 1373.89,
       "at": "2026-04-12T05:38:08.977179"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1132.76,
+      "at": "2026-04-15T05:20:02.416558"
     }
   ]
 }

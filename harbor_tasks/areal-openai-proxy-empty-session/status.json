@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:27:44.254769",
-  "total_time": 1131.04,
-  "sandbox_id": "i0741dfh8xazuixyg3357",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:26:52.780508",
+  "total_time": 801.73,
+  "sandbox_id": "i5nwrhlqnkmj9gtpstuoe",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -51,6 +53,24 @@
       "notes": "Re-validated: Docker build OK, NOP test reward=0 (2 fail-to-pass tests correctly fail), Gold test reward=1 (19 tests pass), Rubric judge=0.0 (expected for task validation).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "validated_at": "2026-04-12T00:00:00"
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.41,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:346: test `test_no_print_in_arun_episode` has 2 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:359: test `test_no_gpu_cpu_sync_in_arun_episode` has 2 assert(s), all ', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pyyaml, aiohttp, pytest, pytest-json-ctrf']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.31,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 2
     }
   },
   "history": [
@@ -69,6 +89,14 @@
       "backend": "fireworks",
       "time": 1131.04,
       "at": "2026-04-11T18:27:44.254769"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 801.73,
+      "at": "2026-04-15T03:26:52.780508"
     }
   ]
 }

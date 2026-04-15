@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: the function name `coin_deny_list_v2_party_owner_test`, the file paths `per_epoch_config_stress_tests.rs` and `party_objects_tests.rs`, the guard pattern `has_mainnet_protocol_config_override`, the exact import statements, the error kind `AddressDeniedForCoin`, `DENY_ADDRESS`, and all method names like `deny_list_v2_add`, `trigger_reconfiguration`, `public_party_transfer`, `execute_transaction_may_fail`, `effects.status().is_err()`. All asserted sp"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies the exact import lines to add (e.g., `use move_core_types::language_storage::{StructTag, TypeTag};`, `use sui_types::execution_status::ExecutionErrorKind;`, `use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID};`), the exact guard pattern to remove, the exact function name for the new test, and the exact sequence of calls and assertions. This effectively tells the agent WHAT to change rather than just describing the proble"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact import line strings like `use move_core_types::language_storage::{StructTag, TypeTag};` and `use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID};`. An alternative correct solution could order these differently (e.g., separate import lines, different grouping) and still compile but fail the text-matching tests. Also `effects.status().is_err()` is checked as a literal string match, but an equivalent expression like `!effects.status().is_ok()"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many tests are pure text matching (e.g., `test_new_deny_list_test_exists` checks `'async fn coin_deny_list_v2_party_owner_test()' in content`, `test_imports_added_to_stress_tests` checks exact import strings, `test_new_test_has_proper_test_structure` checks string presence). While `test_cargo_check_passes`, `test_rustfmt_check`, `test_cargo_clippy_e2e_tests` execute subprocesses, the majority of f2p tests are string-in-file checks with no execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests cannot be satisfied by a stub/no-op. The cargo check test verifies compilation, and the text-matching tests require specific new code to be present. Removing the mainnet guards and adding a new test function with specific structure is non-trivial and cannot be done with default returns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh and /solution/apply_patch.py in the container. An agent could read these files directly (e.g., `cat /solution/apply_patch.py`) to discover the exact patch and apply it. There are no apparent restrictions preventing the agent from accessing /solution/."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: removal of mainnet guards from the listed functions, addition of the new test with proper structure, required imports, compilation, formatting, and linting."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names like `test_mainnet_protocol_config_guards_removed_from_party_tests`, `test_new_test_has_proper_test_structure`, `test_imports_added_to_stress_tests`, clearly indicating what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code changes to Rust test files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact import lines to write, the exact guard pattern to remove (`if sui_simulator::has_mainnet_protocol_config_override() { return; }`), and the exact function name and internal structure of the new test. This goes beyond describing the problem and effectively provides the solution."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task involving Rust test files, not configuration edits."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

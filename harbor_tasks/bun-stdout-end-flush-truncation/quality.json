@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_final_sync_flush/test_final_async_flush/test_final_error_propagation extract the _final function body using regex and test it via a Node.js helper that looks for `this[closureVar]` patterns and uses `makeContext` with a sink object. The instruction mentions sink.flush() and _final-like behavior but doesn't specify the exact pattern `_final = function(cb) {...}` that tests regex-match against. Also, test"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction's 'Expected Behavior' section essentially describes the exact implementation: (1) call sink.flush(), (2) handle sync completion with cb(null/undefined), (3) detect async via $isPromise, (4) propagate errors to cb, (5) use .$call/.$apply. Combined with pointing to kWriteStreamFastPath and the specific file, this is a step-by-step recipe for the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use regex `_final\\s*=\\s*(?:async\\s+)?function\\s*\\(\\w+\\)\\s*\\{` to find the function, then extract and eval its body. An alternative correct fix that implements _final as an arrow function, uses a different assignment pattern (e.g., Object.defineProperty), or names it differently would fail the regex match and thus fail all f2p tests. Also, the helper's `this[closureVar]` detection pattern is specific to the gold solution's use of `this[kFastPath]`."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_final_sync_flush, test_final_async_flush, test_final_error_propagation) extract the _final function, eval it, and actually execute it with mock sink objects to verify behavioral outcomes (callback called with correct args, async waiting, error propagation). test_existing_stream_setup is text-based but is a pass_to_pass regression test. The majority of testing is behavioral."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub _final that does nothing or just calls cb() without flushing would fail test_final_async_flush (which checks cb isn't called before promise resolves) and test_final_error_propagation (which checks error is passed to cb). These tests require genuine flush logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun's git history context and solve.sh is at /solution/solve.sh. An agent could read /solution/solve.sh to get the exact patch. The Dockerfile doesn't remove /solution/ directory and no measures prevent reading it."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behavioral requirements from instruction.md (sync flush, async flush with Promise detection, error propagation to callback) are tested in the f2p tests. The $isPromise requirement is implicitly tested via async flush test."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail_to_pass, pass_to_pass, repo_ci), descriptive function names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves fixing a stream implementation bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly names the exact file (`src/js/builtins/ProcessObjectInternals.ts`), the exact mechanism (`kWriteStreamFastPath`), and tells the agent to look for `internal/fs/streams` module usage. Combined with the step-by-step expected behavior, this localizes the fix precisely rather than letting the agent discover it."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

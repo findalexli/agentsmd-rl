@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T06:22:26.136510",
-  "total_time": 1565.04,
-  "sandbox_id": "iojf6d8za1fkzthg8bqet",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:36:06.284805",
+  "total_time": 1987.19,
+  "sandbox_id": "i39fsdku5t8opsk7pegvk",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,30 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:125: test `test_resolve_handles_package_scope` has 2 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:152: test `test_edge_carries_dep_extras` has 2 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:213: test `test_dep_extras_fed_into_conflict_map` has 2 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:335: test `test_no_bare_unwrap_in_resolve` has 2 assert(s), all pass o']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.01,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "validation",
-      "time": 6000,
-      "at": "2026-04-09T21:00:00"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +106,14 @@
       "backend": "fireworks",
       "time": 1565.04,
       "at": "2026-04-12T06:22:26.136510"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1987.19,
+      "at": "2026-04-15T06:36:06.284805"
     }
   ]
 }

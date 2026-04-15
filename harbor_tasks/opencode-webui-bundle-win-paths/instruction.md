@@ -2,24 +2,29 @@
 
 ## Summary
 
-The `createEmbeddedWebUIBundle` function in `packages/opencode/script/build.ts` generates JavaScript import statements for all files in the web UI dist directory. On Windows, this produces broken import paths because:
+The opencode project has a build script that generates a TypeScript module string by scanning the web UI dist directory. The generated module contains import statements and a default export mapping file paths to imported modules. On Windows, this produces broken output because:
 
-1. `Bun.Glob.scan()` returns paths with backslash separators (`assets\style.css`) on Windows, and these are used directly as export keys without normalization.
-2. The import specifiers are constructed using `path.join()` which produces absolute paths with backslashes on Windows (e.g., `C:\Users\...\app\dist\index.html`). JavaScript import specifiers must use forward slashes and should be relative paths.
+1. File paths from the glob scan may contain backslash separators (`\`), and these are used directly as export keys without normalization to forward slashes (`/`).
+2. Import specifiers are constructed as absolute OS paths. JavaScript import specifiers must use forward slashes and should be relative paths (starting with `./` or `../`).
 3. The generated file list order is non-deterministic across runs.
-
-## Relevant Code
-
-Look at the `createEmbeddedWebUIBundle` async function in `packages/opencode/script/build.ts` (around line 68). It scans the `../../app/dist` directory and generates a TypeScript module string with import statements and a default export mapping filenames to imported file handles.
 
 ## Expected Behavior
 
-- All file paths in the generated module (both import specifiers and export keys) should use forward slashes regardless of platform.
-- Import specifiers should be relative paths (starting with `./` or `../`), not absolute paths.
-- The file list should be sorted for deterministic output across builds.
+Fix the function that generates the embedded web UI bundle module string so the output satisfies all of the following:
 
-## Hints
+- **Forward slashes**: All file paths in the generated module (both import specifiers and export keys) must use forward slashes (`/`) regardless of platform. The source code must contain explicit backslash-to-forward-slash normalization logic in the function body. Acceptable normalization approaches include: using `replaceAll` or `replace` with backslash target patterns, using `split("\\").join(...)`, using `path.posix` utilities, replacing `path.sep`, or defining a dedicated normalization helper function (e.g., named `toForwardSlash`, `normalizePath`, or `normalizeSlash`).
+- **Relative import specifiers**: Import specifiers must be relative paths starting with `./` or `../`, not absolute paths.
+- **Sorted output**: The file list must be sorted alphabetically for deterministic output across builds.
+- **All files present**: All scanned dist files must appear in the generated module output.
+- **Valid module structure**: The output must have `import` statements, `export default`, and a `type: "file"` annotation.
 
-- The `dir` variable (defined earlier in the file as the package root) is available and useful for computing relative paths.
-- Consider `path.relative()` for generating relative import specifiers.
-- `JSON.stringify()` is safer than manual quoting for import specifier strings.
+## Coding Style Requirements
+
+The project has an `AGENTS.md` file at the repo root with coding style conventions. Your fix must comply with the following rules from `AGENTS.md`:
+
+- **const only** (line 70): Use only `const` for variable declarations. Do not use `let` or `var`.
+- **No imperative loops** (line 17): Do not use `for` or `while` loops. Use functional array methods like `map`, `filter`, `flatMap`, or `reduce` instead.
+- **No `any` type** (line 13): Do not use the `any` type annotation (no `: any`, `as any`, or `<any>`).
+- **No try/catch** (line 12): Do not use try/catch blocks.
+- **No `else` statements** (line 84): Do not use `else`. Prefer early returns.
+- **Use Bun.Glob** (line 15): Use `Bun.Glob` for file scanning. Prefer Bun APIs over the native `fs` module.

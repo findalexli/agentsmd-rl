@@ -20,11 +20,18 @@ The MySQL protocol implementation lives in:
 - `src/sql/mysql/MySQLStatement.zig` — Statement-level logic including duplicate field detection
 - `src/sql/mysql/MySQLConnection.zig` — Connection-level result set and statement handling
 
-## Where to Look
+## Required Behavior
 
-Focus on the `deinit()` functions and any code path that reassigns heap-allocated fields. The `ColumnDefinition41` struct has several `Data` fields and a `name_or_index` field (a `ColumnIdentifier`) — all of which hold heap-allocated copies. The `PreparedStatement.Execute` struct manages a dynamically allocated parameter array.
+The fix should prevent RSS growth during repeated query execution. To achieve this:
 
-Check whether all heap allocations are properly freed:
-1. In cleanup/teardown paths (`deinit`)
-2. Before reassignment (when a field is overwritten with a new value, the old value must be freed first)
-3. When ownership is transferred or a sentinel value replaces owned data
+1. **ColumnDefinition41.zig**: The `ColumnDefinition41` struct contains several `Data` fields (`catalog`, `schema`, `table`, `org_table`, `name`, `org_name`) and a `name_or_index` field (of type `ColumnIdentifier`). All owned heap memory must be freed when `deinit()` is called. Additionally, when `decodeInternal()` assigns a new value to `name_or_index`, any previously owned memory must be freed first.
+
+2. **PreparedStatement.zig**: The `Execute` struct has a `deinit()` method and a `params` field (a slice). The `params` slice array itself must be freed (not just the individual items within it).
+
+3. **MySQLStatement.zig**: In `checkForDuplicateFields()`, when a column's `name_or_index` field is overwritten, any previously owned memory must be freed before the assignment.
+
+4. **MySQLConnection.zig**: `ColumnDefinition41` arrays allocated with `bun.default_allocator.alloc()` must be properly initialized before use to prevent undefined behavior with partially-initialized structures.
+
+## Verification
+
+After 5,000 queries on a 50-column table, RSS should remain stable instead of growing by ~17 MB. All heap allocations should have corresponding deallocation during cleanup.

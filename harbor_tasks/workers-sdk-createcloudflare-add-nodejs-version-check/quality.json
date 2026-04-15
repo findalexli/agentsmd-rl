@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes creating a bin shim at bin/ directory, checking Node version, printing error with 'requires at least', mentioning user's version, suggesting version managers (Volta, nvm), exiting non-zero, updating package.json bin/files/engines, and updating AGENTS.md. All test assertions (file path bin/c3.js, 'requires at least' string, user version in stderr, volta/nvm/fnm suggestions, non-zero exit, AGENTS.md content about bin shim, package.json fields) are discoverable from the in"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to build (a version-checking bin shim) and references a pattern to follow (wrangler's bin/wrangler.js), but does not specify exact code, line numbers, or the specific implementation details like the semiver function. The developer still needs to reason about how to implement the version comparison and error messaging."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: non-zero exit code, 'requires at least' substring in stderr (case-insensitive), user version string present, version manager names (volta/nvm/fnm - any one suffices). Alternative implementations using different semver comparison methods, different error message formats (as long as they contain the required substrings), or different file structures within bin/ would all pass. The tests don't assert on specific variable names, helper functions, or implementation "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests execute the bin shim via subprocess with mocked Node.js versions and check exit codes and stderr output. The pass-to-pass tests run actual build, typecheck, test, and lint commands. While some tests (AGENTS.md, package.json) do check file content, the core behavioral tests actually execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub bin/c3.js that is empty or just does nothing would fail test_bin_shim_rejects_old_node (needs non-zero exit and specific error message). A stub that always exits with error would fail test_bin_shim_passes_current_node. The tests require actual version-checking logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/workers-sdk as solve.sh could potentially be accessible. More critically, the test file at tests/test_outputs.py contains all the exact strings being checked ('requires at least', version manager names, file paths) and the agent could read it to reverse-engineer exact requirements. The Dockerfile doesn't appear to remove or protect the /solution/ directory if it's bind-mounted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) version check - tested by test_bin_shim_rejects_old_node, (2) clear error with minimum version - tested by 'requires at least' check, (3) user's current version in message - tested by test_bin_shim_error_mentions_user_version, (4) suggest version managers - tested by test_bin_shim_suggests_version_manager, (5) non-zero exit - tested, (6) no error on valid Node - tested by test_bin_shim_passes_current_node, (7) package.json updates - tested by config tests, (8) AGENT"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config_edit), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces a CLI bin shim and config changes, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions files to look at (package.json, AGENTS.md, wrangler.js reference) which are appropriate for the task domain. It doesn't specify exact line numbers or exact code to write. The guidance about where to add the shim and what to update is architectural direction, not implementation leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md and package.json changes in the gold solution are localized edits (a few lines each), not full-file rewrites, and they don't contradict other tier-1 files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

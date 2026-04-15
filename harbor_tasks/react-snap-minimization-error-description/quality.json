@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific generator function names (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties), the exact AST property path 'description: detail.description', the exact type annotation pattern 'TSPropertySignature' with key 'description' appearing at least twice, and registration in 'simplificationStrategies' array. While the instruction mentions these generator names and the description field, it doesn't mention the exact AST-level checks (e.g., TSPropertyS"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states what to change: add 'description' as 'string | null' to CompileErrors and error.details types, preserve description in error mapping, compare description in errorsMatch, and add three specific generator functions (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties). This is essentially a complete specification of the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_new_generators_defined requires exact function names 'removeFunctionParameters', 'removeArrayPatternElements', 'removeObjectPatternProperties' as generator functions. test_error_mapping_copies_description checks for the exact AST pattern 'description: detail.description' (ObjectProperty with specific key/value names). test_description_in_error_types counts TSPropertySignature nodes named 'description' requiring >= 2. An alternative corre"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are textual/AST inspection rather than behavioral. test_description_in_error_types parses the source and counts TSPropertySignature nodes. test_error_mapping_copies_description parses the AST looking for a specific object property pattern. test_new_generators_defined and test_new_strategies_registered parse the AST for function declarations. Only test_errorsMatch_rejects_different_descriptions actually executes the function. The build/lint tests execute but are pass_to_pass tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (errorsMatch behavioral test, description type check, error mapping check, generators check, strategies registration) cannot be satisfied by stub implementations since they check for specific code structures and behavioral outcomes that don't exist in the original code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/react (same container) as solve.sh is copied there. The agent could read the solution directory if it exists. Also, since tests mostly do AST inspection of the source file, an agent could grep the test file to discover exactly what patterns are expected (e.g., 'detail.description', specific generator names) and produce them without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (description in error types, description in error extraction, description in errorsMatch comparison, three new generator strategies) are tested by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings (e.g., test_errorsMatch_rejects_different_descriptions, test_description_in_error_types) and clearly grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names the exact file (compiler/packages/snap/src/minimize.ts), the exact function (errorsMatch), exact type names (CompileErrors, error.details), exact field names (description: string | null), and exact new function names (removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties). This goes well beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

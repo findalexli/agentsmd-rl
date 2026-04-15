@@ -2,54 +2,39 @@
 
 ## Problem
 
-The `move-core-types` crate contains several `simple_deserialize` methods that are no longer needed. These methods were previously used but have been superseded by `BoundedVisitor::deserialize_value`. This task involves removing these unused methods.
+The `move-core-types` crate contains deprecated `simple_deserialize` methods that are no longer needed. These methods were previously used but have been superseded by `BoundedVisitor::deserialize_value`. The code using `BoundedVisitor::deserialize_value` (in `event.rs`) was already fixed in a previous PR. The remaining unused methods should now be removed.
 
-## Important Note
+After these methods are removed, the `move-core-types` crate should compile cleanly with `cargo check`, `cargo build`, `cargo clippy`, and `cargo test`.
 
-The `crates/sui-analytics-indexer/src/handlers/tables/event.rs` file **already uses** `BoundedVisitor::deserialize_value` at the base commit (it was fixed in a previous PR). You do NOT need to modify this file - it's already in the correct state.
+## What to Remove
 
-Your task is to remove the now-unused methods from the following files.
+The `simple_deserialize` method appears in several `impl` blocks in two files. These deprecated methods should be removed:
 
-## Files to Modify
+**In `external-crates/move/crates/move-core-types/src/annotated_value.rs`:**
+- `MoveValue::simple_deserialize` method
+- `MoveStruct::simple_deserialize` method
+- `MoveVariant::simple_deserialize` method
 
-### Primary Files
+**In `external-crates/move/crates/move-core-types/src/runtime_value.rs`:**
+- `MoveStruct::simple_deserialize` method
+- `MoveVariant::simple_deserialize` method
 
-1. **`external-crates/move/crates/move-core-types/src/annotated_value.rs`**
-   - Remove `MoveValue::simple_deserialize` method (lines ~184-187)
-   - Remove `MoveStruct::simple_deserialize` method (lines ~268-271)
-   - Remove `MoveVariant::simple_deserialize` method (lines ~324-326)
-   - Remove the `use anyhow::Result as AResult;` import (it should be unused after removing these methods)
-   - Remove the TODO comment about "annotated-visitor" if present
+The import `use anyhow::Result as AResult;` in `annotated_value.rs` should also be removed, as it was only used by these methods and will become unused after their removal.
 
-2. **`external-crates/move/crates/move-core-types/src/runtime_value.rs`**
-   - Remove `MoveStruct::simple_deserialize` method
-   - Remove `MoveVariant::simple_deserialize` method
+## Files You Should NOT Modify
 
-### Test File
-
-3. **`external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs`**
-   - The tests already use a helper function `deser_annotated_value` instead of the removed methods (this is already fixed at base)
-
-## What the Methods Look Like
-
-The methods to remove follow this pattern:
-
-```rust
-/// TODO (annotated-visitor): Port legacy uses of this method to `BoundedVisitor`.
-pub fn simple_deserialize(blob: &[u8], ty: &SomeLayoutType) -> AResult<Self> {
-    Ok(bcs::from_bytes_seed(ty, blob)?)
-}
-```
+- `crates/sui-analytics-indexer/src/handlers/tables/event.rs` — This file already uses `BoundedVisitor::deserialize_value` and is already correct at the base commit.
 
 ## Verification
 
 After making these changes:
 - `cargo check` in `external-crates/move/crates/move-core-types/` should pass
 - `cargo check --tests` in the same directory should pass
-- The `anyhow::Result as AResult` import should be removed (it becomes unused)
+- `cargo clippy -p move-core-types --all-targets` should pass
+- `cargo test -p move-core-types --lib` should pass
+- `cargo build -p move-core-types --all-targets` should pass
 
 ## Important Notes
 
-- Do NOT just add `#[allow(dead_code)]` or suppress warnings - actually remove the unused code
-- Do NOT modify `event.rs` - it's already correct at base commit
-- The TODO comments mentioning "annotated-visitor" should be removed along with the methods
+- Do NOT just add `#[allow(dead_code)]` or suppress warnings — actually remove the unused code
+- Do NOT modify `event.rs` — it's already correct at base commit

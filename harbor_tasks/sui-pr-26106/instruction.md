@@ -1,47 +1,31 @@
-# Task: Fix sui-framework UPDATE Build Order
+# Fix sui-framework UPDATE Build Order
 
 ## Problem
 
-When running the `build-system-packages` test with `UPDATE=1`, the current implementation **deletes the existing compiled packages, docs, and API files BEFORE the build runs**. If the build fails, these files are lost and the user has to regenerate them from scratch or restore from git.
+When running tests with `UPDATE=1`, the current implementation deletes existing compiled packages, docs, and API files **before** the build runs. If the build fails, these files are permanently lost.
 
-This is particularly frustrating during development when builds frequently fail due to compilation errors.
+## Expected Behavior
 
-## Current Behavior (Bug)
+Files should only be deleted **after** a successful build. If the build fails, the original files must remain intact.
 
-In `crates/sui-framework/tests/build-system-packages.rs`, when `UPDATE=1` is set:
+## File to Modify
 
-1. The code deletes `packages_compiled/`, `docs/`, and `published_api.txt` from the crate root
-2. Then it runs the build
-3. If the build fails, the deleted files are gone
+`crates/sui-framework/tests/build-system-packages.rs` — the `build_system_packages` async test function
 
-## Expected Behavior (Fix)
+## Constants Used
 
-The build should:
+The test uses these constants (defined in the file):
+- `CRATE_ROOT` — crate root path
+- `COMPILED_PACKAGES_DIR` — compiled packages directory name
+- `DOCS_DIR` — docs directory name
+- `PUBLISHED_API_FILE` — published API file name
 
-1. **Always build to a temporary directory first** (`tempdir.path()`)
-2. Run the full build process
-3. **Only after successful build**, delete the old files and copy the new ones from tempdir
-4. Include safety checks like verifying paths exist before attempting deletion
+## Verification
 
-## Key Changes Required
+After the fix:
+1. `cargo check -p sui-framework --tests` should pass
+2. When `UPDATE=1` is set, the build completes to a temporary directory first, then files are safely updated
 
-The `build_system_packages()` async test function needs restructuring:
+## Hint
 
-1. Change `out_dir` to **always** use `tempdir.path()` (remove the conditional)
-2. Move the file deletion logic to **after** the `build_packages().await` call
-3. Add existence checks before deletion (`if p.exists()`)
-4. After deletion, copy the newly built files from tempdir to crate root using `fs_extra::dir::copy`
-
-## Files to Modify
-
-- `crates/sui-framework/tests/build-system-packages.rs`
-
-## Testing
-
-The fix can be verified by:
-1. Running `cargo check -p sui-framework --tests` to ensure compilation passes
-2. The key behavioral change is the order: build completes first, then files are deleted/copied
-
-## Reference
-
-Look for the `UPDATE` environment variable handling in the `build_system_packages` test function. The current logic deletes files at the start when `UPDATE` is set - this needs to move to after the build succeeds.
+The build should always output to a temporary directory. After a successful build, the old files are replaced with the newly built ones. Replacement should use safe operations (e.g., only overwrite after verifying existence).

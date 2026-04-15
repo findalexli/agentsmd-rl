@@ -2,27 +2,36 @@
 
 ## Problem
 
-The account module in `packages/opencode/src/account/` uses loose typing throughout — raw strings for tokens and IDs, `Schema.Struct` for API response types, and plain numbers for time-based fields. The service and repo layers use older Effect patterns (`Layer.succeed`, inline service shapes, `ServiceMap.Service.Shape`) instead of the modern Effect conventions.
+The account module in `packages/opencode/src/account/` has several type-safety and architectural issues:
 
-This makes the code harder to maintain and less type-safe. Domain identifiers like account IDs, access tokens, and device codes are all typed as `string`, losing the benefit of Effect's branded types.
+1. **Missing branded types**: While `AccessToken` and `AccountID` already use branded types, other domain identifiers — `RefreshToken`, `DeviceCode`, and `UserCode` — are typed as raw `string`. The module needs branded types for these, defined via `Schema.brand` with `withStatics` to provide a `make` constructor.
 
-## Expected Behavior
+2. **Unstructured API types**: Complex API response types (token refresh, device auth, user info, etc.) throughout the module are built with `Schema.Struct`, which doesn't provide class-based instances or methods. The module should use `Schema.Class` for these structured data types — enough to cover all the API response shapes (at least 5 class definitions). After refactoring, no `Schema.Struct` usage should remain in the service layer.
 
-Refactor the account module to use proper Effect patterns:
+3. **Untyped time fields**: The `Login` schema uses `Schema.Number` for time-based fields like expiration and polling intervals. These should be `Schema.Duration` fields for proper temporal type safety.
 
-1. **Branded types**: Create branded schemas for domain identifiers (`RefreshToken`, `DeviceCode`, `UserCode`) alongside the existing `AccessToken` and `AccountID` — using `Schema.brand` with `withStatics` for a `make` constructor
-2. **Schema.Class**: Replace `Schema.Struct` usage in `service.ts` with `Schema.Class` for structured data types (token refresh, device auth, user, etc.)
-3. **Duration fields**: Replace raw `Schema.Number` time fields in the `Login` schema with `Schema.Duration`
-4. **Layer.effect pattern**: Convert `AccountRepo` from `Layer.succeed` to `Layer.effect` with `Effect.gen` and `AccountRepo.of({...})` — also add an `AccountRepo.Service` namespace
-5. **Extract helpers**: Factor out shared HTTP helpers like `fetchOrgs` and `fetchUser` in the service layer
+4. **Simplistic service registration**: The `AccountRepo` is registered via `Layer.succeed`, which bypasses Effect's dependency injection. The expected pattern uses `Layer.effect` with `Effect.gen`, constructs the service via `AccountRepo.of({...})`, and exports `namespace AccountRepo` with a `Service` type for proper Effect service definitions.
 
-After updating the code, add an Effect guide section to `packages/opencode/AGENTS.md` that documents the patterns used in this refactor so future contributors follow the same conventions. The guide should cover schemas, services, errors, effects, and time patterns.
+5. **Duplicated HTTP logic**: The service layer has repeated HTTP fetch patterns. Shared logic for fetching org and user data should be extracted into `fetchOrgs` and `fetchUser` helpers.
 
-## Files to Look At
+## Documentation
 
-- `packages/opencode/src/account/schema.ts` — Schema definitions: branded types, Login class, error types
-- `packages/opencode/src/account/service.ts` — Service layer: HTTP handling, token refresh, device auth flow
-- `packages/opencode/src/account/repo.ts` — Repository layer: database operations, service registration
-- `packages/opencode/src/account/account.sql.ts` — Drizzle table definitions with typed columns
-- `packages/opencode/src/account/index.ts` — Public API surface
-- `packages/opencode/AGENTS.md` — Add Effect guide documenting the patterns used here
+The `packages/opencode/AGENTS.md` file should include an "Effect guide" section documenting the patterns used in this codebase. The guide must cover:
+- **Schema patterns**: including `Schema.brand` for branded single-value types (the guide should use the term "branded" in this context)
+- **Service patterns**
+- **Error patterns**
+
+## Files
+
+The relevant source files are in `packages/opencode/src/account/`:
+- `schema.ts` — schema definitions
+- `service.ts` — service layer, HTTP handling
+- `repo.ts` — repository layer, database operations
+- `account.sql.ts` — Drizzle table definitions
+- `index.ts` — public API surface
+
+Also update `packages/opencode/AGENTS.md` with the Effect guide.
+
+## Verification
+
+All existing unit tests and TypeScript type-checking must pass after the refactoring.

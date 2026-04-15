@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (openhands/server/routes/git.py), the two endpoints, the Sphinx `.. deprecated::` directive format, and the exact deprecation text strings ('The microagents UI has already been removed' and 'and is not supported in V1'). The test checks for `deprecated=True` in decorators, which is the standard FastAPI way to mark endpoints as deprecated \u2014 the instruction says 'Mark both endpoints as deprecated so they appear as deprecated when inspecting the FastAPI app or viewing"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what should be done (mark endpoints as deprecated, add Sphinx directives with specific text) but doesn't specify exact line numbers, exact code snippets, or exact placement. A developer still needs to figure out the specific decorator keyword and docstring formatting."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use AST parsing to check for `deprecated=True` specifically in the `@app.get` decorator's keyword arguments. An alternative correct fix like using FastAPI's `Depends` with a deprecation warning, using a custom decorator wrapper, or setting `deprecated=True` via a route configuration dict would fail. However, the main concern is the docstring checks: tests assert exact substrings 'microagents UI has already been removed' and 'not supported in V1' and '.. deprecated::'. While these are s"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The tests primarily use AST parsing to check for the presence of specific strings in docstrings (`'.. deprecated::' in docstring`, `'microagents UI has already been removed' in docstring`) and specific keyword arguments in decorators. They never actually import the FastAPI app, instantiate routes, or call endpoints. The `test_repo_ruff_lint` and `test_repo_py_compile` tests do execute subprocesses, but the core deprecation tests are essentially structural/textual checks via AST, not behavioral v"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_repo_ruff_lint, test_repo_py_compile, test_functions_exist, test_file_syntax_valid) verify that existing functionality still works. A stub implementation would not have the existing function definitions, so test_functions_exist would fail. The f2p tests serve their purpose of ensuring the file remains valid."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/openhands and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch. Additionally, the test file at tests/test_outputs.py reveals exactly what's checked (deprecated=True keyword, exact docstring substrings), so grepping for expected fixture values is trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) marking both endpoints as deprecated in API/OpenAPI docs \u2014 tested via deprecated=True checks; (2) adding Sphinx deprecated directives with specific text \u2014 tested via docstring checks. All explicit requirements are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_microagents_endpoint_deprecated_flag, test_microagents_content_endpoint_docstring_deprecated, etc.), have docstrings, use helper functions, and are logically grouped with a clear comment separating pass-to-pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task doesn't produce structured data output; it modifies API endpoint decorators and docstrings."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file to modify (openhands/server/routes/git.py) which is appropriate since the task domain is about specific API endpoints. It doesn't specify exact line numbers or exact code changes \u2014 just the behavioral outcome and text requirements."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Python source, not a configuration file edit."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

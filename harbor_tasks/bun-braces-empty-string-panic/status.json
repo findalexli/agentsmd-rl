@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-10T02:28:20.538412",
-  "total_time": 3904.0,
-  "sandbox_id": "i09allteqa3d1ekaf5c4l",
-  "backend": "fireworks",
-  "pipeline": "agents",
-  "rubric_icr": 0.5,
+  "validated_at": "2026-04-15T03:39:39.453807",
+  "total_time": 1389.83,
+  "sandbox_id": "imu93w1trqc2jvgp1edi4",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -47,17 +48,30 @@
       "backend": "fireworks",
       "time": 54.6,
       "notes": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:23: test `test_flatten_tokens_has_empty_guard` has 1 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:41: test `test_advance_has_underflow_guard` has 1 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:217: test `test_regression_test_added` has 1 assert(s), all pass on a ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.2,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 100.0,
-      "at": "2026-04-10T00:00:00.000000"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +103,14 @@
       "backend": "fireworks",
       "time": 3904.0,
       "at": "2026-04-10T02:28:20.538412"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1389.83,
+      "at": "2026-04-15T03:39:39.453807"
     }
   ]
 }

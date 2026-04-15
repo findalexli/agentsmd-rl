@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (command.ts, commands.ts, helpGenerator.ts, program.ts, SKILL.md, session-management.md), the specific command renames (session-list->list, session-close-all->close-all, session-kill-all->kill-all), the -b flag alias, the Category rename from 'session' to 'browsers', the 'Browser' vs 'Session' terminology change, and the [open]/[closed] vs [running]/[stopped] status markers. All test assertions map to these explicitly described requirements."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (new command names, -b flag, terminology changes) but does not specify exact line numbers, code snippets to insert, or implementation details like how the -b flag normalization block should work internally."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_b_flag_alias extracts an `if (args.b) { ... }` block via regex from program.ts and executes it, requiring a very specific implementation pattern (args.b check, setting args.session, deleting args.b). An alternative correct implementation using, e.g., a different argument parsing library, a mapping object, or integrating the alias via command-line parser options rather than manual normalization would fail this test. Similarly, test_status_markers_open_closed checks for exact string literals "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests (test_command_names_renamed, test_category_renamed_to_browsers, test_program_switch_uses_new_names, test_user_messages_say_browser, test_status_markers_open_closed, test_session_mgmt_md_heading_updated, test_skill_md_uses_new_commands) read source files and check for string patterns via includes/regex rather than importing and executing the actual code. test_b_flag_alias does execute extracted code, but it's extracting a text snippet rather than importing the module. No test actually "
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for specific string changes (e.g., 'list' in command names, 'browsers' in category type, 'Browser' in messages, '[open]'/'[closed]' markers) that require actual modifications to the source files. A stub or default implementation would not pass since the original files contain the old 'session-list', 'session' category, 'Session' messages, and '[running]'/'[stopped]' markers."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/playwright/_eval_check.mjs temporarily during test execution, and solve.sh is in /solution/. An agent could read the solution file if it exists in the container. Additionally, since tests are pure text-matching on source files, an agent could grep test files to discover exact expected strings and make minimal targeted text replacements without understanding the task."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: command renames (test_command_names_renamed), category rename (test_category_renamed_to_browsers), switch case updates (test_program_switch_uses_new_names), -b flag (test_b_flag_alias), Browser terminology (test_user_messages_say_browser), status markers (test_status_markers_open_closed), and documentation updates (test_skill_md_uses_new_commands, test_session_mgmt_md_heading_updated)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named, each has a docstring explaining what it checks, and they are grouped into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', and 'Fail-to-pass (agent_config)' sections with clear comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves CLI command renaming and documentation updates, not structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, command names, flag names, and variable references in the instruction are correct and consistent with the test expectations."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files which is appropriate for the task domain, but doesn't specify exact line numbers or code changes. The files listed are the natural ones to modify for the described refactoring."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code and documentation editing task, not an agentmd-edits/config-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

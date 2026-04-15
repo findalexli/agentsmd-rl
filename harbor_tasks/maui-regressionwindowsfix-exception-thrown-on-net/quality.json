@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_tryrequestpermissionasync_extracted checks for exact method signature 'async Task<PermissionStatus> TryRequestPermissionAsync()'; test_requestasync_conditional_ensuredeclared checks for exact string 'var status = CheckStatus()'; test_copilot_instructions_pr_note_removed checks for exact strings 'Testing-PR-Builds' and '### Opening PRs'. While instruction.md mentions extracting a helper method and removing PR notes"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: 'The CheckStatusAsync() method should check permission status first, then only validate manifest declarations for packaged apps', 'The RequestAsync() method should also check current status first and extract the permission-requesting logic into a separate helper method (TryRequestPermissionAsync)', and 'The codebase provides AppInfoUtils.IsPackagedApp to distinguish between packaged and unpackaged apps.' This tells the agent exactly what to change, inclu"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_tryrequestpermissionasync_extracted requires exact method name 'TryRequestPermissionAsync'; test_requestasync_conditional_ensuredeclared requires exact string 'var status = CheckStatus()'; test_checkstatusasync_conditional_ensuredeclared requires exact string 'if (AppInfoUtils.IsPackagedApp)'. An alternative correct fix could use a different helper method name, use a different variable name, or use a different conditional structure (e.g., '"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test (test_microphone_uses_packaged_check, test_checkstatusasync_conditional_ensuredeclared, test_requestasync_conditional_ensuredeclared, test_tryrequestpermissionasync_extracted, test_copilot_instructions_pr_note_removed, test_skill_md_pr_note_removed, test_example_md_root_cause_preserved) reads file content and checks for string presence/absence. No test compiles or executes the code. Even test_permissions_file_compiles only does brace counting and string matching, not actu"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for strings like 'AppInfoUtils.IsPackagedApp' and 'TryRequestPermissionAsync' that don't exist in the original file, so a no-op stub would fail these tests. The agent must actually modify the file to pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/maui (solve.sh is in solution/solve.sh which may be mounted). The agent could read the gold patch from the solution directory or grep for expected test strings in the test files. The tests only check file content via string matching, so the agent could read test_outputs.py (if accessible) and reverse-engineer exactly what strings to insert."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: conditional IsPackagedApp checks in both methods, TryRequestPermissionAsync extraction, removal of stale PR notes from config files, and preservation of Root Cause section in complete-example.md."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named and grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with descriptive docstrings explaining what each test validates."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces code and config file changes, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, method names, and variable names in instruction.md and tests match correctly."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file 'src/Essentials/src/Permissions/Permissions.windows.cs', the exact methods CheckStatusAsync/RequestAsync, the exact helper method name 'TryRequestPermissionAsync', and the exact API 'AppInfoUtils.IsPackagedApp'. It also describes the exact code structure changes needed, leaving virtually no reasoning for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The config file changes (copilot-instructions.md, SKILL.md, complete-example.md) involve localized removal of specific sections/notes, not full-file rewrites, and are consistent with the test expectations."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

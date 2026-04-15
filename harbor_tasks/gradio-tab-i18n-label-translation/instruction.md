@@ -23,10 +23,6 @@ demo.launch(i18n=i18n)
 
 When switching to Spanish, the buttons show "Leon" and "Tigre" but the tabs still show "Lion" and "Tiger" (the English/default values).
 
-## Relevant Code
-
-The issue is in `js/core/src/init.svelte.ts`, specifically in the `_gather_initial_tabs` function. This function collects tab metadata to seed the `Tabs` component, but it does not apply the i18n translation function to the tab labels. Each tab node has access to an i18n function via its props, but the function gathers the raw label value without translating it.
-
 ## Expected Behavior
 
-Tab labels should be translated just like other component labels when i18n is active and the user switches languages.
+Tab labels should be translated just like other component labels when i18n is active and the user switches languages. When no i18n is configured, raw labels should be preserved for backward compatibility.

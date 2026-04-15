@@ -1,54 +1,37 @@
-# Add server functions support to gr.HTML
+# Add Server Functions Support to gr.HTML
 
 ## Problem
 
-The `gr.HTML` component supports `js_on_load` for running JavaScript when the component loads. However, there's no way to call Python functions from this JavaScript code. Users need to be able to call backend Python functions directly from their `js_on_load` scripts.
+The `gr.HTML` component supports a `js_on_load` parameter for running JavaScript when the component loads, but there is currently no way to call Python backend functions from within that JavaScript code. Users need a mechanism to define Python functions and invoke them asynchronously from `js_on_load` scripts.
 
-For example, users want to do something like:
-```python
-def list_files(path):
-    return os.listdir(path)
-
-gr.HTML(
-    js_on_load="""
-        const files = await server.list_files("/path");
-        // use files in the DOM
-    """,
-    server_functions=[list_files],
-)
-```
-
-Currently, this is not possible because:
-1. The `HTML` component doesn't accept a `server_functions` parameter
-2. The `server` object is not available in `js_on_load`
+The Gradio codebase already has a `server` decorator in the base component module that is used by other components (e.g., `FileExplorer`, `ImageEditor`) to register server-callable functions. This same mechanism should be made available for `gr.HTML`.
 
 ## Expected Behavior
 
-1. Add a `server_functions` parameter to `gr.HTML` that accepts a list of Python functions
-2. When `server_functions` is provided, each function should be decorated with `@server` (from `gradio.components.base`) and attached to the component instance
-3. The `server` object should be passed through to the frontend Svelte components (`js/html/Index.svelte` and `js/html/shared/HTML.svelte`)
-4. In `HTML.svelte`, the `server` object should be available as a parameter in the `js_on_load` function (passed to `new Function()`)
-5. Update the `js_on_load` docstring in the Python component to document the availability of the `server` object
-6. Update `.agents/skills/gradio/SKILL.md` to document the new `server_functions` feature (add parameter to `HTML` signature and add a new section about Server Functions)
+### Python Component Changes
 
-## Files to Look At
+1. **New `server_functions` parameter**: Add a `server_functions` parameter to the HTML component's constructor with type `list[Callable] | None` defaulting to `None`. This allows users to pass a list of Python callables that can be invoked from JavaScript.
 
-- `gradio/components/html.py` — the HTML component class
-- `js/html/Index.svelte` — main Svelte component wrapper
-- `js/html/shared/HTML.svelte` — shared HTML component logic
-- `.agents/skills/gradio/SKILL.md` — agent skill documentation
+2. **Function registration**: When `server_functions` is provided, each function must be:
+   - Decorated with the `server` decorator from the base component module (the same one used by `FileExplorer` and `ImageEditor`)
+   - Set as a named attribute on the component instance (using the function's `__name__`)
+   - Added to the component's existing `server_fns` list
 
-## Key Implementation Details
+3. **`js_on_load` docstring update**: The docstring for `js_on_load` must be updated to document that a `server` object is available when `server_functions` is provided. The updated docstring must contain the word "server" and the term "server_functions".
 
-- Import `server` from `gradio.components.base` in `html.py`
-- The `server_functions` parameter should be `list[Callable] | None = None`
-- For each function in `server_functions`, decorate with `server(fn)`, set as attribute, and append to `self.server_fns`
-- In Svelte, the server object comes from `gradio.shared.server`
-- Pass `server` to the `new Function("element", "trigger", "props", "server", js_on_load)` call
+4. **`server_functions` parameter docstring**: Add a docstring entry for `server_functions` that:
+   - Begins with `server_functions:` (as a parameter label)
+   - Explains that each function becomes an async method that sends calls to the Python backend and returns results (the docstring must contain either the phrase "async method" or the word "backend")
 
-## Files to Modify
+### Frontend Changes
 
-1. `gradio/components/html.py` — add parameter and logic
-2. `js/html/Index.svelte` — pass server to shared component
-3. `js/html/shared/HTML.svelte` — add server to js_on_load execution
-4. `.agents/skills/gradio/SKILL.md` — document the feature
+5. **Server object in `js_on_load`**: The `server` object must be propagated through the Svelte component hierarchy and made available as a parameter in the `js_on_load` function execution. The JavaScript function that runs `js_on_load` must receive `server` alongside the existing `element`, `trigger`, and `props` parameters so that code like `server.my_func(arg).then(result => ...)` or `const result = await server.my_func(arg)` works.
+
+### Agent Skill Documentation
+
+6. **Update SKILL.md HTML signature**: The HTML component signature in `.agents/skills/gradio/SKILL.md` must include the new `server_functions` parameter, placed between the `buttons` and `props` parameters.
+
+7. **Add Server Functions section**: Add a new `## Server Functions` section to the same SKILL.md file that includes:
+   - An explanation of how `server_functions` integrates with `js_on_load`
+   - A complete working example showing `server_functions=[list_files]` syntax
+   - Documentation of the `server` object's async interface, with example code containing both `server.` (method calls) and `await` usage

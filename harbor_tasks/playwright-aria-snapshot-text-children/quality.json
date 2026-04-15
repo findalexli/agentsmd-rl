@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the file (packages/injected/src/ariaSnapshot.ts), function (textContributesInfo), utility (longestCommonSubstring), and all the specific test cases (name/text pairs and expected inclusion/exclusion outcomes) that the tests assert. The test cases in test_outputs.py map directly to the tables in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (text children silently dropped when they shouldn't be) and points to the responsible function, but does not specify the exact fix (removing the `node.name.length > text.length` early return). A developer must reason about why the function incorrectly excludes valid text."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_function_exists asserts both 'function textContributesInfo' and 'longestCommonSubstring' must be present as literal strings in the source. While instruction.md mentions preserving longestCommonSubstring, an alternative correct fix that renames or inlines the function, or restructures textContributesInfo differently, would fail these static checks. More critically, the JS harness uses a regex `function textContributesInfo\\([^)]*\\)[^{]*\\{([\\s\\S]*?)\\n\\}` to extract the function body and eval i"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core behavioral tests (test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, test_preserved_exclusions) extract the function via regex, eval it in Node.js, and call it with test inputs to check return values. Only test_function_exists is a static text check; the rest execute the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub that always returns True would fail test_preserved_exclusions (which asserts False for covered_hello, covered_foo, empty_text). A stub that always returns False would fail test_text_contributes_unique_short_text and test_text_contributes_partial_overlap. No trivial default can pass all fail-to-pass tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/playwright (reachable from the container) and solve.sh is in /solution/solve.sh. The agent could read or execute it. Additionally, test_outputs.py is at tests/test_outputs.py and contains the exact test cases and expected values, which the agent could grep for. The gold patch is a simple 3-line deletion that could be directly copied."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All inclusion cases (short unique text, partial overlap with unique info) and exclusion cases (text covered by name, empty text, no name) from instruction.md are tested in the corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it's about fixing a function's boolean return behavior."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is appropriate for the task scope. It does not specify the exact buggy line or the fix. Mentioning textContributesInfo and longestCommonSubstring is necessary context, not solution leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

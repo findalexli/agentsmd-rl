@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test-asserted specifics (constant names _POLL_DELAY_S=3, _NUM_POLL_ATTEMPTS=4, removal of _TITLE_POLL_DELAYS_S, async function _poll_for_title with parameters httpx_client/url/session_api_key, return type str|None, warning log level, await _poll_for_title call, ruff check command, unit test path) are explicitly stated in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction gives the exact function signature, exact constant names and values, exact log level change, and exact calling pattern ('await _poll_for_title(...)'), leaving virtually no reasoning for the developer about WHAT to change\u2014it is a detailed specification of the solution, not just a description of the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact constant names (_POLL_DELAY_S, _NUM_POLL_ATTEMPTS), exact values (3, 4), exact function name (_poll_for_title), exact parameter names (httpx_client, url, session_api_key), and exact string patterns like 'await _poll_for_title('. An alternative correct fix using different naming (e.g., _RETRY_DELAY, _MAX_RETRIES, _fetch_title) would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_new_poll_constants_exist, test_call_method_uses_poll_for_title, test_warning_log_level_for_failed_polls) use string-in-file checks like `'_POLL_DELAY_S = 3' in content` and `'await _poll_for_title(' in content`. While some tests do AST parsing and the repo unit tests are run via subprocess, the core f2p tests are predominantly text matching rather than behavioral execution."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (empty file, pass-only class) would fail these tests since they check for specific constants, function definitions with specific parameters, and specific string patterns that wouldn't exist without actual implementation work."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/OpenHands accessible via solve.sh content at a known path. The agent could read solution/solve.sh if it exists in the container, or simply grep for the exact fixture strings from the test file (e.g., '_POLL_DELAY_S = 3') and replicate them without understanding."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: new constants exist with correct values, old constant removed, _poll_for_title function exists with correct signature/parameters/return type, uses new constants internally, __call__ awaits _poll_for_title, warning log level, valid Python, ruff check, and existing unit tests pass."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_new_poll_constants_exist, test_poll_for_title_function_exists, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file path, exact constant names to create/remove, exact function signature with parameter names and return type, and exact calling pattern. This goes well beyond identifying the buggy area\u2014it specifies the complete solution structure."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

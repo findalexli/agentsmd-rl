@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: Watchpack 'remove' event handler (wp.on('remove')), 'missing' option in wp.watch(), path.dirname ancestor walking with .push(), RESTART_EXIT_CODE constant, .includes(filename) guard in the change handler, and dirWatchPaths variable. The instruction only vaguely describes detecting .next deletion and restarting; it does not mention Watchpack API details, 'missing' option, ancestor directory walking, or the specific"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (server doesn't detect .next deletion) and expected behavior (detect and restart) without specifying the exact code changes, variable names, or implementation approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_remove_event_handler requires wp.on('remove') with RESTART_EXIT_CODE and .includes() guard; test_missing_option_in_watchpack requires 'missing' in wp.watch(); test_distdir_ancestor_walking requires path.join(dir, distDir), path.dirname loop, and .push(); test_change_handler_guards_config_files requires .includes(filename) in the change handler. An alternative correct fix using fs.watch, chokidar, or polling would fail all these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests (test_remove_event_handler, test_missing_option_in_watchpack, test_distdir_ancestor_walking, test_change_handler_guards_config_files) only read the source file and check for regex/string patterns. None of them import, execute, or test actual runtime behavior of the server. They are purely textual assertions like regex.test(src) and src.includes()."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would not pass the tests since they check for specific code patterns (wp.on('remove'), 'missing' option, path.dirname loops, etc.) that don't exist in the base commit. The tests do require adding substantive code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/next.js (solve.sh is hidden but solution/ directory exists in the container). An agent could read /solution/solve.sh if accessible. Additionally, since tests are purely text-matching, an agent could grep test files or reverse-engineer the expected patterns and add matching code strings without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says the server should 'detect the deletion, log an error message, and exit with the restart exit code so that the process manager can restart it.' No test actually verifies runtime behavior \u2014 that deletion is detected, that an error is logged, or that the process exits. Tests only check for source code patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests) with clear docstrings and descriptive function names explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the file start-server.ts and the Watchpack-based watching in the isDev block, which is reasonable context for locating the relevant code area without specifying exact lines or the solution approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

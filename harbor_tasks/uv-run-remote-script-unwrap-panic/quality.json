@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the specific file paths (crates/uv/src/commands/project/run.rs, crates/uv/src/lib.rs, crates/uv/src/commands/mod.rs), function names (run(), as_command(), run_project()), enum name (RunCommand), variant name (PythonRemote), and parameter name (downloaded_script). All asserted specifics in tests (file paths, function names, parameter names, enum variant names) are discoverable from instruction.md's 'Behavioral requirements (tested)' section and 'Relevant files' section."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (unsafe .unwrap(), Option threading of downloaded_script, PythonRemote holding only a URL) and what the expected behavior is (type system enforcement, no .unwrap()), but does not prescribe the exact fix (e.g., it doesn't say 'create ParsedRunCommand enum' or 'embed NamedTempFile in PythonRemote'). A developer must still reason about the specific implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check structural constraints (no downloaded_script parameter, no Option<downloaded_script>, no .unwrap() on downloaded_script, PythonRemote must hold a file type) that are flexible enough to accept multiple valid approaches. For instance, the file type check accepts NamedTempFile, TempPath, PathBuf, tempfile, DownloadedScript, ScriptFile, File, or DownloadedFile. The approach of embedding vs restructuring vs using a different wrapper would all pass. Tests don't assert gold-specific helper "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests (test_no_unwrap_on_downloaded_script, test_python_remote_not_url_only, test_as_command_no_option_downloaded_script, test_run_fn_no_downloaded_script_param, test_lib_no_downloaded_script_threading) are purely text/structural checks using string matching on source files (e.g., 'downloaded_script' in sig, '.unwrap()' in line). While test_repo_cargo_check and test_no_unwrap_on_downloaded_script do run `cargo check`, the core behavioral assertions are text-based inspections, n"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation would not pass: the tests check that specific patterns are ABSENT from the source code (no downloaded_script parameter, no .unwrap() on downloaded_script, PythonRemote must contain a file type), and cargo check must pass. Simply doing nothing or adding stubs wouldn't remove the existing problematic code, and removing code without proper replacement would fail cargo check."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo/../solution/solve.sh (or similar path in the container). The agent could potentially read /solution/solve.sh to get the exact gold patch. Additionally, the tests are purely structural/text-based checks on source files, so an agent could reverse-engineer the expected patterns from the test file if it could access it."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements listed in instruction.md are tested: (1) run() no downloaded_script param, (2) as_command() no Option param, (3) run_project() no downloaded_script param, (4) PythonRemote must embed file type, (5) no .unwrap() on downloaded_script. Additional structural integrity tests (not stub, variant exists, handles all variants) are also present."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (pass-to-pass repo_tests, fail-to-pass pr_diff, pass-to-pass static), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves Rust code refactoring, not structured data output (JSON/CSV/API/DB)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and match what appears in the actual codebase and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact method (.unwrap()), the exact parameter name (downloaded_script), the exact enum variant (PythonRemote), and the exact function signatures that need changing (run(), as_command(), run_project()). While it doesn't give line numbers, it essentially specifies the complete set of changes needed, making localization trivial rather than part of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

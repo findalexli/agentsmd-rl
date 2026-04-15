@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path, function signature (generate_dashboard), MAX_HISTORY_RUNS constant, the legend loc constraint (not code 1), the y-axis padding requirements with specific numeric thresholds, the dynamic header requirement, and the charts_dir parameter. All test-asserted specifics (ymin thresholds >10, >50, >=0; MAX_HISTORY_RUNS >7 and >=12; legend loc != 1; 'Last 7 Runs' not in output; PNG generation) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (y-axis starts at 0, legend in upper-right, MAX_HISTORY_RUNS=7, hardcoded header) and what the fix should achieve, but does not specify exact code changes, line numbers to edit, or the specific implementation (e.g., the padding formula 0.3*range). The developer must reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: y-axis limits via get_ylim(), legend loc code != 1, MAX_HISTORY_RUNS >= 12, dynamic string in markdown output, PNG file generation. They don't assert on specific variable names (like y_range), exact padding formulas, or specific legend loc values (just not 1). Alternative implementations with different padding strategies or legend positions would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call generate_dashboard, capture matplotlib axes to inspect ylim and legend properties, check markdown output content, and verify PNG file creation. They are behavioral tests, not text-matching on source code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning empty string or None would fail test_dashboard_generates_valid_markdown (checks len>=200, table separators, case IDs). A stub that doesn't create matplotlib axes would fail the ylim tests. The MAX_HISTORY_RUNS test checks the actual constant value. The original buggy code (ymin=0, loc='upper right', MAX_HISTORY_RUNS=7, hardcoded header) fails the f2p tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /repo after solve.sh is applied, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh or simply run 'cat solution/solve.sh' if it exists in the container. The Dockerfile doesn't remove /solution/ or restrict access to it. Additionally, the agent could grep test files in /repo for expected values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four bugs described in instruction.md are tested: y-axis scaling (test_yaxis_scales_to_data_range, test_yaxis_scales_high_values, test_yaxis_never_negative), legend position (test_legend_not_upper_right), history window (test_history_window_extended), and dynamic header (test_section_header_reflects_actual_count)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/static, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories like [pr_diff] fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the run dict schema (timestamp, commit_sha, results list with latency data) and the function signature including return type (markdown string) and exported constant (MAX_HISTORY_RUNS)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the single file to edit (appropriate since there's only one file) and describes constants like MAX_HISTORY_RUNS by name (which is necessary for the API contract), but doesn't specify line numbers or exact code changes. The constant name and legend loc codes are part of the behavioral specification, not localization hints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

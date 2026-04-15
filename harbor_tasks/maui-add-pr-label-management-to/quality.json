@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The solution uses label names with 's/' prefix (e.g., 's/ai-reproduction-confirmed', 's/ai-reproduction-failed') but the instruction.md specifies them without the prefix ('ai-reproduction-confirmed', 'ai-reproduction-failed'). The tests check for 'ai-reproduction-confirmed' in the label value, which matches both with and without prefix, but the SKILL.md tests check for the literal string 'ai-reproduction-confirmed' in content. More critically, the instruction says nothing about the 's/' prefix p"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact variable names ($labelToAdd, $labelToRemove, $foundPR, $LabelConfirmed, $LabelFailed), exact function name (Update-VerificationLabels), exact parameter name (-ReproductionConfirmed), exact HTTP methods (DELETE/POST), exact error handling mechanism ($LASTEXITCODE), and exact implementation patterns. This is essentially a specification of the solution, not a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific variable names like '$labelToAdd', '$labelToRemove', '$foundPR', '$LabelConfirmed', '$LabelFailed', the exact function name 'Update-VerificationLabels', exact methods 'DELETE'/'POST', and '$LASTEXITCODE'. An alternative correct implementation using different variable names (e.g., '$addLabel'/'$removeLabel'), a different function name, or different error handling would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test reads the file as text and checks for string patterns (e.g., checking '$labelToAdd' in body, 'DELETE' in body, 'gh pr list' in content). No test actually executes the PowerShell script, calls the function, or verifies runtime behavior. All tests are purely text/regex matching on file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check for multiple specific implementation details that couldn't be satisfied by a stub \u2014 they require a function body with specific variables, REST API methods, error handling, specific call patterns with both $true and $false arguments (at least 2 each), and specific content in SKILL.md. A trivial/empty implementation would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/maui as solve.sh could be read by the agent. The Dockerfile doesn't remove the solution directory. An agent could read tests/test_outputs.py to discover exact string patterns being checked and craft a minimal text-matching solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major behavioral requirements from instruction.md are tested: the Update-VerificationLabels function logic, label constants, function calls on all 4 paths, PR detection fallback with $foundPR, and SKILL.md updates including PR Labels section, toggle behavior, and table."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, Fail-to-pass/pr_diff, Pass-to-pass/static, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test validates."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces PowerShell scripts and markdown documentation, not structured data formats like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: variable names ($labelToAdd, $labelToRemove, $foundPR), exact function signature (Update-VerificationLabels with -ReproductionConfirmed parameter), exact HTTP methods (DELETE/POST), exact error handling ($LASTEXITCODE), and exact guard condition ('unknown'). This goes far beyond describing the problem and essentially dictates the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is not an agentmd-edits task; it involves code and documentation modifications to PowerShell and Markdown files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

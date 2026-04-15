@@ -15,6 +15,57 @@ Create a new `plugins/learning-output-style/` directory with a complete plugin s
 
 The plugin should combine both interactive learning (requesting user code contributions) and explanatory functionality (educational insights about implementation choices).
 
+## Plugin Manifest Schema
+
+The `.claude-plugin/plugin.json` file must be valid JSON with these fields:
+- `name`: exactly `"learning-output-style"`
+- `version`: exactly `"1.0.0"`
+- `description`: must contain the word `"Learning"`
+- `author`: must be an object with a `name` subfield (e.g., `"author": { "name": "..." }`)
+
+## Hook Configuration Schema
+
+The `hooks/hooks.json` file must be valid JSON with this structure:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<path-to-script>"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The `command` value must reference `session-start.sh`.
+
+## Session-Start Hook Output
+
+The `hooks-handlers/session-start.sh` script must:
+1. Be executable (have execute permission)
+2. Output valid JSON to stdout
+3. Output JSON must contain a `hookSpecificOutput` object with:
+   - `hookEventName`: must be `"SessionStart"`
+   - `additionalContext`: must contain the word `"learning"` (case-insensitive) and the word `"Insight"` (with capital I)
+
+## README Requirements
+
+The `README.md` file must contain:
+- A level-1 heading: `# Learning Style Plugin`
+- A section titled: `What it does`
+- A section titled: `How it works`
+- Mention of the `SessionStart` hook
+
+## Repository Configuration
+
+The repository root (`.gitignore`) must contain an entry for `.DS_Store` (macOS system file).
+
 ## Files to Create
 
 1. `plugins/learning-output-style/.claude-plugin/plugin.json` — Plugin manifest with metadata

@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact files (`fetch_diff.py`, `SKILL.md`), the key paths (`b/dev/null`, `a/` side), the exact mask string `[Deleted file - diff masked]`, the function behavior (`filter_diff`), and the `--files` pattern filtering behavior. All test-asserted specifics (file paths like `path/to/removed.py` are constructed in test fixtures, exact mask strings, `dev/null` references, SKILL.md documentation requirements) are discoverable from the instruction's description of expected behavio"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (deleted files silently dropped, pattern matching uses wrong path) and what the output should look like, but does not prescribe exact code changes, variable names, or line numbers. A developer must still reason about how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes: presence of file paths in output, presence of mask messages, correct pattern filtering, and SKILL.md content. They don't assert on internal variable names (like `_DELETED_DIFF_MESSAGE`), specific line positions, or implementation details. Alternative implementations (e.g., different internal variable names, different control flow) would pass as long as behavior matches."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Core fail-to-pass tests import and call `filter_diff()` with constructed diff inputs and check behavioral outputs. Pass-to-pass tests run subprocess commands (syntax check, ruff, mypy). Only `test_skill_md_documents_deleted_files` is text-based, but it's for a documentation file which is inherently text-checking. The majority of tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub `filter_diff` returning empty string or None would fail `test_deleted_file_included_in_output` (asserts `path/to/removed.py` in result), `test_deleted_file_uses_deleted_mask_message` (asserts `[Deleted file - diff masked]` in result), and `test_deleted_file_pattern_filter` (asserts inclusion/exclusion based on patterns). The `test_not_stub` explicitly checks the function body has >= 5 statements."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/mlflow` after being applied (or the solve.sh is accessible). The agent could potentially read `/solution/solve.sh` if it exists in the container, or grep the test file at `tests/test_outputs.py` for the exact fixture strings and expected outputs. The Dockerfile doesn't appear to remove solution files from the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: deleted files appearing in output, correct mask message, pattern filtering using a/ side path, SKILL.md documentation update, and preservation of existing auto-generated file behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Config/doc), each has a descriptive name and docstring, and categories are annotated with tags like `[pr_diff] fail_to_pass`."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces diff text output and documentation, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and string literals in instruction.md are consistent with those used in tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify, which is appropriate given the task domain. It doesn't specify exact line numbers or code changes, only describes the bug and expected behavior."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The SKILL.md gold diff is a localized addition of ~10 lines documenting the deleted file example, consistent with the instruction's requirements and not contradicting other files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

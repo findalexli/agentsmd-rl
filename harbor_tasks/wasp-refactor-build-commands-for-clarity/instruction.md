@@ -15,19 +15,37 @@ This naming trips up new contributors who run `./run build` expecting a full bui
 The command names should be intuitive:
 
 - `build` should build everything (Haskell + TS packages) — the common case.
-- A more specific command should exist for Haskell-only builds.
-- Static builds should not need a separate command — an environment variable is cleaner.
+- A new `build:hs` command should exist for Haskell-only builds.
+- Static builds should be controlled via the `BUILD_STATIC` environment variable, not a separate command.
+- The `build:all` and `build:all:static` commands should be removed.
+- The existing `build:packages` command must be preserved unchanged.
 
-The rename needs to be applied consistently across:
-- The bash `run` script (both command dispatch and help text)
-- The PowerShell `run.ps1` script
-- The CI workflow (`.github/workflows/ci-waspc-build.yaml`)
+### Bash run script (`waspc/run`)
 
-After making the code changes, update `waspc/README.md` to reflect the new command names. The README currently references the old commands in several places (the Build section, the "Run the wasp CLI" section, and the typical development workflow).
+The script already defines variables like `BUILD_HS_CMD`, `BUILD_ALL_CMD`, and `BUILD_ALL_STATIC_CMD`. After the refactor:
+
+- The `BUILD_ALL_CMD` variable must remain defined and represent the full build (packages + Haskell).
+- The `BUILD_HS_CMD` variable must remain defined for Haskell-only builds and should incorporate the `BUILD_STATIC` env var to conditionally pass `--enable-executable-static`.
+- The `BUILD_ALL_STATIC_CMD` variable must be removed entirely.
+- In the `case $COMMAND in` dispatch block:
+  - `build)` must invoke `$BUILD_ALL_CMD` via `echo_and_eval`
+  - `build:hs)` must exist and invoke `$BUILD_HS_CMD` via `echo_and_eval`
+  - `build:all)` and `build:all:static)` must be removed from the case statement
+
+### PowerShell script (`waspc/run.ps1`)
+
+The PowerShell `switch ($Command)` block must be updated to match:
+
+- The `"build"` case must invoke `BUILD_ALL_CMD` (the full build)
+- A `"build:hs"` case must exist and invoke `BUILD_HS_CMD`
+
+### CI workflow (`.github/workflows/ci-waspc-build.yaml`)
+
+- The build step must use `./run build` (not `./run build:all`)
+- Static builds should be driven by the `BUILD_STATIC` environment variable set from the CI matrix
 
 ## Files to Look At
 
-- `waspc/run` — main build script with command definitions and case dispatch
+- `waspc/run` — main build script with variable definitions and case dispatch
 - `waspc/run.ps1` — PowerShell equivalent of the run script
 - `.github/workflows/ci-waspc-build.yaml` — CI build workflow
-- `waspc/README.md` — developer documentation referencing build commands

@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names globsToRegExps, testRegExps, compileModuleRules, the endAnchor option, the specific glob pattern **/*.wasm, and the exact match/non-match paths (foo.wasm, foo.wasm.js, etc.) that appear in the tests. The build/typecheck/test commands are also documented. All test-specific function names, paths, and behaviors are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (glob patterns matching double-extension files), the expected behavior (endAnchor option should prevent this), and which functions are involved, but does not specify the exact code change (e.g., adding '$' suffix to regex, or which line to modify in modules.ts). A developer still needs to reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests call the public API functions (globsToRegExps with endAnchor:true, testRegExps, compileModuleRules) and check behavioral outcomes (match/no-match for specific paths). Alternative implementations (e.g., post-processing regexes differently, using a different regex library, modifying glob-to-regexp options) would all pass as long as the behavior is correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute JavaScript code via Node.js subprocess that imports the built module, calls globsToRegExps/testRegExps/compileModuleRules, and checks actual match results. Build and typecheck tests run real build commands. No test simply greps source files for text patterns."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The key f2p tests (test_globsToRegExps_endAnchor_prevents_double_extension, test_compileModuleRules_uses_endAnchor) require that foo.wasm matches but foo.wasm.js does not. The existing code without the fix would match both, so a stub or no-op implementation would fail. The tests require actual behavioral change."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/workers-sdk (accessible in the container via the solve.sh script's inline patch). An agent could read the hidden test file at tests/test_outputs.py or the solution/solve.sh to extract the exact fix. The Dockerfile doesn't remove these files, and the agent could potentially access /solution/solve.sh if it exists in the container filesystem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: endAnchor preventing double-extension matches, without-endAnchor substring matching still working, compileModuleRules using endAnchor, build success, typecheck success, and existing matcher tests passing."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named individual functions with descriptive docstrings explaining what each tests (e.g., 'Regression test for...', 'Without endAnchor, patterns should match substrings'). Clear separation of concerns across 6 test functions."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, commands, function names, and variable names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the globsToRegExps function's endAnchor option and explains that 'When the endAnchor option is set to true, patterns should only match paths that end with the glob pattern.' It also names compileModuleRules should use endAnchor. This essentially tells the agent what to implement (add endAnchor support to globsToRegExps and pass endAnchor:true in compileModuleRules), reducing the localization challenge significantly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

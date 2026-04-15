@@ -8,15 +8,10 @@ This prevents running unit tests or using parts of the codebase that need HTTP s
 
 ## Expected Behavior
 
-The hash utility functions (`get_hash_str` and `hash_str_to_int64`) should be importable without triggering CUDA dependency chain. These are pure Python functions that compute SHA256 hashes - they don't need CUDA.
-
-## Files to Look At
-
-- `python/sglang/srt/mem_cache/radix_cache.py` — imports hash functions from hicache_storage
-- `python/sglang/srt/mem_cache/hicache_storage.py` — contains hash functions but also CUDA storage code
-- `python/sglang/srt/managers/cache_controller.py` — another import site for hash functions
-- `python/sglang/srt/mem_cache/utils.py` — existing utility module (pure Python, no CUDA deps)
+The hash utility functions (`get_hash_str` and `hash_str_to_int64`) should be importable without triggering the CUDA dependency chain. These are pure Python functions that compute SHA256 hashes — they don't need CUDA.
 
 ## What to Do
 
-Move `get_hash_str` and `hash_str_to_int64` from `hicache_storage.py` to `utils.py`, then update all import sites (`radix_cache.py`, `cache_controller.py`) to import from `utils.py` instead. The hash functions should remain functionally identical - only their location changes.
+The hash utility functions must be separated from the CUDA-dependent code path so they can be imported independently. The functions must remain functionally identical — only their import accessibility changes. After the fix, `get_hash_str` and `hash_str_to_int64` must be accessible as pure Python utilities without triggering GPU/cuda dependencies.
+
+You may need to modify: `radix_cache.py`, `cache_controller.py`, `hicache_storage.py`, and `utils.py`.

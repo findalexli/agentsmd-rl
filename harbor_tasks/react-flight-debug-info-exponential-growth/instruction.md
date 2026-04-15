@@ -30,6 +30,16 @@ The debug chunks themselves are metadata that's never rendered - they don't need
 - Debug info should not accumulate exponentially on debug chunks
 - References resolved during debug info resolution should not trigger debug info transfer
 - Deep component trees (20+ levels) should process without memory issues
+- A module-level boolean flag (`isInitializingDebugInfo`) controls whether `transferReferencedDebugInfo` is invoked during debug chunk initialization
+- The flag must be declared as `let isInitializingDebugInfo` with Flow type annotation `boolean`
+- Both `initializeDebugChunk` and `resolveIOInfo` must save the previous flag value with `prevIsInitializingDebugInfo` and use a `finally` block to restore it after setting it to `true`
+- `getOutlinedModel` must check `isInitializingDebugInfo` before calling `transferReferencedDebugInfo`
+
+## Regression Test
+
+A new test must pass in `ReactFlightAsyncDebugInfo-test.js`:
+- Test name: `should not exponentially accumulate debug info on outlined debug chunks`
+- Verifies that a 20-level deep async component tree does not trigger an infinite loop detection error
 
 ## Symptoms
 

@@ -22,6 +22,15 @@ The write path does not have a corresponding conversion — `None` values are si
 
 When a config field is `None`, the serialized TOML should contain the string `"None"` for that key, so the load path's `_none_str_to_none` validator can restore it. This should apply to all entrypoints and handle arbitrarily nested config dicts.
 
+Implement a helper function named `none_to_none_str` in `src/prime_rl/utils/config.py` that recursively converts Python `None` values to the string `"None"` in dictionaries. This function should:
+- Convert top-level `None` values to `"None"` strings
+- Recursively handle nested dictionaries at any depth
+- Preserve all non-`None` values (booleans, integers, strings, lists) unchanged
+- Not mutate the input dictionary (return a new dict)
+- Handle edge cases: empty dicts, all-`None` dicts, and dicts with no `None` values
+
+The entrypoints should use this `none_to_none_str` helper when serializing config to TOML, and should not use `exclude_none=True` in their `model_dump()` calls.
+
 ## Files to investigate
 
 - `src/prime_rl/utils/config.py` — shared config utilities

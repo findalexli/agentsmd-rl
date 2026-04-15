@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T22:33:56.416309",
-  "total_time": 946.07,
-  "sandbox_id": "iucf099z755xnk9wm194t",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:38:20.816958",
+  "total_time": 2175.37,
+  "sandbox_id": "ivqai7i8ftiyks7f3qoxy",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,28 @@
       "quality_verdict": "LOW",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:180: test `test_aclose_race_condition` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:234: test `test_not_stub` has 1 assert(s), all pass on a stub impl (is', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: anyio, pydantic, 2>/dev/null']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.28,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 4
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 8774.37,
-      "at": "2026-04-10T03:46:10.565739"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +104,14 @@
       "backend": "fireworks",
       "time": 946.07,
       "at": "2026-04-11T22:33:56.416309"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2175.37,
+      "at": "2026-04-15T04:38:20.816958"
     }
   ]
 }

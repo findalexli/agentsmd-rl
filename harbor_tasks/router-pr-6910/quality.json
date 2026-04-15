@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), function name (deepEqual), and describes all tested behaviors: promises not equal unless same reference, thenable detection, promise vs regular object comparison, and regular object comparison still working. The tests operate on these exact artifacts."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (deepEqual doesn't handle promise-like objects) and gives hints about detection strategy, but doesn't specify exact code changes, line numbers to modify, or the exact implementation (e.g., doesn't say 'add an isPromiseLike function' or 'add a check after Object.is')."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests use regex to extract functions by name: `src.match(/function isPromiseLike\\(value: unknown\\)[^{]*\\{([\\s\\S]*?)^\\}/m)`. This means the tests specifically look for a function named 'isPromiseLike' with a specific signature. An alternative correct fix that inlines the promise check directly in deepEqual (e.g., `if (typeof a?.then === 'function' || typeof b?.then === 'function') return false`) without creating a separate `isPromiseLike` function would fail the regex extraction in the test, "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the deepEqual function from source, construct it dynamically via `new Function()`, and actually execute it with Promise objects, checking return values. This is behavioral testing, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check that deepEqual(Promise.resolve(1), Promise.resolve(1)) returns false. A stub that always returns true would fail (the test asserts result should not be true). A stub returning false would fail the regular objects test (test_deepequal_regular_objects_still_work expects deepEqual({a:1}, {a:1}) === true). No trivial stub satisfies all tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router's solve.sh which is accessible in the container at the path implied by the Dockerfile. The agent could read /solution/solve.sh or the gold patch to see the exact fix. Additionally, the tests themselves are in tests/test_outputs.py which could be read to reverse-engineer the expected implementation pattern (specifically the isPromiseLike function name)."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four behaviors from instruction.md are tested: different promises not equal (test_deepequal_native_promises), same-reference promises equal (within same test), thenable/promise-like handling (implicit via Promise objects), promise vs regular object (test_deepequal_promise_vs_non_promise in truncated portion), and regular objects still work (test_deepequal_regular_objects_still_work)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_deepequal_native_promises, test_deepequal_nested_promises, etc.), have docstrings explaining what they test including fail_to_pass/pass_to_pass annotations, and the module has a top-level docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task is about fixing a comparison function, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, function names, and variable names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function which is appropriate for the task scope. It gives conceptual hints about detection strategy but doesn't specify exact lines or implementation details like helper function names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

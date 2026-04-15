@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (slime/ray/rollout.py), the function (_start_router), the relevant flags (has_pd_disaggregation, use_slime_router), and describes both bugs. The tests check for attributes like slime_router_pd_disaggregation and disable_circuit_breaker, which are implied by the bug descriptions (passing PD disaggregation info to the slime router, disabling circuit breaker). While the exact attribute names aren't stated verbatim, the behavior is clearly described and a developer wou"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (assertion crashes, circuit breaker mismarks workers) and what the correct behavior should be, but does not specify exact code changes like 'remove line X' or 'add attribute Y'. A developer must reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific attribute names: test_slime_router_pd_flag_set checks for exactly 'slime_router_pd_disaggregation' on router_args, and test_circuit_breaker_disabled_with_pd checks for exactly 'disable_circuit_breaker'. An alternative correct fix might use different attribute names (e.g., 'pd_disagg_enabled', 'circuit_breaker_off', or 'enable_pd_disaggregation') or pass the flag differently (e.g., as a constructor argument). These tests would fail for such alternatives."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the _start_router function via subprocess with mocked dependencies, inspecting returned values and attributes on captured arguments. They are behavioral, not text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests exercise actual behavior: test_slime_router_pd_disagg_no_crash fails on the unpatched code due to the assert statement; test_slime_router_pd_flag_set checks a specific attribute is set; test_circuit_breaker_disabled_with_pd checks disable_circuit_breaker is True. A stub/no-op would not set these attributes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/slime's sibling or the container may contain solve.sh. More importantly, the test file itself contains the full _PREAMBLE with exact attribute names (slime_router_pd_disaggregation, disable_circuit_breaker) that the agent could discover by reading /tests/test_outputs.py if it exists in the container, directly revealing the expected fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both bugs are tested: Bug 1 (slime router + PD disagg crash) is covered by test_slime_router_pd_disagg_no_crash and test_slime_router_pd_flag_set. Bug 2 (circuit breaker) is covered by test_circuit_breaker_disabled_with_pd. Regression tests also present."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comments (pass_to_pass static, fail_to_pass pr_diff, pass_to_pass pr_diff, pass_to_pass repo_tests) and have descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md. (Note: 'AssertionError' in the instruction is actually how the original code's assertion manifests, not a typo in the instruction itself \u2014 the instruction says 'AssertionError' which is technically a typo for 'AssertionError' vs 'AssertionError'... actually it says 'AssertionError' which is a typo for 'AssertionError'. Wait \u2014 re-reading: 'crashes with an AssertionError' \u2014 this is a typo for 'AssertionError' vs 'As"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction says 'around line 890-940' and specifically names both branches ('if args.use_slime_router:' and 'else:'), giving precise localization. While the file is already identified by the task domain, the line range and branch-level specificity go beyond what's needed and reduce the localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

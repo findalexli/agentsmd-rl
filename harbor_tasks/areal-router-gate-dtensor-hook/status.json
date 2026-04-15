@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:35:00.384481",
-  "total_time": 1055.01,
-  "sandbox_id": "ig5c97hvlindvecukyjxm",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:31:00.510643",
+  "total_time": 1049.29,
+  "sandbox_id": "is63qv1qhl2q1k4d0phwy",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -50,17 +52,28 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.32,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:213: test `test_gate_is_router_gate_linear` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:316: test `test_no_bare_print` has 1 assert(s), all pass on a stub imp', 'A:[A] test_not_tautological @ tests/test_outputs.py:330: test `test_explicit_type_hints` has 2 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:366: test `test_no_module_level_process_group` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, torch, https://download.pytorch.org/whl/c']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 22.77,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 575.6,
-      "at": "2026-04-09T22:08:44.219990"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -92,6 +105,14 @@
       "backend": "fireworks",
       "time": 1055.01,
       "at": "2026-04-11T18:35:00.384481"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1049.29,
+      "at": "2026-04-15T03:31:00.510643"
     }
   ]
 }

@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the script path `.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages`, the function `parse_zulip_url`, the `near/MSG_ID` and `with/MSG_ID` formats, the `.claude/CLAUDE.md` file, and the guidance about `WebFetch` vs `fetch-zulip-messages`. All test-specific details (file paths, function names, URL formats, error message content, CLAUDE.md keywords like 'fetch-zulip-messages' and 'WebFetch') are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (near/MSG_ID URLs not parsed) and expected behavior but does not specify the exact code change (e.g., doesn't say 'change the regex to include `near`' or 'add `|near` to line X'). A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests assert on behavioral outputs (return values from parse_zulip_url, error message content, CLAUDE.md content keywords). Alternative implementations \u2014 different regex patterns, different parsing approaches, different error message wording \u2014 would all pass as long as they produce correct behavior. The tests don't check specific line numbers, internal variable names, or implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests import and call `parse_zulip_url` checking return values (test_parse_near_url, test_parse_near_url_stream_variant, test_parse_with_url_still_works, test_parse_url_no_anchor), or run the script as a subprocess (test_error_message_mentions_near, test_script_help_works, linter tests). Only test_claude_md_zulip_chat_links is text-based, but the majority of tests are behavioral/execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_parse_near_url, test_parse_near_url_stream_variant) assert specific non-None values for server, channel_id, topic, and anchor \u2014 a stub returning None/defaults would fail. test_error_message_mentions_near checks 'near' appears in stderr. test_claude_md_zulip_chat_links checks multiple specific strings. None of these can be satisfied by a no-op or stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/zulip` (or nearby in the container at a predictable path). The solve.sh is in `/solution/solve.sh` and contains the exact patch. An agent could read `/solution/solve.sh` or grep for it. The Dockerfile doesn't remove or protect the solution directory. Additionally, the test file at `tests/test_outputs.py` contains the exact expected URL patterns and assertions, which an agent could read to craft a minimal passing implementation without understanding the bug"
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: near/MSG_ID parsing (test_parse_near_url, test_parse_near_url_stream_variant), error message mentioning 'near' (test_error_message_mentions_near), with/MSG_ID still working (test_parse_with_url_still_works), and CLAUDE.md update with Zulip/WebFetch/fetch-zulip-messages guidance (test_claude_md_zulip_chat_links)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI-derived), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and commands in the instruction are all correct and match the actual repository structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function (parse_zulip_url) but this is appropriate domain-level guidance. It doesn't specify exact line numbers or the precise regex change needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The CLAUDE.md edit in the gold patch is a small localized addition (a new section about Zulip Chat Links) and doesn't contradict other files. The instruction correctly scopes the change."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

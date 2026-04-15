@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact variable names like 'let stopped = false', 'if (stopped) return', 'stopped = true'; exact function signatures 'async function target(' and 'async function input('; specific replacement names like 'file' instead of 'workerPath', 'root' instead of 'baseCwd', 'external' instead of 'shouldStartServer', 'network' instead of 'networkOpts'; the exact import statement 'import { withTimeout }' from '@/util/timeout'; "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (non-idempotent shutdown, no timeout bounding, no try/finally, inline logic) and desired behavior but doesn't specify exact code changes like 'change line X to Y' or give the exact variable names to use."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: exact variable names ('let stopped = false', 'stopped = true'), exact helper function names ('async function target(', 'async function input('), exact renamed variables (no 'workerPath' \u2014 must use something else, no 'baseCwd'), and exact string content in AGENTS.md. An alternative correct fix using e.g. 'async function resolveWorker(' or 'let done = false' or 'let shutdown = false' would fail these tests despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_thread_idempotent_stop, test_thread_helpers_extracted, test_worker_shutdown_simplified, test_short_variable_names, test_agents_md_naming_enforcement, test_thread_imports_with_timeout) are ALL pure text-matching assertions using 'assert X in content' or 'assert X not in content' with no execution of the modified code. Only test_with_timeout_behavior actually runs code, and it tests the pre-existing utility, not the modified files."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings that don't exist in the base commit (e.g., 'let stopped = false', 'async function target(', 'async function input(', 'Naming Enforcement' in AGENTS.md), so a stub/no-op implementation won't pass them. The agent must actually make changes to the files."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/opencode as a git apply patch in solve.sh. The agent could read the solution file at the path specified in the Dockerfile/test setup, or could grep for the exact fixture strings being tested (like 'let stopped = false', 'async function target(') in the test file itself if accessible. The tests check for literal strings, making it easy to reverse-engineer the expected content."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires 'try/finally around the TUI invocation to guarantee cleanup runs' but no test checks for try/finally. instruction.md requires unregistering process listeners but no test verifies listener removal (e.g., process.removeListener calls). The timeout-bounded shutdown is only tested by checking the import exists, not that withTimeout is actually used in the shutdown path."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with section comments (Gates pass_to_pass, Fail-to-pass pr_diff, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring and documentation changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md names the files to look at (thread.ts, worker.ts, AGENTS.md) which is appropriate given the task domain, and describes behaviors without specifying exact line numbers or exact code to write."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The AGENTS.md gold diff is a localized addition of ~11 lines (a new section) and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

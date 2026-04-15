@@ -1,8 +1,8 @@
 # Task: Fix Wrong Results in JOIN with Shard-by-PK and Query Condition Cache
 
-## Problem
+## Problem Statement
 
-JOIN queries with shard-by-PK optimization can return **wrong results (0 rows)** when the query condition cache is enabled and has previously cached filter results for table parts.
+JOIN queries using shard-by-PK optimization can return **incorrect results (0 rows)** when the query condition cache is enabled and has previously cached filter results for table parts.
 
 ### Symptom
 
@@ -11,31 +11,25 @@ When running a JOIN query twice:
 2. A subsequent INSERT creates a new table part
 3. Second run of the same JOIN query returns **0 rows instead of the expected data**
 
-### Affected File
+### Affected Component
 
-`src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp`
+The bug is in `apply()` function in `src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp`.
 
-The bug is in the `apply()` function which processes parts for distributed JOIN optimization. The code incorrectly assumes that `part_index_in_query` values are contiguous, but `filterPartsByQueryConditionCache()` can drop parts, leaving gaps in the indices. This causes the layer distribution logic to assign parts to the wrong sources.
+### Requirements
 
-### What You Need to Do
+The fix must satisfy ALL of the following constraints:
 
-1. Locate the section in `apply()` that processes `analysis_result->parts_with_ranges`
-2. Identify where `part_index_in_query` is being set
-3. Fix the index assignment to ensure contiguous indices (starting from `added_parts`) regardless of which parts were dropped by the query condition cache
-4. Add a comment explaining why contiguous renumbering is necessary
+1. **Code correctness**: The modified code must compile without errors
+2. **Style**: Follow ClickHouse Allman brace style (opening brace on its own line)
+3. **Memory safety**: Do not use raw pointers or manual memory management in the fix area
+4. **Output requirements**: The final source file must contain:
+   - A `for` loop using `size_t local_idx` as the loop variable
+   - Index access pattern: `analysis_result->parts_with_ranges[local_idx]`
+   - Index assignment using: `part_index_in_query = added_parts + local_idx`
+   - A comment containing the exact text: `Renumber part_index_in_query to be contiguous`
+   - A comment containing the exact text: `filterPartsByQueryConditionCache may drop parts`
 
-### Code Context
-
-Look for the loop that iterates over `analysis_result->parts_with_ranges` and pushes parts to `all_parts`. The current code preserves the original `part_index_in_query` values with an offset, but this breaks when parts are filtered out by the cache.
-
-### Constraints
-
-- Follow the existing code style (Allman braces - opening brace on new line)
-- Do not use raw pointers or manual memory management
-- Keep changes minimal and focused on the bug
-- Add an explanatory comment about the fix
-
-### Testing
+### Verification
 
 The repository includes a test file that demonstrates the issue:
 - `tests/queries/0_stateless/04065_join_shard_by_pk_with_qcc.sql`

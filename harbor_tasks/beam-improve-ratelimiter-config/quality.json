@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes all required file paths (ratelimit.tf, variables.tf, gke.tf, outputs.tf, prerequisites.tf, provider.tf, README.md), variable names (project_id, vpc_name, subnet_name, ratelimit_config_yaml, namespace, enable_metrics), resource names (kubernetes_deployment ratelimit/redis, kubernetes_service ratelimit/redis, kubernetes_config_map ratelimit_config, kubernetes_horizontal_pod_autoscaler_v2), output names (cluster_name, load_balancer_ip), and structural requirements (private"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: use Terraform's 'dynamic' block with 'for_each' gated on enable_metrics, create a 'kubernetes_namespace' resource, set USE_STATSD to 'false' when metrics disabled, use 'var.<namespace_var>' for all resources. These are specific implementation choices rather than just describing what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable names like 'namespace' and 'enable_metrics' (test_namespace_variable_exists, test_enable_metrics_variable_exists), specific resource names like 'kubernetes_namespace' (test_namespace_resource_created), exact strings like 'dynamic' and 'for_each' and 'var.enable_metrics' in the sidecar block (test_conditional_statsd_sidecar), and 'USE_STATSD' with 'false' (test_use_statsd_env_var_conditional). An alternative correct fix using e.g. 'metrics_enabled' instead of 'en"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most tests are text-matching (e.g., test_namespace_variable_exists checks 'variable \"namespace\"' in file text, test_conditional_statsd_sidecar checks for 'dynamic' and 'for_each' strings in file text, test_use_statsd_env_var_conditional checks for 'USE_STATSD' string). However, test_terraform_validate and test_terraform_providers do execute terraform init/validate/providers as subprocesses. Since a significant majority of f2p tests are pure text matching, this fails."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for new content that doesn't exist in the original repo (namespace variable, enable_metrics variable, kubernetes_namespace resource, dynamic block for sidecar, Java pipeline references in README). A stub/no-op implementation that leaves the original files unchanged would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/beam as solve.sh could be read, and the Dockerfile doesn't remove it. The agent could also read test_outputs.py to discover exact string assertions (e.g., 'variable \"namespace\"', 'dynamic', 'for_each', 'var.enable_metrics') and just insert those strings to pass text-matching tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires namespace support, conditional metrics sidecar, and README documentation updates. Tests cover all three: namespace variable/resource tests, conditional sidecar tests (dynamic block, USE_STATSD), and README tests (Java examples, variable table with new variables)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_namespace_variable_exists, test_conditional_statsd_sidecar, etc.), include docstrings with tags like 'pass_to_pass' and 'fail_to_pass', and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces Terraform configuration files (HCL) and Markdown, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, resource names, and commands in the instruction are consistent with the test assertions and solution. No typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'use Terraform's dynamic block with for_each gated on the enable_metrics variable', 'A kubernetes_namespace resource should be created', 'USE_STATSD environment variable must be set to false'. These are specific implementation hints beyond describing the problem."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch modifies only 3 files (ratelimit.tf, variables.tf, README.md) with localized additions (new variable blocks, namespace references, dynamic blocks, README sections). Changes don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

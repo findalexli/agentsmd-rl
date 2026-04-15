@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all relevant file paths (setup.py, dependency_versions_table.py, glmasr.md, CONTRIBUTING.md, testing.md), the exact dependency string for hf-doc-builder, the extras[\"docs\"] and extras[\"testing\"] patterns, and the runnable syntax requirements. The tests check for these same elements (e.g., test_docs_extra_defined checks for 'extras[\"docs\"]' in setup.py, test_dependency_table_uses_git_doc_builder checks for the git+ URL). All asserted specifics are discoverable from instructi"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact concatenation pattern to use: 'extras[\"testing\"] = (...) + extras[\"docs\"]', the exact git URL string for hf-doc-builder, and specific syntax like 'runnable:<label>' and '# pytest-decorator:' lines. These are implementation-level details that tell the agent exactly WHAT to write rather than describing the problem to solve."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_docs_extra_in_testing uses a regex that matches the exact pattern 'extras[\"testing\"] = (...) + extras[\"docs\"]'. An alternative correct fix like 'extras[\"testing\"] = extras[\"docs\"] + (...)' (docs first, then testing deps) would fail the regex. Similarly, using a different variable name or merging approach would fail despite being functionally equivalent."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are purely text-matching: test_docs_extra_defined checks 'extras[\"docs\"]' in source text, test_docs_extra_in_testing uses regex on source text, test_dependency_table_uses_git_doc_builder checks for a string in source text. The pass-to-pass tests do execute code (syntax check, ruff), but the core behavioral f2p tests are all string-in-file checks with no execution or import of the modified code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific strings/patterns that don't exist in the original repo (e.g., 'extras[\"docs\"]' is not in the original setup.py, the git+ URL is not in the original dependency table). A stub or no-op implementation would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/transformers/../solution/solve.sh (or wherever Harbor mounts it). The agent could potentially read the gold patch from the solution directory. Additionally, the test file itself is accessible and contains the exact regex patterns and string literals being checked, making it trivial to reverse-engineer the expected changes."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires updates to CONTRIBUTING.md and docs/source/en/testing.md, and fixes to glmasr.md code examples. The test file has empty/commented-out test functions for these (the 'config_edit' and some 'pr_diff' sections have no assertions). The CONTRIBUTING.md and testing.md changes are not actually tested, nor are the glmasr.md code example fixes validated beyond what's shown."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass core behavioral, doc example fixes, config_edit, etc.), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing documentation and configuration files, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction provides the exact concatenation pattern for extras[\"testing\"], the exact git URL for hf-doc-builder, and specifies precise syntax like 'runnable:<label>' and '# pytest-decorator:' directives. It also specifically says 'incorrect object construction, missing imports, and incomplete code paths' which narrows down the exact bugs in glmasr.md."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff shows localized changes to specific sections of setup.py, dependency_versions_table.py, CONTRIBUTING.md, glmasr.md, and testing.md. Changes are scoped and don't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 6
+}

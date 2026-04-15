@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (commands.ts, program.ts, SKILL.md, session-management.md), the command renames (kill-all\u2192session-kill-all, install-skills\u2192install), the .playwright marker directory, the config path change to .playwright/cli.config.json, and the findWorkspaceDir concept. All test assertions reference these same artifacts."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (workspace scoping, command renames, config path change) but does not specify exact code changes, line numbers, or implementation details like 'change line X to Y'. A developer must still reason about how to implement findWorkspaceDir, restructure command declarations, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_find_workspace_dir_function uses a Python regex to extract a function specifically named 'findWorkspaceDir' from program.ts (re.search r'function findWorkspaceDir\\('). An alternative correct implementation using a different function name (e.g., 'resolveWorkspaceRoot' or 'locateWorkspace') would fail this test despite being behaviorally correct. The instruction never mandates this exact function name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most fail-to-pass tests are text-matching: test_session_kill_all_command_registered and test_install_replaces_install_skills use regex to extract command names from source text; test_config_default_path_updated checks content.includes('.playwright') and content.includes('cli.config.json'); test_find_workspace_dir_function extracts function body via regex then reimplements it in a separate Node script rather than importing/calling the actual code. test_skill_md_updated and test_session_mgmt_md_up"
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific new command names (session-kill-all, install) and absence of old ones (kill-all, install-skills), a new function (findWorkspaceDir), and new config path references. A stub or no-op implementation would not satisfy these - the old command names would still be present and new ones absent."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/playwright via solve.sh, and the tests only inspect file contents via regex/string matching. An agent could read the test file at tests/test_outputs.py to discover exact expected strings (e.g., 'session-kill-all', 'findWorkspaceDir'), or could examine /solution/solve.sh if accessible in the container. The text-matching nature of tests makes pattern-matching without understanding trivial."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All five behavioral requirements from instruction.md are tested: workspace-based scoping (test_find_workspace_dir_function, test_daemon_scoped_by_workspace), install command rename (test_install_replaces_install_skills), kill-all rename (test_session_kill_all_command_registered), config path update (test_config_default_path_updated), and documentation updates (test_skill_md_updated, test_session_mgmt_md_updated)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments (Gates/pass_to_pass/static, Pass-to-pass/repo_tests, Fail-to-pass/pr_diff), have descriptive names and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code refactoring and command renaming, not producing structured data output like JSON/CSV/API schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, command names, and variable names in the instruction are consistent and correctly spelled. The files referenced (commands.ts, program.ts, SKILL.md, session-management.md) all match what the tests expect."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction lists relevant files to look at (which is appropriate for the task domain) but doesn't specify exact line numbers or specific code constructs to change. It describes what behavior should change, not how to implement it at the code level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-editing task, not an agent-config-editing task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

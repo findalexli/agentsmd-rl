@@ -1,0 +1,61 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the exact error message 'Referenced Blob is not a Blob.', the error code 582, the test name 'cannot deserialize a Blob reference backed by a string', the relevant files (ReactFlightReplyServer.js, ReactFlightDOMReply-test.js, codes.json), and the yarn extract-errors command. All test assertions (error message content, test existence, file paths, error code registration) are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'add type validation to ensure that when a $B reference is resolved, the backing entry is actually a Blob instance. If the backing entry is not a Blob (e.g., it's a string), the deserializer should throw a descriptive error.' It also specifies the exact error message, error code number (582), and exact test name. This tells the agent precisely WHAT to change and HOW, leaving minimal reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes: that a specific Jest test passes (by running it), that existing tests still pass, that the error message is registered in codes.json, and that the file parses. Alternative implementations (e.g., using typeof check, different variable names, checking with Object.prototype.toString) would all pass as long as they throw the correct error message and add the test with the correct name."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute subprocess commands (yarn test, node --check, yarn lint, yarn flow-ci) and check return codes and Jest output. The error code test does read codes.json, but it parses the JSON and checks for the error message string in the values, which is checking configuration state rather than just grepping source code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests (test_blob_validation_rejects_string, test_error_code_registered) require actual implementation: the Jest test must exist and pass (checking that a string-backed $B reference throws an error), and the error code must be registered. A stub/no-op wouldn't create the test file or register the error code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/react (after solve.sh runs) but more critically, solve.sh is available in the container at solution/solve.sh. The agent could read this file to get the exact patch. Additionally, the test file test_outputs.py is accessible and contains the exact test name pattern and error message being checked for."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from instruction.md are tested: valid Blob references still work (test_react_flight_reply_formdata), string $B references throw error (test_blob_validation_rejects_string), error code 582 registered (test_error_code_registered), new test exists and passes (test_blob_validation_rejects_string checks numTotalTests > 0), and existing tests pass (test_react_flight_reply_all)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies and its relationship to the task."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task involves editing codes.json (a structured JSON file), and the instruction specifies the exact error code (582) and message ('Referenced Blob is not a Blob.') that must be present."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, command names, function names, and string literals in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (ReactFlightReplyServer.js) which is appropriate since it's the only relevant file for this domain. It doesn't specify exact line numbers or the precise code change needed (like 'replace the cast on line 1809')."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes: adds one validation block in ReactFlightReplyServer.js, appends one entry to codes.json, and adds one test case. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 2
+}

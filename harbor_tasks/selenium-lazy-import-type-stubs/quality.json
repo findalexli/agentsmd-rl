@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies all 8 stub file paths, the required exports for the main stub (Chrome, Firefox, ChromeOptions, Keys, ActionChains, etc.), the pyproject.toml change ('*.pyi' in package-data), the DesiredCapabilities import path, and the submodule-specific requirements (chrome must include options/webdriver, firefox must include firefox_profile). All test assertions map to items described in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be created (stub files, pyproject.toml update, import fix) and what the stubs should contain (export lists), but doesn't give exact file contents, line numbers to change, or the specific code fix for the DesiredCapabilities import issue. A developer still needs to reason about what modules to import in each stub and how to fix the lazy import issue."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for file existence, presence of export names in content (flexible string matching like 'Chrome' not exact lines), subprocess import success, and mypy resolution. Alternative implementations (different import styles, different ordering, aliased vs direct imports) would all pass. The test_webdriver_init_stub_exists checks for 'class Chrome' OR 'WebDriver as Chrome', showing flexibility."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While some tests do check file content (stub existence and content checks), many tests execute actual behavior: test_mypy_can_resolve_webdriver_imports runs mypy, test_import_desired_capabilities_directly runs Python import, test_selenium_package_imports/test_webdriver_package_imports execute imports, test_repo_remote_connection_unit_tests runs pytest, test_repo_ruff_check runs ruff, test_repo_python_compileall compiles all files. It's a mix, not purely text-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Stub files don't exist on the base commit, so test_webdriver_init_stub_exists and the other 7 stub existence tests will fail. test_mypy_can_resolve_webdriver_imports would fail without proper stubs. test_pyproject_includes_pyi checks for a specific config change. These cannot be satisfied by empty/stub implementations since they check for specific content and behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/selenium as solve.sh in the solution/ directory. The Dockerfile doesn't remove it, and the agent could potentially read test_outputs.py to discover exact assertions. Additionally, the agent could grep the container for the solution script or test file to reverse-engineer exact requirements without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All major requirements from instruction.md are tested: 8 stub files exist (8 tests), main stub exports all required classes (test_webdriver_stub_has_all_exports), pyproject.toml updated (test_pyproject_includes_pyi), DesiredCapabilities importable (test_import_desired_capabilities_directly), mypy resolution works (test_mypy_can_resolve_webdriver_imports), existing tests pass (multiple pass-to-pass tests)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with section comments ('Fail-to-pass tests' and 'Pass-to-pass tests'), each test has a descriptive name and docstring explaining what it validates."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces .pyi stub files and config edits, not structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, module names, class names, and commands in instruction.md are all correct and consistent with the Selenium project structure."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to create and what behavior to fix without naming specific buggy lines or exact code changes. The mention of DesiredCapabilities and lazy imports is necessary context, not implementation leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The pyproject.toml edit is a single addition of '*.pyi' to package-data, which is a localized change. The gold solution doesn't contradict any other config files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

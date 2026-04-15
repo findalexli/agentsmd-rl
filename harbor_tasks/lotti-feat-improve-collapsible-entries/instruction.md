@@ -1,31 +1,54 @@
-# Fix Collapsible Entry Scroll Jumpiness and Header Layout
+# Fix Collapsible Entry Scroll Jumpiness, Header Layout, and Animation
 
 ## Problem
 
-The collapsible journal entry feature has two UX regressions:
+The collapsible journal entry feature has several UX regressions:
 
-1. **Scroll jumpiness**: Expanding or collapsing an entry causes the page to scroll erratically. After every toggle, the code unconditionally calls `Scrollable.ensureVisible`, which forcibly moves the viewport even when the entry is already fully visible. This is disorienting for the user.
+1. **Scroll jumpiness**: Expanding or collapsing an entry causes erratic scrolling. After every toggle, `Scrollable.ensureVisible` is called unconditionally, moving the viewport even when the entry is already fully visible.
 
-2. **Header layout**: When a collapsible entry is expanded, the date disappears from the header and action icons (flag, AI menu, triple-dot) are placed on the left. The expanded header should match the default header layout: date on the left, action icons on the right.
+2. **Header layout**: When a collapsible entry is expanded, the date disappears from the header and action icons are placed on the left. The expanded header should show `EntryDatetimeWidget` (date) on the left and action icons on the right — matching the default (non-collapsible) header.
 
-Additionally, the collapse/expand animation uses `AnimatedSize` which causes content to visually squish from the center rather than smoothly clipping from top to bottom.
+3. **Animation squish**: The collapse/expand animation uses `AnimatedSize` which causes content to squish from the center rather than clipping smoothly from the top edge. Additionally, the generic `CollapsibleSection` widget's `AnimatedSize` lacks top alignment, so content expands from center instead of downward from the header.
+
+4. **Duplicate date**: The date currently appears in both the expanded header area and in the expanded body content below the image/audio player.
 
 ## Expected Behavior
 
-1. **Scrolling**: Only auto-scroll when *expanding* an entry AND the card's top edge gets pushed above the visible viewport. Never scroll on collapse. Never scroll when the entry is already visible.
+### 1. Viewport-Aware Conditional Scroll (`entry_details_widget.dart`)
 
-2. **Header layout (expanded)**: Date widget on the left, action icons + chevron grouped on the right — matching the default (non-collapsible) header convention.
+After toggling an entry's collapse state, the scroll logic must be conditional — only auto-scroll when expanding AND the entry's top edge is pushed above the visible viewport. The implementation must:
 
-3. **Animation**: Collapse/expand should clip content from the top edge, not squish from center. The `CollapsibleSection` widget should also align its `AnimatedSize` to the top.
+- Import `package:flutter/rendering.dart` to access viewport APIs.
+- Determine whether the toggle is an expand or collapse, storing this as a `final isExpanding` variable.
+- Use `RenderAbstractViewport.maybeOf` for a safe (nullable) viewport lookup and `Scrollable.maybeOf` for a safe scrollable lookup.
+- Guard the `Scrollable.ensureVisible` call inside an `if (isExpanding)` block — never scroll on collapse.
 
-4. **No duplicate date**: Since the date now appears in the expanded header, remove it from the expanded body content (below image/audio player).
+### 2. Expanded Header Shows Date (`entry_detail_header.dart`)
 
-## Files to Look At
+The expanded (non-collapsed) header must include `EntryDatetimeWidget`. The widget should appear in at least one `if (!widget.isCollapsed)` conditional block so that both collapsed and expanded states render the date widget. The expanded header should show date on the left, action icons on the right.
 
-- `lib/features/journal/ui/widgets/entry_details_widget.dart` — scroll logic after toggle, expanded body content
-- `lib/features/journal/ui/widgets/entry_details/header/entry_detail_header.dart` — collapsible header layout (`_buildCollapsibleHeader`)
-- `lib/widgets/misc/collapsible_section.dart` — generic collapsible section widget with `AnimatedSize`
+### 3. SizeTransition-Based Collapse Animation (`entry_details_widget.dart`)
 
-## Additional Notes
+Replace the bare `AnimatedSize` body animation with a private `_CollapsibleBody` StatefulWidget (and corresponding `_CollapsibleBodyState`). This widget must:
 
-After making the code changes, review and update the project's agent instruction files (`AGENTS.md`) to capture any relevant development guidelines. If the project doesn't have a `CLAUDE.md`, consider creating one. Keep agent configuration files current with practical guidance for working in this codebase.
+- Use Flutter's `SizeTransition` widget (not bare `AnimatedSize`) for the collapse/expand animation, configured with `sizeFactor` (bound to an `AnimationController`) and `axisAlignment` for top-aligned expansion.
+- Layer a `FadeTransition` on top (bound to an opacity animation) for smooth fade during collapse/expand.
+- Implement `didUpdateWidget` in the state class to call `_controller.forward()` when expanding and `_controller.reverse()` when collapsing, responding to `isCollapsed` property changes.
+- The build tree must instantiate `_CollapsibleBody(...)` where the body content is rendered.
+
+### 4. AnimatedSize Top Alignment (`collapsible_section.dart`)
+
+The `AnimatedSize` widget in the generic `CollapsibleSection` must use `Alignment.topCenter` (or equivalent top alignment) as its alignment parameter so content expands downward from the header rather than squishing from the center.
+
+### 5. Remove Duplicate Date from Expanded Body (`entry_details_widget.dart`)
+
+Since the date now appears in the expanded header:
+- Remove the `datePadding` variable.
+- Remove the `entry_datetime_widget.dart` import from this file (the widget is used in the header file instead).
+- Ensure `EntryDatetimeWidget` does not appear in the `expandedContent` section.
+
+## Files
+
+- `lib/features/journal/ui/widgets/entry_details_widget.dart`
+- `lib/features/journal/ui/widgets/entry_details/header/entry_detail_header.dart`
+- `lib/widgets/misc/collapsible_section.dart`

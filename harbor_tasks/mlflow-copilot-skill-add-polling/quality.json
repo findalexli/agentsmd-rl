@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The instruction mentions 'approximately 30 minutes / 1800 seconds' but test_poll_script_api_and_event asserts '1800' in content or 'max_seconds' in content \u2014 the variable name 'max_seconds' is not mentioned in instruction.md. Also, tests check specific existing repo files (e.g., enforce-uv.sh, statusline.sh, lint.py, validate_pr_body.py, settings.json) as pass_to_pass tests, but instruction.md never mentions these files or their paths. While these are existing repo files the agent shouldn't brea"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is needed (polling mechanism, timeline API, copilot_work_finished event, timeout, frontmatter updates) but does not prescribe exact code, line numbers, or specific implementation details like variable names or exact diff content."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_poll_script_api_and_event asserts '1800' in content or 'max_seconds' in content \u2014 an alternative correct implementation using a different variable name (e.g., 'timeout_secs=1800') would pass, but one using 'TIMEOUT=1800' would also pass. However, an implementation using a different timeout value like 'max_wait=1800' without the literal '1800' or 'max_seconds' would fail. More critically, this test checks for gold-specific variable name 'max_seconds' as an alternative to the literal '1800'."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_poll_script_api_and_event is purely textual: it reads poll.sh content and asserts substrings ('timeline', 'copilot_work_finished', '1800'/'max_seconds') without executing the script against any mock or real API. test_skill_allows_poll_tool and test_skill_polling_docs also only inspect file text. While test_poll_script_requires_args and test_poll_script_syntax_valid do execute the script, the core behavioral test (API usage and event checking) is text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub poll.sh (e.g., empty file or 'exit 0') would fail test_poll_script_requires_args (needs non-zero exit without args), test_poll_script_api_and_event (needs 'timeline' and 'copilot_work_finished' strings), and test_skill_allows_poll_tool (needs frontmatter change). These tests require meaningful implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/mlflow after the Dockerfile builds (solve.sh is in solution/). An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exact expected strings like 'max_seconds', '1800', 'copilot_work_finished', 'timeline', and the exact frontmatter structure needed. The Dockerfile does not remove these files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: poll.sh existence and executability, argument validation, timeline API usage, copilot_work_finished event checking, timeout mechanism, SKILL.md frontmatter update with poll.sh in allowed-tools, and polling documentation."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (repo_tests pass_to_pass, static pass_to_pass, pr_diff fail_to_pass), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task involves YAML frontmatter in SKILL.md. The instruction specifies the required keys (allowed-tools with poll.sh) and the tests validate YAML structure. The schema expectations are documented."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the task domain and expected behavior without revealing exact line numbers, specific variable names, or implementation details. It names the target directory and file which is appropriate for the task scope."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff in SKILL.md is localized \u2014 it adds one line to allowed-tools and appends a documentation section. It doesn't rewrite the entire file or contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 4
+}

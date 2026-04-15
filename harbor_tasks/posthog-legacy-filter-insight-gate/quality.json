@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: the constant LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG with value 'legacy-insight-filters-disabled', the function is_legacy_insight_filters_blocked with exact parameter handling, the InsightSerializer.validate method behavior, the PermissionDenied message string, the file path posthog/api/insight.py, and the feature_enabled call parameters. All test assertions trace back to instruction content."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction gives the complete implementation: exact function name, exact parameter names and types, exact control flow (check distinct_id, call feature_enabled with specific kwargs), exact method placement in InsightSerializer, and exact validation logic. This is not describing what's broken \u2014 it's prescribing exactly WHAT to change and HOW, leaving essentially no reasoning for the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use AST extraction of specific function names (is_legacy_insight_filters_blocked), extract and exec function source, check for a module-level constant named LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG via AST, and verify specific call signatures. An alternative correct fix (e.g., using a different function name, implementing the check inline in the serializer, or using a different guard pattern) would fail these tests even if behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use ast.parse for structural checks, exec() to actually run extracted function code with mock objects, subprocess.run for compilation/lint checks, and MagicMock to verify call behavior. They execute code, not just grep for text strings."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub is_legacy_insight_filters_blocked returning False would fail test_filters_blocked_delegates_to_feature_flag (which expects True when feature_enabled returns True). A stub returning True would fail test_filters_blocked_returns_false_without_distinct_id. The constant check requires specific string value. The validate method tests verify actual PermissionDenied raising."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/posthog after solve.sh runs, and the Dockerfile doesn't remove solution/. The agent could read solution/solve.sh if it exists in the container, or examine the git diff to find the exact patch. Additionally, the instruction itself is so detailed it essentially provides the solution."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: the constant definition, the function's early return for missing distinct_id, the feature_enabled delegation with correct args, the serializer validate method blocking legacy filters, and allowing query-based requests through."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_legacy_filters_flag_constant, test_filters_blocked_returns_false_without_distinct_id, etc.), grouped by category (static/pass_to_pass vs fail_to_pass), and include docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data output (JSON/CSV/API/DB schema). It's about adding a feature flag gate to existing API endpoints."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or string literals in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (posthog/api/insight.py), the exact class (InsightSerializer), specifies to add a validate method, names the exact function is_legacy_insight_filters_blocked, and provides complete implementation details including exact parameter names and call signatures. This goes far beyond identifying the domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

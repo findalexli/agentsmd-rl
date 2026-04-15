@@ -17,15 +17,18 @@ This split causes several issues:
 
 ## Expected behavior
 
-The workspace routing and instance bootstrapping should be consolidated into a single router module in `packages/opencode/src/server/`. This router should:
+The workspace routing and instance bootstrapping should be consolidated into a single router module at `packages/opencode/src/server/router.ts`. This router should:
 
+- Export a middleware function named `WorkspaceRouterMiddleware`
 - Take over the `Instance.provide` responsibility that is currently in `InstanceRoutes`
-- Handle directory resolution (from query params / headers) directly
+- Handle directory resolution from query param `directory` and header `x-opencode-directory` directly
 - For requests without a workspace parameter, wrap in `Instance.provide` with the resolved directory
 - For worktree workspaces, call `Instance.provide` directly with the workspace's directory instead of going through the adaptor's fetch
 - For remote workspaces, continue forwarding through the adaptor
 - The old `workspace-router-middleware.ts` in the control-plane directory should be removed
 - The worktree adaptor's `fetch` method is no longer needed and can throw
+
+The router must have at least two separate `Instance.provide` calls to handle: (1) requests with no workspace parameter, and (2) worktree workspace requests.
 
 ## Files to investigate
 

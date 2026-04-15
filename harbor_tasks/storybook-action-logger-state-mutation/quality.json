@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_syntax_check asserts 'export default function ActionLogger' literal string; test_repo_format runs 'oxfmt --check'; test_no_state_mutation_on_duplicate freezes objects and checks count immutability; test_new_action_immutable checks that input action objects are not mutated. The instruction mentions immutability conceptually but doesn't specify frozen-object testing or the exact export signature. Also test_repo_type"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the buggy behavior (drops newest instead of oldest, stale counts, mutation issues) but does not prescribe the exact fix like 'use slice(-limit)' or 'spread the previous object'. The agent must reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests extract the setActions updater body via regex and test its behavior (limit retention, immutability, count increment). They don't assert specific variable names, line positions, or helper functions \u2014 any correct implementation that keeps newest actions, doesn't mutate state, and increments count immutably would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests extract the state updater function from source and actually execute it via Node.js subprocess, checking behavioral outcomes (array length, element values, mutation detection via Object.freeze). test_syntax_check is text-based but supplementary; the key behavioral tests are execution-based."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub or no-op implementation would fail: test_limit_retains_newest checks specific array lengths and element names after 5 actions with limit=3; test_no_state_mutation_on_duplicate checks count=2 and freeze-based mutation detection; test_new_action_immutable checks count=1 on output. None of these can be satisfied by returning empty/default values."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/storybook as solve.sh could be discovered, and the gold patch is in solution/solve.sh which could be read by the agent if it exists in the container. The Dockerfile doesn't show any mechanism to prevent the agent from accessing /solution/ or the test files."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors described in instruction.md are tested: (1) newest actions retained via test_limit_retains_newest, (2) repeated action counts via test_no_state_mutation_on_duplicate checking count=2, (3) immutability via test_no_state_mutation_on_duplicate and test_new_action_immutable using Object.freeze."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_limit_retains_newest, test_no_state_mutation_on_duplicate, test_new_action_immutable), grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with comments and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a React component's state management logic, not producing structured data outputs like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct with no evident typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact file 'code/core/src/actions/containers/ActionLogger/index.tsx' and points to the 'addAction' handler, significantly narrowing the localization task in a large monorepo. It also describes specific implementation details like 'State updater in the addAction handler has issues with how it manages state references.'"
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single TypeScript source file, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

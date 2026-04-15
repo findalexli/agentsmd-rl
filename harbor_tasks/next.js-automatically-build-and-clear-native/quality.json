@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific internal identifiers not mentioned in instruction.md: test_maybe_build_native_has_rust_detection checks for 'hasRustChanges' and 'getVersionBumpCommit' as exact variable/function names. The instruction says 'Detect whether any .rs files changed since the last version bump' but never specifies these exact function names. Also, test_agents_md_simplified_rebuild checks for a line containing both 'Turbopack' and 'Rust' and 'pnpm build' \u2014 this specific combination is not explici"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is needed (detect Rust changes, skip in CI, wire into turborepo pipeline) but does not give exact code lines or diffs. A developer must still design the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_maybe_build_native_has_rust_detection asserts exact function names 'hasRustChanges' and 'getVersionBumpCommit' via string search in the file. A correct alternative implementation using different names (e.g., 'checkForRustFileChanges', 'findLastVersionCommit') would fail these assertions. This forces the agent to use gold-specific internal helper names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several core fail-to-pass tests are purely text-matching: test_maybe_build_native_has_rust_detection checks 'hasRustChanges' and 'getVersionBumpCommit' in file text; test_build_native_uses_stdin_prettier checks for '--stdin-filepath' string presence; test_agents_md_simplified_rebuild checks for string patterns. While test_maybe_build_native_skips_in_ci does execute the script, the majority of f2p tests are text-based assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/empty file would not pass: test_maybe_build_native_skips_in_ci actually executes the script and checks for specific stdout output; test_package_json_build_script requires a JSON key to exist; test_turbo_json_build_task requires specific JSON structure. These require meaningful implementation."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js might be accessible if the agent looks at solve.sh. The Dockerfile doesn't show any cleanup of solution files. Also, the expected test strings like 'Skipping swc-build-native in CI' are visible in the instruction.md itself, so an agent could trivially produce a script that just prints that string."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires 'Clear stale .node binaries when no Rust changes exist' but no test verifies this clearing behavior. Also, 'Rebuild native binaries only when Rust changes are detected' is not tested beyond checking function name strings exist."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-grouped with section comments (Gates, Fail-to-pass, Config-edit, Pass-to-pass), each test function has a descriptive docstring, and naming follows a clear convention."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact JSON schema needed: turbo.json must have 'tasks' key with 'build' task containing 'inputs' and 'env' arrays; package.json must have 'scripts.build'. These are documented in the instruction."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names files to modify (which is appropriate given the task domain) but doesn't specify exact line numbers or exact code changes. The file paths mentioned are necessary context for the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff for AGENTS.md is localized (removes 2 lines, adds 1 line in the rebuild section). Config edits to package.json and turbo.json are similarly small, targeted additions."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 5
+}

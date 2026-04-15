@@ -8,15 +8,48 @@ Meanwhile, the `biome-developer` skill (`.claude/skills/biome-developer/SKILL.md
 
 ## Expected Behavior
 
-1. **Extract changeset guidance into its own skill.** Create a new `.claude/skills/changeset/SKILL.md` that covers how to create changesets (using a non-interactive command), choose the correct change type (patch/minor/major), write proper changeset descriptions, and follow Biome's formatting conventions. The `testing-codegen` skill should no longer contain changeset instructions — it should reference the new skill instead.
+### 1. Extract changeset guidance into its own skill
 
-2. **Create a pull-request skill.** Create a new `.claude/skills/pull-request/SKILL.md` that covers branch targeting (main vs next), PR title formatting with conventional commits, the PR template structure, writing good summaries, AI disclosure requirements, and a pre-PR checklist.
+Create a new `.claude/skills/changeset/SKILL.md` with YAML frontmatter containing the fields `name`, `description`, and `compatibility` (where `name` must be `changeset`). The body must include the following sections:
 
-3. **Add Code Comments guidance to biome-developer.** Add a section to `.claude/skills/biome-developer/SKILL.md` explaining how to write good code comments — focused on helping future readers, not on documenting the current task or issue being worked on.
+- `## Purpose` — explaining when to use this skill
+- `## Changeset Format` — describing the changeset file structure
+- `## Writing Guidelines` — covering how to write changeset descriptions, with guidance for the three change types: `patch`, `minor`, and `major`
+- A reference to `just new-changeset-empty` as the non-interactive command for creating changesets
 
-4. **Add a non-interactive changeset command.** The existing `just new-changeset` command is interactive and doesn't work with agents. Add a `just new-changeset-empty` recipe to the `justfile` that creates an empty changeset without interaction.
+### 2. Create a pull-request skill
 
-5. **Update the skills catalog.** The `.claude/skills/README.md` should list the new skills in the skills table and directory tree.
+Create a new `.claude/skills/pull-request/SKILL.md` with YAML frontmatter containing the fields `name`, `description`, and `compatibility` (where `name` must be `pull-request`). The body must include the following sections:
+
+- `## AI Assistance Disclosure` — mandatory disclosure requirements when AI is used
+- `## Choose the Target Branch` — branch targeting rules (main vs next)
+- `## PR Title` — formatting with conventional commits
+- `## Pre-PR Checklist` — pre-submission checklist
+
+### 3. Add Code Comments guidance to biome-developer
+
+Add a `### Code Comments` subsection to `.claude/skills/biome-developer/SKILL.md` with:
+- `**DO:**` and `**DON'T:**` labeled guidance items
+- The principle that comments should help the next developer or future reader understand the code
+- Code examples marked `WRONG` and `CORRECT` to illustrate the difference between task-scoped comments and reader-focused comments
+
+### 4. Add a non-interactive changeset command
+
+Add a `new-changeset-empty` recipe to the `justfile` that invokes `pnpm changeset --empty`.
+
+### 5. Clean up testing-codegen skill
+
+In `.claude/skills/testing-codegen/SKILL.md`:
+- Remove the `### Create Changeset` subsection (extracted to the new skill)
+- Add a reference to `changeset/SKILL.md` for changeset guidance
+- Update the frontmatter `description` field so it does not mention "changeset"
+
+### 6. Update the skills catalog
+
+In `.claude/skills/README.md`:
+- Add the `changeset` and `pull-request` skills to the skills table
+- Update the testing-codegen table entry so it does not say "create changesets"
+- Add `changeset/` and `pull-request/` entries to the directory tree
 
 ## Files to Look At
 

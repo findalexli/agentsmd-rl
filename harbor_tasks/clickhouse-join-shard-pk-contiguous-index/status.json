@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T20:13:57.760240",
-  "total_time": 2300.76,
-  "sandbox_id": "ii16sjwzz1dk6n2wcgvtr",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:57:30.008802",
+  "total_time": 1588.11,
+  "sandbox_id": "ikywr5fq7s40v48yf0vsz",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -42,17 +44,31 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.37,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:137: test `test_no_trailing_whitespace_in_target` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:153: test `test_no_tabs_in_target` has 1 assert(s), all pass on a stub', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.19,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 3,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "gemini",
-      "time": 9917.54,
-      "at": "2026-04-10T04:08:33.739329"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -84,6 +100,14 @@
       "backend": "fireworks",
       "time": 2300.76,
       "at": "2026-04-11T20:13:57.760240"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1588.11,
+      "at": "2026-04-15T03:57:30.008802"
     }
   ]
 }

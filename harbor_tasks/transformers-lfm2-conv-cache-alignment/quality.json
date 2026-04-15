@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: `has_previous_state` attribute, `last_conv_layer` attribute, `update_conv_state(layer_idx, new_conv_state, cache_init=False)` method signature, the `reset()` behavior, the class names `Lfm2HybridConvCache` and the MoE variant, the three affected files, and the `slow_forward`/`cuda_kernels_forward` methods. All test assertions map to discoverable concepts from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly specifies the exact method signature `update_conv_state(layer_idx, new_conv_state, cache_init=False)`, exact attribute names (`has_previous_state`, `last_conv_layer`), exact behavior (roll left by one, update last position when cache_init=False; store full tensor when cache_init=True), and when the flag flips. This is a complete specification of the solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable names like `has_previous_state`, `last_conv_layer`, and method name `update_conv_state` with exact parameter names (`cache_init`). An alternative correct fix using different naming (e.g., `is_initialized`, `final_conv_idx`, `set_conv_cache`) would fail despite being functionally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import classes, instantiate them with configs, call methods like `update_conv_state` and `slow_forward`, and assert on tensor values and attribute states. No text-matching tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The tests check non-trivial behavior: `test_update_conv_state_decode` checks specific tensor values after roll-and-update operations, `test_has_previous_state_lifecycle` checks the flag transitions, and `test_slow_forward_decode_uses_cache` verifies different cache states produce different outputs. A stub returning None or empty would fail."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /repo as a git repo, and the gold patch is in solve.sh. An agent could potentially read /solution/solve.sh or similar paths. The Dockerfile doesn't remove the solution directory, and there's no evidence of access restrictions."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md are tested: `has_previous_state` lifecycle, `last_conv_layer` computation, `update_conv_state` with both cache_init modes, `reset()` clearing the flag, forward method behavior changes, and MoE variant alignment."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., `test_last_conv_layer_computation`, `test_has_previous_state_lifecycle`), grouped by category (static gates vs fail-to-pass), and include docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or method names in the instruction."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact files, exact method names to create (`update_conv_state`), exact attribute names (`has_previous_state`, `last_conv_layer`), and exact behavioral specifications including roll-left-by-one logic. This goes well beyond naming the buggy module and effectively specifies the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T02:02:39.530870",
-  "total_time": 3563.95,
-  "sandbox_id": "iaz0b97chki5vnpz70ifq",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:50:35.931562",
+  "total_time": 918.94,
+  "sandbox_id": "i4t3bn4uoy5wx8sn0s00n",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -56,17 +58,28 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:6', 'A:[A] test_not_tautological @ tests/test_outputs.py:337: test `test_upstream_vitest_passes` has 1 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:356: test `test_repo_core_tests` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:371: test `test_repo_client_tests` has 1 assert(s), all pass on a stub', 'A:[A] test_not_tautological @ tests/test_outputs.py:386: test `test_repo_channel_tests` has 1 assert(s), all pass on a stu']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 29.16,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "gemini",
-      "time": 16161.86,
-      "at": "2026-04-09T15:01:38.980102"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -98,6 +111,14 @@
       "backend": "fireworks",
       "time": 3563.95,
       "at": "2026-04-12T02:02:39.530870"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 918.94,
+      "at": "2026-04-15T04:50:35.931562"
     }
   ]
 }

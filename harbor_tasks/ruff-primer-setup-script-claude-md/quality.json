@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: script path `scripts/setup_primer_project.py`, `main()` function with \u22653 substantive statements, `find_project()` function, `--help` flag with 'project' description, non-zero exit with 'not found' on stderr, `mypy-primer` dependency in `scripts/pyproject.toml`, `[tool.uv.sources]` with git pointing to `hauntsaninja/mypy_primer`, CLAUDE.md updates with 'ecosystem', `setup_primer_project`, and `uv run scripts/setup_primer_project.py`. The tests for p"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what to build and behavioral requirements but does not provide exact code, line numbers, or the specific implementation. A developer must still design the argument parsing, project lookup logic, cloning workflow, etc."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for behavioral properties (--help output contains 'project', find_project works, main() has \u22653 non-trivial statements, TOML keys exist, CLAUDE.md contains certain strings). Alternative implementations using different variable names, different argparse styles, or different orchestration approaches would all pass. The required function names (`main`, `find_project`) are explicitly specified in the instruction."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the script via subprocess (--help flag, unknown project rejection), import and call `find_project()` dynamically, parse TOML files programmatically, run ruff linter, and compile Python files. While some tests do read file content (CLAUDE.md checks), they are mixed with genuine behavioral/execution tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub `main()` with just `pass` would fail test_script_not_stub (needs \u22653 substantive statements). A stub find_project returning None would fail test_script_find_project (asserts p is not None and p.name matches). A script without argparse would fail test_script_help_flag. An empty script would fail test_script_rejects_unknown_project. No f2p test can be trivially passed."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/ruff as a git repo where the gold patch could be obtained via `git log` or examining refs. More critically, the Dockerfile installs mypy_primer and the solution file path is predictable. The agent could also read the test file at tests/test_outputs.py to discover exact assertions. There's no evidence that /solution/ or tests/ directories are blocked from agent access."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in the instruction are tested: script existence/syntax, --help flag, unknown project error handling, find_project function, pyproject.toml dependency and uv sources, CLAUDE.md ecosystem section with required strings, and the uv run command reference."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass gate, fail-to-pass core behavioral, config/documentation, pass-to-pass regression, pass-to-pass repo CI/CD). Each test has a descriptive name and docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The task produces structured data in pyproject.toml (TOML format). The instruction specifies the exact schema keys: `[tool.uv.sources]` with `git` key, and `mypy-primer` in project dependencies. Tests verify these via TOML parsing."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, commands, function names, and variable names in the instruction are consistent with the tests: `scripts/setup_primer_project.py`, `scripts/pyproject.toml`, `CLAUDE.md`, `find_project()`, `main()`, `hauntsaninja/mypy_primer`, etc."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the new script to create and files to modify without specifying exact line numbers or internal implementation details of existing files. It references existing directories and files appropriately for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff for CLAUDE.md is a localized addition of ~9 lines for the ecosystem section, and pyproject.toml changes are minimal (adding one dependency and a new TOML section). Neither contradicts other files."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 1
+}

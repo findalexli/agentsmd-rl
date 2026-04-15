@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The test test_wrap_raw_values_default_true greps for the exact string 'wrapRawValues ?? true' in a specific file path 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts'. While instruction.md mentions the pattern 'wrapRawValues ?? true', it does not mention the exact file path 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts' - it only says 'JSON query serialization layer'. Also, the test test_deserialize_json_object_is_a_function imports from './packages/cl"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states the fix pattern 'wrapRawValues ?? true' and describes exactly what to change: add a 'Raw' case to deserialization, add 'FieldRef' and 'Enum' handling to normalization to pass through unchanged, rename/export 'deserializeJsonObject', and change the default to true using 'wrapRawValues ?? true'. This is essentially a specification of the patch, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_wrap_raw_values_default_true uses grep for the exact literal string 'wrapRawValues ?? true' in a specific file path. An alternative correct fix could use a different pattern like 'wrapRawValues !== false' or 'wrapRawValues === undefined ? true : wrapRawValues' or assign the default elsewhere, all of which would be functionally correct but fail the grep test."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_wrap_raw_values_default_true is purely a grep-based text search ('grep -n \"wrapRawValues ?? true\"') with no execution or behavioral verification. While other tests do execute code, this test specifically only checks for a string pattern in source code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_deserialize_handles_raw_type, test_normalize_handles_fieldref, test_normalize_handles_enum, test_deserialize_json_object_is_a_function) actually call the functions and check specific return values/types. A stub returning None/undefined would fail these checks (e.g., result !== 42, result.$type !== 'FieldRef', typeof check)."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution/solve.sh is present in the container at /workspace and downloads the actual PR patch from GitHub. An agent could read solve.sh to discover the exact patch URL (https://github.com/prisma/prisma/pull/29182.patch) and simply apply it. Even if /solution/ isn't directly accessible, the agent could also fetch the same PR patch by finding the PR number from the instruction context."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors listed in instruction.md are tested: deserializeJsonObject export (test_deserialize_json_object_is_a_function), Raw type handling (test_deserialize_handles_raw_type), FieldRef handling (test_normalize_handles_fieldref), Enum handling (test_normalize_handles_enum), wrapRawValues default (test_wrap_raw_values_default_true), existing tests passing (test_json_protocol_unit_tests, test_repo_client_engine_runtime_tests), prettier-check and check-engines-override."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names, each has a docstring explaining what it tests and why it fails on base vs passes after fix, and the module has a top-level docstring explaining the bug context."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a deserialization bug in a library, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names specific functions (deserializeJsonObject, normalizeJsonProtocolValues), specific tagged type cases to add ('Raw', 'FieldRef', 'Enum'), the exact code pattern to use ('wrapRawValues ?? true'), and even the specific default value change (false to true). This goes well beyond describing the symptom and essentially specifies the implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

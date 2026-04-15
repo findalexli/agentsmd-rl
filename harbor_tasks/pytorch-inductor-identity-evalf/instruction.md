@@ -20,7 +20,17 @@ result = sympy.Max(0, expr)  # RecursionError
 Identity(sympy.sympify("0")) >= 0  # RecursionError
 ```
 
-The `Identity` class needs comparison operators that can handle numeric atom arguments directly, avoiding the recursive SymPy comparison path. For non-atomic or non-comparable arguments, it should fall back to the default SymPy behavior.
+## Required Changes
+
+The `Identity` class in `torch/utils/_sympy/functions.py` needs:
+
+1. **Four comparison operators** named exactly `__ge__`, `__gt__`, `__le__`, `__lt__` — each should compare the wrapped numeric value directly for atomic arguments and fall back to the default SymPy behavior for non-atomic or non-numeric arguments.
+
+2. **A helper method** (any name is acceptable) that provides a fast path for comparing wrapped numeric atoms against other numeric values, returning the comparison result as a SymPy boolean.
+
+3. **Preserve all existing methods**: `__int__`, `__float__`, `_eval_expand_identity`. Do not remove or rename these.
+
+4. **Do not use dynamic attribute access** (`setattr`/`getattr`) for state management.
 
 ## Files to Modify
 

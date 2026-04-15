@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T20:17:01.836403",
-  "total_time": 2441.95,
-  "sandbox_id": "iaqo10o92o3c70z156yq5",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T04:15:59.022437",
+  "total_time": 2692.56,
+  "sandbox_id": "i2swhjakgj154lynly3wx",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -49,17 +51,31 @@
       "quality_verdict": "MEDIUM",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:132: test `test_repo_style_check` has 1 assert(s), all pass on a stub ', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:17: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.48,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 7
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1614.53,
-      "at": "2026-04-09T20:45:23.064379"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -91,6 +107,14 @@
       "backend": "fireworks",
       "time": 2441.95,
       "at": "2026-04-11T20:17:01.836403"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2692.56,
+      "at": "2026-04-15T04:15:59.022437"
     }
   ]
 }

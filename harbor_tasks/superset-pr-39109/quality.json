@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key specifics tested: variable name `chart_form_data`, expression `utils_json.loads(chart_params)`, `form_data=chart_form_data`, `isinstance(chart_params, dict)`, `get_superset_base_url()`, `/tablemodelview/edit/`, `not columns and not metrics`, `UnsupportedChart`, `_build_update_payload()`, `_find_chart()`, `identifier.isdigit()`, `int(identifier)`, `id_column=\"uuid\"`, `ChartConfig | None = Field(None, ...)`, `ValidationError`, error message strings, and structured err"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'assign to a variable named chart_form_data', 'the expression utils_json.loads(chart_params) must be used', 'define a helper function _build_update_payload()', 'return {\"slice_name\": request.chart_name}', 'handles numeric identifiers with identifier.isdigit() and int(identifier)'. These are not descriptions of what's broken but prescriptions of the exact fix code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact variable name `chart_form_data` (test_form_data_populated_from_json_params), exact helper function names `_build_update_payload` and `_find_chart` (TestBuildUpdatePayloadHelper, TestFindChartHelper), exact string 'return {\"slice_name\": request.chart_name}' (test_build_update_payload_returns_name_only), exact expression `identifier.isdigit()`. Alternative correct fixes using different variable names, inline logic instead of helpers, or d"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every f2p test is a string-in-file check: `assert 'X' in open(path).read()`. The only behavioral tests are the ruff lint checks (pass_to_pass). No test imports or calls any function, creates mock objects, or verifies actual runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since tests only check for string presence in source files, an agent could simply add comments or dead code containing the expected strings (e.g., `# chart_form_data = utils_json.loads(chart_params)`) without actually implementing the bug fix, and all f2p tests would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/superset relative path accessible from the container via solve.sh. The agent could read the gold patch from the solution directory. Additionally, since tests are pure string matching, the agent could grep test files to find expected strings and insert them as comments."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Bug 3 (ASCII preview crashes on empty charts) is tested only via ruff lint pass and string presence of 'UnsupportedChart' but the actual crash-prevention behavior (returning UnsupportedChart error instead of crashing) is never tested by calling the function."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into named classes per bug/feature area (TestSerializeChartFormData, TestSerializeDatasetUrl, TestUpdateChartRequestConfigOptional, etc.) with descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the structured error format (error_type, message, details fields) and the ChartInfo response structure including form_data field."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction prescribes exact implementation: specific variable names (chart_form_data), exact expressions (utils_json.loads(chart_params)), exact helper function names (_build_update_payload, _find_chart), and exact method calls (identifier.isdigit()). This goes well beyond describing what's broken and effectively dictates the solution code."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

@@ -13,22 +13,21 @@ This matters because:
 ## What Needs to Be Done
 
 1. **Create a new validation module** at `.ci/pytorch/smoke_test/check_wheel_tags.py` that:
-   - Extracts `Tag:` entries from the `WHEEL` metadata inside `.whl` files (found in `PYTORCH_FINAL_PACKAGE_DIR`) or from installed package metadata
-   - Validates the python tag, ABI tag, and platform tag against expected values based on `TARGET_OS`, `sys.platform`, `sys.version_info`, and `sys.abiflags`
-   - On macOS, extracts `.dylib` files from the wheel to a temp directory, runs `otool -l` on each, and verifies the `minos` field matches what the wheel filename claims
+   - Provides a function `_extract_wheel_tags(whl_path)` that reads a `.whl` file path and returns a list of tag strings extracted from the `WHEEL` metadata entry inside the archive (e.g. `["cp312-cp312-linux_x86_64", "cp312-cp312-manylinux_2_17_x86_64"]`). If the archive contains no `WHEEL` file, return an empty list.
+   - Contains a module-level dict `EXPECTED_PLATFORM_TAGS` mapping target-OS keys to regex patterns:
+     - `"linux"` → pattern matching strings ending with `_x86_64`
+     - `"linux-aarch64"` → pattern matching strings ending with `_aarch64`
+     - `"windows"` and `"win32"` → pattern matching `win_amd64`
+     - `"macos-arm64"` → pattern matching `macosx_\d+_\d+_arm64`
+     - `"darwin"` → pattern matching `macosx_\d+_\d+_(arm64|x86_64)`
+   - Provides a function `check_wheel_platform_tag()` that validates wheel tags:
+     - Reads the single `torch-*.whl` file from the directory in env var `PYTORCH_FINAL_PACKAGE_DIR` (if set) or from the installed torch package metadata (if not set)
+     - Raises `RuntimeError` if more than one torch wheel is found in that directory
+     - Validates each tag's python tag, ABI tag, and platform tag
+     - Raises `RuntimeError` on any mismatch
+   - Provides a function `check_mac_wheel_minos()` that on macOS extracts dylibs from the wheel, runs `otool -l` on each, and verifies the `minos` field matches the wheel filename's OS version
    - Raises `RuntimeError` on any mismatch
 
-2. **Integrate the new module** into `smoke_test.py` so it runs as part of the standard smoke test suite (call it from `main()`).
-
-### Expected platform patterns by target OS
-
-- `linux` → platform tag ends with `_x86_64`
-- `linux-aarch64` → ends with `_aarch64`
-- `windows`/`win32` → `win_amd64`
-- `macos-arm64` → `macosx_*_arm64`
-- `darwin` → `macosx_*_(arm64|x86_64)`
-
-### Relevant files
-
-- `.ci/pytorch/smoke_test/smoke_test.py` — the existing smoke test entry point
-- The new script should live alongside it in `.ci/pytorch/smoke_test/`
+2. **Integrate the new module** into `smoke_test.py` by:
+   - Importing `check_wheel_platform_tag` and `check_mac_wheel_minos` from `check_wheel_tags`
+   - Calling both functions from `main()`

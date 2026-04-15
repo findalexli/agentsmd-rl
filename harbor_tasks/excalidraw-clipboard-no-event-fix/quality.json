@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (packages/excalidraw/clipboard.ts), the variable (plainTextEntry), the function (copyTextToSystemClipboard), the MIME type constant (MIME_TYPES.text), and describes the const vs let change, return placement, and navigator.clipboard.writeText behavior. All asserted specifics in tests (file path, variable name, patterns) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact changes: 'use const not let', 'move return; inside the if block', 'remove the old code that set entry to undefined and replace with return;'. These are precise implementation directives, not just descriptions of broken behavior. A developer reading instruction.md knows exactly WHAT to change without reasoning."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact textual patterns like 'const plainTextEntry = entries.find', the exact regex 'await navigator\\.clipboard\\.writeText\\(plainTextEntry\\[1\\]\\);\\s*return;', and count assignments with 'plainTextEntry\\s*='. An alternative correct fix (e.g., using a different variable name, different control flow structure, or a wrapper function) would fail these text-matching tests even if behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (test_const_plainTextEntry_not_let, test_return_inside_clipboardEvent_block, test_return_after_navigator_clipboard_writeText, test_no_plainTextEntry_reassignment) all use `open(CLIPBOARD_TS).read()` and assert on string/regex patterns in the source file. They do not import, call, or execute the clipboard code to verify behavior. The pass-to-pass tests do run subprocesses (typecheck, lint, unit tests), but the core f2p tests are purely textual."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns that differ from the original code (e.g., 'let plainTextEntry' must be changed to 'const plainTextEntry', 'plainTextEntry = undefined' must be removed). A stub or no-op would not satisfy these since the original file has the buggy patterns."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/excalidraw as a git repo and solve.sh is in /solution/. An agent could read /solution/solve.sh to see the exact patch, or simply grep for the expected patterns in the test file at tests/test_outputs.py to reverse-engineer the exact changes needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (const declaration, return inside if block, return after writeText instead of setting undefined) are tested by the f2p tests, and the verification commands (typecheck, lint, unit tests) are covered by p2p tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass, and each test function clearly describes what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code editing, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, variable names, commands, and function names in the instruction match what's used in tests and the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (packages/excalidraw/clipboard.ts), exact function (copyTextToSystemClipboard), exact variable (plainTextEntry), and describes precisely which keyword to change (let\u2192const), where to move the return statement, and what line to remove (plainTextEntry = undefined). This goes far beyond identifying the buggy module."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 5
+}

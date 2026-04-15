@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T04:13:10.440353",
-  "total_time": 1464.18,
-  "sandbox_id": "iscd4cd51641vmrhy58cu",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T06:08:06.664319",
+  "total_time": 1953.82,
+  "sandbox_id": "iknyxlm89q61umonj1l5x",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -63,17 +65,28 @@
       "quality_verdict": "DELETE",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.36,
+      "notes": "flags=['lint_tier_b:7', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: mbridge, safetensors, transformers, numpy, megat', 'B:[B] dockerfile_determinism @ environment/Dockerfile:30: untagged FROM `pathlib` pulls :latest implicitly', 'B:[B] dockerfile_determinism @ environment/Dockerfile:31: untagged FROM `unittest.mock` pulls :latest implicitly']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.01,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1284.57,
-      "at": "2026-04-09T14:49:35.347136"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -105,6 +118,14 @@
       "backend": "fireworks",
       "time": 1464.18,
       "at": "2026-04-12T04:13:10.440353"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1953.82,
+      "at": "2026-04-15T06:08:06.664319"
     }
   ]
 }

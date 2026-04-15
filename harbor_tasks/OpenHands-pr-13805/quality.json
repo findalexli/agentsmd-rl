@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The test `test_test_file_has_routing_tests` requires the exact class name 'TestJiraV0ConversationRouting' and exact method names 'test_routes_to_claimed_org_when_user_is_member' and 'test_falls_back_to_personal_workspace_when_no_claim'. These specific names are NOT mentioned anywhere in instruction.md. The instruction only says 'Add routing tests' and describes the scenarios generically, so the agent cannot discover these exact names."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact replacement pattern: 'Replace the call to create_new_conversation() with the new flow' and lists the exact sequence of calls (resolve_org_for_repo, get_resolver_instance, uuid4().hex, ConversationMetadata with git_provider, save_metadata, start_conversation). It also provides the exact imports needed. This is essentially the complete solution, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on very specific implementation details: test_generates_uuid_conversation_id checks for the literal string 'uuid4().hex' in source code; test_creates_conversation_metadata checks for a specific keyword argument name 'git_provider' in a ConversationMetadata() call via AST; test_calls_get_resolver_instance checks for the exact method name 'get_resolver_instance'. An alternative correct implementation using e.g. str(uuid4()) or a different conversation store initialization pattern woul"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Almost all fail-to-pass tests use AST parsing or string matching on source code (e.g., test_generates_uuid_conversation_id checks 'uuid4().hex' in source, test_imports_* check import statements via AST). Only test_repo_lint_jira_view and test_repo_syntax_jira_view execute the code. No test actually imports and calls the modified functions or checks runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific imports, function calls, and code patterns that would not exist in the original unmodified file (e.g., resolve_org_for_repo import, start_conversation instead of create_new_conversation). A stub/no-op implementation would not pass these AST-based checks since they verify structural code changes."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/OpenHands and the solve.sh is accessible in the container. An agent could read /solution/solve.sh or the test file at tests/test_outputs.py to discover exactly what AST patterns and string literals are being checked, then write code to match those patterns without understanding the problem."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md requires calling store.save_metadata(metadata) but no test verifies this call exists. The instruction also mentions ProviderHandler.verify_repo_provider() but no test specifically verifies this call pattern."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly organized into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections with descriptive docstrings and meaningful function names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact method to modify ('create_or_update_conversation()'), the exact file ('enterprise/integrations/jira/jira_view.py'), the exact imports to add, and the exact sequence of replacement calls. This goes well beyond identifying the buggy module and essentially provides the complete code recipe."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction describes the function name `_log_proximal_approximation_stats`, the three estimator names (direct/taylor/dual), the stat keys (`kl_div_direct`, `kl_div_taylor`, `kl_div_dual`), the `denominator=\"n_valid_tokens\"` parameter, `.detach()` requirement, and the expected verification values. All test-asserted specifics (function name, stat key patterns containing 'direct'/'taylor'/'dual', denominator keyword, detachment, formulas) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction essentially provides the complete implementation: it gives the exact formulas (`direct = -log_ratio`, `taylor = log_ratio\u00b2 / 2`, `dual = exp(log_ratio) - 1 - log_ratio`), the exact stat call signature with keyword names (`kl_div_direct`, `kl_div_taylor`, `kl_div_dual`), the denominator value, and even the `log_ratio = logprobs.float() - old_logp.float()` computation. A developer doesn't need to reason about what to change \u2014 they just transcribe the instruction into code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests search for stat keys containing 'direct', 'taylor', 'dual' substrings rather than exact key names. The formulas are mathematically determined. An alternative implementation using different variable names, different code structure, or registering stats in separate calls would all pass. The tests check behavioral correctness via tensor values rather than specific implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess execution via `_run_py()` which extracts and calls the actual function `_log_proximal_approximation_stats`, passes tensors through it, and checks the resulting tensor values from the fake stats tracker. This is genuine behavioral testing, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not register any stats with the tracker, so `direct`, `taylor`, `dual` would all be `None`, causing assertions like `assert direct is not None` to fail. The tests verify actual tensor computations that require implementing the KL estimators."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/AReaL/solution/solve.sh` (or wherever mounted) and the agent could read it. Additionally, the test file at `tests/test_outputs.py` contains the complete expected formulas and the eval helpers expose the exact testing mechanism. The agent could also read the Dockerfile or test files to extract the exact implementation needed."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All requirements from instruction.md are tested: (1) three KL estimators computed correctly (test_kl_estimators_computed, test_kl_estimators_diverse_inputs), (2) only computed when logprobs is not None (test_logprobs_none_no_kl), (3) `.detach()` used (test_kl_estimators_detached), (4) denominator='n_valid_tokens' (test_kl_stats_use_denominator), (5) function signature preserved (test_function_signature_preserved)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names, docstrings, section comments (e.g., 'pass_to_pass / static', 'fail_to_pass (pr_diff)'), and shared helper infrastructure clearly separated from individual test functions."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact function `_log_proximal_approximation_stats`, specifies the exact variable `log_ratio = logprobs.float() - old_logp.float()`, and provides the exact stat registration call with keyword names. While the function name is reasonable context, providing the complete implementation details including exact stat key names (`kl_div_direct`, `kl_div_taylor`, `kl_div_dual`) and exact `denominator=\"n_valid_tokens\"` eliminates any localization or design challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

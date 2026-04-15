@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_onrendered_returns_null_on_server checks for exact pattern 'if (isServer ?? router.isServer) { return null }', test_onrendered_uses_layout_effect checks for 'useLayoutEffect', test_solid_router_onrendered_comment_updated checks that 'renders a dummy dom element' is removed from solid-router. The instruction hints at these but never explicitly names useLayoutEffect, the isServer pattern, or the solid-router comment"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The hints section essentially describes the solution: 'There may be a better approach that doesn't require rendering any DOM elements during SSR' combined with 'Currently it renders a script tag to track render completion via the ref callback' strongly implies returning null on server. While not line-specific, the instruction heavily guides toward the exact fix approach."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_onrendered_returns_null_on_server uses regex 'if\\s*\\(\\s*isServer\\s*\\?\\?\\s*router\\.isServer\\s*\\)\\s*\\{\\s*return\\s+null' which requires the exact pattern 'isServer ?? router.isServer'. An alternative correct fix (e.g., using only router.isServer, or a different conditional structure) would fail. test_onrendered_uses_layout_effect requires useLayoutEffect specifically; using useEffect would fail even if correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_onrendered_returns_null_on_server, test_onrendered_uses_layout_effect, test_onrendered_no_script_tag_rendering, and test_solid_router_onrendered_comment_updated are purely text-matching tests using regex/string matching on source files with no execution. Only test_ssr_scripts_test_passes and the pass_to_pass tests actually execute code. The majority of fail_to_pass tests are text-only."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests require specific code changes (adding useLayoutEffect, server null return, removing script tag rendering) that cannot be satisfied by a stub/no-op implementation. The base code at the checked-out commit would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory contains /solution/pr7054.diff and /solution/solve.sh which the agent could read directly. The solve.sh explicitly shows 'git apply --verbose /solution/pr7054.diff'. An agent could simply cat /solution/solve.sh or apply the diff file to pass all tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes removing the extra empty script tag from SSR output, and the tests verify this behavior through both the SSR test execution and source code checks for the OnRendered component changes."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why (e.g., 'fail_to_pass' vs 'pass_to_pass' annotations in comments)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a rendering bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names 'packages/react-router/src/Match.tsx' and the 'OnRendered' component, and hints say 'Currently it renders a script tag to track render completion via the ref callback' and 'There may be a better approach that doesn't require rendering any DOM elements during SSR' \u2014 this essentially describes the exact fix location and approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

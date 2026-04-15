@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (slime/utils/http_utils.py), the two functions (init_http_client and _HttpPosterActor.__init__ inside _init_ray_distributed_post), and the required behavior (disable system proxy for intra-cluster clients). Tests check trust_env=False, proxy mounts, connection limits, and timeout on AsyncClient \u2014 all discoverable from the instruction's description of the two clients and the requirement to bypass system proxy."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (clients incorrectly reading proxy env vars causing 503 errors) and the desired behavior (communicate without system proxy) but does not specify the exact fix (trust_env=False). A developer must reason about how httpx handles proxy configuration to arrive at the solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_ray_actor_trust_env_disabled uses AST inspection to check specifically for trust_env=False as a keyword argument in the AsyncClient call. An alternative correct fix like setting proxy=None, or using a custom transport, or unsetting env vars before client creation would not pass this AST-based test. Similarly test_init_client_trust_env_disabled checks client._trust_env specifically. The tests enforce one specific implementation approach rather than testing the behavior of proxy bypass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute code via subprocess or import and call functions. test_init_client_trust_env_disabled and test_init_client_proxy_not_mounted create actual AsyncClient instances and inspect runtime properties. test_ray_actor_trust_env_disabled uses AST parsing (not pure text grep), and other tests run ruff, black, compileall, and import checks. The tests are not purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that trust_env is False and that no proxy mounts exist on the client. A stub or no-op implementation would leave trust_env at its default (True) and would have proxy mounts when HTTP_PROXY is set, so these tests would fail without the actual fix."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory contains only solve.sh (a shell script applying a patch), not directly readable fixture values. The tests check runtime behavior (trust_env property, mount counts) and AST structure, not simple string matching. There's no easy shortcut to pass all tests without understanding and implementing the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires both clients (init_http_client and _HttpPosterActor.__init__) to bypass system proxy. Tests cover both: test_init_client_trust_env_disabled and test_init_client_proxy_not_mounted for the first, test_ray_actor_trust_env_disabled for the second. Additional tests verify existing functionality is preserved."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass categories for pre_commit, repo_tests, and static), descriptive function names, and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python code to fix proxy behavior, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and the test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and the two specific locations (init_http_client and _HttpPosterActor.__init__), which is appropriate given the task domain. It does not specify line numbers or the exact code change (trust_env=False). Naming the functions is reasonable since the task is about fixing specific client configurations."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (adding trust_env=False to two httpx.AsyncClient calls), not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
+}

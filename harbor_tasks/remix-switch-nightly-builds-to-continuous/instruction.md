@@ -2,24 +2,44 @@
 
 ## Problem
 
-The project currently has a separate CI workflow (`.github/workflows/nightly.yml`) that runs on a daily cron schedule to build the latest `main` into a `nightly` branch. This means that after merging a PR, there's a gap until the next nightly run before the merged work is installable — you have to wait up to 24 hours.
+The project currently has a separate CI workflow (`.github/workflows/nightly.yml`) that runs on a daily cron schedule to build the latest `main` into a `nightly` branch. This creates up to a 24-hour delay between merging a PR and the changes becoming installable.
 
-Meanwhile, there's already a `preview.yml` workflow that creates installable PR preview branches. These two workflows duplicate a lot of setup logic (checkout, pnpm, node, build).
+There is also a `preview.yml` workflow that creates installable PR preview branches. These two workflows duplicate setup logic.
 
-The `setup-installable-branch.ts` script also has logic specific to the nightly flow — it defaults to the `nightly` branch name and has a hardcoded allowlist (`allowedOverwrites = ['nightly']`) that prevents overwriting any other remote branch.
+The `setup-installable-branch.ts` script has nightly-specific logic: it defaults to the `nightly` branch name and contains a branch-protection allowlist that only permits overwriting the `nightly` branch.
 
-## Expected Behavior
+## Required End State
 
-The nightly workflow should be replaced by extending the existing `preview.yml` workflow to also trigger on every push to `main`, building to a `preview` branch instead of `nightly`. This eliminates the delay between merging and availability.
+After the changes, the following must be true:
 
-The build script (`scripts/setup-installable-branch.ts`) should be simplified: remove the `--branch` flag and nightly default, require the branch name as a positional argument, and remove the overwrite protection logic (since the workflow now controls which branches get force-pushed).
+### Workflow
 
-After making the code changes, update the documentation in `README.md` and `CONTRIBUTING.md` to reflect the new branch name and workflow — references to "nightly" builds and the `nightly` branch should be updated to reference "preview" builds and the `preview` branch.
+- `.github/workflows/nightly.yml` must not exist
+- `.github/workflows/preview.yml` must build and push to a `preview` branch when `main` is pushed
+- The preview workflow must still support PR preview branches (`preview/{number}`) and cleanup when PRs close
 
-## Files to Look At
+### Script (`scripts/setup-installable-branch.ts`)
 
-- `.github/workflows/nightly.yml` — the old nightly cron workflow
-- `.github/workflows/preview.yml` — the PR preview workflow to extend
-- `scripts/setup-installable-branch.ts` — the build script invoked by both workflows
-- `README.md` — contains install instructions referencing the build branch
-- `CONTRIBUTING.md` — documents the build system and install commands
+- The script must not accept a `--branch` flag
+- The branch name must be a required positional argument (no silent default)
+- The string `allowedOverwrites` must not appear in the script
+- The script's install example in JSDoc must use the string `remix#preview&path:packages/remix`
+- The string `remix#nightly` must not appear in the script
+
+### Documentation
+
+`README.md` must:
+- Contain the string `remix#preview&path:packages/remix`
+- Not contain the string `remix#nightly`
+
+`CONTRIBUTING.md` must:
+- Contain the section heading `## Preview builds`
+- Not contain the string `remix#nightly`
+
+## Files to Modify
+
+- `.github/workflows/nightly.yml` — delete this file
+- `.github/workflows/preview.yml` — extend to trigger on push to `main` and push builds to `preview`
+- `scripts/setup-installable-branch.ts` — simplify: remove `--branch` flag, require positional branch name, remove overwrite protection
+- `README.md` — update install instructions to reference preview branch
+- `CONTRIBUTING.md` — update build system documentation to reference preview builds

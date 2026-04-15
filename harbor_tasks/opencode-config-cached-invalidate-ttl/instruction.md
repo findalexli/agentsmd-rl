@@ -19,10 +19,14 @@ This pattern has two issues:
 
 ## Expected behavior
 
-- The global config cache should use an idiomatic Effect cache invalidation primitive instead of mutable `let` reassignment
-- Errors during global config loading should be logged before falling back to defaults
-- The `invalidate` function should use the proper invalidation mechanism rather than recreating the cache from scratch
+The global config cache should use `Effect.cachedInvalidateWithTTL` with the following specific implementation:
+
+- Use `const [cachedGlobal, invalidateGlobal] = yield* Effect.cachedInvalidateWithTTL(...)` destructuring pattern (not `let cachedGlobal`)
+- Import `Duration` from the 'effect' package and use `Duration.infinity` as the TTL argument
+- Add `Effect.tapError` before `Effect.orElseSucceed` in the pipe chain to log errors before falling back to defaults
+- The `invalidate` function should yield `invalidateGlobal` (the handle from destructuring) rather than reassigning `cachedGlobal`
+- The `getGlobal` and `invalidate` functions should use `Effect.fn('Config.getGlobal')` and `Effect.fn('Config.invalidate')` named wrappers respectively
 
 ## Relevant files
 
-- `packages/opencode/src/config/config.ts` — the `Config` namespace, specifically around line 1244 (cache creation) and line 1449 (invalidate function)
+- `packages/opencode/src/config/config.ts` — the `Config` namespace with `loadGlobal`, `getGlobal`, and `invalidate` functions

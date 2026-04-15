@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths like 'packages/playwright/src/mcp/browser/config.ts', 'packages/playwright/src/mcp/browser/response.ts', 'packages/playwright/src/mcp/browser/tab.ts', 'packages/playwright/src/mcp/browser/tools/evaluate.ts', 'packages/playwright/src/mcp/browser/tools/tool.ts', 'packages/playwright/src/mcp/program.ts', 'packages/playwright/src/mcp/terminal/commands.ts', and test files 'tests/mcp/cli.spec.ts', 'tests/mcp/dialogs.spec.ts', 'tests/mcp/files.spec.ts'. The instructi"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior should change (skill-friendly names, clearedBy structure with both tool and skill fields, eval auto-wrap, SKILL.md creation) but does not specify exact code changes, line numbers, or explicit diffs. A developer must reason about how to implement these changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The tests (truncated but visible) primarily check syntax validity (balanced braces/parentheses), file existence, valid JSON, ESLint passing, TypeScript parsing, and build success. The test for help.json command names and the clearedBy structure with exact keys like { tool: '...', skill: '...' } are specified in the instruction but the tests themselves check structural properties. However, the clearedBy field requiring exact keys 'tool' and 'skill' constrains implementation to match the gold solu"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The visible tests (test_syntax_check, test_json_files_valid, test_ts_syntax_node_parse, test_mcp_package_structure) primarily check file existence, balanced braces/parentheses, and valid JSON parsing \u2014 these are essentially text/structure checks, not behavioral execution tests. The ESLint and TypeScript parser tests run tools but only verify syntax, not runtime behavior. There are no tests that import and call the modified code to verify the actual behavioral changes (skill-mode messages, eval a"
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Most visible tests (test_syntax_check, test_json_files_valid, test_mcp_package_structure, test_ts_syntax_node_parse) would pass on the unmodified repo since they only check file existence, valid JSON, and balanced syntax. A stub that makes no changes or trivial changes to existing files would pass these gate tests. The build test (test_repo_build) might catch some issues but the truncated tests don't show tests that verify the actual new behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /solution/solve.sh in the container (as shown by the task structure). The agent could read this file to obtain the exact patch. Additionally, since most tests only check syntax/structure rather than behavioral correctness, the agent could grep test files for expected values and produce minimal changes to pass."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction specifies behavioral requirements like skill-mode modal messages showing 'dialog-accept or dialog-dismiss' vs 'browser_handle_dialog', eval auto-wrap for expressions without '=>', SKILL.md with YAML frontmatter, and help.json using non-hyphenated names. The visible tests do not verify these specific behaviors \u2014 they only check syntax, file existence, JSON validity, ESLint, and build success. Key behaviors like modal message format in skill mode and eval auto-wrap are not tested i"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_syntax_check, test_json_files_valid, test_ts_syntax_node_parse, etc.), grouped by concern (gates/pass_to_pass, static checks), and include docstrings explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the clearedBy structure schema ({ tool: string, skill: string }), help.json command names, and SKILL.md frontmatter requirements (name: and description: fields)."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in file paths, command names, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact field names for the clearedBy structure ('{ tool: \"browser_handle_dialog\", skill: \"dialog-accept or dialog-dismiss\" }'), exact command name mappings (press, keydown, keyup, mousemove, mousedown, mouseup, mousewheel), and the exact auto-wrap logic ('() => (...)' for expressions without '=>'). These are implementation-level details that narrow the solution space significantly."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-change task, not primarily a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 7
+}

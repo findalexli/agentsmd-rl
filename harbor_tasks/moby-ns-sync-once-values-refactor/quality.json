@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: (1) test_nshandle_function_exists checks for exact function signature 'func NsHandle() netns.NsHandle' and that it contains 'ns, _ := initNamespace()' \u2014 the instruction never specifies this function name or that initNamespace should return two values unpacked this way. (2) test_sync_oncevalues_used checks for 'sync.OnceValues' and 'initNamespace' variable name \u2014 instruction says 'eliminate global mutable state' bu"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states specific fixes: 'NetlinkSocketsTimeout should be a constant', 'ParseHandlerInt() returns an int... callers actually need the netns.NsHandle type directly', 'Error logging uses unstructured Errorf with %v formatting instead of the structured logging API (WithError)', 'syscall.Close() return values are silently ignored'. These are detailed prescriptions of what to change, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_nshandle_function_exists requires exact string 'ns, _ := initNamespace()' in the function body; test_sync_oncevalues_used requires literal 'sync.OnceValues' and 'initNamespace'; test_nshandle_function_exists requires exact function name 'NsHandle'. An alternative correct fix using e.g. sync.Once with a struct, or a different function name like 'GetNsHandle()', or a different variable unpacking pattern would fail these tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The majority of f2p tests (test_nshandle_function_exists, test_parsehandlerint_removed, test_sync_oncevalues_used, test_netlink_socket_timeout_is_const, test_error_handling_with_error, test_windows_stub_removed, test_interface_uses_nshandle) are purely text-matching with assert 'string' in open(path).read(). While some tests do execute subprocesses (test_code_compiles, test_go_vet_passes, test_package_tests_pass), the core behavioral tests are text-based pattern matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The compilation tests (test_code_compiles, test_osl_package_compiles) and test_package_tests_pass would fail on unmodified code since ParseHandlerInt would still exist in interface_linux.go references while being expected to be removed. A stub/no-op solution wouldn't pass the compilation tests because osl/interface_linux.go needs ns.NsHandle() to exist."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/moby and solve.sh is in the container's solution/ directory. The agent could read solution/solve.sh to see the exact gold patch. Also, since tests are text-matching for specific strings like 'sync.OnceValues', 'initNamespace', 'WithError(err)', the agent could grep test files (tests/test_outputs.py) to discover exact expected patterns."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors mentioned in instruction.md are tested: const NetlinkSocketsTimeout, removing ParseHandlerInt, removing Windows stub, updating osl/interface_linux.go, error logging with WithError, compilation and vet checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., test_nshandle_function_exists, test_parsehandlerint_removed, test_sync_oncevalues_used)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task produces Go source code, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests are correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names specific files (daemon/libnetwork/ns/init_linux.go, etc.) but these are obvious from the task domain. It describes problems at the API/design level rather than pointing to specific line numbers."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only refactoring task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 5
+}

@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific regex patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' in load-matches.ts. While the instruction.md does mention these exact patterns in the 'Implementation Requirements' section, it does not mention the file path 'packages/router-core/src/load-matches.ts' which is asserted by test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly. Also, test_preload_error_stop"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md explicitly states the exact fix: 'The preload loop's break condition must check for inner.serialError || inner.firstBadMatchIndex != null' and 'headMaxIndex calculation must use inner.firstBadMatchIndex !== undefined ? inner.firstBadMatchIndex : inner.matches.length - 1'. These are literal code changes, not just descriptions of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_break_condition_includes_firstbadmatchindex asserts a specific regex pattern 'if\\s*\\(\\s*inner\\.serialError\\s*\\|\\|\\s*inner\\.firstBadMatchIndex\\s*!=\\s*null\\s*\\)' and test_headmaxindex_uses_firstbadmatchindex_directly asserts 'headMaxIndex\\s*=\\s*\\n?\\s*inner\\.firstBadMatchIndex\\s*!==\\s*undefined'. An alternative correct fix using different variable names, different condition ordering, or a different approach (e.g., early return pattern, wrapping in try-catch that prevents child execution) would"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_break_condition_includes_firstbadmatchindex and test_headmaxindex_uses_firstbadmatchindex_directly are pure text-matching tests (regex on source file content with no execution). While test_preload_error_stops_child_handlers does execute code, 2 of the 3 fail_to_pass tests are purely 'assert pattern in open(path).read()' style."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific code patterns and behavioral changes. test_preload_error_stops_child_handlers verifies that childBeforeLoad and childHead are NOT called when parent fails, which would not pass with a stub/no-op implementation since the default behavior is to call them. The regex tests require specific code patterns that don't exist in the base commit."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/router and solve.sh is in the solution/ directory. An agent could read /solution/solve.sh to discover the exact sed/perl commands needed. Additionally, the instruction.md itself contains the literal code patterns that the tests check for, so the agent could simply grep the instruction for the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) parent error stops preload (tested by test_preload_error_stops_child_handlers), (2) child beforeLoad not called (tested), (3) child head not called (tested). The specific implementation requirements about firstBadMatchIndex are also tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, including references to fail_to_pass and pass_to_pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in a routing library, not producing structured data."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction.md names the exact variable 'firstBadMatchIndex', the exact conditions 'inner.serialError || inner.firstBadMatchIndex != null', and the exact expression 'inner.firstBadMatchIndex !== undefined ? inner.firstBadMatchIndex : inner.matches.length - 1'. This is essentially giving the complete solution code, far beyond describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

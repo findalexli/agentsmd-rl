@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests require specific undiscoverable details: a function named 'infer_token_denominator' in 'areal/trainer/ppo/stats.py', specific parameter names ('input_data', 'fallback'), specific fallback chain logic (attention_mask\u2192cu_seqlens\u2192input_ids\u2192fallback), exact old buggy patterns like 'torch.ones_like(loss_mask, dtype=torch.bool)' and 'torch.ones(value.shape[0], dtype=torch.bool', type annotations, no print/wildcard/hardcoded paths rules from AGENTS.md. None of these specifics are mentioned in ins"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes only the problem (incorrect n_tokens under context parallelism) and expected behavior (use full-batch metadata), without specifying exact code changes, file paths, or function names."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests enforce a specific function name 'infer_token_denominator' in a specific file 'areal/trainer/ppo/stats.py' with specific parameter names and signatures. An alternative correct fix (e.g., inline fix in actor.py/critic.py, or a differently-named helper, or a helper in a different module) would fail test_actor_critic_use_helper, test_not_stub, test_type_hints_on_helper, etc."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute subprocess Python code that imports and calls infer_token_denominator, checking actual return shapes and dtypes. test_actor_critic_use_helper does string checks but is supplemented by behavioral tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_attention_mask_preferred checks specific shape [2,3] derived from attention_mask rather than fallback shape, test_cu_seqlens_fallback checks shape [4] from cu_seqlens, test_not_stub requires conditional logic with >=3 body statements. A stub returning None or empty would fail these assertions."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is available at /workspace/AReaL/../solution/solve.sh (or wherever mounted). The Dockerfile does not remove /solution/. The agent could read solve.sh to see the exact gold patch and replicate it."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md says 'The fix must work correctly under context parallelism where intermediate tensors are sliced per-rank' but no test actually simulates context parallelism with sliced tensors to verify the fix works in that scenario."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass behavioral, integration, anti-stub, config-derived), descriptive function names, and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md does not name specific files, line numbers, or function names. It describes only the conceptual problem and expected behavior at a high level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

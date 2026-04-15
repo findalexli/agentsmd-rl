@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert on the specific file path 'src/Interpreters/TokenizerFactory.cpp' (TARGET_FILE), which is never mentioned in instruction.md. The instruction only mentions 'splitByString' and 'tokenizer' generically without specifying the file path. Tests also check for 'SplitByStringTokenizer' class name, 'getExternalName', 'for (const auto & value : array)' loop pattern, and '#include' header structure \u2014 none of which are mentioned in the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact variable name ('value_as_string'), the exact method to call ('castAs<String>'), the exact check ('value_as_string.empty()'), the exact error message strings, and the step-by-step implementation (extract, check, throw). This is essentially dictating the solution rather than describing the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: the exact variable name 'value_as_string' (test_validation_inside_loop_structure uses regex for 'const auto & value_as_string = castAs<String>'), the exact loop pattern 'for (const auto & value : array)' (test_allman_brace_style), and specific proximity of throw to empty check. An alternative correct fix using a different variable name or loop structure would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly every test is purely textual: they read the file with open(FULL_PATH) and use string/regex matching (e.g., 'assert \"the empty string cannot be used as a separator\" in content'). test_code_compiles attempts compilation but tolerates failures. No test actually executes the tokenizer or tests runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests (test_empty_string_separator_validation_present, test_exception_thrown_for_empty_separator) only check for text patterns in the source file. An agent could simply insert a dead-code comment containing 'the empty string cannot be used as a separator' and 'if (value_as_string.empty())' with a nearby 'throw Exception' to pass without actually implementing the fix correctly."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/ClickHouse/solution/solve.sh (if present in container) or the test file itself at tests/test_outputs.py to discover exact expected strings like 'the empty string cannot be used as a separator' and 'the separators argument cannot be empty', then insert them as dead text to pass all tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (empty string validation, array element validation with value_as_string, improved error message, Allman braces, exception terminology, no trailing whitespace) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_empty_string_separator_validation_present, test_allman_brace_style, etc.), grouped by concern, and have docstrings explaining their purpose including fail-to-pass vs pass-to-pass classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves C++ source code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "While the instruction doesn't name the exact file, it specifies the exact variable name 'value_as_string', exact method 'castAs<String>', and the exact step-by-step code structure to implement, which constitutes significant implementation leakage beyond just describing the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agent configuration edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

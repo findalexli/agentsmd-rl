@@ -12,6 +12,10 @@ The root cause is that the desktop-specific files have drifted from their web co
 
 All settings tabs that work in the web app should also work in the Electron desktop app. Both the component map and the router configuration must stay in sync between web and desktop variants.
 
+Specifically:
+- The `componentMap.desktop.ts` file must include entries for `Stats` and `Creds` settings tabs (matching the web version)
+- The `desktopRouter.config.desktop.tsx` file must include the `/onboarding` route (matching the web version)
+
 ## Files to Look At
 
 - `src/routes/(main)/settings/features/componentMap.desktop.ts` — Electron settings tab map, should mirror entries from `componentMap.ts`
@@ -21,4 +25,10 @@ All settings tabs that work in the web app should also work in the Electron desk
 
 ## Additional Requirement
 
-After fixing the code, update the relevant agent skill documentation to help prevent this kind of drift in the future. The project's `.agents/skills/` directory contains skill files that guide agents working on this codebase — the documentation should be updated to clearly describe the desktop file sync requirement so that future edits don't accidentally cause drift again.
+After fixing the code, update the agent skill documentation to help prevent this kind of drift in the future. Update these three specific skill files:
+
+1. `.agents/skills/react/SKILL.md` — Must document the `.desktop` file sync rule, mentioning `.desktop` file variants and using terms like "sync", "pair", or "drift" to describe keeping desktop and web files consistent.
+
+2. `.agents/skills/spa-routes/SKILL.md` — Must document the desktop router parity requirement, explicitly mentioning `desktopRouter.config.desktop` and using terms like "both", "parity", or "drift" to describe the need to edit both the web and desktop router config files when adding routes.
+
+3. `.agents/skills/code-review/SKILL.md` — Must include a SPA/routing section that mentions `desktopRouter` and uses terms like "SPA" or "routing" to describe checking that desktop and web router pairs stay synchronized.

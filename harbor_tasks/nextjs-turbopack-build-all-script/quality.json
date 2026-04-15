@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names all key files (package.json, packages/next-swc/package.json, packages/next-swc/turbo.json, AGENTS.md), the script names (build, build-all, build-native-auto), the JSON-with-comments format (turbo.jsonc), and the documentation requirements. The tests check for these exact artifacts and the instruction provides sufficient information to discover them."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the exact fix: 'The root package.json should have a build-all script', 'The next-swc package should expose a build-native-auto script (invoking maybe-build-native.mjs)', 'the configuration should use a JSON-with-comments format'. It tells the agent precisely what to change rather than just describing the problem."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like test_build_all_script_added assert exact string 'build-all' in package.json scripts, test_turbo_jsonc_task_renamed checks for exact string 'build-native-auto' in turbo.jsonc, test_next_swc_build_renamed checks the exact script name 'build-native-auto'. These are gold-specific implementation choices; an alternative correct fix (e.g., naming the script 'build-rust' or 'build-native') would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Many tests are essentially text-matching: test_build_all_script_added checks 'build-all' in file content, test_turbo_jsonc_task_renamed checks 'build-native-auto' string in file content, test_agents_md_build_all_documented checks for string 'pnpm build-all' in AGENTS.md, test_agents_md_js_only_build checks for 'build all JS' in AGENTS.md. These are text presence checks, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests require actual file modifications - the base commit doesn't have 'build-all' in package.json, doesn't have turbo.jsonc, and doesn't have 'build-native-auto' in next-swc/package.json. A stub/no-op implementation would not pass these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/next.js accessible to the agent via solve.sh, and the agent could read the test file at tests/test_outputs.py to see exactly what strings are checked (e.g., 'build-all', 'build-native-auto', 'pnpm build-all' in AGENTS.md). The agent could also grep for these fixture values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: build-all script in root package.json, build-native-auto in next-swc, turbo.jsonc format, AGENTS.md documentation of both build commands and branch switching guidance."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings, grouped by category (pass_to_pass vs fail_to_pass), and each test has a clear comment explaining what it verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the expected schema for package.json scripts and turbo.jsonc task configuration, specifying exact key names like 'build-all', 'build-native-auto'."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'expose a build-native-auto script', 'have a build-all script that runs a Turbo pipeline including both JS builds and a build-native-auto task', 'configuration should use a JSON-with-comments format'. This goes well beyond describing the problem and names the exact changes to make."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch makes localized changes: adding one line to root package.json, renaming one script in next-swc/package.json, renaming turbo.json to turbo.jsonc with a small task rename, and updating a few lines in AGENTS.md. No full-file rewrites."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 5
+}

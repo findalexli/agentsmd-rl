@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (torch/_inductor/scheduler.py), the class (FusedMixOrderReductions), the methods (sub_node_can_fuse, fuse_with), and the helper (MixOrderReduction.is_contiguous_node). Tests extract sub_node_can_fuse from FusedMixOrderReductions and use MixOrderReduction.is_contiguous_node \u2014 all discoverable from the instruction. The specific mock structures (contiguous/non-contiguous nodes) follow directly from the described bug pattern."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (contiguity invariant not checked in sub_node_can_fuse) and expected behavior (fusion should be rejected) but does not specify the exact code change, line number to edit, or the specific conditional expression to add."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests compile and call the actual sub_node_can_fuse method extracted via AST from the source file. The tests assert that when node1 is contiguous and node2 is non-contiguous, the result must be False. An alternative correct fix that adds the guard in fuse_with instead of sub_node_can_fuse, or that modifies the __init__ to handle the case gracefully rather than rejecting fusion, would fail these tests since they specifically test sub_node_can_fuse's return value. The tests are tightly coupled to "
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the actual sub_node_can_fuse method via AST, compile it, and execute it against mock objects, checking return values. They do not simply grep for text patterns in the source file."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests assert that sub_node_can_fuse returns False for contiguous+non-contiguous combinations. The original unpatched code would return True (allowing the fusion), so a stub or the original code would fail these tests. The pass_to_pass tests verify contiguous+contiguous still returns truthy, preventing a trivial 'always return False' solution."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace as solve.sh (mounted or available in container based on the Dockerfile). An agent could read /solution/solve.sh or the gold patch to discover the exact fix. Additionally, the test infrastructure is in the same container and could be inspected."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction says fusion should be rejected when contiguity invariant would be violated. Tests verify sub_node_can_fuse rejects non-contiguous fusions (fail_to_pass) and still allows valid contiguous fusions (pass_to_pass), covering the described expected behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with descriptive names (test_contiguity_guard_rejects_noncontiguous_pointwise, test_both_contiguous_fusion_allowed, etc.), grouped into fail_to_pass and pass_to_pass sections with clear comments and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves a code bug fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames, paths, class names, or method names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies exact line numbers ('around line 2140' for sub_node_can_fuse, 'around line 2195' for fuse_with, 'around line 379' for is_contiguous_node) and pinpoints the exact method (sub_node_can_fuse) that needs modification, significantly reducing the localization effort required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
+}

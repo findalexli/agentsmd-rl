@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (property-values.json, deployment_test.go), the signature key (4dabf18193072939515e22adb298388d), float signature (8ad145fe-0d11-4827-bfd7-1abcbf086f5c), hex values (7ff8000000000001, 7ff0000000000000, fff0000000000000), function names (FloatObjectGenerator, ObjectValueGenerator), pattern (^[0-9a-f]{16}$), title ('Float property values'), and all other specifics that the tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to do: add a 'Float property values' entry with specific keys/values to the oneOf array, create a FloatObjectGenerator function, and register it in ObjectValueGenerator. It even specifies the exact hex values, the pattern string, and the function signature pattern. This is a complete specification of the fix, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on exact implementation details: test_float_object_generator_exists checks for exact function signature 'func FloatObjectGenerator()' with specific return type pattern, test_generator_registered checks for exact string 'FloatObjectGenerator().AsAny()', and test_json_schema checks for exact title 'Float property values'. An alternative correct fix using a different function name (e.g., SpecialFloatGenerator) or different title would fail these text-matching tests."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_float_object_generator_exists and test_generator_registered_in_object_value_generator are purely text-matching tests (regex on source code, string containment checks). test_json_schema_has_float_definition only parses JSON but doesn't validate against any actual data. However, test_test_property_value_schema_passes does execute the Go test. Since the first three f2p tests are purely textual, this is a FAIL."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests cannot be satisfied by stub implementations: test_json_schema_has_float_definition requires specific JSON structure with correct keys/values/patterns; test_float_object_generator_exists requires specific function definition with hex values; test_generator_registered requires the function to be called within ObjectValueGenerator; test_test_property_value_schema_passes actually runs the Go test 5 times and checks return code 0."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /workspace/pulumi with solve.sh containing the complete gold patch. An agent could read /solution/solve.sh or simply execute it to get the answer. The test files in tests/ also contain all expected values (signature keys, hex values, exact function names) that could be extracted."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors required by instruction.md are tested: JSON schema float entry (test_json_schema_has_float_definition), FloatObjectGenerator function (test_float_object_generator_exists), registration in ObjectValueGenerator (test_generator_registered), and the test passing reliably (test_test_property_value_schema_passes)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names, have docstrings indicating fail-to-pass vs pass-to-pass classification, and are logically grouped (schema validation, code structure, behavior verification, existing test preservation)."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The JSON schema structure for the Float property values entry is documented in instruction.md with the specific keys, values, type, and pattern requirements."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames, paths, commands, variable names, and signature values in the instruction are correct and consistent with the test files and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact functions to create (FloatObjectGenerator), exact functions to modify (ObjectValueGenerator), exact schema entry title ('Float property values'), exact hex values, and exact file locations. This goes well beyond identifying what's broken \u2014 it prescribes the exact implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold patch is localized: it adds a new entry to the JSON schema's oneOf array and adds a new function plus one line in the test file. No full-file rewrites or contradictions with other files."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 5
+}

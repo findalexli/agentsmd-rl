@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-12T03:59:52.404757",
-  "total_time": 4528.22,
-  "sandbox_id": "i6crkyc577y26ci2va2p2",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T05:54:49.547584",
+  "total_time": 1662.71,
+  "sandbox_id": "iv8j01qu43cavsq9tj9yw",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -72,17 +74,30 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 0
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1.68,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:26: unpinned pip deps: pytest, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:26: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.36,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 6
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 421.53,
-      "at": "2026-04-09T15:04:52.986200"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -114,6 +129,14 @@
       "backend": "fireworks",
       "time": 4528.22,
       "at": "2026-04-12T03:59:52.404757"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1662.71,
+      "at": "2026-04-15T05:54:49.547584"
     }
   ]
 }

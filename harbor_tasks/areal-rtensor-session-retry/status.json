@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
+  "valid": true,
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-11T18:34:44.374526",
-  "total_time": 836.45,
-  "sandbox_id": "ith7docfx08s2zv5s03yt",
-  "backend": "fireworks",
-  "pipeline": "agents",
+  "validated_at": "2026-04-15T03:31:59.421739",
+  "total_time": 1107.64,
+  "sandbox_id": "ibbynwn48ce1yk1f5w121",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,17 +59,28 @@
       "quality_verdict": "HIGH",
       "loop_rounds": 0,
       "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.38,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:411: test `test_module_has_logger` has 1 assert(s), all pass on a stub', 'A:[A] test_not_tautological @ tests/test_outputs.py:436: test `test_create_session_has_return_type_annotation` has 1 asser', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: aiohttp, orjson, httpx, colorlog, numpy']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.05,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 62.76,
-      "at": "2026-04-10T09:10:00"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +112,14 @@
       "backend": "fireworks",
       "time": 836.45,
       "at": "2026-04-11T18:34:44.374526"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1107.64,
+      "at": "2026-04-15T03:31:59.421739"
     }
   ]
 }

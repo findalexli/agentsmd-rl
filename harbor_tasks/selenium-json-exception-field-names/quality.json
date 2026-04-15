@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests check for specific implementation details not fully specified in instruction.md: test_field_writer_has_tostring checks for 'field.getDeclaringClass().getName()' and 'field.getName()'; test_simple_property_descriptor_has_tostring checks for 'clazz.getSimpleName()'; test_type_and_writer_returns_writer_tostring checks for exact string 'return writer.toString()'; test_duplicate_field_merge_function_updated checks for exact string '%s vs %s'. These exact code patterns are not specified in the i"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md gives very specific implementation guidance: 'FieldWriter and SimplePropertyWriter classes should be created with proper toString() methods', 'TypeAndWriter should delegate its toString() to the underlying writer's toString()', and shows the exact expected error message format. This goes well beyond describing what's broken and tells the agent exactly what to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_field_writer_has_tostring requires 'field.getDeclaringClass().getName()' and 'field.getName()' as literal strings in the source; test_type_and_writer_returns_writer_tostring requires exact string 'return writer.toString()'; test_duplicate_field_merge_function_updated requires exact string '%s vs %s'. An alternative correct fix using String.format with different patterns, or using string concatenation instead of %s, would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests test_field_writer_has_tostring, test_simple_property_writer_has_tostring, test_simple_property_descriptor_has_tostring, test_type_and_writer_returns_writer_tostring, and test_duplicate_field_merge_function_updated are all pure text-matching tests using 'assert X in open(path).read()' with no execution. Only the bazel test/build tests actually execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (bazel build/test/query tests) run against the actual codebase and would fail if the code doesn't compile or existing tests regress. They cannot be satisfied by stub implementations."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution patch exists at /solution/pr17225.patch in the container, and the agent could read it directly with 'cat /solution/pr17225.patch' or run 'bash /solution/solve.sh' to apply the gold solution. No restrictions prevent accessing /solution/."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes improving error messages to include field names, and tests verify this through both the bazel test execution (which runs the Java test shouldThrowWhenDuplicateFieldNamesExistWithFieldSetting) and the source code inspections for the required implementation patterns."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named and grouped by concern: behavior tests (test_duplicate_field_error_message_includes_field_names, test_error_message_contains_fieldwriter_info), implementation tests (test_field_writer_has_tostring, etc.), and pass-to-pass build tests (test_bazel_build_*). Each has a descriptive docstring."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves improving error messages in Java code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, class names, method names, and bazel targets are consistent between instruction.md and the test file, with no apparent typos."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names exact methods (getFieldWriters(), getBeanWriters()), exact internal classes (TypeAndWriter, FieldWriter, SimplePropertyWriter), and exact implementation details ('TypeAndWriter should delegate its toString() to the underlying writer's toString()'). This is excessive localization for what should be a debugging/refactoring task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Java source files, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

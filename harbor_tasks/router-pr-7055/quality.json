@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file path `packages/router-core/src/scroll-restoration.ts`, the function `setupScrollRestoration`, and describes the scroll restoration cache behavior. The tests check for exports like `setupScrollRestoration`, `scrollRestorationCache`, `defaultGetScrollRestorationKey`, event subscriptions like `onBeforeLoad`/`onRendered`, and patterns involving `shouldClearCache`/`toIndex > fromIndex` \u2014 all of which are discoverable by examining the named file and function as directed b"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (forward navigation doesn't restore scroll position) and gives hints about navigation direction tracking and cache clearing, but never says 'remove the shouldClearCache block' or specifies exact lines/code to change. A developer still needs to reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests like `test_forward_navigation_does_not_clear_cache` and `test_ignore_scroll_flag_handling` assert on the absence of the specific variable name `shouldClearCache` and the specific pattern `toIndex > fromIndex`. An alternative correct fix could rename these variables, restructure the logic differently (e.g., keep the variable but change its usage), or fix the condition rather than removing the block entirely. Such alternatives would fail the regex-based tests even if they correctly fix the b"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests (`test_forward_navigation_does_not_clear_cache`, `test_scroll_restoration_preserves_cache_structure`, `test_ignore_scroll_flag_handling`) are purely text/regex-based: they read the file and check for string patterns like `shouldClearCache` or `cache.set`. They never import, call, or execute the scroll restoration code. The pass-to-pass tests do run builds/lints, but the core behavioral tests are all `assert 'foo' in open(path).read()` style."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check for the presence/absence of specific code patterns that exist in the buggy version. A stub/no-op implementation would not have the original buggy code structure, but the tests specifically check that the buggy `shouldClearCache` pattern is removed while the cache initialization pattern is preserved \u2014 this requires actual modification of the existing file, not a blank stub."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/router/` accessible path as `solution/solve.sh` in the task structure. An agent could read the solution file or the gold patch directly. Additionally, since tests are regex-based on file content, an agent could grep test files to discover exactly what patterns to remove/preserve without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes forward navigation failing to restore scroll position. The tests verify this by checking that the cache-clearing-on-forward-navigation logic is removed, that the module structure is intact, and that builds/types/linting/unit tests pass \u2014 covering the described behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (e.g., `test_forward_navigation_does_not_clear_cache`, `test_scroll_restoration_event_handlers_exist`), have docstrings explaining their purpose, and are categorized as fail-to-pass vs pass-to-pass in comments."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and commands in the instruction and tests are consistent and correct \u2014 no typos detected."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file `scroll-restoration.ts` and function `setupScrollRestoration`, which is appropriate since the task domain makes this obvious. The hints mention navigation direction and cache clearing conceptually but don't specify exact lines or variable names."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
+}

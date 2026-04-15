@@ -1,0 +1,67 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert on specific identifiers like 'jsc.RuntimeTranspilerCache.is_disabled' and 'RuntimeTranspilerCache' with specific patterns (e.g., test_cache_disabled_in_configure_debugger checks for 'RuntimeTranspilerCache\\S*\\.\\s*is_disabled\\s*=\\s*true'). The instruction mentions 'RuntimeTranspilerCache' and 'is_disabled = true' and 'disable() method', so those are discoverable. However, test_cache_disable_applies_to_all_inspector_modes checks that the cache disable is NOT gated on 'mode != .connect"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'The fix must disable RuntimeTranspilerCache by setting is_disabled = true on it', 'The cache disable must apply universally for all debugger modes', and 'check for the debugger being enabled via isInspectorEnabled()'. It also specifies exact settings (minify_identifiers, minify_syntax, minify_whitespace disabled, debugger set to true). This essentially dictates the implementation rather than just describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_cache_disabled_in_configure_debugger uses regex 'RuntimeTranspilerCache\\S*\\.\\s*is_disabled\\s*=\\s*true' which requires the exact field name 'is_disabled' and the exact type name 'RuntimeTranspilerCache'. An alternative correct fix that, say, used a different mechanism to disable caching (e.g., setting a flag on the transpiler options, or calling a different API) would fail. The gold solution also removes cache disabling from Arguments.zig and moves it to configureDebugger \u2014 test_cache_disabl"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test is purely source-text inspection: reading .zig files, parsing function bodies with regex, checking for string patterns in source code. No test compiles or executes any code, runs bun, or tests actual runtime behavior. All tests are variants of 'assert pattern in open(path).read()' style checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_cache_disabled_in_configure_debugger, test_cache_disable_applies_to_all_inspector_modes, test_not_stub) check for specific code patterns that don't exist in the base commit. A stub that makes no changes would fail test_not_stub (requires >=3 code changes) and would fail the RuntimeTranspilerCache checks since that pattern doesn't exist in configureDebugger in the base code."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun's git state plus solution/solve.sh in the container. An agent could read solution/solve.sh to see the exact patch. Additionally, since tests only check source text patterns, an agent could grep the test file to discover exactly what patterns are needed (e.g., 'RuntimeTranspilerCache.*is_disabled.*true') and write code to match those patterns without understanding the bug."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires that 'the runtime transpiler cache must be disabled so that inline source maps are always generated' and describes a reproduction involving creating a 50KB+ file and checking cache behavior. No test actually verifies runtime behavior \u2014 that cached files are not created when inspector is active, or that source maps are correctly generated."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (fail_to_pass, pass_to_pass, anti-stub, config-derived, repo_tests), each test has a descriptive name and docstring explaining what it checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves source code changes to Zig files, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact functions (configureDebugger, isInspectorEnabled), exact field names (is_disabled, minify_identifiers, etc.), the exact type (RuntimeTranspilerCache), and the exact mechanism ('setting is_disabled = true'). This goes well beyond describing the bug \u2014 it specifies the exact code locations and implementation details of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 7
+}

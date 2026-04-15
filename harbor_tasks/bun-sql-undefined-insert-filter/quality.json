@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific file paths (e.g., SHARED_TS, SQLITE_TS, MYSQL_TS, POSTGRES_TS, CLAUDE_MD), the exact function name 'buildDefinedColumnsAndQuery', and the exact error message 'Insert needs to have at least one column with a defined value'. While the instruction does mention most of these, the tests also check for specific things like '$isArray' replacement in test_undefined_filtering_behavior, balanced braces, oxlint/prettier passing, and specific regex patterns for extracting the function "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact function name 'buildDefinedColumnsAndQuery', its exact TypeScript signature, the exact file to create it in (src/js/internal/sql/shared.ts), the exact return type with field names 'definedColumns' and 'columnsSql', and exactly which three adapter files must import it. It also specifies the exact error message string. This is essentially a complete specification of the solution architecture, not just a description of what's broken."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests hard-code the exact function name 'buildDefinedColumnsAndQuery' (test_undefined_filtering_behavior extracts it by regex, test_adapters_import_shared_function checks for it as a literal string), the exact field names 'definedColumns' and 'columnsSql', and require the function to exist in shared.ts specifically. An alternative correct fix (e.g., inline filtering in each adapter, or a differently-named helper) would fail these tests despite correctly fixing the bug."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_undefined_filtering_behavior extracts the function, converts it to JS, and actually executes it via node subprocess with real inputs and behavioral assertions. However, test_adapters_import_shared_function and test_claude_md_toequal_guidance are purely text-based checks. Since at least the core behavioral test executes code, this passes, though it's borderline."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_undefined_filtering_behavior runs 6 behavioral subtests that check specific filtering logic (e.g., T2 expects exactly 1 column when one value is undefined, T3 expects 2 columns in bulk insert). A stub returning empty arrays or defaults would fail T1 (expects 2 cols). test_adapters_import_shared_function requires the literal string to be present. These cannot be satisfied trivially."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/bun and solve.sh is in /solution/. An agent could read the gold patch from the solution directory or from the Docker filesystem. The test file test_outputs.py is also accessible at tests/test_outputs.py, allowing the agent to reverse-engineer exact expectations."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: undefined filtering for single items (tested in T2), bulk insert column union (tested in T3), null substitution for undefined in bulk (implicitly tested), SyntaxError for all-undefined (not directly tested but the error message is checked in adapter code), and CLAUDE.md update (tested). The core behaviors described are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into groups with descriptive names and docstrings: pass_to_pass gates (syntax, lint, prettier), fail_to_pass behavioral tests, and documentation tests. Each test function has a clear comment explaining its purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The instruction documents the exact TypeScript function signature including return type { definedColumns: (keyof T)[]; columnsSql: string }, and the columnsSql format is specified as '(\"col1\", \"col2\") VALUES'."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in file paths, function names, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names exact files to modify (src/js/internal/sql/shared.ts, sqlite.ts, mysql.ts, postgres.ts, test/CLAUDE.md), the exact function name to create, its exact signature, and specifies that all three adapters must import from the exact path 'internal/sql/shared'. This goes well beyond describing the bug domain and essentially provides the complete implementation blueprint."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the function `normalizeNextConfigZodErrors`, the file `packages/next/src/server/config.ts`, the key `dynamicIO`, the replacement `cacheComponents`, the docs URL `https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents`, the existing `turbopackPersistentCaching`/`turbopackFileSystemCacheForDev` behavior, and the distinction between warnings and fatalErrors. All test assertions check these same specifics. The tests also check ESLint/Prettier/TypeScript"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (fatal error for dynamicIO mentioning cacheComponents and a docs link) but does not specify exact code changes, line numbers, or the precise implementation approach. A developer must still figure out HOW to modify normalizeNextConfigZodErrors."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes: that dynamicIO produces a fatal error (not warning), that the fatal error message contains 'cacheComponents' and the docs URL. Alternative implementations (different message wording, different conditional structure, using switch/case vs if/else) would all pass as long as they produce the correct classification and include required strings."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests extract the `normalizeNextConfigZodErrors` function from the source, eval it in Node.js with mocked Zod errors, and inspect the returned [warnings, fatalErrors] arrays. This is behavioral execution, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_dynamicio_fatal_error, test_dynamicio_includes_docs_link) check that dynamicIO produces a fatal error with specific content. The unmodified function would put dynamicIO in warnings (like any generic unrecognized key), so a stub/default implementation would fail these tests."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /workspace/next.js/../solution/solve.sh (or wherever Harbor mounts it). The agent could read the gold patch from solve.sh which contains the exact diff. Additionally, the test file at tests/test_outputs.py is accessible and contains the exact assertion strings and mock error structures the agent could reverse-engineer."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 5 behavioral requirements from instruction.md are tested: (1) dynamicIO is fatal error, (2) mentions cacheComponents, (3) includes docs link, (4) turbopackPersistentCaching preserved, (5) generic keys remain warnings."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with descriptive names (test_dynamicio_fatal_error, test_dynamicio_includes_docs_link, test_turbopack_handling_preserved, test_generic_unrecognized_key_is_warning, etc.) and have clear docstrings for pass_to_pass tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output; it modifies error handling behavior in a config processing function."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, config keys, or URLs in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and function (which is appropriate for a focused config change task) but does not specify exact line numbers or the precise code to write. The function name is necessary context, not leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff is a localized 6-line addition within a single function in a single file, not a full-file rewrite."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
+}

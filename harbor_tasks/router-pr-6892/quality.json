@@ -1,0 +1,65 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction specifies: script path `scripts/update-example-deps.mjs`, reading from `packages/*/package.json`, updating `examples/**/package.json`, outputting `Done`, using caret `^` format, handling `dependencies` and `devDependencies`, and integrating with `changeset:version` script. All test assertions check these elements which are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT the solution should do (create a script, integrate with changeset:version) but does not specify exact code, line numbers, or the precise implementation. A developer must still reason about how to implement the script."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_script_uses_caret_version_format checks for specific string patterns like `\\`^${` in the source code. An alternative correct implementation using string concatenation like `'^' + version` or `\"^\" + packageMap[name]` would fail the assertion `\"`^${\" in content or '`^$' in content or '\"^\"' in content or \"'^'\" in content`. Also test_script_reads_workspace_packages does text-matching for 'packages', 'package.json', 'version' in script content, which is fragile to alternative implementations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Several fail_to_pass tests are purely text-inspection: test_script_reads_workspace_packages checks `'packages' in content.lower()`, test_script_uses_caret_version_format checks for `'^' in content` and template literal patterns, test_script_handles_both_dep_types checks `'devDependencies' in content`. These inspect source text without executing behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "test_script_updates_example_dependencies runs the script but only asserts `returncode == 0` and has an early return if no example uses the package. A script that simply exits 0 without doing any updating would pass. Similarly test_script_runs_without_error only checks returncode == 0."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at `/workspace/router` after solve.sh runs, and the gold patch is visible in solve.sh. An agent could read `solution/solve.sh` (or the PATCH content embedded in it) to extract the exact solution. The Dockerfile and test files are supposedly hidden but the solution directory may be accessible in the container."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says the script should 'output which examples were updated (one per line, e.g., Updated examples/foo/package.json)' but no test verifies the 'Updated ...' per-line output. Also no test verifies that example package.json files actually have their versions changed to the correct caret versions after running."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names, docstrings indicating their purpose, and are clearly separated by concern (script existence, execution, output, integration, code inspection, linting)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces a script and modified package.json files, not a structured data output like an API or CSV schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the task at an appropriate level - it names the script file to create and the npm script to modify, but these are natural requirements of the task, not localization hints for a bugfix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold diff in package.json is a single-line change to the changeset:version script, which is localized and doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 6,
+  "fail_count": 5
+}

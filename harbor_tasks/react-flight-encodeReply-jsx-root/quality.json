@@ -1,0 +1,63 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific symbols like 'serializeTemporaryReferenceMarker', 'moveDebugInfoFromChunkToInnerValue', 'addAsyncInfo', 'Object.isFrozen', 'Object.defineProperty', 'processReply', 'temporary reference set' literal string, and function names like 'addAsyncInfo' with a 40-line region check. The instruction.md does not mention 'addAsyncInfo', 'moveDebugInfoFromChunkToInnerValue', 'serializeTemporaryReferenceMarker', 'Object.isFrozen', or 'modelRoot'. These are undiscoverable from the instruct"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the symptoms (crash with JSX root, TypeError on frozen elements) and names the files to look at, but does not specify the exact code changes like adding Object.isFrozen guards or the modelRoot check. A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_frozen_guard_in_add_async_info asserts 'Object.isFrozen' appears within 40 lines of 'function addAsyncInfo', which is extremely specific to the gold patch's implementation. An alternative correct fix (e.g., try/catch around Object.defineProperty, or cloning the element before defining the property) would fail this test despite being behaviorally correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_frozen_guard_in_add_async_info is purely text-based (checks 'Object.isFrozen' string in source within 40 lines of addAsyncInfo). test_error_preserved_for_non_temp_ref_jsx only checks string presence. test_js_syntax_reply_client and test_js_syntax_flight_client only check string markers. While some tests (test_encodereply_jsx_root_behavior, test_frozen_client_ref_behavior) do execute code, multiple f2p and p2p tests are purely textual assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The behavioral f2p tests (test_encodereply_jsx_root_behavior, test_frozen_client_ref_behavior) inject and run actual Jest tests that exercise the buggy code paths. A stub or no-op implementation would not pass these since encodeReply would still throw on JSX root and frozen elements would still crash."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could simply read and apply it with 'cat /workspace/solution/solve.sh | bash' or similar. There's no evidence the solution directory is removed or made inaccessible."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction describes two bugs: (1) encodeReply throws on JSX root with TemporaryReferenceSet, and (2) debug info attachment crashes on frozen elements. Both are tested by test_encodereply_jsx_root_behavior and test_frozen_client_ref_behavior respectively."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized into sections (Gates/static, Fail-to-pass/behavioral, Pass-to-pass/regression, Repo tests) with descriptive names and detailed docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing source code bugs, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in file paths, function names, or commands across the task files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two files to modify, which is reasonable for a bug report. It doesn't specify exact lines, function names like addAsyncInfo, or the Object.isFrozen fix approach."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 4
+}

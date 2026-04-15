@@ -1,54 +1,39 @@
-# Add heap snapshot functionality for TUI and server
+# Capture both TUI and server heap snapshots
 
 ## Problem
 
-The TUI currently has a "Write heap snapshot" command that only captures the TUI process's heap. Users need to also capture the server process heap for complete memory debugging.
+The TUI has a "Write heap snapshot" command that only captures the TUI process's heap, producing a single snapshot file. For complete memory debugging, both the TUI and server (worker) process heaps need to be captured when the command is triggered.
 
-The current implementation:
-1. Only writes a single heap snapshot file
-2. Does not coordinate with the server worker process
-3. Shows only one file path in the toast notification
+Currently, triggering "Write heap snapshot" writes only one snapshot and displays only one file path in the toast notification. There is no mechanism for the TUI process to request a heap snapshot from the server worker process.
 
 ## Expected Behavior
 
-When the user triggers "Write heap snapshot" from the command palette:
-1. The TUI should write its own heap snapshot to `tui.heapsnapshot`
-2. An RPC call should be made to the worker to write the server heap snapshot to `server.heapsnapshot`
+When "Write heap snapshot" is triggered from the command palette:
+1. The TUI process heap should be saved as `tui.heapsnapshot`
+2. The server process heap should be saved as `server.heapsnapshot`
 3. The toast notification should display both file paths
 
-## Implementation Details
+## Technical Context
 
-You'll need to:
+The TUI uses a multi-process architecture across these source files:
+- `packages/opencode/src/cli/cmd/tui/worker.ts` — the server worker process, exposes an RPC interface to the TUI thread
+- `packages/opencode/src/cli/cmd/tui/thread.ts` — the TUI thread, communicates with the worker via an RPC client (`client.call("methodName", args)`)
+- `packages/opencode/src/cli/cmd/tui/app.tsx` — the main TUI React component, renders the command palette
 
-1. **Add RPC method in worker** (`packages/opencode/src/cli/cmd/tui/worker.ts`):
-   - Add a new `snapshot` method to the RPC object that calls `writeHeapSnapshot("server.heapsnapshot")`
+Heap snapshots are written using `writeHeapSnapshot()` from Node's `node:v8` (or `"v8"`) module.
 
-2. **Implement callback in thread** (`packages/opencode/src/cli/cmd/tui/thread.ts`):
-   - Import `writeHeapSnapshot` from the `v8` module
-   - Add an `onSnapshot` callback to the `tui()` call that:
-     - Writes the TUI heap snapshot to `tui.heapsnapshot`
-     - Calls the worker's RPC `snapshot` method
-     - Returns an array of both file paths
+The cross-process coordination requires:
+- An RPC method named `snapshot` on the worker that writes the server heap to `server.heapsnapshot`
+- An `onSnapshot` callback in the TUI thread that triggers both snapshot writes (TUI locally, server via RPC) and returns both file paths
+- The `onSnapshot` callback must be passed as an optional prop through to the App component so the command palette can invoke it
 
-3. **Update App component** (`packages/opencode/src/cli/cmd/tui/app.tsx`):
-   - Add `onSnapshot` optional prop to the `tui` function input type
-   - Pass `onSnapshot` from input to the `App` component
-   - Update the `App` component to accept the `onSnapshot` prop
-   - Modify the "Write heap snapshot" command to call `onSnapshot` and display both file paths
+## Changelog Command
 
-4. **Update the changelog command instructions** (`.opencode/command/changelog.md`):
-   - The changelog generation instructions need to be updated to organize entries into sections (TUI, Desktop, Core, Misc)
-   - Update the instructions so that each subagent appends its summary to the appropriate section
+The changelog generation instructions at `.opencode/command/changelog.md` should be restructured to organize entries into categorized sections with these exact headers:
 
-## Files to Look At
+- `# TUI`
+- `# Desktop`
+- `# Core`
+- `# Misc`
 
-- `packages/opencode/src/cli/cmd/tui/worker.ts` — Worker process RPC handlers
-- `packages/opencode/src/cli/cmd/tui/thread.ts` — TUI thread that spawns the app
-- `packages/opencode/src/cli/cmd/tui/app.tsx` — Main TUI app component with command palette
-- `.opencode/command/changelog.md` — Instructions for the changelog generation command
-
-## Notes
-
-- The `writeHeapSnapshot` function is available from Node's `v8` module (or `node:v8`)
-- The RPC client in thread.ts can call methods via `client.call("methodName", args)`
-- The changelog command is a custom agent instruction file used by the opencode CLI
+Each subagent should append its summary to the appropriate section. The changelog output file should be `UPCOMING_CHANGELOG.md`.

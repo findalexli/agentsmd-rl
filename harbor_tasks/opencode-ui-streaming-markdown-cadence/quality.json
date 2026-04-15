@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_no_banned_else checks for 'else' keyword absence (instruction mentions this), but test_pacing_func_signature checks for specific parameter patterns like 'live|streaming|isStreaming|active|isActive|isLive|running|flushed|complete' via regex, test_pacing_step_logic checks for Math.min/Math.ceil/Math.floor, test_pacing_uses_position_tracking checks for variable names 'pos|shown|cursor|idx|position|index|of"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md is extremely prescriptive: it specifies to create a pacing function replacing createThrottledValue, use createSignal, accept a 'live' parameter, use substring/slice with position tracking variables, use Math.min/Math.ceil/Math.floor for step calculations, use setTimeout/requestAnimationFrame, interval <= 50ms, no 'else' statements, no 'any' types, no try/catch. This essentially dictates the implementation approach rather than just describing the broken behavior."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert gold-specific implementation details: test_pacing_uses_position_tracking requires variables named 'pos|shown|cursor|idx|position|index|offset|start|end|current'; test_pacing_func_signature requires parameter names matching 'live|streaming|isStreaming|active|isActive|isLive|running|flushed|complete'; test_pacing_step_logic requires Math.min/Math.ceil/Math.floor; test_pacing_uses_incremental_reveal requires 'slice|substring'. An alternative correct implementation using different inter"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every test is purely text/regex-based inspection of the source file contents (e.g., 'assert \"createSignal\" in src', regex matching for variable names, checking for banned keywords). No test imports, compiles, or executes the code. No behavioral verification whatsoever."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "A stub implementation that simply preserves the original file structure and adds the right keywords (createSignal, createEffect, onCleanup, createMemo, Math.min, slice, a variable named 'shown', a parameter named 'live') without actually fixing the streaming behavior would pass all tests, since tests only check for string/regex presence in source code, not runtime behavior."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution exists at /workspace/opencode as a git repo, and solve.sh applies a patch. The agent could read the solution by examining solve.sh or the git history. Also, since tests only do text matching on the source file, the agent could reverse-engineer expected patterns from the test file if it could access tests/test_outputs.py."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction requires 'streamed text should reveal in small, steady increments that feel like real-time typing' and 'when the response is complete, text should flush immediately' \u2014 these behavioral requirements are never tested at runtime. Tests only check for syntactic markers in the source code."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names (test_file_valid, test_pacing_func_signature, test_no_banned_else, etc.) and include docstrings explaining what each test checks. They are grouped into sections with comments like '# Gates (pass_to_pass, static)'."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces UI component code changes, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No apparent typos in filenames, paths, variable names, or commands in instruction.md."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md names the exact function to replace ('createThrottledValue'), the exact file ('packages/ui/src/components/message-part.tsx'), the exact constant ('TEXT_RENDER_THROTTLE_MS = 100'), and the exact component names (TextPartDisplay, ReasoningPartDisplay). It also specifies the exact replacement approach including parameter names and internal variable types."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

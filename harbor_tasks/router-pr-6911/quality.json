@@ -1,0 +1,66 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file (Matches.tsx in @tanstack/solid-router), the functions (useMatchRoute, MatchRoute), the specific variable names (renderedChild, child), the patterns (Solid.createMemo, props.children), and the exact string patterns the tests check for. All test-asserted specifics are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fix: 'The options parameter destructuring pattern must be moved so it happens inside the Solid.createMemo() callback', provides exact code snippets for the fix, and specifies exact patterns like 'const renderedChild = Solid.createMemo(', 'const child = props.children', and 'return <>{renderedChild()}</>'. This is a complete solution specification, not just a bug description."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: exact string 'const renderedChild = Solid.createMemo(' in test_matchroute_uses_creatememo, exact string 'return <>{renderedChild()}</>' in test_matchroute_returns_fragment, exact variable name 'const child = props.children' inside createMemo in test_matchroute_child_inside_memo, and exact regex patterns for destructuring placement in test_usematchroute_reactive_opts. An alternative correct fix using different variable names or structure would"
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The fail_to_pass tests (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, test_matchroute_child_inside_memo, test_matchroute_returns_fragment) are ALL pure text/regex matching on file contents with no code execution. They use patterns like 'assert \"const renderedChild = Solid.createMemo(\" in content' \u2014 pure string matching, not behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string patterns in source code. An agent could pass all four f2p tests by simply text-editing the file to contain the expected string patterns without any understanding of the bug or correct implementation. For example, inserting the exact strings checked by the asserts anywhere in the file would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution is in /workspace/router as solve.sh, and the agent could read /solution/solve.sh or grep test files for exact expected strings like 'const renderedChild = Solid.createMemo(' and simply insert them into the target file. The tests only check for string presence, making this trivially exploitable."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors described in instruction.md (destructuring inside createMemo, renderedChild as createMemo, props.children inside memo, fragment return, plus type checking, build, eslint, and unit tests) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, etc.), have detailed docstrings explaining buggy vs fixed patterns, and are logically grouped by concern."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (packages/solid-router/src/Matches.tsx), exact functions, exact variable names (renderedChild), and provides the exact code patterns required. This goes far beyond naming the buggy module \u2014 it provides the complete solution implementation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 6
+}

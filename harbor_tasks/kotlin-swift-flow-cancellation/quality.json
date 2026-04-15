@@ -1,0 +1,68 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)', 'public fun cancel() = coroutineScope.cancel(CancellationException', 'continuation.invokeOnCancellation { cancel() }', 'coroutineScope.launch {', 'public final class Iterator: AsyncIteratorProtocol', '_kotlin_swift_SwiftFlowIterator_cancel(iterator.__externalRCRef())', 'internal final class KotlinFlowIterator<Element>'. While the instruction describes the general "
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states implementation details like 'Maintain a CoroutineScope that is shared across all flow operations (instead of creating a new scope for launch())', 'Register cancellation handlers using invokeOnCancellation in the two suspendCancellableCoroutine blocks', 'Introduce a new Iterator class that wraps KotlinFlowIterator', 'Make KotlinFlowIterator internal', 'Move the cancellation logic from KotlinFlowIterator.deinit to the new Iterator.deinit'. This describes exactly W"
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)' and 'public fun cancel() = coroutineScope.cancel(CancellationException'. An alternative correct fix could use a different default context (e.g., Dispatchers.Default), a different parameter name, or structure the cancel method differently while achieving the same behavior. The tests would reject these alternatives."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Every fail-to-pass test (test_coroutine_scope_parameter, test_cancel_uses_scope_cancel, test_invoke_on_cancellation_ready_state, etc.) reads file content and asserts on literal strings. No test compiles, runs, or executes the code. The pass-to-pass tests also only do text-based validation (brace counting, regex matching). There is zero behavioral testing."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since all f2p tests are pure text assertions (e.g., 'assert \"private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)\" in content'), they could be satisfied by simply inserting the expected strings into the files without actually implementing a working fix. A stub that appends the right text would pass."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The agent can read /workspace/kotlin/.git or the solution directory if it exists. More critically, since all tests are string-matching on file content, the agent could grep test_outputs.py (or infer from instruction.md's detailed specifications) for the exact strings to insert, without understanding the bug at all."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'Flow collection stops when the iterator is deallocated' and 'Flow collection stops when an async call to next() is cancelled' and 'No behavioral changes for normal flow consumption'. None of these runtime behaviors are actually tested \u2014 only text patterns in source files are checked."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, and docstrings explaining what each test verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying source code files, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact methods to modify ('invokeOnCancellation in the two suspendCancellableCoroutine blocks for State.Ready and State.AwaitingConsumer states'), exact class names to create ('Iterator class that wraps KotlinFlowIterator'), and exact visibility changes ('Make KotlinFlowIterator internal'). This goes far beyond naming the relevant files."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological",
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 2,
+  "fail_count": 8
+}

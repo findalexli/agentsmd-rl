@@ -6,12 +6,19 @@ The `/copilot` skill (`.claude/skills/copilot/`) creates a GitHub Copilot agent 
 
 ## Expected Behavior
 
-The skill should include a polling mechanism that automatically detects when Copilot finishes working on a PR. This requires:
+The skill should include a polling mechanism that automatically detects when Copilot finishes working on a PR. Concretely:
 
-1. A shell script that polls the GitHub Issues Timeline API for the completion event, with a reasonable timeout
-2. The skill definition updated to allow running the polling script and to document how to use it
+1. **A shell script** at `.claude/skills/copilot/poll.sh` that:
+   - Is executable
+   - Takes two arguments: `{owner}/{repo}` (e.g., `mlflow/mlflow`) and a PR number
+   - Polls the GitHub Issues **Timeline API** endpoint (`repos/{owner}/{repo}/issues/{pr_number}/timeline`)
+   - Looks for the **copilot_work_finished** event in the timeline response
+   - Has a timeout mechanism (e.g., a variable or value representing approximately 30 minutes / 1800 seconds)
+   - Exits non-zero when invoked without arguments
 
-After implementing the polling script, update the skill's configuration and documentation to reflect the new capability.
+2. **The SKILL.md frontmatter** updated to:
+   - Add `poll.sh` to the `allowed-tools` list
+   - Document how to run the polling script
 
 ## Files to Look At
 

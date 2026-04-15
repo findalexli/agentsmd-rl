@@ -1,19 +1,20 @@
-# Fix AMD/ROCm startup crash caused by top-level CUDA import in KDA backend
+# Fix AMD/ROCm startup crash in KDA backend
 
 ## Bug Description
 
-The file `python/sglang/srt/layers/attention/linear/kda_backend.py` has a top-level import of `CuteDSLKDAKernel` from the `kda_cutedsl` module. This import chains through to `cuda.bindings.driver`, which is a CUDA-only package that does not exist on AMD/ROCm systems. This causes an immediate `ModuleNotFoundError` when launching any model with linear attention (e.g., Qwen3.5) on AMD GPUs:
+When launching any model with linear attention (e.g., Qwen3.5) on AMD/ROCm GPUs, the server crashes immediately with:
 
 ```
 ModuleNotFoundError: No module named 'cuda'
 ```
 
-The import is only needed when the CuTeDSL backend is selected AND the platform is CUDA, but because it is at the top level, it is always executed regardless of platform.
+The crash occurs when importing the KDA backend module at `python/sglang/srt/layers/attention/linear/kda_backend.py`. The module works correctly on NVIDIA/CUDA systems but fails to import on any non-CUDA platform (AMD/ROCm, CPU-only).
 
-## Expected Fix
+## Expected Behavior After Fix
 
-Move the `CuteDSLKDAKernel` import from the top level to a lazy import inside the code path where it is actually used (inside the `elif decode_backend.is_cutedsl():` branch in the `__init__` method, which already has an `is_cuda()` guard). This way, non-CUDA platforms never attempt to import the CUDA-only module.
-
-## File to Modify
-
-`python/sglang/srt/layers/attention/linear/kda_backend.py` -- remove the top-level import of `CuteDSLKDAKernel` and add it as a local import inside the `is_cutedsl()` branch.
+- Importing the `kda_backend` module on a non-CUDA system must succeed without raising `ModuleNotFoundError` or `ImportError` mentioning 'cuda' or 'kda_cutedsl'
+- The `KDAKernelDispatcher` class must remain intact with its `__init__` method
+- `TritonKDAKernel` must remain as a top-level import from the `kda_triton` module
+- `CuteDSLKDAKernel` must still be referenced somewhere in the file — it should not be deleted entirely
+- The file must retain the identifiers `decode_kernel`, `is_cuda`, and `is_cutedsl`
+- The code must pass standard quality checks: valid Python syntax, ruff linting, black formatting, isort import ordering, and codespell

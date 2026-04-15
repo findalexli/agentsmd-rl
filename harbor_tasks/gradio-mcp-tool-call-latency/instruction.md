@@ -13,28 +13,17 @@ MCP request
   -> run_sync(job.result)                      # thread blocking for HTTP response
 ```
 
-For non-queued events, all of this overhead is unnecessary because `blocks.process_api()` can be called directly — it is the same internal function the HTTP route eventually reaches.
+## Symptom
 
-## What to Fix
+MCP tool calls in `gradio/mcp.py` unconditionally use the HTTP loopback path via `gradio_client.Client`, even for non-queued events where direct internal function calls would suffice. This causes unnecessary latency overhead.
 
-In `gradio/mcp.py`, in the `call_tool()` method:
+## Goal
 
-1. When `block_fn.queue` is `False`, bypass the HTTP loopback and call `blocks.process_api()` directly with the block function, inputs, and a fresh `SessionState`. Extract the output from `raw_output["data"]`.
+Modify `gradio/mcp.py` to add a fast path for non-queued MCP tool calls that:
+1. Bypasses the HTTP loopback mechanism for events where `queue=False`
+2. Calls the Gradio blocks processing directly for such events
+3. Preserves the existing HTTP loopback behavior for queued events (queue=True)
+4. Maintains progress token handling only where needed for queue-based features
+5. Keeps the file syntactically valid and importable
 
-2. When `block_fn.queue` is `True`, preserve the existing HTTP loopback path to maintain streaming updates, progress notifications, and queue-based features.
-
-3. Import `SessionState` from `gradio.state_holder`.
-
-4. Move the progress token and client creation logic inside the queued branch only.
-
-## Affected Code
-
-- `gradio/mcp.py` — the `call_tool()` method and related imports
-
-## Acceptance Criteria
-
-- Non-queued MCP tool calls use `blocks.process_api()` directly
-- Queued MCP tool calls continue to use the HTTP loopback path
-- `SessionState` is imported from `gradio.state_holder`
-- The file remains syntactically valid Python
-- Progress token handling is only done for queued events
+The fix should eliminate the ~4 second latency overhead for non-queued MCP tool calls while maintaining backward compatibility for streaming/queued events.

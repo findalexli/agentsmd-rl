@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names BaseVideoProcessor, its attributes (rescale_factor=1/255, model_input_names=['pixel_values_videos'], default_to_square=True, return_metadata=False), required methods, BASE_VIDEO_PROCESSOR_DOCSTRING requirements, PILImageResampling availability with PIL, file content requirements, and the target file path. All test-specific assertions are discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (unconditional import of PILImageResampling) and expected behavior (conditional import) but does not specify exact code changes, line numbers to modify, or the specific fix pattern (e.g., wrapping in is_vision_available()). A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (importability without PIL, attribute values, method existence, PILImageResampling availability with PIL) rather than implementation details. Alternative fixes like TYPE_CHECKING guards, try/except blocks, or lazy imports would all pass. The ruff checks constrain style but not the specific fix approach."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests use subprocess execution to actually import the module, check class attributes, verify method existence, and test runtime behavior. test_not_stub does check file content via text inspection, but it's supplementary to the behavioral tests, not the sole verification mechanism."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests (test_import_without_pil, test_docstring_constant_without_pil, test_methods_exist_without_pil) cannot be satisfied by a stub because they require: (1) successful import without PIL (the actual bug), (2) specific attribute values on BaseVideoProcessor, (3) real method definitions including __call__ delegating to preprocess. A stub would fail the anti-stub checks on attribute values and file size."
+    },
+    "anti_cheating_measures": {
+      "outcome": "fail",
+      "reason": "The solution file exists at /repo's accessible filesystem (solution/solve.sh contains the exact gold patch). The agent could read this file to discover the exact fix. While the Dockerfile doesn't explicitly copy solution/ into the container, the task structure doesn't prevent access if it were present. Additionally, tests/test_outputs.py is accessible and contains all assertion values."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: import without PIL, class attributes (rescale_factor, model_input_names, default_to_square, return_metadata), required methods, __call__ delegation, BASE_VIDEO_PROCESSOR_DOCSTRING contents/length, PILImageResampling availability with PIL, and file content requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each test's purpose, and tags like [static], [pr_diff], [repo_tests], [agent_config]."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a Python import bug, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'the top-level imports section where the unconditional PIL import occurs' in the Relevant Files section, and names the exact symbol (PILImageResampling) and exact file (video_processing_utils.py). It also references how other optional dependencies are handled 'elsewhere in this file' and mentions import_utils.py for checking availability. This significantly narrows localization beyond what's needed for understanding the bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "anti_cheating_measures"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}

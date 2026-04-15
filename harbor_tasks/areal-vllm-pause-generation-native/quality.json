@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (areal/engine/vllm_ext/areal_vllm_server.py), all function/endpoint names tested (areal_update_weight, areal_pause_generation, areal_continue_generation, hook, abort_all_reqs), the specific imports to remove (EngineCore, EngineCoreOutput, etc.), the exact API methods to use (llm.pause_generation with specific kwargs, llm.resume_generation), and all route paths and Pydantic models. Every assert target in tests is discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states the exact fix: 'uses llm.pause_generation(wait_for_inflight_requests=False, clear_cache=True)', 'calls llm.resume_generation()', 'pause generation before performing RPC calls and resume generation afterward (even when the RPC fails)'. These are not just descriptions of what's broken but precise prescriptions of the replacement code, including exact method names and keyword arguments."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests verify behavioral properties (call ordering pause->rpc->resume, specific kwargs, error resilience, absence of monkey-patching) rather than exact line positions or specific internal helper names. Alternative implementations that satisfy these behavioral contracts would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a sophisticated approach: they extract async functions via AST, execute them with mock objects via asyncio.run(), and verify call ordering and kwargs on mocks. Some tests also do AST inspection (test_no_monkey_patching, test_no_banned_imports), but these verify structural properties by parsing and walking the AST, not just string matching. The behavioral tests genuinely call the code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., async def areal_update_weight that just returns None) would fail test_weight_update_call_ordering because the mock's call_log wouldn't contain ['pause', 'rpc', 'resume']. The tests require specific mock interactions that only occur with actual implementation logic."
+    },
+    "anti_cheating_measures": {
+      "outcome": "pass",
+      "reason": "The solution directory is not accessible in the container at test time (only /workspace/AReaL exists). Tests use behavioral verification with mocks rather than fixture strings. The agent cannot simply grep for expected values since tests verify call ordering and mock interactions dynamically."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All acceptance criteria from instruction.md are tested: hook() removal (test_no_monkey_patching), setattr removal (same test), abort_all_reqs removal (test_no_standalone_abort), banned imports removal (test_no_banned_imports), pause/resume around weight updates (test_weight_update_call_ordering), pause kwargs (test_weight_update_pause_kwargs), error resilience (test_weight_update_error_resilience), native pause API (test_pause_endpoint_uses_native_api), resume in continue endpoint (test_continue"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_syntax_check, test_weight_update_call_ordering, test_no_monkey_patching, etc.), parametrized across weight update endpoints, include docstrings explaining purpose, and use a shared helper module for reusable test infrastructure."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is about refactoring a server module, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, API routes, and variable names in instruction.md are consistent with those used in tests and the actual codebase."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (areal/engine/vllm_ext/areal_vllm_server.py), the exact functions to modify (hook(), abort_all_reqs()), exact replacement API calls (llm.pause_generation(wait_for_inflight_requests=False, clear_cache=True), llm.resume_generation()), and the exact imports to remove. This goes well beyond naming the module \u2014 it precisely locates every change point."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 2
+}
