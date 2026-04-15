@@ -32,6 +32,8 @@ valid=$(grep "Progress:" "$LOG" 2>/dev/null | tail -1 | grep -oE '[0-9]+ valid' 
 judge_done=$(grep -c "judge:" "$LOG" 2>/dev/null || echo 0)
 reconcile_needed=$(grep -c "reconcile needed" "$LOG" 2>/dev/null || echo 0)
 reconcile_done=$(grep -c "post-reconcile judge" "$LOG" 2>/dev/null || echo 0)
+tests_rewrite_needed=$(grep -c "tests_rewrite needed" "$LOG" 2>/dev/null || echo 0)
+tests_rewrite_done=$(grep -c "post-tests-rewrite judge" "$LOG" 2>/dev/null || echo 0)
 errors=$(grep -c "ERROR\|Traceback" "$LOG" 2>/dev/null || echo 0)
 rate_limited=$(grep -c "rate-limited" "$LOG" 2>/dev/null || echo 0)
 pass_count=$(grep -c " PASS " "$LOG" 2>/dev/null || echo 0)
@@ -39,11 +41,13 @@ pass_count=$(grep -c " PASS " "$LOG" 2>/dev/null || echo 0)
 echo "  ── Pipeline progress ──"
 echo "  Tasks completed:        $pass_count"
 echo "  Valid (nop=0, gold=1):  $valid"
-echo "  Judge calls finished:   $judge_done"
-echo "  Reconcile triggered:    $reconcile_needed"
-echo "  Reconcile completed:    $reconcile_done"
-echo "  Rate-limit events:      $rate_limited"
-echo "  Errors / tracebacks:    $errors"
+echo "  Judge calls finished:    $judge_done"
+echo "  Reconcile triggered:     $reconcile_needed"
+echo "  Reconcile completed:     $reconcile_done"
+echo "  Tests rewrite triggered: $tests_rewrite_needed"
+echo "  Tests rewrite completed: $tests_rewrite_done"
+echo "  Rate-limit events:       $rate_limited"
+echo "  Errors / tracebacks:     $errors"
 echo
 
 echo "  ── Recent activity (last 10 PASS/FAIL events) ──"
@@ -58,9 +62,11 @@ echo
 # Count actual quality.json files on disk (true success signal)
 judged_on_disk=$(find harbor_tasks -maxdepth 2 -name quality.json 2>/dev/null | wc -l | tr -d ' ')
 reconciled_on_disk=$(find harbor_tasks -maxdepth 2 -name reconcile_status.json 2>/dev/null | wc -l | tr -d ' ')
+tests_rewrite_on_disk=$(find harbor_tasks -maxdepth 2 -name tests_rewrite_status.json 2>/dev/null | wc -l | tr -d ' ')
 echo "  ── Disk state ──"
-echo "  Tasks with quality.json:        $judged_on_disk"
-echo "  Tasks with reconcile_status.json: $reconciled_on_disk"
+echo "  Tasks with quality.json:              $judged_on_disk"
+echo "  Tasks with reconcile_status.json:     $reconciled_on_disk"
+echo "  Tasks with tests_rewrite_status.json: $tests_rewrite_on_disk"
 echo
 
 # E2B active sandboxes

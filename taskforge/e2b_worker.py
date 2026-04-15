@@ -209,6 +209,12 @@ class WorkerResult:
     reconcile_outcome: dict = field(default_factory=dict)
     judge_status_post: str = ""
     judge_summary_post: dict = field(default_factory=dict)
+    # Test rewrite (runs when judge flags test-design rubrics)
+    tests_rewrite_status: str = ""      # "ok" | "abandoned" | "error" | "rate_limited"
+    tests_rewrite_time: float = 0.0
+    tests_rewrite_outcome: dict = field(default_factory=dict)
+    judge_status_post_tests: str = ""
+    judge_summary_post_tests: dict = field(default_factory=dict)
     total_time: float = 0.0
     error: str = ""
     nodes: dict = field(default_factory=dict)
@@ -1422,6 +1428,29 @@ async def node_instruction_reconcile(sandbox: AsyncSandbox) -> tuple[str, str]:
     return await _run_agent(sandbox, "instruction_reconcile.md")
 
 
+async def node_tests_rewrite(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 6d: Test rewrite — cheap executor rewrites tests/test_outputs.py to
+    be behavioral (invoke code instead of grep), then re-validates oracle.
+
+    Called ONLY when node_quality_judge flags test-design rubrics as FAIL:
+      - tests_verify_behavior_not_text  (pure text-match tests)
+      - solution_uniqueness_guard        (tests assert gold-specific literals)
+      - test_not_tautological            (asserts pass on stub impls)
+
+    Cannot fix structural issues (anti_cheating_measures when solution/ is
+    COPY'd into image, or pass_to_pass_coverage requiring new eval_manifest
+    entries). Agent writes abandoned=true for those.
+
+    Reads: /workspace/task/quality.json + tests/* + solution/solve.sh +
+           environment/Dockerfile
+    Writes: /workspace/task/tests/test_outputs.py (rewritten);
+            tests_rewrite_status.json
+    Returns: (status, error)
+      status: "ok" | "abandoned" | "error" | "rate_limited"
+    """
+    return await _run_agent(sandbox, "tests_rewrite.md")
+
+
 def _is_rate_limit(text: str) -> bool:
     """Detect rate-limit signatures in claude -p output."""
     if not text:
@@ -1982,6 +2011,74 @@ async def run_task(
                         logger.info("[%s] post-reconcile judge: %s tier_a=%s",
                                     result.task_name, js2,
                                     judge_summary2.get("tier_a_fails", []))
+
+            # ── Node 6d: Tests Rewrite (conditional) ──────────────
+            # Runs when the judge (or post-reconcile judge) still flags
+            # test-design rubrics that only a test rewrite can address.
+            TEST_RUBRICS = {
+                "tests_verify_behavior_not_text",
+                "solution_uniqueness_guard",
+                "test_not_tautological",
+            }
+            # Use post-reconcile judge if available, else initial judge
+            latest_summary = (result.judge_summary_post
+                              if result.judge_summary_post
+                              else judge_summary)
+            tests_rewrite_needed = (
+                result.valid
+                and result.judge_status in ("ok", "")
+                and any(r in TEST_RUBRICS
+                        for r in latest_summary.get("tier_a_fails", []))
+            )
+            if tests_rewrite_needed:
+                logger.info("[%s] tests_rewrite needed — judge flagged %s",
+                            result.task_name,
+                            [r for r in latest_summary.get("tier_a_fails", [])
+                             if r in TEST_RUBRICS])
+                t0 = time.monotonic()
+                trs, trerr = await node_tests_rewrite(sandbox)
+                elapsed = time.monotonic() - t0
+                result.tests_rewrite_status = trs
+                result.tests_rewrite_time = round(elapsed, 2)
+                if trs == "rate_limited":
+                    if pool and backend:
+                        pool.report_429(backend)
+                    raise _RateLimited(f"rate limited during tests_rewrite: {trerr}")
+
+                # Read tests_rewrite_status.json written by the agent
+                tr_data: dict = {}
+                try:
+                    tr_raw = await sandbox.files.read(
+                        "/workspace/task/tests_rewrite_status.json", format="text")
+                    tr_data = json.loads(tr_raw)
+                    result.tests_rewrite_outcome = tr_data
+                except Exception as e:
+                    logger.warning("[%s] tests_rewrite_status read failed: %s",
+                                   result.task_name, str(e)[:80])
+
+                if tr_data.get("abandoned"):
+                    logger.info("[%s] tests_rewrite abandoned: %s",
+                                result.task_name, tr_data.get("reason", ""))
+                elif tr_data.get("rewritten"):
+                    new_nop = tr_data.get("nop_reward")
+                    new_gold = tr_data.get("gold_reward")
+                    if new_nop is not None:
+                        result.nop_reward = float(new_nop)
+                    if new_gold is not None:
+                        result.gold_reward = float(new_gold)
+                    result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                    if not result.valid:
+                        logger.warning(
+                            "[%s] tests_rewrite claimed success but nop=%.1f gold=%.1f",
+                            result.task_name, result.nop_reward, result.gold_reward)
+                    else:
+                        # Re-run judge to confirm test rubrics now pass
+                        js3, judge_summary3 = await node_quality_judge(sandbox)
+                        result.judge_status_post_tests = js3
+                        result.judge_summary_post_tests = judge_summary3
+                        logger.info("[%s] post-tests-rewrite judge: %s tier_a=%s",
+                                    result.task_name, js3,
+                                    judge_summary3.get("tier_a_fails", []))
 
             # ── Node 7: Download (ONCE, only if valid) ────────────
             result.total_time = round(time.monotonic() - t_start, 2)

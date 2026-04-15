@@ -17,9 +17,13 @@ def main(task_root: str = "harbor_tasks") -> None:
     total = 0
     has_quality = 0
     has_reconcile = 0
+    has_tests_rewrite = 0
     reconciled_ok = 0
     reconciled_broke_oracle = 0
     reconciled_abandoned = 0
+    tests_rewritten_ok = 0
+    tests_rewrite_broke_oracle = 0
+    tests_rewrite_abandoned = 0
     judge_error = 0
 
     # Rubric counts across whole corpus
@@ -84,6 +88,24 @@ def main(task_root: str = "harbor_tasks") -> None:
             except Exception:
                 pass
 
+        # tests_rewrite_status.json — round-2 test rewrite pass
+        tjson = task_dir / "tests_rewrite_status.json"
+        if tjson.exists():
+            has_tests_rewrite += 1
+            try:
+                tr = json.loads(tjson.read_text())
+                if tr.get("rewritten"):
+                    if tr.get("nop_reward") == 0 and tr.get("gold_reward") == 1:
+                        tests_rewritten_ok += 1
+                    else:
+                        tests_rewrite_broke_oracle += 1
+                        partially_fixed.append(f"{task_dir.name}  [tests_rewritten but nop={tr.get('nop_reward')} gold={tr.get('gold_reward')}]")
+                elif tr.get("abandoned"):
+                    tests_rewrite_abandoned += 1
+                    unsalvageable.append(f"{task_dir.name}  [tests_rewrite abandoned: {tr.get('reason', '')[:100]}]")
+            except Exception:
+                pass
+
     print("═" * 75)
     print("  RETROFIT SUMMARY — 20-rubric quality pipeline")
     print("═" * 75)
@@ -102,11 +124,19 @@ def main(task_root: str = "harbor_tasks") -> None:
         print(f"  Tier-A fails/task:      avg {avg_a:.1f}, max {max_a}")
     print()
 
-    print("  ── Reconcile outcomes ──")
-    print(f"  Reconciled (oracle held):  {reconciled_ok}")
+    print("  ── Reconcile outcomes (instruction.md rewrites) ──")
+    print(f"  Reconciled (oracle held):    {reconciled_ok}")
     print(f"  Reconciled but oracle broke: {reconciled_broke_oracle}")
-    print(f"  Reconcile abandoned:       {reconciled_abandoned}")
+    print(f"  Reconcile abandoned:         {reconciled_abandoned}")
     print()
+
+    if has_tests_rewrite:
+        print("  ── Tests rewrite outcomes (test_outputs.py rewrites) ──")
+        print(f"  With tests_rewrite_status.json: {has_tests_rewrite}")
+        print(f"  Rewritten (oracle held):        {tests_rewritten_ok}")
+        print(f"  Rewritten but oracle broke:     {tests_rewrite_broke_oracle}")
+        print(f"  Rewrite abandoned:              {tests_rewrite_abandoned}")
+        print()
 
     print("  ── Top rubric failures (Tier A) ──")
     for name, n in tier_a_tasks.most_common():

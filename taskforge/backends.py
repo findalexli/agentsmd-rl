@@ -64,7 +64,13 @@ class Backend:
         return f"{base}/v1/messages"
 
     def subprocess_env(self) -> dict[str, str]:
-        """Env vars for a claude -p subprocess."""
+        """Env vars for a claude -p subprocess.
+
+        For Fire Pass setup: sets ALL model env vars (ANTHROPIC_MODEL,
+        ANTHROPIC_SMALL_FAST_MODEL, and the DEFAULT_* variants) so Claude Code
+        subagents also route through the Fireworks turbo router instead of
+        falling back to Anthropic.
+        """
         env: dict[str, str] = {}
         if self.base_url:
             env["ANTHROPIC_BASE_URL"] = self.base_url
@@ -75,6 +81,11 @@ class Backend:
             env["ANTHROPIC_AUTH_TOKEN"] = self.api_key
         for logical, actual in self.model_map.items():
             env[f"ANTHROPIC_DEFAULT_{logical.upper()}_MODEL"] = actual
+        # Fire Pass: force subagents to use the same model (not fallback to anthropic)
+        primary = self.model_map.get("opus") or self.model_map.get("sonnet") or ""
+        if primary:
+            env["ANTHROPIC_MODEL"] = primary
+            env["ANTHROPIC_SMALL_FAST_MODEL"] = primary
         return env
 
 
@@ -125,6 +136,23 @@ class BackendPool:
         finally:
             slot.sem.release()
 
+    def _ordered_slots(self) -> list["_Slot"]:
+        """Return slots sorted for acquisition:
+          primary:   cost_tier asc (cheapest first)
+          secondary: free-capacity ratio DESC (least-loaded first within tier)
+        This load-balances same-tier backends (fixes retrofit-run-1 where
+        fireworks was first in declaration order and got hammered while
+        MiniMax stayed idle)."""
+        return sorted(
+            self._slots,
+            key=lambda s: (
+                s.backend.cost_tier,
+                # Negate free ratio so higher free-ratio sorts first within tier.
+                # Guard against max_concurrent=0 though that would be a bug.
+                -(s.sem._value / max(1, s.backend.max_concurrent)),
+            ),
+        )
+
     async def _wait(self, direct_only: bool) -> _Slot:
         deadline = time.monotonic() + self._timeout
         while True:
@@ -135,7 +163,7 @@ class BackendPool:
             # Note: _value check + await acquire() is safe in asyncio because
             # acquire() returns immediately (no yield) when _value > 0.
             cheapest_wait: float | None = None
-            for s in self._slots:
+            for s in self._ordered_slots():
                 if not s.available:
                     continue
                 if direct_only and not s.backend.supports_direct:
@@ -154,7 +182,7 @@ class BackendPool:
                 continue
 
             # Otherwise try any available backend (expensive tiers)
-            for s in self._slots:
+            for s in self._ordered_slots():
                 if not s.available:
                     continue
                 if direct_only and not s.backend.supports_direct:
@@ -191,6 +219,17 @@ class BackendPool:
         s = self._find(backend)
         s.consecutive_429s += 1
         s.total_429 += 1
+
+        # Auto-blacklist on persistent failure — if we've hit 429 100+ times in a
+        # row, the backend is effectively dead. Mark unavailable so the pool stops
+        # hammering it (other backends pick up the load; outer queue handles any
+        # items that needed this backend via retry).
+        if s.consecutive_429s > 100 and s.available:
+            s.available = False
+            print(f"  [{_ts()}] {backend.name} AUTO-BLACKLISTED after "
+                  f"{s.consecutive_429s} consecutive 429s")
+            return
+
         # Exponential backoff with jitter — 10-20 min caps to let backends recover
         if s.backend.cost_tier <= 1:
             base = 30 * (2 ** (s.consecutive_429s - 1))
@@ -421,22 +460,53 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
     def _get(key: str) -> str:
         return os.environ.get(key) or dotenv.get(key, "")
 
+    def _enabled(key: str) -> bool:
+        """A flag is enabled iff its value is exactly '1' (truthy in our convention).
+        Note: returning the raw _get() string would treat '0' as truthy in Python."""
+        return _get(key) == "1"
+
     backends: list[Backend] = []
 
-    # GLM-5.1 — free via Z.AI Anthropic proxy
-    if _get("GLM_API_KEY"):
+    # GLM-5.1 — free via Z.AI Anthropic proxy (set GLM_ENABLED=1)
+    if _get("GLM_API_KEY") and _enabled("GLM_ENABLED"):
         backends.append(Backend(
             name="glm",
             base_url="https://api.z.ai/api/anthropic",
             api_key=_get("GLM_API_KEY"),
             model_map={"opus": "glm-5.1", "sonnet": "glm-5.1", "haiku": "glm-4.5-air"},
-            max_concurrent=0,
-            cost_tier=0,
+            max_concurrent=30,
+            cost_tier=0,  # free
+        ))
+
+    # ─── Tier-1 backends — ORDER MATTERS ─────────────────────────
+    # BackendPool sorts by cost_tier (stable), so within the same tier we pick
+    # in declaration order. In retrofit run 1, listing Fireworks first caused
+    # it to absorb ALL overflow from GLM (30→78 workers = 48 spillover) — it
+    # was hammered with 127× 429 while MiniMax stayed at 0×. Rebalance by
+    # listing MiniMax FIRST so the first 50 tier-1 spillover lands there.
+
+    # MiniMax via Anthropic-compatible proxy (MiniMax-M2.7)
+    # Tier 1: cheap, subscription-style. In run 1 with max_concurrent=20, it
+    # completed 414 tasks with only 3 × 429 — room to scale. Bumped to 50.
+    if _get("MINIMAX_API_KEY") and _enabled("MINIMAX_ENABLED"):
+        backends.append(Backend(
+            name="minimax",
+            base_url="https://api.minimax.io/anthropic",
+            api_key=_get("MINIMAX_API_KEY"),
+            auth_type="x-api-key",
+            model_map={
+                "opus": "MiniMax-M2.7",
+                "sonnet": "MiniMax-M2.7",
+                "haiku": "MiniMax-M2.7",
+            },
+            max_concurrent=50,
+            cost_tier=1,
         ))
 
     # Kimi K2.5 via Fireworks — Anthropic-compatible API, supports subprocess
-    # Tier 1: preferred fallback after GLM (cheap, high concurrency)
-    if _get("FIREWORKS_API_KEY"):
+    # DISABLED 2026-04-13: account suspended (412 PRECONDITION_FAILED)
+    # Re-enable by setting FIREWORKS_ENABLED=1 after restoring billing
+    if _get("FIREWORKS_API_KEY") and _enabled("FIREWORKS_ENABLED"):
         backends.append(Backend(
             name="fireworks",
             base_url=_get("FIREWORKS_BASE_URL") or "https://api.fireworks.ai/inference",
@@ -446,7 +516,10 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
                 "sonnet": "accounts/fireworks/routers/kimi-k2p5-turbo",
                 "haiku": "accounts/fireworks/routers/kimi-k2p5-turbo",
             },
-            max_concurrent=100,
+            # Retrofit run 1: 127× 429 at max_concurrent=100 → 26× 429 at 50 —
+            # provider-side limit is tighter than our semaphore. Keep 50 but
+            # MiniMax (listed before) takes first pick of tier-1 spillover.
+            max_concurrent=50,
             cost_tier=1,
         ))
 
@@ -464,26 +537,53 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             cost_tier=0,
         ))
 
-    # OAuth — subscription, subprocess-only (direct API returns 401)
-    # Tier 2: use sparingly, daily limit
+    # Anthropic API key — direct, full API access, pay-per-token
+    # Tier 2: reliable but paid. Use as primary when Fireworks/GLM unavailable.
+    # Set ANTHROPIC_ENABLED=1 to include in pool (off by default — prefer cheap Kimi)
+    if _get("ANTHROPIC_API_KEY") and _enabled("ANTHROPIC_ENABLED"):
+        backends.append(Backend(
+            name="anthropic",
+            base_url="https://api.anthropic.com",
+            api_key=_get("ANTHROPIC_API_KEY"),
+            model_map={
+                "opus": "claude-opus-4-5",
+                "sonnet": "claude-sonnet-4-5",
+                "haiku": "claude-haiku-4-5",
+            },
+            max_concurrent=50,
+            cost_tier=2,
+        ))
+
+    # OAuth — Claude Code Max subscription via subprocess-only (direct API returns 401)
+    # Tier 1: share tier-1 load with MiniMax/Fireworks using Sonnet 4.6.
+    # Subscription has a daily limit — if we start hitting 429s from the provider
+    # itself, `consecutive_429s > 100` will auto-blacklist this backend.
     oauth_token = os.environ.get("CLAUDE_ACCESS_TOKEN", "")
     if not oauth_token:
-        creds = Path.home() / ".claude" / ".credentials_backup.json"
-        if creds.exists():
-            try:
-                oauth_token = json.loads(creds.read_text()).get(
-                    "claudeAiOauth", {}
-                ).get("accessToken", "")
-            except (json.JSONDecodeError, KeyError):
-                pass
+        for candidate in (".credentials.json", ".credentials_backup.json"):
+            creds = Path.home() / ".claude" / candidate
+            if creds.exists():
+                try:
+                    oauth_token = json.loads(creds.read_text()).get(
+                        "claudeAiOauth", {}
+                    ).get("accessToken", "")
+                    if oauth_token:
+                        break
+                except (json.JSONDecodeError, KeyError):
+                    pass
     if oauth_token:
         backends.append(Backend(
             name="oauth",
             base_url="",
             api_key=oauth_token,
             auth_type="bearer",
-            max_concurrent=4,
-            cost_tier=2,
+            model_map={
+                "opus": "claude-sonnet-4-6",
+                "sonnet": "claude-sonnet-4-6",
+                "haiku": "claude-haiku-4-5",
+            },
+            max_concurrent=15,
+            cost_tier=1,
             supports_direct=False,
         ))
 
