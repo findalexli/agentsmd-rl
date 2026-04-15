@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The text-grep fail-to-pass tests (e.g., test_static_readonly_fields_skipped, test_i18n_strings_exist) can be passed by simply inserting comment strings containing the expected keywords (e.g., '// targetRootPath.length === 0 resolveConditionalProperty readOnly level: warning errors.push') without implementing any actual logic. No behavioral execution validates the fix works."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh exists in the container (the Dockerfile doesn't remove it), and the agent could read it. Additionally, the text-grep tests can be trivially satisfied by inserting the expected literal strings as comments without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that read-only fields preserve existing target values during paste and that warnings are generated. While text-grep tests check for code patterns, no test actually verifies the behavioral outcome (e.g., that a paste operation with read-only fields returns preserved values and warning messages). The unit test suite (test_transferValue_unit_tests_pass) is pass-to-pass and only verifies existing tests pass."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

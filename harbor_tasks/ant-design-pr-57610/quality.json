@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific strings (genFocusOutline, genFocusStyle, focusTrap, etc.) that don't exist in the original files. A stub/no-op implementation wouldn't add these strings, so the tests would correctly fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/antd's git history or solve.sh at /solution/solve.sh. The agent could read the solution file or grep for expected test strings. The tests check for exact literal strings like '...genFocusStyle(token)' which could be discovered by reading test_outputs.py and just inserting those strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires focus-visible styling for preview toolbar action buttons specifically, but tests only check for genFocusOutline/genFocusStyle generically without verifying toolbar-specific application. The instruction's requirement #4 about focus escaping inline previews is only tested by checking 'focusTrap: false' text, not actual focus trapping behavior."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 6
+  "fail_count": 5
 }

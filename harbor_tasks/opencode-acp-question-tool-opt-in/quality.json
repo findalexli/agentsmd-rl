@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation wouldn't pass: test_flag_opencode_enable_question_tool_defined requires Flag.OPENCODE_ENABLE_QUESTION_TOOL to actually exist in flag.ts, test_question_tool_gated_by_env_var requires the flag to return false when env var is unset and true when set to '1', and the doc tests require actual content in specific files. These require real implementation."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/opencode as the solve.sh applies a git patch there. The agent could potentially read /solution/solve.sh if it exists in the container, or inspect the git history. The Dockerfile doesn't remove the solution directory, and the tests don't prevent reading it."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requirement 2 says 'Update the tool registry gating logic' so QuestionTool is disabled for ACP by default. But no test actually imports and calls the tool registry to verify that QuestionTool is excluded/included. The f2p tests only verify the Flag exists and do inline logic simulation, not actual registry behavior."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

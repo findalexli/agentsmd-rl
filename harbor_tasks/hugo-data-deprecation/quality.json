@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Most f2p tests are substring checks on file contents. A trivial agent could just append the expected strings as comments to the relevant files (e.g., adding '// type DataProvider interface' and '// Data() map[string]any' as dead comments to page.go) to pass test_data_provider_interface_exists without implementing any actual interface. The compilation test would catch some cases, but many substring checks could be satisfied with dead code or comments."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution files exist at /solution/solve.sh and /solution/apply_fix.py in the container. An agent could read these files directly (e.g., 'cat /solution/apply_fix.py') to obtain the exact patch. There is no evidence of any mechanism preventing access to /solution/."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (Data identity update, DataProvider interface, HugoInfoHugoSitesProvider interface, deprecation warnings for Data/AllPages/BuildDrafts/Languages, sync.Once usage, compilation) are covered by corresponding tests."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

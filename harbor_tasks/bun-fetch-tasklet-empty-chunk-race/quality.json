@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct) only check for the presence of specific strings in the source file. An agent could satisfy these by inserting a dead-code comment block containing all the required strings (e.g., 'stale-task race', 'onStartStreamingHTTPResponseBodyCallback', 'scheduled_response_buffer.list.items.len == 0') without actually implementing a functional guard."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history and the solve.sh script is at solution/solve.sh. The agent could read solution/solve.sh to get the exact patch, or simply grep the test file for the expected literal strings to insert. The instruction itself also essentially gives away the solution."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors specified in instruction.md are tested: the guard checks (buffer length, has_more, isSuccess), placement before onBodyReceived inside is_waiting_body, the stale-task race comment, and the reference to onStartStreamingHTTPResponseBodyCallback."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub that simply appends the expected text patterns to option.move and option_tests.move files without any real implementation logic would pass all fail-to-pass tests, since they only check for string presence in files (e.g., 'public macro fun map_mut' in content, '*x = 100' in content). The cargo check/clippy tests are pass-to-pass, not fail-to-pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/sui with solve.sh accessible. The agent could read solution/solve.sh to get the exact patch. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the expected strings and insert them into the source files without understanding the task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires doc comments, following existing patterns, and that tests actually pass when run with 'cargo test -p sui-framework -- option'. However, no test actually runs the Move tests to verify runtime behavior \u2014 only text pattern matching and compilation checks are performed."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

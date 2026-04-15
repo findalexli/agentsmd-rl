@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail-to-pass tests only check for string presence in source files. An agent could satisfy them by inserting dead-code comments or unused variables containing the required strings (e.g., `// angleLocked?: boolean;`, `// opts?.angleLocked && otherBindableElement`) without actually fixing the bug. The pass-to-pass tests (typecheck, lint, etc.) add some constraint but don't verify the angle-locking behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is at /workspace/excalidraw accessible to the agent (solve.sh applies a patch there). The agent could read the test file at tests/test_outputs.py to see exact string patterns being asserted and simply insert those strings. Additionally, the gold patch is in /solution/solve.sh which could be read directly."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction describes behavioral requirements (angle constraint should apply during binding, Shift should constrain angles even near bindable elements) but no test actually verifies this behavior by simulating user interactions or checking angle values. All fail-to-pass tests are structural/textual checks."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

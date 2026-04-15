@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original file (e.g., the original has 'bun.assert(instance != .zero)' which must be removed, and 'if (... == .zero)' checks must be added). A stub or no-op would not pass since the original file content would fail these assertions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun's solution/solve.sh path (or can be accessed from the container). The agent could read the gold patch directly. Also, since tests are purely text-matching, the agent could grep test_outputs.py for the exact patterns being checked and make minimal textual edits to satisfy them."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All seven functions mentioned in the instruction (throw, throwPretty, throwTODO, createRangeError, the throw overload with error options, throwValue, throwError) have corresponding test coverage. The instruction's requirements about handling .zero returns and hasException guards are all tested."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

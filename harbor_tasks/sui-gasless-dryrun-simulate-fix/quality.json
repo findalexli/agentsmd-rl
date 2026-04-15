@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply inserts the text 'let is_gasless = true; if is_gasless { sui_transaction_checks::check_transaction_input( } !is_gasless' as dead code/comments into the file would pass all f2p tests, since they only check for string presence. No compilation or execution is verified."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui as solve.sh in the solution/ directory. The agent could read /solution/solve.sh to get the exact patch. Additionally, since tests only check for string patterns in the file, the agent could grep test files to discover exact expected strings and insert them as comments without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires 'Preserve existing behavior: Non-gasless transactions with empty gas should continue to work as before' but no test verifies this. Also, the instruction says to run 'cargo check -p sui-core' and 'cargo clippy -p sui-core' but these are not tested (compilation tests are explicitly excluded per comments in test file)."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "test_update_statements_inside_disable_sqlite_fkeys asserts that 0 UPDATE statements are before the context manager and >=2 are inside it - this fails on the original code which has both UPDATEs before the context manager. A stub/no-op would not pass. The SQLite behavior tests also verify actual database operations succeed."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow's solve.sh path, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh (or the solve.sh file) to see the exact patch needed. There's no evidence the /solution/ directory is excluded from the agent's filesystem access."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) disable_sqlite_fkeys usage - tested by AST check, (2) import statement present - tested implicitly by AST parsing the file, (3) both UPDATE statements present - tested by AST analysis counting >=2 UPDATEs, (4) migration completes without FK errors - tested by SQLite behavior tests."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_original_broken_behavior runs a hardcoded Python script that always passes (it confirms the original bug exists in a simulation, independent of the agent's changes). test_allgather_uneven_behavior_simulation also runs a hardcoded simulation script that doesn't depend on the agent's code changes at all \u2014 it always passes. The actual fail-to-pass tests (size_guard_present, continue_present) are text-matching, not behavioral."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/pytorch (solve.sh is in solution/), and the agent could read it or grep for the exact patch. Additionally, the tests check for exact literal strings ('tensor.size(0) != inputTensors[0].size(0)', 'continue;') that could be trivially inserted by pattern-matching without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires handling uneven output tensor sizes in allgather by guarding with a size check and using continue. Tests check for the size guard, continue statement, loop structure, and copy_ presence, covering the described behavior."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

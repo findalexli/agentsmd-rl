@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require substantive implementation: test_tool_name_pattern_validation requires a working regex that accepts/rejects specific names; test_vitest_file_created requires a new file with specific imports; test_repo_unit_tests/test_repo_build require the code to actually compile and pass. A stub implementation would not satisfy these."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/posthog as a git repo and solve.sh applies a patch. The agent could potentially read the solution/solve.sh file or inspect the test file at tests/test_outputs.py to see exact expected values. The test for TOOL_NAME_PATTERN extracts the regex by parsing the source file \u2014 an agent could reverse-engineer the exact expected regex from the test's acceptance/rejection lists."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All major behaviors from the instruction are tested: pattern constants export, Zod schema validation, lint script JSON coverage, lint pattern usage, vitest file creation, SKILL.md documentation, and handbook documentation updates."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

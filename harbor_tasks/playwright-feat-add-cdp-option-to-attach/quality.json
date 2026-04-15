@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All fail-to-pass tests check for the presence of specific strings in source files. An agent could pass all tests by simply inserting the expected string patterns as comments (e.g., adding `// attachTarget && (args.cdp || args.endpoint || args.extension)` to program.ts) without implementing any functional change."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solve.sh copies /solution/fix.js from the solution mount, meaning the agent could read /solution/fix.js to get the exact patch. Additionally, since all tests are string-matching, the agent could grep the test file for the expected patterns and insert them as dead code or comments."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction.md requires functional behaviors like 'Conflicting usage should produce an error' and 'connect to an existing browser via its CDP endpoint URL', but tests only check for string patterns in source code, not actual runtime behavior. No test verifies that conflicting args actually produce an error or that CDP connection works."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

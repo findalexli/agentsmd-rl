@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_normalize_timestamp_valid_input, test_normalize_money_valid_input, test_convert_bytes_valid_input) check that valid inputs produce specific non-trivial outputs (e.g., '1996-12-19 16:39:57' \u2192 '1996-12-19T16:39:57+00:00', '$1234.56' \u2192 '1234.56', 'aGVsbG8=' \u2192 'hello'). A stub returning None/null would fail these. The null-handling tests also require the script to not crash (returncode == 0), which wouldn't happen with the unfixed code."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/prisma (the solve.sh with the full patch is accessible in the container at the path referenced by the test infrastructure). An agent could read /solution/solve.sh or the patch content to extract the exact fix. The Dockerfile doesn't remove solution files from the container."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires null handling for normalize_timestamp, normalize_timestamptz, normalize_timez, normalize_money, and convertBytes, plus their array variants. All scalar parsers are tested for null handling and some for valid input. Array parsers are covered by the gold patch but not directly tested, though the instruction says 'and their corresponding array parsers' \u2014 this is a minor gap but the core behavior is tested."
@@ -50,13 +46,11 @@
       "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "anti_cheating_measures"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 8,
-  "fail_count": 2
+  "fail_count": 1
 }

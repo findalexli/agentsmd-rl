@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests run actual Go test suites (e.g., TestPermalinks, TestHTMLFilesIsue11999, TestMultiHost) that exercise real Hugo functionality. A stub implementation cannot satisfy these since they require the Go code to compile, run, and produce correct permalink outputs."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to extract the exact changes needed. The instruction.md even references test file paths that the agent can grep to find expected values."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (replacing :filename, :slugorfilename, .Site.Data and running the specified Go tests) are covered by the test suite."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

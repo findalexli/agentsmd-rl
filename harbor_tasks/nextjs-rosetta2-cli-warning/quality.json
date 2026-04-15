@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation (empty file or unchanged next.ts) would fail test_os_import_exists (no 'import os from \"os\"'), test_warning_message_content (no warn call with 'Apple Silicon' and 'performance'), and test_rosetta_warning_darwin_x64_apple (missing detection components). The tests require actual implementation."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/next.js in the container's git history or could be found via the solve.sh in /solution/. The agent could read /solution/solve.sh to get the exact patch, or could grep for the expected test fixture strings (like 'Apple Silicon', 'Rosetta 2') and just insert matching text."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors from the instruction are tested: darwin+x64+Apple CPU triggers warning (test_rosetta_warning_darwin_x64_apple), arm64 doesn't trigger (test_no_false_positive_arm64), Linux doesn't trigger (test_no_false_positive_linux), os import exists (test_os_import_exists), message content requirements (test_warning_message_content)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

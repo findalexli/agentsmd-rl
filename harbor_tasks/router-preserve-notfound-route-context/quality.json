@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests check for string patterns in files (e.g., test_react_match_assigns_routeId_onCatch checks if 'error.routeId ??= matchState.routeId' exists in Match.tsx). An agent could simply append a dead-code comment containing the exact string to each file without implementing any actual fix, and the f2p tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/router accessible to the agent. The agent could read solution/solve.sh or the gold patch. Additionally, since f2p tests are pure string matching, the agent could just insert the expected strings as comments without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: React routeId assignment in onCatch and fallback, Solid getNotFound helper with cause checking, Solid Match.tsx integration, Vue routeId assignment in both handlers, plus pass-to-pass tests for unit tests, types, and eslint."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

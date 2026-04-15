@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub/empty script would fail test_script_updates_example_dependencies because it checks that dependency versions are actually changed from '^1.0.0' to '^1.2.3' in the output JSON. A no-op script would leave the original values unchanged and fail these assertions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (or accessible path) in the container. The solve.sh is in solution/solve.sh and while the instruction says the agent doesn't see it, the Dockerfile doesn't explicitly prevent access. An agent could potentially read the solution directory or grep for expected test values. The test uses tempdir with dynamic paths which helps, but the gold solution script is written to disk and readable."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicitly required behaviors are tested: script existence, valid JS syntax, changeset:version script updated, dependency updates working correctly, JSON formatting preserved, node_modules exclusion, 'Updated' output message, and pass-to-pass repo tests (lint, types, unit, build, format, docs)."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 9,
-  "fail_count": 3
+  "fail_count": 2
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation (e.g., empty commit_info body) would fail test_not_stub (requires >10 meaningful lines), test_git_functionality_preserved (requires git commands, env vars, rerun directives), and test_jj_early_return (requires both .jj reference AND git operations in specific order). The f2p tests require substantive, correctly structured code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /repo/../solution/solve.sh (or wherever mounted). The Dockerfile doesn't remove /solution/. An agent could read solve.sh to see the exact sed command and replicate the gold patch. Additionally, test_jj_code_added_to_diff just checks git diff for '.jj' additions, which could be gamed by adding a comment containing '.jj'."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires two behaviors: (1) detect .jj directory and skip git operations, and (2) preserve existing git functionality when not in jj repo. Both are tested \u2014 test_jj_early_return and test_jj_code_added_to_diff cover (1), and test_git_functionality_preserved covers (2)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "no_typos"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

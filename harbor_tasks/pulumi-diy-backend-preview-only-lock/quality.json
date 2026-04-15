@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check that Lock() appears after PreviewOnly check positionally, and that specific patterns exist in the Refresh function. A stub or no-op implementation wouldn't have these patterns in the correct positions, so the tests do require the actual code change."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/pulumi's container at solution/solve.sh. The agent could read this file or grep for the expected patterns. Additionally, since tests are purely text-matching, the agent could just rearrange code blocks to match the expected string patterns without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (lock not acquired for preview-only, lock acquired for actual refresh, compilation, tests passing, vet, fmt) are tested in the test suite."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

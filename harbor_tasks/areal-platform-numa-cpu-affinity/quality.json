@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "test_cuda_sets_cpu_affinity verifies that nvmlInit, getHandle, set_cpu_affinity, and nvmlShutdown are actually called via mock tracking \u2014 a stub `def set_numa_affinity(cls, local_rank): return None` would fail because no NVML calls would be recorded. test_engines_call_set_numa_affinity does AST checking that can't be satisfied without adding actual calls. test_platform_base_set_numa_affinity requires the method to exist and be callable."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution directory is referenced in solve.sh but the tests don't read from it. The tests use dynamic imports, mock modules, and behavioral assertions that require actual code changes. An agent cannot simply grep for expected values or read the solution file to pass."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicitly required behaviors are tested: base class no-op method, CUDA implementation with pynvml, defensive handling of missing pynvml, catching NVML errors, NVML shutdown in finally block, engine integration calls, and existing method preservation."
@@ -53,6 +49,6 @@
   "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 10,
+  "pass_count": 9,
   "fail_count": 0
 }

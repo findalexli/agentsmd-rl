@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "F2P tests like test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, and test_setrightpanelshown_destructured only check for string presence in files. An agent could add dead code comments containing these strings (e.g., '// selectedTab === tab setHasRightPanelToggled(false) setRightPanelShown(false)') without implementing any actual fix, and these tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/OpenHands (the Dockerfile clones the repo there) and solve.sh is in /solution/. The agent could read /solution/solve.sh to see the exact patch. Additionally, since F2P tests are string-matching, the agent could grep the test file for expected strings and insert them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: unpinning active tab closes panel, unpinning non-active tab doesn't close panel, and specific test descriptions. test_vitest_context_menu_tests runs the vitest suite, and test_test_file_includes_active_tab_test checks for both test descriptions. The core behaviors are covered."
@@ -54,11 +50,10 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

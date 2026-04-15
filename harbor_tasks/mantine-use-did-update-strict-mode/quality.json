@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all fail-to-pass tests are pure text-matching (checking for strings like 'mounted.current = false' and 'return undefined' in the source file), an agent could pass them by simply appending comments containing these strings without actually fixing the bug. No behavioral execution validates the fix works."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/mantine's solve.sh (accessible at /solution/solve.sh or visible in the container). The agent could read the gold patch directly. Additionally, since tests are pure string-matching, the agent could grep for expected patterns from the test file and inject them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says 'The hook should NOT run the callback on initial mount' and 'should work correctly in React Strict Mode'. No test actually verifies this runtime behavior - there's no test that renders a component in Strict Mode and checks whether the callback fires on mount."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

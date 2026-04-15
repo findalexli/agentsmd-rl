@@ -61,23 +61,10 @@ file contents produced) over assertions on SOURCE CODE STRUCTURE.
 tests against this stub. If any f2p test passes, it's tautological. Replace
 with assertions on the actual computed value or side effect.
 
-### `anti_cheating_measures` (Tier A, partial)
-
-> **Judge question:** Could the agent win by (a) reading /solution/ if it
-> exists in container, (b) grepping env files for the expected test fixture
-> value, (c) matching the literal fixture string without understanding the bug?
-> FAIL if any route works.
-
-**What you CAN do:** avoid embedding gold-specific fixture strings in test
-assertions (use parameterized inputs/outputs). What you CAN'T do here: change
-the Dockerfile or container layout. If the only remaining fail after your
-rewrite is (a), write `abandoned=true, reason="anti_cheating needs Dockerfile
-changes beyond test rewrite scope"`.
-
 ### When to abandon
 
 If the ONLY remaining fails are structural (e.g., `pass_to_pass_coverage`
-because eval_manifest needs new check entries, or `anti_cheating_measures`
+because eval_manifest needs new check entries, or `no_hidden_solution_artifacts`
 solvable only by removing `COPY solution/` from Dockerfile), stop and write
 abandoned=true with an explicit reason.
 

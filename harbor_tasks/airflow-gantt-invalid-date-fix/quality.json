@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_dayjs_used_for_date_parsing can be satisfied by simply doing a string replacement in the file without understanding the bug. test_date_parsing_produces_valid_numbers and test_chart_options_scale_calculation run independent Node scripts that test dayjs behavior in isolation \u2014 they don't actually import or run the modified utils.ts code, so they pass regardless of the actual file content (they test dayjs itself, not the fix)."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/airflow in the container (solve.sh contains the exact patch). The agent could read solve.sh or the git diff. Also, the test_dayjs_used_for_date_parsing test checks for exact literal strings that are stated verbatim in instruction.md, so the agent could just do a sed replacement matching those strings without understanding anything."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: dayjs usage for date parsing, TypeScript compilation, lint, format check, build, and unit tests."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

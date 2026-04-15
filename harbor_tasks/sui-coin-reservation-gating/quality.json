@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_get_object_read_has_protocol_gating, test_get_owned_coins_has_protocol_gating) only check for text patterns in source code. A stub that simply adds comments containing 'coin_reservations_enabled', 'enable_coin_reservation_obj_refs()', 'if !coin_reservations_enabled { HashMap::new() }', and 'if let ObjectRead::NotExists(id) = result && enable_coin_reservation_obj_refs()' as dead code in the right functions would pass without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/sui with the gold patch in solution/solve.sh. The agent could read the solve.sh file or inspect the test file at tests/test_outputs.py to discover the exact regex patterns being tested and craft matching text without understanding the bug. The tests only check text patterns, making pattern-matching trivially exploitable."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md states that when enable_coin_reservation_obj_refs() returns false, 'object reads should NOT return fake coins' and 'owned coin queries should NOT include fake coins'. These behavioral requirements are NOT actually tested via execution - only via text pattern matching in source code. No integration or unit test verifies the runtime behavior."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

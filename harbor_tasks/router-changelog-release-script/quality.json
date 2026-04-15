@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since the tests only check for string presence in the source file, an agent could write a file containing all the required strings as comments or dead code (e.g., a comment block with 'async function resolveAuthorForCommit(hash)' etc.) without implementing any actual functionality, and all f2p tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch exists at /solution/fix.patch in the container. The agent could simply run 'cat /solution/fix.patch' or 'git apply /solution/fix.patch' to get the exact answer. Additionally, since tests only check for string presence, the agent could read test files at /workspace/tests/test_outputs.py to extract every required string and paste them into the script."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction describes behavior like 'resolve the GitHub username from the commit author email', 'extract entries under the current version header', and 'gracefully degrade on failed username resolution', but no test verifies these runtime behaviors \u2014 tests only check for string patterns in source code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

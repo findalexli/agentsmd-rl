@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation would not pass these tests because the tests check for specific code patterns (Effect.fn usage \u2265 3 times, Effect.fnUntraced presence, yield* Config.Service, absence of Promise.all, etc.) that require actual implementation changes, plus the typecheck and test suite must pass on the full codebase."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/opencode as a git repo and solve.sh contains the exact patch. An agent could read the solve.sh or the solution directory if accessible. Additionally, since tests are text-matching on source files, an agent could grep for expected patterns and craft minimal textual changes to pass without understanding the actual bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All 11 requirements from instruction.md are tested: no async facades (test 1), effectful all (test 2), Effect concurrency (test 3), services yielded (test 4), Effect.fn \u2265 3 (test 5), Effect.fnUntraced (test 6), Plugin defaultLayer (test 7), ToolRegistry defaultLayer (test 8), explicit return type on tools is partially covered by typecheck (test 9/10), tool registry tests (test 11)."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

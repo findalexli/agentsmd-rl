@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_module_origin_iszero_true_when_empty, test_loadgitinfo_returns_error, test_origin_check_with_iszero_in_gitinfo, test_client_handles_nil_origin) cannot be satisfied by stub implementations. The IsZero test actually compiles and runs code that would fail on an unmodified codebase. The text-matching tests check for specific code patterns that don't exist in the base commit."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/hugo's solve.sh (solution/solve.sh), and the Dockerfile doesn't prevent reading it. An agent could read the solution file directly. Additionally, since tests are primarily text-matching (checking for exact strings in source files), an agent could just insert the expected strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four behaviors specified in instruction.md are tested: IsZero() method (test_module_origin_iszero_true_when_empty), .info file loading (test_client_handles_nil_origin), !mod.Origin().IsZero() check (test_origin_check_with_iszero_in_gitinfo), and error propagation (test_loadgitinfo_returns_error). Compilation and formatting are also tested."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

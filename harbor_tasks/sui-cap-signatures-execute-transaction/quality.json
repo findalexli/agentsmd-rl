@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub/no-op implementation would not pass the fail-to-pass tests since they check for specific strings like MAX_NUMBER_OF_SIGNATURES, 'request.signatures.len()', 'exceeds the maximum allowed', etc. that must be present in the source file. The default file does not contain these strings."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/sui (the solve.sh patches it there), and the agent could read the solution/solve.sh file which contains the exact patch. The tests only check file content via string matching, so the agent could simply apply the patch from solve.sh or copy the expected strings into the file without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires the validation results in an 'InvalidArgument gRPC status code', but no test actually sends a gRPC request with >2 signatures and verifies the status code. All tests are static text analysis of the source file."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for conditions not present in the base repo (e.g., 'recommended' using 'allRuleConfigs' instead of 'basicRuleConfigs', version >= 7.0.0, removal of legacy configs, meta version field). A stub or no-op would not satisfy these since the base code has different values."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/react (accessible via the container), and solve.sh is in /solution/solve.sh. The agent could read the solution patch directly. Additionally, since tests are purely text-matching, the agent could grep test files to discover exact expected strings like 'allRuleConfigs' and '7.0.0' and match them without understanding the task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction.md requires updating fixture files (eslint-v6/v7/v8), updating ReactVersions.js, updating README with specific rule names (config, error-boundaries, etc.), and consolidating installation sections. None of these are tested \u2014 no test checks fixture content, ReactVersions.js, README rule listings, or installation section consolidation."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for content that does not exist in the base commit (e.g., SymbolicatorMessage enum, activity_monitor.ts file, progress notification handling). A stub/empty implementation would not contain these specific strings, so the tests cannot be trivially satisfied."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/sui with solve.sh applying a git patch. An agent could read solution/solve.sh (which contains the full gold patch) or simply apply it. The tests are pure text-matching so the agent could also grep test files to discover exact expected strings and place them in files without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction mentions animated indicator, tooltip with version/restart command, wrapped request latency tracking with timeouts (~10 seconds for slow promotion), and persistent output channel. Tests don't verify animation logic, tooltip content, the 10-second slow promotion timer, or output channel persistence."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

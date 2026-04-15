@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific code changes (removing 'W' from one array, adding unconditional check) that would not be present in the original unmodified file. A stub or no-op would fail these tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch is in /workspace/ClickHouse adjacent to the working directory, and solve.sh is a shell script the agent could potentially read. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact patterns being asserted and make targeted string replacements without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says 'running 00719_format_datetime_f_varsize_bug.sql should produce correct output without truncation' but no test actually runs this SQL test or verifies the formatting behavior. Only file existence is checked (test_repo_functional_test_files_exist), not execution."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

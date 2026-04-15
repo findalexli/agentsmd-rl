@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub/no-op implementation would not pass the f2p tests since the original file lacks SCOPE_EXIT, and the tests check for its presence (test_cleanup_mechanism_exists), its content (test_scope_exit_block_well_formed), and its placement (test_scope_exit_placed_in_deserialize_function). The agent must actually modify the file."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse (or could be accessed via solution/solve.sh in the container). The agent could read the gold patch from solution/solve.sh or inspect the test file at tests/test_outputs.py to see exactly what strings and patterns are checked. No measures prevent this."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md requires: (1) exact 'std::vector<std::shared_ptr<DeserializationTask>> tasks' declaration - NOT tested; (2) required comment with three exact phrases - NOT tested; (3) task_size variable - NOT tested. The tests only check SCOPE_EXIT structure, placement, and basic file integrity."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "test_misaligned_weight_returns_false and test_misaligned_input_returns_false create intentionally misaligned tensors and assert _can_use_grouped_mm returns False. The original code doesn't check alignment, so it would return True (assuming grouped_mm is available). A stub returning None or default wouldn't satisfy 'assert result is False'. test_force16bytes_removed_from_mappings inspects actual converter operations."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution directory is not accessible from within the container during agent execution (it's hidden). Tests call actual functions with real tensor objects and check behavioral outcomes, not fixture strings. The agent cannot simply grep for expected values."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) runtime alignment check in _can_use_grouped_mm \u2014 tested by misaligned tensor tests, (2) removal of Force16BytesAlignment from mappings \u2014 tested by test_force16bytes_removed_from_mappings, (3) version gating with is_torch_less_or_equal \u2014 tested via _mock_old_torch. All explicit requirements are covered."
@@ -57,6 +53,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 8,
+  "pass_count": 7,
   "fail_count": 2
 }

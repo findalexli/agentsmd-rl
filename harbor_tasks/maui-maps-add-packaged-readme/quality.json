@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require creating a new README.md file (which doesn't exist at the base commit) and modifying the csproj to add PackageReadmeFile. A stub/empty file would fail length checks (>=500 chars), keyword checks, and structural requirements. The csproj modifications require adding new XML elements that don't exist in the base commit."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to get the exact README content and csproj modifications. The Dockerfile doesn't remove or protect the /solution/ directory."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The tests cover all behaviors described in instruction.md: README existence, length (>=500 chars), installation instructions, UseMauiMaps mention, feature coverage (pin/polygon/polyline/circle/MapClicked/MapType/IsShowingUser), code examples (XAML maps:Map), documentation link, markdown structure, csproj metadata preservation, PackageReadmeFile declaration, and None item with Pack=true."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 4
+  "fail_count": 3
 }

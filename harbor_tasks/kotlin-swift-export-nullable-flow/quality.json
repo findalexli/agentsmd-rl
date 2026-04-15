@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests check for textual presence of patterns like 'bool' in header, 'class Value' in Kotlin, 'testNullable' in test files. An agent could simply add these strings as comments or dead code without actually implementing the fix, and all f2p tests would pass since they only do string matching."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /solution/solve.sh and contains the complete gold patch. An agent could read this file directly. Additionally, since tests are pure text-matching, the agent could grep test_outputs.py for the exact strings being asserted and insert them without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says 'iterating flowOf(Element1, null, Element2, null, Element3) from Swift should yield five expected elements', but no test actually verifies this runtime behavior. Tests only check source code text patterns."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

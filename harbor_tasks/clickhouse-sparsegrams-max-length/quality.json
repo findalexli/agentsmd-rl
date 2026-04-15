@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_logic_calculation_correct compiles and runs a self-contained C++ snippet that tests 'offset = min - 1' which is tautologically true regardless of whether the bug is fixed. test_convex_hull_logic_preserved checks for strings that exist in both buggy and fixed code. These tests pass without implementing the fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/clickhouse and solve.sh is accessible. The agent could read solution/solve.sh to see the exact patch. The test file at /tests/test_outputs.py contains the exact regex patterns needed. Also, test_sparsegrams_length_constraint_bug's fallback path reveals exactly what patterns to match."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md specifies expected outputs for specific SQL queries (e.g., tokens('abcde', 'sparseGrams', 5, 5) returns ['abcde']), but no test actually executes these SQL queries or verifies these specific behavioral outputs."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -65,5 +60,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 1,
-  "fail_count": 9
+  "fail_count": 8
 }

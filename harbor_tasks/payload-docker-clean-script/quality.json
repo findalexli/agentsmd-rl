@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A script containing the right string literals without actual working logic would pass. For example, a file with comments containing 'docker rm', 'postgres-payload-test', 'mongodb-payload-test', 'docker compose', 'down', 'execSync' and 5+ non-comment lines would pass all fail-to-pass tests without implementing any real cleanup behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/payload after solve.sh runs, and solution/solve.sh is visible in the container. The agent could read solve.sh or the resulting files to extract the exact patch. Additionally, since tests are purely text-matching, the agent could craft a file with the right keywords without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says to 'update the relevant documentation to reflect the renamed commands' referencing CLAUDE.md and CONTRIBUTING.md (as seen in the gold patch). The test file has commented-out config_edit tests with no actual assertions for documentation updates, so this required behavior is untested."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

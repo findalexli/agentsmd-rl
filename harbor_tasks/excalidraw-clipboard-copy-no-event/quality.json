@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific code patterns that differ from the base commit (e.g., 'const plainTextEntry' vs 'let plainTextEntry', return placement inside if block, absence of 'plainTextEntry = undefined', background-color in SCSS). A stub or unmodified file would fail these assertions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the exact patch. The agent could read solution/solve.sh to get the gold patch. Additionally, since tests are purely text-matching, the agent could grep test files (if accessible) to discover the exact regex patterns expected."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: return inside if(clipboardEvent) block, return after writeText, const vs let for plainTextEntry, no plainTextEntry = undefined, and SCSS background-color for success state."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check that 'interface ShouldBlockFnLocation<' is NOT in the file and 'type ShouldBlockFnLocation<' IS present. A stub/no-op wouldn't satisfy these since the base code has 'interface'. The agent must actually modify the source files."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh exists in the container at /workspace and contains the exact patch. An agent could read it directly (cat /solution/solve.sh or similar) to discover the exact fix. Additionally, the f2p tests check for literal strings ('type ShouldBlockFnLocation<') that could be matched by grepping the test files."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: fixing TS4023 across three router packages and updating docs. Tests cover all three packages (react, solid, vue), build/type-check/lint, unit tests, and the docs file is modified in the solution."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

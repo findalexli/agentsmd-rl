@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require specific string patterns (e.g., `export const OPENCODE_ENABLE_QUESTION_TOOL`, `truthy(...)`, `const question = ...` with both client checks and flag checks) and specific documentation content. A stub or empty implementation would not pass these checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/opencode as solve.sh would be run there. The agent could potentially read the solution script if it's mounted. Also, since tests are purely text-matching, the agent could trivially pattern-match the expected strings from the test file if accessible, or from the instruction itself which spells out exact patterns like `truthy(\"OPENCODE_ENABLE_QUESTION_TOOL\")`."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four requirements from instruction.md are tested: flag definition (test_flag_constant_defined), tool gating logic (test_question_gating_behavior), ACP README documentation (test_acp_readme_documents_question_tool), and translator.md update (test_translator_md_lists_env_var). Pass-to-pass tests cover typecheck and existing test suites."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

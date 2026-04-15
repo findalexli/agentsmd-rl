@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require creating new files (hub-a/b/c page.tsx, AGENTS.md, SKILL.md) and modifying existing files (dynamic-stale-10/60 page.tsx, test file). A stub/no-op implementation would fail because the files don't exist at the base commit. The tests check for specific content that must be deliberately added."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /solution/solve.sh in the container (the Dockerfile doesn't remove it, and the hidden test file header shows it). An agent could simply read and execute solve.sh. Additionally, the test assertions are pure string matching, so an agent could grep the test file to discover exactly what strings need to be present in each file."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires 'The test must deterministically pass every time after the fix is applied' but no test actually runs the Next.js e2e test to verify deterministic passing. The instruction also requires 'act scopes with includes assertions matching hub content' but tests only check for hub path strings, not act scope usage patterns."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

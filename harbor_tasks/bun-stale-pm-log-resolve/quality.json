@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_pm_log_set_before_defer, test_pm_log_restored_in_defer, test_pm_log_set_before_resolve_call) all assert that 'package_manager' appears with '.log = &log' in specific regions of the function. The base commit code does NOT contain these patterns, so a stub or no-op would fail these tests. The agent must add actual package_manager log save/restore code."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun's filesystem context and solution/solve.sh is present in the container. An agent could read /solution/solve.sh or simply run it to apply the gold patch. Additionally, the git diff-based tests (test_no_std_api_in_diff, test_no_non_default_allocator) only check added lines, so copying the exact patch would trivially pass."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "instruction.md requires: (1) package_manager.log set to stack-local log before resolution, (2) package_manager.log restored in defer block, (3) existing save/restore for resolver/linker/jsc_vm log intact. All of these are tested by corresponding test functions."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

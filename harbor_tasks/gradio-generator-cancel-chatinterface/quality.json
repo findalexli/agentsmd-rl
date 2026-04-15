@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub aclose() returning None would fail test_aclose_is_coroutine (which checks asyncio.iscoroutine). A stub safe_aclose_iterator with just 'pass' would fail test_safe_aclose_not_stub and test_safe_aclose_iterator_awaits_generic_async_iterator (mock.closed would remain False). The AST tests for aclosing require actual structural changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/gradio's git history or could be in /solution/solve.sh. The Dockerfile doesn't remove the solution directory. An agent could read solve.sh or inspect the git log to find the exact patch. Also, the idempotency check 'grep -q aclosing gradio/chat_interface.py && exit 0' in solve.sh reveals the solution approach."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four explicit requirements from instruction.md are tested: aclosing in _stream_fn (test_aclosing_used_in_stream_fn), aclosing in _examples_stream_fn (test_aclosing_used_in_examples_stream_fn), aclose returns coroutine (test_aclose_is_coroutine), safe_aclose_iterator awaits (test_safe_aclose_iterator_awaits_generic_async_iterator and test_safe_aclose_iterator_awaits_sync_to_async)."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

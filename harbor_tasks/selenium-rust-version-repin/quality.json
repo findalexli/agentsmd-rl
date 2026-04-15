@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All f2p tests check for the presence of specific strings in the file. An agent could simply append a comment block containing all the required strings without understanding the bug at all: '# Repin cargo immediately after updating the version CARGO_BAZEL_REPIN mid-evaluation file-hash conflict\\nRake::Task[\"rust:update\"].reenable\\nRake::Task[\"rust:update\"].invoke'. This would pass all f2p tests without any real fix implementation."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/selenium with solve.sh containing the exact gold patch. The agent could read solution/solve.sh (if accessible) or simply grep the test file to find the exact strings being asserted (e.g., 'Repin cargo immediately after updating the version') and insert them verbatim. The tests only check string presence, making this trivially exploitable."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All 8 required implementation details from the instruction are tested: reenable string, invoke string, exact comment phrase, CARGO_BAZEL_REPIN mention, mid-evaluation mention, ordering, block containment, and Ruby syntax validity."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p test test_adrq_without_serialized_dag_is_excluded only checks if certain strings exist in the source file. An agent could satisfy it by adding a dead-code comment containing those variable names without actually implementing the fix. No behavioral execution verifies the bug is actually fixed."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/airflow as solve.sh is applied there. The agent could read solution/solve.sh if it exists in the container. Additionally, the f2p test is pure text matching, so the agent could grep test_outputs.py for the expected strings ('missing_from_serialized', 'ser_dag_ids', 'del adrq_by_dag') and insert them as comments without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires: (1) skip orphan DAGs from triggered_date_by_dag, (2) preserve ADRQ rows, (3) emit INFO log with exact message, (4) sort DAG IDs. The hidden tests only do text matching on the source code for the f2p test, not actually testing behaviors 1-4 at runtime. The behavioral tests from the gold solution (test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing) are in the solution patch but truncated/not in the actual test_outputs.py."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

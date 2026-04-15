@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_parse_config_overrides_rejects_xss_patterns only checks (1) that the string 'export function parseConfigOverrides' exists in the file, and (2) that JSON5 from /opt/test-deps rejects XSS patterns \u2014 it never actually calls the agent's parseConfigOverrides. An agent could add `export function parseConfigOverrides() { return {}; }` to compilation.ts and pass this test. Similarly, test_parse_config_overrides_parses_valid_json5 tests JSON5 from test-deps, not the agent's code."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/react (the solve.sh is applied there). The agent could read the test file at the known test-deps paths or grep for expected strings. Additionally, since tests mostly do string matching on source files rather than behavioral execution, the agent could pattern-match the expected strings from the test file itself (e.g., 'export function parseConfigOverrides', 'config.json5') without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors explicitly required by instruction.md are tested: parseConfigOverrides function export, config.json5 reference, defaultConfig template format without TS syntax, test file existence, json5 dependency."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

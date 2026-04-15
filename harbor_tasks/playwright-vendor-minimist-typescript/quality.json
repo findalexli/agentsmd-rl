@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub minimist that returns `{ _: [] }` would fail test_minimist_parses_args (which checks verbose=true, color=false, name='alice', 'file.txt' in _). A stub that doesn't throw would fail test_minimist_boolean_equals_error. The tests require actual implementation logic."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/playwright as the solve.sh applies a git patch. An agent could potentially read the test file at tests/test_outputs.py to discover exact expected values and fixture strings. The Dockerfile doesn't appear to remove the solution directory or test files from the container."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All major requirements are tested: minimist parsing (test_minimist_parses_args), boolean=value error (test_minimist_boolean_equals_error), -- separator (test_minimist_double_dash), program.ts import update (test_program_imports_vendored), @types/minimist removal (test_types_minimist_removed), DEPS.list update (test_deps_list_updated), CLAUDE.md update (test_claude_md_generated_with_rule). Session.ts import is not directly tested but is implicitly covered by DEPS.list checks."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 9,
-  "fail_count": 3
+  "fail_count": 2
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_mistral_small_4_both_files_returns_true, test_mistral_large_3_both_files_returns_true, etc.) assert True for specific models with both files present. The buggy code returns False in this scenario. A stub returning always-True would fail the tests asserting False (test_mistral_7b_both_files_returns_false, etc.), and always-False would fail the True assertions. No trivial default satisfies all tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution/ directory is bind-mounted at runtime but the Dockerfile doesn't copy it into the container image. Tests dynamically extract and execute the function from the actual source file, so the agent must modify the real code. The agent cannot simply hardcode expected values since the function is extracted by AST and executed with real file system checks."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors specified in instruction.md are tested: native models with both files \u2192 True (4 tests), HF models with both files \u2192 False (5 tests), params only \u2192 True (2 tests), neither/config-only \u2192 False (2 tests)."
@@ -55,6 +51,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 9,
+  "pass_count": 8,
   "fail_count": 1
 }

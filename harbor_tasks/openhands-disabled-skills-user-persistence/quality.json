@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation (empty file or default User class) would not contain the required string patterns like 'disabled_skills = Column(JSON, nullable=True)' or the migration file with correct Alembic structure. The agent must actually create/modify files with specific content."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file directly to obtain the exact solution. Additionally, the test file at tests/test_outputs.py contains the exact expected strings, which the agent could grep to construct the solution."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: the User model having disabled_skills column with JSON type and nullable=True, the migration file with revision 104 and down_revision 103, and the correct upgrade/downgrade operations."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

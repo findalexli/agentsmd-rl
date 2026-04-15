@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation returning None or empty values would fail: test_register_helper_creates_lora_request checks that the registry contains entries with correct fields; test_stale_aliases_removed checks that old entries are deleted; test_infer_path_synthetic_fallback checks for 'xccl://' in the result; test_infer_path_preserves_existing checks for exact path values. These cannot be satisfied by trivial stubs."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/AReaL/_eval_tmp.py during test runs, and more importantly, solution/solve.sh is present in the container (the Dockerfile doesn't remove it). An agent could read solve.sh to obtain the exact gold patch and apply it directly."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All major required behaviors are tested: path inference with existing path and synthetic fallback, registration creating new LoRARequest objects, stale alias removal, success gating, and the LoRARequest import (implicitly tested through behavioral tests that create LoRARequest objects)."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

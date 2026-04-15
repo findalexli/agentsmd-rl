@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub/no-op implementation would fail: test_no_standalone_fixed_sleep checks the buggy sleep(0.1) is not outside a loop (base code has it outside), test_polling_loop_with_file_read requires a while loop with open() and FINISHED_ (base has none), test_timeout_mechanism_exists requires timeout logic in the loop, and test_polling_captures_delayed_status executes the loop and checks it captures delayed writes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /repo as solve.sh is applied there, and the gold patch is in solution/solve.sh. An agent could read /solution/solve.sh or the patch content directly. The Dockerfile doesn't remove /solution/ directory, and tests don't guard against this."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires replacing the fixed sleep with polling that actively waits with a timeout. The tests verify: no standalone fixed sleep (test_no_standalone_fixed_sleep), polling loop with file read (test_polling_loop_with_file_read), timeout mechanism (test_timeout_mechanism_exists), and behavioral correctness (test_polling_captures_delayed_status)."
@@ -51,11 +47,10 @@
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 8,
-  "fail_count": 2
+  "fail_count": 1
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for the absence of specific patterns that exist in the base commit. A stub or no-op implementation would leave those patterns in place and fail the tests. The behavioral tests (test_react_router_no_global_createFileRoute) actually import the built module and check runtime behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router's sibling or the container includes solution/solve.sh. An agent could read /solution/solve.sh to see the exact patch. Additionally, the test file itself at tests/test_outputs.py contains the exact patterns being checked, so grepping for test fixtures would reveal the solution."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: no global pollution after import, no globalThis/window assignments in source, Router class still exports, createFileRoute/createLazyFileRoute still importable from fileRoute module, both react-router and solid-router covered, and build/lint commands tested."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

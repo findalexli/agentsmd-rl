@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub that simply appends the right string literals to the script file (e.g., a comment block containing all the required strings without any actual logic) would pass test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, and test_large_file_warning_message since they only check for substring presence. test_large_file_check_logic doesn't even run the shell script\u2014it reimplements the logic in Python."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to extract the exact implementation. Additionally, since most tests are string-matching, the agent could grep the test file for expected strings and embed them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires the check to 'Work correctly on both GNU (Linux) and BSD (macOS) systems' and to 'Print a warning for each violation', but no test actually executes the shell logic against real files to verify runtime behavior. The behavioral test (test_large_file_check_logic) reimplements the logic in Python rather than testing the actual shell code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

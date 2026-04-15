@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "test_branded_types_exported actually runs code that imports and calls RefreshToken.make/DeviceCode.make/UserCode.make - a stub can't satisfy this. The text-matching tests require specific patterns that don't exist in the base code (e.g., 'extends Schema.Class' count >= 5, 'Schema.Duration', 'Layer.effect'), so the base code would fail them. A trivial stub won't pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/opencode as a git repo and solve.sh is applied via git apply. The agent could potentially read the solution patch from the hidden files. Additionally, since most tests are text-matching (checking for string presence in files), the agent could trivially insert the expected strings without understanding the actual refactoring needed."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction mentions 'Shared logic for fetching org and user data should be extracted into fetchOrgs and fetchUser helpers' but no test verifies the existence or behavior of these helpers. Also, the instruction says 'exports namespace AccountRepo with a Service type' but tests only check for 'export namespace AccountRepo' string, not that it contains a Service type."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 7,
-  "fail_count": 4
+  "fail_count": 3
 }

@@ -266,8 +266,7 @@ After Docker validation passes, verify **every** item below. If any fails, fix a
 - [ ] **tests_verify_behavior_not_text**: every test calls code, runs subprocess, or compiles — no pure `grep 'literal'` tests
 - [ ] **test_not_tautological**: no f2p passes on `return None` / empty function / stub
 - [ ] **pass_to_pass_coverage**: ≥1 p2p from repo CI/CD
-- [ ] **anti_cheating_measures**: agent can't find the answer via `find / -name solve`, env vars, or a grep that matches the fixture string
-- [ ] **no_hidden_solution_artifacts**: `COPY solution/` and `COPY tests/` NOT in Dockerfile; `.dockerignore` covers them
+- [ ] **no_hidden_solution_artifacts**: `COPY solution/` and `COPY tests/` NOT in Dockerfile; `.dockerignore` covers them (Harbor's runtime already hides solution/ at agent-run time — this check guards against it being baked into the image)
 
 **Tier B — important:**
 - [ ] **dockerfile_determinism**: base image has a version tag (NEVER `:latest`); no `curl | bash` of moving target

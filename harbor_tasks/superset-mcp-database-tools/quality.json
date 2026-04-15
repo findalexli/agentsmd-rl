@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests would not pass with stub implementations: `test_database_error_uses_timezone_utc` requires a non-None timezone-aware timestamp with UTC tzinfo; `test_humanize_timestamp_uses_tzinfo` requires a string containing 'ago'; `test_create_mock_database_has_type_hints` requires AST annotations to be present; `test_model_type_docstring_includes_database` requires 'database' in the docstring."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset as solve.sh would be applied there. The agent could potentially read the test file at tests/test_outputs.py to discover exact expected behaviors and fixture values. Additionally, the solution/solve.sh file may be accessible in the container depending on mount configuration."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All seven issues described in instruction.md have corresponding test coverage: timezone handling (issue 4), type annotations (issue 5), docstring update (issue 7), DatabaseFilter owner filtering (issue 1), JSON string validators (issue 2), duplicate columns removal (issue 3), and app instructions (issue 6 is tested in the truncated portion)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

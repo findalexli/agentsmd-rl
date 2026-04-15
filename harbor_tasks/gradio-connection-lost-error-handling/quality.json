@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all tests are text-matching on source files, an agent could pass them by simply inserting the expected string patterns (e.g., adding 'const is_connection_error = x === BROKEN_CONNECTION_MSG' and 'connection_lost = false' as dead code comments) without implementing any actual behavioral fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file solve.sh exists at /workspace/gradio or is available in the container's solution/ directory. The agent could read it directly. Additionally, since tests are purely text-matching, the agent could grep the test file for expected patterns and insert them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors listed in the instruction (broken flag, connection_lost tracking, dispatch short-circuit, callback wiring, reconnection handler, cleanup) are tested by the corresponding test functions."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The tests check for specific strings and patterns that would not be present in stub implementations. A stub returning None or empty values would not cause 'build_strategy_option_group = make_option_group' to appear in source code. The CLI help tests also require actual working CLI integration."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/dagster and solve.sh contains the complete gold patch. An agent could read the solution directly. Additionally, since tests are pure text matching on source files, an agent could simply write the exact strings the tests look for without understanding the underlying functionality."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction specifies that selecting python-executable with a Hybrid agent must raise a click.UsageError with a specific message, but test_hybrid_pex_validation only checks that the validation string exists in source code text \u2014 it never actually invokes the code to verify the error is raised at runtime."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

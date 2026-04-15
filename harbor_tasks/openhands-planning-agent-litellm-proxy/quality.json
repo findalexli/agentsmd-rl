@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The core f2p test (test_litellm_proxy_model_uses_provider_base_url) asserts llm.base_url == 'https://provider.example.com' when model starts with 'litellm_proxy/'. Without the fix, base_url would be None (the user's llm_base_url is None). A stub/default implementation would not pass this."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/openhands as solve.sh in the container's solution/ directory. The Dockerfile doesn't remove or restrict access to solution/. An agent could read /solution/solve.sh or the gold patch directly. Additionally, the instruction essentially gives the complete solution."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors mentioned in instruction.md are tested: litellm_proxy/ prefix recognition, user base_url preference over provider, regular models ignoring provider base_url, and existing openhands/ prefix behavior preservation."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

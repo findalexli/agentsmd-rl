@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply appends the exact SCOPE_EXIT text block and comment string to the file (without understanding the bug or placing it correctly in the function) would pass all three fail-to-pass tests, since they only do regex/string matching on file content without verifying correct placement or behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/clickhouse/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the tests check for exact string patterns like 'Ensure all already-scheduled tasks are drained on any exit path' which is stated verbatim in instruction.md, so the agent can trivially match the fixture string by copying it from the instructions. The agent could also grep test files for the expected patterns."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requirement 4 says 'Place the cleanup guard before the task scheduling loop so it protects against partial scheduling failures' but no test verifies the placement relative to the scheduling loop \u2014 the regex tests only check the SCOPE_EXIT block exists somewhere in the file."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

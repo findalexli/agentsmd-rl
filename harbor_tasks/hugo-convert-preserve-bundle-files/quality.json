@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "test_bundle_files_preserved_during_convert creates a real Hugo project, runs hugo convert toJSON, and checks that non-content files exist with correct contents in the output. A stub or no-op implementation would not produce these files. test_copy_content_dirs_function_exists requires specific code additions. These cannot be satisfied by default/empty implementations."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/hugo/../solution/solve.sh (or similar path in the container). The agent could read solution/solve.sh to see the exact patch. Additionally, the test file tests/test_outputs.py reveals the exact strings and structure needed, and the agent could grep for these. No measures prevent reading these files."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: bundle files preserved (tested by test_bundle_files_preserved_during_convert), output-inside-content handling (tested by test_convert_output_inside_content_tree), code structure requirements (tested by test_copy_content_dirs_function_exists), and code quality (tested by test_go_vet_passes, test_gofmt_check, test_go_mod_verify). All stated behaviors are tested."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

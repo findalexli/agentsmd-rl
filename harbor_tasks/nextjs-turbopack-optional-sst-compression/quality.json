@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests would not pass with a stub. For example, test_process_file_returns_uppercase_content checks the output contains 'HELLO WORLD', test_process_file_uses_custom_exception checks that FileProcessingError is raised (not None returned), test_process_file_has_type_hints checks actual annotation objects. A stub returning None or pass would fail these."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/repo/../solution/solve.sh (or a similar path). The agent could read the gold solution from the container. Additionally, the Dockerfile creates the base file inline, making the initial state visible. No explicit measures prevent reading /solution/solve.sh."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors required by instruction.md are tested: pathlib.Path usage, read_text(), type hints, docstring with Args/Returns, FileNotFoundError/IOError handling, FileProcessingError custom exception, no bare except, and uppercase return behavior."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

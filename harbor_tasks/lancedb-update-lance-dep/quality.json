@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The base commit has version 3.0.0-beta.5, so tests asserting '3.0.0-beta.5 not in content' and '3.1.0-beta.2 in content' would fail without actual changes. cargo check/clippy would also fail if versions are changed incorrectly. A stub/no-op solution cannot pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace (solve.sh is in solution/), and there's no evidence it's removed from the container. The agent could read solution/solve.sh to extract the exact patch. Additionally, the agent could grep test_outputs.py for the expected version strings '3.1.0-beta.2' and mechanically substitute them without understanding."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: updating Cargo.toml lance deps (tested), updating java/pom.xml (tested), updating Cargo.lock (tested), cargo check passes (tested), cargo clippy passes (tested). Additional tests (fmt, ruff, metadata, clippy --all-features) go beyond but don't contradict requirements."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 8,
-  "fail_count": 3
+  "fail_count": 2
 }

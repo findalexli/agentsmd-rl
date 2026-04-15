@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All f2p tests are string-presence/absence checks on file content. A stub that simply edits the file text to include the expected strings (without understanding the bug) would pass. For example, adding a dead-code comment containing 'image.naturalWidth / uncroppedSize.width' would pass test_natural_width_scaling_used."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace's solution/solve.sh which contains the exact gold patch. The agent could read this file and apply it directly. Additionally, since tests are pure string matching, the agent could grep test files (tests/test_outputs.py) to discover exactly what strings to insert."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction says to fix cursor drift by using natural dimensions, removing zoom-based scaling, and importing getUncroppedWidthAndHeight. Tests check all of these aspects plus TypeScript compilation and existing test suites."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

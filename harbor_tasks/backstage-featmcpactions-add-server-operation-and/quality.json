@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The tests check for specific strings and patterns that would not exist in the original codebase (e.g., 'mcp.server.operation.duration', 'bucketBoundaries', 'McpServerOperationAttributes' interface). A stub or no-op implementation would not contain these strings, so the tests do require meaningful code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/backstage and solve.sh is accessible. An agent could read the solution patch or the solve.sh script directly. Additionally, since tests are purely text-matching, an agent could simply insert the expected strings into files without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires updating the README and creating a changeset file, but no tests verify these requirements. The instruction also requires session duration instrumentation in createStreamableRouter.ts with specific attributes ('mcp.protocol.version', 'network.transport': 'tcp'), but the test file is truncated and the visible tests focus mainly on McpService. The plugin.ts metricsServiceRef integration is mentioned but testing coverage appears incomplete."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 6
+  "fail_count": 5
 }

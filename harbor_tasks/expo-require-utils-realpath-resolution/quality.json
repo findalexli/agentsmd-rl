@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All fail-to-pass tests can be satisfied by inserting the right strings into load.ts without implementing any actual functionality. For example, adding a comment containing `function toRealDirname`, `fs.realpathSync`, `basePath`, `_nodeModulePaths(basePath)`, `ENOENT`, and `try {` would pass all assertions since the tests only check for string presence in the file."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/expo (the solve.sh contains the full git patch). The agent could read `/solution/solve.sh` or the git diff within it to extract the exact patch. Additionally, since all tests are text-matching, the agent could grep the test file for the expected strings and insert them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that symlinked path resolution actually works at runtime (module resolution succeeds for symlinked paths), but no test creates symlinks or verifies runtime module resolution behavior. The tests only check for string patterns in source code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

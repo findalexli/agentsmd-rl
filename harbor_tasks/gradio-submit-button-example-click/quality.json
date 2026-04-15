@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific AST structures that wouldn't exist in a stub implementation: removing example_select from stop triggers, adding a .then() with submit_btn=False, and using a compound condition for events_to_cancel. A stub or no-op _setup_events would fail all three."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/gradio with solve.sh accessible. An agent could read the gold patch from the solution directory or grep for expected patterns. The Dockerfile doesn't remove or protect the solution files."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four acceptance criteria from instruction.md are tested: submit button restoration (via AST checks on .then() and stop triggers), valid Python (test_syntax_valid), ruff format/check (test_ruff_formatting, test_repo_ruff_check), and existing unit tests passing (test_repo_chat_interface_init_unit_tests, etc.)."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

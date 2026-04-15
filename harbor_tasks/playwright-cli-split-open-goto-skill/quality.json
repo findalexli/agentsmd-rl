@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail_to_pass tests check for specific emoji prefixes (\u2705/\u274c), backtick-wrapped paths, and SKILL.md documentation structure that don't exist in the original codebase. A stub or no-op implementation would not produce these specific patterns in the source files."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch is available at /workspace/playwright as solve.sh could be accessed. More critically, tests read source files and check for specific string patterns \u2014 an agent could grep test_outputs.py to discover exactly what strings/patterns are expected (e.g., '\\u2705', '\\u274C', backtick wrapping format) and make targeted edits to match those patterns without understanding the underlying task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction says 'The CLI should support open (launch browser without a URL) and goto (navigate to a URL) as distinct operations' but no test verifies that the actual CLI commands work as separate operations in program.ts \u2014 tests only check SKILL.md documentation, not the actual command implementation split."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

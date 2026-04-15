@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check for string patterns in source code. An agent could simply insert the exact string patterns as dead code or comments (e.g., add '// const renderedChild = Solid.createMemo(') and pass the text-matching tests without actually fixing the bug. The regex patterns are not strict enough to verify the code is functional."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/router as solve.sh and the agent could read /solution/solve.sh or the test file itself at tests/test_outputs.py to see exactly what string patterns are being checked, then insert those exact patterns. The tests check for literal strings that could be copied directly."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: opts destructuring inside createMemo, renderedChild using createMemo, props.children inside memo, fragment return, plus type checking, build, eslint, and unit tests."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

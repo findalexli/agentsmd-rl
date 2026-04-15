@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All fail-to-pass tests can be satisfied by simply adding the right strings to files without implementing any actual logic. For example, adding a comment '// LoaderStaleReloadMode' to index.ts passes test_loader_stale_reload_mode_type_exported, adding '// routeLoader?.handler' to load-matches.ts passes test_load_matches_extracts_handler_from_object_loader, etc. No behavioral verification is performed."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and downloads the exact gold patch files from a specific commit SHA. An agent could read /solution/solve.sh to discover the merge commit hash 6f297a249424c0fd1c1a56aa4fc12c8217be7b6a and simply execute the script or download those files directly."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that 'blocking' mode makes navigation wait for stale loader reloads to complete before resolving, and that 'background' mode shows stale data immediately. No test actually verifies this runtime behavior - only text patterns are checked. The actual blocking vs background behavioral difference is never tested."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

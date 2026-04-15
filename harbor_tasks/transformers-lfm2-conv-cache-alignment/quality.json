@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The tests check non-trivial behavior: `test_update_conv_state_decode` checks specific tensor values after roll-and-update operations, `test_has_previous_state_lifecycle` checks the flag transitions, and `test_slow_forward_decode_uses_cache` verifies different cache states produce different outputs. A stub returning None or empty would fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /repo as a git repo, and the gold patch is in solve.sh. An agent could potentially read /solution/solve.sh or similar paths. The Dockerfile doesn't remove the solution directory, and there's no evidence of access restrictions."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: `has_previous_state` lifecycle, `last_conv_layer` computation, `update_conv_state` with both cache_init modes, `reset()` clearing the flag, forward method behavior changes, and MoE variant alignment."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

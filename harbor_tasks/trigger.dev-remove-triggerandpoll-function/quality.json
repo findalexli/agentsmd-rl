@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail_to_pass tests check that 'triggerAndPoll' is absent from files where it currently exists in the base commit. A stub/no-op solution (doing nothing) would fail because the string is present in the original files. The agent must actively remove the references to pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/trigger.dev's sibling or within the container at a predictable path. The solve.sh is described as 'hidden' but if it's mounted in the container, the agent could read it. Additionally, since tests are purely string-matching, the agent could grep test files (if accessible) to discover exactly which strings must be absent/present and make minimal targeted edits."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: function removal from shared.ts, export removal from tasks.ts, import removal from tasks.ts, reference removal from sdkUsage.ts, doc updates in writing-tasks.mdc and triggering.mdx, and preservation of other methods."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

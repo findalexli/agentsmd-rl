@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The base commit (56dd547) does not contain the required strings (e.g., IrRichFunctionReferenceImpl, isNative(), visitRichFunctionReference in those files). A stub or no-op implementation would not add these strings to the source files, so the tests would fail without actual code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin (the solve.sh operates on that directory) and the agent could read solution/solve.sh which contains the complete git patch. Additionally, since tests are purely string-matching, the agent could simply grep the test file for the expected strings and insert them into the source files without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors listed in the instruction's Required Changes and Verification Criteria sections are tested: Native platform check, IrRichFunctionReferenceImpl usage, visitRichFunctionReference in both ComposableTypeRemapper and ComposerParamTransformer, needsComposableRemapping check, and super calls."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

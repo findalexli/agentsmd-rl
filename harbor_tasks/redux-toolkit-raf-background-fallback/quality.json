@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_raf_fallback_function_exists, test_raf_strategy_uses_fallback, test_100ms_timeout_value) only check for string presence in the source file. An agent could simply add a comment containing `createRafWithFallbackTimer(window.requestAnimationFrame, 100)` with `called`, `cancelAnimationFrame`, `clearTimeout` strings without implementing any actual logic, and all three f2p tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/redux-toolkit/packages/toolkit (the working directory) as solution/solve.sh which contains the exact gold patch. An agent could read this file or grep for the expected strings. Additionally, since f2p tests only check for string presence, the agent could grep test_outputs.py for the exact strings to insert."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that 'notification should still happen at ~16ms via RAF' in foreground and that 'exactly one notification occurs per batch', but no test verifies these behavioral properties. The f2p tests only check string presence in source code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All fail-to-pass tests check for string presence in the file content. An agent could write a stub file containing all the required strings as comments or dead code (e.g., '// async function resolveAuthorForCommit', '// authorCache', '// No changelog entries') and pass every test without implementing the actual bug fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/router and solve.sh is accessible. The agent could read solution/solve.sh to see the exact patch. Additionally, since tests only check for string presence, the agent could grep test files for the expected strings and insert them as comments without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md requires that the script actually reads CHANGELOG.md files, extracts version sections, resolves authors via GitHub API, and generates correct release notes. None of this runtime behavior is tested \u2014 tests only verify string presence in the source file."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

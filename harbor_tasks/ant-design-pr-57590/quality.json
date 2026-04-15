@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original source (e.g., conditional title rendering with 'title &&', '&:first-child' CSS rule). A stub or no-op change would not introduce these patterns, so the tests would fail without a real fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/antd/../solution/solve.sh (or similar path in the container). The agent could read the solve.sh file to see the exact gold patch. Additionally, since tests are pure regex checks on source files, the agent could grep test files for the expected patterns and insert them mechanically without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction says the description should not overlap with the close button when no title is present. The tests verify conditional title rendering and CSS spacing for description, which covers the described behavior. ESLint and design token tests ensure code quality is maintained."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check ordering of statements in the source file. The base (buggy) commit has PID write before initialise(), so the tests would fail on the unmodified code. A stub/no-op implementation wouldn't pass because the tests require specific code patterns to exist in specific relative positions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/backstage after solve.sh runs, and the Dockerfile clones the repo to /workspace/backstage. The agent could read /tmp/fix.patch or the solution/solve.sh file if accessible. Additionally, since the tests are purely text-based regex checks on the source file, the agent could simply grep for the expected pattern and rearrange lines mechanically without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction describes the bug as PID file being written before pg.initialise() causing the directory to not be empty. The tests verify this exact behavior: PID write must come after initialise(), must be in the try block, and must not appear before the EmbeddedPostgres constructor."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

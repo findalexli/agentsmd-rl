@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (errorsMatch behavioral test, description type checks, mapping checks, generator function definitions, strategy registration) cannot be satisfied by stub implementations \u2014 they require actual structural changes to the source file that implement the described bug fix. A no-op or empty implementation would not pass any of these checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/react (solution/solve.sh is in the task), and the Dockerfile doesn't remove it. An agent could potentially read the gold patch from the solution directory or from the task's solution files if accessible. Additionally, the test file itself contains significant implementation hints in its JavaScript code strings that could be pattern-matched."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicitly required behaviors in instruction.md are tested: full error comparison including description (test_errorsMatch_rejects_different_descriptions), description in type definitions (test_description_in_error_types), description preserved in mapping (test_error_mapping_copies_description), three new generator strategies defined and registered (test_new_generators_defined, test_new_strategies_registered)."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

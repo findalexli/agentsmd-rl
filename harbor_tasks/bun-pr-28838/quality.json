@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all tests are pure text-matching, an agent could create files containing the exact expected strings without implementing any real logic. For example, pr-comments.ts could contain the strings 'gh api', '--paginate', 'graphql', '/issues/', '/pulls/', '/reviews', '/comments' as comments without any actual implementation and pass all tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container at /solution/solve.sh and contains the gold patch. An agent could read this file to extract exact changes. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the expected strings and embed them without understanding the vulnerability."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires the script to support 'both human-readable and JSON output modes', 'can be called with PR number, URL, or defaults to current branch's PR', 'shows summary counts by type', 'handles pagination manually for GraphQL', but tests only check for string presence in files. The actual runtime behavior of the TypeScript script (pagination, output formatting, argument handling) is never tested."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 7
+  "fail_count": 6
 }

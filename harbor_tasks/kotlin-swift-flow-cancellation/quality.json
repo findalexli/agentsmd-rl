@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all tests are pure text-matching (e.g., 'assert \"private val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)\" in content'), an agent could pass every test by simply inserting the exact expected strings into the files without implementing any actual cancellation behavior. The tests don't verify runtime behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The agent can read tests/test_outputs.py (not explicitly blocked), see the exact strings being asserted, and insert them verbatim. Additionally, solution/solve.sh contains the complete gold patch. The Docker environment doesn't prevent access to these files."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says 'Flow collection stops when the iterator is deallocated' and 'Flow collection stops when an async call to next() is cancelled' \u2014 these runtime behaviors are never actually tested. Tests only check for specific code patterns in source files."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

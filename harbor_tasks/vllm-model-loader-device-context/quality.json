@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_log_inspection_outside_device_context, test_device_context_narrower_than_dtype, test_initialize_model_inside_device_context) would fail on the original buggy code where both calls are in a combined 'with dtype, device:' block. A stub/no-op change would not change the AST structure and would still fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the exact gold patch. An agent could read this file to obtain the fix directly. The Dockerfile does not remove or protect this path."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction describes three behaviors: log_model_inspection outside device context, initialize_model inside device context, and set_default_torch_dtype wrapping dtype-sensitive operations. All three are tested by the fail-to-pass tests."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

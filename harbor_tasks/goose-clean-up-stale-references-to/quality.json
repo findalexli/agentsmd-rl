@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub/no-op implementation would not pass these tests. The dead file tests check that files DON'T exist (they do by default in the repo). The log level test checks for tracing::warn! which isn't present by default (it's tracing::debug!). The TODO test checks for absence of a string that exists by default. The console.log test checks for absence of strings that exist by default."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact git patch and commands needed. An agent could read /workspace/goose's git history or the solve.sh file directly. Additionally, the test file itself at tests/test_outputs.py contains all the exact strings being checked."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four categories of changes described in instruction.md are tested: console.log removal (test_debug_console_log_removed_from_app), TODO removal (test_stale_todo_comment_removed), log level upgrade (test_log_level_upgraded_to_warn), and dead file removal (three separate tests for the three named files)."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation that does nothing would fail test_min_tps_compiles (cargo check would fail if min_tps field is referenced but not defined) and would fail the text-matching tests since the required strings wouldn't be present. The tests do require actual code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/sui after solve.sh runs, and the agent could read solution/solve.sh or look at the test file to see exact strings to insert. The tests only check for string presence in files, so the agent could just append the expected strings as comments without understanding anything."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires 'Handle edge cases (avoid division by zero on very short durations) by ensuring the denominator is at least 1.0' and 'If the actual TPS is below the minimum, return an error'. Neither of these behaviors is tested via execution \u2014 only via text matching. There's no test that actually runs the binary with --min-tps to verify runtime behavior."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

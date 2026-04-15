@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Several f2p tests like test_pydantic_field_import_present only check for an import statement, test_injector_uses_self_endpoint_url only checks a string in source code. These could be satisfied by adding the import and string without actually implementing the protocol handling logic correctly. The behavioral tests are in the pass-to-pass category (repo unit tests), not the f2p tests themselves."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/openhands as a git repo, and solve.sh is at /solution/solve.sh in the container. An agent could read the solution file directly or examine the gold patch. The Dockerfile doesn't remove /solution/ after setup."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction's expected behaviors (protocol conversion for various AWS_S3_ENDPOINT/AWS_S3_SECURE combinations, None when unset) are tested via the truncated f2p tests and the repo's own unit tests run in test_repo_unit_tests_aws_event_service."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail-to-pass tests (test_active_tab_panel_close_fix_present, test_new_tests_for_active_tab_unpin, etc.) only check for string presence in source files. An agent could satisfy them by inserting dead code comments or unreachable code containing those exact strings without actually fixing the bug. Only the vitest execution tests (pass-to-pass) verify actual behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/OpenHands (the solve.sh is applied there), and the agent could read /solution/solve.sh or the test file at tests/test_outputs.py to see exact expected strings like 'selectedTab === tab && isRightPanelShown'. The tests check for literal strings that could be matched by reading test_outputs.py."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: closing panel when active tab unpinned (vitest + string check), not closing when non-active tab unpinned (vitest + string check), store state updates, localStorage updates, and required imports."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

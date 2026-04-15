@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check for string presence in files. An agent could satisfy test_go_mod_dependencies_updated by just editing the version string in go.mod, test_config_has_keep_namespaces by inserting the exact string as a comment, and test_minifiers_test_has_alpine_cases by adding the strings as comments. The actual behavioral test (test_repo_minifiers_test) is pass-to-pass, not fail-to-pass, so it doesn't verify the bug fix works."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is at /workspace/hugo/../solution/solve.sh (or wherever mounted). The agent could read /solution/solve.sh if it exists in the container. Additionally, the instruction.md itself contains the exact strings needed to pass the text-matching f2p tests, so the agent can trivially pattern-match without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four requirements from instruction.md are tested: dependency update (test_go_mod_dependencies_updated), SVG config (test_config_has_keep_namespaces), regression tests (test_minifiers_test_has_alpine_cases), and existing tests passing (test_repo_minifiers_test, test_repo_go_build, test_repo_go_vet)."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 6
+  "fail_count": 5
 }

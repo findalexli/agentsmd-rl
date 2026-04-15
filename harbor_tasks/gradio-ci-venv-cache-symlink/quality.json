@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check specific structural properties that a stub/no-op wouldn't satisfy: the original code has venv creation BEFORE cache restore (test_venv_created_after_cache_restore would fail), the original cache key lacks exact version (test_cache_key_includes_exact_python_version would fail), and the original has '// await tick()' commented out (test_textbox_await_tick_active would fail). These require actual code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/gradio (solution/solve.sh contains the full git patch). An agent could read the Dockerfile or solution/solve.sh to extract the exact patch. The test file at tests/test_outputs.py is also accessible and reveals exactly what patterns are checked."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "Both behaviors described in the instruction are tested: the CI cache/venv ordering and cache key issues (multiple tests), and the flaky textbox copy test (test_textbox_await_tick_active and test_textbox_copy_test_exists)."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "no_typos"
   ],
   "pass_count": 7,
-  "fail_count": 4
+  "fail_count": 3
 }

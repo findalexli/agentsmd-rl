@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Several f2p tests can be passed by stub implementations. For example, test_mcp_writes_settings just checks 'writeFile' and 'JSON.stringify' appear in the source text. A file containing those strings as comments would pass. test_mcp_url_validation_error checks for 'new URL(' and 'throw new Error' in text - dead code containing these strings would pass. test_mcp_duplicate_detection checks for 'readFile' and 'already exists' as strings - these could appear in comments."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/cline after applying solve.sh. The agent could read the solution patch or the resulting files. Additionally, since tests are purely text-matching (checking for specific strings in source files), the agent could reverse-engineer the expected patterns from test_outputs.py if it could access it, though the instructions say it cannot see tests/."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md requires URL validation behavior (error when URL provided without --type http), config output to specific path, and working CLI commands. The tests only check source text patterns rather than actually testing these behaviors (e.g., no test actually calls addMcpServerShortcut with a URL and verifies the error, no test verifies the actual JSON output format)."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "structured_data_schema"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

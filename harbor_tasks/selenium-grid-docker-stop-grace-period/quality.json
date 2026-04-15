@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all tests are text-matching on source files, an agent could write source files containing the expected strings as comments or dead code without actually implementing the fix. For example, adding '// try { finally { container.stop( super.stop() }' as a comment would pass test_docker_session_has_try_finally without fixing the actual bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/selenium at solve.sh (solution/solve.sh), and an agent could read it. Also, since tests only check for string patterns in files, an agent could grep test_outputs.py for the expected strings and insert them verbatim into source files without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The tests cover all major behaviors described in instruction.md: try-finally protection, Duration fields, configurable stop grace period, CLI flag, factory integration, Debug thread safety fix, readFully replacement, and unit test existence."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

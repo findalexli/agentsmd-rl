@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require: (1) a new test method with specific name and @Test annotation, (2) VNC handling code positioned before browserName check in the apply method, (3) a specific comment string. A stub/no-op implementation would not satisfy these - particularly the order check requires actual code restructuring, and the bazel test suite must pass meaning the Java test must actually verify VNC propagation behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/selenium after the agent starts (solve.sh is at solution/solve.sh in the container). An agent could read the solution file or the gold patch directly. The Dockerfile doesn't remove or protect the solution directory."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors specified in instruction.md are tested: VNC caps propagation when no browserName (test_vnc_propagation_order_in_apply_method, test_session_capabilities_mutator_test_suite), the comment requirement (test_vnc_propagation_comment_exists), and the new test method (test_new_test_method_exists)."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

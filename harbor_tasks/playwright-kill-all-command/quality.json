@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since tests only check for string presence in files (not execution), an agent could write a stub function 'async function killAllDaemons() {}' containing the right keywords ('run-mcp-server', '--daemon-session', 'SIGKILL', 'win32', 'execSync') as comments or dead code, add the routing strings, and pass all fail-to-pass tests without any actual process-killing logic."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh exists in the container at /workspace and contains the complete gold patch. An agent could read it directly. Additionally, since tests only check for string patterns, the agent could grep the test file itself to discover exact strings needed (e.g., 'killAllDaemons', 'declareCommand') and insert them as dead code."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says the command should 'Report how many processes were killed (or that none were found)' but no test verifies this reporting behavior. The instruction says it should 'Forcefully terminate matched processes' but no test verifies actual process termination."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

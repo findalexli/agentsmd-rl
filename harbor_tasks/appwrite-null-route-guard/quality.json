@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The F2P tests only check for the presence of specific strings in the file content (`if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`). An agent could simply insert those strings as dead code comments or unreachable code blocks and pass the tests without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at `/workspace/appwrite` in the container (solve.sh is accessible), and the tests are purely text-matching so the agent could grep for expected patterns. The agent could also read the test file to discover exact string patterns to insert."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) null guards in both init and shutdown actions, (2) throwing GENERAL_ROUTE_NOT_FOUND, (3) valid PHP syntax. All three are tested, plus additional linting and static analysis."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

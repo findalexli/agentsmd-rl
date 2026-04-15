@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, test_keyed_artifact_uses_key_route) only check for string presence in source code. An agent could satisfy them by adding dead code comments containing the expected strings without actually implementing the fix. For example, adding '// \"/artifacts/artifact/$id\"' and '// \"latest_id\" in artifact' as comments would pass the text checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/prefect and solve.sh is accessible in the container. The agent could read the solution patch directly. Additionally, since tests are pure string-matching, the agent could grep test_outputs.py for the exact strings being asserted and inject them as comments or dead code."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (route selection based on key truthiness, ArtifactCollection vs Artifact handling with latest_id, removal of old fallback pattern) are covered by tests, plus the vitest/typecheck/lint/build tests verify overall correctness."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

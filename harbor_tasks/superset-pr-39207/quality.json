@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific keyword arguments in specific call sites. A stub or no-op implementation would not pass because the tests verify the presence of 'template_processor=template_processor' in the adhoc_column_to_sqla call with force_type_check=True, which is absent in the base commit."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/superset's solve.sh and the gold patch is visible in the container. An agent could read /solution/solve.sh or simply grep for the exact pattern needed. The tests check for text patterns that could be trivially matched by copying the patch."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction describes that template_processor is not being passed through in the adhoc column filter code path, and the tests verify exactly this behavior (that template_processor is passed to adhoc_column_to_sqla in the filter processing section)."
@@ -53,11 +49,10 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

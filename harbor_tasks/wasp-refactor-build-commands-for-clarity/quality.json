@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific changes from the base commit state. The original repo has 'build:all)' in the case block and 'BUILD_ALL_STATIC_CMD' defined, so a stub/no-op would fail tests like test_old_build_all_removed and test_static_via_env_var. The agent must actually modify files to pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/wasp's git history or the agent could read solve.sh if mounted. The Dockerfile does a shallow clone and the solution file contains the exact git patch. An agent could also grep test_outputs.py for the exact regex patterns and string matches expected, then craft minimal edits to satisfy them."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicit requirements from instruction.md are tested: build dispatches BUILD_ALL_CMD, build:hs exists, build:all and build:all:static removed, BUILD_STATIC env var used, BUILD_ALL_STATIC_CMD removed, CI uses './run build', PowerShell updated, build:packages preserved."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

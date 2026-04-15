@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check for the presence of specific strings in the source file. An agent could simply append the required strings as comments (e.g., '// shared::{gas::GasMeter, linkage_context}') to pass the text-matching tests. While test_code_compiles would catch non-compiling changes, the f2p text tests themselves are trivially satisfiable without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/sui after applying solve.sh, and the test file at tests/test_outputs.py contains all the exact literal strings being tested. An agent could read the test file to discover exactly what strings to insert, or read the solution patch directly. No measures prevent accessing /solution/ or test files."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (import linkage_context, create linkage table, create LinkageContext, update package loading, compilation check) are tested by the test suite."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

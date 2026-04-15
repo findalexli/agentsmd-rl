@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (e.g., test_build_all_script_added, test_next_swc_build_renamed, test_turbo_jsonc_task_renamed, test_agents_md_build_all_documented) all check for content that doesn't exist in the base commit. A stub or no-op implementation would not add 'build-all' to package.json or create turbo.jsonc, so these tests would fail without actual changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/next.js as a gold patch file at solution/solve.sh. The agent could potentially read the solution directory if it exists in the container. Additionally, since the tests are purely text-matching (checking for specific strings like 'build-all', 'build-native-auto'), an agent could grep test files or environment to find expected values."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four major requirements from the instruction are tested: build-all in root package.json, build-native-auto rename in next-swc package.json, turbo.jsonc creation with renamed task, and AGENTS.md documentation updates including build vs build-all distinction and branch switching guidance."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 8,
-  "fail_count": 4
+  "fail_count": 3
 }

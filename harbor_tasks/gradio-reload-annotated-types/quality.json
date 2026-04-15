@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_watchfn_no_future_annotations_flag, test_annotated_class_hints_resolve, test_annotations_not_stringified_after_exec, test_forward_refs_are_quoted) all require actual removal of 'from __future__ import annotations' and proper quoting of forward references. A stub or no-op would fail because the CO_FUTURE_ANNOTATIONS flag would still be present, annotations would still be stringified, and bare forward refs would cause NameErrors."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the full git patch. An agent could read /solution/solve.sh (or solution/solve.sh relative to any accessible path) and apply it directly. No evidence of the solution directory being removed or made inaccessible in the Dockerfile."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) reload mode works with Annotated types \u2014 tested by test_annotated_class_hints_resolve; (2) watchfn doesn't carry CO_FUTURE_ANNOTATIONS \u2014 tested by test_watchfn_no_future_annotations_flag; (3) bare annotations converted to strings \u2014 tested by test_forward_refs_are_quoted. All explicitly required behaviors are tested."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

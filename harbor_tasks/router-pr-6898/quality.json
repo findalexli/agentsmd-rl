@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply adds the required strings as comments (e.g., `// resolveAuthorForPR prAuthorCache prMatch` with the regex pattern and API URL) without any functional implementation would pass all fail-to-pass tests since they only check for string presence and ordering in the file content."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (accessible in container) and the agent could read solve.sh or simply grep test files to find the exact strings being asserted ('resolveAuthorForPR', 'prAuthorCache', etc.) and insert them as dead code/comments to pass all tests without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that PR entries get author attribution and dependency updates continue to work, but no test actually verifies changelog transformation behavior \u2014 e.g., no test checks that a line like '- Fixed navigation ([#6891](url))' gets ' by @username' appended after the fix."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

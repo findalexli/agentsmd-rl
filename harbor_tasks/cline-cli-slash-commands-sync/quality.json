@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All f2p tests only check for the presence of strings in source files (e.g., checking that 'exactMatches' appears in slash-commands.ts, that 'filterCommands' appears in test files). A stub file containing the right keywords as comments (e.g., '// exactMatches prefixMatches fuzzyFilter') with no actual implementation would pass all f2p tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is fetched via 'curl -sL https://github.com/cline/cline/pull/9747.patch' in solve.sh, and the agent could read /solution/solve.sh to discover this. Additionally, since tests only check for string presence in files, the agent could grep test_outputs.py for the expected strings and write files containing just those strings."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires deterministic command filtering behavior (exact matches first, then prefix, then fuzzy), standalone command detection distinguishing '/q' from '/q something', and execution logic respecting menu visibility. None of these behaviors are actually tested at runtime \u2014 tests only check for string patterns in source code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

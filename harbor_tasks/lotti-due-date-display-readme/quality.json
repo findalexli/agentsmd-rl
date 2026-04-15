@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific code patterns (TaskDone/TaskRejected references in _buildDateRow, hasDueDate gated by isCompleted) that don't exist in the base commit. A stub or no-op implementation wouldn't add these patterns to the existing source files."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/lotti as a git repo where solve.sh applies a patch. The agent could read test_outputs.py (though hidden, it's at a predictable path in /logs/verifier or similar), or more directly, the agent could inspect the git log or look for the solution patch. Also, since tests use regex on source code, the agent could just insert the expected patterns as comments without real logic."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that due dates are 'completely hidden' for completed/rejected tasks on task cards and use 'grayed-out/neutral styling' in detail view. Tests only check source code text patterns (regex for variable names and type references) rather than verifying the actual rendering behavior \u2014 they don't test that the widget actually hides the due date or changes styling."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

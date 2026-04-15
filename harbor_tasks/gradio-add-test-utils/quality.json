@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply creates files containing the expected literal strings (e.g., a download.ts containing 'export async function download_file' as a comment or empty function body, fixtures.ts with 'export const TEST_TXT = null') would pass all f2p tests since they only check for string presence in file contents, not actual functionality."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/gradio's container at solve.sh path. The agent could read solution/solve.sh if it exists in the container, or since tests only check for string patterns in files, the agent could grep the test file itself to extract exact required strings and write minimal stub files matching those patterns."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires mock_client to have 'upload method (echo-back behavior)' and 'stream method (no-op)', but tests only check that 'upload' and 'stream' strings appear in render.ts. The echo-back behavior is never tested. Similarly, drop_file's DataTransfer/dragenter/dragover/drop dispatch behavior is not tested at all."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 7,
-  "fail_count": 5
+  "fail_count": 4
 }

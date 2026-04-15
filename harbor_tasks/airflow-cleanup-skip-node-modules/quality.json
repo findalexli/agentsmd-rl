@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The behavioral tests (test_skips_node_modules, test_cleans_pyc_files_in_regular_directories, etc.) call cleanup_python_generated_files_fixed which is defined locally in the test file, not imported from the patched code. These tests always pass regardless of any changes to path_utils.py. Only the structural text-search tests (test_uses_os_walk_instead_of_rglob, test_dirnames_pruning_in_os_walk) actually verify the patched file."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/airflow's git history context and solve.sh is at a known path. The agent could read solution/solve.sh to see the exact patch. Additionally, since the structural tests just check for string patterns ('os.walk', 'dirnames[:]', 'node_modules', 'startswith'), the agent could add these as dead code/comments to pass without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that FileNotFoundError is silently ignored and PermissionError is caught with paths appended to permission_errors. While test_handles_permission_errors exists (truncated), the behavioral tests only test a locally-defined function, not the actual patched code, so the actual patched function's error handling is never verified."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

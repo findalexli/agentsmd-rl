@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all f2p tests are string-matching tests, an agent could simply insert a comment block containing all the required strings (e.g., '// const handleWheel = (event: ... onWheel?.(event) ... isAtTop ... isAtBottom ... event.stopPropagation() ...') without implementing any actual functionality, and all f2p tests would pass. The TypeScript compilation test might catch non-compilable code but the Jest test for ScrollArea is pass_to_pass (existing tests, not new behavioral tests)."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/mantine and the solve.sh is in /solution/solve.sh within the container. An agent could read /solution/solve.sh to get the exact patch, or simply grep the test file to discover the exact strings being checked and insert them."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (onWheel extraction, handleWheel function, calling user's onWheel, boundary detection with isAtTop/isAtBottom, canScrollHorizontally check, shiftKey check, stopPropagation, attaching to Box) are tested."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

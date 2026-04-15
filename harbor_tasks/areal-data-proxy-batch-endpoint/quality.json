@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub returning None/empty/default would fail: test_batch_valid_request checks that body[0] == [1,2,3] and body[1] == [4,5,6]; test_batch_missing_shard_error checks status != 200; test_batch_invalid_input_rejected checks status in (400,422). No trivial stub satisfies all these."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution directory is not present in the container at test time (it's applied via solve.sh). The test fixtures (MockStorage data) are embedded in the test script preamble which is hidden from the agent. The agent cannot simply grep for expected values since they must be served through a working FastAPI endpoint that correctly interfaces with storage."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction specifies: valid batch retrieval, empty input, invalid input (non-list, non-string items), missing shard errors, and route ordering. Tests cover all of these: test_batch_valid_request, test_batch_empty_shard_ids, test_batch_invalid_input_rejected, test_batch_missing_shard_error, and test_batch_route_ordering."
@@ -55,6 +51,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 10,
+  "pass_count": 9,
   "fail_count": 1
 }

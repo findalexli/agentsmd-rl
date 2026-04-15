@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Tests like test_container_is_running_method only check that the string 'public boolean isRunning()' and 'return running' appear in the file. An agent could add a stub `public boolean isRunning() { return running; }` with a hardcoded `boolean running = false;` field and pass. Similarly, test_timezone_null_check just checks for 'Optional.ofNullable' string presence - adding a dead-code comment would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/selenium (the solve.sh applies a patch there). An agent could read solution/solve.sh if accessible, or since the tests only check for string presence in source files, the agent could simply grep the test file to discover exactly which strings to insert without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All six behavioral requirements from the instruction (parseMultiplexedStream, isRunning, getLogs with InputStream, isBinaryStream with content types, isRunning check in saveLogs, TZ null check) are tested by corresponding test functions."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

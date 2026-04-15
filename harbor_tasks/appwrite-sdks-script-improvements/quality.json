@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_console_output_formatting_improved checks for '{$' interpolation syntax which likely already exists in the base file, or counts lines with 2-space indented console outputs where >=3 is sufficient. A no-op solution could pass this test if the original code already contains some interpolation patterns."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container and downloads the gold file from GitHub. An agent could read /workspace/appwrite/../solution/solve.sh or directly curl the merge commit's file. Also, since tests are pure text-matching on source code, the agent could read test_outputs.py to discover exact strings needed."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction mentions 'Console Output Consistency' requiring double-quoted strings with {$variable} interpolation and 2-space indentation, but the test (test_console_output_formatting_improved) only weakly checks this with a threshold of >=3 lines or any interpolation. The behavioral requirement of consistent formatting throughout is not thoroughly verified."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

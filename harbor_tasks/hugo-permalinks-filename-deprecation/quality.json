@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_page_path_disable_path_to_lower, test_page_bundler_slug_or_content_basename) actually run the Go tests and check both for deprecation error strings and non-zero return codes. A stub implementation that doesn't fix the deprecated tokens would still produce deprecation errors and fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace and the agent could read solve.sh or the gold patch directly. There's no evidence of protection against reading /solution/solve.sh. The agent could also grep test_outputs.py to discover exactly what strings are checked."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors mentioned in the instruction (updating deprecated tokens in 4 test files, updating .Site.Data to hugo.Data, adding -failfast flag) are tested. The hugo.go debug comment change is not required by instruction and not tested."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for absence of specific patterns (truncate_long_unions, Specialization::display with DisplaySpecialization, pub on specific items). A stub/no-op implementation wouldn't pass because the original source file contains these patterns. The agent must actively modify the file to remove them, and the cargo check/clippy tests ensure the modifications don't break compilation."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /solution/solve.sh and /solution/display.patch inside the container. The agent could simply run 'cat /solution/solve.sh' or 'git apply /solution/display.patch' to obtain and apply the gold solution without understanding anything about the task."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors required by instruction.md are tested: removal of dead code (truncate_long_unions, Specialization::display), removal of unnecessary pub on structs/enums/methods, making fields private, and compilation/lint/test/format/doc gates."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

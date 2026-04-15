@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "While the tests are text-based, they do check for specific non-trivial content that wouldn't exist by default in the repo \u2014 a stub/empty implementation wouldn't add the required strings to the files. The tests would fail without actual code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/playwright (the solve.sh creates a patch). The agent could read /tmp/kill_all.patch or the solution/solve.sh file if accessible. Also, since tests are purely string-matching, the agent could simply insert the exact expected strings into the files without understanding the implementation."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires cross-platform process killing behavior (Windows PowerShell, Unix ps aux + SIGKILL), error handling ('Handle errors silently'), and output ('Output the number of processes killed'). None of these runtime behaviors are tested \u2014 only text presence in source files."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

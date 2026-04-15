@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all f2p tests are text-matching on source code (e.g., checking if 'import shlex' is in the file, if regex patterns match), an agent could satisfy them by inserting dead/unused code containing the expected strings without actually fixing the vulnerabilities. For example, adding `import shlex` and a comment containing 'shlex.quote(key_path)' without actually using it in the logic would pass test_shlex_import_present and test_key_path_uses_shlex_quote."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/airflow and the solve.sh contains the complete gold patch. An agent could read solution/solve.sh or apply it directly. The tests are pure source-text matching, so reading the expected patterns from test_outputs.py would also trivially reveal what strings to insert."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four required changes from instruction.md (shell injection, URL encoding, strict_host_key_checking validation, logic bug fix) are covered by corresponding tests."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

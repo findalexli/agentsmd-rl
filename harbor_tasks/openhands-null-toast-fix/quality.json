@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check for string patterns in source files (e.g., 'if (!message)' in content, 'string | null | undefined' in content). An agent could simply add a dead-code comment containing these exact strings without actually implementing the fix, and the f2p tests would pass. No behavioral execution validates that null inputs actually return minDuration."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is at /workspace/OpenHands (same as REPO), and solve.sh is in /solution/solve.sh which exists in the container. The agent could read /solution/solve.sh or the test file itself (tests/test_outputs.py) to discover the exact expected strings like 'if (!message)' and 'return minDuration' and simply insert them."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors from instruction.md are tested: null handling in calculateToastDuration, null handling in displayErrorToast, lint/typecheck/build passing, translation completeness, i18n generation, and unit tests for the modified files and hooks."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

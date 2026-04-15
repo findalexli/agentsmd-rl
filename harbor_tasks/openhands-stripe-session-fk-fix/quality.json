@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply has the right signature and text patterns would pass all tests. For example, 'async def migrate_customer(session, user_id, org): result = await session.execute(select(1))' with no real logic would pass every fail-to-pass test since tests only check text patterns and AST structure, not actual behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/openhands with solve.sh containing the exact patch. The agent could read solution/solve.sh or simply apply it. Additionally, since tests check for literal strings like 'migrate_customer(session, user_id, org)', the agent could grep test files or solution files to find the exact expected strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All five key requirements listed in instruction.md (session as first parameter, no a_session_maker, session.execute usage, no session.commit, caller passes session) are each tested by corresponding test functions."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

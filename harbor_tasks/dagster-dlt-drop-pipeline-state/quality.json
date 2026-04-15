@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) only check for string presence in the source file. An agent could simply insert the exact comment and code strings as dead code (unreachable block) and pass all F2P tests without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/dagster's solve.sh which shows the exact git patch. The agent could read solution/solve.sh to see the gold patch. Also, since tests are pure text matching, the agent could grep for expected strings and insert them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All 7 requirements from instruction.md are tested: restore_from_destination check (req 1-2), drop_pending_packages for disabled case (req 3), ordering before run() (req 4), and all three exact comment strings (req 5-7)."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

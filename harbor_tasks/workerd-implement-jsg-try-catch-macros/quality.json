@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that merely adds '#define JSG_TRY(js) if(true)' and '#define JSG_CATCH(x) else' to jsg.h, declares an empty 'class JsgCatchScope' with stub getCaughtException/catchException methods, adds 'JSG_TRY' text to the migrated files, and updates README.md with the required strings would pass all tests without implementing actual exception handling."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/workerd with solve.sh accessible in the container. The agent could read solution/solve.sh (if mounted) or inspect test_outputs.py to discover exactly what strings to grep for. Tests only check text presence, so the agent could trivially insert matching strings without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires macros that 'automatically convert both JavaScript exceptions and KJ exceptions to jsg::Value', 'set up proper try/catch infrastructure', 'support nested usage', 'support optional ExceptionToJsOptions', and 'be if-else friendly'. None of these behavioral requirements are tested - only text presence is checked."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

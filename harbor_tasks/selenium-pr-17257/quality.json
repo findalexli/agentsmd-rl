@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail_to_pass tests check for patterns (new method signature, @Deprecated annotation, delegation pattern, updated callers) that do not exist in the base commit. A stub or no-op would not add these patterns to the source files, so the tests would fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/selenium's solve.sh (solution/solve.sh), and the agent could read it. Additionally, since tests only do text matching on source files, the agent could grep test_outputs.py for the exact regex patterns and write minimal text edits to satisfy them without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All five requirements from instruction.md are tested: new method signature (test_new_method_signature_exists), @Deprecated on old method (test_old_method_deprecated), delegation (test_old_method_delegates_to_new), all four caller updates (test_cdp_event_types, test_remote_script, test_w3c_codec, test_read_test_updated)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

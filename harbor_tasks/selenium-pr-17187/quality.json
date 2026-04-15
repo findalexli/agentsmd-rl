@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A 'stub' fix that simply inserts a comment containing the exact strings 'Duplicate JSON field name detected while collecting field writers', '(existing, replacement) ->', and 'throw new JsonException(\"Duplicate JSON field name detected' into the source file (without actually changing behavior) would pass all three f2p tests as long as the file still compiles. The tests check text presence, not runtime behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/selenium relative path accessible from the container. The agent could read tests/test_outputs.py or solution/solve.sh to find the exact strings to insert. The tests only check for literal string presence in source code, so the agent could grep for expected strings and insert them without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says the library should 'throw a JsonException with a descriptive message' when duplicate field names are detected during deserialization, but no test actually performs JSON deserialization of a class with duplicate field names to verify the JsonException is thrown. The behavioral requirement is only checked via source text matching."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

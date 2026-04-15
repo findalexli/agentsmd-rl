@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub route.ts containing just comments with 'browser_route', 'browser_route_list', 'browser_unroute' strings would pass test_route_tools_file_exists. Similarly, adding string literals to commands.ts without functional implementation would pass test_terminal_commands_defined and test_route_command_maps_arguments_correctly. The build/lint tests provide some guard but the feature-specific tests are satisfiable without real implementation."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/playwright's solve.sh which is accessible in the container. The agent could read /tmp/network_route.patch or the solution directory to extract the exact gold patch. Additionally, test fixture strings like 'Do not run test --debug' and 'npm run flint' are visible in test_outputs.py if the agent can access the tests/ directory."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires route.ts to support fulfilling with mock response AND modifying headers and continuing, defines specific RouteEntry fields (handler, addHeaders, etc.), and requires removeRoute to return number of routes removed. None of these behavioral requirements are tested - only string presence in files is checked."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

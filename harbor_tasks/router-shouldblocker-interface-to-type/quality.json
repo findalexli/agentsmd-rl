@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check that 'interface ShouldBlockFnLocation' is NOT in the file and that 'type ShouldBlockFnLocation' IS present. A stub/no-op wouldn't pass because the original files contain the interface declaration. The TS4023 regression test compiles actual TypeScript code that would fail without the fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/router's solve.sh (accessible in the container at solution/solve.sh or via the Dockerfile). The agent could read the gold patch directly. Additionally, the text-based tests (regex matching in files) could be satisfied by simple sed/regex replacement matching the literal fixture strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) converting interface to type in three files, (2) TypeScript type checking should pass, (3) TS4023 error resolved. All three are tested via text checks, compilation tests, and the TS4023 regression test."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

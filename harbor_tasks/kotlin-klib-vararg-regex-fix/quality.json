@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The F2P tests only check for the presence of a literal string '(?!\\\\.\\\\.\\\\.)'  in the source file. An agent could simply insert that string as a comment anywhere near validIdentifierWithDotRegex without actually fixing the regex, and all F2P tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/kotlin with solve.sh accessible. The agent could read /solution/solve.sh or the test file tests/test_outputs.py to discover the exact expected string '(?!\\\\.\\\\.\\\\.)'  and insert it without understanding the bug. The tests only grep for this string."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md says 'Ensure the fix works for parsing inputs like kotlin/DoubleArray... correctly, where the type is kotlin/DoubleArray and the parameter is marked as a vararg.' No test actually verifies this parsing behavior - they only check for a string pattern in the source file."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

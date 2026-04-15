@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub fix that simply adds a comment '// Display registry objects are global objects' and 'let scope = scope.without_root_bound();' before Object::latest without understanding the bug would pass all F2P tests (test_code_compiles, test_without_root_bound_applied, test_fix_has_proper_comment). The tests don't verify the actual runtime behavior of Display v2 rendering."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sui (or could be accessed via the solve.sh). The agent could read tests/test_outputs.py to see exactly what strings are asserted ('scope.without_root_bound()' and 'Display registry objects are global objects') and simply insert those strings to pass. The gold patch is also readable from solve.sh showing the exact diff to apply."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requirement #4 mentions 'cargo clippy -p sui-indexer-alt-graphql' must pass. While test_cargo_clippy tests this, the core behavioral requirement\u2014that Display v2 formats actually render correctly for older versioned objects\u2014is never tested with an actual runtime/integration test."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

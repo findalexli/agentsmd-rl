@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub or no-op implementation would not pass because the tests check for specific code patterns (getCachePoint(message) and the push pattern) that don't exist in the original source file's user case block. The agent must actually add the specific code."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/effect (the solve.sh with the exact patch is accessible if the agent reads solution/solve.sh). The agent could also grep for the expected patterns in the test file or solution and replicate them. Additionally, since tests are pure text matching, the agent could just insert the exact string pattern without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires cache point handling in the user case block equivalent to the assistant case block, and TypeScript compilation. Both are tested (text pattern matching for cache point handling, tsc --noEmit for compilation)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

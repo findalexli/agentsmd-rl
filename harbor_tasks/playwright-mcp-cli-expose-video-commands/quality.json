@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation would not pass - tests require specific file creation (video.ts must exist), specific string content in files, and specific ordering of elements. The agent must write actual code with the right structure and content."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/playwright as solve.sh is applied there. The agent could potentially read the solution/solve.sh file or the test file itself (tests/test_outputs.py) to see exactly what strings are being asserted. Since tests are pure string matching, the agent could grep the test file for all asserted strings and produce matching content without understanding the task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Several instruction requirements are not tested: the 'remove debug console.log(matchingDirs) statement from Session.cleanup()' is never checked; backward compatibility behavior (when 'tracing' is specified, automatically add 'devtools') is only checked via string matching, not actual CLI behavior; the video API calls (tab.page.video().start/stop) are never validated for correctness."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

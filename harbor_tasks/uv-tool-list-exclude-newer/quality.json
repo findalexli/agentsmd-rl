@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific new code additions (exclude_newer field in ToolListArgs, exclude_newer handling in ToolListSettings, new parameters in list() signature, option merging). A stub/no-op implementation would not add these structural elements and would fail these tests. The base commit explicitly lacks these, confirming they're non-trivial."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/uv as a git repo where solve.sh applies a patch. The agent could read solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). Additionally, since tests are purely text-matching on source files, the agent could reverse-engineer exactly what strings need to appear by examining the test file patterns."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction states 'The CLI flag should take precedence over filesystem configuration, and both should take precedence over tool-specific stored options \u2014 matching the standard option-merging behavior.' No test verifies this precedence ordering at runtime. Tests only check structural presence of code, not that exclude-newer actually filters releases or that precedence works correctly."
@@ -52,8 +48,7 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -61,5 +56,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

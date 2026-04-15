@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The base commit does not have Rust support, so a stub/no-op implementation would fail tests like test_rust_sdk_config_exists (checks for 'key' => 'rust'), test_rust_language_import (checks for Rust token in SDKs.php), and test_rust_switch_case (checks for case 'rust' and new Rust()). These require actual code changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace as solve.sh (copied during setup). The agent could potentially read /solution/solve.sh or the gold patch to extract the exact changes needed. The tests also run PHP scripts from /tmp/pt.py which the agent could inspect, but more critically the solution directory may be accessible."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in the instruction are tested: config existence (test_rust_sdk_config_exists), config values (test_rust_sdk_config_values), all required fields (test_rust_sdk_array_structure), language import (test_rust_language_import), switch case (test_rust_switch_case), ordering (test_switch_case_order), PHP syntax (test_php_syntax_valid), and code style/static analysis (test_pint_linter, test_phpstan_analysis)."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 9,
-  "fail_count": 3
+  "fail_count": 2
 }

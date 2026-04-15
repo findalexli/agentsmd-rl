@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_hook_accepts_opts_parameter, test_hook_checks_opts_show, etc.) only check for text patterns in the source file. An agent could satisfy them by inserting the exact expected strings as dead code or comments without actually fixing the bug's behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/prometheus as solve.sh with the exact patch. The agent could read tests/test_outputs.py to find the exact literal strings being asserted (e.g., 'if (opts.show != null)') and insert them. The instruction itself also provides the complete solution specification."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All three explicit requirements from instruction.md are tested: the opts parameter (test_hook_accepts_opts_parameter), the opts.show != null check (test_hook_checks_opts_show), and the comment update (test_comment_updated). TypeScript compilation is covered by lint test."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

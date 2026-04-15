@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub implementation that simply appends comment lines containing the literal strings 'SecureRandom.hex(12)', 'define_singleton_method(:generate_available_uuid_list)', 'local_podspecs_dir', '.podspec.json', 'xcfw_info', and 'rm_rf(pod_dir)' to the respective files would pass all f2p tests without implementing any actual bug fix. The tests only check for string presence, not functional behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /solution/solve.sh and /solution/gold.patch which exist in the container. An agent could read these files directly (cat /solution/gold.patch) to obtain the exact fix. Additionally, since tests are purely text-matching, the agent could grep test files for the expected strings and inject them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in the instruction (UUID collision fix via SecureRandom and singleton method, cache clearing of local podspecs and stale pod dirs) are tested, though only via text matching."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

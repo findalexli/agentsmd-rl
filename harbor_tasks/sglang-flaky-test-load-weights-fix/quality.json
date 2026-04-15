@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The visible f2p tests (test_syntax_check, test_repo_python_syntax_check, test_repo_ruff_check, test_repo_black_check, test_repo_codespell_check, test_repo_isort_check, test_repo_toml_check, test_repo_yaml_check, and various pre-commit checks) would all pass on the unmodified base commit without any changes. They check syntax, formatting, and linting \u2014 not the actual bug fix. The base commit already passes these checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/sglang and solve.sh is accessible. The agent could read the solution patch from the container's /solution/solve.sh (if mounted) or grep for the FIXME comment string in test files. The gold patch is also embedded in solve.sh with the exact diff."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says to make the configuration unconditional (the core behavioral fix), but the tests only verify via AST parsing and linting checks \u2014 they never actually run the test or verify it doesn't hang. The actual behavioral requirement (no hang during initialization) is untested."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

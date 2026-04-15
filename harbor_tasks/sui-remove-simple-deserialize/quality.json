@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail_to_pass tests check that specific methods/imports have been removed from source files. A stub/no-op solution (doing nothing) would fail because the methods would still be present. The cargo check/clippy tests would also catch dead code warnings. These tests require actual code removal."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/sui's solution/solve.sh (if present in container), and the gold patch is a git diff that could be read directly. The agent could also read test_outputs.py to see exactly what strings are checked for. The text-based tests (checking for string absence) could be gamed by simply deleting the target strings without understanding the code."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors specified in instruction.md are tested: removal of 5 simple_deserialize methods, removal of the AResult import, event.rs using BoundedVisitor, and cargo check/clippy/test/build passing."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

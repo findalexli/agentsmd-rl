@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail_to_pass tests (test_dagversionselect_vitest, test_component_imports_dag_run_hook, test_component_extracts_runid, test_component_filters_versions) all depend on a test file DagVersionSelect.test.tsx that doesn't exist initially. The agent must CREATE this test file. An agent could write a trivial test file with passing stubs (e.g., tests that assert true) with the right test names ('DagRun is selected', 'no DagRun') and satisfy the subprocess-based checks without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/airflow with solve.sh containing the full gold patch. The agent could read /solution/solve.sh (or the solution directory) to extract both the test file and component fix. The Dockerfile doesn't remove or protect the solution directory."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) show all versions when no DagRun selected, (2) filter to run's versions when DagRun selected. Both behaviors are tested via the vitest test cases 'no DagRun' and 'DagRun is selected'."
@@ -53,11 +49,10 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

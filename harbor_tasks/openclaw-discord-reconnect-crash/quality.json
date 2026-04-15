@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail-to-pass tests (test_drain_reconnect_exhausted_not_gated, test_drain_reconnect_exhausted_returns_stop, test_drain_no_parenthesized_lifecycle_guard) all check for the ABSENCE of the buggy pattern. The original unmodified file contains the bug pattern, so these tests would fail on the original code but pass on ANY modification that removes or alters the specific text pattern \u2014 including simply deleting the entire function body or replacing it with a stub, which would also pass these tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/openclaw in the container (from the git checkout), and solve.sh contains the exact patch. An agent could read solve.sh or the solution directory. Additionally, since tests are purely text-based regex checks, the agent could simply delete the offending lines (the bug pattern) without understanding the bug, and all fail-to-pass tests would pass."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires that reconnect-exhausted be treated as a graceful stop unconditionally (not gated by lifecycleStopping). The fail-to-pass tests verify this by checking the guard is removed. The instruction also implicitly requires preserving existing functionality, which pass-to-pass tests cover (disallowed-intents, lifecycleStopping flag, exports)."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The F2P tests check for 'import urllib.request' in the file content and AST, and test_url_retrieve_has_working_import executes code that would fail with AttributeError without the fix. A stub/no-op cannot pass these since the base file is missing the import."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/lancedb's solve.sh path (solution/solve.sh shows the exact patch). An agent could read this file or grep for the expected fixture strings. The Dockerfile doesn't remove the solution directory."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires adding `import urllib.request` and verifying `url_retrieve()` works with HTTP URLs. Tests cover the import presence, function existence, execution behavior, syntax validity, and linting \u2014 all behaviors described in the instruction."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

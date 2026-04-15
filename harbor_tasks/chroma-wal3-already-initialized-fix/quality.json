@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The F2P tests only check for string presence in source files. An agent could write a file containing the exact expected strings without implementing any actual logic (e.g., a comment containing 'return Err(Error::AlreadyInitialized)' and 'matches!(result, Err(Error::AlreadyInitialized))') and pass the F2P tests. The P2P tests (cargo check/build/clippy) provide compilation verification, but the F2P tests themselves are satisfiable without a correct fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The instruction itself provides the exact strings the tests check for (e.g., 'matches!(result, Err(Error::AlreadyInitialized))', 'num_writers = 32', the function name). An agent could also read /workspace/chroma and the solution/solve.sh if accessible in the container. The test assertions are literal string matches, so matching fixture strings without understanding the bug is trivially possible."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors required by instruction.md are tested: the error mapping fix (test_manifest_manager_returns_already_initialized), the repl_02 test update (test_repl_02_checks_already_initialized), the repl_06 test creation (test_repl_06_parallel_init_test_exists), and compilation (cargo check/build/clippy/fmt tests)."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation would not pass \u2014 the tests require specific files to exist with specific content (YAML with allocation_mode containing 'megatron', JSON with exactly 16 floats), AST-level parametrize decorators on specific functions, and backend-dependent config path patterns. These cannot be satisfied by empty/default implementations."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/AReaL as solve.sh is applied there. The agent could read the solution directory if it exists in the container. Additionally, the test file itself contains inline Python scripts with all expected values (experiment names, file paths, constraints), making it trivial to reverse-engineer the expected output by examining the test infrastructure."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All seven requirements from instruction.md are tested: parametrized test functions (tests 1,2,7), backend-specific configs (tests 3,4), ref_losses_megatron.json (test 5), backend-dependent config path (test 6), file renaming is implicitly tested via the config path pattern, and no hardcoded 'config.yaml' is enforced by the backend path check."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 8,
-  "fail_count": 4
+  "fail_count": 3
 }

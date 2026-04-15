@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original buggy code (e.g., 'const target = @min(count, ...' doesn't exist before the fix, 'count - sync.spawned' exists before and must be removed). A stub/no-op would not pass these."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/bun as a git repo where solve.sh applies a patch. The agent could read solution/solve.sh if it exists in the container (the Dockerfile doesn't explicitly remove it). Also, since tests are pure string-matching on source files, the agent could grep test files to discover exact expected strings and copy them in."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md says 'When warm(8) is called on an empty pool with max_threads >= 8, all 8 threads should be spawned before the function returns.' No test actually verifies this runtime behavior - all tests are source-text pattern matching, not execution-based verification."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

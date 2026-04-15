@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests cannot be satisfied by stub implementations: test_shim_h_two_arg_deleter_compiles requires an actual compilable signature change, test_ops_h_accepts_capturing_lambda requires a template with is_invocable_v in the source, and test_shim_cpp_context_forwarded requires specific wrapping lambda code patterns. A no-op or empty change would not satisfy these."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/pytorch and the agent could potentially read the solution/solve.sh file if it exists in the container. Also, since tests are purely regex-based on source files, the agent could craft source text that matches the expected patterns without understanding the actual bug fix (e.g., adding comments containing the expected strings)."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction.md specifies that the fix must support capturing lambdas and be backwards-compatible with plain function pointers, but no test actually compiles and runs code that passes a capturing lambda through the full from_blob API or tests backward compatibility with plain function pointers at runtime."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check that SIM102 fix applicability changes from 'unsafe' to 'safe' when --preview is enabled. A stub or no-op implementation would leave the fix as 'unsafe' (the base behavior), failing test_fix_safe_in_preview. test_preview_function_defined checks for existence of the new function which doesn't exist at baseline."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ruff as solve.sh in the solution/ directory, and the Dockerfile doesn't remove it. The agent could potentially read /solution/solve.sh (or the gold patch therein) to get the exact changes needed. Additionally, the test file at tests/test_outputs.py reveals the exact expected behavior."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All three behaviors specified in instruction.md are tested: safe applicability in preview mode (test_fix_safe_in_preview), unsafe without preview (test_fix_unsafe_without_preview), and the gating function existence (test_preview_function_defined)."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

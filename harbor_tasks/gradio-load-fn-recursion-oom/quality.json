@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests verify real behavior: test_closure_no_self_recursion runs code that would infinitely recurse without the fix; test_stop_iteration_handled checks that StopIteration is caught and converted to Error (a stub would fail); test_empty_exception_non_empty_message checks non-empty error messages (passing through empty str(e) would fail)."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /repo/../solution/solve.sh (or similar path in the container). The agent could potentially read the gold patch from the solution directory. There's no evidence of explicit measures to prevent this (e.g., the Dockerfile doesn't remove /solution)."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors mentioned in instruction.md are tested: kwargs.pop('fn') pattern (test_closure_no_self_recursion), StopIteration handling (test_stop_iteration_handled), non-empty error messages for bare exceptions (test_empty_exception_non_empty_message), 401/auth errors (test_401_error_still_handled), 429 errors (test_too_many_requests_still_handled), branching/raise counts (test_handle_hf_error_not_stub)."
@@ -53,11 +49,10 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

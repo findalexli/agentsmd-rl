@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require creating new files (SKILL.md, Run-IntegrationTests.ps1, updating copilot-instructions.md, integration-tests.instructions.md) with specific content. A stub/empty implementation would fail these tests since they check for existence and specific content patterns."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/maui with solve.sh accessible. The Dockerfile doesn't remove /solution/ or restrict access. An agent could read the gold patch from solve.sh (if mounted) or inspect the test file at tests/test_outputs.py to determine exactly what assertions to satisfy. The test_git_repo_clean test requires committing changes, but the agent could still read solution files before applying changes."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction specifies MSBuild isolation fix requiring 'empty MSBuild project files (Directory.Build.props and Directory.Build.targets) in the test directory root' via File.WriteAllText in BaseBuildTest.cs, but no test verifies that these isolation files are actually created in test setup code. test_not_stub only checks for >= 3 File.* operations generically."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

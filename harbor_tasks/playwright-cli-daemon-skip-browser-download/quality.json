@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since all f2p tests are string matching against source code, an agent could simply insert the exact expected strings as comments or dead code (e.g., add '// async function resolveAndInstall(nameOrChannel: string)' and similar lines) and pass all f2p tests without actually implementing the fix correctly. The build test provides some guard but wouldn't catch dead code additions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/playwright and solve.sh is accessible. The agent could read solution/solve.sh to see the exact patch. Additionally, since tests are pure string matching, the agent could grep for expected strings in test files and insert them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: env var check (test_env_var_check_exists), shared helper with resolveBrowsers (test_resolve_and_install_helper_exists), ffmpeg dependency (test_ffmpeg_dependency_installation), chromium path refactoring (test_chromium_uses_resolve_and_install), and build/lint constraints."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

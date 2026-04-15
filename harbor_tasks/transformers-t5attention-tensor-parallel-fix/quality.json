@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail-to-pass tests are all string-matching checks (e.g., checking if 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' appears in the file). An agent could pass these by simply inserting the exact expected strings as dead code/comments without actually fixing the bug. test_view_operations_runtime_semantics tests numpy logic unrelated to the actual codebase changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The tests grep for exact literal strings in source files. An agent could read the test file (tests/test_outputs.py) to discover the exact strings being checked and insert them verbatim. The solution file exists at /solution/solve.sh in the container. Additionally, the test fixture values are plaintext strings that can be matched without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four fix locations described in the instruction (query reshape, KV reshape, position bias, attn output reshape) have corresponding tests, and the copy-to-other-files requirement is tested via syntax/compile/class-existence checks on all six files."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

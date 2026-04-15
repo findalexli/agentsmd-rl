@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The behavioral tests (test_w_with_m_is_month_name, test_w_with_various_flags, etc.) test hardcoded C++ code embedded within test_outputs.py, not the agent's code. They always pass regardless of what the agent does. Only test_patch_applied checks the agent's work, and it's a simple grep that could be satisfied by just inserting the expected string anywhere in the file."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/ClickHouse accessible to the agent. The test_patch_applied test greps for the literal string \"variable_width_formatter_M_is_month_name = {'M'}\" \u2014 the agent could simply read the solution file or grep for this expected string. Also, solution/solve.sh is present and readable, containing the exact patch."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that containsOnlyFixedWidthMySQLFormatters returns false for %W regardless of settings. The tests embed a fixed implementation rather than testing the agent's actual changes to formatDateTime.cpp, so the actual behavioral requirement is not verified against the agent's code."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

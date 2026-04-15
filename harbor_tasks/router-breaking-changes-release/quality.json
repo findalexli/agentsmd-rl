@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Most f2p tests (test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_type_labels_includes_breaking, test_bucket_logic_for_breaking_changes, test_regex_index_updated_for_message) are pure string-matching against the source file. An agent could simply add comment lines containing the expected strings (e.g., '// const bucket = isBreaking ? \"breaking\" : type') without implementing any actual logic change, and these tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/ directory exists in the container at /workspace (the Dockerfile doesn't remove it). The agent could read /solution/solve.sh to obtain the exact gold patch. Additionally, since tests are pure text matching, the agent could grep test files for the expected strings and insert them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four expected behaviors from the instruction are tested: regex update (test_conventional_commit_regex_breaking), breaking changes section (test_type_labels_includes_breaking), ordering (test_type_order_includes_breaking), and non-breaking commits continuing to work (test_breaking_change_parsing_simulation checks both breaking and non-breaking buckets)."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

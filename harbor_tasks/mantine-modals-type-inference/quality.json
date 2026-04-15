@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check for string patterns in the source file. An agent could simply insert the exact literal strings as comments or dead code without actually fixing the type definition, and the text-matching f2p tests would pass. The behavioral tests (tsc, jest) are pass_to_pass, not fail_to_pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/mantine (or rather the solution script is accessible). The agent could read solution/solve.sh to get the exact patch. Additionally, the instruction itself contains the exact expected code, and tests match literal strings, so the agent can trivially match fixture values without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors required by instruction.md are tested: the simplified type definition, removal of intermediate types, TypeScript compilation, Jest tests, ESLint, and Prettier checks."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific code patterns that are absent in the original file (e.g., Weak<> m_owner instead of Strong<>, null checks in getter, isCell guards). A stub or no-op change would not satisfy these regex checks \u2014 the original file has Strong<> m_owner which would fail test_m_owner_not_strong and test_m_owner_uses_weak."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists at /repo/../solution/solve.sh (or similar path in the container). The Dockerfile doesn't remove it. An agent could read the gold patch from the solution directory. Additionally, the tests only check text patterns in a header file, so an agent could grep test_outputs.py for the expected regex patterns and match them directly."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requirement 5 explicitly requires a regression test that verifies vm.Script, vm.compileFunction, and vm.SourceTextModule objects are properly garbage-collected. While the test file has a test_regression_test_exists function (truncated), the core behavioral requirement \u2014 actual runtime GC verification \u2014 is never tested. All f2p tests are static text checks."
@@ -52,8 +48,7 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -61,5 +56,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

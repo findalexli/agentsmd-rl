@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "An agent could satisfy all tests by simply adding the required import statements and code strings to the file without any of them being functionally correct. For example, adding dead code containing 'await resolve_org_for_repo(', 'uuid4().hex', 'SaasConversationStore.get_resolver_instance', etc. as comments or unreachable code would pass all text-matching assertions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution patch exists at /workspace/OpenHands (solve.sh patches files there), and tests only do text matching on the target file. An agent could read test_outputs.py to discover exactly which strings need to appear in the file, or read /solution/solve.sh to get the exact patch. The Dockerfile doesn't prevent access to these paths."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction mentions org routing, fallback to personal workspace, error logging, and specific imports \u2014 all of which have corresponding test assertions."
@@ -55,13 +51,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

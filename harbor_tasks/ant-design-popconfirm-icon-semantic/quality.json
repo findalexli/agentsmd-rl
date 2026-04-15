@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests only check file content via string/regex matching. An agent could write the exact string patterns into the files without actually implementing working functionality (e.g., putting the right strings in comments) and pass the text-matching tests. For example, test_icon_classnames_applied just checks that 'classNames?.icon' appears in the file and a regex matches - a commented-out line with that pattern would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The agent can read /workspace/ant-design/solution/solve.sh (the gold patch) if it exists in the container, or grep test_outputs.py for the exact fixture strings and regex patterns. The tests are pure text-matching, so the agent could simply write the expected strings into files without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in the instruction (classNames.icon, styles.icon, type definitions, demo update, test file update) are tested. The pass-to-pass tests cover lint, TypeScript, unit tests, a11y, and demo tests."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

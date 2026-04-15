@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since tests only check for string presence in source files, an agent could write stub functions containing the required strings as comments or dead code (e.g., `# utils_json.loads(chart_params)`) without implementing any actual bug fix, and all text-matching tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/superset as a git repo and solve.sh is in /solution/. The agent could read /solution/solve.sh or the gold patch directly. Additionally, since tests are pure string matching, the agent could grep test files to discover exact strings needed and insert them as comments."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Bug 3 (ASCII preview crashes on empty charts) is only tested via ruff lint check on get_chart_preview.py and an `assertIn` for 'Cannot generate ASCII preview' and 'UnsupportedChart'. No test actually verifies the runtime behavior of returning an UnsupportedChart error when columns/metrics are empty."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

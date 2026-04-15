@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "While tests are text-based, they require non-trivial content: a stub empty file wouldn't contain 'browser_route', '.fulfill(', '.continue(', 'RouteEntry', 'addRoute', etc. The agent must write substantive code with specific patterns to pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/playwright as solve.sh applies a git patch. The agent could potentially read the solution/solve.sh if mounted, or since tests only check for string presence in source files, the agent could grep test files (if accessible) for the exact strings being checked and produce minimal files containing those strings without understanding the feature."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that 'When a body or status is provided, the route should fulfill with a mock response' and 'When only headers are specified, the route should modify headers and continue the request' \u2014 these runtime behaviors are only checked via string matching (.fulfill(, .continue(). The instruction also requires CLI commands map to MCP tools, but test_cli_commands only checks string presence in commands.ts, not actual CLI execution."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 6
+  "fail_count": 5
 }

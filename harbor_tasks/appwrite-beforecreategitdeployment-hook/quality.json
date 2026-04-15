@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, test_method_has_noop_implementation) check for the presence of new code that doesn't exist in the base commit. A stub/no-change implementation would fail these tests since the method doesn't exist at baseline."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/appwrite's git history context and solve.sh is at solution/solve.sh. An agent could read solution/solve.sh to see the exact patch, including the method name 'beforeCreateGitDeployment' and exact placement. No evidence of solution directory being removed or protected in the Dockerfile."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: the hook accepts the right parameters (test_method_exists_with_correct_signature), is protected (test_method_is_protected), has empty body (test_method_has_noop_implementation), and is placed between validation and database operations (test_method_is_called_in_createGitDeployments)."
@@ -53,11 +49,10 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

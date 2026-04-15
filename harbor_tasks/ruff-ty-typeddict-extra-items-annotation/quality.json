@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_required_rejected_in_extra_items, test_not_required_rejected_in_extra_items, etc.) check that ty NOW produces 'invalid-type-form' errors where it previously didn't. A stub/no-op implementation would not produce these diagnostics, so these tests cannot be trivially satisfied."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ruff as solve.sh content is described in the task. The agent could potentially read the solution patch from the hidden files. Also, the gold patch is partially visible in the truncated solve.sh showing exact code changes. An agent could grep for test fixture strings like 'invalid-type-form' in the test file if accessible."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md mentions forward references ('extra_items=\"Foo | None\"' should be resolved, self-referential forward references in stubs should work) and non-TypedDict classes should treat extra_items as regular expression. These behaviors are tested in the mdtest (test_ty_python_semantic_typed_dict_mdtest) but only indirectly \u2014 the mdtest must be updated by the agent. The InitVar case mentioned in instruction.md is not directly tested by any standalone test function."
@@ -51,8 +47,7 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "anti_cheating_measures"
+    "behavior_in_task_description"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -60,5 +55,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

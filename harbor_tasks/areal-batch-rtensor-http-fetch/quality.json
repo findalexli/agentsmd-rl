@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests like test_batch_endpoint_returns_data POST to /data/batch and assert status 200 with correctly deserialized tensors. A stub returning None or empty would fail these assertions. test_client_batch_fetch_groups_by_node patches aiohttp and checks that the correct batch POST calls are made with correct shard grouping. These require actual implementation."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution is in solve.sh which applies git patches at runtime - it's not a pre-existing file the agent could read. The tests execute actual code behavior (HTTP endpoints, tensor serialization round-trips) so the agent can't just pattern-match fixture strings. The Dockerfile doesn't expose solution files in the container filesystem."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction specifies: batch endpoint with success/missing/invalid responses (tested), order preservation (tested), client grouping by node (tested), max_shards_per_request with ValueError (tested), chunking (tested), existing GET endpoint preserved (tested via test_repo_serialization_tests and existing endpoint still works), empty shard_ids (tested)."
@@ -53,6 +49,6 @@
   "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 11,
+  "pass_count": 10,
   "fail_count": 0
 }

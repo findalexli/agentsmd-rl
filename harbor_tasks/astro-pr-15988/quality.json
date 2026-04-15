@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The pass-to-pass tests (test_repo_knip, test_repo_tsc_noEmit, test_repo_unit_tests, test_repo_biome_lint) would pass on the unmodified base commit without any fix. The f2p tests in TestEnsureModulesLoadedFunction check for string presence, which means a stub that simply appends the text 'async function ensureModulesLoaded' etc. to the file could pass them without actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/astro's solution/solve.sh (the gold patch), and the agent could read it directly. Additionally, since tests are pure string-matching (e.g., 'async function ensureModulesLoaded' in content), the agent could grep test files or simply append the expected strings to pass."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md describes the core behavior: CSS styles from dynamically imported components should be injected on the first request in dev mode. No test actually verifies this behavior (e.g., by starting a dev server and checking HTML output). Tests only check for the presence of specific code patterns."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

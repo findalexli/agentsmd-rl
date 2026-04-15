@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Many f2p (pass_to_pass) tests check only structural properties that the base commit already satisfies - e.g., test_syntax_check just checks files exist and are >100 chars, test_all_modified_files_exist checks files exist and are >50 chars, test_typescript_syntax_valid checks balanced braces/parens, test_mcp_module_structure checks 'import' and 'export' keywords exist. These pass without any code changes on the base commit."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh is present in the container at /workspace and contains the exact merge commit SHA (e0e7f41e80247f857e97cb23f4833d2eee2122fe) and explicit git show commands to extract the gold solution. An agent could read this file and simply execute it to pass all tests."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Key behaviors from instruction.md are not properly tested: 'Signal success or failure back to the parent via stdout markers' is only checked by grepping for 'READY' string in source, not by actually running the daemon. 'Exit cleanly if browser context closes' is not tested at all. Direct daemon startup behavior is only checked via source text patterns, not execution."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

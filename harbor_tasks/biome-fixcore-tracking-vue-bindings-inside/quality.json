@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation (empty files, default returns) would not pass these tests since they check for specific content like 'pub fn initializer', all 8 Svelte variants in a match block, specific function signatures, and specific string patterns. The agent must write substantive code matching the expected patterns."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/biome via the gold patch applied by solve.sh. The agent could read the solution directory or the Dockerfile reveals the exact commit. Since tests only check file contents with string matching, the agent could also grep test_outputs.py (which runs inline Python strings) to discover exactly what strings to place in each file."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that 'Running biome lint --only=noUnusedVariables on a .vue or .svelte file with directive-bound variables should report zero warnings,' but no test actually runs the linter to verify this core behavioral requirement. Tests only check file content patterns."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 6
+  "fail_count": 5
 }

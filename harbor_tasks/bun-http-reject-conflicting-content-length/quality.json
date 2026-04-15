@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub pr-comments.ts that is simply an empty valid TypeScript file (e.g., 'export {}') would pass test_pr_comments_script_parses. For the C++ tests, since they're text-matching, an agent could just append a comment block containing all the required strings without implementing any logic, and the tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/bun's git history or could be obtained from the solve.sh. More critically, since tests are pure text-matching (assert 'X' in src), the agent could simply append a multi-line comment to HttpParser.h containing all required strings without understanding the bug. The instruction.md itself also provides the complete solution code."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires the script to 'accept PR number, URL, or current branch as input', 'support --json flag', fetch three GitHub endpoints, and present chronological listings. None of this runtime behavior is tested \u2014 only transpilation is checked. The instruction also requires identical duplicates to be accepted, but no test verifies this acceptance behavior."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 8
+  "fail_count": 7
 }

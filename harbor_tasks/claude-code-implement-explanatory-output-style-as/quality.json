@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation would not pass: test_plugin_files_exist requires all 4 files to exist at specific paths; test_session_start_outputs_valid_json requires executing the script and getting valid JSON with specific nested keys; test_session_start_has_explanatory_content requires specific keywords in the output; test_plugin_json_valid requires name='explanatory-output-style' and other fields; test_hooks_json_valid requires a specific nested structure with 'session-start.sh' reference. An empty f"
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/claude-code's solve.sh (or solution/solve.sh in the container). The Dockerfile doesn't remove /solution/ if mounted. An agent could potentially read the solution file or grep for expected test fixture values. The solution/solve.sh is described as 'hidden' but there's no evidence it's actually excluded from the container filesystem."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors specified in instruction.md are tested: plugin directory creation (test_plugin_files_exist), plugin manifest validity (test_plugin_json_valid), hook handler JSON output (test_session_start_outputs_valid_json), explanatory content (test_session_start_has_explanatory_content), hooks configuration (test_hooks_json_valid), README existence (test_plugin_files_exist), script executability (test_shell_script_executable), and README documentation (test_readme_documents_usage)."
@@ -51,11 +47,10 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 9,
-  "fail_count": 2
+  "fail_count": 1
 }

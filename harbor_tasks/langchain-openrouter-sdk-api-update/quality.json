@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_import_chat_models, test_wrap_messages_with_file_blocks, test_wrap_messages_developer_and_tool) actually import and execute the code, checking isinstance against specific SDK classes. A stub that returns None or empty collections would fail these isinstance checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/langchain/libs/partners/openrouter (or can be found via the solve.sh path). The agent could read /solution/solve.sh if accessible in the container, or simply inspect the gold patch's sed commands to determine exactly what to change. The Dockerfile doesn't remove the solution directory."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All four expected outcomes from instruction.md are tested: (1) import succeeds, (2) SDK message objects returned for file-block content across all roles, (3) unit tests pass, (4) lint and type checks pass."
@@ -53,11 +49,10 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

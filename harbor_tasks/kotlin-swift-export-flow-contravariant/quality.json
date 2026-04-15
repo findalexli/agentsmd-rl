@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub that simply writes the expected string patterns into the files (without understanding the bug) would pass all fail-to-pass tests. The tests only check for regex patterns in file content, not actual behavior. For example, test_flow_type_check_removed just checks that a specific regex matches in the file."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/kotlin's solve.sh (accessible in the container at solution/solve.sh). The agent could read the gold patch directly. Additionally, since tests are pure text matching, the agent could grep test files to find exact expected patterns and write them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All requirements from instruction.md are tested: Flow type interception without COVARIANT check (test_flow_type_check_removed), internal companion object (test_companion_object_is_internal), Flow support in visibility checker (test_visibility_checker_flow_support), and cross-file reference (test_compilation_with_cross_file_reference)."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

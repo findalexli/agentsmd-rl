@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests (test_async_exit, test_sync_exit, etc.) assert that SystemExit(1) is raised instead of the original exception. A stub/no-op implementation would either re-raise the original exception (failing the SYSTEM_EXIT:1 check) or not raise at all (printing NO_EXCEPTION). The unpatched code raises the original exception, so these tests genuinely detect the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution directory is not mounted in the container (Dockerfile only clones the repo). The tests extract and execute the clean_exit function dynamically, so reading test files wouldn't help bypass the behavioral checks. The agent must actually modify the source code to produce correct behavior."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors from the instruction are tested: error logging (implicit via no crash), wandb.finish(exit_code=1) (test_wandb_cleanup), destroy_process_group in finally (test_finally_cleanup), sys.exit(1)/SystemExit(1) (test_async_exit, test_sync_exit), process not hanging (subprocess timeout), and success paths still work (test_success_path_async/sync)."
@@ -57,6 +53,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 8,
+  "pass_count": 7,
   "fail_count": 2
 }

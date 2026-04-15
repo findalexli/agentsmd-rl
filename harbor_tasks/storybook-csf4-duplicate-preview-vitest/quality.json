@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A trivial stub that replaces requiresProjectAnnotations with 'export async function requiresProjectAnnotations(testConfig: any, finalOptions: any) { return true; }' and removes the flagged variables from index.ts would pass all fail-to-pass tests. The tests only check for absence of certain strings/AST patterns and presence of 'return true', not actual runtime behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/storybook as a git repo where the agent could read solution/solve.sh (if mounted), and the tests only check for string patterns in source files. An agent could grep the test file itself to discover exact strings to remove/add (e.g., 'const isCSF4', 'previewOrConfigFile') without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicitly required behaviors from instruction.md are tested: 2 parameters for requiresProjectAnnotations, no isCSF4 references, no previewOrConfigFile variable, no isCsfFactoryPreview call, preserved areProjectAnnotationRequired, preserved setup-file-with-project-annotations reference, function still exported, return true by default."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

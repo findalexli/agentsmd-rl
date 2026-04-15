@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific strings that are NOT present in the original code (e.g., '-fdebug-compilation-dir=.', 'include_dir == \".\"'). A stub or no-op implementation would not add these strings to the files, so the tests would fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/ClickHouse's solve.sh at a known path. The agent could read solution/solve.sh (if accessible in container) or grep test files for the exact expected strings like 'include_dir == \".\" ? std::string_view{} : include_dir' and simply insert them into the target files. Since tests are pure text-matching, the agent can pass by copying exact fixture strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says to 'Test that paths are clean by checking that source files resolve to bare relative paths like src/Foo.cpp rather than ./src/Foo.cpp', but no test actually verifies this runtime behavior. Tests only check for specific code patterns in source files."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

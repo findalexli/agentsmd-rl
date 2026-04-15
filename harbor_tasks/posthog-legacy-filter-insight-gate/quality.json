@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests require non-trivial implementation: test_legacy_filters_flag_constant requires defining a specific constant, test_filters_blocked_returns_false_without_distinct_id requires a function that returns False for missing distinct_id but the companion test_filters_blocked_delegates_to_feature_flag requires it to return True when feature_enabled returns True. A stub returning a fixed value cannot satisfy both."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/posthog as solve.sh is applied there, and the agent could potentially read the solution directory. Additionally, the test file references exact string literals like 'legacy-insight-filters-disabled' and 'LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG' that could be grep'd from test files or environment to reverse-engineer the solution."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction's key behaviors are tested: feature flag gating (test_filters_blocked_delegates_to_feature_flag), legacy filter detection logic (test_validate_blocks_legacy_filters, test_validate_allows_query_based), no-distinct-id bypass (test_filters_blocked_returns_false_without_distinct_id), HTTP 403 response (test_repo_integration tests), and the error message."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

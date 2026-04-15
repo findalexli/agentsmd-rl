@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The tests check for specific strings that do not exist in the base commit (e.g., 'if (!wasPanelShown)' with 'forceFocus: true', removal of useRegionFocusAnimation). A stub or no-op implementation would not add these strings to the files, so the tests would fail without actual changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace with solve.sh containing the exact gold patch. The agent could read /solution/solve.sh to get the complete answer. Additionally, since tests are pure string matching, the agent could grep test_outputs.py for the exact patterns expected and write them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All required behaviors from instruction.md are tested: shortcuts calling focusOnUIElement for both panel and sidebar, Panel using constant for id, forceFocus parameter in showPanel/showSidebar, onClick(false)/onKeyDown(true) patterns, and removal of useRegionFocusAnimation from both files."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

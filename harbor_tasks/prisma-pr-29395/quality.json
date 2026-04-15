@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All three f2p tests check for literal strings in source files. An agent could simply append the exact strings as comments (e.g., '// this.pgOptions?.statementNameGenerator?.(query)') to pg.ts without implementing any actual functionality, and all f2p tests would pass."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/prisma with solve.sh containing the complete gold patch. The agent could read /solution/solve.sh or simply grep for the expected fixture strings in test_outputs.py (which are in the container) and paste them into the source files."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "instruction.md says 'When a statementNameGenerator function is provided, it is called with the query and its result is passed as the name property to pg.Client#query()'. This behavioral requirement is not tested by any f2p test - they only check for string presence in source code, not actual runtime behavior of passing the name property."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "A stub implementation would not pass these tests. test_no_module_augmentation requires deleting a file. test_database_middleware_context_api requires specific import and context.set patterns in database.ts. test_handlers_use_get_database_pattern requires changes across multiple handler files. The pass_to_pass tests (typecheck, lint, tests) ensure the changes are functionally correct, not just textually present."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/remix as a git repo, and solve.sh applies a git patch. The agent could potentially read the solution by examining git history or the solve.sh file if accessible. Also, the test patterns are simple regex matches on file contents that could be satisfied by inserting the expected strings as comments without actually implementing the changes \u2014 though the typecheck and test suite pass_to_pass tests would catch most such cheating."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in the instruction are tested: database middleware using context.set(Database, db), handlers using get(Database), auth middleware using get(Database), removal of module augmentation file, and README updates. The account.tsx changes are covered by test_repo_bookstore_account_tests."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

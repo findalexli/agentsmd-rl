@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since tests only check text patterns in source files, an agent could simply insert the exact text strings the regexes look for as comments or dead code without implementing any actual fix. For example, adding '// private readonly Lazy<V143Network> network;' wouldn't fix the bug but a slightly adjusted regex might match. More practically, an agent can just paste the exact code from instruction.md verbatim since the solution is fully leaked."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /workspace/selenium and solve.sh contains the complete gold patch. An agent could read /solution/solve.sh (if accessible) or simply copy the exact code from instruction.md which contains the complete solution. The tests only check text patterns, so matching the literal fixture strings without understanding the bug is trivially possible."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All requirements from instruction.md are tested: lazy fields (requirement 1), constructor initialization (requirement 2), property accessors (requirement 3), all three version files (requirement 4), API compatibility via property signature checks (requirement 5)."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

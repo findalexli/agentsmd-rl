@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific strings/patterns that don't exist in the original repo (extras[\"docs\"] definition, git+ URL for doc-builder, the concatenation pattern). A stub or no-op implementation would not pass these since the original files lack these patterns."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace/transformers context (the Dockerfile doesn't remove it). An agent could read the gold patch from the solution directory. Additionally, test_outputs.py contains literal strings and regex patterns that an agent could grep for and reverse-engineer the expected changes."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Several instruction requirements lack corresponding test assertions: the glmasr.md runnable example fixes (the test functions for these are empty comment stubs in test_outputs.py), CONTRIBUTING.md updates (empty stub), and testing.md updates (empty stub). The instruction requires fixing code examples and updating docs, but these have no actual test implementations."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

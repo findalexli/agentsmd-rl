@@ -145,23 +145,12 @@ RUBRICS: tuple[Rubric, ...] = (
         source="PatchDiff §4.3 (14.3% of wrong patches were regressive); SWE-smith protocol",
         failure_example="task has only f2p tests — agent can delete the failing code path and 'win'",
     ),
-    Rubric(
-        name="anti_cheating_measures",
-        tier="A",
-        description=(
-            "Agent cannot see solution/ or tests/ at runtime. Answer is not embedded in "
-            "environment files. Tests are not trivially grep-matchable for a fixed string."
-        ),
-        artifacts=("environment/Dockerfile", "tests/test_outputs.py", "instruction.md"),
-        verification="both",
-        source="Harbor #4",
-        failure_example="53% of 1087 tasks failed this in Opus audit",
-        judge_prompt=(
-            "Could the agent win by (a) reading /solution/ if it exists in container, (b) "
-            "grepping env files for the expected test fixture value, (c) matching the literal "
-            "fixture string without understanding the bug? FAIL if any route works."
-        ),
-    ),
+    # REMOVED 2026-04-15: `anti_cheating_measures` was over-flagging (~98% FAIL)
+    # because Opus assumed the agent could read /solution/ at runtime. Harbor's
+    # actual evaluation architecture mounts /solution/ ONLY during gold validation,
+    # never during agent execution — the agent container cannot see it. The real
+    # residual threat (Dockerfile COPY solution/ baking the answer into the image)
+    # is already caught programmatically by `no_hidden_solution_artifacts`.
     Rubric(
         name="no_hidden_solution_artifacts",
         tier="A",

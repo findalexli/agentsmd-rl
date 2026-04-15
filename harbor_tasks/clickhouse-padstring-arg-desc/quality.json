@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check that specific description strings have been changed from their original values ('Array', 'const UInt*') to corrected values ('String or FixedString', 'UInt*', 'String'). A stub or no-op would leave the original incorrect strings in place, causing these tests to fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted), and the agent could read it. Additionally, the test file at tests/test_outputs.py contains the exact expected strings in assert statements and even comments describing the old->new values (e.g., 'was \"Array\" -> should be \"String or FixedString\"'), which the agent could grep to determine the fix."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction specifies correcting three description strings, and the tests verify all three corrections plus style/structural requirements mentioned in the instruction (Allman brace style, existing code style)."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

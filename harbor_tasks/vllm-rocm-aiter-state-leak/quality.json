@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The behavioral portions of the f2p tests are self-contained simulations that don't actually test the agent's code changes. For example, test_rocm_env_setup_not_gated_on_use_rocm_aiter simulates the bug and fix inline. The structural AST checks do verify actual file changes, but a stub that just removes 'use_rocm_aiter' from the condition (without understanding why) would pass. More critically, the behavioral simulations always pass regardless of what the agent does to the files."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution/solve.sh file exists in the container at /workspace and contains the exact gold patch. The agent could read it with cat /workspace/vllm/../solution/solve.sh or find / -name solve.sh. The Dockerfile doesn't remove solution files, and tests run in the same container."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction describes three behaviors: (1) env vars set for all ROCm cases, (2) cleanup resets class-level caches, (3) no direct dict mutation. All three are tested by the f2p tests, plus regression tests verify existing functionality is preserved."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

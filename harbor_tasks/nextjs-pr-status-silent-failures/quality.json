@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The visible pass_to_pass tests (syntax check, prettier check, structure check, no-banned-patterns) would all pass with the original unmodified file since they check structural properties that already exist. The fail_to_pass tests are truncated but the visible ones are text-pattern checks that could potentially be satisfied by adding the right string patterns without actually implementing correct retry logic or failure detection."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/next.js after solve.sh runs, and the Dockerfile doesn't remove the solution directory. The agent could potentially read /solution/solve.sh if it exists in the container, or inspect the git diff to find the expected changes. The solve.sh script is also available and contains the complete patch."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction says 'The report table should clearly indicate when a job's conclusion type differs from a standard failure' and 'If all retries fail on the first page, it should throw an error'. The visible tests don't verify retry behavior at runtime or test that the report table actually shows conclusion tags. Tests are mostly structural/textual checks."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

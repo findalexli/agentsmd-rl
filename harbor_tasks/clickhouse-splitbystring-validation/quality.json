@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Many tests like test_git_log_shows_base_commit, test_yaml_config_valid, test_clang_format_valid, test_clang_tidy_valid, test_file_headers_present pass on the unmodified repo without any changes. These are tautological - they test pre-existing repo state, not the bug fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read the gold patch from solve.sh. Also, the tests check for literal strings ('the empty string cannot be used as a separator', 'the separators argument cannot be empty') that are provided verbatim in instruction.md, so the agent can just pattern-match without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction.md requires validation for direct (non-array) empty string separators, but the tests only check within the array iteration loop (_get_split_by_string_section). The single-separator case is not tested."
@@ -55,8 +51,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -64,5 +59,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 2,
-  "fail_count": 8
+  "fail_count": 7
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "test_script_updates_example_dependencies finds an example using a workspace package but only asserts the script exits with returncode 0 - it never checks that any dependency was actually updated. A script that does nothing but exits 0 would pass this test. Similarly test_script_runs_without_error only checks returncode 0."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router after solve.sh runs, but even before that, the agent could read the test file at tests/test_outputs.py to see exactly what strings and patterns are checked (e.g., 'Done' in stdout, '`^${' in source), then craft a minimal script that passes all text-matching tests without actually implementing the functionality correctly."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires 'Output which examples were updated (one per line, e.g., Updated examples/foo/package.json)' but no test verifies this output format. Also, no test verifies that example package.json files actually have their versions updated to the correct caret versions after script execution."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The tests check for specific strings and patterns that don't exist in the base commit (e.g., UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE in various files, the test data file withUnitType.kt doesn't exist at all). A stub/no-op implementation would not create these files or add these strings, so the tests would fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/kotlin's solution/solve.sh in the container (based on the Dockerfile and task structure). An agent could read the gold patch directly. Additionally, since tests are purely grep-based, an agent could simply write the exact expected strings into the expected files without understanding the compiler architecture at all."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction specifies behavioral requirements like 'warning should NOT be reported for nullable Unit' and 'warning should NOT be reported for lambda parameters', but the tests only check for the presence of warning markers in specific test file sections - they don't actually run the compiler to verify these behavioral properties."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

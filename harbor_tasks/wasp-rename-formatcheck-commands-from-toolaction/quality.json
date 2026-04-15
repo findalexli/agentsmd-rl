@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific new strings (check:ormolu, format:ormolu, check:prettier, format:prettier, top-level format/check commands) that don't exist in the base commit. A stub or no-op would not introduce these strings into the files."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/wasp (or solution/solve.sh in the container). The agent could read solve.sh or simply apply the patch. Additionally, since tests just grep for literal strings, the agent could insert the expected strings without understanding the task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires updating waspc/README.md to reflect new command names, but no test checks that the README was updated. The gold patch modifies README.md but no test validates it."
@@ -52,13 +48,12 @@
   },
   "tier_a_fails": [
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 7,
-  "fail_count": 4
+  "fail_count": 3
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The fail-to-pass tests only check for text patterns in the source file. An agent could satisfy all four f2p tests by simply inserting the exact text strings as comments or dead code (e.g., adding `// std.heap.stackFallback(1024, bun.default_allocator)` and similar patterns) without actually fixing the buffer overflow. The tests don't verify compilation or runtime behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in `/workspace/bun` accessible via `solution/solve.sh` which is visible in the container. The agent could read the solve.sh or the git apply patch directly. Additionally, the instruction.md itself contains the exact strings being tested, so the agent can trivially match fixture strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in the instruction (removing the fixed-size buffer, using stackFallback, using dupeZ, using defer free) are tested by the fail-to-pass tests."
@@ -54,13 +50,12 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_file_schema_returns_filepath, test_image_like_schema_returns_filepath, test_nested_file_shows_filepath_in_dict) assert specific return values like 'filepath' that the unmodified code would not produce \u2014 it would return verbose dict representations instead. A stub returning None or empty string would also fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/gradio as a gold patch in solve.sh. An agent could potentially read the solution directory or the solve.sh script if accessible. Additionally, the test file at tests/test_outputs.py contains the exact expected outputs ('filepath'), and the exact schema structures, which an agent could grep for and hardcode responses to match."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md are tested: file-type schemas returning 'filepath' (test_file_schema_returns_filepath, test_image_like_schema_returns_filepath), nested file schemas (test_nested_file_shows_filepath_in_dict), plain objects still showing dict (test_non_file_object_still_dict), and the value_is_file helper is mentioned in instruction but tested indirectly through the main function."
@@ -52,11 +48,10 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 8,
-  "fail_count": 3
+  "fail_count": 2
 }

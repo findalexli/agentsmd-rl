@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific guard patterns that don't exist in the original code. A stub or no-op change wouldn't add '.items.len == 0' before items[0] access in flattenTokens, nor 'self.current > 0' before self.prev() in advance. The original code lacks these guards, so the tests would fail without actual changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/bun (accessible via the container) and solve.sh is in /solution/. The agent could read solve.sh to see the exact patch. Additionally, since tests are text-pattern-matching, the agent could simply insert the exact strings being checked for without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction requires specific return values: '[\"\"] for $.braces(\"\")' and '\"\" for $.braces(\"\", {parse: true})'. These behavioral requirements are only checked in test_regression_test_added which verifies the test file contains '$.braces(\"\")' as text, but never actually runs the JavaScript to verify the return values are correct."
@@ -53,8 +49,7 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -62,5 +57,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

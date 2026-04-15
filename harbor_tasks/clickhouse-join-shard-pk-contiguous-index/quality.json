@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific code patterns that don't exist in the original file (the buggy code uses 'for (const auto & part : analysis_result->parts_with_ranges)' with '+=' instead of '='). A stub or no-op wouldn't pass since the tests check for presence of specific fix patterns AND absence of the buggy range-for pattern."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/ClickHouse/../solution/solve.sh (or wherever mounted). The agent could read it directly. Additionally, since the instruction.md literally specifies the exact variable names, comment strings, and code patterns needed, the agent can trivially match the fixture strings without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All explicit requirements from instruction.md are tested: the for loop with size_t local_idx, the index access pattern, the assignment pattern, both exact comment strings, Allman brace style, memory safety (no raw new/delete), and code compilation."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

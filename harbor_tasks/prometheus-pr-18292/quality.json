@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests (test_concurrent_append_same_labels, test_set_unless_already_set_concurrent, etc.) run actual Go test functions that verify concurrent behavior. These cannot be satisfied by stub implementations - the Go tests check that concurrent appends produce exactly one series, which requires actual atomic check-and-insert logic."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/prometheus (same working directory). The agent could read solution/solve.sh if mounted, or could examine the Dockerfile/test files. More importantly, the gold patch content is available in the task definition itself (solution/solve.sh), and the agent could potentially access test_outputs.py to see exactly what's being tested and craft a minimal pass."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: one series in memory for concurrent appends (tested by TestConcurrentAppendSameLabels), one WAL record (tested implicitly), same canonical ref (tested by concurrent tests), cleanup of losing refs (tested by GC test). All major behaviors are covered by the test suite."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "anti_cheating_measures"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "An agent could pass all fail-to-pass tests by simply text-editing the file to include the exact strings being searched for (e.g., adding comments containing 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', '1\\'000\\'000', 'validateFunctionArguments') without actually implementing the fix. No test verifies runtime behavior of leftPad/rightPad."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The agent can read test_outputs.py (it's in the container at tests/test_outputs.py) and see exactly which literal strings are asserted. Since tests are purely textual, the agent can match fixture strings directly without understanding the bug. There's no /solution/ directory mentioned, but the test file itself reveals the complete expected implementation."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction says 'Maintain UTF-8 support through utf8_offsets' and 'Preserve all existing functionality for both ASCII and UTF-8 padding operations', but no test verifies actual padding behavior, UTF-8 handling, or that the ASan overflow is actually fixed."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

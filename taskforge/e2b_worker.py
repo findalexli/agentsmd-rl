@@ -1437,8 +1437,8 @@ async def node_tests_rewrite(sandbox: AsyncSandbox) -> tuple[str, str]:
       - solution_uniqueness_guard        (tests assert gold-specific literals)
       - test_not_tautological            (asserts pass on stub impls)
 
-    Cannot fix structural issues (anti_cheating_measures when solution/ is
-    COPY'd into image, or pass_to_pass_coverage requiring new eval_manifest
+    Cannot fix structural issues (no_hidden_solution_artifacts when solution/
+    is COPY'd into image, or pass_to_pass_coverage requiring new eval_manifest
     entries). Agent writes abandoned=true for those.
 
     Reads: /workspace/task/quality.json + tests/* + solution/solve.sh +

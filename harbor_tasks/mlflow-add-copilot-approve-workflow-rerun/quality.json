@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "A stub script like '#!/bin/bash\\nif [ -z \"$1\" ]; then exit 1; fi\\n# action_required Copilot /rerun\\nrun_ids=\"\"\\nif [ -z \"$run_ids\" ]; then echo \"No action_required\"; exit 0; fi' would pass all fail-to-pass tests without implementing any actual GitHub API interaction or meaningful workflow rerun logic. The tests only check for string presence, not actual behavior."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/mlflow (or could be accessed via the solve.sh in /solution/). The agent could read the gold patch from the container's solution directory. Additionally, since tests are purely text-matching, the agent could grep test_outputs.py for the exact strings being asserted and embed them without understanding the task."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires 'Logs success or failure per run without aborting on individual failures' (requirement 5), but no test verifies this behavior. Also, requirement 2 (finding runs for the PR's HEAD SHA) is not behaviorally tested - only string presence of 'action_required' and 'Copilot' is checked."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 6,
-  "fail_count": 5
+  "fail_count": 4
 }

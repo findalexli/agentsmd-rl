@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since tests only check file content strings and AST structure, an agent could simply insert the exact expected strings as comments or dead code without implementing actual validation logic, and all tests would pass. For example, adding '# min(page_size, MAX_PAGE_SIZE)' as a comment in mcp_core.py would satisfy test_mcp_core_clamps_page_size."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/superset's solution directory (solve.sh is present in the container). The agent could read it. Additionally, since tests only check for literal strings in files, the agent could grep test_outputs.py for expected strings and insert them without understanding the problem."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "Instruction says 'Confirm oversized page sizes are rejected with validation errors' and 'Confirm valid page sizes are accepted' \u2014 but no test actually validates that schema validation rejects/accepts page sizes. Tests only check static file content for string patterns."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

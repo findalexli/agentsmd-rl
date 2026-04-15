@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The f2p tests (test_log_group_extraction_from_nested_config, test_log_group_fallback_*, test_log_group_extraction_variations) do NOT import or call the actual code being fixed. They inline their own dictionary access logic and verify that logic works. These tests pass regardless of whether the bug fix is applied to the actual source file. Only test_fix_is_applied (text grep) verifies the source file changed, but it's not behavioral. A stub/no-op change to the file that just adds the searched str"
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/dagster (solution/solve.sh is in the container context). The agent could read the solve.sh script or grep for the expected test fixture strings. Additionally, test_fix_is_applied checks for an exact string that could be inserted as a comment to pass. The literal fixture values ('/custom/log/group', '/aws/emr-serverless') appear in instruction.md's examples."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction requires that the actual PipesEMRServerlessClient code correctly extracts log group names. However, no test actually imports or invokes the PipesEMRServerlessClient class or any function from emr_serverless.py. The behavioral tests are self-contained dictionary operations that don't test the actual module."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 3,
-  "fail_count": 7
+  "fail_count": 6
 }

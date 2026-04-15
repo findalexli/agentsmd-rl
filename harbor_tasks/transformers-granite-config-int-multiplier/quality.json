@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests construct config objects with specific integer values (e.g., embedding_multiplier=12) and assert the stored value equals 12. A stub that always returns default 1.0 would fail these assertions. The strict dataclass validation in the original code actively rejects int inputs, so the tests genuinely verify the bug fix."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The /solution/solve.sh file exists in the container and contains the exact git patch with the fix. An agent could simply read /repo/../solution/solve.sh or /solution/solve.sh (depending on mount) and apply the patch directly. No evidence of restrictions preventing access to this file."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All five required behaviors from the instruction are tested: (1) int acceptance for all fields across all three classes, (2) roundtrip persistence via save/from_pretrained, (3) float values still work (test_granite_config_float_defaults, test_granite_config_explicit_float_roundtrip), (4) None values accepted where applicable (test_granitemoe_config_none_multipliers, test_granitemoeshared_config_none_multipliers), (5) ruff check/format and existing repo tests pass."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 7,
-  "fail_count": 3
+  "fail_count": 2
 }

@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "Since the f2p tests only check AST structure (presence of certain patterns in the source code) and never execute the tests, an agent could write test methods containing the right keywords and patterns (assertRaises, dumps, loads, node.meta['key'] = ..., ignore_raw_node) that are syntactically correct but semantically wrong (e.g., asserting the wrong thing, testing unrelated behavior) and still pass all checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/pytorch via solve.sh which applies a git patch. The agent could read solve.sh or the gold patch directly if the solution/ directory exists in the container. Additionally, since tests are purely AST-based, the agent could grep test_outputs.py to discover exactly what patterns are expected (assertRaises+dumps, loads, meta subscript assignment) and produce code matching those patterns without understanding the actual behavior."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires testing two behaviors: (1) default raises AssertionError, (2) ignore_raw_node=True round-trips as None. Both are checked via test_default_raises_covered and test_ignore_true_round_trip respectively, plus test_raw_node_in_meta ensures the setup is correct."
@@ -54,11 +50,10 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

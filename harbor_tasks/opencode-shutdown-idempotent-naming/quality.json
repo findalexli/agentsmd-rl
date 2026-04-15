@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check for specific strings that are NOT present in the base commit (e.g., 'let stopped = false', 'async function target()', renamed variables). A stub/no-op implementation would not add these strings, so the tests would fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read it directly. Additionally, since all tests are string-matching, an agent could grep test_outputs.py (if accessible) for the expected strings and insert them verbatim."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors described in instruction.md (idempotent stop, listener cleanup, worker terminate, helper extraction, variable renaming, AGENTS.md update, worker simplification) are tested, though only via string matching."
@@ -54,8 +50,7 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

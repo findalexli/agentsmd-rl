@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "All fail-to-pass tests check for the presence of literal strings in files. An agent could simply insert the exact string 'shouldSaveDraft || isTrashAttempt' as a comment in update.ts, add 'localizedField' with 'localized: true' to the Posts collection file, add 'localization:' and 'locales:' to config.ts, and add 'localizedField?: string | null' to payload-types.ts \u2014 none of which requires understanding or actually fixing the bug."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is in /workspace/payload_repo accessible via solve.sh. The agent could read the solution file or simply grep for the exact fixture strings mentioned in the instruction (e.g., 'shouldSaveDraft || isTrashAttempt') and paste them into the right files without understanding the bug."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction describes runtime behavior (localized field data lost when bulk-trashing drafts), but no test actually verifies this runtime behavior. Tests only check for string presence in source files."
@@ -54,8 +50,7 @@
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
@@ -63,5 +58,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 7
+  "fail_count": 6
 }

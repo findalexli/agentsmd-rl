@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The build and unit test execution tests (test_build_succeeds, test_unit_tests_pass, and p2p tests) would fail on a stub implementation because the code must actually compile and pass real unit tests. A stub returning None or empty wouldn't pass the build or the existing Scripts.test.tsx tests."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution directory exists at /solution/solve.sh in the container and contains the complete gold patch. An agent could read this file to obtain the exact fix. The Dockerfile doesn't remove or protect the solution directory from agent access."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All behaviors required by instruction.md are tested: the source file constraints (no script+suppressHydrationWarning, return null, useLayoutEffect, isServer check, onRendered event, prevHrefRef, resetKey, router.emit), the test file sentinel tag removal, the solid-router comment update, build verification, and unit test passing."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }

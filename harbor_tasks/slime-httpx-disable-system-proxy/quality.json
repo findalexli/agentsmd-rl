@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The fail-to-pass tests check client._trust_env is False and client._mounts is empty \u2014 the default httpx.AsyncClient has trust_env=True and would have proxy mounts when HTTP_PROXY is set. A stub or no-op implementation would fail these assertions. The AST test requires the specific keyword to be present in the source."
     },
-    "anti_cheating_measures": {
-      "outcome": "pass",
-      "reason": "The solution directory contains solve.sh (a shell script with a git patch), not directly exploitable test fixtures. Tests check runtime behavior of the actual module. The agent cannot simply grep for fixture values since the tests verify object properties at runtime. The solution file exists in the container but reading it requires the agent to actively look for /solution/solve.sh, which is not obvious from the task."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires both clients to communicate without using system proxy. Tests verify this for init_http_client (trust_env=False, no proxy mounts) and _HttpPosterActor (AST check for trust_env=False). Additional tests ensure existing functionality is preserved (connection limits, timeout)."
@@ -55,6 +51,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
+  "pass_count": 8,
   "fail_count": 1
 }

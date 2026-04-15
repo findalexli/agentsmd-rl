@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The pass_to_pass tests check that existing scripts maintain valid syntax (non-trivial since edits could break them). The fail_to_pass tests (truncated but visible from test names) require creating rust-fingerprint.js with specific behavior, modifying turbo.json with globalEnv/globalPassThroughEnv, and restructuring turbo.jsonc tasks. A stub/empty file would fail node --check, prettier, and structural JSON assertions."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution exists at /workspace/next.js as a git repo and solve.sh applies a git patch. The Dockerfile doesn't remove or protect the /solution/ directory. An agent could potentially read the test file at tests/test_outputs.py to extract exact expected values, or if solve.sh is accessible in the container, directly apply the patch."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "All 10 explicit requirements in instruction.md appear to be tested: rust-fingerprint task structure, script behavior, turbo.json globalEnv/globalPassThroughEnv, task dependsOn/inputs changes, package.json script entries, syntax checks, prettier formatting, JSON validity, and JSONC validity. The tests cover each requirement systematically."
@@ -51,13 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "anti_cheating_measures"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 9,
-  "fail_count": 3
+  "fail_count": 2
 }

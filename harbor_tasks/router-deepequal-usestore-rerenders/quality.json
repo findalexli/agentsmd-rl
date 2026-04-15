@@ -21,10 +21,6 @@
       "outcome": "fail",
       "reason": "The text-based f2p tests (test_deepequal_import_in_scripts, test_scripts_ast_usestore_has_deepequal, etc.) could be passed by simply adding the import statement and inserting 'deepEqual,' strings into comments or dead code without actually fixing the re-render bug. The pass-to-pass tests (type check, unit tests) would pass on the base commit without any changes."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (container) under the test's REPO path, and solve.sh is at /solution/solve.sh. An agent could read /solution/solve.sh to see the exact patch. Additionally, the test fixture strings like \"import { deepEqual } from '@tanstack/router-core'\" could be found by grepping test_outputs.py."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction mentions preventing unnecessary re-renders as the core behavior, but no test actually verifies that re-renders are reduced. Tests only check for text patterns (deepEqual import/usage) and that existing pass-to-pass checks continue passing."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
-    "test_not_tautological",
-    "anti_cheating_measures"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

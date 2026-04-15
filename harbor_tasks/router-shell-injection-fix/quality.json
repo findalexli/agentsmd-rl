@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific patterns (execFileSync import, array arguments to execFileSync for git show, absence of vulnerable execSync pattern). A stub/default file without the fix would still have the vulnerable execSync pattern and lack execFileSync, so these tests would correctly fail."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution file exists at /workspace/router (accessible in the container) and solve.sh contains the exact patch. The agent could read /tmp/fix.patch or the solution directory. Additionally, since tests are purely regex-based text matching, the agent could grep test files to discover the exact patterns expected and replicate them without understanding the vulnerability."
-    },
     "behavior_in_tests": {
       "outcome": "pass",
       "reason": "The instruction requires: (1) modifying import to include necessary function \u2014 tested by test_execfilesync_imported, (2) replacing vulnerable execution \u2014 tested by test_git_show_uses_execfilesync, (3) no shell metacharacter interpretation \u2014 tested by test_no_shell_injection_in_rel_path, (4) valid JS \u2014 tested by test_file_is_valid_javascript. All stated requirements are tested."
@@ -54,13 +50,12 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
-  "fail_count": 6
+  "fail_count": 5
 }

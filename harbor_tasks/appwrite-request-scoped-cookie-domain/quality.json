@@ -21,10 +21,6 @@
       "outcome": "pass",
       "reason": "The f2p tests check for specific patterns that wouldn't exist in the base commit (e.g., Http::setResource('cookieDomain') in resources.php, ->inject('domainVerification') in account.php, removal of Config::setParam('domainVerification') from general.php). A stub/no-op implementation would not satisfy these checks."
     },
-    "anti_cheating_measures": {
-      "outcome": "fail",
-      "reason": "The solution is available at /workspace/appwrite as a git repo, and the solve.sh with the full patch is in /solution/solve.sh. The agent could read the solution file directly or examine the gold patch to determine exactly what changes to make. There are no measures preventing access to /solution/."
-    },
     "behavior_in_tests": {
       "outcome": "fail",
       "reason": "The instruction specifies that cookieDomain should 'Return null for migration hosts defined in _APP_MIGRATION_HOST environment variable' and 'Return . + registerable domain when project ID is console AND _APP_CONSOLE_ROOT_SESSION env var equals enabled', but no tests verify this logic actually works correctly at runtime - only that certain strings appear in the file."
@@ -53,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "anti_cheating_measures"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
   "pass_count": 5,
-  "fail_count": 5
+  "fail_count": 4
 }
