@@ -1,0 +1,106 @@
+source:
+  owner: continuedev
+  repo: continue
+  pr_number: 11881
+  merge_commit: 44ca86002b3983e2994b9df987f814f8cbefd318
+  base_commit: 7f3254013710ef44867d35fa8718b7b6df40c507
+  title: "Fix StringIndexOutOfBoundsException in readRangeInFile"
+  body: "When the IntelliJ extension attempts to read context from very short files (or temp files), it occasionally requests a range that is larger than the file itself. This results in a StringIndexOutOfBoundsException in IntelliJIde.kt (readRangeInFile), which silently breaks the background process and disrupts the chat context."
+  files_changed: 1
+
+target:
+  path: "extensions/intellij/src/main/kotlin/com/github/continuedev/continueintellijextension/continue/IntelliJIde.kt"
+  function: "readRangeInFile"
+
+fix:
+  description: "Use coerceIn() to clamp line and character indices within file bounds, preventing StringIndexOutOfBoundsException when reading ranges from files smaller than the requested range."
+
+checks:
+  - id: test_kotlin_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin code compiles successfully"
+    timeout: 300
+
+  - id: test_source_contains_fix
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: extensions/intellij/rules.md
+      lines: "Core Files - IntelliJIde.kt"
+      commit: "7f3254013710ef44867d35fa8718b7b6df40c507"
+    description: "Source code contains the coerceIn fix for bounds clamping"
+    timeout: 10
+
+  - id: test_coerceIn_in_readRangeInFile_context
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: extensions/intellij/rules.md
+      lines: "Core Files - readRangeInFile function"
+      commit: "7f3254013710ef44867d35fa8718b7b6df40c507"
+    description: "coerceIn calls appear within readRangeInFile function (idempotency)"
+    timeout: 10
+
+  - id: test_fix_handles_end_line_beyond_array
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: extensions/intellij/rules.md
+      lines: "Core Files"
+      commit: "7f3254013710ef44867d35fa8718b7b6df40c507"
+    description: "The fix clamps endLine to prevent array out-of-bounds access"
+    timeout: 10
+
+  - id: test_fix_handles_char_beyond_line_length
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: extensions/intellij/rules.md
+      lines: "Core Files"
+      commit: "7f3254013710ef44867d35fa8718b7b6df40c507"
+    description: "The fix clamps character indices to line.length to prevent StringIndexOutOfBoundsException"
+    timeout: 10
+
+  - id: test_repo_existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing IntelliJ extension unit tests compile"
+    timeout: 300
+
+  - id: test_intellij_plugin_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: "IntelliJ plugin builds successfully without tests"
+    timeout: 300
+
+  - id: test_intellij_plugin_configuration_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "IntelliJ plugin configuration is valid"
+    timeout: 300
+
+rubric:
+  - rule: "The fix uses coerceIn to safely clamp line indices within file bounds"
+    source:
+      path: extensions/intellij/src/main/kotlin/com/github/continuedev/continueintellijextension/continue/IntelliJIde.kt
+    reference: "coerceIn(0, maxOf(0, lines.size - 1))"
+    weight: medium
+
+  - rule: "The fix uses coerceIn to safely clamp character indices within line bounds"
+    source:
+      path: extensions/intellij/src/main/kotlin/com/github/continuedev/continueintellijextension/continue/IntelliJIde.kt
+    reference: "coerceIn(safeStart, line.length)"
+    weight: medium
+
+  - rule: "The fix handles single-line case (startLine == endLine) separately from multi-line case"
+    source:
+      path: extensions/intellij/src/main/kotlin/com/github/continuedev/continueintellijextension/continue/IntelliJIde.kt
+    reference: "if (startLine == endLine)"
+    weight: low
+
+  - rule: "The fix compiles and does not break existing tests"
+    source:
+      path: extensions/intellij/build.gradle.kts
+    reference: "tasks.register"
+    weight: medium

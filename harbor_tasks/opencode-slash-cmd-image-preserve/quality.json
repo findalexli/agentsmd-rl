@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests reference specific file path 'packages/app/src/components/prompt-input.tsx', function name 'handleSlashSelect', command object shapes like {type:'custom', trigger:'mycmd', id:'c1'} and {type:'builtin', id:'help'}, and specific behaviors like 'promptProbe.select' and 'command.trigger' with 'slash' argument. While instruction.md mentions prompt.set, closePopover, command.trigger with 'slash', and DEFAULT_PROMPT, it never mentions the file path, the function name 'handleSlashSelect', the exac"
+      "outcome": "pass",
+      "reason": "instruction.md names the functions (imageAttachments, prompt.set, closePopover, clearEditor, setEditorText, focusEditorEnd, promptProbe.select, command.trigger, DEFAULT_PROMPT), the part types ('text', 'image_attachment'), the 'slash' source string, and the early-return behavior on undefined cmd \u2014 all of which the tests assert."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states 'prompt.set should be called with a parts array that includes both the new text content and all existing image_attachment parts' and describes the exact early-return behavior for undefined commands. It also says 'command.trigger must be called with the command's id and the string \"slash\"'. This is very close to specifying the exact fix rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken and expected behavior (preserve image_attachments, include them in prompt.set) without specifying line numbers or exact code diffs."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral outcomes (image count in prompt.set args, whether closePopover was called, triggerArgs values) rather than exact code patterns. The 'not_stub' test checks statement count and branching but with loose thresholds. Alternative implementations that preserve images differently (e.g., concatenating arrays in different order, using different variable names) would still pass."
+      "reason": "Tests check counts of image_attachment parts in the prompt.set args and trigger arg values, not variable names or exact line positions; alternative orderings/implementations would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests transpile the TypeScript code, run it in a Node.js VM with mock objects, invoke handleSlashSelect with various arguments, and check the behavioral outcomes (promptSetArgs, closePopoverCalled, triggerArgs, image counts). This is genuine behavioral testing, not text matching."
+      "reason": "Tests extract handleSlashSelect, transpile, and execute it in a VM with mocks, plus run bun typecheck and repo unit tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The 'custom_images' and 'builtin_images' scenarios check that prompt.set is called with parts containing the correct number of image_attachment items. A stub or the original buggy code would fail these checks since the original code doesn't include images in the prompt.set call. The 'not_stub' test also ensures the function has sufficient complexity."
+      "reason": "A stub returning nothing would fail because tests require promptSetCalled to be true with correct imageCount, and triggerArgs to equal [id, 'slash']."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md's key requirements are tested: preserving image attachments for both custom and built-in commands, early return for undefined commands, calling closePopover, calling command.trigger with id and 'slash', and prompt.set including image_attachment parts."
+      "reason": "Tests cover custom/builtin image preservation, undefined cmd early return, closePopover, and command.trigger('id','slash') \u2014 all behaviors described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_custom_cmd_preserves_images, test_builtin_cmd_preserves_images, test_undefined_cmd_early_return, etc.) and docstrings explaining each test's purpose. Scenarios are clearly separated."
+      "reason": "Tests are grouped with section comments ('Gates (pass_to_pass, static)', '[repo_tests] pass_to_pass') and descriptively named."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "Task modifies UI component state, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, variable names, or function names in the instruction or test files."
+      "reason": "Paths and function names (packages/app/src/components/prompt-input.tsx, handleSlashSelect, imageAttachments) are consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md provides extremely detailed technical context including exact function signatures (imageAttachments(), prompt.set(parts, cursorPosition)), exact type schemas, exact API methods, and the precise behavior expected from prompt.set. While it doesn't name the file, it essentially specifies the exact code changes needed. Combined with naming DEFAULT_PROMPT and the exact early-return behavior for undefined, this heavily localizes and constrains the solution."
+      "outcome": "pass",
+      "reason": "instruction.md does not identify the file or line; it describes the component and functions generically."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

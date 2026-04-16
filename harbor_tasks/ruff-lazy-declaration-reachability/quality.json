@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the method `any_reachable`, the old method `all_reachable`, `is_defined_and`, `is_undefined_or`, all three file paths, the cargo check command, and the key internal elements (predicates, reachability_constraints, .evaluate(), is_always_false). All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names the method `any_reachable`, the dual predicate `is_defined_and`, the three files to modify, the cargo check command, and the key internal elements (predicates, reachability_constraints, evaluate, is_always_false). All test-asserted specifics (method names, file paths, patterns) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the new method must be named `any_reachable`, call sites must use `is_defined_and`, the predicate must be checked before reachability evaluation, and the old `.filter().all()` chain must not be used. It also says to use De Morgan's transform. This prescribes the exact implementation approach rather than just describing what's broken."
+      "reason": "The instruction explicitly states the new method must be named `any_reachable`, call sites must use `is_defined_and`, the predicate must be checked before reachability evaluation, and the old `.filter().all()` pattern must not be used. It also specifies that the body must contain `predicates`, `reachability_constraints`, `.evaluate()`, and `is_always_false()`. This essentially dictates the exact implementation rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_lazy_evaluation_pattern checks that 'predicate(' appears before '.evaluate(' in the method body, test_any_reachable_not_stub checks for exact strings like 'predicates', 'reachability_constraints', 'is_always_false', and test_call_sites_updated checks for exact method name 'any_reachable' and 'is_defined_and'. An alternative correct implementation (e.g., using a different variable name or helper) would fail these text-matching tests."
+      "reason": "Tests assert very specific implementation details: the method must be named exactly `any_reachable`, `test_lazy_evaluation_pattern` checks that `predicate(` appears before `.evaluate(` in the method body text, `test_any_reachable_not_stub` checks for specific strings like `predicates`, `reachability_constraints`, `is_always_false` in the body, and `test_call_sites_updated` checks for exact string `.any_reachable(` and `is_defined_and(`. An alternative correct implementation (e.g., using a differ"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_any_reachable_method_exists, test_lazy_evaluation_pattern, test_call_sites_updated, test_no_stale_all_reachable_calls, test_any_reachable_not_stub) are ALL text-matching via regex/string search on source files. They never execute the any_reachable method or test its behavior. The pass-to-pass tests do run cargo check/test/clippy but those only verify compilation and existing behavior, not the new optimization."
+      "reason": "The fail-to-pass tests (`test_any_reachable_method_exists`, `test_lazy_evaluation_pattern`, `test_call_sites_updated`, `test_no_stale_all_reachable_calls`, `test_any_reachable_not_stub`) are all purely text-matching via regex/string search on source files. They do not import, call, or execute the code. The pass-to-pass tests do execute cargo commands, but every f2p test is source text inspection only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., `fn any_reachable(...) -> bool { false }`) would fail test_any_reachable_not_stub (requires 8+ lines, references to predicates/reachability_constraints/.evaluate()/is_always_false) and would also fail the compilation/unit test checks since call sites depend on correct behavior."
+      "reason": "A stub implementation would not pass because: (1) the compilation tests require actual working code, (2) the text-matching f2p tests require specific method names and internal logic patterns that don't exist in the base code, and (3) the repo test suite (unit tests, mdtests) would catch semantic regressions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All acceptance criteria from instruction.md are tested: compilation (test_compilation), method existence and rename (test_any_reachable_method_exists), predicate-before-reachability ordering (test_lazy_evaluation_pattern), call site updates (test_call_sites_updated), no stale calls (test_no_stale_all_reachable_calls), and repo tests passing (multiple test functions)."
+      "reason": "All acceptance criteria from the instruction are tested: compilation (test_compilation), method existence and rename (test_any_reachable_method_exists), predicate-before-reachability ordering (test_lazy_evaluation_pattern), call site updates (test_call_sites_updated), no stale calls (test_no_stale_all_reachable_calls), and all repo tests passing (multiple test functions)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining what each test checks, and annotations like [static], [pr_diff], [repo_tests]."
+      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, docstrings explaining what each test checks, and labels like [static], [pr_diff], [repo_tests]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "This task involves code refactoring, not production of structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, and variable names in instruction.md and tests are correct and consistent."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names all three files to modify, specifies the exact new method name `any_reachable`, the exact predicate name `is_defined_and`, and describes the internal restructuring (check predicate before reachability, don't use .filter().all()). This goes far beyond describing the problem."
+      "reason": "The instruction names the exact files to modify, the exact method names to use (`any_reachable`, `is_defined_and`), the exact internal fields the method body must reference (`predicates`, `reachability_constraints`), and the exact pattern to avoid (`.filter().all()`). This goes well beyond describing what's broken and essentially provides the solution blueprint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

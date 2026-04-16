@@ -3,58 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check specific things not mentioned in instruction.md: test_repo_prettier_ffi_tests checks 'test/js/bun/ffi/*.test.ts' with prettier, test_repo_prettier_scripts checks 'scripts/build.mjs' and 'scripts/build.ts', test_js_lint_oxlint runs oxlint on 'src/js', test_js_files_valid_syntax checks 'scripts/build.mjs'. While instruction.md mentions prettier formatting and oxlint.json structure, it doesn't mention specific script files like 'scripts/build.mjs' or 'scripts/build.ts'. Also, the test t"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_repo_prettier_ffi_tests checks 'test/js/bun/ffi/*.test.ts' with prettier, test_repo_prettier_scripts checks 'scripts/build.mjs' and 'scripts/build.ts', test_js_lint_oxlint runs oxlint on 'src/js', test_js_files_valid_syntax checks 'scripts/build.mjs'. While instruction.md mentions prettier formatting for test files and oxlint.json structure, it doesn't mention scripts/build.mjs, scripts/build.ts, or oxlint running on src/js. Als"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (non-object symbol descriptors crash instead of throwing TypeError, and error-path cleanup is imperfect) without specifying the exact code changes needed. The agent must figure out to add `!value.isObject()` check and `arg_types.deinit` cleanup themselves."
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states 'At least two of these functions error paths must include proper cleanup of allocated arg_types arrays before calling clearAndFree' which directly describes the gold patch's addition of arg_types.deinit() calls before clearAndFree. It also states the fix must add a non-object check alongside isEmptyOrUndefinedOrNull, which is exactly the gold patch's 'or !value.isObject()' addition. The 'Functions with error-path cleanup requirements' section essentially describe"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_value_guard_rejects_non_objects searches for specific patterns like 'isObject' in the generateSymbols region. An alternative fix using e.g. 'isStruct' or a different type-checking approach might not pass. test_error_path_cleanup specifically looks for 'arg_types.deinit' or 'arg_types' combined with 'deinit' \u2014 an alternative cleanup using a different method name or approach would fail. test_cleanup_count requires 'at least 2' cleanup sites with 'arg_types' and 'deinit' patterns, which is gol"
+      "reason": "test_value_guard_rejects_non_objects searches for specific patterns like 'isObject' within 3 lines of 'isEmptyOrUndefinedOrNull', or checks for specific type-check identifiers like 'isStruct', 'isCallable', '@intFromEnum', '.tag'. An alternative correct fix using a different validation approach (e.g., a custom helper function, or checking JSType directly with a different method name) might not match these specific pattern checks. test_error_path_cleanup_arg_types specifically looks for 'arg_type"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_value_guard_rejects_non_objects, test_error_path_cleanup, test_cleanup_count) are purely source text analysis \u2014 they read ffi.zig and search for string patterns like 'isObject', 'arg_types.deinit' without executing any code or testing runtime behavior. The note in the test file acknowledges 'Zig requires the full Bun build toolchain... All checks therefore operate on source analysis.' This means every f2p test is effectively `assert 'foo' in open(path).read()`."
+      "reason": "The fail-to-pass tests (test_value_guard_rejects_non_objects, test_error_path_cleanup_arg_types) are purely text-based source analysis using regex pattern matching on ffi.zig content. They do `assert 'isObject' in block` and similar string checks. No code is compiled, executed, or behavior tested. The pass-to-pass tests do run some subprocesses (prettier, node JSON parsing) but the core behavioral tests for the bug fix are all text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns (isObject guard, arg_types.deinit cleanup) that don't exist in the base commit. A stub or no-op change would not introduce these patterns, so the tests would fail without an actual implementation."
+      "reason": "The fail-to-pass tests check for specific code patterns (isObject near isEmptyOrUndefinedOrNull, arg_types deinit near clearAndFree) that don't exist in the base commit. A stub/no-op change would not introduce these patterns, so the tests would fail without actual implementation."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction mentions two main behaviors: (1) throwing TypeError for non-object symbol descriptors (tested by test_value_guard_rejects_non_objects) and (2) error-path cleanup of arg_types arrays (tested by test_error_path_cleanup and test_cleanup_count). Both are covered."
+      "outcome": "fail",
+      "reason": "Instruction.md says 'should throw a TypeError with a descriptive message instead of crashing' but no test actually verifies that a TypeError is thrown. The tests only check source code patterns, not runtime behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear sections (Gates/static, pass_to_pass/repo_tests, fail_to_pass/pr_diff), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in Zig source code, not producing structured data output."
+      "reason": "This task is about fixing a crash bug in Zig source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file 'src/bun.js/api/ffi.zig', lists specific function names like 'generateSymbols', 'generateSymbolForFunction', 'isEmptyOrUndefinedOrNull', and explicitly describes 'error-path cleanup requirements' for 'arg_types arrays' with 'clearAndFree'. This strongly hints at the exact fix (add cleanup of arg_types before clearAndFree, and add a type guard near isEmptyOrUndefinedOrNull)."
+      "reason": "Instruction.md names the exact file 'src/bun.js/api/ffi.zig', lists specific function names (generateSymbols, generateSymbolForFunction), specifies exact cleanup patterns ('arg_types arrays before calling clearAndFree'), and describes the exact condition to add ('non-object check' alongside isEmptyOrUndefinedOrNull). This goes well beyond describing what's broken and effectively describes the fix location and approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task modifying Zig source, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

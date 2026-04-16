@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant files (Pipeline.ts, BuildHIR.ts, ValidateNoDerivedComputationsInEffects.ts, ValidatePreservedManualMemoization.ts, ValidateSourceLocations.ts), describes the specific patterns to change (tryRecord wrapping, recordErrors batch method, redundant instanceof ternary, merged enableValidations blocks), and the specific function names referenced in tests (validateContextVariableLValues, validateUseMemo, etc.) are discoverable from the named files. The test for merged "
+      "reason": "All file paths and the pass functions referenced by tests are described in instruction.md under 'Files to Look At' and 'Expected Behavior'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (inconsistent wrapping, manual for-loops instead of batch method, redundant ternary, duplicate guard blocks) and what the expected behavior should be, but does not specify exact line numbers or exact code to write. A developer must still figure out exactly which calls to wrap, how to simplify the ternary, and how to merge the blocks."
+      "reason": "Instruction describes what's broken (inconsistent tryRecord wrapping, manual loop vs recordErrors, redundant ternary, adjacent guard blocks) without providing exact replacement code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are highly specific about implementation details. For example, test_build_hir_simplified_conditional checks for the exact string 'detail.category === ErrorCategory.Invariant' - an alternative correct simplification (e.g., using a different but equivalent check) would fail. test_merged_validation_guard_blocks asserts there is no 'if (env.enableValidations)' string between two specific function calls, which constrains the exact merge approach. test_record_errors_normalization checks for the "
+      "reason": "test_merged_validation_guard_blocks asserts no 'if (env.enableValidations)' appears between validateLocalsNotReassignedAfterRender and assertValidMutableRanges, which constrains structural placement; also test_build_hir_simplified_conditional requires the exact string 'detail.category === ErrorCategory.Invariant' which an alternative equivalent simplification (e.g., using a different check or extracting to a variable) wouldn't match."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/string matching: they read file contents and check for string presence/absence (e.g., 'tryRecord' in context, '.recordErrors(' in content, 'detail instanceof CompilerDiagnostic' not in content). Tests like test_repo_lint, test_repo_typecheck, and test_repo_jest_unit do execute subprocesses, but the core fail-to-pass tests (test_tryrecord_wraps_*, test_record_errors_normalization, test_build_hir_simplified_conditional, test_merged_validation_guard_blocks) are"
+      "reason": "All f2p tests only do string/regex inspection of source files (e.g., _is_wrapped_in_tryrecord checks for 'tryRecord' substring near a call; checks for '.recordErrors(' substring); none execute the compiler to verify actual error-handling behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., tryRecord wrapping around validation calls, .recordErrors( in validation files, absence of instanceof CompilerDiagnostic). A stub or no-op implementation would not pass these tests since the base files must be actively modified."
+      "reason": "Tests check specific structural changes to multiple files; a stub cannot trivially satisfy them without performing the described edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors described in the instruction (tryRecord wrapping, batch recordErrors, simplified ternary, merged guard blocks) have corresponding test functions that verify them."
+      "reason": "Each expected behavior (tryRecord wrapping, recordErrors batch, simplified ternary, merged guard blocks) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (comments separating fail-to-pass from pass-to-pass), descriptive function names (test_tryrecord_wraps_early_and_hook_validations, test_record_errors_normalization, etc.), and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comment headers (fail-to-pass, pass-to-pass) and descriptively named."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not structured data output."
+      "reason": "Task is code refactoring, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in instruction.md and tests match the actual repository structure correctly."
+      "reason": "File paths and function names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files AND describes the exact patterns to change (e.g., 'for (const detail of errors.details) { env.recordError(detail); }' should become 'env.recordErrors(errors)', 'instanceof CompilerDiagnostic ternary evaluates to the same expression on both branches'). This is quite specific about what to change in each file, reducing the localization challenge significantly."
+      "outcome": "pass",
+      "reason": "Instruction names the files (which is needed since localization is not the task) but does not point to exact lines or patched code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
@@ -51,9 +51,7 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

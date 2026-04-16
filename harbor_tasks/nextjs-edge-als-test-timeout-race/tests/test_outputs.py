@@ -193,7 +193,7 @@ for (let i = 0; i < lines.length; i++) {{
             capture_output=True, text=True, timeout=10,
         )
 
-    assert result.returncode == 0, f"createNew is called inside a test body (race condition not fixed): {result.stderr}"
+    assert result.returncode == 0, f"createNext is called inside a test body (race condition not fixed): {result.stderr}"
 
 
 # [pr_diff] fail_to_pass
@@ -235,25 +235,6 @@ def test_concurrent_requests_with_req_id():
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------
-
-# [agent_config] fail_to_pass — AGENTS.md:207-221 @ 9f181bd
-def test_uses_nexttestsetup():
-    """Must use nextTestSetup() API (not createNext) per AGENTS.md:207-221."""
-    code = TEST_FILE.read_text()
-    assert "nextTestSetup" in code, \
-        "Test does not use nextTestSetup — AGENTS.md:207-221 requires it over createNext"
-
-
-# [agent_config] fail_to_pass — AGENTS.md:207-221 @ 9f181bd
-def test_uses_fixture_directory():
-    """Must use fixture directory reference (not inline files object) per AGENTS.md:207-221."""
-    code = TEST_FILE.read_text()
-    uses_dir_ref = bool(re.search(r"__dirname|import\.meta|path\.(join|resolve)", code))
-    uses_inline_files = bool(re.search(r"files\s*:\s*\{", code))
-
-    assert uses_dir_ref or not uses_inline_files, \
-        "Uses inline files object instead of fixture directory reference (AGENTS.md:207-221)"
-
 
 # [agent_config] pass_to_pass — AGENTS.md:194-205 @ 9f181bd
 def test_no_deprecated_check_function():

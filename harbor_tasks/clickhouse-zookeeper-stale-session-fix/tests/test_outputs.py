@@ -12,6 +12,7 @@ on each retry via zookeeper_getter.
 import subprocess
 import re
 import sys
+import pytest
 from pathlib import Path
 
 REPO = Path("/workspace/clickhouse")
@@ -19,7 +20,10 @@ TARGET_FILE = REPO / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperSt
 
 
 def get_refresh_objects_function():
-    """Extract the refreshObjects function content from the source file."""
+    """
+    Extract the refreshObjects function content from the source file.
+    Returns the full function body or None.
+    """
     content = TARGET_FILE.read_text()
 
     # Find the refreshObjects function
@@ -48,24 +52,77 @@ def get_refresh_objects_function():
     return match.group(0)
 
 
+def extract_lambda_body(func_content, lambda_marker):
+    """
+    Extract the body of a lambda given a marker like 'retryLoop([&]'.
+    Returns the lambda body (with outer braces).
+    """
+    lambda_start = func_content.find(lambda_marker)
+    if lambda_start == -1:
+        return None
+
+    brace_start = func_content.find('{', lambda_start)
+    if brace_start == -1:
+        return None
+
+    # Find matching closing brace
+    brace_count = 0
+    lambda_end = brace_start
+    for i, range_c in enumerate(func_content[brace_start:]):
+        if range_c == '{':
+            brace_count += 1
+        elif range_c == '}':
+            brace_count -= 1
+            if brace_count == 0:
+                lambda_end = brace_start + i + 1
+                break
+
+    return func_content[brace_start:lambda_end]
+
+
+def extract_retry_block(func_content):
+    """
+    Extract the block inside 'if (retries_ctl.isRetry())' that obtains fresh session.
+    Returns (condition_text, block_text) or (None, None).
+    """
+    # Find if (retries_ctl.isRetry()) block
+    pattern = r'if\s*\(\s*retries_ctl\.isRetry\(\)\s*\)(.*?)(?=\n\s*(?:else|for|while|if|\w+\s*\())'
+    match = re.search(pattern, func_content, re.DOTALL)
+    if match:
+        return match.group(0), match.group(1)
+    return None, None
+
+
 def test_fix_session_refresh_in_retry_loop():
     """
     FAIL-TO-PASS: Verify that on retry, a fresh ZooKeeper session is obtained.
 
-    The fix adds: if (retries_ctl.isRetry()) current_zookeeper = zookeeper_getter.getZooKeeper().first;
+    The fix adds logic like:
+        if (retries_ctl.isRetry())
+            <some_var> = zookeeper_getter.getZooKeeper().first;
+
+    We check that inside the isRetry() block, there's a call to getZooKeeper()
+    to obtain a fresh session. We do NOT assert on the variable name.
     """
+    content = TARGET_FILE.read_text()
     func_content = get_refresh_objects_function()
     if not func_content:
         pytest.fail("Could not find refreshObjects function")
 
-    # Check for the key fix: obtaining fresh session on retry
-    has_retry_check = 'retries_ctl.isRetry()' in func_content
-    has_session_refresh = 'zookeeper_getter.getZooKeeper()' in func_content
-    has_current_zookeeper = 'current_zookeeper' in func_content
+    # Find the retry condition block
+    retry_condition, retry_block = extract_retry_block(func_content)
 
-    assert has_retry_check, "Missing retry check - should call isRetry() to detect retry condition"
-    assert has_session_refresh, "Missing session refresh - should get fresh ZooKeeper on retry"
-    assert has_current_zookeeper, "Missing current_zookeeper variable - should use fresh session handle"
+    assert retry_condition is not None, \
+        "Missing retry detection - should call retries_ctl.isRetry() to detect retry condition"
+
+    assert 'getZooKeeper()' in retry_block or 'zookeeper_getter.getZooKeeper()' in retry_block, \
+        "Missing session refresh - should call zookeeper_getter.getZooKeeper() to get fresh session on retry"
+
+    # Verify that the result of getZooKeeper() is assigned to a variable
+    # Pattern: some_var = zookeeper_getter.getZooKeeper().first;
+    assign_pattern = r'\w+\s*=\s*zookeeper_getter\.getZooKeeper\(\)\.first'
+    assert re.search(assign_pattern, retry_block), \
+        "Fresh session should be assigned to a variable (zookeeper_getter.getZooKeeper().first)"
 
 
 def test_fix_object_names_inside_retry_loop():
@@ -75,95 +132,129 @@ def test_fix_object_names_inside_retry_loop():
     The bug: object_names was fetched BEFORE the retry loop, using stale data on retry.
     The fix: Move the call inside the retryLoop lambda so it's re-fetched on each retry.
     """
+    content = TARGET_FILE.read_text()
     func_content = get_refresh_objects_function()
     if not func_content:
         pytest.fail("Could not find refreshObjects function")
 
     # Find the retryLoop lambda
-    retry_loop_match = re.search(
-        r'retries_ctl\.retryLoop\(\[&\].*?\{.*?\}\);',
-        func_content,
-        re.DOTALL
-    )
-
-    if not retry_loop_match:
-        # Try simpler pattern
-        retry_start = func_content.find('retries_ctl.retryLoop([&]')
-        if retry_start == -1:
-            pytest.fail("Could not find retryLoop call")
-
-        # Extract the lambda body (approximately)
-        brace_start = func_content.find('{', retry_start)
-        if brace_start == -1:
-            pytest.fail("Could not find retryLoop lambda body")
-
-        # Find matching closing brace
-        brace_count = 0
-        lambda_end = brace_start
-        for i, char in enumerate(func_content[brace_start:]):
-            if char == '{':
-                brace_count += 1
-            elif char == '}':
-                brace_count -= 1
-                if brace_count == 0:
-                    lambda_end = brace_start + i
-                    break
-
-        lambda_content = func_content[brace_start:lambda_end+1]
-    else:
-        lambda_content = retry_loop_match.group(0)
+    lambda_body = extract_lambda_body(func_content, 'retries_ctl.retryLoop([&]')
+    assert lambda_body is not None, "Could not find retryLoop lambda"
 
     # The fix requires getObjectNamesAndSetWatch to be INSIDE the retry loop
-    assert 'getObjectNamesAndSetWatch' in lambda_content, \
+    assert 'getObjectNamesAndSetWatch' in lambda_body, \
         "getObjectNamesAndSetWatch must be called INSIDE the retryLoop lambda, not before it"
 
 
-def test_fix_uses_current_zookeeper_in_tryload():
+def test_fix_fresh_zookeeper_used_for_object_names():
     """
-    FAIL-TO-PASS: Verify that tryLoadObject uses current_zookeeper, not the original zookeeper handle.
+    FAIL-TO-PASS: Verify that getObjectNamesAndSetWatch uses a ZooKeeper handle
+    that was obtained inside the retry condition (i.e., the fresh session), not
+    the original zookeeper parameter.
 
-    The fix changes tryLoadObject(zookeeper, ...) to tryLoadObject(current_zookeeper, ...)
+    We check that inside the retry lambda, getObjectNamesAndSetWatch is called
+    with a variable that was assigned inside the isRetry() block.
     """
+    content = TARGET_FILE.read_text()
     func_content = get_refresh_objects_function()
     if not func_content:
         pytest.fail("Could not find refreshObjects function")
 
-    # Find the retryLoop lambda content
-    retry_start = func_content.find('retries_ctl.retryLoop([&]')
-    if retry_start == -1:
-        pytest.fail("Could not find retryLoop call")
+    # Find what variable is assigned from getZooKeeper() in the retry block
+    retry_condition, retry_block = extract_retry_block(func_content)
+    if retry_condition is None:
+        pytest.fail("Could not find retries_ctl.isRetry() block")
 
-    # Extract lambda body
-    brace_start = func_content.find('{', retry_start)
-    if brace_start == -1:
-        pytest.fail("Could not find retryLoop lambda body")
+    # Find the variable assigned in retry block
+    assign_match = re.search(r'(\w+)\s*=\s*zookeeper_getter\.getZooKeeper\(\)\.first', retry_block)
+    if not assign_match:
+        pytest.fail("Could not find variable assigned from zookeeper_getter.getZooKeeper().first")
 
-    # Count braces to find the end
-    brace_count = 0
-    lambda_end = brace_start
-    for i, char in enumerate(func_content[brace_start:]):
-        if char == '{':
-            brace_count += 1
-        elif char == '}':
-            brace_count -= 1
-            if brace_count == 0:
-                lambda_end = brace_start + i + 1
-                break
+    fresh_zk_var = assign_match.group(1)
 
-    lambda_content = func_content[brace_start:lambda_end]
+    # Now find the lambda body
+    lambda_body = extract_lambda_body(func_content, 'retries_ctl.retryLoop([&]')
+    assert lambda_body is not None, "Could not find retryLoop lambda"
 
-    # In the retry loop, tryLoadObject should use current_zookeeper, not the original zookeeper
-    # Look for tryLoadObject calls in the lambda
-    tryload_pattern = r'tryLoadObject\((\w+),'
-    matches = re.findall(tryload_pattern, lambda_content)
+    # Find getObjectNamesAndSetWatch call in lambda
+    obj_names_match = re.search(r'getObjectNamesAndSetWatch\s*\(\s*(\w+)\s*,', lambda_body)
+    assert obj_names_match, \
+        "getObjectNamesAndSetWatch should be called inside the retry loop with a zookeeper handle"
+
+    used_zk_var = obj_names_match.group(1)
+
+    # The variable used should be the same one assigned in the retry block
+    assert used_zk_var == fresh_zk_var, \
+        f"getObjectNamesAndSetWatch should use the fresh session variable ({fresh_zk_var}) inside retry loop, not the original zookeeper parameter"
+
+
+def test_fix_fresh_zookeeper_used_for_tryload():
+    """
+    FAIL-TO-PASS: Verify that tryLoadObject uses the fresh ZooKeeper handle
+    inside the retry loop, not the original zookeeper parameter.
+    """
+    content = TARGET_FILE.read_text()
+    func_content = get_refresh_objects_function()
+    if not func_content:
+        pytest.fail("Could not find refreshObjects function")
+
+    # Find what variable is assigned from getZooKeeper() in the retry block
+    retry_condition, retry_block = extract_retry_block(func_content)
+    if retry_condition is None:
+        pytest.fail("Could not find retries_ctl.isRetry() block")
+
+    # Find the variable assigned in retry block
+    assign_match = re.search(r'(\w+)\s*=\s*zookeeper_getter\.getZooKeeper\(\)\.first', retry_block)
+    if not assign_match:
+        pytest.fail("Could not find variable assigned from zookeeper_getter.getZooKeeper().first")
+
+    fresh_zk_var = assign_match.group(1)
+
+    # Now find the lambda body
+    lambda_body = extract_lambda_body(func_content, 'retries_ctl.retryLoop([&]')
+    assert lambda_body is not None, "Could not find retryLoop lambda"
+
+    # Find tryLoadObject calls in lambda and check they use the fresh zk variable
+    tryload_pattern = r'tryLoadObject\s*\(\s*(\w+)\s*,'
+    matches = re.findall(tryload_pattern, lambda_body)
 
     assert len(matches) > 0, "Should have tryLoadObject call inside retry loop"
 
-    # All tryLoadObject calls should use current_zookeeper, not the parameter zookeeper
+    # All tryLoadObject calls should use the fresh zookeeper variable
     for match in matches:
-        assert match == 'current_zookeeper', \
-            f"tryLoadObject should use 'current_zookeeper' inside retry loop, not '{match}'"
+        assert match == fresh_zk_var, \
+            f"tryLoadObject should use the fresh session handle ({fresh_zk_var}) inside retry loop, not '{match}'"
 
+
+def test_no_object_names_before_retry_loop():
+    """
+    FAIL-TO-PASS: Verify that object_names is NOT fetched before the retry loop.
+
+    In the buggy version, Strings object_names = getObjectNamesAndSetWatch(...) was called
+    before the retry loop, causing stale data on retry.
+    """
+    content = TARGET_FILE.read_text()
+    func_content = get_refresh_objects_function()
+    if not func_content:
+        pytest.fail("Could not find refreshObjects function")
+
+    # Find the retry loop start
+    retry_loop_pos = func_content.find('retries_ctl.retryLoop')
+    if retry_loop_pos == -1:
+        pytest.fail("Could not find retryLoop call")
+
+    # Get content BEFORE the retry loop
+    before_retry = func_content[:retry_loop_pos]
+
+    # Should NOT have getObjectNamesAndSetWatch before the retry loop
+    # (It should now be inside the retry loop)
+    assert 'getObjectNamesAndSetWatch' not in before_retry, \
+        "getObjectNamesAndSetWatch should NOT be called before the retry loop (it causes the bug)"
+
+
+# ============================================================================
+# PASS-TO-PASS: Syntax and structure checks
+# ============================================================================
 
 def test_code_compiles_syntax():
     """
@@ -188,6 +279,7 @@ def test_function_structure_intact():
     """
     PASS-TO-PASS: Verify the overall function structure is intact with key components.
     """
+    content = TARGET_FILE.read_text()
     func_content = get_refresh_objects_function()
     if not func_content:
         pytest.fail("Could not find refreshObjects function")
@@ -202,31 +294,6 @@ def test_function_structure_intact():
 
     for component in required_components:
         assert component in func_content, f"Missing required component: {component}"
-
-
-def test_no_object_names_before_retry_loop():
-    """
-    FAIL-TO-PASS: Verify that object_names is NOT fetched before the retry loop.
-
-    In the buggy version, Strings object_names = getObjectNamesAndSetWatch(...) was called
-    before the retry loop, causing stale data on retry.
-    """
-    func_content = get_refresh_objects_function()
-    if not func_content:
-        pytest.fail("Could not find refreshObjects function")
-
-    # Find the retry loop start
-    retry_loop_pos = func_content.find('retries_ctl.retryLoop')
-    if retry_loop_pos == -1:
-        pytest.fail("Could not find retryLoop call")
-
-    # Get content BEFORE the retry loop
-    before_retry = func_content[:retry_loop_pos]
-
-    # Should NOT have getObjectNamesAndSetWatch before the retry loop
-    # (It should now be inside the retry loop)
-    assert 'getObjectNamesAndSetWatch' not in before_retry, \
-        "getObjectNamesAndSetWatch should NOT be called before the retry loop (it causes the bug)"
 
 
 # ============================================================================
@@ -437,5 +504,4 @@ def test_repo_cpp_files_compile_independently():
 
 
 if __name__ == "__main__":
-    import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

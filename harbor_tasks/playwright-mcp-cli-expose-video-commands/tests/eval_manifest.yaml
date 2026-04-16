@@ -1,0 +1,191 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39006
+  base_commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+  merge_commit: "bb03b6c12704f594236c583b8dd9aec417cbf121"
+
+# ============================================================================
+# Track 1: Code correctness checks
+# ============================================================================
+checks:
+  # --- Fail-to-pass: Core functionality ---
+
+  - id: video_module_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Video tools module must exist with browser_start_video and browser_stop_video exports"
+
+  - id: video_capability_is_devtools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Video tools must use 'devtools' capability, not 'tracing'"
+
+  - id: tracing_capability_renamed_to_devtools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tracing tools must have capability renamed from 'tracing' to 'devtools'"
+
+  - id: tools_registry_includes_video
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tools registry must import and include video tools in correct order"
+
+  - id: config_dts_has_devtools_capability
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config type definitions must include 'devtools' capability and remove 'tracing'"
+
+  - id: browser_context_factory_uses_devtools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "BrowserContextFactory must check for 'devtools' capability instead of 'tracing'"
+
+  - id: program_cli_accepts_devtools
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLI program must accept 'devtools' in --caps option and handle legacy 'tracing'"
+
+  - id: terminal_commands_include_video
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Terminal commands must include video-start and video-stop with proper category"
+
+  - id: terminal_program_passes_output_dir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Terminal program must pass outputDir to MCP server and session.run"
+
+  - id: command_parses_filename_with_output_dir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Command parser must resolve filename against outputDir for saving files"
+
+  - id: run_code_in_correct_order
+    type: fail_to_pass
+    origin: pr_diff
+    description: "runCode command must be repositioned to correct location (after resize, before navigation)"
+
+  # --- Fail-to-pass: Config/documentation update ---
+
+  - id: skill_md_documents_video_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must document video-start and video-stop commands in DevTools section"
+
+  - id: skill_md_consistent_formatting
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md must maintain consistent formatting with other command examples"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "1-120"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+
+  # --- Pass-to-pass: Code quality ---
+
+  - id: video_module_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Video module must have valid TypeScript syntax"
+
+  - id: commands_module_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Commands module must have valid TypeScript syntax"
+
+  - id: no_debug_console_log_in_program
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Session class should not have debug console.log statements (removed in PR)"
+
+# ============================================================================
+# Track 2: Gold config edits
+# ============================================================================
+config_edits:
+  - path: "packages/playwright/src/mcp/terminal/SKILL.md"
+    tier: 1
+    gold_added: "playwright-cli video-start\nplaywright-cli video-stop video.webm"
+    gold_removed: ""
+
+# ============================================================================
+# Track 3: Positive rubric - conventions the gold solution follows
+# ============================================================================
+rubric:
+  - rule: "SKILL.md commands should follow consistent code block formatting with backticks"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "15-120"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    evidence: "All existing commands use backtick code blocks with 'playwright-cli' prefix"
+    category: documentation
+    verification: programmatic
+    check_cmd: "grep -E '^playwright-cli' /workspace/playwright/packages/playwright/src/mcp/terminal/SKILL.md | head -5"
+
+  - rule: "Tool capabilities should be grouped logically (devtools for developer features)"
+    source:
+      path: "packages/playwright/src/mcp/config.d.ts"
+      lines: "17-30"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    evidence: "Gold groups video/tracing/network/run-code under 'devtools' capability"
+    category: architecture
+    verification: programmatic
+
+  - rule: "Command imports should be in alphabetical order"
+    source:
+      path: "packages/playwright/src/mcp/browser/tools.ts"
+      lines: "27-38"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    evidence: "Gold imports: screenshot, storage, tabs, tracing, verify, video, wait (alphabetical)"
+    category: code_style
+    verification: programmatic
+
+  - rule: "Terminal commands should use kebab-case naming (video-start, not videoStart)"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "98-115"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    evidence: "Existing commands use kebab-case: tracing-start, tracing-stop, tab-list, etc."
+    category: naming
+    verification: programmatic
+
+  - rule: "File paths for output should be resolved against outputDir"
+    source:
+      path: "packages/playwright/src/mcp/terminal/command.ts"
+      lines: "14-45"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    evidence: "Gold uses path.resolve(args.outputDir, args.filename) for consistency"
+    category: code_quality
+    verification: programmatic
+
+# ============================================================================
+# Track 4: Distractors - conventions that create collisions
+# ============================================================================
+distractors:
+  - rule: "Keep 'tracing' as a separate capability (don't merge with devtools)"
+    source:
+      path: "packages/playwright/src/mcp/config.d.ts"
+      lines: "17-30"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    collision_type: rule_conflict
+    why_distracting: "The PR specifically merges 'tracing' into 'devtools'; keeping them separate would be wrong"
+    severity: high
+
+  - rule: "Add video commands to 'media' or 'recording' category instead of 'devtools'"
+    source:
+      path: "packages/playwright/src/mcp/terminal/commands.ts"
+      lines: "300-480"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    collision_type: architecture_boundary
+    why_distracting: "Video/tracing/run-code/network are all grouped under 'devtools' per the PR design"
+    severity: medium
+
+  - rule: "Document video commands in a new 'Media' section of SKILL.md"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "95-115"
+      commit: "8c99ff19b8e03ab21cec344d8b2f1d149d4040c7"
+    collision_type: scope_ambiguity
+    why_distracting: "Gold adds video commands to DevTools section alongside tracing commands; creating a new section would be inconsistent"
+    severity: medium

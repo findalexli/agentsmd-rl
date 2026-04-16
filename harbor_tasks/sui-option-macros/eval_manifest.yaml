@@ -1,0 +1,136 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  pr_number: 26085
+  base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
+  merge_commit: b9b9628b2040de6b8f02af1e59d7a119dd4bbc10
+
+instruction: |
+  The std::option module in the Move standard library is missing several useful macro functions.
+  Add the following 5 macro functions to the option.move file:
+
+  1. map_mut - Map an Option<T> to Option<U> by applying a function to a contained value by mutable reference.
+     The original Option<T> is preserved, though potentially modified.
+
+  2. is_none_or - Return true if the value is None, or if the predicate returns true for the contained value.
+
+  3. fold - Consume the option and return a default value if None, otherwise apply a function to the contained value.
+
+  4. fold_ref - Like fold but borrows the value instead of consuming it. Original option is preserved.
+
+  5. fold_mut - Like fold_ref but with mutable borrow.
+
+  Follow the existing patterns in the file for macro function definitions.
+  The file is located at: crates/sui-framework/packages/move-stdlib/sources/option.move
+
+checks:
+  # Fail-to-pass tests - these should fail on base commit, pass on gold
+  - id: test_map_mut_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: map_mut macro function exists in option.move
+
+  - id: test_is_none_or_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: is_none_or macro function exists in option.move
+
+  - id: test_fold_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: fold macro function exists in option.move
+
+  - id: test_fold_ref_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: fold_ref macro function exists in option.move
+
+  - id: test_fold_mut_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: fold_mut macro function exists in option.move
+
+  - id: test_all_five_macros_present
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md: testing requirements
+    description: All five new macros are present in source
+
+  # Pass-to-pass tests - these should pass on both base and gold
+  - id: test_move_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Move code compiles successfully
+
+  - id: test_option_file_exists
+    type: pass_to_pass
+    origin: agent_config
+    source: CLAUDE.md: repository guidelines
+    description: option.move file exists
+
+  # New p2p tests - repo structure and syntax validation
+  - id: test_option_move_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: option.move has balanced braces and valid syntax
+
+  - id: test_move_stdlib_package_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-stdlib package has required Move.toml and directories
+
+  - id: test_option_tests_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: option_tests.move exists with proper test structure
+
+  - id: test_move_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Move.toml has required package and addresses sections
+
+  - id: test_option_move_module_decl
+    type: pass_to_pass
+    origin: repo_tests
+    description: option.move has valid module std::option declaration
+
+  - id: test_move_source_files_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: Required Move source files are present in stdlib
+
+  - id: test_option_macros_consistent
+    type: pass_to_pass
+    origin: repo_tests
+    description: Macro patterns in option.move are consistent
+
+  - id: test_all_test_files_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Move test files are readable
+
+rubric:
+  - criterion: "Code follows existing macro patterns"
+    description: "New macros follow the same style as existing macros (map, map_ref, filter, etc.)"
+    source: CLAUDE.md - follow existing patterns
+    reference: "map_mut, is_none_or, fold, fold_ref, fold_mut follow patterns like 'let o = $o; if (o.is_some()) ...'"
+
+  - criterion: "Proper documentation comments"
+    description: "Each macro has a documentation comment explaining its purpose and behavior"
+    source: CLAUDE.md - comment non-obvious logic
+    reference: "/// Map an Option<T> value to Option<U>..., /// Return true if the value is None..., /// Consume the option and return..."
+
+  - criterion: "Uses correct type parameters"
+    description: "Macros correctly use $T, $U, $R type parameters matching the pattern of existing macros"
+    source: option.move existing patterns
+    reference: "public macro fun map_mut<$T, $U>, is_none_or<$T>, fold<$T, $R>, fold_ref<$T, $R>, fold_mut<$T, $R>"
+
+  - criterion: "No linting suppressions added"
+    description: "No #[allow(...)] attributes used, following repo conventions"
+    source: CLAUDE.md - NEVER use linting suppressions
+    reference: "No #[allow(...)] attributes in the added code"

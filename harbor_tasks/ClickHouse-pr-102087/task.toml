@@ -1,0 +1,31 @@
+name = "clickhouse-leftpad-heap-buffer-overflow"
+title = "Fix heap-buffer-overflow in leftPad/rightPad functions"
+description = """
+The leftPad and rightPad string functions in ClickHouse have a heap-buffer-overflow vulnerability.
+The issue is in how padding characters are stored and copied - the original code uses a regular
+String which doesn't provide the 15-byte read padding required by memcpySmallAllowReadWriteOverflow15.
+The fix involves storing the pad string in a PaddedPODArray which provides the necessary padding.
+"""
+
+owner = "ClickHouse"
+repo = "ClickHouse"
+pr_number = 102087
+base_commit = "11943f24a8dcc6274d50136144d0078ab7a56fad"
+merge_commit = "76f219cd167ab3b9f50f93daf1c74d2f54345b2f"
+
+# Difficulty and tags
+difficulty = "medium"
+tags = ["c++", "memory-safety", "string-functions", "security", "asan"]
+
+# Time estimates (in minutes)
+estimated_time = {
+    understanding = 20,
+    implementation = 40,
+    verification = 20
+}
+
+# Source file that needs to be modified
+target_file = "src/Functions/padString.cpp"
+
+# Distinctive line from the patch for idempotency check
+distinctive_line = "PaddedPODArray<UInt8> pad_string"

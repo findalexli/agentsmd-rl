@@ -104,3 +104,63 @@ rubric:
   type: pass_to_pass
   origin: repo_tests
   description: Repo has no large files added
+- rule: No production code changes in test PRs
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '177'
+  source_text: '**Quality bar** — test real logic (validation boundaries, state transitions,
+    error paths, branching, etc.). Skip tests that just verify Python itself works
+    (e.g., "does calling an abstract method raise `NotImplementedError`?", "does a
+    dataclass store the field I assigned?"). Consolidate repetitive patterns into
+    parameterized tests. No production code changes in test PRs.'
+  evidence: The gold diff correctly scopes its fixes entirely to the test file `test/registered/distributed/test_load_weights_from_remote_instance.py`,
+    disabling non-deterministic paths and addressing a test logic issue without touching
+    any production code in `python/sglang/`.
+  category: architecture
+  verification: llm_judge
+- rule: Consolidate repetitive patterns into parameterized tests
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '177'
+  source_text: '**Quality bar** — test real logic (validation boundaries, state transitions,
+    error paths, branching, etc.). Skip tests that just verify Python itself works
+    (e.g., "does calling an abstract method raise `NotImplementedError`?", "does a
+    dataclass store the field I assigned?"). Consolidate repetitive patterns into
+    parameterized tests. No production code changes in test PRs.'
+  evidence: 'The developer explicitly adds the comment `# FIXME: refactor this test
+    to have less random behavior` immediately above the non-deterministic `random.choice(["Engine",
+    "Server"])` calls, acknowledging the rule and indicating intent to transition
+    to deterministic, parameterized tests.'
+  category: testing patterns
+  verification: llm_judge
+distractors:
+- rule: Prefer mock over real server
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '16'
+  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't
+    need a server / engine launch (middleware, request routing, config validation,
+    argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in
+    `test/registered/unit/`. Only launch a real server when the test genuinely needs
+    inference results or server lifecycle behavior.
+  collision_type: scope_ambiguity
+  why_distracting: An agent reviewing the test file might try to optimize it by removing
+    the real server engine launches (`sgl.Engine`, `popen_launch_server`) and replacing
+    them with mocks. However, this test specifically validates distributed multi-GPU
+    weight loading over network/NCCL backends, which inherently requires the actual
+    server and engine lifecycles to be verified correctly.
+  severity: high
+- rule: Do NOT add register_amd_ci unless testing AMD paths
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '36'
+  source_text: '**Key principle for E2E tests**: Do NOT add `register_amd_ci` unless
+    the test specifically exercises AMD/ROCm code paths. Common E2E tests just need
+    any GPU to run — duplicating across backends wastes CI time with no extra coverage.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see the `register_amd_ci` call at the top of the
+    file and delete it, assuming this is a 'Common E2E test' that only needs to run
+    on one backend to save CI time. But because distributed weight loading exercises
+    highly hardware-specific communication code paths (NCCL vs RCCL), the AMD registry
+    is crucial coverage here.
+  severity: high

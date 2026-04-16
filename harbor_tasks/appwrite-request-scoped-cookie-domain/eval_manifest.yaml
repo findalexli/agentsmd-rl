@@ -123,6 +123,27 @@ distractors:
   source:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 28-35
+- rule: HTTP endpoints should be placed in the module's Http directory under src/Appwrite/Platform/Modules.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-18
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers
+
+    - `Tasks` directory - Contains behavior for module-specific CLI tasks
+
+    - `Http` directory - Contains HTTP endpoints for the module'
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to refactor the modified `app/controllers/api/account.php`
+    file into the new `src/Appwrite/Platform/Modules` structure described in the config,
+    but the gold diff correctly leaves the file in its current legacy location and
+    only updates dependency injection.
+  severity: high
 hierarchy_analysis: The root `AGENTS.md` defines the general Action pattern for DI
   injection which applies globally. The leaf `src/Appwrite/Platform/AGENTS.md` defines
   strict naming and structural conventions for the new Modules architecture. The agent

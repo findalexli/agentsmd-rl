@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file paths (areal/trainer/ppo/stats.py, areal/trainer/ppo/actor.py, areal/trainer/ppo/critic.py), the function name (infer_token_denominator), the required signature (input_data: dict[str, Any], fallback: torch.Tensor -> torch.Tensor of bool dtype), the metadata keys (attention_mask, cu_seqlens, input_ids), the fallback logic, and constraints (no wildcard imports, no bare print, no hardcoded paths). All test-asserted specifics are discoverable from instruction.md."
+      "reason": "Instruction names the helper function `infer_token_denominator`, the file `areal/trainer/ppo/stats.py`, the consumer files actor.py and critic.py, metadata keys (attention_mask, cu_seqlens, input_ids), return type (boolean tensor), and constraints (no wildcard imports, no print, no hardcoded paths)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what the function should do (accept metadata dict + fallback tensor, return boolean tensor with fallback logic) and where it should live, but does not give the exact code, line numbers to change, or the specific sed commands. A developer must still reason about the implementation."
+      "reason": "Instruction describes requirements (priority order, fallback behavior) but doesn't provide the exact implementation code; agent must still write the logic."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_actor_critic_integration uses regex `r'infer_token_denominator\\s*\\('` to check that actor.py and critic.py call a function with this exact name. test_infer_token_denominator_behavior dynamically discovers a function but then the integration test hardcodes the name. Also test_not_stub requires specific AST structure (>=3 non-docstring statements with conditional logic). While instruction.md does name `infer_token_denominator`, an alternative correct fix using a different function name (e.g.,"
+      "outcome": "pass",
+      "reason": "Tests check behavior (shapes, dtype) rather than specific variable names or line numbers; alternative implementations meeting the spec would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_infer_token_denominator_behavior dynamically imports and calls the function with various inputs, checking shapes and dtypes. test_actor_critic_integration compiles the files. test_repo_ruff_lint_ppo and test_repo_ruff_format_ppo run linting tools. Tests go well beyond simple text matching."
+      "reason": "test_infer_token_denominator_behavior dynamically loads the module and calls the function with various inputs, asserting on output shapes and dtypes."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_infer_token_denominator_behavior makes 9 substantive assertions about return shapes, dtypes, and values for different metadata combinations. A stub returning None, empty tensor, or ones_like(fallback) would fail tests involving attention_mask shape [2,3] when fallback is zeros(5), or cu_seqlens producing shape [4] from [0,4]."
+      "reason": "A stub returning a default tensor would fail the shape assertions (e.g., cu_seqlens [0,3,7] must produce shape [7], attention_mask preserves its shape)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are tested: the function signature, boolean return type, attention_mask priority, cu_seqlens fallback, input_ids fallback with shape matching, ones_like fallback for unrecognized keys, type annotations, conditional logic with >=3 statements, import in actor/critic, no wildcard imports, no print, no hardcoded paths."
+      "reason": "Tests cover attention_mask priority, cu_seqlens fallback, input_ids shape match/mismatch, empty metadata fallback, type hints, no wildcard, no print, no hardcoded paths, and actor/critic integration."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_infer_token_denominator_behavior, test_actor_critic_integration, test_not_stub, etc.) with docstrings explaining each test's purpose. The behavioral test has numbered sub-tests with comments."
+      "reason": "Tests are named descriptively (test_infer_token_denominator_behavior, test_actor_critic_integration, test_not_stub, etc.) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is code-level, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "Filenames and function names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify (stats.py, actor.py, critic.py) and the function to create, but these are natural from the task domain. It doesn't reveal specific line numbers or the exact old code patterns to replace (like `torch.ones_like(loss_mask, dtype=torch.bool)`)."
+      "reason": "Instruction describes the problem area (PPO logging under CP) and required function signature without citing exact line numbers to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

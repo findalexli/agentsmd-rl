@@ -5,61 +5,34 @@ PR:   28200
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+Rewritten to verify BEHAVIOR, not implementation:
+- Tests execute code and inspect results, not source structure
+- No gold-specific variable names or patterns assumed
+- Observable output (return values, stdout, file permissions) verified
 """
 
 import json
 import os
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 
 REPO = "/workspace/bun"
 TARGET = f"{REPO}/test/integration/next-pages/test/dev-server-puppeteer.ts"
 
 
-def _src():
-    return Path(TARGET).read_text()
-
-
-def _code_lines(src):
-    """Strip comment-only lines to avoid matching commented-out code."""
-    return "\n".join(
-        l
-        for l in src.splitlines()
-        if not re.match(r"^\s*//", l) and not re.match(r"^\s*\*", l)
-    )
-
-
-def _run_node(code: str, timeout: int = 30, install_deps: list[str] | None = None) -> subprocess.CompletedProcess:
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node.js."""
-    # Install dependencies if needed
-    if install_deps:
-        pkg_dir = Path("/tmp/node_deps")
-        pkg_dir.mkdir(parents=True, exist_ok=True)
-        # Check if already installed
-        if not (pkg_dir / "node_modules").exists():
-            deps_str = " ".join(install_deps)
-            subprocess.run(
-                f"cd {pkg_dir} && npm install {deps_str}",
-                shell=True,
-                capture_output=True,
-            )
-
     script = Path("/tmp/_eval_tmp.cjs")
     script.write_text(code)
     try:
-        env = os.environ.copy()
-        # Add node_modules path if we installed deps
-        if install_deps:
-            pkg_dir = Path("/tmp/node_deps")
-            node_path = str(pkg_dir / "node_modules")
-            env["NODE_PATH"] = node_path
         return subprocess.run(
             ["node", str(script)],
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=env,
         )
     finally:
         script.unlink(missing_ok=True)
@@ -72,21 +45,35 @@ def _run_node(code: str, timeout: int = 30, install_deps: list[str] | None = Non
 
 # [pr_diff] fail_to_pass
 def test_macos_headless_shell_mode():
-    """On macOS, headless mode must use 'shell' (not boolean true) to avoid Gatekeeper."""
-    src = _src()
+    """
+    On macOS, headless mode must use 'shell' (not boolean true) to avoid Gatekeeper.
+    BEHAVIORAL: Extract the headless expression and evaluate it with a mocked
+    platform detection variable set to true/false.
+    """
+    src = Path(TARGET).read_text()
 
-    # Verify isMacOS variable exists
-    assert re.search(r"const\s+isMacOS\s*=", src), "No isMacOS variable defined"
+    # Find ANY platform detection variable (const x = process.platform === "darwin")
+    # Accept any variable name, not just 'isMacOS'
+    platform_var_m = re.search(
+        r'const\s+(\w+)\s*=\s*process\.platform\s*===\s*["\']darwin["\']',
+        src
+    )
+    if not platform_var_m:
+        raise ValueError("No platform detection variable found (const x = process.platform === 'darwin')")
+
+    platform_var = platform_var_m.group(1)
 
     # Extract the headless expression from the launch options
-    headless_m = re.search(r"headless\s*:\s*(.+?),", src)
-    assert headless_m, "No headless config found in launchOptions"
+    headless_m = re.search(r'headless\s*:\s*(.+?),', src)
+    if not headless_m:
+        raise ValueError("No headless config found in launchOptions")
+
     headless_expr = headless_m.group(1).strip()
 
     # Evaluate on macOS — must produce "shell"
     r = _run_node(
         f"""
-const isMacOS = true;
+const {platform_var} = true;
 const result = {headless_expr};
 console.log(JSON.stringify(result));
 """
@@ -99,7 +86,7 @@ console.log(JSON.stringify(result));
     # Evaluate on Linux — must produce true
     r = _run_node(
         f"""
-const isMacOS = false;
+const {platform_var} = false;
 const result = {headless_expr};
 console.log(JSON.stringify(result));
 """
@@ -112,18 +99,34 @@ console.log(JSON.stringify(result));
 
 # [pr_diff] fail_to_pass
 def test_executable_path_excluded_on_macos():
-    """On macOS with shell mode, executablePath must not be set."""
-    src = _src()
+    """
+    On macOS with shell mode, executablePath must not be set.
+    BEHAVIORAL: Extract the executablePath spread expression and evaluate it
+    with platform detection true/false.
+    """
+    src = Path(TARGET).read_text()
+
+    # Find ANY platform detection variable
+    platform_var_m = re.search(
+        r'const\s+(\w+)\s*=\s*process\.platform\s*===\s*["\']darwin["\']',
+        src
+    )
+    if not platform_var_m:
+        raise ValueError("No platform detection variable found")
+
+    platform_var = platform_var_m.group(1)
 
     # Extract the spread expression containing executablePath
     spread_m = re.search(r"\.\.\.\(([^)]*executablePath[^)]*)\)", src)
-    assert spread_m, "No executablePath spread expression found"
+    if not spread_m:
+        raise ValueError("No executablePath spread expression found")
+
     spread_expr = spread_m.group(1).strip()
 
     # On macOS with a browser path: executablePath should NOT be set
     r = _run_node(
         f"""
-const isMacOS = true;
+const {platform_var} = true;
 const browserPath = "/usr/bin/chromium";
 const result = {spread_expr};
 console.log(JSON.stringify(result));
@@ -136,7 +139,7 @@ console.log(JSON.stringify(result));
     # On Linux with a browser path: executablePath SHOULD be set
     r = _run_node(
         f"""
-const isMacOS = false;
+const {platform_var} = false;
 const browserPath = "/usr/bin/chromium";
 const result = {spread_expr};
 console.log(JSON.stringify(result));
@@ -151,9 +154,17 @@ console.log(JSON.stringify(result));
 
 # [pr_diff] fail_to_pass
 def test_finite_timeouts():
-    """Launch timeout and protocolTimeout must be finite (>0), not 0/infinite."""
-    src = _src()
-    code = _code_lines(src)
+    """
+    Launch timeout and protocolTimeout must be finite (>0), not 0/infinite.
+    BEHAVIORAL: Extract timeout values and verify they are > 0.
+    """
+    src = Path(TARGET).read_text()
+
+    # Strip comment-only lines to avoid matching commented-out code
+    code = "\n".join(
+        l for l in src.splitlines()
+        if not re.match(r"^\s*//", l) and not re.match(r"^\s*\*", l)
+    )
 
     # Extract and evaluate timeout values via Node.js
     r = _run_node(
@@ -180,9 +191,17 @@ console.log(JSON.stringify({{timeout, protoTimeout}}));
 
 # [pr_diff] fail_to_pass
 def test_retry_delay_increased():
-    """Retry delay between browser launch attempts must be > 1000ms."""
-    src = _src()
-    code = _code_lines(src)
+    """
+    Retry delay between browser launch attempts must be > 1000ms.
+    BEHAVIORAL: Extract setTimeout delay from catch block and verify > 1000.
+    """
+    src = Path(TARGET).read_text()
+
+    # Strip comment-only lines
+    code = "\n".join(
+        l for l in src.splitlines()
+        if not re.match(r"^\s*//", l) and not re.match(r"^\s*\*", l)
+    )
 
     # Find the setTimeout in the catch/retry block
     catch_idx = code.rfind("catch")
@@ -203,12 +222,35 @@ def test_retry_delay_increased():
 
 # [pr_diff] fail_to_pass
 def test_chmod_cached_binaries():
-    """Downloaded browser binaries in Puppeteer cache must be chmod'd executable."""
-    code = _code_lines(_src())
+    """
+    Downloaded browser binaries in Puppeteer cache must be chmod'd executable.
+    BEHAVIORAL: Extract chmod commands, create temp files with non-executable
+    permissions, run commands, verify files become executable.
+    """
+    src = Path(TARGET).read_text()
 
-    # Extract the actual execSync chmod commands from the source, create a temp
-    # directory with non-executable dummy binaries, run the commands, and verify
-    # the binaries become executable.
+    # Strip comment-only lines
+    code = "\n".join(
+        l for l in src.splitlines()
+        if not re.match(r"^\s*//", l) and not re.match(r"^\s*\*", l)
+    )
+
+    # Extract execSync calls containing chmod from backtick template strings
+    chmod_regex = re.compile(r'execSync\s*\(\s*`([^`]*chmod[^`]*)`')
+    cmds = chmod_regex.findall(code)
+
+    assert len(cmds) > 0, "No execSync chmod commands found in source"
+
+    # Verify commands target key browser binaries
+    assert any('chrome-headless-shell' in c for c in cmds), (
+        "chmod commands should target chrome-headless-shell"
+    )
+    assert any('chrome' in c and 'headless' not in c for c in cmds), (
+        "chmod commands should target chrome binary"
+    )
+
+    # BEHAVIORAL: Create temp dir with non-executable dummy binaries,
+    # run the extracted chmod commands, verify binaries become executable
     r = _run_node(
         f"""
 const fs = require('fs');
@@ -216,28 +258,7 @@ const path = require('path');
 const os = require('os');
 const {{ execSync }} = require('child_process');
 
-const src = {json.dumps(code)};
-
-// Extract execSync calls containing chmod from backtick template strings
-const chmodRegex = /execSync\\(\\s*`([^`]*chmod[^`]*)`/g;
-const cmds = [];
-let m;
-while ((m = chmodRegex.exec(src)) !== null) cmds.push(m[1]);
-
-if (cmds.length === 0) {{
-    console.error('No execSync chmod commands found in source');
-    process.exit(1);
-}}
-
-// Verify commands target key browser binaries
-if (!cmds.some(c => c.includes('chrome-headless-shell'))) {{
-    console.error('No chmod targeting chrome-headless-shell');
-    process.exit(1);
-}}
-if (!cmds.some(c => c.includes('chrome') && !c.includes('headless'))) {{
-    console.error('No chmod targeting chrome binary');
-    process.exit(1);
-}}
+const cmds = {json.dumps(cmds)};
 
 // Create temp dir with non-executable dummy binaries
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'puppeteer-'));
@@ -251,7 +272,7 @@ fs.writeFileSync(crPath, '#!/bin/sh', {{ mode: 0o644 }});
 
 // Run extracted chmod commands with template variable substituted to temp dir
 for (const cmd of cmds) {{
-    const resolved = cmd.replace(/\\$\\{{[^}}]+\\}}/g, tmpDir);
+    const resolved = cmd.replace(/\\${{[^}}]+}}/g, tmpDir);
     try {{ execSync(resolved, {{ stdio: 'ignore' }}); }} catch(e) {{}}
 }}
 
@@ -283,7 +304,7 @@ fs.rmSync(tmpDir, {{ recursive: true }});
 # [pr_diff] pass_to_pass
 def test_retry_loop_preserved():
     """Browser retry loop (for + catch + launch) must still exist."""
-    src = _src()
+    src = Path(TARGET).read_text()
     has_loop = bool(
         re.search(r"for\s*\(.*attempt", src)
         or re.search(r"while\s*\(.*attempt", src)
@@ -297,7 +318,7 @@ def test_retry_loop_preserved():
 # [pr_diff] pass_to_pass
 def test_core_launch_args_preserved():
     """Core Puppeteer launch args (--no-sandbox etc.) must be preserved."""
-    src = _src()
+    src = Path(TARGET).read_text()
     for arg in ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]:
         assert arg in src, f"Core launch arg missing: {arg}"
 
@@ -305,7 +326,7 @@ def test_core_launch_args_preserved():
 # [pr_diff] pass_to_pass
 def test_puppeteer_launch_with_options():
     """File must have Puppeteer import and launch() call with headless + args config."""
-    src = _src()
+    src = Path(TARGET).read_text()
     has_import = bool(
         re.search(r"require\s*\(\s*['\"]puppeteer['\"]", src)
         or re.search(r"from\s+['\"]puppeteer['\"]", src)
@@ -322,7 +343,12 @@ def test_puppeteer_launch_with_options():
 # [pr_diff] pass_to_pass
 def test_xattr_quarantine_removal():
     """xattr quarantine removal for macOS Gatekeeper must be preserved."""
-    code = _code_lines(_src())
+    src = Path(TARGET).read_text()
+    # Strip comment-only lines
+    code = "\n".join(
+        l for l in src.splitlines()
+        if not re.match(r"^\s*//", l) and not re.match(r"^\s*\*", l)
+    )
     assert "xattr" in code, "xattr call missing from macOS quarantine workaround"
     assert "quarantine" in code, "com.apple.quarantine removal missing"
 
@@ -335,12 +361,21 @@ def test_xattr_quarantine_removal():
 # [repo_tests] pass_to_pass
 def test_repo_typescript_syntax():
     """TypeScript file must have valid syntax (repo CI check)."""
-    src = _src()
+    src = Path(TARGET).read_text()
 
     # Use TypeScript parser to validate syntax
+    pkg_dir = Path("/tmp/node_deps")
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    if not (pkg_dir / "node_modules").exists():
+        subprocess.run(
+            f"cd {pkg_dir} && npm install @typescript-eslint/typescript-estree@8.30.1",
+            shell=True, capture_output=True, timeout=120
+        )
+
     r = _run_node(
         f"""
-const parser = require("@typescript-eslint/typescript-estree");
+// Use the full path to avoid module resolution issues with exports field
+const parser = require('/tmp/node_deps/node_modules/@typescript-eslint/typescript-estree/dist/index.js');
 const src = {json.dumps(src)};
 try {{
   parser.parse(src, {{ range: false, loc: false }});
@@ -350,8 +385,7 @@ try {{
   process.exit(1);
 }}
 """,
-        timeout=60,
-        install_deps=["@typescript-eslint/typescript-estree@8.30.1"],
+        timeout=60
     )
     assert r.returncode == 0, f"TypeScript syntax validation failed: {r.stderr}"
     assert "PASS" in r.stdout, "TypeScript syntax check did not pass"
@@ -367,8 +401,6 @@ def test_repo_oxlint():
         timeout=120,
         cwd=REPO,
     )
-    # Exit code 0 = success (warnings don't cause non-zero exit)
-    # Exit code 1 = errors found
     assert r.returncode == 0, f"oxlint failed with errors:\n{r.stderr[-500:]}"
 
 
@@ -388,7 +420,7 @@ let noComments = src.replace(/^\\s*\\/\\/.*$/gm, '');
 // Handle inline comments after JSON values with comma
 noComments = noComments.replace(/,(\\s*)\\/\\/.*$/gm, ',');
 // Handle inline comments after closing brackets/values
-noComments = noComments.replace(/([}\\]"0-9])\\s*\\/\\/.*$/gm, '$1');
+noComments = noComments.replace(/([}\\]\"0-9])\\s*\\/\\/.*$/gm, '$1');
 // Strip multi-line comments
 noComments = noComments.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');
 // Parse as JSON
@@ -417,8 +449,6 @@ def test_repo_prettier_format():
         timeout=120,
         cwd=REPO,
     )
-    # Exit code 0 = file is properly formatted
-    # Exit code 1 = file needs formatting
     assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 

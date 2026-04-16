@@ -1,0 +1,114 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T01:31:38.603904",
+  "total_time": 4855.37,
+  "sandbox_id": "i3kovic4h2yi9ikt24sdp",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2591.36,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 544.47,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (tests correctly fail on base commit), Gold test reward=1 (all 8 tests pass after fix). Rubric judge requires API keys for LLM evaluation but gold solution satisfies all rubric rules (linting passes, typecheck passes, vitest used, tests added).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 650.66
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-sonnet-4-6",
+      "backend": "oauth",
+      "time": 0.88,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:65: test `test_vitest_file_view_action` has 1 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:76: test `test_vitest_malformed_action_event` has 1 assert(s), all pas', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 21.26,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 5
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":116,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"347c4e66-6eb0-4563-a85f-a759190236e2\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
+      "time": 1.26
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3866.76,
+      "at": "2026-04-13T13:03:52.647931"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1583.98,
+      "at": "2026-04-15T05:08:14.307750"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 486.08,
+      "at": "2026-04-15T13:04:37.628560"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 385.43,
+      "at": "2026-04-15T19:06:43.324933"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4855.37,
+      "at": "2026-04-16T01:31:38.603904"
+    }
+  ]
+}

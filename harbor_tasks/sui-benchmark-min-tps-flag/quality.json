@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: (1) test_min_tps_flag_exists_in_options checks for '#[clap(long, global = true)]' - the 'global = true' part is not mentioned in instruction.md; (2) test_min_tps_logic_in_stress checks for exact string 'let min_tps = opts.min_tps;' which is not specified in instruction; (3) test_min_tps_calculation_logic checks for '.max(1.0)' division-by-zero guard which is not mentioned in instruction.md; (4) test_min_tps_logic_in_st"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'let min_tps = opts.min_tps;' (test_min_tps_logic_in_stress), exact string '#[clap(long, global = true)]' (test_min_tps_flag_exists_in_options), exact string '.max(1.0)' for division-by-zero guard (test_min_tps_calculation_logic), exact file paths 'crates/sui-benchmark/src/options.rs' and 'crates/sui-benchmark/src/bin/stress.rs'. The instruction never mentions 'global = true' on the clap attribute, ne"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what feature to add (--min-tps flag) and its behavioral requirements, but does not specify exact code changes, line numbers, or specific implementation details like variable extraction patterns."
+      "reason": "The instruction describes what feature to add (a --min-tps flag with specific behavior) but does not specify exact code changes, line numbers, or specific implementation patterns like 'let min_tps = opts.min_tps;' or '.max(1.0)'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: 'let min_tps = opts.min_tps;' (could be inlined), 'if let Some(min_tps) = min_tps' (could use match or if-let with different binding), '#[clap(long, global = true)]' (global=true is not required by spec), '.max(1.0)' (could use an if-check for zero duration). A correct alternative implementation would fail these string-matching tests."
+      "reason": "Tests assert gold-specific implementation details: 'let min_tps = opts.min_tps;' (exact variable extraction), '#[clap(long, global = true)]' (global = true is not required by the task), '.max(1.0)' (a specific division-by-zero guard), 'if let Some(min_tps) = min_tps' (exact pattern match syntax), 'benchmark_stats.num_success_txes as f64' and 'benchmark_stats.duration.as_secs_f64()' (exact expressions). An alternative correct implementation using different variable names, different safety guards "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_min_tps_flag_exists_in_options, test_min_tps_cli_doc_comment, test_min_tps_logic_in_stress, and test_min_tps_calculation_logic are all purely string-matching on file contents (assert 'X' in open(path).read()). Only test_repo_cargo_check_sui_benchmark and test_repo_rustfmt execute the code. The core fail-to-pass tests do not call or execute the binary."
+      "reason": "Tests test_min_tps_flag_exists_in_options, test_min_tps_cli_doc_comment, test_min_tps_logic_in_stress, and test_min_tps_calculation_logic are all purely text-matching via 'assert X in open(path).read()'. Only test_repo_rustfmt and test_repo_cargo_check_sui_benchmark execute the code. The f2p tests do not call/execute any code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would not pass because the tests check for specific strings like 'min_tps: Option<f64>', TPS calculation logic, and error messages that must actually be present in the source files. These require meaningful code additions."
+      "reason": "A stub implementation that does nothing would not pass because the tests check for specific strings in source files (min_tps field, clap attribute, calculation logic, error message) that must actually be added. The cargo check test also verifies compilation."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requirement #1 (accepts optional floating-point value) is only tested via string matching, not by actually running the binary with --min-tps. Requirement #3 (exit with error/non-zero status) is never behaviorally tested - no test runs the binary and checks exit codes."
+      "reason": "The instruction requires that the binary 'exit with a non-zero status code if the achieved TPS falls below a specified minimum', but no test actually runs the binary with --min-tps and checks exit code or error output. The behavioral requirement is only checked via source text matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_min_tps_flag_exists_in_options, test_min_tps_cli_doc_comment, etc.) and include docstrings with fail-to-pass/pass-to-pass annotations."
+      "reason": "Tests are well-named (test_min_tps_flag_exists_in_options, test_min_tps_cli_doc_comment, etc.), grouped logically, and have docstrings with fail-to-pass/pass-to-pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the relevant files (options.rs, stress binary) which are natural for the task domain, but doesn't specify exact line numbers or internal implementation patterns."
+      "reason": "The instruction does not name specific files (options.rs, stress.rs) or line numbers. It describes the feature at a high level appropriate for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

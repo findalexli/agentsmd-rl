@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific patterns like 'precmd_functions[(r)' and 'typeset -gaU' for dedup (test_dedup_prevents_duplicate_hooks), 'precmd_functions:#' and 'unfunction' for cleanup (test_cleanup_after_successful_registration), and specific checks like '$+functions[compdef]' (test_compdef_availability_check). While the instruction mentions the general behaviors (dedup, cleanup, availability check), it does not enumerate all accepted literal patterns. For example, 'typeset -gaU' is accepted for dedup "
+      "outcome": "pass",
+      "reason": "Instruction names src/cli/completion-cli.ts, mentions compdef, precmd_functions, the availability check patterns, _root_completion function, case/compadd/_arguments \u2014 all items tested."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (compdef called before compinit) and the expected behavior (availability check, deferred registration, cleanup, dedup), but does not prescribe exact code changes, line numbers, or specific implementation details like variable names or function bodies."
+      "reason": "Instruction describes required behavior (availability check, deferred registration, cleanup, dedup) without prescribing exact code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_dedup_prevents_duplicate_hooks only accepts two specific patterns: 'precmd_functions[(r)' or 'typeset -gaU'. A valid alternative dedup approach (e.g., using a guard variable like 'if [[ -z $_already_registered ]]') would fail. Similarly, test_cleanup_after_successful_registration only accepts 'precmd_functions:#', 'unfunction', or 'unset -f' \u2014 other valid cleanup approaches would fail. The tests are too tied to specific implementation idioms."
+      "outcome": "pass",
+      "reason": "Tests accept multiple patterns (whence/type/command -v/$+functions) and multiple cleanup approaches (unfunction, unset -f, precmd_functions:#) and dedup approaches (typeset -gaU, [(r)])."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core f2p tests (test_compdef_not_bare_at_toplevel, test_compdef_availability_check, test_precmd_hook_queues_deferred_registration, test_cleanup_after_successful_registration, test_dedup_prevents_duplicate_hooks) all work by extracting the generated shell script text and searching for literal string patterns. None of them actually execute the zsh script to verify runtime behavior. They are essentially 'assert pattern in text' checks."
+      "outcome": "pass",
+      "reason": "Tests execute Node.js to extract the template, and run pnpm lint/format/vitest/tsgo subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass these tests. The original code has a bare 'compdef' at top level which test_compdef_not_bare_at_toplevel would catch, and the original lacks precmd_functions references which test_precmd_hook_queues_deferred_registration checks for. The agent must actually modify the template to include the deferred registration pattern."
+      "reason": "A stub can't pass all the combined assertions requiring availability check, precmd_functions append, cleanup, and dedup in the generated script."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five explicit requirements from instruction.md (availability check, deferred registration, cleanup, no duplicate hooks, root completion function intact) are tested by corresponding test functions."
+      "reason": "Each of the 5 behavioral requirements in the instruction maps to a test (availability check, deferral, cleanup, dedup, _root_completion intact)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., test_compdef_availability_check, test_precmd_hook_queues_deferred_registration, test_cleanup_after_successful_registration) and each maps to a specific behavioral requirement."
+      "reason": "Tests are named descriptively (test_compdef_availability_check, test_precmd_hook_queues_deferred_registration, etc.) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces shell script code embedded in TypeScript, not structured data like JSON/CSV/API/DB."
+      "reason": "Task produces shell script text, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies the file to modify (src/cli/completion-cli.ts) which is appropriate given the task domain. It does not mention specific line numbers or exact code to write."
+      "reason": "Instruction identifies the file but not exact line \u2014 localization of the bare compdef is still required of the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a configuration edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_options_parsing_intact checks for 'getTruthy' and 'port' near arguments.ptr[1]; test_no_banned_words_in_dns_zig checks banned patterns like 'std.debug.assert', 'std.Thread.Mutex', 'usingnamespace'; test_oxlint_dns_js checks src/js/node/dns.ts and dns.promises.ts; test_prettier_dns_test_files checks test/js/node/dns/ files. None of these file paths or patterns are discoverable from instruction.md."
+      "reason": "Tests assert specific patterns like 'if (arguments.len > 1 and arguments.ptr[1].isXxx())' via regex, require 'getTruthy' within 500 chars of the guard block, and check git commit history. The instruction.md does not mention the exact guard pattern format, the 'isCell' method name (the buggy method), the getTruthy proximity requirement, or that git commits are checked. The test also discovers 'isXxx' methods from the repo \u2014 while instruction.md mentions searching for 'fn isXxx' patterns, it doesn"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md says 'The issue occurs when processing the second argument to the lookup function' and points to the exact file and struct (Resolver in dns.zig). Combined with the reproducer showing a non-object string argument, it strongly implies the fix is to change the type-check on the second argument. While it doesn't say 'change isCell to isObject', the description is very close to revealing the exact fix location and nature."
+      "reason": "The instruction.md explicitly states 'The code must not attempt to access arguments.ptr[1] as an object unless it is actually a valid object type' and 'Guard the second argument access', combined with the Discovery section telling the agent to search for 'fn isXxx' methods that 'return true only for objects'. This strongly guides the agent to replace an existing isXxx check with an object-discriminating one, essentially describing the fix (change isCell to isObject or similar)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_non_object_guard_on_second_arg uses a specific regex pattern 'if\\s*\\(arguments\\.len\\s*>\\s*1\\s+and\\s+arguments\\.ptr\\[1\\]\\.(is\\w+)\\(\\)' which requires the guard to follow this exact syntactic form. An alternative correct fix (e.g., using a different conditional structure, adding a separate check, or using 'else if') would fail this regex. Also, test_guard_uses_valid_object_method requires the same regex pattern, locking in the implementation approach."
+      "reason": "Tests use a specific regex pattern 'if\\s*\\(\\s*arguments\\.len\\s*>\\s*1\\s+and\\s+arguments\\.ptr\\[1\\]\\.(\\w+)\\(\\)' to extract the guard method. An alternative correct fix that restructures the guard differently (e.g., using a separate variable, negating the condition, or using a different control flow) would fail because the regex wouldn't match. The tests are tied to the specific syntactic structure of the gold patch."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_non_object_guard_on_second_arg, test_guard_uses_valid_object_method) only do regex matching on source text: `re.search(r'if\\s*\\(arguments\\.len...', content)`. No test actually compiles or executes the code. All tests are text-inspection only ('assert X in content', regex searches on file contents)."
+      "reason": "All tests use regex pattern matching on source code text (Path(TARGET).read_text() with re.search) and git log subprocess checks. No test actually compiles the code, runs dns.lookup(), or executes the fixed code to verify it doesn't crash. Every f2p test is essentially 'assert pattern in source' with git history checks."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check that the guard method is NOT 'isCell' (the original buggy value) and IS a valid object-discriminating method. A stub or no-op wouldn't pass because the original code has 'isCell' which the test explicitly rejects."
+      "outcome": "fail",
+      "reason": "A trivial fix that just does a regex replace of 'isCell' with any other 'is' method found in the codebase (e.g., 'isString') would pass all f2p tests, since the tests only check that the method is not 'isCell' and exists in the source. Such a fix would not actually resolve the bug correctly (isString would still crash for number arguments)."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The core behavior described in instruction.md (non-object second argument should not crash, should be silently ignored) is tested via the guard check tests that verify the type-checking method is changed from isCell to an object-discriminating method."
+      "outcome": "fail",
+      "reason": "The instruction says the lookup should 'proceed normally and return results' when given a non-object second argument, but no test verifies that dns.lookup actually returns correct results. Tests only check source code patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a bug fix in a DNS resolver, not producing structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the file 'src/bun.js/api/bun/dns.zig' and the 'Resolver' struct, and states 'The issue occurs when processing the second argument to the lookup function.' This narrows the fix to essentially one line (the guard on the second argument), which is excessive localization."
+      "reason": "The instruction names the exact file 'src/bun.js/api/bun/dns.zig', the exact struct 'Resolver', mentions 'arguments.ptr[1]' specifically, and the Discovery section tells the agent exactly what kind of method to search for ('fn isXxx patterns that return bool'). This effectively pinpoints the exact buggy line and the category of fix needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -50,12 +50,14 @@
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 2,
+  "fail_count": 7
 }

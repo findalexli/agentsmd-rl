@@ -1,0 +1,67 @@
+source_pr:
+  owner: mantinedev
+  repo: mantine
+  number: 8437
+  merge_commit: e1b18a18d5ab9986e7950cf937561b8f51df95ad
+  base_commit: 0c52227db887ce0b48fe59fa3422638b0448e1e1
+
+checks:
+  # Fail-to-pass tests (core functionality)
+  - id: test_opendelay_prop_in_interface
+    type: fail_to_pass
+    origin: programmatic
+    description: MenuSubProps interface declares openDelay prop
+
+  - id: test_opendelay_in_default_props
+    type: fail_to_pass
+    origin: programmatic
+    description: defaultProps includes openDelay with value 0
+
+  - id: test_opendelay_destructured
+    type: fail_to_pass
+    origin: programmatic
+    description: openDelay is destructured from props in MenuSub function
+
+  - id: test_opendelay_passed_to_useDelayedHover
+    type: fail_to_pass
+    origin: programmatic
+    description: useDelayedHover receives openDelay variable instead of hardcoded 0
+
+  - id: test_opendelay_values_vary
+    type: fail_to_pass
+    origin: programmatic
+    description: openDelay accepts various numeric values (0, 100, 500)
+
+  # Pass-to-pass tests (repo health)
+  - id: test_repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: No git conflict markers in source files
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package.json files are valid
+
+  - id: test_repo_package_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package files configuration is valid
+
+  - id: test_repo_prettier_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Menu files are properly formatted (Prettier)
+
+  - id: test_repo_eslint_menu
+    type: pass_to_pass
+    origin: repo_tests
+    description: Menu directory passes ESLint checks
+
+  - id: test_menusub_file_parses
+    type: pass_to_pass
+    origin: static
+    description: MenuSub.tsx has valid TypeScript structure (balanced braces, required exports)
+
+rubric: []
+  # No agent config files found in this repository

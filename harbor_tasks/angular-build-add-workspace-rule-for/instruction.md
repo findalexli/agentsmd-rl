@@ -2,13 +2,14 @@
 
 ## Problem
 
-The Angular repository uses an `AGENTS.md` file to provide instructions for AI agents. However, Google's Antigravity tool does not read `AGENTS.md` directly - it expects to find "workspace rules" in the `.agent/rules/` directory.
+The Angular repository uses an `AGENTS.md` file to provide instructions for AI agents. However, Google's Antigravity tool does not read `AGENTS.md` directly — it expects to find "workspace rules" in the `.agent/rules/` directory.
 
-Currently:
-- The `.agent/rules/agents.md` path does not exist (Antigravity cannot locate agent instructions)
-- `AGENTS.md` lacks YAML frontmatter metadata required by some agent frameworks to properly load the configuration (specifically missing `trigger: always_on`)
-- `.prettierignore` does not exclude `.agent/rules/agents.md`
-- `.pullapprove.yml` does not include the glob pattern `.agent/**/{*,.*}` for review coverage
+The following issues prevent Antigravity from functioning correctly:
+
+1. **Workspace rule not found**: The `.agent/rules/agents.md` path does not exist, so Antigravity cannot locate agent instructions.
+2. **Missing frontmatter**: `AGENTS.md` lacks YAML frontmatter with `trigger: always_on` required by some agent frameworks to properly load the configuration.
+3. **Formatting noise**: Prettier may attempt to format agent instruction files, creating unnecessary CI noise.
+4. **Review coverage gap**: PullApprove review does not extend to the `.agent/rules/` directory because the glob pattern `.agent/**/{*,.*}` is missing.
 
 ## Expected Behavior
 
@@ -16,11 +17,17 @@ After the fix, the repository should satisfy these requirements:
 
 1. **Workspace rule accessible**: Antigravity should be able to read agent instructions from `.agent/rules/agents.md`. The content at that path should match the existing `AGENTS.md` file.
 
-2. **Frontmatter present**: `AGENTS.md` should have YAML frontmatter containing `trigger: always_on`.
+2. **Frontmatter present**: `AGENTS.md` should have YAML frontmatter with `trigger: always_on`.
+   Example format:
+   ```yaml
+   ---
+   trigger: always_on
+   ---
+   ```
 
-3. **Prettier ignore configured**: `.prettierignore` should contain an entry for `.agent/rules/agents.md`.
+3. **Prettier ignore configured**: `.prettierignore` should exclude `.agent/rules/agents.md` so Prettier does not format it.
 
-4. **PullApprove coverage**: `.pullapprove.yml` should include the glob pattern `.agent/**/{*,.*}` in its file patterns.
+4. **PullApprove coverage**: `.pullapprove.yml` should include the glob pattern `.agent/**/{*,.*}` to ensure the `.agent/rules/` directory is covered by review.
 
 5. **Existing content preserved**: `AGENTS.md` should retain its existing documentation sections including `## Environment` and references to `pnpm`.
 

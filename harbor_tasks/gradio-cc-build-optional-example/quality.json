@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md: test_syntax_check asserts 'export async function make_build' as an exact string; test_build_function_not_stub asserts 'build(' and 'pkg.exports' as exact substrings; test_repo_node_syntax_check runs 'node --check' on BUILD_TS; the exact file path 'js/preview/src/build.ts' is inferable from 'js/preview/src/' but not explicitly named. The function name 'make_build' is never mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "Instruction names build.ts path hint (js/preview/src/), the exports array construction, build() call, pkg.exports reference, and the 1/2 entry counts asserted by tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the problem (crash when ./example is missing/null) and expected behavior but does not specify the exact code change (spread operator with conditional, etc.)."
+      "reason": "Instruction describes the bug and expected behavior but does not prescribe the exact fix (e.g., spread operator with ternary)."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests evaluate the exports array construction dynamically by extracting code between 'const exports' and 'for (const [out_path' markers, then running it. Alternative fixes (e.g., if-statement guard, ternary, filter approach) that produce the correct number of entries would pass. The tests check behavioral output (array length) not implementation details like specific syntax patterns."
+      "reason": "Tests check behavior (array length, no crash) and loose structural markers (build(, pkg.exports); alternative fixes like if-push, filter, or ternary spread would all pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Core f2p tests (test_missing_example_no_crash, test_missing_example_one_entry, test_null_example_no_crash) extract code from build.ts and execute it in Node.js, checking return codes and JSON output. test_build_function_not_stub does text inspection but is a pass_to_pass anti-stub check, not the only verification. Repo tests execute actual builds."
+      "reason": "Tests extract code from build.ts and execute it via Node.js subprocess with mock pkg objects, checking runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests extract the actual exports construction code from build.ts and execute it with mock pkg objects. A stub that returns empty/default would fail because: the code block must exist between the markers, must execute without error, and must produce arrays of specific lengths (1 for missing example, 2 for present example). The original buggy code crashes, so doing nothing fails."
+      "reason": "A stub returning empty would fail test_example_present_two_entries (needs 2) and test_missing_example_one_entry (needs 1); both cannot be satisfied by a trivial stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 5 behavioral requirements from instruction.md are tested: (1) no crash when ./example absent, (2) 1 entry when absent, (3) 2 entries when present, (4) real build logic with build() and pkg.exports, (5) format check passes."
+      "reason": "Tests cover missing example (no crash, 1 entry), null example (no crash), present example (2 entries), format check, and build logic presence."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section headers (Gates, Fail-to-pass, Pass-to-pass) and annotated with [pr_diff]/[static]/[repo_tests] tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a build pipeline crash, not producing structured data output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "Paths and commands appear consistent (js/preview/src/build.ts, pnpm format:check)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md says 'js/preview/src/' directory and mentions 'exports array construction that crashes' but doesn't name the exact file (build.ts) or line number. The directory hint is reasonable given the task domain."
+      "reason": "Instruction points to js/preview/src/ directory and describes symptom; does not name exact line or the fix construct."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

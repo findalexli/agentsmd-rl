@@ -3,56 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (.claude/skills/changeset/SKILL.md, .claude/skills/pull-request/SKILL.md, justfile, .claude/skills/biome-developer/SKILL.md, .claude/skills/testing-codegen/SKILL.md, .claude/skills/README.md), required frontmatter fields (name, description, compatibility), required section headings, the recipe name (new-changeset-empty), the command (pnpm changeset --empty), change types (patch/minor/major), and DO/DON'T labels with WRONG/CORRECT examples. All asserted specif"
+      "reason": "The instruction names all file paths (.claude/skills/changeset/SKILL.md, .claude/skills/pull-request/SKILL.md, justfile, .claude/skills/testing-codegen/SKILL.md, .claude/skills/biome-developer/SKILL.md, .claude/skills/README.md), required frontmatter fields (name, description, compatibility), required section headings (Purpose, Changeset Format, Writing Guidelines, AI Assistance Disclosure, Choose the Target Branch, PR Title, Pre-PR Checklist), the recipe name 'new-changeset-empty', the command "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to create and the structural requirements (sections, frontmatter fields, etc.) but does not give the exact content, line-by-line text, or specific implementation. The agent must reason about how to write the content of each skill file, the justfile recipe, and the code comments guidance."
+      "reason": "The instruction describes WHAT to create (new skill files, new justfile recipe, modifications to existing files) and the structural requirements, but does not give exact file contents, line numbers to change, or verbatim text to insert. A developer must still reason about the actual content and implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for structural properties (YAML frontmatter keys, H2 section counts, presence of keywords like 'patch'/'minor'/'major', regex patterns like 'just\\s+\\S*changeset'), not exact text matches. Alternative correct implementations with different wording, ordering, or formatting would pass as long as they meet the structural requirements."
+      "reason": "Tests check for structural properties (frontmatter fields, section headings via regex patterns, presence of keywords like 'patch'/'minor'/'major', recipe name and body keywords) rather than exact text. Alternative implementations with different wording, ordering, or additional content would pass as long as they meet the structural requirements."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The tests are almost entirely text-inspection tests: they read files and check for string presence (e.g., 'assert \"**DO:**\" in text', 'assert \"patch\" in lower', 'assert \"new-changeset-empty:\" in content'). The subprocess calls just run Python scripts that also do text parsing. No code is imported, executed, or behaviorally tested. The justfile is never actually invoked with 'just'. This is fundamentally 'assert X in open(path).read()' pattern throughout."
+      "reason": "All tests read files and check text content via regex/string matching (e.g., checking frontmatter YAML parsing, searching for heading patterns, checking keyword presence). No test actually executes the justfile recipe, imports code, or runs any behavioral subprocess. Tests like test_justfile_new_changeset_empty_recipe only check that 'pnpm', 'changeset', and '--empty' appear in the recipe body text, not that the recipe actually runs."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_changeset_skill_parseable_yaml_and_has_required_frontmatter, test_pull_request_skill_parseable_yaml, test_changeset_skill_has_substantive_content, test_justfile_new_changeset_empty_recipe, test_biome_developer_has_code_comments_guidance) all require creating new files or adding new content. A stub/no-op implementation would fail because the files don't exist yet and content wouldn't be present."
+      "reason": "The fail-to-pass tests require creating new files (changeset/SKILL.md, pull-request/SKILL.md) with specific frontmatter and sections, adding a new justfile recipe with specific content, and modifying existing files. A stub/empty implementation would not pass since tests check for file existence, valid YAML frontmatter with specific field values, required section headings, and specific keywords in content."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires: (1) removing the '### Create Changeset' subsection from testing-codegen/SKILL.md, (2) adding a reference to changeset/SKILL.md in testing-codegen, (3) updating the testing-codegen frontmatter description to not mention 'changeset', (4) updating README.md skills table entries and directory tree. The truncated test file shows tests for some of these but the testing-codegen cleanup (items 1-3 of requirement 5) and full README update verification (requirement 6) appear insuffic"
+      "outcome": "pass",
+      "reason": "The instruction specifies 6 main tasks and the tests cover all of them: new changeset skill (frontmatter, sections, writing guidelines, change types, just command reference), new pull-request skill (frontmatter, required sections), Code Comments in biome-developer (DO/DON'T, WRONG/CORRECT examples), new-changeset-empty recipe in justfile, testing-codegen cleanup (no changeset mention, reference to changeset skill), and README updates (new entries in table and directory tree)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_justfile_new_changeset_empty_recipe, test_changeset_skill_has_substantive_content, etc.) and each has a docstring explaining what it checks. Pass-to-pass vs fail-to-pass intent is noted in docstrings."
+      "reason": "Tests are clearly separated into pass-to-pass and fail-to-pass groups with comments, each has a descriptive name (e.g., test_changeset_skill_has_writing_guidelines, test_pull_request_skill_valid_frontmatter) and docstrings explaining what they verify."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task produces structured data in YAML frontmatter format, and the instruction explicitly documents the required fields (name, description, compatibility) and their expected values."
+      "reason": "The task produces structured Markdown files with YAML frontmatter. The instruction documents the exact schema: required frontmatter fields (name, description, compatibility), required section headings, and content requirements for each file."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "File paths, commands, variable names, and section headings in the instruction are consistent with what the tests check. No typos detected in filenames (.claude/skills/changeset/SKILL.md, justfile, etc.), commands (pnpm changeset --empty, just new-changeset-empty), or field names."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files that are the natural targets of the task (skill files, justfile, README). It doesn't leak specific line numbers or internal implementation details beyond what's necessary to describe the task requirements."
+      "reason": "The instruction specifies what files to create/modify and what sections they should contain, which is appropriate for a documentation/configuration task. It doesn't reveal implementation-specific details like exact line numbers or verbatim content to paste."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff involves localized additions (new recipe in justfile, new files, section additions to existing files) rather than full-file rewrites, and the changes are consistent with the instruction requirements."
+      "reason": "The gold patch makes localized changes: adding a recipe to justfile via sed insertion, creating new skill files, and modifying specific sections in existing files. Changes don't contradict the test expectations or other task files."
     }
   },
   "tier_a_fails": [
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 9,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
 }

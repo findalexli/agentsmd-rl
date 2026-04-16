@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Several test specifics are not discoverable from instruction.md: (1) test_unused_literal_cleaned checks that if Literal is imported but not used in annotations it must be removed \u2014 instruction.md mentions 'unused imports must be removed' and hints about Literal but doesn't explicitly state the Literal import must be removed; (2) test_core_fields_present checks for specific field names like 'cpu', 'gpu', 'mem', 'task_type', 'exclude', 'nodelist' which are never mentioned in instruction.md; (3) te"
+      "outcome": "pass",
+      "reason": "Instruction names SchedulingSpec, areal/api/cli_args.py, ray_placement_strategy, valid values shared/separate/deferred, default shared, ValueError requirement with field name, and AGENTS.md rules."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix approach: 'You must change the field's type annotation while preserving runtime validation of allowed values' and 'currently uses a Literal type annotation for the ray_placement_strategy field. This is incompatible with the version of omegaconf pinned in the project'. This tells the agent exactly what to change (replace Literal type annotation) and what to add (runtime validation), leaving minimal reasoning required."
+      "outcome": "pass",
+      "reason": "Instruction says to change the type annotation while preserving runtime validation but doesn't specify the exact implementation (e.g., __post_init__ vs validators)."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral outcomes (OmegaConf.structured works, invalid values rejected with ValueError, roundtrip works, valid strategies accepted) rather than implementation details. Alternative approaches like using a custom validator decorator, an Enum, or __post_init__ with different validation logic would all pass. The test_unused_literal_cleaned check is slightly restrictive but still allows multiple approaches since it only checks that unused Literal imports are removed."
+      "reason": "Tests check behavior (OmegaConf works, ValueError raised, field name in message) not implementation; multiple valid fixes (str+__post_init__, custom validator, etc.) would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use _load_scheduling_spec() to dynamically extract and instantiate the class, call OmegaConf.structured(), test instantiation with invalid values, run subprocess commands for ruff and py_compile. While some tests do AST inspection (test_core_fields_present, test_unused_literal_cleaned, test_no_wildcard_imports), these are complementary to behavioral tests that actually execute code."
+      "reason": "Tests instantiate SchedulingSpec, call OmegaConf.structured, run subprocess for ruff/pytest."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by a stub: test_omegaconf_structured_works requires OmegaConf.structured() to succeed (the original Literal annotation causes it to fail); test_invalid_strategy_rejected requires ValueError/TypeError for invalid values (a plain str field wouldn't do this); test_omegaconf_roundtrip requires YAML serialization to work; test_validation_raises_valueerror requires specific ValueError with 'ray_placement_strategy' in the message."
+      "reason": "f2p tests require actual ValueError on invalid values and successful OmegaConf.structured call \u2014 stub can't satisfy both."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four explicit requirements from instruction.md are tested: (1) OmegaConf.structured succeeds (test_omegaconf_structured_works), (2) valid values are shared/separate/deferred (test_valid_strategies_accepted), (3) invalid values rejected with ValueError including field name (test_validation_raises_valueerror, test_invalid_strategy_rejected), (4) default is 'shared' (test_default_instantiation)."
+      "reason": "All four behavioral requirements from instruction (omegaconf works, valid values, ValueError with field name, default shared) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, docstrings, and comments indicating test categories like [static], [pr_diff], [agent_config], [repo_tests]."
+      "reason": "Tests grouped by section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD) with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves fixing a Python dataclass for config compatibility, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames (areal/api/cli_args.py), paths, commands, variable names, or field names across instruction.md and test files."
+      "reason": "Paths and names consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file (areal/api/cli_args.py), the exact field (ray_placement_strategy), the exact type annotation issue (Literal), and the exact fix approach ('change the field's type annotation while preserving runtime validation'). It also specifies the omegaconf version causing incompatibility. This goes well beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction identifies the SchedulingSpec class and ray_placement_strategy field which is the task scope, but does not state the specific fix line or patch."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Python source file, not a config/agentmd-edits task."
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

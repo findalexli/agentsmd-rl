@@ -3,58 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_adapter_uses_execute_for_queries asserts 'this.client.execute(' must appear in the performIO method body. The instruction never mentions 'execute', 'binary protocol', 'text protocol', or the specific method name 'performIO'. The agent cannot discover from instruction.md alone that the fix involves changing query() to execute() in the performIO method."
+      "reason": "The test test_adapter_uses_execute_for_queries asserts specifically on the string 'this.client.execute(' within the performIO method body. While instruction.md mentions performIO and suggests using execute() instead of query(), it does not explicitly name the exact string pattern 'this.client.execute(' that the test regex searches for. Also, test_repo_adapter_errors_test asserts on 'pnpm run dev && pnpm exec vitest run src/errors.test.ts' passing, and while src/errors.test.ts is mentioned in ins"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md only describes symptoms (precision loss with large decimals) and points to relevant files/classes. It does not say to change query() to execute() or mention binary vs text protocol."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states 'The fix requires using the binary protocol variant (execute()) for query operations instead' \u2014 this directly tells the agent what to change (replace query() with execute()), leaving no reasoning required about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_adapter_uses_execute_for_queries uses regex to find the performIO method and asserts 'this.client.execute(' is present. An alternative correct fix (e.g., converting values to strings before passing to query(), or using a different serialization approach) would fail this test even if it correctly preserved decimal precision."
+      "reason": "test_adapter_uses_execute_for_queries uses regex to find the performIO method body and asserts 'this.client.execute(' is present. An alternative correct fix that, for example, wraps the call in a helper method (e.g., this.executeQuery() which internally calls this.client.execute()) would fail this test because the literal string 'this.client.execute(' would not appear directly in performIO's body."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_adapter_uses_execute_for_queries is purely textual: it reads the source file and checks for string patterns ('this.client.execute(' in performIO body). It does not execute the code or test actual decimal precision behavior. Two of three tests are execution-based (lint + vitest), but the fail-to-pass test is entirely text-matching."
+      "reason": "test_adapter_uses_execute_for_queries is purely textual \u2014 it reads mariadb.ts and checks for the string 'this.client.execute(' via regex. It does not import, call, or execute the code. The other two tests (lint and error-mapping) do execute subprocesses, but the primary fail-to-pass test is entirely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass: the f2p test requires the literal string 'this.client.execute(' to appear in the performIO method body. The original code has 'this.client.query(' there, so doing nothing fails. However, this is a very narrow textual check rather than behavioral."
+      "reason": "The fail-to-pass test checks that 'this.client.execute(' appears in performIO, which is not the default state of the code (which uses 'this.client.query('). A stub or no-op would not pass this test."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'Large decimal values are incorrectly stored/retrieved' and the adapter 'must continue to work with the existing test suite', but no test actually verifies decimal precision preservation through execution \u2014 only that the source text contains 'execute'."
+      "reason": "instruction.md states the adapter must 'continue to work with the existing test suite' broadly, but tests only check lint, error-mapping tests, and the execute() string presence. The actual precision behavior with large decimals (the core symptom described) is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly named (test_adapter_uses_execute_for_queries, test_lint_adapter, test_repo_adapter_errors_test) with docstrings explaining purpose and context."
+      "reason": "Tests are well-named (test_adapter_uses_execute_for_queries, test_lint_adapter, test_repo_adapter_errors_test), have docstrings explaining their purpose, and the module has a header comment describing the PR context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the file (mariadb.ts) and classes (MariaDbQueryable, MariaDbTransaction), which is reasonable for the task domain. It does not name specific lines or the exact fix (execute vs query)."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact method (performIO), the exact class (MariaDbQueryable), and explicitly states to change from query() to execute() \u2014 'The fix requires using the binary protocol variant (execute()) for query operations instead.' This is direct solution leakage beyond just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits / config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

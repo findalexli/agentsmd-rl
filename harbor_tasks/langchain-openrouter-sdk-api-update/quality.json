@@ -1,58 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_no_old_imports_remain checks for specific literal strings like 'components.ChatUserMessage', 'components.ChatSystemMessage', 'components.ChatAssistantMessage', 'components.ChatToolMessage', 'components.ChatDeveloperMessage' and their old counterparts. While instruction.md tells the agent to discover the new names via introspection, it does not explicitly name these exact new class names. More critically, test_wrap_messages_developer_and_tool asserts isinstance checks against components.Chat"
+      "outcome": "pass",
+      "reason": "Instruction describes that class names must be discovered via introspection and lists all roles (user/system/assistant/tool/developer); tests check for ChatXxxMessage classes which are discoverable from the SDK."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (old class names no longer exist) and tells the agent to discover the new names via introspection, but does not specify the exact new class names or exact code changes needed."
+      "reason": "Instruction says to discover the new names via introspection rather than stating them directly."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_no_old_imports_remain asserts that exact strings like 'components.ChatUserMessage' appear in the source code. If an agent used a different but correct approach (e.g., importing the classes at the top with aliases, or using getattr(components, 'ChatUserMessage')), the literal string check would fail. This test enforces gold-specific implementation details."
+      "reason": "test_no_old_imports_remain asserts exact string presence of 'components.ChatUserMessage' etc. in source; an alternative fix using `from openrouter.components import ChatUserMessage as UserMessage` or importing the classes directly would fail this test."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_no_old_imports_remain is purely a textual grep test: it reads the source file and checks for string presence/absence with no execution. While other tests do execute code, this test is purely 'assert X in open(path).read()' style."
+      "outcome": "pass",
+      "reason": "Tests execute subprocesses that import and call _wrap_messages_for_sdk and check instance types, beyond just text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_import_chat_models, test_wrap_messages_with_file_blocks, test_wrap_messages_developer_and_tool) actually import and execute the code, checking isinstance against specific SDK classes. A stub that returns None or empty collections would fail these isinstance checks."
+      "reason": "Tests check isinstance against specific SDK classes and that imports succeed, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four expected outcomes from instruction.md are tested: (1) import succeeds, (2) SDK message objects returned for file-block content across all roles, (3) unit tests pass, (4) lint and type checks pass."
+      "reason": "Tests cover import, wrapping for all five roles, lint, type, and full unit tests as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_import_chat_models, test_wrap_messages_with_file_blocks, etc.), have docstrings explaining their purpose and whether they are fail-to-pass or pass-to-pass, and are logically grouped."
+      "reason": "Tests have descriptive names and docstrings grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Python imports and class name references, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the files to change (chat_models.py, pyproject.toml, test file) which is appropriate given the task domain. It does not specify exact line numbers or the exact new class names \u2014 it tells the agent to discover them via introspection."
+      "reason": "Instruction names the files to change which is part of the scope description, not a leakage of the actual fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code editing task, not an agentmd-edits/config-only task."
+      "reason": "Code-focused task, though pyproject change is small and localized."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 8,
+  "fail_count": 1
 }

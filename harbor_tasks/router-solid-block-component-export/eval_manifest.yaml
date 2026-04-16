@@ -1,0 +1,59 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  pr_number: 6931
+  base_commit: d9e6c3179a888afb5fb47e7b31c31016f446d81f
+  merge_commit: b95b1061d34579e1fe7fd7ec781e743ec6fe31fe
+
+checks:
+  # F2P (Fail-to-Pass) tests - these should fail on base commit and pass with fix
+  - id: test_block_export_uses_const_arrow
+    type: fail_to_pass
+    origin: task_spec
+    description: Block export uses const arrow function implementing BlockComponent
+
+  - id: test_no_deprecated_function_overload
+    type: fail_to_pass
+    origin: task_spec
+    description: Deprecated function overload is removed
+
+  - id: test_block_has_function_implementation
+    type: fail_to_pass
+    origin: task_spec
+    description: Block has proper function implementation body
+
+  - id: test_block_uses_correct_param_type
+    type: fail_to_pass
+    origin: task_spec
+    description: Block function accepts correct parameter type union
+
+  # P2P (Pass-to-Pass) tests - these should pass on both base and fixed
+  - id: test_legacy_prompt_props_still_exists
+    type: pass_to_pass
+    origin: task_spec
+    description: LegacyPromptProps type still exists for backward compatibility
+
+  - id: test_useBlocker_hook_exports
+    type: pass_to_pass
+    origin: task_spec
+    description: useBlocker hook is properly exported
+
+  - id: test_prompt_props_type_exists
+    type: pass_to_pass
+    origin: task_spec
+    description: PromptProps type exists and is properly defined
+
+  # Repo CI tests - actual commands from the repo's CI
+  - id: test_repo_eslint_solid_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ESLint passes for solid-router package
+
+  - id: test_repo_unit_tests_blocker
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo unit tests for blocker.test.tsx pass
+
+rubric: []
+# This repo has no agent config files (CLAUDE.md, AGENTS.md, etc.)
+# The PR is a straightforward refactoring task with clear technical requirements

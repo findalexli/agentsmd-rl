@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings not mentioned in instruction.md: e.g., test_constants_file_has_expected_values checks for 'Pagination defaults' or '# Pagination' comment; test_mcp_core_clamps_page_size checks for exact string 'min(page_size, MAX_PAGE_SIZE)' and 'defense-in-depth' or 'Clamp page_size' comments; test_main_py_has_middleware checks for '_add_default_middlewares' function name, 'create_response_size_guard_middleware', 'GlobalErrorHandlerMiddleware', 'LoggingMiddleware' \u2014 none of t"
+      "reason": "Tests assert very specific literal strings not mentioned in instruction.md: e.g., test_constants_file_has_expected_values checks for 'Pagination defaults' or '# Pagination' comment text; test_mcp_core_clamps_page_size checks for exact string 'min(page_size, MAX_PAGE_SIZE)'; test_main_py_has_middleware checks for '_add_default_middlewares' function name, 'create_response_size_guard_middleware', 'GlobalErrorHandlerMiddleware', 'LoggingMiddleware' \u2014 these specific function/class names are not menti"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (constants, schema validation, runtime capping, middleware) but does not specify exact code changes like 'change line X to Y'. It describes the fix at a requirements level."
+      "outcome": "fail",
+      "reason": "instruction.md essentially describes the exact fix: define MAX_PAGE_SIZE=100 and DEFAULT_PAGE_SIZE=10 in constants.py, apply le constraint using MAX_PAGE_SIZE, apply gt=0 constraint, use default constant, add min(page_size, MAX_PAGE_SIZE) clamping. This goes beyond describing what's broken and prescribes the specific implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'min(page_size, MAX_PAGE_SIZE)', 'from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE', 'le=MAX_PAGE_SIZE', 'default=DEFAULT_PAGE_SIZE', '_add_default_middlewares', exact comment text 'Pagination defaults' or '# Pagination'. An alternative correct implementation using e.g. 'page_size = min(page_size, constants.MAX_PAGE_SIZE)' or a different import style would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact import line format ('from superset.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE'), exact string 'min(page_size, MAX_PAGE_SIZE)', exact comment text ('Pagination defaults' or '# Pagination'), exact function name '_add_default_middlewares', exact middleware class names. An alternative correct fix (e.g., using 'from superset.mcp_service import constants' or 'page_size = min(page_size, constants.MAX_PAGE_SIZE)') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses only file content string matching (assert 'X' in content) or AST inspection of static file contents. No test imports, instantiates, or calls any code. For example, test_chart_schema_page_size_validation just checks 'le=MAX_PAGE_SIZE' in file content rather than actually constructing a schema object with page_size=200 and checking it raises a validation error."
+      "reason": "Every single test uses only file reading and string/AST inspection (e.g., 'assert \"le=MAX_PAGE_SIZE\" in content', 'assert \"min(page_size, MAX_PAGE_SIZE)\" in content'). No test imports the modules, instantiates schemas, calls validation, or executes any code. This is purely textual checking."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check file content strings and AST structure, an agent could simply insert the exact expected strings as comments or dead code without implementing actual validation logic, and all tests would pass. For example, adding '# min(page_size, MAX_PAGE_SIZE)' as a comment in mcp_core.py would satisfy test_mcp_core_clamps_page_size."
+      "reason": "Since tests only check file contents for specific strings, a stub implementation that just contains the right string literals (without any actual functional code) would pass all tests. For example, placing 'min(page_size, MAX_PAGE_SIZE)' in a comment in mcp_core.py would pass test_mcp_core_clamps_page_size."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'Confirm oversized page sizes are rejected with validation errors' and 'Confirm valid page sizes are accepted' \u2014 but no test actually validates that schema validation rejects/accepts page sizes. Tests only check static file content for string patterns."
+      "reason": "instruction.md says 'Confirm oversized page sizes are rejected with validation errors' and 'Confirm valid page sizes are accepted', but no test actually validates schema behavior by passing in oversized or valid page sizes. Tests only check for string patterns in files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_constants_defined, test_chart_schema_page_size_validation, etc.), have docstrings, and are logically grouped by component."
+      "reason": "Tests are well-named (test_constants_defined, test_chart_schema_page_size_validation, etc.), grouped by concern, and have descriptive docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code changes to enforce validation, not producing structured data output."
+      "reason": "The task involves code changes to enforce pagination limits, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, variable names, or commands in instruction.md."
+      "reason": "No typos found in filenames, paths, variable names, or commands in instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction mentions file paths that are the natural domain of the task (constants.py, schemas.py, mcp_core.py, __main__.py) but doesn't specify exact line numbers or exact code to write."
+      "outcome": "fail",
+      "reason": "instruction.md specifies exact constant names (MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE), exact values (100, 10), exact constraint syntax (le, gt=0), exact method (min clamping in list tool runner), and exact file locations. This goes well beyond identifying the domain problem and prescribes the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -48,14 +48,16 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 2,
+  "fail_count": 7
 }

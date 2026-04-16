@@ -10,9 +10,16 @@ There are two root causes:
 
 2. **Missing upper bound in release workflow**: The release workflow calls the changelog command without pinning the upper bound of the commit range. This means commits that land after the release cut can leak into the changelog.
 
+## Files to modify
+
+- `script/changelog.ts` — The main changelog generation script
+- `script/version.ts` — The version/release workflow script
+- `.opencode/command/changelog.md` — The LLM command prompt for changelog generation
+- `.gitignore` — Git ignore patterns
+
 ## Constraints from AGENTS.md
 
-When modifying the changelog and version scripts, you MUST follow these rules:
+When modifying `script/changelog.ts` and `script/version.ts`, you MUST follow these rules:
 
 1. **No try/catch blocks** (AGENTS.md line 12): Do not use try/catch for control flow. Restructure logic to handle errors without exception handling.
 
@@ -24,12 +31,12 @@ When modifying the changelog and version scripts, you MUST follow these rules:
 
 ## Expected behavior
 
-- The changelog generation script must not import or use `@opencode-ai/sdk`, `@opencode-ai/script`, or any LLM-based summarization. It should gather commits deterministically using `gh api` and `git log`, group them into sections, filter reverts, identify community contributors, and output structured text directly.
+- The `script/changelog.ts` script must gather commits deterministically using `gh api` and `git log`, group them into sections, filter reverts, identify community contributors, and output structured text directly. It must not import or use any LLM SDK packages for commit summarization.
 
-- The help text for the changelog script must mention "non-draft" when describing the default starting version (e.g., "Starting version (default: latest non-draft GitHub release)").
+- The help text for `script/changelog.ts --help` must distinguish between draft and non-draft releases when describing the default starting version. The base help says "Starting version (default: latest GitHub release)" which does not distinguish draft vs non-draft.
 
-- The changelog command prompt must not instruct the LLM to fetch GitHub releases or find PRs. It should instead consume pre-computed structured data piped from the changelog script via shell interpolation.
+- The `script/version.ts` script must pin the commit range upper bound at the release point when invoking the changelog command, so that commits landing after the release cut cannot leak into the changelog.
 
-- The release workflow must read the `GITHUB_SHA` environment variable and pass it as a `--to` flag when invoking the changelog command, pinning the commit range upper bound at the release point.
+- The `.opencode/command/changelog.md` prompt must not instruct the LLM to fetch GitHub releases or find PRs. The command should consume pre-computed structured data piped from `script/changelog.ts` rather than having the LLM gather this information itself.
 
-- The generated `UPCOMING_CHANGELOG.md` file must be listed in `.gitignore` so it is not accidentally committed.
+- The generated changelog file (name contains "UPCOMING_CHANGELOG") must be listed in `.gitignore` so it is not accidentally committed.

@@ -25,7 +25,21 @@ Behavior requirements:
 
 4. **Leading blank line stripping**: Empty lines introduced by tag removal at the start are stripped, but interior blank lines are preserved. `[[reply_to_current]]\n\ntext after blanks` → `"text after blanks"`.
 
-5. **Real implementation**: The file must contain substantial logic (not a stub); it must export `parseInlineDirectives`. The solution must pass the repo's lint, format-check, typecheck, and unit tests for this file.
+5. **Implementation structure**: The file `src/utils/directive-tags.ts` must contain substantial logic (not a stub) and be more than 50 lines. It must export `parseInlineDirectives` and include a helper function named `normalizeDirectiveWhitespace` that handles whitespace normalization without destroying indentation.
+
+6. **Repo tooling compliance**: The solution must pass the repository's quality checks:
+   - Lint check: `pnpm exec oxlint src/utils/directive-tags.ts`
+   - Format check: `pnpm exec oxfmt --check src/utils/directive-tags.ts`
+   - Unit tests: `pnpm exec vitest run --config vitest.unit.config.ts src/utils/directive-tags`
+   - Typecheck: `pnpm exec tsgo` (must not report type errors in directive-tags.ts)
+   - Extension boundary checks (no unauthorized src/ imports)
+
+7. **Code quality constraints**:
+   - No `@ts-nocheck` or `@ts-ignore` comments
+   - No inline lint suppression (eslint-disable, oxlint-ignore)
+   - No `any` type annotations
+   - No prototype mutation
+   - No dynamic `await import()` - use static imports only
 
 ## Files to Modify
 

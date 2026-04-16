@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test test_playwright_tutorial_summon asserts 'extensionName=\"Summon\"' must appear in the file, but instruction.md only says 'Update any code blocks or component references that use the old extension name to use the new one' without specifying the exact attribute format 'extensionName=\"Summon\"'. Also, test_summon_mcp_example_content checks for exact heading strings '## Configuration' and '## Example Usage' which are not precisely mandated in instruction.md (it says 'a section on how to config"
+      "outcome": "pass",
+      "reason": "All asserted paths (summon-mcp.md, skills-mcp.md, using-extensions.md, etc.), literal strings ('## Configuration', '## Example Usage', 'extensionName=\"Summon\"', 'summon-retro-site.png'), and frontmatter keys (title, description) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change (rename Skills to Summon, create new docs, add deprecation notice) but does not give exact line-level changes or the specific content to write. The agent must reason about structure and wording."
+      "reason": "Instruction describes what to change and required content, but doesn't provide the exact markdown body or prescribe specific sentences/lines."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like '## Configuration', '## Example Usage', 'extensionName=\"Summon\"', and 'subagent' (lowercase). Alternative valid implementations using '## Setup', '## Examples', 'extensionName=\"summon\"', or 'sub-agent' would fail. The tests are overly specific to the gold solution's exact formatting choices."
+      "outcome": "pass",
+      "reason": "Tests check for substring presence (e.g., 'summon-mcp', 'Summon', section headers) rather than exact wording, allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_summon_mcp_file_created through test_summon_retro_image) are almost entirely string-matching on file contents via 'assert X in content'. The pass-to-pass tests (test_documentation_npm_test, test_documentation_build, test_documentation_verify_build) do execute actual builds. But the core behavioral tests are purely text-matching."
+      "outcome": "pass",
+      "reason": "Beyond text checks, tests run npm ci, npm test, npm run build, and verify-build.sh which execute the actual docs build pipeline."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or empty implementation would not pass - the tests require creating a new file (summon-mcp.md) with >500 chars and specific content, modifying existing files to contain new strings, and placing a >1000 byte PNG image. These cannot be satisfied by default/empty returns."
+      "reason": "Tests require file creation with non-trivial content (>500 bytes, PNG >1000 bytes, specific section headers), which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 tasks in the instruction are covered by corresponding tests: summon-mcp creation (tests 1-2), skills-mcp deprecation (test 3), using-extensions update (test 4), using-skills guide (test 5), playwright tutorial (test 6), remotion tutorial (test 7), and screenshot image (test 8). Build tests verify overall documentation integrity."
+      "reason": "Each of the 7 tasks in instruction.md maps to corresponding test functions checking the required changes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass repo_tests, pass-to-pass static), descriptive function names, and docstrings explaining what each test validates."
+      "reason": "Tests are grouped with comment headers for fail-to-pass, pass-to-pass CI, and pass-to-pass static regression sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces markdown documentation files and a PNG image, not structured data like JSON/CSV/API/DB."
+      "reason": "Task produces markdown docs and an image, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correct (summon-mcp.md, skills-mcp.md, using-extensions.md, etc.)."
+      "reason": "Filenames and paths in instruction.md match those asserted in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies which files to edit and what conceptual changes to make, which is appropriate for a documentation update task. It doesn't reveal exact line numbers or specific sed commands."
+      "reason": "Instruction names the files to edit, which is the scope of the task (doc rename), not hidden bug localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a documentation editing task, not an agentmd-edits or config-editing task."
+      "reason": "Not an agentmd/config-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 9,
+  "fail_count": 0
 }

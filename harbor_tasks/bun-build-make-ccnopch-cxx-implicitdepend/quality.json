@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (scripts/build/bun.ts, scripts/build/compile.ts, scripts/build/CLAUDE.md), the key variables (depOutputs, codegen.cppAll, implicitInputs, orderOnlyInputs), the functions (cc(), cxx(), compileC), and the behavioral requirements (depOutputs as implicitInputs, separation of codegen from dep outputs, CLAUDE.md update patterns). All test assertions check for these named concepts."
+      "reason": "The instruction names the key files (scripts/build/bun.ts, scripts/build/compile.ts, scripts/build/CLAUDE.md), the key variables (depOutputs, codegen.cppAll, implicitInputs, orderOnlyInputs), the functions (cc(), cxx(), compileC), and the specific behavioral requirements (depOutputs as implicitInputs, separation of depOutputs from codegen, CLAUDE.md update patterns like 'cc needs implicit dep' and 'PCH.*cc.*cxx.*implicit'). All test assertions check for these named concepts."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md's 'Specific Requirements' section essentially dictates the exact fix: 'cc() calls within compileC must pass depOutputs as implicitInputs', 'no-PCH cxx must also pass depOutputs as implicitInputs', 'separate depOutputs from codegen.cppAll', and even specifies regex patterns for CLAUDE.md text. This leaves almost no reasoning for the agent about WHAT to change."
+      "reason": "Instruction.md's 'Specific Requirements' section essentially dictates the exact fix: requirement 1 says 'cc() calls within compileC must pass depOutputs as implicitInputs', requirement 2 says 'no-PCH cxx code path must also pass depOutputs as implicitInputs', requirement 3 says 'separate depOutputs from codegen.cppAll', and requirement 4 specifies exact text patterns for CLAUDE.md. This leaves almost no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex pattern matching on source code for gold-specific variable names like 'depOutputs', 'codegenOrderOnly', 'codegen.cppAll', and exact patterns like 'implicitInputs.*depOutputs'. An alternative correct fix that used different variable names (e.g., 'libraryOutputs' instead of 'depOutputs', or 'generatedHeadersOrderOnly' instead of 'codegenOrderOnly') would fail these tests despite being behaviorally correct."
+      "reason": "Tests assert on gold-specific variable names and patterns. test_codegen_separated_from_dep_outputs checks for the exact string 'codegenOrderOnly' in source. test_cc_implicit_dep_outputs does regex matching for 'implicitInputs' near 'depOutputs' in the compileC section. test_claude_md_dep_strategy_updated checks for specific text patterns like 'cc.*need implicit dep'. An alternative correct fix using different variable names (e.g., 'libraryOutputs' instead of 'depOutputs', or 'codegenHeaders' ins"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_codegen_separated_from_dep_outputs and test_claude_md_dep_strategy_updated are pure text/regex matching on source files. The other two tests (test_cc_implicit_dep_outputs and test_nopch_cxx_implicit_dep_outputs) attempt to run TypeScript but have fallback paths that are also pure source text analysis (regex on bun.ts). The fallback source_analysis method in both is just 'assert string in file.read()' pattern matching."
+      "reason": "While tests attempt to run TypeScript code, they all have fallback paths that are pure text/regex matching on source files. test_codegen_separated_from_dep_outputs is entirely source text analysis (regex on bun.ts). test_claude_md_dep_strategy_updated is entirely text matching on CLAUDE.md. The TypeScript execution paths are unlikely to work in the Docker environment (no bun runtime installed), so effectively all tests reduce to 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific patterns that don't exist in the base commit (e.g., 'codegenOrderOnly' variable, depOutputs in implicitInputs context within compileC, updated CLAUDE.md text). A stub/no-op would not pass since the original code has depOrderOnly combining both and uses orderOnlyInputs."
+      "reason": "The tests check for specific patterns that don't exist in the base commit (e.g., 'codegenOrderOnly' variable, 'implicitInputs' with 'depOutputs' in compileC, updated CLAUDE.md text). A stub/no-op implementation would not introduce these patterns, so the tests would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four specific requirements from instruction.md are tested: cc() implicitInputs (test_cc_implicit_dep_outputs), no-PCH cxx implicitInputs (test_nopch_cxx_implicit_dep_outputs), separation of depOutputs from codegen (test_codegen_separated_from_dep_outputs), and CLAUDE.md updates (test_claude_md_dep_strategy_updated)."
+      "reason": "All four specific requirements from instruction.md are covered: test_cc_implicit_dep_outputs covers req 1, test_nopch_cxx_implicit_dep_outputs covers req 2, test_codegen_separated_from_dep_outputs covers req 3, and test_claude_md_dep_strategy_updated covers req 4."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names, docstrings explaining what each checks, and section comments grouping them into 'pr_diff fail_to_pass' and 'agent_config fail_to_pass' categories."
+      "reason": "Tests are well-structured with descriptive function names (test_cc_implicit_dep_outputs, test_nopch_cxx_implicit_dep_outputs, etc.), docstrings explaining what each test verifies, and comments separating fail-to-pass sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task modifies build system scripts and documentation, not structured data output."
+      "reason": "This task modifies build system scripts and documentation, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction appear correct and consistent with the codebase."
+      "reason": "No typos observed in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's 'Specific Requirements' section names exact variables (depOutputs, implicitInputs, orderOnlyInputs, codegen.cppAll), exact functions (compileC, cc(), cxx()), and even provides regex patterns for CLAUDE.md validation. This goes well beyond describing the bug and essentially specifies the implementation."
+      "reason": "The instruction names specific functions (compileC), specific variables (depOutputs, codegen.cppAll), specific options (implicitInputs vs orderOnlyInputs), and even specifies exact regex patterns for CLAUDE.md updates ('cc needs implicit dep', 'PCH.*cc.*cxx.*implicit'). This goes well beyond describing the bug \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation edit task, not an agentmd-edits or config-only task."
+      "reason": "This is primarily a code/documentation edit task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

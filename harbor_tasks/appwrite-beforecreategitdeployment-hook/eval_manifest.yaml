@@ -1,0 +1,89 @@
+source_pr:
+  owner: "appwrite"
+  repo: "appwrite"
+  number: 11732
+  merge_commit: "2b7690d6db26f668c5e335b3a443d3215bf9869e"
+  base_commit: "3ed1ca736dd2889b675775687e58db041283ad5a"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_method_exists_with_correct_signature
+    type: fail_to_pass
+    origin: behavior
+    description: "beforeCreateGitDeployment method exists with correct signature"
+    points: 1
+
+  - id: test_method_is_called_in_createGitDeployments
+    type: fail_to_pass
+    origin: behavior
+    description: "beforeCreateGitDeployment is called in the right place (after PROJECT_NOT_FOUND check, before DSN/database operations)"
+    points: 1
+
+  - id: test_method_has_noop_implementation
+    type: fail_to_pass
+    origin: behavior
+    description: "beforeCreateGitDeployment has an empty no-op implementation"
+    points: 1
+
+  - id: test_method_is_protected
+    type: fail_to_pass
+    origin: behavior
+    description: "beforeCreateGitDeployment is declared as protected (not public or private)"
+    points: 1
+
+  # Pass-to-pass tests
+  - id: test_php_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "PHP file syntax is valid"
+    points: 0
+
+  - id: test_composer_autoload_still_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Composer autoload still works after changes"
+    points: 0
+
+  - id: test_composer_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's composer.json is valid"
+    points: 0
+
+  - id: test_vcs_module_php_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All PHP files in VCS module have valid syntax"
+    points: 0
+
+  - id: test_repo_git_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository configuration is valid"
+    points: 0
+
+# Agent configuration rules relevant to this PR
+rubric:
+  - rule: "When adding methods to HTTP action classes, use proper visibility modifiers (protected for internal hooks)"
+    source: "CLAUDE.md:Action pattern section"
+    weight: 1
+
+  - rule: "Follow existing naming conventions for hook methods (verb-first naming like beforeCreateGitDeployment)"
+    source: "CLAUDE.md:Conventions section"
+    weight: 1
+
+  - rule: "Place hook calls at appropriate points in the flow (after validation, before operations)"
+    source: "CLAUDE.md:Module structure section"
+    weight: 1
+
+  - rule: "Create extensible no-op implementations for hooks meant to be overridden in subclasses"
+    source: "src/Appwrite/Platform/AGENTS.md:Module structure section"
+    weight: 1
+
+  - rule: "HTTP endpoint classes should follow PSR-12 formatting enforced by Pint"
+    source: "CLAUDE.md:Conventions section"
+    weight: 1
+
+  - rule: "File names in Http directories should follow CRUD patterns (this is an existing file, modifications should respect conventions)"
+    source: "src/Appwrite/Platform/AGENTS.md:HTTP directory structure"
+    weight: 1

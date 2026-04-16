@@ -98,6 +98,32 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 10-11
+- rule: 'CRITICAL: After ANY Python code changes, ALWAYS run `make ruff` - this is
+    mandatory and must never be skipped.'
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+  source_text: '- **CRITICAL**: After ANY Python code changes, ALWAYS run `make ruff`
+    - this is mandatory and must never be skipped.'
+  collision_type: scope_ambiguity
+  why_distracting: The strong wording ('CRITICAL', 'mandatory', 'must never be skipped')
+    might cause an agent to blindly run `make ruff` after modifying the Helm charts,
+    even though the rule explicitly mentions Python code changes and no Python files
+    were touched.
+  severity: medium
+- rule: 'make ruff # Format, lint, and autofix code - MANDATORY AFTER ANY CODE CHANGES'
+  source:
+    path: CLAUDE.md
+    lines: 22-23
+  source_text: '# Code quality - RUN AFTER EVERY PYTHON EDIT
+
+    make ruff                    # Format, lint, and autofix code - MANDATORY AFTER
+    ANY CODE CHANGES'
+  collision_type: scope_ambiguity
+  why_distracting: The inline comment says 'MANDATORY AFTER ANY CODE CHANGES', which
+    an agent might interpret broadly as applying to Helm chart code changes as well,
+    leading it to run a Python linter unnecessarily.
+  severity: medium
 hierarchy_analysis: The repository has a single root-level CLAUDE.md file containing
   general Python coding conventions. The agent must recognize that the specific task
   instructions (which dictate using a Pydantic model for Helm schema validation) override

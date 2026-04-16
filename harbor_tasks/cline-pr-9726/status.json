@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T10:02:33.419127",
+  "total_time": 66.36,
+  "sandbox_id": "iy97jrndr5wlgfaybklnz",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1662.28,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 265.65,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Core checks pass: Docker build \u2713, NOP test (reward=0) \u2713, Gold test (reward=1) \u2713. Rubric judge returns 0.0 due to fundamental incompatibility: gold solution delivered as Docker image with changes already committed at HEAD, but rubric judge expects uncommitted working tree changes (git diff HEAD). Rubric rules from .clinerules are advisory notes without references - cannot be properly evaluated. Task setup limitation, not implementation issue.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 741.86
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.27,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:4: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 13.41,
+      "tier_a_fails": [
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":578,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.38
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4536.9,
+      "at": "2026-04-15T01:47:18.177790"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1887.46,
+      "at": "2026-04-15T04:09:07.974684"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 962.09,
+      "at": "2026-04-15T11:19:41.433736"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 2827.42,
+      "at": "2026-04-15T13:24:32.208478"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 66.36,
+      "at": "2026-04-16T10:02:33.419127"
+    }
+  ]
+}

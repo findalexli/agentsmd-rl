@@ -1,0 +1,104 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T09:46:18.039576",
+  "total_time": 299.21,
+  "sandbox_id": "io355lwrda57p1kxdgs9k",
+  "backend": "fireworks",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1226.99,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 659.96,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 3,
+      "notes": "3 of 4 checks pass. Docker build, NOP test (reward=0), and Gold test (reward=1) all pass correctly. Rubric judge fails at 0.0 ICR - this is a fundamental architectural mismatch. The rubric judge is designed for config-file-editing tasks (checking if CLAUDE.md/AGENTS.md were updated), but this is a pure TypeScript code bugfix that only modifies utils.ts/utils.test.ts. The judge uses extract_config_hunks() to find config file changes, which won't recognize TypeScript source files as config files. The rubric rules themselves are reasonable (code quality best practices from CLAUDE.md), but the judge architecture cannot evaluate code quality - it only checks for file modifications to specific config/documentation files.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1529.13
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.35,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 11.19,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 0
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3419.77,
+      "at": "2026-04-15T01:28:41.263229"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1680.02,
+      "at": "2026-04-15T04:41:38.449161"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 405.38,
+      "at": "2026-04-15T12:56:11.412412"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2783.18,
+      "at": "2026-04-16T00:01:08.896137"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 299.21,
+      "at": "2026-04-16T09:46:18.039576"
+    }
+  ]
+}

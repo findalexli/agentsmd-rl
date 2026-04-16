@@ -1,0 +1,115 @@
+source:
+  pr: apache/airflow#64725
+  title: "Install rustup and cargo in CI and prod build images"
+  base_commit: c4a209ba0ec1749ce0d0ac561fb22feba5bad567
+  merge_commit: 1b2893300d8b6c3ae656b8e7d9a44138b663d633
+  files_changed:
+    - scripts/docker/install_os_dependencies.sh
+    - Dockerfile
+    - Dockerfile.ci
+    - .github/workflows/additional-ci-image-checks.yml
+
+# Checks mapping to test_outputs.py test functions
+checks:
+  - id: test_install_rustup_function_in_script
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "install_os_dependencies.sh contains install_rustup function with SHA256 verification"
+
+  - id: test_dockerfile_has_rustup_install
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Dockerfile calls install_rustup and sets RUSTUP environment variables"
+
+  - id: test_dockerfile_ci_has_rustup_install
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Dockerfile.ci calls install_rustup and sets RUSTUP environment variables"
+
+  - id: test_dockerfile_ci_path_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Dockerfile.ci removes /root/.cargo/bin from PATH"
+
+  - id: test_rustup_targets_defined
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Rustup targets defined for amd64 and arm64 architectures"
+
+  - id: test_curl_security_flags
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Rustup download uses secure curl flags (--proto, --tlsv1.2)"
+
+  - id: test_rustup_version_defaults
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "RUSTUP_VERSION and RUSTUP_DEFAULT_TOOLCHAIN have default values"
+
+  - id: test_install_rustup_architecture_handling
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "install_rustup function handles unsupported architectures gracefully"
+
+  - id: test_ci_workflow_timeout_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "CI workflow timeout updated from 17 to 25 minutes"
+
+  # Pass-to-pass tests - CI commands that should pass on base commit
+  - id: test_shellcheck_install_os_dependencies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on install_os_dependencies.sh"
+
+  - id: test_shellcheck_dockerfile_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on Dockerfile scripts"
+
+  - id: test_bash_syntax_install_os_dependencies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on install_os_dependencies.sh"
+
+  - id: test_yamllint_ci_workflow
+    type: pass_to_pass
+    origin: repo_tests
+    description: "YAML lint passes on additional-ci-image-checks.yml"
+
+  - id: test_scripts_docker_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Scripts docker tests pass"
+
+  - id: test_scripts_ci_e2e_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Scripts CI e2e analysis tests pass"
+
+# Rubric rules - coding conventions for infrastructure changes
+# Note: Shell script safety is covered by functional tests (shellcheck, bash syntax)
+rubric:
+  - id: dockerfile_env_consistency
+    rule: "Dockerfiles should set consistent environment variables for tools"
+    source:
+      file: Dockerfile
+      lines: "RUSTUP environment variables"
+    reference: |
+      ENV RUSTUP_HOME="/usr/local/rustup", ENV CARGO_HOME="/usr/local/cargo", PATH="${CARGO_HOME}/bin:${PATH}"
+
+  - id: checksum_verification
+    rule: "Downloaded binaries should be verified with checksums before execution"
+    source:
+      file: scripts/docker/install_os_dependencies.sh
+      lines: "install_rustup function"
+    reference: |
+      echo "${rustup_sha256}  /tmp/rustup-init" | sha256sum --check
+
+  - id: architecture_support
+    rule: "Infrastructure changes should support both amd64 and arm64 architectures"
+    source:
+      file: scripts/docker/install_os_dependencies.sh
+      lines: "install_rustup function"
+    reference: |
+      declare -A rustup_targets=([amd64]="x86_64-unknown-linux-gnu" [arm64]="aarch64-unknown-linux-gnu")

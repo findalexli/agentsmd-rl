@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for very specific string patterns like '*x = 100', '*x == 5', '*x == 6', 'option::some(5u64).fold!', 'option::none<u64>().fold!', 'o.borrow()', 'o.borrow_mut()' in source files. While the instruction.md does mention most of these (e.g., map_mut test pattern, is_none_or predicates, fold test patterns, implementation notes about borrow/borrow_mut), some test assertions like 'o.is_none() ||' in test_is_none_or_macro_exists are implementation details not fully specified in instruction.md"
+      "reason": "Tests assert very specific patterns like 'o.borrow()' in test_fold_ref_macro_exists, 'o.borrow_mut()' in test_fold_mut_macro_exists, exact variable name 'o' used internally. The instruction mentions 'use o.borrow()' in implementation notes but doesn't specify the local variable must be named 'o'. Also test_repo_cargo_xlint and test_repo_cargo_fmt are pass-to-pass infrastructure tests not mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md provides exact function signatures, exact implementation notes ('fold_ref implementation must use o.borrow()', 'fold_mut implementation must use o.borrow_mut()'), exact test patterns ('*x = 100', 'opt.map_mut!(|x| { *x = 100; vector[*x] })'), and exact test values. This is essentially dictating the implementation rather than describing what's broken."
+      "reason": "The instruction gives exact implementation details: 'fold_ref implementation must use o.borrow()', 'fold_mut implementation must use o.borrow_mut()', exact signatures, exact test patterns like '*x = 100', 'option::some(5u64).fold!', and specific closure patterns. This effectively dictates the solution rather than describing desired behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are almost entirely text-matching (e.g., test_fold_ref_macro_exists checks 'o.borrow()' literally, test_fold_mut_macro_exists checks 'o.borrow_mut()', test_is_none_or_macro_exists checks 'is_none()' in content, test_map_mut_functionality checks '*x = 100'). An alternative correct implementation using different variable names or internal patterns would fail. For example, using 'opt.borrow()' instead of 'o.borrow()' would fail test_fold_ref_macro_exists."
+      "reason": "Tests like test_fold_ref_macro_exists assert 'o.borrow()' as a literal string in the source file, meaning an alternative correct implementation using a different local variable name (e.g., 'opt.borrow()') would fail. Similarly test_fold_mut_macro_exists requires 'o.borrow_mut()' literally. test_is_none_or_macro_exists checks for 'is_none()' string presence. These are implementation-detail checks that reject valid alternatives."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_map_mut_macro_exists, test_is_none_or_macro_exists, test_fold_macro_exists, test_fold_ref_macro_exists, test_fold_mut_macro_exists, test_map_mut_functionality, test_is_none_or_functionality, test_fold_functionality, test_fold_ref_functionality, test_fold_mut_functionality) all use 'assert X in open(path).read()' pattern \u2014 pure text matching with no execution of Move code. The pass-to-pass tests do run cargo check/clippy but those verify compilation, not the new funct"
+      "reason": "The fail-to-pass tests (test_map_mut_macro_exists, test_is_none_or_macro_exists, test_fold_macro_exists, test_fold_ref_macro_exists, test_fold_mut_macro_exists, test_map_mut_functionality, test_is_none_or_functionality, test_fold_functionality, test_fold_ref_functionality, test_fold_mut_functionality) are ALL text-matching tests using 'assert X in content' on file contents. None of them actually execute the Move code. The only execution-based tests are pass-to-pass cargo check/clippy/fmt tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply appends the expected text patterns to option.move and option_tests.move files without any real implementation logic would pass all fail-to-pass tests, since they only check for string presence in files (e.g., 'public macro fun map_mut' in content, '*x = 100' in content). The cargo check/clippy tests are pass-to-pass, not fail-to-pass."
+      "reason": "A stub implementation that simply adds the correct function signatures and string patterns to the source files (without correct logic) and adds test functions containing the required string patterns (without them being correct tests) would pass all fail-to-pass tests, since those tests only check for string presence in files, not actual execution."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires doc comments, following existing patterns, and that tests actually pass when run with 'cargo test -p sui-framework -- option'. However, no test actually runs the Move tests to verify runtime behavior \u2014 only text pattern matching and compilation checks are performed."
+      "reason": "The instruction requires that the functions actually work correctly (e.g., map_mut returns Some(f(value)) for Some, None for None), but no test actually executes the Move code to verify this behavior. The cargo check tests only verify compilation, not runtime correctness."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named by function (test_map_mut_macro_exists, test_fold_functionality, etc.) and have docstrings explaining what they verify."
+      "reason": "Tests are well-named with clear docstrings explaining what each test verifies, grouped by macro function (map_mut, is_none_or, fold, fold_ref, fold_mut) with separate existence and functionality tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces Move source code, not structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides extremely specific implementation details: exact variable naming ('o.borrow()', 'o.borrow_mut()'), exact test patterns ('*x = 100', 'opt.map_mut!(|x| { *x = 100; vector[*x] })'), and exact test structure ('option::some(5u64).fold!'). These are implementation-level hints that go far beyond describing what behavior is needed."
+      "reason": "The instruction specifies exact implementation details like 'fold_ref implementation must use o.borrow()', 'fold_mut implementation must use o.borrow_mut()', and exact test patterns like '*x = 100' and 'option::some(5u64).fold!'. This goes beyond describing desired behavior and prescribes exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (models.toml, provider_types.rs, safety_limits.rs, use-providers.ts, model-card.tsx, model-selector.tsx, provider-status-card.tsx, README.md, configuration.md, .env.example), the provider name 'minimax', the API key 'MINIMAX_API_KEY', the base URL 'https://api.minimax.io/v1', the type 'openaicompatible', and the model names (M2.7, M2.7-highspeed, M2.5, M2.5-highspeed with MiniMax prefix implied). The 204K context window is also mentioned. All test-as"
+      "reason": "instruction.md names all file paths tested, the MINIMAX_API_KEY env var, the api.minimax.io base URL, and the four model names (M2.7, M2.7-highspeed, M2.5, M2.5-highspeed) that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be added (MiniMax provider with certain properties) but does not give exact code, line numbers, or copy-paste snippets. A developer must still reason about how to integrate it into each file."
+      "reason": "Instruction describes what to add (MiniMax provider across listed files) without specifying exact lines or code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific string literals like 'id: \"minimax\"' in provider_types.rs (test_provider_types_registers_minimax), requiring exact Rust formatting. A correct alternative that uses `id: String::from(\"minimax\")` or `id: \"minimax\".to_string()` would fail. Similarly, test_safety_limits_minimax_default checks that '\"minimax\"' and '\"MiniMax-M2.7\"' appear within 50 characters of each other, which is implementation-detail-specific. The TOML tests are more flexible but the Rust source text che"
+      "reason": "test_safety_limits_minimax_default asserts distance < 50 chars between '\"minimax\"' and '\"MiniMax-M2.7\"' implying a specific match arm style; also test_minimax_has_four_models requires exact model name strings like 'MiniMax-M2.7-highspeed' which are plausible but the exact capitalization/naming is gold-specific and not uniquely derivable (though instruction lists them)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_provider_types_registers_minimax, test_safety_limits_minimax_default, test_frontend_use_providers, test_frontend_model_card_icon, test_frontend_model_selector_icon, test_frontend_provider_status_card, test_readme_mentions_minimax, test_docs_configuration_minimax, test_env_example_minimax) are all pure text searches using 'in content' or regex on source files. They never import, compile, or execute the code being tested. The pass-to-pass cargo tests do execute code, b"
+      "outcome": "pass",
+      "reason": "Tests parse TOML via tomllib, run cargo check/test/clippy/fmt/doc/build subprocesses, not just text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for content that does not exist in the base commit (e.g., 'minimax' in provider_types.rs, safety_limits.rs, frontend files). A stub or no-op implementation would not add these strings to the files, so the tests cannot be trivially satisfied."
+      "reason": "f2p tests require adding actual provider entries with specific structure (e.g., context_length >= 200000, model_type 'llm', provider registration) which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors listed in the instruction (backend TOML config, API provider registration, safety limits, frontend display/icons, README, docs, .env.example) have corresponding test functions."
+      "reason": "Tests cover backend TOML, provider registration, safety limits, and frontend/docs files mentioned in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clearly labeled sections (Gates/static checks, pass-to-pass repo tests, fail-to-pass behavioral tests) with descriptive docstrings for each test function."
+      "reason": "Tests grouped by comment headers (Gates, Pass-to-pass, Fail-to-pass) with descriptive names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The TOML schema for the MiniMax provider entry is effectively documented in the instruction (type, api_base, models with context_length) and tested structurally in test_models_toml_has_minimax_provider and test_minimax_has_four_models."
+      "reason": "TOML schema keys (type, api_base, api_key_env, enabled, capabilities.context_length, model_type) are specified implicitly via reference to existing providers/models.toml structure."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, provider names, and model names are consistently spelled correctly across instruction and tests."
+      "reason": "Filenames and env vars appear consistent (MINIMAX_API_KEY, models.toml, provider_types.rs)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly lists every file to modify with specific descriptions of what to add in each (e.g., 'checking MINIMAX_API_KEY for availability', 'using openaicompatible type', 'api at https://api.minimax.io/v1'). While the files are reasonable to list for a feature task, the level of detail essentially prescribes the exact implementation rather than leaving localization as part of the task."
+      "outcome": "pass",
+      "reason": "Instruction lists files to modify but doesn't point to specific lines; file localization is part of the task scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized additions to multiple files (adding provider entries, match arms, display names) without full-file rewrites, and changes are consistent across files."
+      "reason": "Gold patch diffs are localized additions (new TOML entries, new env var blocks, new table rows) not full-file rewrites."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
 }

@@ -10,7 +10,7 @@ Additionally, the `recommended` preset only enables the two basic hooks rules (`
 
 Slim down to just 2 configuration presets:
 
-- **`recommended`**: includes ALL recommended rules (both basic hooks rules and compiler rules) — this config must reference the variable named `allRuleConfigs` (which contains all rule configurations including `rules-of-hooks`, `exhaustive-deps`, and all React Compiler rules)
+- **`recommended`**: includes ALL recommended rules (both basic hooks rules AND compiler rules) — the tests verify this by checking that this config maps to the variable containing the complete set of rule configurations
 - **`recommended-latest`**: same as recommended plus any bleeding-edge experimental compiler rules
 
 The removed presets (`recommended-legacy`, `recommended-latest-legacy`, `flat/recommended`) and their flat config equivalents should be deleted entirely from `packages/eslint-plugin-react-hooks/src/index.ts`.
@@ -37,3 +37,12 @@ Add a `## 7.0.0` entry to the CHANGELOG documenting the breaking change.
 - `packages/eslint-plugin-react-hooks/package.json` — version field (must be >= 7.0.0)
 - `ReactVersions.js` — central version registry
 - `fixtures/eslint-v6/.eslintrc.json`, `fixtures/eslint-v7/.eslintrc.json`, `fixtures/eslint-v8/.eslintrc.json` — update preset references
+
+## Verification
+
+The tests verify:
+- The 'recommended' config maps to the variable containing all rule configurations (including compiler rules)
+- The legacy configs ('recommended-legacy', 'recommended-latest-legacy', 'flat/recommended') are removed from the configs object
+- The plugin meta object includes a version field with semver format
+- The package.json version is >= 7.0.0
+- The repo is at the expected git commit containing '9724e3e'

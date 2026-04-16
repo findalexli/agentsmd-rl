@@ -1,100 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21650
-  base_commit: "afb32d76224e39d1226273d4a4a7fc568bd36b8c"
-  merge_commit: "c06ca1526cb6008a8dacb4fdb06567e648134664"
-
+  base_commit: afb32d76224e39d1226273d4a4a7fc568bd36b8c
+  merge_commit: c06ca1526cb6008a8dacb4fdb06567e648134664
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "test_utils.py must parse without syntax errors"
-
-  - id: test_repo_ruff_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: ruff check --select=E9 catches syntax errors"
-
-  - id: test_repo_ruff_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: ruff check --select=F401,F821 catches import/name issues"
-
-  - id: test_repo_ast_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Python AST validation passes"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: isort --check passes (import order)"
-
-  - id: test_repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: black --check passes (code formatting)"
-
-  - id: test_repo_codespell
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: codespell passes (spell checking)"
-
-  - id: test_repo_precommit_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: pre-commit check-ast hook passes"
-
-  - id: test_repo_precommit_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: pre-commit trailing-whitespace hook passes"
-
-  - id: test_repo_precommit_eof
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: pre-commit end-of-file-fixer hook passes"
-
-  - id: test_repo_precommit_debug
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: pre-commit debug-statements hook passes"
-
-  - id: dill_no_recursive_ref_warning
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dill.dumps on a CustomTestCase subclass must not emit recursive-ref PicklingWarnings"
-
-  - id: no_circular_ref_in_setup_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "safe_setUpClass must not hold a bound-method default that creates a circular reference"
-
-  - id: dill_roundtrip_preserves_state
-    type: pass_to_pass
-    origin: pr_diff
-    description: "dill round-trip preserves class attributes and name"
-
-  - id: teardown_called_on_setup_failure
-    type: pass_to_pass
-    origin: pr_diff
-    description: "tearDownClass still runs when setUpClass raises"
-
-  - id: normal_setup_flow
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Normal setUpClass executes correctly and sets class state"
-
-  - id: no_double_wrapping
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Subclass of subclass doesn't double-wrap setUpClass"
-
-  - id: init_subclass_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "__init_subclass__ has meaningful logic, not gutted to pass/return"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: test_utils.py must parse without syntax errors
+- id: test_repo_ruff_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: ruff check --select=E9 catches syntax errors'
+- id: test_repo_ruff_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: ruff check --select=F401,F821 catches import/name issues'
+- id: test_repo_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Python AST validation passes'
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: isort --check passes (import order)'
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: black --check passes (code formatting)'
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: codespell passes (spell checking)'
+- id: test_repo_precommit_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: pre-commit check-ast hook passes'
+- id: test_repo_precommit_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: pre-commit trailing-whitespace hook passes'
+- id: test_repo_precommit_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: pre-commit end-of-file-fixer hook passes'
+- id: test_repo_precommit_debug
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: pre-commit debug-statements hook passes'
+- id: dill_no_recursive_ref_warning
+  type: fail_to_pass
+  origin: pr_diff
+  description: dill.dumps on a CustomTestCase subclass must not emit recursive-ref
+    PicklingWarnings
+- id: no_circular_ref_in_setup_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: safe_setUpClass must not hold a bound-method default that creates a
+    circular reference
+- id: dill_roundtrip_preserves_state
+  type: pass_to_pass
+  origin: pr_diff
+  description: dill round-trip preserves class attributes and name
+- id: teardown_called_on_setup_failure
+  type: pass_to_pass
+  origin: pr_diff
+  description: tearDownClass still runs when setUpClass raises
+- id: normal_setup_flow
+  type: pass_to_pass
+  origin: pr_diff
+  description: Normal setUpClass executes correctly and sets class state
+- id: no_double_wrapping
+  type: pass_to_pass
+  origin: pr_diff
+  description: Subclass of subclass doesn't double-wrap setUpClass
+- id: init_subclass_not_stub
+  type: pass_to_pass
+  origin: static
+  description: __init_subclass__ has meaningful logic, not gutted to pass/return
 rubric: []
+distractors:
+- rule: Always use CustomTestCase — never raw unittest.TestCase.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
+    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
+    leaks in CI.
+  collision_type: meta_confusion
+  why_distracting: An agent might mistakenly try to change unittests or modify CustomTestCase
+    usage, when the PR actually fixes the underlying implementation of CustomTestCase
+    itself.
+  severity: medium
+- rule: '`tearDownClass` must be defensive — use `hasattr`/null checks before accessing
+    resources.'
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '13'
+  source_text: 2. **`tearDownClass` must be defensive** — use `hasattr`/null checks
+    before accessing resources (e.g. `cls.process`) that `setUpClass` may not have
+    finished allocating.
+  collision_type: meta_confusion
+  why_distracting: The agent is editing the exception handling logic in the test utilities
+    base class (`setUpClass`/`tearDownClass` wrappers) rather than writing a specific
+    test case's `tearDownClass`. Applying this rule to the framework code would be
+    inappropriate.
+  severity: low
+- rule: Always use CustomTestCase for tests
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 12-12
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
+    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
+    leaks in CI.
+  collision_type: meta_confusion
+  why_distracting: The diff modifies the test framework utility (`test_utils.py`)
+    that implements `CustomTestCase`, not writing a test file. An agent might confuse
+    the implementation of the framework with the usage of the framework.
+  severity: low
+- rule: Defensive tearDownClass implementation
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 13-13
+  source_text: 2. **`tearDownClass` must be defensive** — use `hasattr`/null checks
+    before accessing resources (e.g. `cls.process`) that `setUpClass` may not have
+    finished allocating.
+  collision_type: meta_confusion
+  why_distracting: The diff edits the framework's internal error-handling wrapper
+    for `setUpClass`, which invokes `tearDownClass` on failure. An agent reading this
+    might mistakenly try to add defensive logic to the test runner's code instead
+    of to individual test classes.
+  severity: medium

@@ -13,11 +13,10 @@ Modify `products/tasks/backend/models.py` in the `Task.create_and_run()` method 
 1. Accept an optional keyword-only parameter named `sandbox_environment_id` with type `str | None` defaulting to `None`
 
 2. When `sandbox_environment_id` is provided (not None):
-   - Look up the corresponding `SandboxEnvironment` record, ensuring it belongs to the requesting team (the method already receives a `team` parameter)
-   - If no matching environment exists, raise `ValueError` with the message: `Invalid sandbox_environment_id: {sandbox_environment_id}`
-   - Store the environment's ID in `extra_state` under the key `sandbox_environment_id` as a string value (convert the environment's ID to string if necessary)
-
-3. Ensure `extra_state` is properly initialized before adding the sandbox environment ID
+   - Look up the corresponding `SandboxEnvironment` record using `SandboxEnvironment.objects.filter(team=team, id=sandbox_environment_id).first()` and assign the result to a variable named `sandbox_env`
+   - If the lookup returns no result (i.e., `sandbox_env` is None or falsy), raise `ValueError` with the exact message: `Invalid sandbox_environment_id: {sandbox_environment_id}`
+   - Ensure `extra_state` is initialized using the pattern `extra_state = extra_state or {}` before adding values to it
+   - Store the environment's ID in `extra_state` under the key `sandbox_environment_id` using the exact expression `str(sandbox_env.id)` (convert the environment's ID to string using the str() function)
 
 ### Documentation Update
 

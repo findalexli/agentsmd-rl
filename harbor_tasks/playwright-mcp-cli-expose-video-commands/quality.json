@@ -2,61 +2,59 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific string literals not fully specified in instruction.md. For example: test_tools_registry_includes_video asserts exact import string \"import video from './tools/video';\" and \"...video,\". test_terminal_commands_include_video asserts exact strings like \"videoStart = declareCommand\", \"name: 'video-start'\", \"toolName: 'browser_start_video'\", \"category: 'devtools'\". test_program_cli_accepts_devtools asserts exact string \"possible values: vision, pdf, devtools\". test_terminal_"
+      "outcome": "pass",
+      "reason": "Every assert in the tests checks for specific strings, file paths, variable names, and patterns that are explicitly stated in instruction.md. For example, 'videoStart = declareCommand', 'capability: \\'devtools\\'', 'import video from \\'./tools/video\\';', 'session.run({ ...args, outputDir })', 'path.resolve(args.outputDir, args.filename)', etc. are all directly specified in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to change: 'Change capability: tracing to capability: devtools in tracing.ts', 'Check for devtools instead of tracing in browserContextFactory.ts', 'Pass --output-dir=${outputDir} argument when spawning', 'Pass outputDir to session.run() calls', 'Resolve filename arguments against outputDir using path.resolve()'. These are specific implementation directives, not problem descriptions."
+      "reason": "The instruction explicitly tells the agent exact code to write, e.g., 'Import the video module using the exact statement: import video from \\'./tools/video\\';', 'capabilities?.includes(\\'devtools\\')', 'options.caps.push(\\'devtools\\')', 'path.resolve(args.outputDir, args.filename)', 'session.run({ ...args, outputDir })'. This is not describing what's broken but dictating exact implementation lines."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation-specific strings: \"videoStart = declareCommand\" (variable name), \"session.run({ ...args, outputDir })\" (exact call syntax), \"path.resolve(args.outputDir, args.filename)\" (exact expression), \"`--output-dir=${outputDir}`\" (exact template literal). An alternative correct implementation using different variable names (e.g., 'startVideoCmd') or different argument passing patterns (e.g., passing outputDir separately) would fail these tests."
+      "reason": "Tests assert on exact variable names like 'videoStart = declareCommand', exact string patterns like 'import video from \\'./tools/video\\';', and specific code like 'session.run({ ...args, outputDir })'. Alternative correct implementations using different variable names (e.g., 'startVideoCmd'), different import styles, or different parameter passing patterns would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function reads file content and checks for string presence using assertions like 'assert X in content'. No test imports modules, calls functions, executes the CLI, or checks runtime behavior. This is purely text/pattern matching on source files."
+      "reason": "Every single test function reads file content as text and checks for substring presence (e.g., `assert 'browser_start_video' in content`, `assert 'capability: \\'devtools\\'' in content`). No test imports modules, executes code, runs the CLI, or checks any runtime behavior. All tests are purely `assert X in open(path).read()` style."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass - tests require specific file creation (video.ts must exist), specific string content in files, and specific ordering of elements. The agent must write actual code with the right structure and content."
+      "reason": "While the tests are text-based, they check for content that doesn't exist in the base repo (e.g., video.ts doesn't exist, 'devtools' capability doesn't exist in tracing.ts, video commands aren't in commands.ts). A stub/empty file or no-op change would not pass these tests."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Several instruction requirements are not tested: the 'remove debug console.log(matchingDirs) statement from Session.cleanup()' is never checked; backward compatibility behavior (when 'tracing' is specified, automatically add 'devtools') is only checked via string matching, not actual CLI behavior; the video API calls (tab.page.video().start/stop) are never validated for correctness."
+      "outcome": "pass",
+      "reason": "The tests cover the major requirements: video module creation, capability renaming, tools registry update, terminal commands, output directory handling, SKILL.md documentation, and runCode repositioning. Most instruction requirements have corresponding test assertions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names, docstrings, and clear section comments separating 'Code behavior' tests from 'Config/documentation update' tests."
+      "reason": "Tests are well-organized with descriptive function names (test_video_module_exists, test_tracing_capability_renamed_to_devtools, etc.), docstrings, and section comments separating 'FAIL-TO-PASS TESTS: Code behavior' from 'Config/documentation update'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces TypeScript source code and markdown documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB; it's about code file modifications."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, and variable names in instruction.md appear consistent and correctly spelled when cross-referenced with the test assertions."
+      "reason": "File paths, variable names, and commands in the instruction are consistent with those used in tests and the solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files and exact changes: 'Change capability: tracing to capability: devtools' in specific files, 'Pass --output-dir=${outputDir} argument', 'Resolve filename arguments against outputDir using path.resolve()'. These are line-level implementation hints, not high-level task descriptions."
+      "reason": "The instruction specifies exact code changes at a very granular level: exact import statements, exact variable names, exact string literals, and exact positions ('between verify and wait imports'). This goes beyond naming files/modules and dictates the precise implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code creation/modification task, not a config-edit-only task."
+      "reason": "This is primarily a code-editing task, not an agentmd-edits task focused on config files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

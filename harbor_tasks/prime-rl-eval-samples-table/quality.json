@@ -3,56 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact method signature `log_eval_samples(self, rollouts: list[RolloutOutput], env_name: str, step: int) -> None`, all concrete classes (NoOpMonitor, MultiMonitor, WandbMonitor, PrimeMonitor), the exact file paths, the table columns (step, env, task, example_id, completion, reward), the call site in evaluate_env, and the filtering behavior for empty completions. All test-asserted specifics (method names, parameter names, column values, class names, file paths) are discov"
+      "reason": "The instruction names all relevant files (base.py, multi.py, wandb.py, prime.py, eval_utils.py), the method name `log_eval_samples`, the class names (Monitor, NoOpMonitor, MultiMonitor, WandbMonitor, PrimeMonitor), the W&B table columns (step, env, task, example_id, completion, reward), and the behavior of skipping empty completions. The tests check these exact things, and all specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact method signature, exact column names, exact call to add in evaluate_env (`monitor.log_eval_samples(outputs, env_name=env_name, step=step)`), and which classes need which implementations. This goes beyond describing what's broken \u2014 it prescribes the exact fix, leaving almost no reasoning for the agent."
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to be added (a new abstract method, concrete implementations, table columns, integration in evaluate_env) but does not specify exact line numbers, exact code to write, or precise implementation details like 'change line X to Y'. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check behavioral properties (ABC enforcement via TypeError, method delegation, table row addition, wandb.log calls) rather than exact line positions or internal helper names. Alternative implementations that use the same method signature and produce the same behavior would pass. The method signature and parameter names are specified in the instruction, so requiring them is fair."
+      "reason": "The tests check for the method name `log_eval_samples` (which is specified in the instruction as a requirement), check behavioral properties (delegation, table row addition, skipping empty completions), and use AST extraction to test methods in isolation. Alternative implementations that use the same method name but different internal logic (e.g., different variable names, different iteration patterns) would pass. The method name is a requirement, not an implementation detail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute code via subprocess (test_abc_enforces_log_eval_samples, test_noop_monitor_accepts_log_eval_samples), import and call methods via AST extraction and exec (test_multi_monitor_delegates_eval_samples, test_wandb_log_eval_samples_*), and check behavioral assertions (mock call counts, argument values, TypeError raising). They are not simple text-matching."
+      "reason": "Tests execute code via subprocess (test_abc_enforces_log_eval_samples, test_noop_monitor_accepts_log_eval_samples), extract methods via AST and execute them with mocks (test_multi_monitor_delegates_eval_samples, test_wandb_log_eval_samples_*), and verify behavioral outcomes like call counts and arguments. They are not simple text-matching tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_abc_enforces_log_eval_samples requires TypeError when log_eval_samples is missing \u2014 a stub won't cause this. test_wandb_log_eval_samples_processes_rollouts checks table_mock.add_data.call_count == 3 and specific data in rows \u2014 a pass/no-op implementation would fail. test_wandb_log_eval_samples_skips_empty_completion checks that empty completions are filtered. These cannot be satisfied by trivial stubs."
+      "reason": "test_abc_enforces_log_eval_samples verifies TypeError is raised without the method - a stub pass wouldn't satisfy this. test_wandb_log_eval_samples_processes_rollouts checks that table_mock.add_data is called exactly 3 times with specific data - a no-op wouldn't pass. test_wandb_log_eval_samples_skips_empty_completion checks that empty completions are filtered. test_multi_monitor_delegates_eval_samples checks delegation calls. These require actual implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from the instruction are tested: (1) ABC abstract method enforcement, (2) all concrete implementations (NoOp, Multi, Wandb, Prime), (3) WandbMonitor table logging with correct columns and empty-completion filtering, (4) evaluate_env calling monitor.log_eval_samples (test_evaluate_env_calls_log_eval_samples)."
+      "reason": "The instruction requires: (1) ABC abstract method - tested by test_abc_enforces_log_eval_samples, (2) NoOpMonitor - tested by test_noop_monitor_accepts_log_eval_samples, (3) MultiMonitor delegation - tested by test_multi_monitor_delegates_eval_samples, (4) WandbMonitor table logging with columns and empty-skip - tested by test_wandb_log_eval_samples_processes_rollouts and test_wandb_log_eval_samples_skips_empty_completion, (5) PrimeMonitor - tested (visible from truncated tests), (6) evaluate_en"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly named (test_abc_enforces_log_eval_samples, test_noop_monitor_accepts_log_eval_samples, etc.), have docstrings explaining what each verifies, and are grouped with comments into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections."
+      "reason": "Tests are well-named (e.g., test_abc_enforces_log_eval_samples, test_wandb_log_eval_samples_skips_empty_completion), have docstrings explaining what they verify, and are grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with comments."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The W&B table schema columns are explicitly documented in instruction.md: `step`, `env`, `task`, `example_id`, `completion`, `reward`."
+      "reason": "The W&B table schema is explicitly documented in the instruction: columns are `step`, `env`, `task`, `example_id`, `completion`, `reward`. Tests verify these columns appear in the table rows."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, class names, and parameter names in instruction.md all match the actual codebase and test expectations without typos."
+      "reason": "File paths, method names, class names, and variable names in the instruction all match those used in the tests and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact call to add: `monitor.log_eval_samples(outputs, env_name=env_name, step=step)` after logging metrics in evaluate_env, and gives the exact method signature. This is precise localization of the fix, not just describing the problem."
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files but doesn't specify exact line numbers or exact code changes. It describes what functionality to add at an architectural level, which is appropriate given the task requires modifying multiple files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving adding methods to Python classes and a function call, not a config edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

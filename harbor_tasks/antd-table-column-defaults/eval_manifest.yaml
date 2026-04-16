@@ -119,6 +119,35 @@ rubric:
     to add a test case using the existing `Table` component without introducing any
     absolute imports for internal Ant Design modules,
   category: testing
+- rule: 项目组件和逻辑必须使用 TypeScript 和 React 进行开发。
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  source_text: '- 使用 TypeScript 和 React 开发'
+  evidence: The diff introduces a new file `useFilledColumns.ts` written in TypeScript,
+    which imports React (`import * as React from 'react';`), and uses TypeScript types
+    like `ColumnsType<RecordType>` and `Partial<ColumnType<RecordType>>`.
+  category: architecture
+  verification: llm_judge
+- rule: 单元测试文件应存放在对应组件目录下的 `__tests__/` 文件夹中。
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '│   │   ├── __tests__/            # 单元测试'
+  evidence: The diff adds a new test case for the Table component's column alignment
+    inside the file `components/table/__tests__/Table.test.tsx`, following the project
+    structure for unit tests.
+  category: architecture
+  verification: llm_judge
+- rule: 跨组件共享的工具函数和类型定义应放置在 `_util/` 目录中。
+  source:
+    path: AGENTS.md
+    lines: 25-25
+  source_text: '│   ├── _util/                   # 共享工具函数库'
+  evidence: The newly added hook `useFilledColumns.ts` imports the shared `AnyObject`
+    type from the `_util` directory (`import type { AnyObject } from '../../_util/type';`).
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Demo files must use absolute paths (e.g., `antd`, `antd/es/*`) for internal
     imports.

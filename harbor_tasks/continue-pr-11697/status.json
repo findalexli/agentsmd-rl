@@ -1,0 +1,112 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T10:52:54.147053",
+  "total_time": 72.06,
+  "sandbox_id": "ih2wuqmkeohroqnna0ypv",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1498.38,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 709.52,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed eval_manifest.yaml YAML syntax. Original used TOML-like format (= for key-value, [section] headers, \"\"\" for multi-line strings) which yaml.safe_load() couldn't parse. Converted to proper YAML. Rubric has no actual rules (only comments), so ICR=1.0.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 795.07
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.69,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:48: test `test_agents_and_checks_deduplication` has 1 assert(s), all p', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:33: unpinned pip deps: pytest, pytest-timeout']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 11.28,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":637,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.8
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1703.09,
+      "at": "2026-04-15T04:07:33.976114"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 571.1,
+      "at": "2026-04-15T12:48:09.507029"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 385.47,
+      "at": "2026-04-15T18:46:14.390104"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 4588.92,
+      "at": "2026-04-15T23:12:16.647750"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 72.06,
+      "at": "2026-04-16T10:52:54.147053"
+    }
+  ]
+}

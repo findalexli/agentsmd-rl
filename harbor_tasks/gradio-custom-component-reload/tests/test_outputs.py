@@ -8,141 +8,93 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/gradio"
 MOUNT_CUSTOM = Path(REPO) / "js/core/src/MountCustomComponent.svelte"
 MOUNT_COMPONENTS = Path(REPO) / "js/core/src/MountComponents.svelte"
 
-
-def _run_validation(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Write and execute a Python validation script."""
-    script = Path("/tmp/_eval_check.py")
-    script.write_text(code)
-    try:
-        return subprocess.run(
-            ["python3", str(script)],
-            capture_output=True, text=True, timeout=timeout,
-        )
-    finally:
-        script.unlink(missing_ok=True)
+# Import the svelte analyzer (will be copied alongside this file)
+sys.path.insert(0, str(Path(__file__).parent))
+from svelte_analyzer import (
+    verify_effect_has_cleanup_behavior,
+    verify_effect_remounts_on_change,
+    verify_no_debug_logging,
+    verify_unmount_spelling,
+    analyze_svelte_component,
+)
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral validation via code execution
+# Fail-to-pass (pr_diff) — behavioral validation via code structure analysis
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_effect_returns_cleanup():
-    """$effect must return a cleanup function instead of using onDestroy."""
-    r = _run_validation(
-        f'''
-import re
+    """
+    $effect must return a cleanup function instead of using onDestroy.
 
-content = open("{MOUNT_CUSTOM}").read()
+    Behavioral requirement: When the $effect re-runs (due to prop changes),
+    it must unmount the previous component instance before mounting the new one.
+    This is achieved by returning a cleanup function from $effect.
+    """
+    content = MOUNT_CUSTOM.read_text()
 
-# Must NOT import onDestroy — the fix removes it entirely
-assert "onDestroy" not in content, "onDestroy import still present"
-
-# $effect must contain a return () => cleanup pattern
-assert "return () =>" in content or "return() =>" in content, (
-    "$effect does not return a cleanup function"
-)
-
-# Cleanup must call unmount (not umount) on the mounted instance
-assert ".unmount(" in content, "Cleanup does not call .unmount()"
-
-# Must NOT have the old onDestroy block
-assert not re.search(r"onDestroy\\s*\\(\\s*\\(\\)\\s*=>", content), (
-    "onDestroy callback still present — should use $effect return instead"
-)
-
-print("PASS")
-'''
-    )
-    assert r.returncode == 0, f"Validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    # Verify using behavioral analysis (not simple string matching)
+    passed, message = verify_effect_has_cleanup_behavior(content)
+    assert passed, message
 
 
 # [pr_diff] fail_to_pass
 def test_effect_remounts_on_rerun():
-    """Effect must re-mount component on every run, not guard with !comp."""
-    r = _run_validation(
-        f'''
-import re
+    """
+    Effect must re-mount component on every run, not guard with !comp.
 
-content = open("{MOUNT_CUSTOM}").read()
+    Behavioral requirement: The effect must re-run when the node is replaced
+    during dev reload (hot reload). This requires:
+    1. No module-level state that prevents re-mounting (!comp guard)
+    2. Reading reactive props so the effect re-runs when they change
+    3. Using early-return guard instead of conditional mount
+    """
+    content = MOUNT_CUSTOM.read_text()
 
-# Must NOT have module-level 'let comp' that holds stale mount state.
-# The fix uses a local 'mounted' variable inside $effect instead.
-has_let_comp = False
-for line in content.split("\\n"):
-    stripped = line.strip()
-    # Match 'let comp;' or 'let comp =' but NOT 'let component'
-    if stripped.startswith("let comp") and "component" not in stripped:
-        has_let_comp = True
-        break
-assert not has_let_comp, "Module-level comp variable prevents effect re-triggering"
-
-# Must NOT have the old guard 'if (el && !comp && runtime)'
-assert "&& !comp" not in content, "Old !comp guard pattern still present"
-
-# Effect must use early-return guard instead of conditional mount
-assert re.search(r"if\\s*\\(\\s*!el\\s*\\|\\|", content) or "return" in content, (
-    "No early-return guard found — effect structure is wrong"
-)
-
-print("PASS")
-'''
-    )
-    assert r.returncode == 0, f"Validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    # Verify using behavioral analysis
+    passed, message = verify_effect_remounts_on_change(content)
+    assert passed, message
 
 
 # [pr_diff] fail_to_pass
 def test_no_inspect_debug():
-    """$inspect(node) debug call must be removed from MountComponents.svelte."""
-    r = _run_validation(
-        f'''
-import os
+    """
+    $inspect(node) debug call must be removed from MountComponents.svelte.
 
-path = "{MOUNT_COMPONENTS}"
-if not os.path.exists(path):
-    # File may have been refactored away
-    print("PASS")
-    exit(0)
+    Behavioral requirement: Production component code should not contain
+    debug logging calls that could leak internal state or clutter output.
+    """
+    if not MOUNT_COMPONENTS.exists():
+        return  # File may have been refactored away
 
-content = open(path).read()
-assert "$inspect" not in content, "$inspect debug call still present"
-print("PASS")
-'''
-    )
-    assert r.returncode == 0, f"Validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    content = MOUNT_COMPONENTS.read_text()
+
+    # Verify using behavioral analysis
+    passed, message = verify_no_debug_logging(content)
+    assert passed, message
 
 
 # [pr_diff] fail_to_pass
 def test_unmount_spelling():
-    """The 'umount' typo must be fixed to 'unmount' in the runtime type."""
-    r = _run_validation(
-        f'''
-import re
+    """
+    The 'umount' typo must be fixed to 'unmount' in the runtime type.
 
-content = open("{MOUNT_CUSTOM}").read()
+    Behavioral requirement: The runtime type definition must use correct
+    spelling of 'unmount' so that the correct method name is available at runtime.
+    """
+    content = MOUNT_CUSTOM.read_text()
 
-# Must have 'unmount' present (correct spelling)
-assert "unmount" in content, "'unmount' not found — typo has not been corrected"
-
-# Must NOT have 'umount' as a standalone word (not inside 'unmount')
-# \\bumount\\b matches 'umount' but not 'unmount' since there's no word
-# boundary between 'n' and 'm' in 'unmount'.
-assert not re.search(r"\\bumount\\b", content), "'umount' typo still present"
-
-print("PASS")
-'''
-    )
-    assert r.returncode == 0, f"Validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    # Verify using behavioral analysis of the type definition
+    passed, message = verify_unmount_spelling(content)
+    assert passed, message
 
 
 # ---------------------------------------------------------------------------
@@ -153,11 +105,16 @@ print("PASS")
 def test_not_stub():
     """MountCustomComponent.svelte must have real mounting logic."""
     content = MOUNT_CUSTOM.read_text()
+
+    # Behavioral check: file must have substantial content
     lines = [ln.strip() for ln in content.splitlines() if ln.strip()]
     assert len(lines) > 10, "File is too short — likely a stub"
-    assert "mount" in content.lower(), "No mount call found"
-    assert "$effect" in content, "No $effect block found"
-    assert "target" in content, "No target element reference found"
+
+    # Behavioral check: must have mounting infrastructure
+    analysis = analyze_svelte_component(content)
+    assert len(analysis.effects) > 0, "No $effect block found — mounting logic missing"
+    assert analysis.runtime_type is not None, "No runtime type definition found"
+    assert analysis.runtime_type.get('has_mount', False), "Runtime type missing mount method"
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +127,7 @@ def _ensure_node():
     result = subprocess.run(["which", "node"], capture_output=True)
     if result.returncode == 0:
         return True
-    
+
     # Try to install Node.js
     try:
         subprocess.run(
@@ -188,10 +145,10 @@ def _install_deps():
     node_modules = Path(REPO) / "node_modules"
     if node_modules.exists():
         return True
-    
+
     if not _ensure_node():
         return False
-    
+
     try:
         subprocess.run(
             ["pnpm", "install", "--frozen-lockfile"],
@@ -252,10 +209,10 @@ def test_repo_format_check():
     """Repo's code formatting passes (pass_to_pass)."""
     if not _ensure_node():
         return
-    
+
     if not _install_deps():
         return
-    
+
     r = subprocess.run(
         ["pnpm", "format:check"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -268,16 +225,16 @@ def test_repo_unit_tests():
     """Repo's unit tests pass (pass_to_pass)."""
     if not _ensure_node():
         return
-    
+
     if not _install_deps():
         return
-    
+
     # Build client first (required for tests)
     subprocess.run(
         ["pnpm", "--filter", "@gradio/client", "build"],
         capture_output=True, timeout=60, cwd=REPO,
     )
-    
+
     r = subprocess.run(
         ["pnpm", "test:run"],
         capture_output=True, text=True, timeout=120, cwd=REPO,

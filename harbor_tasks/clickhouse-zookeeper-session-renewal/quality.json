@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names every literal string, variable name, and pattern asserted in the tests: 'retries_ctl.isRetry()', 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'Renew the session on retry', 're-fetch the object list', 'watches are set on the live session', '5-second sleep in processWatchQueue', the variable naming 'current_zookeeper', and the requirement to move object_names inside the loop. All test-specific details are discoverable from the instruction."
+      "reason": "All assert'd literals (e.g., 'retries_ctl.isRetry()', 'current_zookeeper = zookeeper_getter.getZooKeeper().first', 'Renew the session on retry', 're-fetch the object list', 'watches are set on the live session', '5-second sleep in processWatchQueue', 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;') are explicitly named in instruction.md's Required Implementation section."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: use 'retries_ctl.isRetry()' check, assign 'current_zookeeper = zookeeper_getter.getZooKeeper().first', use specific variable name 'current_zookeeper', move 'Strings object_names = getObjectNamesAndSetWatch(...)' inside the loop, include exact comment phrases. This is essentially the complete solution spelled out step by step, leaving no reasoning about WHAT to change."
+      "reason": "instruction.md specifies exact variable names ('current_zookeeper'), exact code patterns ('retries_ctl.isRetry()'), exact assignment expressions ('zookeeper_getter.getZooKeeper().first'), exact comment strings, and exactly what to move where. This is effectively dictating the solution, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable name 'current_zookeeper' (test_current_zookeeper_variable_exists checks 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;'), exact string 'current_zookeeper = zookeeper_getter.getZooKeeper().first', exact comment text 'Renew the session on retry', 're-fetch the object list', 'watches are set on the live session'. An alternative correct fix using e.g. 'fresh_zookeeper' or 'new_session' or different comment wording would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'current_zookeeper' (test_current_zookeeper_variable_exists checks 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;'), exact comment strings ('Renew the session on retry', 're-fetch the object list', 'watches are set on the live session'), and exact expression 'current_zookeeper = zookeeper_getter.getZooKeeper().first'. An alternative correct fix using e.g. 'fresh_zookeeper' or 'renewed_session' would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all F2P tests (test_session_renewal_logic_exists, test_object_names_moved_into_retry_loop, test_current_zookeeper_variable_exists, test_tryLoadObject_uses_current_zookeeper, test_comment_explains_session_refresh) are purely text-matching via 'assert X in content' on the source file. test_cpp_syntax_valid attempts compilation but is lenient about errors. No test actually executes the code or verifies runtime behavior."
+      "reason": "Nearly all F2P tests (test_session_renewal_logic_exists, test_object_names_moved_into_retry_loop, test_current_zookeeper_variable_exists, test_tryLoadObject_uses_current_zookeeper, test_comment_explains_session_refresh) are purely text-matching with 'assert X in content' on file contents. test_cpp_syntax_valid runs clang but only checks for syntax errors, not behavioral correctness. No test actually executes the fixed code path or verifies runtime behavior."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The F2P tests check for specific strings and patterns that do not exist in the base commit (e.g., 'current_zookeeper', 'retries_ctl.isRetry()', moved object_names declaration). A stub or no-op implementation would not produce these strings in the source file, so the tests would fail."
+      "outcome": "fail",
+      "reason": "All F2P tests check for literal string presence in file content. A stub that simply writes the expected strings/comments into the file without implementing any real fix would pass. For example, test_session_renewal_logic_exists just checks 'if (retries_ctl.isRetry())' appears in file text - inserting it in a dead code block or comment would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: session renewal check (isRetry), fresh session acquisition, current_zookeeper variable, object_names moved inside loop, current_zookeeper usage in tryLoadObject, specific comments, removal of old comment, no sleep calls, and style checks."
+      "reason": "All 7 required implementation points from instruction.md (session renewal check, fresh session acquisition, variable naming, move object_names, use current_zookeeper, comment updates, remove old comment) are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_session_renewal_logic_exists, test_object_names_moved_into_retry_loop, etc.), clear docstrings explaining what each test checks, and a section comment separating F2P from P2P tests."
+      "reason": "Tests are well-named (test_session_renewal_logic_exists, test_object_names_moved_into_retry_loop, etc.), grouped into F2P and P2P categories with section comments, and each has a docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task involves C++ code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (refreshObjects), exact class (UserDefinedSQLObjectsZooKeeperStorage), exact variable names to use (current_zookeeper), exact method calls (retries_ctl.isRetry(), zookeeper_getter.getZooKeeper().first), and exact comment text to add/remove. This goes far beyond identifying the buggy area."
+      "reason": "instruction.md names the exact function (refreshObjects), exact class (UserDefinedSQLObjectsZooKeeperStorage), exact variable names to use (current_zookeeper), exact method calls (retries_ctl.isRetry(), zookeeper_getter.getZooKeeper().first), and exact comments to add/remove. This goes far beyond describing what's broken and effectively dictates the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a C++ source file, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

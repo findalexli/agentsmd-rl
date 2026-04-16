@@ -2,59 +2,62 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all specific file paths (ci/praktika/settings.py, ci/praktika/issue.py, ci/jobs/collect_statistics.py, ci/settings/settings.py, ci/praktika/validator.py, etc.), variable names (S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, HTML_S3_PATH), method signatures (_download_catalog(cls, bucket, suffix=\"\")), error messages ('S3_REPORT_BUCKET Setting must be defined'), import statements, and class names that the tests assert on. All tested specifics are discoverable from the instructi"
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_download_catalog_method_exists checks for '_download_catalog' method name, test_issue_to_s3_uses_settings patches 'praktika.issue.Utils.compress_gz' (specific module path), test_validator_uses_new_setting_name checks for literal string 'Settings.S3_REPORT_BUCKET' in validator.py source. The instruction never specifies the exact method name '_download_catalog' \u2014 it only says 'Add a classmethod that downloads a cata"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: rename HTML_S3_PATH to S3_REPORT_BUCKET, specifies exact attribute declarations ('S3_REPORT_BUCKET: str = \"\"'), exact import statements ('from ci.praktika.settings import Settings'), exact method signatures ('def _download_catalog(cls, bucket, suffix=\"\")'), exact export lines ('S3_REPORT_BUCKET = S3_REPORT_BUCKET_NAME'), and exact error messages. This is essentially a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly states exact renames ('HTML_S3_PATH \u2192 S3_REPORT_BUCKET'), exact attribute names, exact file references ('The file that currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings must be updated to use Settings.S3_REPORT_BUCKET instead'), and exact method behaviors (to_s3 must use S3_REPORT_BUCKET, from_s3 must merge). This tells the agent precisely WHAT to change rather than describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details that alternative correct fixes wouldn't share. For example, test_download_catalog_method_exists checks for the exact string 'def _download_catalog(cls, bucket, suffix=\"\"):' \u2014 an alternative using a different parameter name or default would fail. test_from_s3_merge_logic checks for exact string 'cls._download_catalog(' and 'if Settings.S3_UPSTREAM_REPORT_BUCKET:'. A correct implementation using a different helper method name or different conditional st"
+      "reason": "test_download_catalog_method_exists asserts the exact method name '_download_catalog' which is a gold-specific implementation detail. An alternative correct fix could name this method 'download_from_bucket', 'fetch_catalog', or 'get_remote_catalog' and still implement the same behavior correctly but fail this test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is purely text-based: they read files and assert substrings exist (e.g., 'assert \"S3_REPORT_BUCKET: str = \"\"\" in content'). The test_settings_importable test does import the module, but the fail-to-pass tests are all string matching on file contents with no behavioral execution of the changed code."
+      "reason": "test_validator_uses_new_setting_name reads the file and asserts 'Settings.S3_REPORT_BUCKET' in content \u2014 this is pure text matching. Several other tests (test_hook_html_uses_new_setting, test_html_prepare_uses_new_setting, test_info_uses_new_setting, test_result_uses_new_setting, test_s3_uses_new_setting) only check hasattr on Settings, never importing or calling the actual modules they claim to test."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific strings that don't exist in the base commit (e.g., S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, _download_catalog). A stub or no-op implementation would not contain these strings, so the tests cannot be trivially satisfied without making actual code changes."
+      "outcome": "fail",
+      "reason": "Multiple f2p tests can be satisfied by trivially adding attributes without implementing real logic: test_hook_html_uses_new_setting, test_html_prepare_uses_new_setting, test_info_uses_new_setting, test_result_uses_new_setting, test_s3_uses_new_setting all just check hasattr(Settings, 'S3_REPORT_BUCKET'). Adding 'S3_REPORT_BUCKET = \"\"' to Settings passes all of them without fixing any actual code in those modules."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: the rename across all files, new settings, _download_catalog method, from_s3 merge logic, validator error message, collect_statistics import changes, and ci/settings/settings.py export line."
+      "outcome": "fail",
+      "reason": "The instruction requires 'No non-comment references to HTML_S3_PATH may remain in any source file' and 'The legacy compatibility module must export S3_REPORT_BUCKET', but tests only check hasattr(Settings, 'HTML_S3_PATH') is False \u2014 they don't scan source files for remaining references or test the legacy compatibility module export."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_html_s3_path_removed, test_s3_report_bucket_exists_in_settings, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by the component they verify."
+      "reason": "Tests are well-organized with descriptive names and docstrings, grouped under clear FAIL-TO-PASS section headers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring and renaming, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction match those used in the tests and solution without typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names every file that needs modification, exact attribute declarations, exact method signatures, exact import statements, and exact string values. For example, it specifies 'The file ci/jobs/collect_statistics.py currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings and uses it to build S3 paths. It must be updated to import Settings via from ci.praktika.settings import Settings'. This removes all localization challenge from the task."
+      "reason": "The instruction names exact files and exact code patterns: 'The file that currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings must be updated to use Settings.S3_REPORT_BUCKET instead' \u2014 this pinpoints ci/jobs/collect_statistics.py and the exact import change needed, which is localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not a configuration edit task."
+      "reason": "This is a code-editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 2,
+  "fail_count": 7
 }

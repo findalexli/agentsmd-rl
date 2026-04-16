@@ -1,6 +1,6 @@
 """
 Task: sglang-cache-gfx95-quant-format
-Repo: sgl-project/sglang @ 52801ff20c3d48ef594912bae3f2e49fbabe0a71
+Repo: sgl_project/sglang @ 52801ff20c3d48ef594912bae3f2e49fbabe0a71
 PR:   22143
 
 All checks must pass for reward = 1. Any failure = reward 0.
@@ -9,47 +9,29 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import sys
-import types
+import subprocess
+import tempfile
+import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 REPO = "/workspace/sglang"
 TARGET_FILE = f"{REPO}/python/sglang/srt/models/deepseek_v2.py"
+sys.path.insert(0, f"{REPO}/python")
 
 
-def _parse_target_file():
-    """Parse the target file and return the AST."""
-    src = Path(TARGET_FILE).read_text()
-    return ast.parse(src)
-
-
-def _get_class_methods(tree, class_name):
-    """Extract methods from a class in the AST."""
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == class_name:
-            return {n.name: n for n in node.body if isinstance(n, ast.FunctionDef)}
-    return {}
-
-
-def _get_init_assignments(tree, class_name):
-    """Extract attribute assignments from __init__ method."""
-    methods = _get_class_methods(tree, class_name)
-    if "__init__" not in methods:
-        return {}
-
-    init = methods["__init__"]
-    assigns = {}
-    for stmt in init.body:
-        if isinstance(stmt, ast.Assign):
-            for target in stmt.targets:
-                if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
-                    if target.value.id == "self":
-                        assigns[target.attr] = stmt
-        elif isinstance(stmt, ast.AnnAssign):
-            if isinstance(stmt.target, ast.Attribute) and isinstance(stmt.target.value, ast.Name):
-                if stmt.target.value.id == "self":
-                    assigns[stmt.target.attr] = stmt
-    return assigns
+def _run_script(script_content):
+    """Write a Python script to a temp file and execute it via subprocess."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        f.write(script_content)
+        path = f.name
+    try:
+        result = subprocess.run(
+            [sys.executable, path],
+            capture_output=True, text=True, timeout=60
+        )
+        return result
+    finally:
+        os.unlink(path)
 
 
 # ---------------------------------------------------------------------------
@@ -69,82 +51,343 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_cached_quant_format_attribute():
-    """DeepseekV2DecoderLayer must cache _gfx95_quant_format in __init__."""
-    tree = _parse_target_file()
+    """Execute the quant format detection logic and verify correct dtype-to-format mapping."""
+    script = r"""
+import torch
+import ast
+import types
+import copy
 
-    # Check class exists
-    methods = _get_class_methods(tree, "DeepseekV2DecoderLayer")
-    assert "__init__" in methods, "DeepseekV2DecoderLayer.__init__ not found"
+TARGET = "/workspace/sglang/python/sglang/srt/models/deepseek_v2.py"
+src = open(TARGET).read()
+tree = ast.parse(src)
 
-    # Check that _gfx95_quant_format is assigned in __init__
-    assigns = _get_init_assignments(tree, "DeepseekV2DecoderLayer")
-    assert "_gfx95_quant_format" in assigns, (
-        "_gfx95_quant_format not assigned in __init__"
-    )
+# Find DeepseekV2DecoderLayer class
+cls_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+        cls_node = node
+        break
+assert cls_node is not None, "DeepseekV2DecoderLayer not found"
 
-    # Check that it calls _detect_gfx95_quant_format()
-    assign = assigns["_gfx95_quant_format"]
-    assert isinstance(assign.value, ast.Call), (
-        "_gfx95_quant_format assignment is not a function call"
+# Collect all methods
+methods = {}
+for item in cls_node.body:
+    if isinstance(item, ast.FunctionDef):
+        methods[item.name] = item
+
+# Find detection method: any method (not __init__/forward/_is_layer_sparse/op_*)
+# that contains dtype checking logic (references uint8 AND float8/fp8)
+detect_name = None
+detect_node = None
+for name, node in methods.items():
+    if name in ("__init__", "forward", "_is_layer_sparse") or name.startswith("op_"):
+        continue
+    node_src = ast.unparse(node)
+    if "uint8" in node_src and ("float8" in node_src or "fp8" in node_src.lower()):
+        detect_name = name
+        detect_node = node
+        break
+
+if detect_node is not None:
+    # Strip decorators so we can call the method directly
+    node_copy = copy.deepcopy(detect_node)
+    node_copy.decorator_list = []
+    method_src = ast.unparse(node_copy)
+
+    # Build a minimal test class containing this method
+    lines = method_src.split("\n")
+    class_body = "\n".join("    " + l for l in lines)
+    class_code = "class _TestDetector:\n" + class_body + "\n"
+
+    exec_ns = {"torch": torch, "_is_gfx95_supported": True}
+    exec(class_code, exec_ns)
+    Cls = exec_ns["_TestDetector"]
+
+    # Test uint8 weight -> "mxfp4"
+    obj = Cls()
+    obj.self_attn = types.SimpleNamespace(
+        fused_qkv_a_proj_with_mqa=types.SimpleNamespace(
+            weight=types.SimpleNamespace(dtype=torch.uint8)))
+    result = getattr(obj, detect_name)()
+    assert result == "mxfp4", f"uint8 weight should yield 'mxfp4', got {result!r}"
+
+    # Test float8_e4m3fn weight -> "fp8"
+    if hasattr(torch, "float8_e4m3fn"):
+        obj2 = Cls()
+        obj2.self_attn = types.SimpleNamespace(
+            fused_qkv_a_proj_with_mqa=types.SimpleNamespace(
+                weight=types.SimpleNamespace(dtype=torch.float8_e4m3fn)))
+        result2 = getattr(obj2, detect_name)()
+        assert result2 == "fp8", f"float8_e4m3fn weight should yield 'fp8', got {result2!r}"
+
+    # Test other dtype -> ""
+    obj3 = Cls()
+    obj3.self_attn = types.SimpleNamespace(
+        fused_qkv_a_proj_with_mqa=types.SimpleNamespace(
+            weight=types.SimpleNamespace(dtype=torch.float32)))
+    result3 = getattr(obj3, detect_name)()
+    assert result3 == "", f"float32 weight should yield '', got {result3!r}"
+
+    # Test None weight -> ""
+    obj4 = Cls()
+    obj4.self_attn = types.SimpleNamespace(
+        fused_qkv_a_proj_with_mqa=types.SimpleNamespace(weight=None))
+    result4 = getattr(obj4, detect_name)()
+    assert result4 == "", f"None weight should yield '', got {result4!r}"
+
+    print("OK")
+else:
+    # No separate detection method; verify detection is inline in __init__ (not forward)
+    forward = methods.get("forward")
+    assert forward is not None
+    forward_src = ast.unparse(forward)
+    has_old_pattern = (
+        "uint8" in forward_src
+        and "mxfp4" in forward_src
+        and "fused_qkv_a_proj_with_mqa" in forward_src
     )
-    func = assign.value.func
-    assert isinstance(func, ast.Attribute), "Expected method call"
-    assert func.attr == "_detect_gfx95_quant_format", (
-        "_gfx95_quant_format not assigned from _detect_gfx95_quant_format()"
+    assert not has_old_pattern, "forward() still has inline quant format computation"
+
+    init = methods.get("__init__")
+    assert init is not None
+    init_src = ast.unparse(init)
+    assert "uint8" in init_src and "mxfp4" in init_src, (
+        "No detection logic found (neither separate method nor inline in __init__)"
     )
+    print("OK")
+"""
+    result = _run_script(script)
+    assert result.returncode == 0, f"Detection correctness test failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_detect_gfx95_quant_format_method():
-    """DeepseekV2DecoderLayer must have _detect_gfx95_quant_format method."""
-    tree = _parse_target_file()
+def test_detect_quant_format_method_exists():
+    """forward() must not recompute quant format inline; detection must live outside forward."""
+    script = r"""
+import ast
 
-    methods = _get_class_methods(tree, "DeepseekV2DecoderLayer")
-    assert "_detect_gfx95_quant_format" in methods, (
-        "_detect_gfx95_quant_format method not found"
-    )
+TARGET = "/workspace/sglang/python/sglang/srt/models/deepseek_v2.py"
+src = open(TARGET).read()
+tree = ast.parse(src)
 
-    method = methods["_detect_gfx95_quant_format"]
-    # Check return annotation (str)
-    if method.returns:
-        assert isinstance(method.returns, ast.Name) and method.returns.id == "str", (
-            "Method should return str"
-        )
+cls_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+        cls_node = node
+        break
+assert cls_node is not None
+
+methods = {}
+for item in cls_node.body:
+    if isinstance(item, ast.FunctionDef):
+        methods[item.name] = item
+
+# forward() must NOT contain the inline quant_format computation
+forward = methods.get("forward")
+assert forward is not None, "forward method not found"
+forward_src = ast.unparse(forward)
+
+has_inline = (
+    "uint8" in forward_src
+    and "fused_qkv_a_proj_with_mqa" in forward_src
+)
+assert not has_inline, (
+    "forward() still has inline quant format computation with dtype checks. "
+    "The format should be pre-computed during initialization."
+)
+
+# Detection logic must exist OUTSIDE forward (in another method or __init__)
+non_forward = ""
+for name, node in methods.items():
+    if name != "forward" and not name.startswith("op_"):
+        non_forward += ast.unparse(node) + "\n"
+
+has_detection = "uint8" in non_forward or "mxfp4" in non_forward
+assert has_detection, (
+    "No quant format detection logic found outside forward(). "
+    "Detection must happen during initialization."
+)
+
+print("OK")
+"""
+    result = _run_script(script)
+    assert result.returncode == 0, f"Detection separation test failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_forward_uses_cached_quant_format():
-    """forward() must use self._gfx95_quant_format instead of recomputing."""
-    tree = _parse_target_file()
+    """forward() must pass a pre-cached self.* attribute to prepare_attn."""
+    script = r"""
+import ast
 
-    methods = _get_class_methods(tree, "DeepseekV2DecoderLayer")
-    assert "forward" in methods, "forward method not found"
+TARGET = "/workspace/sglang/python/sglang/srt/models/deepseek_v2.py"
+src = open(TARGET).read()
+tree = ast.parse(src)
 
-    forward = methods["forward"]
-    src = ast.unparse(forward)
+cls_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+        cls_node = node
+        break
+assert cls_node is not None
 
-    # Should use self._gfx95_quant_format
-    assert "self._gfx95_quant_format" in src, (
-        "forward() does not use self._gfx95_quant_format"
+forward = None
+for item in cls_node.body:
+    if isinstance(item, ast.FunctionDef) and item.name == "forward":
+        forward = item
+        break
+assert forward is not None, "forward method not found"
+
+forward_src = ast.unparse(forward)
+
+# The old inline pattern must be gone
+has_old = (
+    ("quant_format" in forward_src and "dtype" in forward_src)
+    or ("uint8" in forward_src and "fused_qkv_a_proj_with_mqa" in forward_src)
+)
+assert not has_old, "forward() still has inline quant_format computation"
+
+# prepare_attn must be called with a self.* attribute (the cached value)
+found_cached = False
+for node in ast.walk(forward):
+    if isinstance(node, ast.Call):
+        func = node.func
+        if isinstance(func, ast.Attribute) and func.attr == "prepare_attn":
+            for arg in node.args:
+                if (isinstance(arg, ast.Attribute)
+                        and isinstance(arg.value, ast.Name)
+                        and arg.value.id == "self"):
+                    found_cached = True
+                    break
+            if found_cached:
+                break
+
+assert found_cached, (
+    "forward() does not pass a cached self.* attribute to prepare_attn. "
+    "The quant format should be stored as an instance attribute."
+)
+
+print("OK")
+"""
+    result = _run_script(script)
+    assert result.returncode == 0, f"Forward caching test failed:\n{result.stderr}"
+    assert "OK" in result.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_detection_method_executable():
+    """Detection handles edge cases and is cached during __init__."""
+    script = r"""
+import torch
+import ast
+import types
+import copy
+
+TARGET = "/workspace/sglang/python/sglang/srt/models/deepseek_v2.py"
+src = open(TARGET).read()
+tree = ast.parse(src)
+
+cls_node = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+        cls_node = node
+        break
+assert cls_node is not None
+
+methods = {}
+for item in cls_node.body:
+    if isinstance(item, ast.FunctionDef):
+        methods[item.name] = item
+
+# Find detection method (any non-init/forward/op_* method with dtype logic)
+detect_name = None
+detect_node = None
+for name, node in methods.items():
+    if name in ("__init__", "forward", "_is_layer_sparse") or name.startswith("op_"):
+        continue
+    node_src = ast.unparse(node)
+    if "uint8" in node_src and ("float8" in node_src or "fp8" in node_src.lower()):
+        detect_name = name
+        detect_node = node
+        break
+
+if detect_node is not None:
+    node_copy = copy.deepcopy(detect_node)
+    node_copy.decorator_list = []
+    method_src = ast.unparse(node_copy)
+    lines = method_src.split("\n")
+    class_body = "\n".join("    " + l for l in lines)
+    class_code = "class _TestDetector:\n" + class_body + "\n"
+
+    # Test: _is_gfx95_supported=False should return ""
+    exec_ns = {"torch": torch, "_is_gfx95_supported": False}
+    exec(class_code, exec_ns)
+    Cls = exec_ns["_TestDetector"]
+    obj = Cls()
+    obj.self_attn = types.SimpleNamespace(
+        fused_qkv_a_proj_with_mqa=types.SimpleNamespace(
+            weight=types.SimpleNamespace(dtype=torch.uint8)))
+    result = getattr(obj, detect_name)()
+    assert result == "", f"With gfx95 unsupported, expected '', got {result!r}"
+
+    # Test: no fused_qkv_a_proj_with_mqa attribute should return ""
+    exec_ns2 = {"torch": torch, "_is_gfx95_supported": True}
+    exec(class_code, exec_ns2)
+    Cls2 = exec_ns2["_TestDetector"]
+    obj2 = Cls2()
+    obj2.self_attn = types.SimpleNamespace()  # no fused attr
+    result2 = getattr(obj2, detect_name)()
+    assert result2 == "", f"With no fused attr, expected '', got {result2!r}"
+
+# Verify __init__ caches the format value
+init = methods.get("__init__")
+assert init is not None
+init_src = ast.unparse(init)
+
+if detect_name:
+    assert detect_name in init_src, "Detection method not called in __init__"
+else:
+    assert "uint8" in init_src or "mxfp4" in init_src, (
+        "No detection logic caching found in __init__"
     )
 
-    # Should NOT have the old inline quant_format computation pattern
-    # (checking for the complex nested conditional that was removed)
-    assert "quant_format =" not in src or "self._gfx95_quant_format" in src, (
-        "forward() still has inline quant_format computation"
-    )
+# Verify __init__ stores result as a self.* attribute
+found_cache = False
+for stmt in ast.walk(init):
+    if isinstance(stmt, ast.Assign):
+        for target in stmt.targets:
+            if (isinstance(target, ast.Attribute)
+                    and isinstance(target.value, ast.Name)
+                    and target.value.id == "self"):
+                stmt_src = ast.unparse(stmt)
+                if detect_name and detect_name in stmt_src:
+                    found_cache = True
+                    break
+                if not detect_name and ("mxfp4" in stmt_src or "uint8" in stmt_src):
+                    found_cache = True
+                    break
+    if found_cache:
+        break
+
+assert found_cache, "No self.* attribute in __init__ caching the quant format"
+
+print("OK")
+"""
+    result = _run_script(script)
+    assert result.returncode == 0, f"Detection integration test failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests / static) — regression + structure
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_lint():
     """Repo's ruff lint check passes on modified file (pass_to_pass)."""
-    import subprocess
-
-    # Install ruff if not available
     try:
         subprocess.run(["pip", "install", "-q", "ruff"], check=True, capture_output=True)
     except Exception:
@@ -160,11 +403,8 @@ def test_repo_ruff_lint():
 # [static] pass_to_pass
 def test_repo_ast_validity():
     """Repo's Python AST parsing passes on modified file (pass_to_pass)."""
-    import ast
     src = Path(TARGET_FILE).read_text()
-    # Should parse without errors
     tree = ast.parse(src)
-    # Should find the expected class
     classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
     assert "DeepseekV2DecoderLayer" in classes, "DeepseekV2DecoderLayer class not found"
 
@@ -172,25 +412,20 @@ def test_repo_ast_validity():
 # [static] pass_to_pass
 def test_repo_file_structure():
     """Modified file has proper Python file structure (pass_to_pass)."""
-    import ast
     src = Path(TARGET_FILE).read_text()
     tree = ast.parse(src)
 
-    # Check for imports section at top
     imports = [node for node in tree.body if isinstance(node, (ast.Import, ast.ImportFrom))]
     assert len(imports) > 0, "No imports found in file"
 
-    # Check for class definitions
     classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
     assert len(classes) > 0, "No class definitions found in file"
 
-    # DeepseekV2DecoderLayer should have expected methods
     layer_class = None
     for cls in classes:
         if cls.name == "DeepseekV2DecoderLayer":
             layer_class = cls
             break
-
     assert layer_class is not None, "DeepseekV2DecoderLayer class not found"
 
     methods = [n.name for n in layer_class.body if isinstance(n, ast.FunctionDef)]
@@ -201,8 +436,6 @@ def test_repo_file_structure():
 # [repo_tests] pass_to_pass
 def test_repo_black_format():
     """Repo's black format check passes on modified file (pass_to_pass)."""
-    import subprocess
-
     try:
         subprocess.run(["pip", "install", "-q", "black"], check=True, capture_output=True)
     except Exception:
@@ -218,8 +451,6 @@ def test_repo_black_format():
 # [repo_tests] pass_to_pass
 def test_repo_isort():
     """Repo's isort check passes on modified file (pass_to_pass)."""
-    import subprocess
-
     try:
         subprocess.run(["pip", "install", "-q", "isort"], check=True, capture_output=True)
     except Exception:
@@ -235,8 +466,6 @@ def test_repo_isort():
 # [repo_tests] pass_to_pass
 def test_repo_codespell():
     """Repo's codespell check passes on modified file (pass_to_pass)."""
-    import subprocess
-
     try:
         subprocess.run(["pip", "install", "-q", "codespell"], check=True, capture_output=True)
     except Exception:
@@ -251,38 +480,56 @@ def test_repo_codespell():
 
 # [static] pass_to_pass
 def test_not_stub():
-    """Modified function is not a stub (has real logic, not just pass/return)."""
-    tree = _parse_target_file()
+    """DeepseekV2DecoderLayer has real logic in __init__ and forward (not stubs)."""
+    src = Path(TARGET_FILE).read_text()
+    tree = ast.parse(src)
 
-    methods = _get_class_methods(tree, "DeepseekV2DecoderLayer")
-    assert "_detect_gfx95_quant_format" in methods, "Method not found"
+    cls_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+            cls_node = node
+            break
+    assert cls_node is not None
 
-    method = methods["_detect_gfx95_quant_format"]
-    # Count non-trivial statements (not Pass, not just docstring)
-    stmts = [s for s in method.body if not isinstance(s, (ast.Pass, ast.Expr))]
-    assert len(stmts) >= 3, "Method body is a stub (too few statements)"
+    methods = {}
+    for item in cls_node.body:
+        if isinstance(item, ast.FunctionDef):
+            methods[item.name] = item
+
+    init = methods.get("__init__")
+    assert init is not None, "__init__ not found"
+    init_stmts = [s for s in init.body if not isinstance(s, (ast.Pass, ast.Expr))]
+    assert len(init_stmts) >= 10, (
+        f"__init__ has only {len(init_stmts)} non-trivial statements - likely a stub"
+    )
+
+    forward = methods.get("forward")
+    assert forward is not None, "forward not found"
+    forward_stmts = [s for s in forward.body if not isinstance(s, (ast.Pass, ast.Expr))]
+    assert len(forward_stmts) >= 5, (
+        f"forward has only {len(forward_stmts)} non-trivial statements - likely a stub"
+    )
 
 
 # [static] pass_to_pass
 def test_detect_method_has_proper_logic():
-    """_detect_gfx95_quant_format must have proper dtype checking logic."""
-    tree = _parse_target_file()
+    """Class contains proper dtype-based quant format detection logic."""
+    src = Path(TARGET_FILE).read_text()
+    tree = ast.parse(src)
 
-    methods = _get_class_methods(tree, "DeepseekV2DecoderLayer")
-    method = methods["_detect_gfx95_quant_format"]
-    src = ast.unparse(method)
+    cls_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "DeepseekV2DecoderLayer":
+            cls_node = node
+            break
+    assert cls_node is not None
 
-    # Check for the key logic components
-    assert "torch.uint8" in src, "Missing uint8 dtype check"
-    assert "float8_e4m3fn" in src or "getattr(torch" in src, (
-        "Missing fp8_e4m3fn dtype check"
+    # The class must handle all three dtype cases somewhere in its code
+    class_src = ast.unparse(cls_node)
+    assert "torch.uint8" in class_src or "uint8" in class_src, (
+        "Missing uint8 dtype handling in class"
     )
-    assert "mxfp4" in src, "Missing mxfp4 return value"
-    assert "fp8" in src, "Missing fp8 return value"
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md / AGENTS.md
-# ---------------------------------------------------------------------------
-# No agent config rules apply to this task (the SKILL.md files are for
-# test writing and kernel development, not model code refactoring)
+    assert "float8_e4m3fn" in class_src or "fp8" in class_src.lower(), (
+        "Missing fp8/float8_e4m3fn dtype handling in class"
+    )
+    assert "mxfp4" in class_src, "Missing 'mxfp4' format string in class"

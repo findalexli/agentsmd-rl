@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully specified in instruction.md. For example, test_get_verified_models_function asserts exact strings like 'verified_models = set()', 'return verified_models', 'VERIFIED_MODELS.items()', and 'verified_models.add(' \u2014 these internal variable names and patterns are not specified in instruction.md. Similarly, test_get_all_models_with_verified asserts 'model_name.split(\"/\", 1)' or \"model_name.split('/', 1)\" \u2014 the variable name 'model_name' is no"
+      "outcome": "pass",
+      "reason": "All file paths, class names, field names, function signatures, and key literals (e.g., 'deprecated=True', 'prefix=/config') are explicitly specified in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to build (new endpoint, models, helpers) and their behavior, but doesn't give literal code patches or line-by-line changes. A developer still needs to reason about implementation."
+      "reason": "Instruction describes requirements and signatures but doesn't provide full implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_get_verified_models_function checks for exact strings 'verified_models = set()', 'return verified_models', 'VERIFIED_MODELS.items()', 'verified_models.add('. test_get_all_models_with_verified checks for 'model_name.split' with a specific variable name. A correct alternative using different variable names (e.g., 'result_set = set()') or different iteration patterns (e.g., dict comprehension) would fail these tests despite being functional"
+      "reason": "test_get_verified_models_function asserts exact strings like 'verified_models = set()' and 'VERIFIED_MODELS.items()' and 'verified_models.add(', and test_get_all_models_with_verified requires 'model_name.split('/', 1)' \u2014 these are implementation details that correct alternatives (e.g., set comprehension, different variable names, different splitting approach) would not match."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Multiple tests are purely text-matching: test_config_router_file_exists checks for string patterns in source code, test_get_verified_models_function asserts exact string matches like 'verified_models = set()' in file content, test_get_all_models_with_verified similarly does string matching. test_v1_router_includes_config_router and test_public_models_deprecated are also pure text checks. While some tests (test_config_models_file_exists, test_llm_model_serialization) do import and execute code, t"
+      "outcome": "pass",
+      "reason": "Tests import and instantiate LLMModel/LLMModelPage, run subprocess pytest, and execute pagination code, though several tests also rely on string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests do require actual implementation \u2014 test_config_models_file_exists imports and instantiates LLMModel/LLMModelPage, test_llm_model_serialization checks model_dump() output. A stub returning None or empty would fail these. The text-matching tests also require specific content to exist."
+      "reason": "Serialization and model tests require actual Pydantic model definitions with correct field defaults; stubs returning None would fail."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies that search_models should apply case-insensitive filtering, verified__eq filtering, and pagination, but no test actually calls the search_models endpoint with test data to verify these behaviors. The filtering and pagination logic is not behaviorally tested \u2014 only string presence in source code is checked."
+      "outcome": "pass",
+      "reason": "Tests cover the file creations, model serialization, router inclusion, deprecation mark, and helper functions as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating what each test verifies (e.g., 'F2P: config_models.py file must exist', 'pass_to_pass'). The file has a module-level docstring explaining the test categories."
+      "reason": "Tests are named descriptively with docstrings categorizing F2P vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact Pydantic model schemas (LLMModel fields with types/defaults, LLMModelPage fields) and the expected serialization output format."
+      "reason": "LLMModel/LLMModelPage schemas including field names, types, and defaults are explicitly documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction."
+      "reason": "No visible typos in paths or identifiers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "This is a feature creation task, not a bug fix. The instruction describes what to build without leaking implementation specifics beyond the API contract. Helper function signatures are given but that's part of the specification."
+      "reason": "Files to modify are listed as the task scope, not as undue hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code creation task with minor modifications, not a config-edit task."
+      "reason": "Code-only task, no config edits required."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

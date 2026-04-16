@@ -1,0 +1,22 @@
+name = "dagster-k8s-utf8-log-decoding"
+description = "Fix UTF-8 decoding when multi-byte characters span k8s log chunks in dagster-k8s pipes module"
+category = "bugfix"
+difficulty = "medium"
+estimated_time = "25 min"
+tags = ["python", "dagster", "kubernetes", "utf-8", "encoding", "streaming"]
+
+[source]
+repo = "dagster-io/dagster"
+pr_number = 33362
+base_commit = "bff96c1a777298c1bf027e7eb1cedb556ddbe2ee"
+merge_commit = "d70d900d13b97702997ad6af7429ad7d0d1c8321"
+
+[target]
+files = [
+    "python_modules/libraries/dagster-k8s/dagster_k8s/pipes.py"
+]
+
+[[target.changes]]
+file = "python_modules/libraries/dagster-k8s/dagster_k8s/pipes.py"
+line_range = [731, 780]
+description = "Use codecs.getincrementaldecoder for UTF-8 to handle multi-byte sequences split across log chunks"

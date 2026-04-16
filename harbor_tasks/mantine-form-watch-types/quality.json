@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact import statement, the exact type assertion patterns including 'previousValue: getPath(path, previousValues) as FormPathValue<' and 'value: getPath(path, $values.refValues.current) as FormPathValue<' and 'LooseKeys<Values>', and mentions ESLint and Jest verification. The file path 'use-form.ts' is discoverable from the package name '@mantine/form' mentioned in the instruction. All test assertions match strings explicitly provided in the acceptance criteria."
+      "reason": "The instruction specifies the exact import statement, exact string patterns for type assertions, the file path (use-form.ts in @mantine/form), ESLint passing, and Jest tests passing \u2014 all of which correspond to what the tests assert. The tests check for these exact strings in the file, ESLint, and Jest runs."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's Acceptance Criteria section explicitly states the exact fix: add a specific import line, and use specific type assertions with exact code patterns like 'previousValue: getPath(path, previousValues) as FormPathValue<' and 'value: getPath(path, $values.refValues.current) as FormPathValue<'. This is essentially dictating the solution line-by-line, not just describing what's broken."
+      "reason": "The instruction explicitly states the exact fix: add 'import type { FormPathValue, LooseKeys } from ./paths.types;', and use 'as FormPathValue<Values, LooseKeys<Values>>' assertions on specific lines. It even provides the exact code patterns to insert. This is not describing what's broken \u2014 it's prescribing the exact solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'previousValue: getPath(path, previousValues) as FormPathValue<' in test_form_watch_callback_has_type_assertions. An alternative correct fix (e.g., using a helper type alias, different formatting/line breaks, or casting via a variable) would fail these substring checks despite being functionally equivalent."
+      "reason": "Tests assert exact string patterns like 'previousValue: getPath(path, previousValues) as FormPathValue<' and 'import type { FormPathValue, LooseKeys } from ./paths.types;'. An alternative correct fix (e.g., using a generic type parameter on the callback, or a different type narrowing approach, or formatting the assertion on one line vs multiple) would fail these substring checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_form_watch_types_import_present and test_form_watch_callback_has_type_assertions are purely text-matching assertions (reading file content and checking for substrings). While test_eslint_passes, test_form_package_tests, test_form_watch_tests, and test_form_paths_tests do execute subprocesses, the two fail-to-pass tests (the ones that actually verify the fix) are entirely text-based with no execution."
+      "reason": "The two fail-to-pass tests (test_form_watch_types_import_present and test_form_watch_callback_has_type_assertions) are purely text-matching: they read the file and assert substrings exist. They do not compile TypeScript, run type checks, or execute any code. The pass-to-pass tests (ESLint, Jest) do execute code, but the core f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_form_watch_types_import_present, test_form_watch_callback_has_type_assertions) only check for string presence in a file. An agent could simply append the import line and the exact assertion strings as comments to the file without understanding the bug, and both f2p tests would pass."
+      "reason": "The f2p tests only check for string presence in the source file. An agent could simply append the import line and a comment containing the asserted strings to the file without implementing any real type fix, and both f2p tests would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) the type-only import \u2014 tested by test_form_watch_types_import_present, (2) type assertions on watch callback values \u2014 tested by test_form_watch_callback_has_type_assertions, (3) ESLint passes \u2014 tested by test_eslint_passes, (4) existing Jest tests pass \u2014 tested by test_form_package_tests and test_form_watch_tests."
+      "reason": "All three acceptance criteria (type-only import, type assertions on watch callback values, runtime behavior unchanged) are tested: the import and assertion patterns are checked via string matching, and runtime behavior is verified via ESLint and Jest tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_form_watch_types_import_present, test_form_watch_callback_has_type_assertions) and each has a descriptive docstring explaining what it verifies and whether it's fail-to-pass or pass-to-pass."
+      "reason": "Tests are well-named (test_form_watch_types_import_present, test_form_watch_callback_has_type_assertions, etc.) with docstrings explaining purpose and whether they are fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves TypeScript type annotation changes, not structured data output."
+      "reason": "This task modifies TypeScript source code; it does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution."
+      "reason": "All file paths, variable names, commands, and string patterns are consistent between instruction.md and the test file with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact code patterns to insert, including the precise import statement and exact type assertion syntax. While the file isn't named by line number, the acceptance criteria effectively dictate the exact code changes needed, which constitutes solution leakage."
+      "reason": "The instruction provides exact code patterns including specific variable names ($values.refValues.current), exact import paths (./paths.types), and exact type assertion syntax. This goes far beyond identifying the buggy module \u2014 it essentially dictates the complete solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (TypeScript type annotation changes), not a config-edit task."
+      "reason": "This is a code-only task (TypeScript type fix), not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

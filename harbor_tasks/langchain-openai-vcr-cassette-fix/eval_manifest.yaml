@@ -1,0 +1,84 @@
+source_pr: langchain-ai/langchain#36502
+base_commit: 8c15649127b3714b2b8f1903968163db70e6b90c
+merge_commit: deb85b6c4ccba4a41f1b71a500880ace13f0b5a5
+
+# Task description
+title: "Fix VCR cassette playback in langchain-openai tests"
+description: |
+  Fix broken VCR cassette playback in langchain-openai integration tests.
+  The bug: before_record_request redacts URIs to '**REDACTED**' but match_on
+  still includes 'uri', so playback never matches. Also, test input strings
+  were changed without re-recording cassettes, breaking json_body matching.
+
+# Checks that must pass for the task to be considered complete
+checks:
+  # Fail-to-pass tests: these fail on base commit, pass with fix
+  - id: test_vcr_config_excludes_uri
+    type: fail_to_pass
+    origin: behavioral
+    description: VCR config excludes 'uri' from match_on since URIs are redacted
+
+  - id: test_test_strings_match_cassettes
+    type: fail_to_pass
+    origin: behavioral
+    description: Test strings match recorded cassette contents
+
+  - id: test_vcr_tests_pass
+    type: fail_to_pass
+    origin: behavioral
+    description: VCR cassette tests pass in playback-only mode
+
+  # Pass-to-pass tests: these should always pass
+  - id: test_vcr_config_structure
+    type: pass_to_pass
+    origin: behavioral
+    description: VCR config has proper structure with json_body matcher
+
+  - id: test_repo_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package imports work correctly
+
+  - id: test_conftest_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: conftest.py has valid Python syntax
+
+  - id: test_repo_lint_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ruff linter passes on package code
+
+  - id: test_repo_lint_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ruff linter passes on test code
+
+  - id: test_repo_unit_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo unit tests for imports and loading pass
+
+  - id: test_repo_unit_secrets
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo unit tests for secrets handling pass
+
+# Rubric: soft/subjective rules from agent config files
+# These rules apply to the gold solution's changes
+rubric:
+  - rule: "VCR config modifications must preserve existing type hints and return types in conftest.py"
+    source:
+      path: "libs/partners/openai/tests/conftest.py"
+      lines: "35-48"
+    applicable: true
+
+  - rule: "Modified test files must maintain American English spelling"
+    source:
+      path: "libs/partners/openai/tests/integration_tests/chat_models/test_responses_api.py"
+    applicable: true
+
+  - rule: "Test string changes must match cassette recordings exactly"
+    source:
+      path: "libs/partners/openai/tests/integration_tests/chat_models/test_responses_api.py"
+    applicable: true

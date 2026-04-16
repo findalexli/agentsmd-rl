@@ -76,6 +76,32 @@ rubric:
     here too\n# (defaults to the current branch''s PR).\nbun run pr:comments --json
     | jq ''.[] | select(.user == "Jarred-Sumner")''\nbun run pr:comments --json |
     jq ''[.[] | select(.resolved == false)]''   # still open\n```'
+- rule: Use port 0 for random ports in tests
+  source:
+    path: test/CLAUDE.md
+    lines: 21-21
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  evidence: 'In `test/js/bun/http/request-smuggling.test.ts`, the developer uses `Bun.serve({
+    port: 0, ... })` across all three tests to request a random port rather than hardcoding
+    it.'
+  category: A
+  verification: llm_judge
+- rule: Await conditions instead of relying on timeouts or time passing
+  source:
+    path: test/CLAUDE.md
+    lines: 21-21
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  evidence: In `test/js/bun/http/request-smuggling.test.ts`, the tests use `await
+    new Promise<void>((resolve, reject) => { client.on("data", ... resolve()) })`
+    to precisely await the response condition instead of relying on an arbitrary `setTimeout`.
+  category: A
+  verification: llm_judge
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -142,6 +168,76 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 37-38
+- rule: Use `.$call` and `.$apply` instead of `.call` or `.apply`
+  source:
+    path: src/js/CLAUDE.md
+    lines: 56-56
+  source_text: '**CRITICAL**: Use `.$call` and `.$apply`, never `.call` or `.apply`:'
+  collision_type: scope_ambiguity
+  why_distracting: This rule strictly applies to JS Builtins (in `src/js/`) to prevent
+    tampering. The PR adds a CLI script (`pr-comments.ts`) and tests, where using
+    `.$call` would result in a ReferenceError because the `$` globals are not injected
+    outside the builtin bundler.
+  severity: high
+- rule: Use `itBundled()` for tests
+  source:
+    path: .claude/skills/writing-bundler-tests/SKILL.md
+    lines: 32-32
+  source_text: Bundler tests use `itBundled()` from `test/bundler/expectBundled.ts`
+    to test Bun's bundler.
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds tests for the built-in HTTP server to `test/js/bun/http/request-smuggling.test.ts`.
+    An agent might mistakenly think `itBundled` is the standard testing method, which
+    would fail since these tests check native HTTP protocol parsing with `Bun.serve`.
+  severity: high
+- rule: Create 3 C++ classes for JSC bindings
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 10-14
+  source_text: 'For publicly accessible Constructor and Prototype, create 3 classes:
+
+
+    1. **`class Foo : public JSC::DestructibleObject`** - if C++ fields exist; otherwise
+    use `JSC::constructEmptyObject` with `putDirectOffset`
+
+    2. **`class FooPrototype : public JSC::JSNonFinalObject`**
+
+    3. **`class FooConstructor : public JSC::InternalFunction`**'
+  collision_type: architecture_boundary
+  why_distracting: The PR modifies a C++ header (`packages/bun-uws/src/HttpParser.h`),
+    but this is part of the vendored uWebSockets fork which handles internal HTTP
+    parsing, not JavaScriptCore bindings. Trying to apply JSC macros or JSObject inheritance
+    here would break the HTTP stack.
+  severity: high
+- rule: Create V8 handles using isolate->currentHandleScope()
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 222-223
+  source_text: '- All V8 values must be created within an active handle scope
+
+    - Use `isolate->currentHandleScope()->createLocal<T>()` to create handles'
+  collision_type: architecture_boundary
+  why_distracting: Since the PR changes C++ code, an agent might incorrectly assume
+    it needs to wrap variables in V8 handle scopes. However, `bun-uws` is independent
+    of V8. Applying V8 handle scopes inside the HTTP parser would cause severe compilation
+    and architectural errors.
+  severity: high
+- rule: Use bunExe and Bun.spawn in tests
+  source:
+    path: test/CLAUDE.md
+    lines: 28-30
+  source_text: 'When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
+    This ensures the same build of Bun is used to run the test and ensures debug logging
+    is silenced.
+
+
+    ##### Use `-e` for single-file tests'
+  collision_type: scope_ambiguity
+  why_distracting: The tests verify HTTP request smuggling. An agent might think it
+    needs to spawn a subprocess with `Bun.spawn` as indicated here, but the tests
+    run efficiently natively using `Bun.serve()` and `net.connect()` without needing
+    child processes. Spawning processes here would add unnecessary overhead.
+  severity: medium
 hierarchy_analysis: The repository contains duplicate config files (`AGENTS.md` and
   `CLAUDE.md`) at both the root and `test/` directories. The agent must synthesize
   the root-level test placement rules with the `test/`-level execution and style rules

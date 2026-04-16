@@ -2,58 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the target file path implicitly (sui-core crate), the function name `record_local_observations_timing`, the exact literal strings required in the warning log, the epoch store check message, the `cargo check` and `cargo fmt --check` commands, and the parameter types. All test-asserted specifics (file path `crates/sui-core/src/authority/execution_time_estimator.rs` is discoverable from hints about execution time observation handling in sui-core, exact strings like 'executed_c"
+      "outcome": "fail",
+      "reason": "Tests assert on specifics not fully discoverable from instruction.md: test_target_file_has_tests_module checks for 'mod tests' or '#[cfg(test)]' in the target file, test_function_signature_unchanged checks for exact parameter types like '&[ExecutionTiming]' which aren't mentioned in instruction.md, test_epoch_store_check_preserved checks for 'epoch_store.upgrade()' which isn't in instruction.md, and the exact file path 'crates/sui-core/src/authority/execution_time_estimator.rs' is never stated i"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (assertion fails when timings exceed commands) and requirements (remove assert, add defensive check, emit warning), but does not specify exact line numbers, the specific code to write, or implementation details like slicing the timings array. A developer must still reason about how to implement the fix."
+      "reason": "The instruction describes the problem (assertion failure when timings exceed commands) and requirements (remove assert, add defensive check, emit warning), but does not specify exact code changes, line numbers, or the specific replacement code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests enforce very specific implementation details. test_defensive_timing_handling_exists requires the exact regex pattern `timings\\.len\\(\\)\\s*>\\s*tx\\.commands\\.len\\(\\)` \u2014 an alternative correct fix could use `tx.commands.len() < timings.len()` or `timings.len().saturating_sub(tx.commands.len()) > 0` or use `min()` to clamp without an explicit comparison, and would fail this test. The tests also require exact literal strings like 'executed_commands' and 'original_commands' as field names, wh"
+      "reason": "test_defensive_timing_handling_exists uses regex 'timings\\.len\\(\\)\\s*>\\s*tx\\.commands\\.len\\(\\)' which requires this exact expression. An alternative fix using e.g. 'timings.len().saturating_sub(tx.commands.len()) > 0' or 'tx.commands.len() < timings.len()' would fail the test despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_no_panic_assert_in_code, test_defensive_timing_handling_exists, test_warning_log_for_excess_timings) are ALL purely text-matching tests using regex or string-in-file checks. No test actually compiles, runs, or calls the Rust code to verify the panic is fixed or that the warning is emitted. The cargo fmt test does run a subprocess but is pass-to-pass."
+      "reason": "The fail-to-pass tests (test_no_panic_assert_in_code, test_defensive_timing_handling_exists, test_warning_log_for_excess_timings) all exclusively use regex/string matching on file content (open(path).read()), never actually compiling or executing the code. The cargo fmt and cargo doc tests verify tooling but not the actual bug-fix behavior."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for removal of the assert pattern and addition of specific defensive code and warning strings. A stub or no-op implementation would not satisfy these \u2014 the original file contains the assert that must be removed, and the new patterns must be added."
+      "outcome": "fail",
+      "reason": "All three f2p tests (test_no_panic_assert_in_code, test_defensive_timing_handling_exists, test_warning_log_for_excess_timings) only check for string/regex patterns in the source file. An agent could add a dead-code comment block containing the required strings ('timings.len() > tx.commands.len()', the warning text, etc.) without actually fixing the bug and pass all f2p tests."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requirement #5 states 'The fix must pass cargo check -p sui-core', but no test actually runs `cargo check -p sui-core`. The tests only run `cargo fmt`, `cargo doc`, `cargo metadata`, and `cargo xlint` but never verify compilation of the fix."
+      "reason": "Instruction requirement 5 states 'The fix must pass cargo check -p sui-core' but no test runs 'cargo check -p sui-core'. The cargo fmt test runs workspace-level fmt, and cargo doc runs doc generation, but the core compilation check is missing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, have docstrings explaining their purpose, and are annotated with (pass_to_pass) or (fail-to-pass) comments indicating their category."
+      "reason": "Tests are well-named with descriptive function names, have docstrings explaining pass_to_pass vs fail_to_pass, and are organized logically by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Rust source file, not producing structured data output."
+      "reason": "The task involves fixing a Rust source file, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or literal strings across the instruction and test files."
+      "reason": "No typos observed in filenames, paths, commands, or variable names across the instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction does not name the exact file path or line number. It describes the bug domain (execution time observation handling) and provides hints about where to look, but the agent must still locate the specific file and code location."
+      "reason": "The instruction gives hints about the area of code ('execution time observation handling', 'PTB commands') but doesn't name the exact file path or line number. The hints section mentions looking for 'execution timings in relation to PTB commands' which is appropriately vague."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single Rust source file, not a configuration edit task."
+      "reason": "This is a code-only fix task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 4,
+  "fail_count": 5
 }

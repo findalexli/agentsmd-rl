@@ -65,6 +65,48 @@ rubric:
   evidence: In `DevEnv.ts`, the gold solution uses `logger.error(event.cause.message)`
     to log non-esbuild errors, adhering to the rule to avoid `console.error`.
   category: style
+- rule: Use the logger singleton instead of console.*
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: '25'
+  source_text: '- No `console.*` — use `logger` singleton'
+  evidence: In `DevEnv.ts`, instead of adding `console.error` statements for standard
+    build failures, the diff imports `logger` and `logBuildFailure` from `../../logger`
+    and correctly uses `logger.error(event.cause.message)`.
+  category: logging_convention
+  verification: llm_judge
+- rule: Use the logger singleton in wrangler
+  source:
+    path: AGENTS.md
+    lines: '186'
+  source_text: '- **`console.*` in wrangler** → use the `logger` singleton'
+  evidence: The diff removes loose `logger.error` outputs in `BundlerController.ts`
+    and replaces them with a centralized handling mechanism via `logger.error` in
+    `DevEnv.ts`, avoiding standard console functions.
+  category: logging_convention
+  verification: llm_judge
+- rule: Always use curly braces for control flow
+  source:
+    path: AGENTS.md
+    lines: '95'
+  source_text: '- Always use curly braces for control flow (`curly: error`)'
+  evidence: The added `else if (event.source === "BundlerController")` and inner `if`/`else
+    if`/`else` statements in `DevEnv.ts` rigorously wrap their executing blocks with
+    curly braces `{}`.
+  category: style_convention
+  verification: llm_judge
+- rule: Enforce specific import order
+  source:
+    path: AGENTS.md
+    lines: '105'
+  source_text: '- Import order enforced: builtins → third-party → parent → sibling
+    → index → types'
+  evidence: In `packages/wrangler/src/api/startDevWorker/DevEnv.ts`, the new parent-level
+    imports (`../../deployment-bundle/build-failures` and `../../logger`) are correctly
+    inserted after the third-party import (`miniflare`) and right before the sibling
+    import (`./BundlerController`).
+  category: import_convention
+  verification: llm_judge
 distractors:
 - rule: No `console.*` — use `logger` singleton
   collision_type: rule_conflict
@@ -84,6 +126,30 @@ distractors:
   source:
     path: packages/wrangler/AGENTS.md
     lines: 41-41
+- rule: 'Many shared ESLint rules temporarily DISABLED: curly'
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: '26'
+  source_text: '- Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`,
+    `consistent-type-imports`, `no-shadow`, `no-floating-promises`, others'
+  collision_type: scope_ambiguity
+  why_distracting: An agent reading this might mistakenly assume it is acceptable
+    to omit curly braces for the new simple `if/else` statements being added in `DevEnv.ts`.
+    However, this exception is scoped strictly to the `miniflare` package, whereas
+    `wrangler` fully enforces the `curly` rule.
+  severity: medium
+- rule: No named imports from wrangler
+  source:
+    path: packages/vite-plugin-cloudflare/AGENTS.md
+    lines: '23'
+  source_text: '- No named imports from `"wrangler"` — must use `import * as wrangler
+    from "wrangler"` (namespace import only, enforced by eslint)'
+  collision_type: scope_ambiguity
+  why_distracting: An agent working internally within the `wrangler` repository itself
+    might mistakenly think it needs to use namespace imports internally or avoid named
+    imports between internal sibling files. This rule only applies to the `vite-plugin-cloudflare`
+    package when importing `wrangler` as an external package.
+  severity: low
 hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to `packages/wrangler/AGENTS.md`
   to find the Wrangler-specific conventions. The agent must apply the `logger` singleton
   rule from the Wrangler config while carefully balancing it against the PR instruction

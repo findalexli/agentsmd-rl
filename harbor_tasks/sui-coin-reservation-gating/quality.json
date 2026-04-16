@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on the specific file path 'crates/sui-json-rpc/src/authority_state.rs' (TARGET_FILE), specific variable name 'coin_reservations_enabled', specific regex patterns like 'if !coin_reservations_enabled\\s*\\{\\s*HashMap::new\\(\\)', and the exact pattern 'if let ObjectRead::NotExists\\([^)]+\\)\\s*= result.*?&&.*?enable_coin_reservation_obj_refs\\(\\)'. While instruction.md mentions the variable name and HashMap::new() pattern, it does not explicitly name the target file 'crates/sui-json-rpc/src/"
+      "reason": "Tests assert on the specific file path 'crates/sui-json-rpc/src/authority_state.rs' (TARGET_FILE), function names 'get_object_read' and 'get_owned_coins', the variable name 'coin_reservations_enabled', and the exact pattern 'if !coin_reservations_enabled { HashMap::new()'. While instruction.md mentions the variable name and HashMap pattern, it never explicitly names the target file 'crates/sui-json-rpc/src/authority_state.rs'. The agent must discover this file path on its own."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md under 'Required Implementation' specifies exact implementation details: 'Define a boolean variable named coin_reservations_enabled', 'Use the pattern if !coin_reservations_enabled { HashMap::new() }', 'Access the protocol configuration via the epoch store's protocol_config() method', and 'The check should use the && operator to combine these conditions'. This tells the agent exactly WHAT to change and HOW, not just what's broken."
+      "reason": "instruction.md explicitly states the exact fix: 'Define a boolean variable named coin_reservations_enabled', 'Use the pattern if !coin_reservations_enabled { HashMap::new() }', 'Access the protocol configuration via the epoch store's protocol_config() method', and the exact && operator combination with ObjectRead::NotExists. This is not just describing what's broken \u2014 it's prescribing the exact implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert gold-specific implementation details: test_get_owned_coins_has_protocol_gating asserts the exact variable name 'coin_reservations_enabled' and exact pattern 'if !coin_reservations_enabled { HashMap::new() }'. test_get_object_read_has_protocol_gating asserts the exact pattern 'if let ObjectRead::NotExists(...) = result ... && ... enable_coin_reservation_obj_refs()'. A correct alternative fix using different variable names (e.g., 'reservations_on') or different control fl"
+      "reason": "Tests assert on gold-specific implementation details: the exact variable name 'coin_reservations_enabled' (test_get_owned_coins_has_protocol_gating), the exact pattern 'if !coin_reservations_enabled { HashMap::new()' via regex, and the specific regex pattern combining NotExists with && and enable_coin_reservation_obj_refs(). An alternative correct fix using a different variable name (e.g., 'reservations_on') or different control flow (e.g., match statement, early return with different structure)"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating are purely text-matching: they open the source file and use regex to check for specific strings/patterns. While test_cargo_check and test_clippy_passes do execute subprocesses, the core behavioral tests (f2p tests checking the actual fix) are text-based assertions only."
+      "reason": "Tests test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating are purely text-matching: they read the source file and use regex/string assertions like 'assert \"coin_reservations_enabled\" in content' and regex searches on file content. While test_cargo_check and test_clippy_passes do execute subprocesses, the core behavioral tests (f2p tests) are text-only inspections, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_get_object_read_has_protocol_gating, test_get_owned_coins_has_protocol_gating) only check for text patterns in source code. A stub that simply adds comments containing 'coin_reservations_enabled', 'enable_coin_reservation_obj_refs()', 'if !coin_reservations_enabled { HashMap::new() }', and 'if let ObjectRead::NotExists(id) = result && enable_coin_reservation_obj_refs()' as dead code in the right functions would pass without actually fixing the bug."
+      "reason": "The f2p tests (test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating) only check for the presence of specific strings/patterns in the source file. A trivial implementation that adds a dead-code comment containing 'coin_reservations_enabled', 'enable_coin_reservation_obj_refs()', 'if !coin_reservations_enabled { HashMap::new()' and the NotExists pattern as a string literal in a comment would pass these regex tests without actually fixing the bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md states that when enable_coin_reservation_obj_refs() returns false, 'object reads should NOT return fake coins' and 'owned coin queries should NOT include fake coins'. These behavioral requirements are NOT actually tested via execution - only via text pattern matching in source code. No integration or unit test verifies the runtime behavior."
+      "reason": "instruction.md requires that 'When enable_coin_reservation_obj_refs() returns false, object reads should NOT return fake coins' and 'owned coin queries should NOT include fake coins', and the reverse when true. These actual behavioral requirements are not tested \u2014 only string patterns in source code are checked. The e2e tests from the gold solution patch are not included in test_outputs.py."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cargo_check, test_get_object_read_has_protocol_gating, etc.) and have docstrings explaining what each test verifies."
+      "reason": "Tests are well-named (test_cargo_check, test_get_object_read_has_protocol_gating, etc.), have docstrings explaining what they verify, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about modifying Rust source code for protocol config gating, not producing structured data output."
+      "reason": "The task is about modifying Rust source code, not producing structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation patterns including variable name 'coin_reservations_enabled', exact code pattern 'if !coin_reservations_enabled { HashMap::new() }', method chain 'epoch store's protocol_config() method', and the exact '&&' operator pattern. While it doesn't name the file, it gives away essentially the entire solution implementation."
+      "reason": "instruction.md prescribes exact implementation details: specific variable name 'coin_reservations_enabled', exact code pattern 'if !coin_reservations_enabled { HashMap::new() }', exact method chain 'epoch store's protocol_config() method', and the exact && operator combination. While it doesn't name the file, it specifies the solution at line-level granularity."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not an agentmd-edits/config-edit task."
     }
   },
   "tier_a_fails": [

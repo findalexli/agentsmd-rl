@@ -1,0 +1,93 @@
+source_pr:
+  owner: oxc-project
+  repo: oxc
+  pr_number: 21078
+  title: "refactor(oxfmt): Arrange cli/js_config dir"
+  merge_commit: 7ac69fa3f7e526e3201d864f28124c4bb3cc3940
+  base_commit: 35cf6e87c089000411d6d1353e8919f6eaa6df22
+
+checks:
+  # File structure checks
+  - id: test_js_config_directory_structure
+    type: fail_to_pass
+    origin: gold_patch
+    description: "js_config/ directory exists with index.ts and node_version.ts; old files removed"
+
+  # Import update check
+  - id: test_cli_ts_import_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: "cli.ts imports from ./cli/js_config/index not ./cli/js_config"
+
+  # Inline tests checks
+  - id: test_node_version_has_inline_tests
+    type: fail_to_pass
+    origin: gold_patch
+    description: "node_version.ts contains inline vitest tests with import.meta.vitest guard"
+
+  # Error handling behavior change
+  - id: test_js_config_error_handling
+    type: fail_to_pass
+    origin: gold_patch
+    description: "loadJsConfig always throws Error with hint appended to err.message"
+
+  # Function signature change
+  - id: test_node_version_function_signature
+    type: fail_to_pass
+    origin: gold_patch
+    description: "node_version exports getUnsupportedTypeScriptModuleLoadHint (new name)"
+
+  # Configuration file checks
+  - id: test_package_json_test_command
+    type: fail_to_pass
+    origin: gold_patch
+    description: "package.json test command is 'vitest run' for inline tests"
+
+  - id: test_tsconfig_has_vitest_types
+    type: fail_to_pass
+    origin: gold_patch
+    description: "tsconfig.json includes vitest/importMeta types"
+
+  - id: test_tsdown_config_define
+    type: fail_to_pass
+    origin: gold_patch
+    description: "tsdown.config.ts defines import.meta.vitest as undefined for bundling"
+
+  - id: test_vitest_config_includes_source
+    type: fail_to_pass
+    origin: gold_patch
+    description: "vitest.config.ts includes src-js/**/*.ts for inline tests"
+
+  # Pass-to-pass tests (repo CI/tests)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript compiles without type errors (tsc --noEmit)"
+
+  - id: test_inline_vitest_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Inline vitest tests in node_version.ts pass"
+
+  - id: test_all_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All unit tests pass (pnpm test / vitest run)"
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - id: test_organization
+    description: "Test organization follows oxfmt 1:1:1 Rule: Each test directory contains exactly 1 test file, 0 or 1 fixtures/ directory. Tests may only reference files within their own directory or shared utils.ts."
+    source: "apps/oxfmt/AGENTS.md: Test Organization section"
+
+  - id: inline_tests_location
+    description: "Inline tests should be at the end of the source file after implementation code, using if (import.meta.vitest) guard pattern."
+    source: "apps/oxfmt/AGENTS.md: Verification section (inline test pattern)"
+
+  - id: file_path_handling
+    description: "When working with file paths in CLI code, use std::path::Path/PathBuf (Rust) or node:path (JS) instead of manual string manipulation."
+    source: "apps/oxfmt/AGENTS.md: Platform Considerations section"
+
+  - id: code_review_before_submission
+    description: "All changes should be thoroughly reviewed and tested. Run cargo check/clippy for Rust code and ensure pnpm test passes for JS code."
+    source: "AGENTS.md: AI Usage Policy and Verification sections"

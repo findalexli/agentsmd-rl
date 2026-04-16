@@ -1,0 +1,194 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39144
+  base_commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+  merge_commit: "c4a4efa50a02f404829c8cf8a169d5b70e8e35ae"
+
+# Track 2: Config edits extracted deterministically from PR
+gold_config_edits:
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    description: "Update session commands documentation: rename kill-all to session-kill-all, update command descriptions"
+    gold_added: "# Close all browsers\n+playwright-cli session-close-all\n+# Forcefully kill all browser processes\n+playwright-cli session-kill-all"
+    gold_removed: "playwright-cli session-close-all          # stop all sessions\n-playwright-cli delete-data                # delete user data for default session\n-playwright-cli kill-all                   # forcefully kill all daemon processes"
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    description: "Update session management reference: rename kill-all to session-kill-all, update config path"
+    gold_added: "playwright-cli session-kill-all\nplaywright-cli open https://example.com --config=.playwright/my-cli.json"
+    gold_removed: "playwright-cli kill-all\nplaywright-cli open https://example.com --config=playwright-cli.json"
+
+# Track 1: Code correctness checks
+checks:
+  # Pass-to-pass structural checks
+  - id: program_ts_parses
+    type: pass_to_pass
+    origin: static
+    description: "program.ts should be valid TypeScript"
+
+  - id: commands_ts_parses
+    type: pass_to_pass
+    origin: static
+    description: "commands.ts should be valid TypeScript"
+
+  - id: skill_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "SKILL.md should exist"
+
+  - id: session_management_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "session-management.md should exist"
+
+  # Code behavior fail-to-pass checks
+  - id: workspace_dir_hash_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts uses workspaceDirHash instead of installationDirHash for daemon scoping"
+
+  - id: find_workspace_dir_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts has findWorkspaceDir function to locate .playwright folder"
+
+  - id: commands_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "commands.ts renames kill-all to session-kill-all"
+
+  - id: install_command_restructured
+    type: fail_to_pass
+    origin: pr_diff
+    description: "commands.ts restructures install-browser into install with skills option"
+
+  - id: config_path_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default config path changed from playwright-cli.json to .playwright/cli.config.json"
+
+  - id: retry_logic_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Retry logic uses exponential backoff array [100, 200, 400]"
+
+  - id: error_message_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Error message updated to 'please run open first' without formatted args"
+
+  - id: daemon_profiles_dir_uses_workspace_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "daemonProfilesDir uses workspaceDirHash parameter"
+
+  - id: socket_path_uses_workspace_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "daemonSocketPath uses workspaceDirHash for socket naming"
+
+  - id: install_function_creates_playwright_dir
+    type: fail_to_pass
+    origin: pr_diff
+    description: "install function creates .playwright directory and prints 'Workspace initialized'"
+
+  - id: open_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "open command description updated to 'Open the browser'"
+
+  - id: close_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "close command description updated to 'Close the browser'"
+
+  - id: config_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config option description mentions .playwright/cli.config.json default"
+
+  # Config/documentation fail-to-pass checks
+  - id: skill_md_kill_all_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md references session-kill-all instead of kill-all"
+
+  - id: session_management_md_kill_all_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-management.md references session-kill-all instead of kill-all"
+
+  - id: session_management_md_config_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-management.md references .playwright/ folder for config files"
+
+  - id: skill_md_session_commands_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md has descriptive comments for session commands"
+
+  - id: skill_md_close_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md close command section has updated descriptive comments"
+
+# Track 3: Positive rubric - conventions gold solution follows
+rubric:
+  - rule: "When renaming commands, update all documentation references consistently"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "1-10"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "Gold updates both SKILL.md and session-management.md for session-kill-all rename"
+    category: documentation_consistency
+    verification: llm_judge
+
+  - rule: "Use semantic comments in documentation to describe command behavior"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "190-195"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "Gold adds descriptive comments like '# Close all browsers' instead of inline '# stop all sessions'"
+    category: documentation_style
+    verification: llm_judge
+
+  - rule: "Daemon session directories should be scoped by workspace, not installation"
+    source:
+      path: "packages/playwright/src/mcp/terminal/program.ts"
+      lines: "1-50"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "Gold introduces workspaceDirHash to scope daemon sessions by workspace folder containing .playwright"
+    category: architecture
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that create collisions
+distractors:
+  - rule: "Use inline comments to describe command behavior (e.g., '# stop all sessions')"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "190-195"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: rule_conflict
+    why_distracting: "Old style uses inline comments like '# stop all sessions' but gold uses semantic comments above commands like '# Close all browsers'"
+    severity: medium
+
+  - rule: "Use installation directory hash for daemon scoping"
+    source:
+      path: "packages/playwright/src/mcp/terminal/program.ts"
+      lines: "45-55"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: architecture_boundary
+    why_distracting: "Installation directory scoping was the old approach; workspace scoping via .playwright folder is the new architecture"
+    severity: high
+
+  - rule: "Keep install-browser and install-skills as separate top-level commands"
+    source:
+      path: "packages/playwright/src/mcp/terminal/commands.ts"
+      lines: "1-30"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: architecture_boundary
+    why_distracting: "Old design had separate commands; gold collapses them into install with --skills flag for better UX"
+    severity: medium

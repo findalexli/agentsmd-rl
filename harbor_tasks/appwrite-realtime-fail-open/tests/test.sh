@@ -1,0 +1,86 @@
+#!/bin/bash
+# Test runner script
+# Runs pytest and writes binary reward to /logs/verifier/reward.txt
+
+set -e
+
+# Install pytest if needed
+pip install pytest -q 2>/dev/null || true
+
+# Run tests
+cd /workspace/appwrite
+pytest /tests/test_outputs.py -v --tb=short 2>&1 || true
+
+# Calculate reward: count passed tests vs total non-skipped tests
+# Output format: "N/M tests passed"
+python3 << 'EOF'
+import subprocess
+import sys
+import os
+
+# Ensure logs directory exists
+os.makedirs('/logs/verifier', exist_ok=True)
+
+# Run pytest with json output for parsing
+result = subprocess.run(
+    ['pytest', '/tests/test_outputs.py', '-v', '--tb=no', '--co', '-q'],
+    capture_output=True,
+    text=True
+)
+
+# Run actual tests to get pass/fail
+result2 = subprocess.run(
+    ['pytest', '/tests/test_outputs.py', '-v', '--tb=no'],
+    capture_output=True,
+    text=True
+)
+
+output = result2.stdout + result2.stderr
+
+# Parse results - count passes and failures
+passed = 0
+total = 0
+
+for line in output.split('\n'):
+    if 'PASSED' in line:
+        passed += 1
+        total += 1
+    elif 'FAILED' in line:
+        total += 1
+    elif 'ERROR' in line:
+        total += 1
+
+# If no tests found, try parsing summary line
+if total == 0:
+    for line in output.split('\n'):
+        if 'passed' in line or 'failed' in line or 'error' in line:
+            # Parse summary like "5 passed, 1 failed"
+            import re
+            numbers = re.findall(r'(\d+) passed', line)
+            if numbers:
+                passed = int(numbers[0])
+            failures = re.findall(r'(\d+) failed', line)
+            errors = re.findall(r'(\d+) error', line)
+            total = passed + sum(int(x) for x in failures) + sum(int(x) for x in errors)
+            break
+
+# Default to 0 if no tests run
+if total == 0:
+    reward = 0
+else:
+    reward = passed / total
+
+# Write binary reward (0 or 1)
+if reward >= 1.0:
+    binary_reward = 1
+else:
+    binary_reward = 0
+
+with open('/logs/verifier/reward.txt', 'w') as f:
+    f.write(str(binary_reward))
+
+print(f"Tests: {passed}/{total} passed")
+print(f"Reward: {binary_reward}")
+EOF
+
+cat /logs/verifier/reward.txt

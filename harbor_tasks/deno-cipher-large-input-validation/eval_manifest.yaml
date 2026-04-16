@@ -240,6 +240,60 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 19-20
+- rule: Internal symbols in JS (`ext/node/polyfills/`) use the `k` prefix convention
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: 319-321
+  source_text: "- Internal symbols in JS (`ext/process/40_process.js`, `ext/node/polyfills/`)\n\
+    \  use the `k` prefix convention: `kIpc`, `kSerialization`, `kInputOption`. Flag\n\
+    \  deviations."
+  collision_type: scope_ambiguity
+  why_distracting: While the PR edits code within `ext/node/polyfills/`, it only introduces
+    local variable logic and does not define any module-level internal symbols. An
+    agent might incorrectly flag the lack of a `k` prefix on local variables like
+    `buf` or attempt to unnecessarily rename them, leading to an incorrect implementation.
+  severity: medium
+- rule: Modifying or Adding an Extension (Rust ops exposed to JS)
+  source:
+    path: repo/CLAUDE.md
+    lines: 256-262
+  source_text: '### Modifying or Adding an Extension
+
+
+    1. Navigate to `ext/<extension_name>/` (e.g., `ext/fs/`, `ext/net/`)
+
+    2. Rust code provides the ops (operations) exposed to JavaScript
+
+    3. JavaScript code in the extension provides the higher-level APIs
+
+    4. Update `runtime/worker.rs` to register the extension if new
+
+    5. Add tests in the extension''s directory'
+  collision_type: architecture_boundary
+  why_distracting: The PR modifies code inside the `ext/node/` directory. An agent
+    might read these instructions and mistakenly assume that the size check logic
+    must be implemented in Rust (as an op) and exposed to JavaScript. However, since
+    this is a Node.js polyfill, the matching logic should be done purely in JavaScript/TypeScript
+    without crossing the FFI boundary.
+  severity: high
+- rule: When suggesting error handling changes (Rust Result/Option handling)
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: 327-336
+  source_text: "### When suggesting error handling changes\n\n- Check whether the\
+    \ function's callers expect the error to propagate or be\n  swallowed. Do not\
+    \ suggest propagating errors in paths that are intentionally\n  best-effort (e.g.\
+    \ killing already-exited processes).\n- When suggesting a specific error variant\
+    \ or code change, verify the types\n  actually match. For example, `Option::or_else`\
+    \ takes `FnOnce() -> Option<T>`,\n  not `FnOnce(E) -> ...`.\n- If a Rust function\
+    \ returns `Result` and an `Option` is needed, use `.ok()`\n  before `.or_else()`\
+    \ or `.unwrap_or()`."
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds error handling logic (throwing an exception). An agent
+    searching for 'error handling' guidelines will find these rules, but they are
+    exclusively written for Rust code (e.g., `Result`, `Option`, `unwrap_or`). Applying
+    them to this TypeScript file would cause confusion or result in invalid code suggestions.
+  severity: low
 hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
   containing generic repository guidelines. There is no complex inheritance to navigate.
 rubric:
@@ -250,3 +304,18 @@ rubric:
   evidence: This is a code-only fix in cipher.ts that adds exactly two minimal size
     checks (one in each update method). No config files are modified.
   category: minimal_code_change
+- rule: Node.js compatibility code is in `ext/node/polyfills/`. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: 322-325
+  source_text: "- Node.js compatibility code is in `ext/node/polyfills/`. When reviewing\
+    \ these\n  files, check behavior against Node.js docs, not just Deno conventions.\
+    \ Some\n  patterns (like synchronous `throw` in `spawn()` for EPERM but async\
+    \ error\n  event for ENOENT) are intentional Node.js compatibility."
+  evidence: 'The gold diff correctly follows this rule by adding a synchronous `throw
+    new Error(...)` to explicitly match OpenSSL/Node.js behavior, rather than Deno''s
+    native async error handling conventions, as indicated by the comment: `// Match
+    Node.js/OpenSSL behavior: reject inputs >= INT_MAX bytes`.'
+  category: architecture
+  verification: llm_judge

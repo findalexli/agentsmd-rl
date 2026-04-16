@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all file paths (header.css, footer.css, main.css, css.html, js.html), required content (border-bottom, margin-bottom, border-top, margin-top, @import statements), exact option patterns like `(cond hugo.IsDevelopment false true)` and `(cond hugo.IsDevelopment \"linked\" \"none\")`, and constraints like no targetPath or \"external\" in js.html. All test assertions map to explicitly stated requirements."
+      "reason": "The instruction specifies all file paths (header.css, footer.css, main.css, css.html, js.html), required properties (border-bottom, margin-bottom, border-top, margin-top), import statements, template requirements (css.Build, js.Build, hugo.IsDevelopment, minify, sourceMap, 'linked', 'none'), and constraints (no targetPath, no 'external'). The only test-specific detail arguably missing is the exact `(cond hugo.IsDevelopment false true)` pattern checked in test_js_html_uses_cond_dict_pattern, but "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact solution: exact file contents to create, exact template option values like `(cond hugo.IsDevelopment false true)`, exact @import syntax, and exact constraints. It tells the agent precisely WHAT to write rather than describing broken behavior to diagnose. For example, 'Configure the minify option with the value (cond hugo.IsDevelopment false true)' is literally the code to write."
+      "reason": "The instruction essentially dictates the exact implementation: specific file paths, exact @import syntax, exact template option names and values, exact conditional logic pattern. For example, it specifies 'Configure source map options to use \"linked\" format in development and \"none\" in production' and 'NOT contain any targetPath option' and 'NOT use \"external\" as a sourceMap value'. This leaves almost no reasoning for the developer about WHAT to change\u2014it's a detailed specification of the soluti"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_js_html_uses_cond_dict_pattern asserts exact strings like `(cond hugo.IsDevelopment false true)` and `(cond hugo.IsDevelopment \"linked\" \"none\")`. An alternative correct implementation using e.g. `(not hugo.IsDevelopment)` for minify or `(if hugo.IsDevelopment \"linked\" \"none\")` would fail these tests despite being functionally equivalent."
+      "reason": "test_js_html_uses_cond_dict_pattern asserts exact string patterns like '(cond hugo.IsDevelopment false true)' and '(cond hugo.IsDevelopment \"linked\" \"none\")'. An alternative correct implementation using `if/else` blocks or `ternary`-style Hugo templates (e.g., `{{ if hugo.IsDevelopment }}false{{ else }}true{{ end }}`) would produce the same behavior but fail these exact string match tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "While several tests check file content via string matching, there are also substantial behavioral tests: test_repo_go_build compiles Hugo, test_repo_go_vet runs go vet, test_repo_gofmt checks formatting, test_repo_css_build_tests and test_repo_create_package_tests run unit test suites, and test_skeleton_templates_valid builds a site with the skeleton theme in both development and production modes. Not every test is pure text matching."
+      "reason": "While many tests do check file content via string matching, there are also substantial behavioral tests: test_repo_go_build compiles Hugo, test_repo_go_vet runs go vet, test_repo_gofmt checks formatting, test_repo_css_build_tests and test_repo_create_package_tests run Go unit tests, and test_skeleton_templates_valid actually builds a Hugo site with the skeleton theme in both development and production modes. Not every test is pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The file-content tests require specific files to exist with specific content (e.g., header.css must contain border-bottom). A stub/empty implementation would fail because the files don't exist by default. The build tests (go build, go test) would also fail if the skeleton is malformed. These cannot be satisfied by default/empty implementations."
+      "reason": "The f2p tests (file content checks for header.css, footer.css, main.css imports, template content) require actual file creation/modification with specific content. A stub or empty file would fail assertions like 'border-bottom in content' or '@import \"components/header.css\" in content'. The build tests also require valid Go code and valid Hugo templates."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behavior specified in instruction.md is tested: component CSS files existence and content, main.css imports and absence of inline styles, css.html and js.html template options, environment-aware configuration values, and successful Hugo builds."
+      "reason": "All behaviors described in instruction.md are tested: component CSS files with required properties, main.css imports and absence of inline styles, css.html using css.Build with conditional options, js.html with updated options (no targetPath, no external, linked/none pattern), and successful Hugo builds in both environments."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_header_css_exists, test_main_css_uses_imports, test_css_html_uses_css_build, etc.), have docstrings explaining purpose, and are logically grouped from file existence checks to content validation to build verification."
+      "reason": "Tests are well-named (test_header_css_exists, test_css_html_uses_css_build, test_js_html_updated_options, etc.), each has a docstring, and they are logically grouped by concern (file existence, template content, build verification)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces CSS files, HTML templates, and build artifacts \u2014 not structured data like JSON/CSV/API/DB."
+      "reason": "This task produces CSS files, HTML templates, and Go code\u2014not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and option names in the instruction are consistent with the test expectations and solution. No typos detected."
+      "reason": "File paths, commands, variable names, and string literals in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact option values like `(cond hugo.IsDevelopment false true)` and `(cond hugo.IsDevelopment \"linked\" \"none\")`, exact @import syntax, and exact constraints on what must/must not be in each file. This goes beyond describing what's broken and tells the agent exactly what code to write."
+      "reason": "The instruction names exact files to modify/create, exact CSS properties to include, exact template function calls (css.Build, js.Build), exact option names and values ('linked', 'none'), and exact constraints (no targetPath, no 'external'). This goes beyond describing what's broken and essentially specifies the implementation details, including which specific options to remove (targetPath) and replace ('external' \u2192 'linked')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it involves creating and modifying CSS, HTML template, and configuration files."
+      "reason": "This is primarily a code/template editing task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [

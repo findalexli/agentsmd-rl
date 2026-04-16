@@ -1,0 +1,108 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T12:37:36.322467",
+  "total_time": 112.12,
+  "sandbox_id": "i9niu9lwweaen01i4p1t9",
+  "backend": "oauth",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1456.7,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 687.75,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "partial",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "Docker build, NOP test (reward=0), and Gold test (reward=1) all pass. Rubric judge fails (ICR=0.0) because extract_config_hunks only returns config files (AGENTS.md, CLAUDE.md), but the gold solution only modifies source code files. The rubric rules describe coding conventions (Biome formatting, build verification) that require running linters to verify, not diff comparison. The gold solution is correct (lint tests pass) but the judge mechanism is fundamentally incompatible with this task. Rubric rules were auto-generated from AGENTS.md conventions but cannot be verified by the judge.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1097.11
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "claude-sonnet-4-6",
+      "backend": "oauth",
+      "time": 0.56,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:7: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 18.69,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5148.32,
+      "at": "2026-04-14T20:49:31.422189"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2357.74,
+      "at": "2026-04-15T03:53:23.534504"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3789.42,
+      "at": "2026-04-15T11:17:33.568601"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3439.4,
+      "at": "2026-04-15T12:17:39.896376"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 112.12,
+      "at": "2026-04-15T12:37:36.322467"
+    }
+  ]
+}

@@ -1,98 +1,146 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "THUDM/slime"
+  repo: THUDM/slime
   pr: 1756
-  base_commit: "64e1e68f524e1da6ca646606c22e785eeb845268"
-  merge_commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
-
+  base_commit: 64e1e68f524e1da6ca646606c22e785eeb845268
+  merge_commit: 6f70479966749e258ba0b20341e2c4b88ea094f1
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (checkpoint.py, data.py, processing_utils.py) must parse without errors"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (checkpoint.py, data.py, processing_utils.py) must parse
+    without errors
+- id: repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on modified files
+- id: repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort check passes on modified files
+- id: repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's black formatting check passes on modified files
+- id: repo_autoflake
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's autoflake check passes on modified files
+- id: check_yaml
+  type: pass_to_pass
+  origin: static
+  description: Repo's YAML files must be valid
+- id: check_case_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not have case-conflicting filenames
+- id: detect_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not contain private keys
+- id: checkpoint_uses_load_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: _load_checkpoint_hf passes load_path (not args.hf_checkpoint) to from_hf_pretrained
+- id: data_no_multimodal_num_items
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_batch does not track or set multimodal_num_items on the batch
+- id: processor_kwargs_mm_token_type_ids_none_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs(None) includes return_mm_token_type_ids=False
+    in text_kwargs
+- id: processor_kwargs_mm_token_type_ids_with_existing
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs preserves existing text_kwargs while adding
+    return_mm_token_type_ids
+- id: processor_kwargs_mm_token_type_ids_empty_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs({}) includes return_mm_token_type_ids=False
+- id: processor_kwargs_overrides_existing_mm_token_type_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs overrides return_mm_token_type_ids=True to False
+- id: data_multimodal_data_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_batch still creates multimodal_data dict and assigns to batch
+- id: processor_kwargs_modality_forced
+  type: pass_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs still sets return_tensors=pt for modality kwargs
+- id: processor_kwargs_return_tensors_none_for_text
+  type: pass_to_pass
+  origin: pr_diff
+  description: text_kwargs has return_tensors=None across varied inputs
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified functions have meaningful bodies (not stubs)
+rubric: []
+distractors:
+- rule: Keep list[list[Sample]] structure intact and do not flatten sample groups
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: 68-69
+  source_text: '- Keep `list[list[Sample]]` structure intact where required.
 
-  - id: repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on modified files"
-
-  - id: repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's isort check passes on modified files"
-
-  - id: repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's black formatting check passes on modified files"
-
-  - id: repo_autoflake
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's autoflake check passes on modified files"
-
-  - id: check_yaml
-    type: pass_to_pass
-    origin: static
-    description: "Repo's YAML files must be valid"
-
-  - id: check_case_conflict
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo must not have case-conflicting filenames"
-
-  - id: detect_private_key
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo must not contain private keys"
-
-  - id: checkpoint_uses_load_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_load_checkpoint_hf passes load_path (not args.hf_checkpoint) to from_hf_pretrained"
-
-  - id: data_no_multimodal_num_items
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_batch does not track or set multimodal_num_items on the batch"
-
-  - id: processor_kwargs_mm_token_type_ids_none_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "build_processor_kwargs(None) includes return_mm_token_type_ids=False in text_kwargs"
-
-  - id: processor_kwargs_mm_token_type_ids_with_existing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "build_processor_kwargs preserves existing text_kwargs while adding return_mm_token_type_ids"
-
-  - id: processor_kwargs_mm_token_type_ids_empty_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "build_processor_kwargs({}) includes return_mm_token_type_ids=False"
-
-  - id: processor_kwargs_overrides_existing_mm_token_type_ids
-    type: fail_to_pass
-    origin: pr_diff
-    description: "build_processor_kwargs overrides return_mm_token_type_ids=True to False"
-
-  - id: data_multimodal_data_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_batch still creates multimodal_data dict and assigns to batch"
-
-  - id: processor_kwargs_modality_forced
-    type: pass_to_pass
-    origin: pr_diff
-    description: "build_processor_kwargs still sets return_tensors=pt for modality kwargs"
-
-  - id: processor_kwargs_return_tensors_none_for_text
-    type: pass_to_pass
-    origin: pr_diff
-    description: "text_kwargs has return_tensors=None across varied inputs"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified functions have meaningful bodies (not stubs)"
+    - Do not flatten sample groups unless downstream path expects flattened samples.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule warns against flattening sample groups, but the gold diff
+    explicitly removes a list (`multimodal_num_items`) and flattens/concatenates multimodal
+    tensors in the Megatron data loader. An agent might mistakenly apply this rule
+    outside the dynamic filter context and refuse to flatten the tensors.
+  severity: medium
+- rule: Avoid returning raw Python lists/dicts with mismatched schema in custom paths
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: '96'
+  source_text: '- Returning raw Python lists/dicts with mismatched schema in custom
+    path'
+  collision_type: scope_ambiguity
+  why_distracting: The rule discourages returning raw Python lists/dicts for custom
+    rollout functions. The gold diff modifies data processors and utilities (`data.py`,
+    `processing_utils.py`) that correctly construct and return raw dictionaries. An
+    agent might mistakenly attempt to refactor these to use typed dataclasses.
+  severity: low
+- rule: Do not flatten sample groups unless downstream path expects flattened samples.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '69'
+  source_text: '- Do not flatten sample groups unless downstream path expects flattened
+    samples.'
+  collision_type: scope_ambiguity
+  why_distracting: The diff concatenates (`torch.cat`) `mm_tensor` into `multimodal_data`
+    along dim=0 (effectively flattening the tensor inputs) and explicitly removes
+    `multimodal_num_items` (which tracked sequence counts) in `data.py`. An agent
+    might mistakenly think this flattening violates the rule, but the rule applies
+    to `Sample` groups in the rollout pipeline, not multimodal tensors in the Megatron
+    data backend.
+  severity: medium
+- rule: Keep list[list[Sample]] structure intact where required.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '68'
+  source_text: '- Keep `list[list[Sample]]` structure intact where required.'
+  collision_type: scope_ambiguity
+  why_distracting: The diff removes `multimodal_num_items`, which is a dict of lists
+    tracking items per sequence (representing a grouped sequence structure). An agent
+    might confuse this structure with the `list[list[Sample]]` structure and avoid
+    removing it, but the rule refers to rollout samples, not multimodal data batch
+    properties.
+  severity: low
+- rule: For sample removal, prefer sample.remove_sample=True over deleting objects.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '70'
+  source_text: '- For sample removal, prefer `sample.remove_sample=True` over deleting
+    objects.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR completely deletes the dictionary key and variable `multimodal_num_items`.
+    An agent might think it should not delete objects due to this rule, but the rule
+    strictly governs rollout sample masking, not variables in the Megatron data loader.
+  severity: low

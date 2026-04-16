@@ -2,32 +2,32 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific literal strings like 'MAX_CASCADING_UPDATES', 'cascadingUpdateCount', and 'infinite loop detected' in scheduler.ts (test_cascading_update_guard). The instruction.md mentions 'maximum threshold of cascading updates' and 'dispatch an error event' but never specifies these exact variable names or the exact error string 'infinite loop detected'. Also, test_render_ctrl_cleanup checks for the exact identifier 'renderCtrl' in the remove() function body, which is not named in the i"
+      "outcome": "pass",
+      "reason": "The instruction names all file paths (component.ts, scheduler.ts, AGENTS.md, README.md, docs/handle.md), the specific identifiers (MAX_CASCADING_UPDATES, cascadingUpdateCount, 'infinite loop detected'), the function remove(), the renderCtrl abort requirement, the Promise<AbortSignal> return type, the old signature 'handle.update(task?)', and the 'await handle.update()' pattern. All test assertions reference items discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (Promise<AbortSignal> return, cascading update guard, renderCtrl cleanup) but does not give exact code patches or line numbers. A developer still needs to reason about implementation."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names implementation details like 'Define a module-level constant specifying the maximum threshold of cascading updates', 'Track a counter that increments each time a cascading update occurs', 'report an error with the message \"infinite loop detected\"', and 'The remove() function in component.ts must call abort() on renderCtrl'. These are specific implementation steps, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_cascading_update_guard asserts exact variable names 'MAX_CASCADING_UPDATES' and 'cascadingUpdateCount' and the exact string 'infinite loop detected'. An alternative correct implementation using different names (e.g., 'MAX_UPDATE_DEPTH', 'updateDepth', 'cascading update loop detected') would fail these tests despite being functionally correct."
+      "reason": "test_cascading_update_guard asserts exact variable names 'MAX_CASCADING_UPDATES' and 'cascadingUpdateCount' as string literals in source. An alternative correct fix using e.g. 'maxCascadingUpdates' or 'cascadeCount' would fail. test_render_ctrl_cleanup also searches for exact string 'renderCtrl' in the remove() body. These are gold-specific implementation detail checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several fail-to-pass tests are purely text-based: test_cascading_update_guard does `assert 'MAX_CASCADING_UPDATES' in src` (string search); test_render_ctrl_cleanup checks for 'renderCtrl' and 'abort' strings in source; test_agents_md_promise_api, test_readme_md_promise_api, test_handle_md_promise_api all just check string presence/absence in markdown files. Only test_handle_update_returns_promise actually compiles TypeScript code. The pass-to-pass tests do run builds/typechecks, but the majorit"
+      "reason": "test_cascading_update_guard is purely text-based: it reads scheduler.ts and asserts string presence of 'MAX_CASCADING_UPDATES', 'cascadingUpdateCount', 'infinite loop detected'. test_render_ctrl_cleanup reads component.ts source and searches for string 'renderCtrl' and 'abort'. test_agents_md_promise_api, test_readme_md_promise_api, test_handle_md_promise_api are all pure text grep checks. Only test_handle_update_returns_promise and the pass-to-pass tests execute code. The majority of fail-to-pa"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_handle_update_returns_promise requires actual TypeScript type changes that compile; test_cascading_update_guard requires specific code additions to scheduler.ts; the documentation tests require specific content changes. None can be satisfied by a no-op."
+      "reason": "A stub implementation would not pass: test_handle_update_returns_promise requires actual TypeScript type changes that compile; test_cascading_update_guard requires specific strings in scheduler.ts; test_render_ctrl_cleanup requires code in remove(); doc tests require specific content. None are satisfiable by default/empty implementations."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies that 'existing test files in src/test/ that call handle.update(task) will also need updating' but no test verifies this. Also, the instruction says the signal 'is aborted when the component updates again or is removed' but no test verifies this abort behavior. The cascading update guard's 'dispatch an error event' behavior is only checked via string presence, not actual runtime behavior."
+      "outcome": "pass",
+      "reason": "The instruction specifies: Promise<AbortSignal> return (tested by type check), cascading update guard with threshold/counter/error message (tested by text check), renderCtrl abort in remove() (tested by text check), and doc updates (tested by text checks). All required behaviors have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments into sections: 'Pass-to-pass (repo_tests)', 'Fail-to-pass (pr_diff) \u2014 behavioral type check', 'structural code checks', and 'documentation update checks'. Each test has a descriptive docstring."
+      "reason": "Tests are grouped with clear section comments (pass-to-pass repo_tests, fail-to-pass behavioral type check, fail-to-pass structural code checks, fail-to-pass documentation checks) and each has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,25 +35,25 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, variable names, and commands in instruction.md and tests match correctly (component.ts, scheduler.ts, AGENTS.md, README.md, docs/handle.md, MAX_CASCADING_UPDATES, cascadingUpdateCount, renderCtrl, etc.)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names specific files but this is appropriate for the task domain. It does not specify exact line numbers or exact variable names to use, only describes the behavioral changes needed."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details: 'Define a module-level constant specifying the maximum threshold', 'Track a counter that increments each time', exact error message 'infinite loop detected', 'The remove() function in component.ts must call abort() on renderCtrl'. This goes beyond describing the bug to prescribing the exact fix structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-and-docs editing task, not primarily a config-editing task."
+      "reason": "This is not an agentmd-edits task; it involves code and documentation changes, not config files."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
   "pass_count": 5,
   "fail_count": 4

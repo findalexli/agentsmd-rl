@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths like utils.ts and index.ts, function name requiresProjectAnnotations, variable names isCSF4/previewOrConfigFile/areProjectAnnotationRequired, string literals like setup-file-with-project-annotations, parameter counts, isCsfFactoryPreview) are explicitly mentioned in instruction.md's Required Changes section."
+      "reason": "Instruction names both files (utils.ts, index.ts), the function requiresProjectAnnotations, variables previewOrConfigFile, isCSF4, areProjectAnnotationRequired, and the string 'setup-file-with-project-annotations' \u2014 all asserted in tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: remove isCSF4 parameter, remove previewOrConfigFile variable, remove isCsfFactoryPreview() call, remove conditional preview file addition. It specifies 'Accept exactly 2 parameters: testConfig and finalOptions', 'NOT accept an isCSF4 parameter', 'Have zero references to isCSF4', 'Return true by default'. This is a detailed prescription of what to change, not just a description of what's broken."
+      "reason": "Instruction is highly prescriptive: it explicitly lists what to remove (previewOrConfigFile declaration, isCsfFactoryPreview() call, const isCSF4, `&& previewOrConfigFile` pattern) and what to keep, leaving essentially no reasoning for the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: exactly 2 parameters for requiresProjectAnnotations (test_no_csf4_param), zero isCSF4 identifiers in utils.ts AST (test_no_csf4_conditional_return), absence of 'const previewOrConfigFile' and '&& previewOrConfigFile' as literal strings (test_setup_files_no_preview_injection), absence of 'isCsfFactoryPreview(' and 'const isCSF4' strings (test_no_preview_file_loading). An alternative correct fix that, e.g., renamed isCSF4 to something else whil"
+      "outcome": "pass",
+      "reason": "Tests check absence of specific patterns/variables that must be removed and presence of areProjectAnnotationRequired and 'setup-file-with-project-annotations'; alternative correct fixes would share these properties."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely text/AST inspection: test_no_preview_file_loading_for_csf4_detection uses 'assert \"isCsfFactoryPreview(\" not in src', test_setup_files_no_preview_injection uses 'assert \"const previewOrConfigFile\" not in src', test_requires_project_annotations_returns_true_by_default uses 'assert \"return true\" in src'. No test actually imports, calls, or executes the modified code to verify runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests use TypeScript compiler API via Node subprocess to parse AST and inspect function parameters/exports, not just substring checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A trivial stub that replaces requiresProjectAnnotations with 'export async function requiresProjectAnnotations(testConfig: any, finalOptions: any) { return true; }' and removes the flagged variables from index.ts would pass all fail-to-pass tests. The tests only check for absence of certain strings/AST patterns and presence of 'return true', not actual runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests verify specific parameter count (2), absence of isCSF4 identifier references, and presence of conditional setup \u2014 a stub wouldn't satisfy both presence and absence assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are tested: 2 parameters for requiresProjectAnnotations, no isCSF4 references, no previewOrConfigFile variable, no isCsfFactoryPreview call, preserved areProjectAnnotationRequired, preserved setup-file-with-project-annotations reference, function still exported, return true by default."
+      "reason": "All required changes from instruction.md (parameter count, no isCSF4, no previewOrConfigFile, preserve areProjectAnnotationRequired, return true default) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/static), descriptive function names, and detailed docstrings explaining the rationale for each check."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and tagged with [static]/[pr_diff]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "Task is code modification, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, function names, and commands in instruction.md are consistent with those used in the test file and solution."
+      "reason": "File paths and identifiers appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files, exact function signatures ('Accept exactly 2 parameters: testConfig and finalOptions'), exact variable names to remove ('previewOrConfigFile', 'isCSF4'), and exact function calls to remove ('isCsfFactoryPreview()'). This goes far beyond identifying the buggy module \u2014 it prescribes the exact code-level changes."
+      "reason": "Instruction spells out exact variable names to remove ('previewOrConfigFile', 'const isCSF4', 'isCsfFactoryPreview()', '&& previewOrConfigFile pattern') and exact parameter signature, leaving no localization work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

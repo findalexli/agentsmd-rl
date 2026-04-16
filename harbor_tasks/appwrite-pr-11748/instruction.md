@@ -1,48 +1,37 @@
 # Replace PHPMailer with utopia-php/messaging SMTP adapter
 
-The codebase currently uses raw PHPMailer for SMTP functionality. This needs to be refactored to use the `Utopia\Messaging\Adapter\Email\SMTP` adapter instead, which provides a cleaner abstraction and enables dependency injection with other email adapters.
+The codebase currently uses raw PHPMailer for SMTP functionality, creating tight coupling that makes it difficult to swap in alternative email adapters (like Resend), properly inject email configuration, and use modern attachment handling.
 
-## What's broken
+## Problem Description
 
-The SMTP register (`app/init/registers.php`) currently creates and returns a `PHPMailer\PHPMailer\PHPMailer` instance with extensive manual configuration. The Mails worker (`src/Appwrite/Platform/Workers/Mails.php`) and Doctor task (`src/Appwrite/Platform/Tasks/Doctor.php`) interact with this PHPMailer instance directly, using methods like `clearAddresses()`, `addAddress()`, `Subject`, `Body`, etc.
+The SMTP register (`app/init/registers.php`) currently creates and returns a `PHPMailer\PHPMailer\PHPMailer` instance with extensive manual configuration including SMTP setup methods like `isSMTP()`, `setFrom()`, `addReplyTo()`, `isHTML()`, and various property assignments (`XMailer`, `SMTPAuth`, `Username`, `Password`, `SMTPSecure`, `SMTPAutoTLS`, `SMTPKeepAlive`, `CharSet`, `Timeout`). The current tight coupling to PHPMailer prevents using the `Utopia\Messaging\Adapter\Email\SMTP` class with named parameters for `host`, `port`, `keepAlive`, `timelimit`, and other SMTP settings.
 
-This tight coupling to PHPMailer makes it difficult to:
-- Swap in alternative email adapters (like Resend)
-- Properly inject email configuration
-- Use modern attachment handling
+The Mails worker (`src/Appwrite/Platform/Workers/Mails.php`) contains PHPMailer-specific patterns including a protected method that constructs PHPMailer instances, and uses PHPMailer-specific state manipulation methods like `clearAddresses()`, `clearAllRecipients()`, `clearReplyTos()`, `clearAttachments()`, `clearBCCs()`, `clearCCs()`, `addAddress()`, as well as direct property assignments for `Subject`, `Body`, `AltBody`, and `AddStringAttachment`. These patterns prevent using `EmailAdapter` type hints, `EmailMessage` object construction, and the `Attachment` class from `utopia-php/messaging`.
 
-## What needs to change
+The Doctor task (`src/Appwrite/Platform/Tasks/Doctor.php`) similarly uses PHPMailer-specific methods including `addAddress()`, `Subject`, `Body`, `AltBody`, and `$mail->send()` for sending test emails, preventing migration to `EmailAdapter` and `EmailMessage`.
 
-1. **app/init/registers.php**: Replace the PHPMailer instantiation with `new SMTP(...)` using named parameters. Remove all PHPMailer-specific configuration (isSMTP, setFrom, addReplyTo, isHTML, etc.). Return the SMTP adapter directly.
+The `Usage` class (`src/Appwrite/Event/Message/Usage.php`) is declared as `final class Usage` and its `fromArray()` method uses `new self(...)`. These patterns prevent proper subclassing and should be changed to allow extension and proper factory pattern usage.
 
-2. **src/Appwrite/Platform/Workers/Mails.php**: 
-   - Replace PHPMailer import with imports for `EmailAdapter`, `SMTP`, `EmailMessage`, and `Attachment` from `utopia-php/messaging`
-   - Remove the `getMailer()` protected method entirely
-   - When custom SMTP config is provided, construct a new `SMTP(...)` directly instead of calling `getMailer()`
-   - Replace all PHPMailer state manipulation (clearAddresses, clearAttachments, addAddress, Subject, Body, AltBody, etc.) with construction of an `EmailMessage` object
-   - Handle attachments using the new `Attachment` class with string content
-   - Call `$adapter->send($emailMessage)` to send
+The composer dependency on `utopia-php/messaging` is currently at version `0.20.*` and needs to be updated to `0.22.*` to access the new messaging adapter classes.
 
-3. **src/Appwrite/Platform/Tasks/Doctor.php**:
-   - Replace PHPMailer import with `EmailAdapter` and `EmailMessage` imports
-   - Replace PHPMailer-specific code with `EmailMessage` construction and `$smtp->send($emailMessage)`
+## Files to Modify
 
-4. **src/Appwrite/Event/Message/Usage.php**:
-   - Remove `final` keyword from class declaration
-   - Change `new self(...)` to `new static(...)` in `fromArray()`
+- `app/init/registers.php` - Return SMTP adapter instead of PHPMailer
+- `src/Appwrite/Platform/Workers/Mails.php` - Use EmailAdapter, EmailMessage, Attachment
+- `src/Appwrite/Platform/Tasks/Doctor.php` - Use EmailAdapter and EmailMessage
+- `src/Appwrite/Event/Message/Usage.php` - Allow subclassing and proper factory pattern
+- `composer.json` - Update utopia-php/messaging to 0.22.*
+- `composer.lock` - Will auto-update on composer install
 
-5. **composer.json**: Update `utopia-php/messaging` requirement from `0.20.*` to `0.22.*`
+## Required Classes and Imports
 
-## Files to modify
+The solution must import and use these classes from `utopia-php/messaging`:
+- `Utopia\Messaging\Adapter\Email` (aliased as `EmailAdapter`)
+- `Utopia\Messaging\Adapter\Email\SMTP`
+- `Utopia\Messaging\Messages\Email` (aliased as `EmailMessage`)
+- `Utopia\Messaging\Messages\Email\Attachment`
 
-- `app/init/registers.php`
-- `src/Appwrite/Platform/Workers/Mails.php`
-- `src/Appwrite/Platform/Tasks/Doctor.php`
-- `src/Appwrite/Event/Message/Usage.php`
-- `composer.json`
-- `composer.lock` (will auto-update on composer install)
-
-## Reference
+## Reference - SMTP Constructor Parameters
 
 The `Utopia\Messaging\Adapter\Email\SMTP` constructor accepts these named parameters:
 - `host`, `port`, `username`, `password` - SMTP connection settings
@@ -52,6 +41,8 @@ The `Utopia\Messaging\Adapter\Email\SMTP` constructor accepts these named parame
 - `keepAlive` - Keep connection alive between sends
 - `timelimit` - Per-command timeout
 
+## Reference - EmailMessage Constructor Parameters
+
 The `EmailMessage` constructor accepts:
 - `to` - Array of recipients (each with 'email' and optional 'name')
 - `subject`, `content` - Message content
@@ -59,3 +50,13 @@ The `EmailMessage` constructor accepts:
 - `replyToName`, `replyToEmail` - Reply-to info
 - `attachments` - Array of `Attachment` objects
 - `html` - Boolean indicating HTML content
+
+## Success Criteria
+
+After the changes:
+- No PHPMailer imports should remain in the modified files
+- No PHPMailer-specific methods (`clearAddresses`, `addAddress`, `Subject`, `Body`, etc.) should be present
+- SMTP adapter should use named parameters for configuration
+- Email messages should be sent via `$adapter->send($emailMessage)` or `$smtp->send($emailMessage)`
+- The `Usage` class should not be declared `final` and should use `new static()` in `fromArray()`
+- `composer.json` should require `utopia-php/messaging` version `0.22.*`

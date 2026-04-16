@@ -6,10 +6,9 @@ PR:   #13152
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Behavioral tests: extract MARKDOWN_HEADERS from source, create real Response
-objects in Node.js, and verify that .text() returns raw markdown and Content-Type
-is text/markdown. This validates the actual response format behavior that was
-changed (plain text vs JSON-wrapped).
+Behavioral tests: spawn Node subprocess to construct real Response objects
+and verify that .text() returns raw markdown and Content-Type is text/markdown.
+This validates the actual response format behavior that was changed (plain text vs JSON-wrapped).
 """
 
 import re
@@ -34,14 +33,43 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
-def _extract_headers_obj(src: str) -> str:
-    """Extract the MARKDOWN_HEADERS object literal from TypeScript source."""
-    m = re.search(
-        r"const\s+MARKDOWN_HEADERS\s*=\s*(\{[^}]+\})",
-        src,
-        re.DOTALL,
-    )
-    return m.group(1) if m else ""
+def _extract_response_headers_from_source(src: str, path_hint: str = "") -> dict:
+    """
+    Extract the headers that will be used in Response objects by analyzing the source.
+    Returns a dict with Content-Type and X-Robots-Tag values, or {} if not found.
+    """
+    # First try to find inline headers in new Response(..., { headers: {...} })
+    inline_pattern = r"""new\s+Response\s*\([^,]+,\s*\{\s*headers\s*:\s*(\{[^}]+\})\s*\}"""
+    m = re.search(inline_pattern, src, re.DOTALL)
+    if m:
+        headers_str = m.group(1)
+        ct_match = re.search(r'"Content-Type"\s*:\s*"([^"]+)"', headers_str)
+        rt_match = re.search(r'"X-Robots-Tag"\s*:\s*"([^"]+)"', headers_str)
+        if ct_match and rt_match:
+            return {
+                "Content-Type": ct_match.group(1),
+                "X-Robots-Tag": rt_match.group(1)
+            }
+
+    # Try to find headers reference: new Response(..., { headers: SOME_VAR })
+    ref_pattern = r"""new\s+Response\s*\([^,]+,\s*\{\s*headers\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}"""
+    m = re.search(ref_pattern, src, re.DOTALL)
+    if m:
+        var_name = m.group(1)
+        # Now find the definition of this variable
+        var_pattern = rf"""const\s+{re.escape(var_name)}\s*=\s*(\{{[^}}]+\}})"""
+        vm = re.search(var_pattern, src, re.DOTALL)
+        if vm:
+            headers_str = vm.group(1)
+            ct_match = re.search(r'"Content-Type"\s*:\s*"([^"]+)"', headers_str)
+            rt_match = re.search(r'"X-Robots-Tag"\s*:\s*"([^"]+)"', headers_str)
+            if ct_match and rt_match:
+                return {
+                    "Content-Type": ct_match.group(1),
+                    "X-Robots-Tag": rt_match.group(1)
+                }
+
+    return {}
 
 
 # ---------------------------------------------------------------------------
@@ -52,26 +80,38 @@ def _extract_headers_obj(src: str) -> str:
 def test_doc_endpoint_uses_plain_response():
     """Doc endpoint returns plain Response instead of json() wrapper."""
     src = _read(DOC_SERVER)
-    assert re.search(r"new\s+Response\s*\(", src), \
+    assert re.search(r"""new\s+Response\s*\(""", src), \
         "Doc endpoint should use new Response()"
-    assert not re.search(r"return\s+json\s*\(", src), \
+    assert not re.search(r"""return\s+json\s*\(""", src), \
         "Doc endpoint should not use json() wrapper"
 
-    headers_src = _extract_headers_obj(src)
-    assert headers_src, "MARKDOWN_HEADERS constant not found in doc endpoint"
+    # Extract headers using behavior-based approach (any variable name or inline)
+    headers = _extract_response_headers_from_source(src, "doc")
+    assert headers, "Could not find Response headers with Content-Type and X-Robots-Tag in doc endpoint"
+    assert "text/markdown" in headers.get("Content-Type", ""), \
+        f"Content-Type should be text/markdown, got: {headers.get("Content-Type")}"
+    assert headers.get("X-Robots-Tag") == "noindex", \
+        f"X-Robots-Tag should be noindex, got: {headers.get("X-Robots-Tag")}"
 
-    # Behavioral: create a real Response with the extracted headers and verify
+    # Behavioral: create a real Response with extracted header values and verify
     r = _run_node(f"""
 (async () => {{
-    const headers = {headers_src};
+    const headers = {{
+        "Content-Type": "{headers["Content-Type"]}",
+        "X-Robots-Tag": "{headers["X-Robots-Tag"]}"
+    }};
     const resp = new Response("# Hello World", {{ headers }});
     const text = await resp.text();
     if (text !== "# Hello World") {{
         throw new Error("Expected raw markdown, got: " + text);
     }}
     const ct = resp.headers.get("Content-Type");
-    if (ct !== "text/markdown; charset=utf-8") {{
+    if (!ct || !ct.includes("text/markdown")) {{
         throw new Error("Wrong Content-Type: " + ct);
+    }}
+    const rt = resp.headers.get("X-Robots-Tag");
+    if (rt !== "noindex") {{
+        throw new Error("Wrong X-Robots-Tag: " + rt);
     }}
     console.log("PASS");
 }})().catch(e => {{ console.error(e.message); process.exit(1); }});
@@ -84,26 +124,38 @@ def test_doc_endpoint_uses_plain_response():
 def test_guide_endpoint_uses_plain_response():
     """Guide endpoint returns plain Response instead of json() wrapper."""
     src = _read(GUIDE_SERVER)
-    assert re.search(r"new\s+Response\s*\(", src), \
+    assert re.search(r"""new\s+Response\s*\(""", src), \
         "Guide endpoint should use new Response()"
-    assert not re.search(r"return\s+json\s*\(", src), \
+    assert not re.search(r"""return\s+json\s*\(""", src), \
         "Guide endpoint should not use json() wrapper"
 
-    headers_src = _extract_headers_obj(src)
-    assert headers_src, "MARKDOWN_HEADERS constant not found in guide endpoint"
+    # Extract headers using behavior-based approach (any variable name or inline)
+    headers = _extract_response_headers_from_source(src, "guide")
+    assert headers, "Could not find Response headers with Content-Type and X-Robots-Tag in guide endpoint"
+    assert "text/markdown" in headers.get("Content-Type", ""), \
+        f"Content-Type should be text/markdown, got: {headers.get("Content-Type")}"
+    assert headers.get("X-Robots-Tag") == "noindex", \
+        f"X-Robots-Tag should be noindex, got: {headers.get("X-Robots-Tag")}"
 
-    # Behavioral: create a real Response with the extracted headers and verify
+    # Behavioral: create a real Response with extracted header values and verify
     r = _run_node(f"""
 (async () => {{
-    const headers = {headers_src};
+    const headers = {{
+        "Content-Type": "{headers["Content-Type"]}",
+        "X-Robots-Tag": "{headers["X-Robots-Tag"]}"
+    }};
     const resp = new Response("# Guide Content", {{ headers }});
     const text = await resp.text();
     if (text !== "# Guide Content") {{
         throw new Error("Expected raw markdown, got: " + text);
     }}
     const ct = resp.headers.get("Content-Type");
-    if (ct !== "text/markdown; charset=utf-8") {{
+    if (!ct || !ct.includes("text/markdown")) {{
         throw new Error("Wrong Content-Type: " + ct);
+    }}
+    const rt = resp.headers.get("X-Robots-Tag");
+    if (rt !== "noindex") {{
+        throw new Error("Wrong X-Robots-Tag: " + rt);
     }}
     console.log("PASS");
 }})().catch(e => {{ console.error(e.message); process.exit(1); }});
@@ -116,10 +168,10 @@ def test_guide_endpoint_uses_plain_response():
 def test_client_uses_text_not_json():
     """Client fetches markdown via .text() instead of .json()/.markdown."""
     src = _read(CLIENT)
-    assert re.search(r"\.text\s*\(\s*\)", src), \
+    assert re.search(r"""\.text\s*\(\s*\)""", src), \
         "Client should use response.text()"
-    has_json = bool(re.search(r"\.json\s*\(\s*\)", src))
-    has_markdown_field = bool(re.search(r"\.markdown\b", src))
+    has_json = bool(re.search(r"""\.json\s*\(\s*\)""", src))
+    has_markdown_field = bool(re.search(r"""\.markdown\b""", src))
     assert not (has_json and has_markdown_field), \
         "Client should not use .json() + .markdown extraction pattern"
 
@@ -160,13 +212,20 @@ def test_content_type_markdown_in_servers():
     """Both server endpoints set Content-Type to text/markdown."""
     for path, name in [(DOC_SERVER, "doc"), (GUIDE_SERVER, "guide")]:
         src = _read(path)
-        headers_src = _extract_headers_obj(src)
-        assert headers_src, f"{name}: MARKDOWN_HEADERS not found"
+        headers = _extract_response_headers_from_source(src, name)
+        assert headers, f"{name}: Could not find Response headers with Content-Type and X-Robots-Tag"
+        assert "text/markdown" in headers.get("Content-Type", ""), \
+            f"{name}: Content-Type should be text/markdown, got: {headers.get("Content-Type")}"
+        assert headers.get("X-Robots-Tag") == "noindex", \
+            f"{name}: X-Robots-Tag should be noindex, got: {headers.get("X-Robots-Tag")}"
 
         # Behavioral: evaluate headers in Node and verify via real Response
         r = _run_node(f"""
 (async () => {{
-    const headers = {headers_src};
+    const headers = {{
+        "Content-Type": "{headers["Content-Type"]}",
+        "X-Robots-Tag": "{headers["X-Robots-Tag"]}"
+    }};
     const resp = new Response("test", {{ headers }});
     const ct = resp.headers.get("Content-Type");
     if (!ct || !ct.includes("text/markdown")) {{
@@ -216,11 +275,11 @@ def test_handler_structure_preserved():
     """SvelteKit handler exports (prerender, entries, GET) still present."""
     for path, name in [(DOC_SERVER, "doc"), (GUIDE_SERVER, "guide")]:
         src = _read(path)
-        assert re.search(r"export\s+(const\s+)?prerender", src), \
+        assert re.search(r"""export\s+(const\s+)?prerender""", src), \
             f"{name}: prerender export missing"
-        assert re.search(r"export\s+(async\s+)?function\s+entries", src), \
+        assert re.search(r"""export\s+(async\s+)?function\s+entries""", src), \
             f"{name}: entries() export missing"
-        assert re.search(r"export\s+async\s+function\s+GET", src), \
+        assert re.search(r"""export\s+async\s+function\s+GET""", src), \
             f"{name}: GET export missing"
 
 
@@ -230,7 +289,7 @@ def test_handlers_not_stub():
     for path, name in [(DOC_SERVER, "doc"), (GUIDE_SERVER, "guide")]:
         src = _read(path)
         has_logic = ("try" in src or "if " in src) and \
-            bool(re.search(r"new\s+Response", src))
+            bool(re.search(r"""new\s+Response""", src))
         assert has_logic, f"{name}: GET handler appears to be a stub"
         lines = [l for l in src.splitlines()
                  if l.strip() and not l.strip().startswith("//")
@@ -257,7 +316,9 @@ def test_repo_format_check():
         ["pnpm", "format:check"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Format check failed:
+{r.stdout[-500:]}
+{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -271,7 +332,9 @@ def test_repo_format_check_modified():
          "js/_website/src/lib/components/DocsCopyMarkdown.svelte"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check on modified files failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Format check on modified files failed:
+{r.stdout[-500:]}
+{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -282,7 +345,8 @@ def test_repo_client_build():
         ["pnpm", "--filter", "@gradio/client", "build"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Client build failed:
+{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -354,8 +418,10 @@ console.log('PASS');
     r = subprocess.run(["node", "check-syntax.cjs"], capture_output=True, text=True, timeout=30, cwd=REPO)
     err = r.stderr[-500:] if r.stderr else ""
     out = r.stdout[-500:] if r.stdout else ""
-    assert r.returncode == 0, f"TypeScript syntax check failed:\n{err}"
-    assert "PASS" in r.stdout, f"Expected PASS in output, got:\n{out}"
+    assert r.returncode == 0, f"TypeScript syntax check failed:
+{err}"
+    assert "PASS" in r.stdout, f"Expected PASS in output, got:
+{out}"
 
 
 # [repo_tests] pass_to_pass
@@ -367,11 +433,14 @@ def test_repo_client_node_tests():
         ["pnpm", "--filter", "@gradio/client", "build"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Client build failed:
+{r.stderr[-500:]}"
 
     # Run node-based tests (no browser needed)
     r = subprocess.run(
         ["pnpm", "--filter", "@gradio/client", "test:node"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Client node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Client node tests failed:
+{r.stderr[-500:]}
+{r.stdout[-500:]}"

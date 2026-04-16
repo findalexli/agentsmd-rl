@@ -2,34 +2,31 @@
 
 ## Problem
 
-In the ClickHouse codebase at `/workspace/ClickHouse`, the user-defined SQL objects ZooKeeper storage implementation (in `src/Functions/UserDefined/`) has a bug in its object refresh logic. When the underlying ZooKeeper session expires mid-operation, the code throws exceptions instead of recovering.
+In the ClickHouse codebase at `/workspace/ClickHouse`, the `refreshObjects` function in `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp` has a bug: when the underlying ZooKeeper session expires mid-operation, the retry mechanism fails to recover because it continues using the expired session.
 
-### Symptom
+### Symptoms
 
-Two related issues cause the failure:
+The function uses `ZooKeeperRetriesControl` (accessible as `retries_ctl`) to retry transient ZooKeeper errors via its `retryLoop()` method. However, two issues prevent successful recovery:
 
-1. **Stale watches**: `getObjectNamesAndSetWatch` is called once *before* the retry loop begins, so watches are bound to a session that may later expire. On retry, operations fail because watches are still attached to the expired session.
+1. **Watches bound to expired session**: The call to `getObjectNamesAndSetWatch` (which retrieves object names and registers ZooKeeper watches) is made *before* the `retryLoop()` begins. When the session expires and a retry occurs, the watches remain attached to the dead session, causing subsequent operations to fail.
 
-2. **Stale session handle**: The `zookeeper` parameter captured at function entry is reused throughout all retry iterations. Even when the underlying session has expired between attempts, the stale handle continues to be used for all ZooKeeper operations.
+2. **No session refresh on retry**: The `zookeeper` function parameter is captured once at function entry and never updated. On retry iterations, the code reuses the same (possibly expired) session handle for all ZooKeeper operations, including `tryLoadObject` and `getObjectNamesAndSetWatch`.
 
-### Available Infrastructure
+## Verification Criteria
 
-The class already provides the tools needed for recovery:
+The fixed `refreshObjects` function must satisfy all of the following:
 
-- `zookeeper_getter` — a member whose `getZooKeeper()` method returns `std::pair<ZooKeeperPtr, ...>`. Use `.first` to extract the session pointer.
-- `retries_ctl.isRetry()` — detects whether the current retry-loop iteration is a retry (as opposed to the first attempt).
-- `retries_ctl.retryLoop(...)` — the retry loop wrapper already in use.
+1. **Session tracking variable**: A local variable of type `zkutil::ZooKeeperPtr` named `current_zookeeper` must be declared, initialized from the `zookeeper` parameter. This variable tracks the potentially refreshed session.
 
-## Requirements
+2. **Session refresh on retry**: Inside the `retries_ctl.retryLoop()` lambda, when `retries_ctl.isRetry()` is true, the `current_zookeeper` variable must be reassigned from `zookeeper_getter.getZooKeeper().first` to obtain a fresh session handle.
 
-After the fix, the code must satisfy all of the following:
+3. **Watches on current session**: The `getObjectNamesAndSetWatch` call must appear inside the retry loop (not before it) and must use `current_zookeeper` as its first argument. There must be no `getObjectNamesAndSetWatch` call involving `object_names` before the retry loop.
 
-1. The active ZooKeeper session must be tracked in a variable named `current_zookeeper` of type `zkutil::ZooKeeperPtr`, initialized from the original `zookeeper` parameter.
+4. **Consistent session usage**: Both `tryLoadObject` and `getObjectNamesAndSetWatch` must be called with `current_zookeeper` (not the original `zookeeper` parameter) as their first argument inside the retry loop.
 
-2. On retry iterations (detected via `retries_ctl.isRetry()`), the session-tracking variable must be updated with a fresh session from `zookeeper_getter.getZooKeeper().first`.
+5. **Terminology**: Per the project's `CLAUDE.md` (in the repository root), when referring to logical errors in comments, use the word **"exception"** rather than **"crash"**.
 
-3. The `getObjectNamesAndSetWatch` call must be inside the retry loop (not before it), so that watches are always established on the current session.
+## Style Conventions
 
-4. All ZooKeeper operations inside the retry loop — including `tryLoadObject` and `getObjectNamesAndSetWatch` — must use `current_zookeeper` rather than the original `zookeeper` parameter.
-
-5. Per the conventions in `CLAUDE.md`, comments should use the word "exception" (not "crash") when referring to logical errors.
+- 4-space indentation (no tabs), no trailing whitespace, lines within 140 characters
+- Must pass `clang-format` checks

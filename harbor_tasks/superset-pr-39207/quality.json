@@ -1,58 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific identifiers like 'applied_adhoc_filters_columns', 'force_type_check', the exact file path 'superset/models/helpers.py', and the exact keyword argument 'template_processor=template_processor'. The instruction.md mentions 'adhoc_column_to_sqla' and 'template_processor' but does not mention 'applied_adhoc_filters_columns', 'force_type_check', or the exact file path 'superset/models/helpers.py'. These specifics are not discoverable from the instruction alone."
+      "outcome": "pass",
+      "reason": "Instruction names adhoc_column_to_sqla, template_processor parameter, and the filter code path; tests check these same names in helpers.py."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the symptom (Jinja templates not rendered in adhoc column filters) and hints at the area (template_processor not being passed through) but does not specify the exact line, file, or code change needed."
+      "reason": "Instruction describes the bug and hints at where to investigate but doesn't give the exact line change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex and AST parsing to check that adhoc_column_to_sqla calls with force_type_check=True also have template_processor as a keyword argument. An alternative fix that, say, renders templates earlier in the pipeline (before adhoc_column_to_sqla is called) or handles it inside adhoc_column_to_sqla itself would fail these tests. The tests assert on gold-specific implementation details like the exact keyword argument pattern."
+      "reason": "Tests assert specifically that the call with force_type_check=True must have template_processor=template_processor as a keyword arg; an alternative fix that renders the template before the call or uses positional args would fail test_adhoc_column_filter_passes_template_processor."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_adhoc_column_filter_passes_template_processor, test_adhoc_column_filter_template_processor_in_call, test_jinja_template_in_adhoc_filter_would_be_processed) all use string matching (regex) or AST inspection of source code text. None of them import the code, instantiate objects, or execute the actual rendering logic. They are purely 'assert X in open(path).read()' style tests."
+      "reason": "All f2p tests use file.read_text() with regex/AST inspection (e.g., test_adhoc_column_filter_passes_template_processor checks 'template_processor=template_processor' as a substring); no behavioral execution of the rendering."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific keyword arguments in specific call sites. A stub or no-op implementation would not pass because the tests verify the presence of 'template_processor=template_processor' in the adhoc_column_to_sqla call with force_type_check=True, which is absent in the base commit."
+      "reason": "Stub implementations wouldn't satisfy the requirement that the specific call site includes template_processor=template_processor."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes that template_processor is not being passed through in the adhoc column filter code path, and the tests verify exactly this behavior (that template_processor is passed to adhoc_column_to_sqla in the filter processing section)."
+      "reason": "Instruction's requirement (pass template_processor through adhoc filter path) is tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass tests', 'Pass-to-pass tests'), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests grouped with section comments for fail-to-pass, pass-to-pass, and CI checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code bug fix, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the task files."
+      "reason": "Filenames and identifiers are consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the method name 'adhoc_column_to_sqla' and 'template_processor' parameter but does not name the exact file or line number. It says 'Investigate the query generation code paths' which is appropriate guidance without being too specific."
+      "reason": "Instruction names method adhoc_column_to_sqla but not exact file/line; localization remains part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 7,
+  "fail_count": 2
 }

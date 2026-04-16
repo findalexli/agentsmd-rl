@@ -1,0 +1,114 @@
+source_pr:
+  owner: excalidraw
+  repo: excalidraw
+  number: 10707
+  title: "fix: Increase iteration on curve intersection calc"
+  merge_commit: "54fa0c908969236908aab47b908fb648ddc01cb8"
+  base_commit: "dfdd994dbbefc0562c0c5e42f267f23ae8d9d62d"
+
+# Checks correspond 1:1 with test_outputs.py functions
+checks:
+  - id: test_iteration_count_increased
+    type: fail_to_pass
+    origin: gold_patch
+    description: solveWithAnalyticalJacobian must be called with iterLimit=4 instead of 3
+    points: 25
+
+  - id: test_fallback_code_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: Fallback mechanism using lineSegmentIntersectionPoints must be removed
+    points: 25
+
+  - id: test_unused_import_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: Unused import lineSegmentIntersectionPoints must be removed from curve.ts
+    points: 15
+
+  - id: test_curve_intersection_accuracy
+    type: fail_to_pass
+    origin: gold_patch
+    description: Curve intersection tests should pass
+    points: 15
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes (yarn test:typecheck)
+    points: 10
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes (yarn test:code)
+    points: 5
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting passes (yarn test:other)
+    points: 5
+
+  - id: test_repo_math_curve_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Math package curve tests pass (npx vitest run packages/math/tests/curve.test.ts)
+    points: 10
+
+  - id: test_repo_build_math
+    type: pass_to_pass
+    origin: repo_tests
+    description: Math package builds successfully (yarn build:math)
+    points: 5
+
+# Rubric entries from agent config files (CLAUDE.md, .github/copilot-instructions.md)
+rubric:
+  - id: use_typescript
+    description: Code must be written in TypeScript (per CLAUDE.md and copilot-instructions.md)
+    points: 5
+    source:
+      file: CLAUDE.md
+      ref: "Use TypeScript for all new code"
+
+  - id: prefer_no_allocation
+    description: Prefer implementations without allocation (per CLAUDE.md and copilot-instructions.md)
+    points: 5
+    source:
+      file: CLAUDE.md
+      ref: "prefer implementations without allocation"
+
+  - id: use_math_types
+    description: Include packages/math/src/types.ts and use Point type instead of {x,y}
+    points: 5
+    source:
+      file: CLAUDE.md
+      ref: "Always include packages/math/src/types.ts in the context when your write math related code and always use the Point type instead of { x, y}"
+
+  - id: prefer_immutable
+    description: Prefer immutable data (const, readonly) per copilot-instructions.md
+    points: 5
+    source:
+      file: .github/copilot-instructions.md
+      ref: "Prefer immutable data (const, readonly)"
+
+  - id: naming_conventions
+    description: Follow naming conventions (PascalCase for types, camelCase for functions, ALL_CAPS for constants)
+    points: 5
+    source:
+      file: .github/copilot-instructions.md
+      ref: "Use PascalCase for component names, interfaces, and type aliases; Use camelCase for variables, functions, and methods; Use ALL_CAPS for constants"
+
+  - id: use_modern_ts
+    description: Use optional chaining and nullish coalescing operators
+    points: 3
+    source:
+      file: .github/copilot-instructions.md
+      ref: "Use optional chaining (?.) and nullish coalescing (??) operators"
+
+# Metadata
+metadata:
+  task_name: excalidraw-curve-intersection-iteration
+  difficulty: easy
+  language: typescript
+  area: math/geometry

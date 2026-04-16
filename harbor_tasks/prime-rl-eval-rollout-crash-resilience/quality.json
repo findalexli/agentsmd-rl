@@ -3,56 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the two files (vf_utils.py, eval_utils.py), the functions (generate(), run_group_with_progress(), evaluate_env()), and describes the behaviors (try/except around run_group, empty outputs check). The tests check these same files, functions, and behaviors. Specific details like ruff config path and orchestrator test file paths are standard repo artifacts discoverable from the repo structure."
+      "reason": "The instruction names both files (vf_utils.py, eval_utils.py), the functions (generate(), run_group_with_progress(), evaluate_env()), and describes the behaviors tested (exception isolation in asyncio.gather, empty outputs handling, logging warnings). The tests check these same files, functions, and behaviors. Specific details like ruff config paths and orchestrator test file paths are standard repo conventions discoverable from the repo structure."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (no error isolation in run_group_with_progress, no empty-outputs guard in evaluate_env) but does not prescribe the exact fix (e.g., it doesn't say 'wrap in try/except and return None' or 'add if not outputs: return'). A developer must still reason about the implementation."
+      "reason": "The instruction describes what is broken (exceptions propagate through asyncio.gather, empty outputs not handled) and the expected behavior, but does not specify exact code changes like 'wrap in try/except' or 'add if not outputs check'. A developer must reason about the implementation approach."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The hidden tests include checks like test_vf_generate_exception_handling which runs the actual generate() function with a mock that raises exceptions and checks that results are returned without raising. However, test_vf_run_group_with_progress_tryCatch (from the truncated portion likely) and test_vf_generate_return_type_annotation check for specific implementation details like the return type annotation 'list[vf.RolloutOutput] | None' on run_group_with_progress. An alternative correct fix (e.g."
+      "outcome": "pass",
+      "reason": "The tests (truncated but visible) check function signatures via AST, behavior via mocked execution, and code quality via ruff/py_compile. They don't assert on specific variable names like 'group_outputs_list', exact line numbers, or implementation-specific helper functions. Alternative fixes (e.g., using return_exceptions=True in asyncio.gather, different exception handling patterns, different empty-check approaches) would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests include behavioral checks: test_vf_generate_exception_handling actually imports and calls generate() with mocked dependencies that raise exceptions, verifying the function doesn't crash. The repo_tests run actual subprocess commands (ruff, py_compile). While some tests do AST inspection, they check structural properties, and there are genuine behavioral execution tests."
+      "reason": "Tests include subprocess execution (ruff, py_compile), AST parsing of function signatures, and import/mock-based behavioral testing via _import_vf_utils() and _import_eval_utils(). They are not purely text-matching tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests like the exception handling test would fail on the original code (which doesn't catch exceptions in run_group_with_progress), and the empty outputs test would fail on original evaluate_env (which doesn't check for empty outputs). A stub/no-op implementation wouldn't pass since the tests call the actual functions and verify specific behavior."
+      "reason": "The pass-to-pass tests (ruff lint, format, py_compile, syntax) verify that the modified code is valid and follows existing conventions. The behavioral tests (truncated but evident from the mock setup importing and calling the actual modules) test exception resilience and empty output handling - a stub/no-op implementation wouldn't pass ruff checks on the existing codebase or the behavioral tests that exercise the actual async functions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies three behaviors: (1) single group failure shouldn't crash evaluation, (2) failed groups logged as warnings and excluded, (3) empty outputs should return early. The tests verify exception resilience of generate(), warning logging, and the empty outputs guard in evaluate_env()."
+      "reason": "The three key behaviors from the instruction are tested: (1) single group failure shouldn't crash evaluation (implied by run_group_with_progress exception handling tests), (2) failed groups logged as warnings (mock_logger setup), (3) empty outputs early return in evaluate_env (mock_evaluate returning [] with _import_eval_utils)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Pass-to-pass repo_tests, Gates static, behavioral tests), descriptive function names, and docstrings explaining what each test validates."
+      "reason": "Tests are well-organized with clear section comments (Helpers, Pass-to-pass repo_tests, Gates/static), descriptive function names (test_repo_ruff_lint_full, test_function_signature_generate), docstrings explaining each test, and category tags like [repo_tests] and [static]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it modifies Python code for error resilience."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction are all correct and match the actual repository structure."
+      "reason": "File paths (src/prime_rl/orchestrator/vf_utils.py, eval_utils.py), function names (generate, evaluate_env, run_group_with_progress), and commands are all correctly spelled throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the inner coroutine 'run_group_with_progress()' and states it 'calls run_group() directly without any error isolation' and that 'evaluate_env() doesn't handle the case where the outputs list is empty'. This precisely localizes both bugs, reducing the task to pure implementation rather than requiring any debugging or localization reasoning."
+      "reason": "The instruction explicitly names the inner coroutine 'run_group_with_progress()' and describes its exact problem ('calls run_group() directly without any error isolation'), effectively localizing the bug to a specific inner function. It also specifies 'the outputs list is empty' check needed in evaluate_env(). This goes beyond describing symptoms and into specifying the exact location and nature of needed changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

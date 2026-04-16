@@ -3,61 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not fully discoverable from instruction.md alone. For example, test_results_component_tests_pass checks for a variable named 'contextMenuMountCount' and the assertion 'expect(contextMenuMountCount).toBe(1)' in a specific test file path 'apps/studio/tests/components/SQLEditor/Results.test.tsx'. While the instruction does mention these, test_results_utils_functions checks for 'describe(\"formatClipboardValue\"' in 'apps/studio/tests/components/SQLEditor/Results.utils.te"
+      "reason": "The tests check for specific implementation details like `contextMenuCellRef`, `triggerRef`, `handleContextMenu`, `contextMenuMountCount` variable name, and the exact test file paths `apps/studio/tests/components/SQLEditor/Results.utils.test.ts` and `apps/studio/tests/components/SQLEditor/Results.test.tsx`. While most of these ARE mentioned in instruction.md's acceptance criteria, the hidden test `test_single_context_menu_pattern` performs AST analysis checking that no nested function at depth >"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: 'Import useCallback, useMemo, and useRef', 'Define a ref named contextMenuCellRef', 'Define a ref named triggerRef', 'Define a function named handleContextMenu wrapped in useCallback', 'Wrap the columns definition in useMemo', 'Render a single ContextMenu_Shadcn_ component at the component level'. This is a complete implementation specification, not a description of what's broken. The agent doesn't need to reason about what to change"
+      "reason": "The instruction explicitly prescribes the exact solution: use `useRef` with specific ref names (`contextMenuCellRef`, `triggerRef`), define a function named `handleContextMenu` using `useCallback`, memoize `columns` with `useMemo`, create specific utility functions `formatCellValue` and `formatClipboardValue` with exact behavior, and use specific CSS classes (`flex-1`, `flex flex-col`, `max-h-64`). This is not describing what's broken \u2014 it's specifying exactly what to change and how."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: test_single_context_menu_pattern checks for exact strings 'triggerRef', 'contextMenuCellRef', 'handleContextMenu' in Results.tsx. An alternative correct fix could use different ref names (e.g., 'menuTriggerRef', 'activeCellRef', 'onContextMenu') and still fix the performance issue, but would fail these tests."
+      "reason": "Tests assert gold-specific variable names: `contextMenuCellRef` (ref name), `triggerRef` (ref name), `handleContextMenu` (function name), `contextMenuMountCount` (variable in test file). Tests like `test_single_context_menu_pattern` grep for these exact identifiers via AST analysis. An alternative correct fix using different variable names (e.g., `cellRef`, `menuTriggerRef`, `onRightClick`) would fail these tests despite being functionally equivalent."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Almost all tests are text/grep-based: test_single_context_menu_pattern reads file content and checks for string presence ('useRef' in content, 'triggerRef' in content, etc.), test_results_utils_functions reads file and checks 'export function formatClipboardValue' in content, test_queryblock_flex_layout checks 'flex flex-col' in content. No test actually imports, compiles, or executes the TypeScript code. The only execution-based test is test_p2p_repo_prettier_check which runs prettier."
+      "outcome": "pass",
+      "reason": "Tests `test_format_clipboard_value_behavior` and `test_format_cell_value_behavior` actually import and execute the functions via `npx tsx -e`, checking return values against expected outputs. The AST test (`test_single_context_menu_pattern`) parses TypeScript and walks the AST. However, many pass_to_pass tests are grep-based text checks (e.g., `test_p2p_results_utils_has_formatresults`). Since at least the behavioral tests do execute code, this passes."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_results_utils_functions, test_single_context_menu_pattern, test_queryblock_flex_layout, test_results_component_tests_pass) only check for string presence in files. A stub that contains the right keywords/strings without implementing actual logic would pass. For example, formatClipboardValue and formatCellValue could be empty functions with the right export signatures and all text-matching tests would pass."
+      "outcome": "pass",
+      "reason": "The behavioral tests `test_format_clipboard_value_behavior` and `test_format_cell_value_behavior` test specific input/output pairs (null\u2192'', {a:1}\u2192'{\"a\":1}', null\u2192'NULL', etc.) that would not be satisfied by stub implementations returning empty strings or None. The AST analysis test requires actual structural changes. A stub would fail these."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'renderCell function should call formatCellValue to display cell values' and that formatClipboardValue handles nulls/objects/primitives correctly, but no test actually verifies the runtime behavior of these functions (no execution of formatCellValue or formatClipboardValue with test inputs)."
+      "outcome": "pass",
+      "reason": "The instruction's acceptance criteria are largely tested: utility functions behavior, single context menu pattern, QueryBlock flex classes, prettier formatting, file existence, and test file creation. The specific test files mentioned in acceptance criteria #4 are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names and docstrings, grouped into 'pass_to_pass' and 'Original tests' sections with clear naming conventions like test_p2p_* and test_*."
+      "reason": "Tests are grouped into pass_to_pass tests and behavioral tests with clear section comments. Each test function has a descriptive docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about UI component refactoring, not producing structured data output."
+      "reason": "This task involves component refactoring and utility functions, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, function names, CSS class names, and commands in instruction.md and tests match consistently without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact ref names ('contextMenuCellRef', 'triggerRef'), exact function names ('handleContextMenu'), exact hooks to use ('useCallback', 'useMemo', 'useRef'), and exact CSS classes ('flex-1', 'flex flex-col', 'max-h-64'). This goes well beyond identifying the buggy area and specifies the exact implementation."
+      "reason": "Instruction.md names exact file paths (`Results.tsx`, `Results.utils.ts`, `QueryBlock.tsx`), exact ref names (`contextMenuCellRef`, `triggerRef`), exact function names (`handleContextMenu`), exact React hooks to use (`useRef`, `useCallback`, `useMemo`), and exact CSS classes to apply (`flex-1`, `flex flex-col`, `max-h-64` replacing `overflow-auto`). This goes far beyond identifying the buggy area \u2014 it prescribes the complete implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 4
 }

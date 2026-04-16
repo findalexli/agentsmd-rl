@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (src/shell/braces.zig), the functions (flattenTokens, Parser.advance, prev), the API calls (Bun.$.braces with empty string, parse:true, tokenize:true), and the expected return value (['']). The tests check these same things. Static tests check for struct names and function names all mentioned in the instruction. The only arguably undiscoverable detail is the exact schema key 'expansions' returned by parse:true, but this is standard Bun API behavior discoverable fro"
+      "reason": "The instruction names the file (src/shell/braces.zig), the functions (flattenTokens, Parser.advance, prev), the API calls (Bun.$.braces with empty string, parse:true, tokenize:true), and the expected return value (['']). The tests check these same things. Static tests check for 'brace_count', '.open', struct names, etc., which are discoverable from the instruction's mention of the file and its brace expansion lexer context. The test for 'a{b,c}d' expanding to ['abd','acd'] is standard brace expa"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the two crash sites conceptually (accessing items[0] without checking empty, and u32 underflow in current-1) but does NOT specify the exact fix code. A developer must still reason about what guard to add and how to handle the edge cases."
+      "reason": "The instruction describes the two crash sites and their causes (unconditional access of items[0], u32 underflow in prev()) but does not prescribe the exact fix. A developer still needs to reason about how to guard these cases."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_prev_normal_case_intact asserts 'current - 1' appears in the prev() function body using a regex. An alternative correct fix might refactor prev() to not use 'current - 1' directly (e.g., using a helper or restructuring the logic), and would fail this static test. Similarly, test_flatten_tokens_not_stub checks for 'brace_count' and '.open' and requires >=15 lines, which could reject a valid refactored solution. These tests enforce gold-specific implementation details."
+      "reason": "test_prev_normal_case_intact requires a regex match for 'current - 1' inside prev(), and test_flatten_tokens_not_stub checks for 'brace_count' and '.open' in the source and requires flattenTokens to have >=15 non-comment lines. An alternative correct fix that refactors prev() to not use 'current - 1' (e.g., using an index variable or restructuring the logic) or restructures flattenTokens differently would fail these static assertions even if behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_braces_empty_string_no_crash, test_braces_empty_string_parse_true, test_braces_empty_string_tokenize_true, test_braces_nonempty_input_still_works) all execute JavaScript code via bun subprocess and check actual runtime behavior. While some static tests do text inspection, the core behavioral tests execute the code."
+      "reason": "The fail-to-pass tests (test_braces_empty_string_no_crash, test_braces_empty_string_parse_true, test_braces_empty_string_tokenize_true, test_braces_nonempty_input_still_works) all execute JavaScript via bun subprocess and check return codes and parsed JSON output. While some pass-to-pass tests are static source checks, the core behavioral tests execute actual code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests run the actual buggy code (Bun.$.braces('')) which panics/crashes on the unfixed version. A stub that returns empty or default would not produce returncode==0 with correct JSON output. test_braces_nonempty_input_still_works checks that 'a{b,c}d' expands to ['abd','acd'], requiring real brace expansion logic."
+      "reason": "The f2p tests run the actual bun runtime with Bun.$.braces('') and check that it doesn't crash (returncode==0) and returns specific values like [''] or ['abd','acd']. A stub that doesn't fix the panic would crash, and returning wrong values would fail the JSON assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies three crash cases (empty string, parse:true, tokenize:true) and expected behavior ([''] return). All three are tested, plus a regression test for non-empty input."
+      "reason": "The instruction specifies three crash cases (empty string, parse:true, tokenize:true) and expected behavior ([''] return). All three are tested, plus a regression test for normal brace expansion."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass, Fail-to-pass/pr_diff), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are grouped with clear section comments (Gates pass_to_pass, Fail-to-pass pr_diff, Pass-to-pass static), have descriptive function names, and include detailed docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies expected return value [''] for empty input. The parse:true variant returns an object with 'expansions' key, and tokenize:true returns an array. These schemas are verified in the tests and the basic return type is documented in the instruction."
+      "reason": "The instruction specifies that braces('') should return [''], and parse:true/tokenize:true variants should handle empty input gracefully. Tests verify JSON schema: parse:true returns an object with 'expansions' key, tokenize:true returns a list."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or commands in the instruction or tests."
+      "reason": "No typos found in filenames, paths, commands, function names, or variable names in the instruction or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact functions (flattenTokens, Parser.advance, prev) and describes the exact bug mechanism (accessing items[0] unconditionally, self.current-1 underflow at 0). This goes beyond describing symptoms and essentially pinpoints the exact lines/operations to fix, reducing the localization task to near-zero."
+      "reason": "The instruction names the exact file (src/shell/braces.zig) AND the exact functions (flattenTokens, Parser.advance, prev) AND describes the precise root cause at the code level (unconditional access of self.tokens.items[0], self.current - 1 underflow). This goes beyond describing symptoms and essentially localizes the bug to specific lines/expressions."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

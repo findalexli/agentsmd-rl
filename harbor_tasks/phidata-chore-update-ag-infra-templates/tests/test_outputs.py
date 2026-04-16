@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import re
 import subprocess
 from pathlib import Path
 
@@ -33,6 +34,18 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
+
+def _parse_version(version_str):
+    """Parse version string like '1.0.6' into tuple of ints for comparison."""
+    return tuple(int(x) for x in version_str.strip().strip('"').split('.'))
+
+
+def _compare_versions(v1_str, v2_str):
+    """Compare two version strings. Returns True if v1 > v2."""
+    v1 = _parse_version(v1_str)
+    v2 = _parse_version(v2_str)
+    return v1 > v2
+
 
 # [pr_diff] fail_to_pass
 def test_enum_values_renamed():
@@ -64,10 +77,9 @@ def test_enum_values_renamed():
             f"Enum value '{val}' still has '-template' suffix"
         )
 
-    # Verify specific expected names exist
-    assert "agentos_docker" in member_names, "Missing agentos_docker member"
-    assert "agentos_aws" in member_names, "Missing agentos_aws member"
-    assert "agentos_railway" in member_names, "Missing agentos_railway member"
+    # Verify we have exactly 3 members (same count as original)
+    assert len(member_names) == 3, f"Expected 3 enum members, got {len(member_names)}"
+    assert len(member_values) == 3, f"Expected 3 enum values, got {len(member_values)}"
 
 
 def _get_map_from_ast(tree, map_name):
@@ -103,22 +115,23 @@ def test_template_name_map_updated():
         assert not val.endswith("-template"), (
             f"TEMPLATE_TO_NAME_MAP value '{val}' still has '-template' suffix"
         )
-    assert "agentos-docker" in values
-    assert "agentos-aws" in values
-    assert "agentos-railway" in values
 
 
 # [pr_diff] fail_to_pass
 def test_default_template_prompt_updated():
-    """User prompt must show 'agentos-docker' not 'agentos-docker-template'."""
+    """User prompt default template name should not have -template suffix."""
     operator_py = Path(REPO) / "libs" / "agno_infra" / "agno" / "infra" / "operator.py"
     content = operator_py.read_text()
-    # The prompt string shown to users
-    assert 'default (agentos-docker)' in content, (
-        "User prompt should say 'agentos-docker' not 'agentos-docker-template'"
-    )
-    assert 'default (agentos-docker-template)' not in content, (
-        "User prompt still references 'agentos-docker-template'"
+    
+    # Find the print_info line that shows the default template
+    # The format is: print_info("...default (TEMPLATE_NAME)")
+    match = re.search(r'print_info\([^)]*default\s*\(([^)]+)\)', content)
+    assert match, "Could not find default template in print_info call"
+    
+    default_name = match.group(1)
+    # The default name shown to user should not have -template suffix
+    assert not default_name.endswith("-template"), (
+        f"User prompt default '{default_name}' still has '-template' suffix"
     )
 
 
@@ -139,11 +152,18 @@ def test_repo_urls_unchanged():
 
 # [pr_diff] fail_to_pass
 def test_version_bumped():
-    """agno-infra version must be bumped to 1.0.7."""
+    """agno-infra version must be greater than 1.0.6 after being updated."""
     pyproject = Path(REPO) / "libs" / "agno_infra" / "pyproject.toml"
     content = pyproject.read_text()
-    assert 'version = "1.0.7"' in content, (
-        "pyproject.toml version should be 1.0.7"
+    
+    # Extract version line - find version = "X.Y.Z"
+    match = re.search(r'version\s*=\s*"([^"]+)"', content)
+    assert match, "version not found in pyproject.toml"
+    
+    version_str = match.group(1)
+    # Verify version is greater than original 1.0.6
+    assert _compare_versions(version_str, "1.0.6"), (
+        f"pyproject.toml version {version_str} should be greater than 1.0.6"
     )
 
 

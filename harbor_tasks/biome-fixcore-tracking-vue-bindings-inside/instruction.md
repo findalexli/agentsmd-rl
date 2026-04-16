@@ -7,79 +7,75 @@ Biome's `noUnusedVariables` lint rule incorrectly reports variables as unused wh
 - In Vue: `@click="handler"`, `:disabled="!supported"`, `v-if="count > 0"` — the variables `handler`, `supported`, `count` are flagged as unused even though they are used in the template.
 - In Svelte: `bind:value={inputValue}`, `class:active={isActive}` — the variables `inputValue`, `isActive` are flagged as unused.
 
-The linter is not extracting and analyzing the JavaScript expressions inside these directive attributes, so variables referenced there are invisible to the usage tracker.
+The linter's embedded-language extraction does not currently process directive attributes, so JavaScript expressions inside them are invisible to the variable usage tracker.
 
 ## Requirements
 
-### Code Changes
+### Vue Directive Tracking
 
-#### 1. `crates/biome_html_syntax/src/directive_ext.rs` (new file)
+The embedded-node extraction logic must recognize and parse all 4 Vue directive AST types:
 
-Create a new module that implements an `initializer()` method on `AnySvelteDirective`. The method must:
-- Return `Option<HtmlAttributeInitializerClause>`
-- Match on all 8 Svelte directive variants: `SvelteBindDirective`, `SvelteClassDirective`, `SvelteInDirective`, `SvelteOutDirective`, `SvelteStyleDirective`, `SvelteTransitionDirective`, `SvelteUseDirective`, `SvelteAnimateDirective`
+- `VueDirective` (handles `v-if`, `v-show`, `v-on:click`, etc.)
+- `VueVOnShorthandDirective` (handles `@click`, `@input`, etc.)
+- `VueVBindShorthandDirective` (handles `:prop`, `:disabled`, etc.)
+- `VueVSlotShorthandDirective` (handles `#slot`, `#default`, etc.)
 
-#### 2. `crates/biome_html_syntax/src/lib.rs`
+Each must be detected via `cast_ref`, have its `.initializer()` extracted, and be parsed as embedded JavaScript tagged with `EmbeddingKind::Vue`. Vue directive values are quoted strings (e.g., `@click="handler"`), so the inner string content must be extracted (not the raw token with quotes). Proper offset calculation using `TextSize` is required so that error positions map correctly back to the source.
 
-Register the new module by adding `mod directive_ext;`.
+### Svelte Directive Tracking
 
-#### 3. `crates/biome_service/src/file_handlers/html.rs`
+All 8 variants of the `AnySvelteDirective` enum must be handled:
 
-Add directive attribute parsing logic in the `parse_embedded_nodes` function:
+- `SvelteBindDirective`
+- `SvelteClassDirective`
+- `SvelteInDirective`
+- `SvelteOutDirective`
+- `SvelteStyleDirective`
+- `SvelteTransitionDirective`
+- `SvelteUseDirective`
+- `SvelteAnimateDirective`
 
-For Vue directives, handle these 4 directive types:
-- `VueDirective`
-- `VueVOnShorthandDirective`
-- `VueVBindShorthandDirective`
-- `VueVSlotShorthandDirective`
+A `directive_ext` module must be added to the `biome_html_syntax` crate (declared in its `lib.rs`) that provides a way to obtain the `HtmlAttributeInitializerClause` from any `AnySvelteDirective` variant. This module must match on all 8 variants and chain through `.value()` and `.initializer()` for each. The extracted content should be parsed as embedded JavaScript tagged with `EmbeddingKind::Svelte`.
 
-Vue directive values are quoted strings stored in `HtmlAttributeInitializerClause`. They must be:
-- Extracted and parsed as JavaScript
-- Tagged with `EmbeddingKind::Vue`
+Unlike Vue, Svelte directives use curly-brace text expressions (e.g., `bind:value={x}`), so the implementation must extract text expressions rather than quoted strings.
 
-For Svelte directives:
-- Match with `AnySvelteDirective::cast_ref`
-- Call the `initializer()` method to get `HtmlAttributeInitializerClause`
-- Tag with `EmbeddingKind::Svelte`
+### Helper Functions
 
-Svelte directive expressions are curly-braced text expressions in `HtmlAttributeInitializerClause`.
-
-Both Vue and Svelte directive handlers require helper functions that:
-- Accept `HtmlAttributeInitializerClause` as parameter
-- For Vue (quoted strings): Use `inner_string_text()` for extraction and offset by `TextSize::from(1)` for the opening quote
-- For Svelte (curly braces): Use `as_html_attribute_single_text_expression()` for extraction
+At least 2 helper functions must exist that accept an `HtmlAttributeInitializerClause` parameter — one for parsing Vue-style quoted string values (using `inner_string_text()` and `TextSize` offset calculation) and one for parsing Svelte-style text expression values (using `expression()` and the existing text expression parsing infrastructure).
 
 ### Documentation Updates
 
 #### `AGENTS.md`
 
-Add guidance on:
-- Not claiming patterns are "widely used" or "common" without evidence — ask the user first
-- Not implementing legacy/deprecated syntax without checking with the user first
-- Inspecting AST structure (using the parser crate's `quick_test`) before implementing
-- Referencing `.claude/skills/` for implementation details
+Add new items to the project's do's and don'ts:
+
+- Warn against claiming patterns are "widely used" or "common" without evidence
+- Warn against implementing legacy/deprecated syntax without checking with the user first
+- Recommend inspecting AST structure (e.g., using the parser crate's `quick_test`) before implementing
+- Reference the `.claude/skills/` directory for technical implementation details
 
 #### `.claude/skills/testing-codegen/SKILL.md`
 
-Add a "Quick Test for Parser Development" section covering:
+Add a section on quick testing for parser development covering:
+
 - The `just qt` command for running quick tests
-- `biome_html_parser` for HTML/embedded language testing
-- Using `dbg!` to inspect AST structure
+- Using `biome_html_parser` for HTML/embedded language parser testing
 
 #### `.claude/skills/biome-developer/SKILL.md` (new file)
 
-Create a skill file with:
-- `inner_string_text()` usage for extracting quoted string content (not `text_trimmed()`)
-- `quick_test` for AST inspection
-- `EmbeddingKind` variants for embedded language tagging
-- A "Common Gotchas" or "Common API Confusion" section
+Create a developer skill file with YAML frontmatter (including a `name:` field) that documents:
 
-Markdown table formatting must use spaces around separators: `| --- | --- | --- |` (not `|---|---|---|`).
+- String extraction patterns (mention `inner_string_text` or similar text extraction methods)
+- AST inspection techniques (mention `quick_test`, `dbg!`, or similar AST inspection tools)
+- Embedded language handling (mention `EmbeddingKind` or embedded language concepts)
+
+Markdown tables in skill files must use proper formatting with spaces around separators (e.g., `| --- | --- |` not `|---|---|`).
 
 ### Test Fixtures
 
-The following test fixture directories must exist:
+The following test fixture directories must be populated:
+
 - `crates/biome_html_parser/tests/html_specs/ok/vue/` — at least 3 `.vue` files
 - `crates/biome_html_parser/tests/html_specs/error/vue/` — at least 3 `.vue` files
 - `crates/biome_html_parser/tests/html_specs/error/svelte/` — at least 5 `.svelte` files
-- `crates/biome_html_parser/tests/html_specs/ok/svelte/` — must exist
+- `crates/biome_html_parser/tests/html_specs/ok/svelte/` — directory must exist

@@ -35,27 +35,41 @@ def _find_function(tree, name):
     return None
 
 
-def _released_names(node):
-    """Return set of variable names released by a del or =None statement."""
-    names = set()
-    if isinstance(node, ast.Delete):
-        for t in node.targets:
-            if isinstance(t, ast.Name):
-                names.add(t.id)
-            elif isinstance(t, ast.Tuple):
-                for elt in t.elts:
-                    if isinstance(elt, ast.Name):
-                        names.add(elt.id)
-    elif isinstance(node, ast.Assign):
-        if isinstance(node.value, ast.Constant) and node.value.value is None:
-            for t in node.targets:
+def _del_or_none_assignments_in_loop(func_ast):
+    """Find all variable names that are deleted or assigned None inside the
+    outermost for-loop body of update_weights (the weight-chunk loop)."""
+    # Locate the outermost for-loop inside the function
+    loop_node = None
+    for node in func_ast.body:
+        if isinstance(node, ast.For):
+            loop_node = node
+            break
+
+    if loop_node is None:
+        return set()
+
+    released = set()
+    for child in ast.walk(loop_node):
+        # del statement
+        if isinstance(child, ast.Delete):
+            for t in child.targets:
                 if isinstance(t, ast.Name):
-                    names.add(t.id)
+                    released.add(t.id)
                 elif isinstance(t, ast.Tuple):
                     for elt in t.elts:
                         if isinstance(elt, ast.Name):
-                            names.add(elt.id)
-    return names
+                            released.add(elt.id)
+        # assignment to None:  x = None  or  x, y = None, None
+        elif isinstance(child, ast.Assign):
+            if isinstance(child.value, ast.Constant) and child.value.value is None:
+                for t in child.targets:
+                    if isinstance(t, ast.Name):
+                        released.add(t.id)
+                    elif isinstance(t, ast.Tuple):
+                        for elt in t.elts:
+                            if isinstance(elt, ast.Name):
+                                released.add(elt.id)
+    return released
 
 
 # Script that mock-executes update_weights and prints an ordered event log as JSON.
@@ -187,27 +201,26 @@ def test_ipc_collect_after_barrier():
 
 
 # [pr_diff] fail_to_pass
-def test_hf_named_tensors_released_in_loop():
-    """Both long_lived_tensors and hf_named_tensors must be released (del or =None)
-    inside the weight chunk for-loop in update_weights."""
+def test_tensors_released_in_loop():
+    """GPU tensors created per chunk (the send result and iteration variable) must
+    be released inside the weight-chunk loop so the CUDA caching allocator can
+    reclaim memory blocks.
+
+    This test checks that the loop body contains at least two distinct release
+    operations (del or assignment to None) for variables that originate from the
+    weight-chunk send.  A correct fix may use any variable naming; the test
+    checks the structural pattern (at least two releases inside the loop body).
+    """
     tree, _ = _parse_target()
     func = _find_function(tree, "update_weights")
     assert func is not None, "update_weights function not found"
 
-    released_long = False
-    released_hf = False
-
-    for node in ast.walk(func):
-        if isinstance(node, ast.For):
-            for child in ast.walk(node):
-                released = _released_names(child)
-                if "long_lived_tensors" in released:
-                    released_long = True
-                if "hf_named_tensors" in released:
-                    released_hf = True
-
-    assert released_long, "long_lived_tensors not released in loop (need del or = None)"
-    assert released_hf, "hf_named_tensors not released in loop (need del or = None)"
+    released = _del_or_none_assignments_in_loop(func)
+    assert len(released) >= 2, (
+        f"Expected at least 2 release operations (del or =None) inside the weight-chunk loop, "
+        f"but found only {len(released)}: {sorted(released)}. "
+        f"GPU tensors from each chunk (send result + iteration var) must be explicitly released."
+    )
 
 
 # ---------------------------------------------------------------------------

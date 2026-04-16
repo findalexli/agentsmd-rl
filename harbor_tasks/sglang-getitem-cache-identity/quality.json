@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details like '_sub_obj_cache' variable name, 'setdefault' method usage, 'cache[i]' pattern, and propagation logic in _resolve_lora_path. The instruction.md never mentions '_sub_obj_cache', 'setdefault', or these specific implementation patterns. It only describes the problem abstractly."
+      "reason": "Tests assert specific patterns like 'setdefault' in method source, 'cache[i]' literal string, and '_sub_obj_cache' variable name. While instruction.md does mention these (e.g., 'use setdefault', 'stored as _sub_obj_cache', 'cache[i]'), the tests for tokenizer_manager.py check for patterns like '_sub_obj_cache' and 'sub_obj.lora_id' which are discoverable. However, the test_ruff_check, test_black_format_check, test_isort_check, test_codespell_check etc. enforce specific tool configurations that a"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (identity instability, divergent objects) and expected behavior (same instance on repeated access, lora_id propagation) but does not specify exact code changes, line numbers, or variable names for the fix."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact implementation steps: 'use a cache stored as _sub_obj_cache', 'Initialize the cache using setdefault on the instance's __dict__', 'Store newly created sub-objects in cache[i]', 'propagate lora_id to any cached sub-objects by iterating over _sub_obj_cache'. This is essentially the complete solution specification, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: '_sub_obj_cache' as the exact variable name (test_generate_req_caching_implemented, test_embedding_req_caching_implemented), 'setdefault' as the exact method, 'cache[i]' as the exact pattern, and '_sub_obj_cache' in tokenizer_manager.py. An alternative using functools.lru_cache, a simple dict named '_cache', or __getattr__ interception would fail these AST-based checks."
+      "reason": "Tests assert gold-specific implementation details: test_generate_req_caching_implemented checks for exact variable name '_sub_obj_cache', exact use of 'setdefault', and exact pattern 'cache[i]' in method source. An alternative correct fix using e.g., functools.lru_cache, a '_cache' dict, or any other caching mechanism would fail these AST-based string checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_generate_req_caching_implemented, test_embedding_req_caching_implemented, test_lora_propagation_in_tokenizer_manager) are purely AST/text inspection: they parse source code and check for string patterns like '_sub_obj_cache' and 'setdefault' in unparsed AST. No test actually imports the classes, creates instances, or checks runtime identity (req[0] is req[0])."
+      "reason": "The core fail-to-pass tests (test_generate_req_caching_implemented, test_embedding_req_caching_implemented, test_resolve_lora_path_propagation) are purely AST/text inspection tests checking for string patterns like '_sub_obj_cache' and 'setdefault' in source code. They never instantiate GenerateReqInput, call __getitem__, or verify identity (req[0] is req[0]). No behavioral execution occurs."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns ('_sub_obj_cache', 'setdefault', 'cache[i]') that don't exist in the original code. A stub/no-op implementation would not contain these patterns and would fail."
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string patterns in source code via AST unparsing. An agent could add dead code like 'if False: cache = self.__dict__.setdefault(\"_sub_obj_cache\", {}); cache[i] = None' without actually implementing caching behavior, and the AST pattern checks would pass."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'req[0] is req[0] should be True' as expected behavior, but no test actually verifies this runtime identity check. The instruction's requirement #3 about lora_id propagation to cached sub-objects is only tested via AST pattern matching, not actual behavior."
+      "reason": "Instruction.md requires 'req[0] is req[0] should be True' (identity check behavior), but no test actually instantiates objects and verifies this identity property. Tests only check for code patterns in source text."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (gates/pass_to_pass static checks vs fail-to-pass behavioral tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-structured with clear sections (gates/pass_to_pass for static checks, fail-to-pass for behavioral AST checks), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,11 +35,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files (io_struct.py, tokenizer_manager.py) and methods (__getitem__, _resolve_lora_path) which is appropriate for the task domain. It doesn't specify exact line numbers or the implementation approach."
+      "outcome": "fail",
+      "reason": "instruction.md names exact variable '_sub_obj_cache', exact method 'setdefault', exact file paths, and exact propagation logic in _resolve_lora_path. It goes far beyond naming the domain area and essentially provides the complete implementation recipe."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -48,13 +48,16 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 2,
+  "fail_count": 7
 }

@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key paths (packages/cli/src/MCP.ts, packages/cli/src/mcp/MCP.ts, packages/cli/src/bin.ts, packages/cli/package.json, packages/cli/src/mcp/README.md), the class name 'Mcp', 'McpServer', the import paths './mcp/MCP', '../../package.json', '../platform/_lib/help', the three PDP tool names, the four core tool names, the keyword 'MCP', and the README content requirements. The pass-to-pass tests (prettier, eslint, check-engines-override) are standard repo CI checks that a dev"
+      "reason": "All paths, tool names (Prisma-Postgres-account-status etc.), core tools (migrate-status, migrate-dev, migrate-reset, Prisma-Studio), keyword 'MCP', README requirements, and relative import paths are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: move MCP.ts to packages/cli/src/mcp/MCP.ts, change import in bin.ts to './mcp/MCP', change relative imports to '../../package.json' and '../platform/_lib/help', remove three specific PDP tools, add 'MCP' to keywords, create README.md. This is a step-by-step implementation guide, not a problem description. A developer doesn't need to reason about what to change \u2014 every change is spelled out."
+      "outcome": "pass",
+      "reason": "Instruction describes what to move/change but doesn't give exact sed commands or line numbers; agent must figure out how to perform the move and edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for structural properties (file exists at new path, old file removed, import path contains 'mcp/MCP', tool names not registered, relative imports present and resolve, keyword in array, README contains certain words). Alternative implementations that achieve the same goals (e.g., different README wording, different formatting, different ordering of tool removals) would all pass."
+      "reason": "Tests check for file existence, import paths, tool registrations, and keyword presence \u2014 multiple valid implementations would pass; no gold-specific variable names tested."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching: readFileSync + includes/match checks for string patterns like 'export class Mcp', 'McpServer', regex for server.tool registrations, checking import paths via regex. The pass-to-pass tests do run prettier/eslint/check-engines-override as subprocesses, but the core f2p tests never import or execute the MCP module \u2014 they only inspect file contents as text."
+      "outcome": "pass",
+      "reason": "Tests execute Node scripts that parse imports, run prettier/eslint/check-engines-override subprocesses, verifying behavior and toolchain compliance."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty files, default returns) would not pass: test_mcp_module_at_new_location requires 'export class Mcp' and 'McpServer' in the file content, test_old_mcp_file_removed requires the original file to not exist, test_bin_import_targets_mcp_dir requires a specific import pattern, test_pdp_tools_not_registered checks that specific tool registrations are absent, test_relative_imports_resolve checks both string presence and file existence on disk. These require actual code chang"
+      "reason": "Each test checks a specific required change (file moved, PDP tools removed, keyword added, README created); a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five explicitly required behaviors are tested: (1) file move \u2014 test_mcp_module_at_new_location + test_old_mcp_file_removed, (2) import path updates \u2014 test_bin_import_targets_mcp_dir + test_relative_imports_resolve, (3) PDP tool removal \u2014 test_pdp_tools_not_registered, (4) keyword addition \u2014 test_mcp_keyword_in_package_json, (5) README creation \u2014 test_mcp_readme_created. Core tools preservation is also tested."
+      "reason": "All five instruction requirements (move, import updates, PDP removal, keyword, README) are tested, plus core tools preserved."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names and docstrings, grouped into 'Fail-to-pass' and 'Pass-to-pass' sections with clear comment headers."
+      "reason": "Tests are grouped with section comments (fail-to-pass, pass-to-pass core tools, repo CI/CD checks) and named descriptively."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The task involves editing package.json (structured data). The instruction specifies the exact key ('keywords' array) and exact value ('MCP') to add, which constitutes sufficient schema documentation."
+      "outcome": "not_applicable",
+      "reason": "Task produces code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, tool names, class names, and commands in the instruction are consistent with the test assertions and solution. No typos detected."
+      "reason": "Paths and names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact relative import paths after the move ('../../package.json' and '../platform/_lib/help'), exact new import path in bin.ts ('./mcp/MCP'), and exact tool names to remove. This goes well beyond describing what's broken \u2014 it tells the agent exactly what the changed lines should contain, removing the need for the agent to figure out the correct relative path adjustments."
+      "outcome": "pass",
+      "reason": "Instruction names the file to move (which is intrinsic to the task) but does not pinpoint specific lines to change."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The package.json edit is minimal (adding one keyword to an array). The gold patch's config changes are localized and don't contradict other files."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task; package.json edit is minimal keyword addition."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

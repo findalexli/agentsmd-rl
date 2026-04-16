@@ -2,7 +2,7 @@
 
 ## Summary
 
-The `docker/patch/latest/sglang.patch` file modifies `python/sglang/srt/models/deepseek_v2.py` in sglang to add support for topk index caching across layers. However, the `skip_topk` and `next_skip_topk` attributes on `DeepseekV2AttentionMLA` are only initialized inside the `if self.use_nsa:` branch of `__init__`. When the forward path accesses these attributes on an MLA model that doesn't use NSA (Native Sparse Attention), it raises an `AttributeError`.
+The `docker/patch/latest/sglang.patch` file modifies `python/sglang/srt/models/deepseek_v2.py` in sglang to add support for topk index caching across layers. However, the `skip_topk` and `next_skip_topk` attributes on `DeepseekV2AttentionMLA` are only initialized inside the `if self.use_nsa:` branch of `__init__`, specifically nested within the `if is_nextn:` sub-block. When the forward path accesses these attributes on an MLA model that doesn't use NSA (Native Sparse Attention), it raises an `AttributeError`.
 
 ## Steps to Reproduce
 
@@ -14,22 +14,25 @@ The `docker/patch/latest/sglang.patch` file modifies `python/sglang/srt/models/d
 
 - File: `docker/patch/latest/sglang.patch`
 - The patch modifies `DeepseekV2AttentionMLA.__init__` in `python/sglang/srt/models/deepseek_v2.py`
-- The `forward_absorb_prepare` method references `self.skip_topk` and `self.next_skip_topk` unconditionally at the end when determining the return value
+- The `forward_absorb_prepare` method references `self.skip_topk` and `self.next_skip_topk` unconditionally when determining the return value
 
 ## Expected Behavior
 
-`skip_topk` and `next_skip_topk` should always be available on the attention module, defaulting to safe values (`False`) so that MLA models without NSA can still proceed through the forward path without errors. Specifically:
+`self.skip_topk` and `self.next_skip_topk` must be initialized unconditionally at method-body level in `__init__` (i.e., at the top-level indentation of the method body, outside the `if self.use_nsa:` conditional block entirely), defaulting to `False`, so that MLA models without NSA can proceed through the forward path without errors.
 
-- `forward_absorb_prepare` must return a 2-tuple: `(output, topk_indices)` where `topk_indices` may be `None` when skipping
-- The NSA branch must still configure the topk caching parameters: `index_topk_freq`, `index_topk_pattern`, `index_skip_topk_offset`
-- The forward path must conditionally skip the indexer using `skip_topk` with `prev_topk_indices` as fallback
+Specifically:
 
-The topk index caching logic (frequency-based or pattern-based skipping) should remain functional for NSA-enabled models.
+- **Unconditional init**: `self.skip_topk` and `self.next_skip_topk` should be assigned `False` at method-body level of `__init__` — they must not be nested inside `if self.use_nsa:` or `if is_nextn:` conditionals.
+- **`forward_absorb_prepare` return value**: This method must return a 2-tuple `(output, topk_indices)`. When `self.skip_topk` is `True`, it should `return output, None`. When not skipping, it should `return output, <topk_indices_value>` (i.e., the return line should start with `return output,` and include the topk indices). The method must also reference `self.next_skip_topk` in its return path logic.
+- **NSA config attributes preserved**: The NSA branch must still configure `index_topk_freq`, `index_topk_pattern`, and `index_skip_topk_offset`.
+- **Forward skip logic**: The forward path must conditionally skip the indexer based on `self.skip_topk`, using `prev_topk_indices` as a fallback. There should be conditional logic such as `if not self.skip_topk` or `if self.skip_topk` that governs whether to run the indexer or use `prev_topk_indices`.
 
 ## Additional Context
 
-The `DeepseekV2DecoderLayer.forward` method also needs to properly thread the `prev_topk_indices` through the attention call and unpack the return tuple, and `DeepseekV2Model` needs to pass `topk_indices` across layers. Specifically:
+The `DeepseekV2DecoderLayer.forward` method and `DeepseekV2Model` also need updates to thread topk indices across layers:
 
-- `DeepseekV2DecoderLayer.forward` must return a 3-tuple: `(hidden_states, residual, topk_indices)`
-- `DeepseekV2Model` must unpack `topk_indices` from each layer's return value
+- **DecoderLayer return**: `DeepseekV2DecoderLayer.forward` must return a 3-tuple containing `hidden_states`, `residual`, and the topk indices (e.g., `return hidden_states, residual, topk_indices`).
+- **Model unpacking**: In the `DeepseekV2Model` forward loop, the 3-tuple from each layer must be unpacked into variables including `hidden_states`, `residual`, and the topk indices (the unpacking assignment should name all three).
 - All of these changes are within the sglang.patch file.
+
+The topk index caching logic (frequency-based or pattern-based skipping) should remain functional for NSA-enabled models.

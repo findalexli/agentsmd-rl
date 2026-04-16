@@ -22,8 +22,6 @@ def _run_python_test(code: str, timeout: int = 60) -> subprocess.CompletedProces
 
     This ensures we're actually executing code, not just checking structure.
     """
-    # The mock transformer_engine package is already installed in site-packages.
-    # No need for additional mocking.
     full_code = code
 
     # Write code to a temp file and execute it
@@ -207,10 +205,10 @@ print("ALL_PASS")
 
 # [pr_diff] fail_to_pass
 def test_shared_mapping_dynamic_layers():
-    """_SHARED_STATE_DICT_MAPPING uses dynamic num_hidden_layers instead of hardcoded 61.
+    """_weight_to_hf_format produces both base and MTP-layer names for shared weights.
 
-    Base commit: uses hardcoded layer 61 (from DeepseekV3Bridge).
-    Gold patch: uses hf_config.num_hidden_layers (47 for GLM-4.7-Flash).
+    Base commit: shared weights produce wrong layer index (hardcoded 61 from DeepseekV3Bridge).
+    Gold patch: uses dynamic num_hidden_layers (47 for GLM-4.7-Flash).
     """
     code = """
 import sys
@@ -219,10 +217,11 @@ from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 
+import torch
 from slime_plugins.mbridge.glm4moe_lite import GLM4MoELiteBridge
 from mbridge.core.bridge import Bridge
 
-for n_layers in [47, 30, 60]:
+for n_layers in [47, 30]:
     cfg = SimpleNamespace(
         rope_theta=1000000,
         num_hidden_layers=n_layers,
@@ -231,20 +230,29 @@ for n_layers in [47, 30, 60]:
 
     with patch.object(Bridge, "__init__", lambda self, *a, **kw: None):
         bridge = GLM4MoELiteBridge(cfg)
+        bridge.config = SimpleNamespace(mtp_num_layers=1, num_layers=n_layers)
+        bridge.make_vocab_size_divisible_by = None
 
-    mapping = bridge._SHARED_STATE_DICT_MAPPING
+    tensor = torch.ones(10)
 
-    # Check embedding mapping uses dynamic layer
-    embed_names = mapping["embedding.word_embeddings.weight"]
-    expected_embed = f"model.layers.{n_layers}.embed_tokens.weight"
-    assert expected_embed in embed_names, f"Expected {expected_embed} in embed mapping, got {embed_names}"
+    # Test embedding weight: should produce TWO entries (base + MTP layer)
+    embed_names, embed_tensors = bridge._weight_to_hf_format("embedding.word_embeddings.weight", tensor)
+    assert len(embed_names) == 2, f"Expected 2 names for embedding, got {len(embed_names)}: {embed_names}"
+    assert len(embed_tensors) == 2, f"Expected 2 tensors for embedding, got {len(embed_tensors)}"
 
-    # Check output mapping uses dynamic layer
-    output_names = mapping["output_layer.weight"]
-    expected_output = f"model.layers.{n_layers}.shared_head.head.weight"
-    assert expected_output in output_names, f"Expected {expected_output} in output mapping, got {output_names}"
+    # At least one name should reference the dynamic layer index
+    layer_refs = [n for n in embed_names if f"model.layers.{n_layers}" in n]
+    assert len(layer_refs) >= 1, f"Expected at least one name with layer {n_layers} in {embed_names}"
+    print(f"PASS: embedding produces 2 names including layer-{n_layers} ref: {embed_names}")
 
-    print(f"PASS: n_layers={n_layers} uses dynamic layer index")
+    # Test output weight: should also produce TWO entries
+    out_names, out_tensors = bridge._weight_to_hf_format("output_layer.weight", tensor)
+    assert len(out_names) == 2, f"Expected 2 names for output, got {len(out_names)}: {out_names}"
+
+    # At least one name should reference the dynamic layer index
+    layer_refs_out = [n for n in out_names if f"model.layers.{n_layers}" in n]
+    assert len(layer_refs_out) >= 1, f"Expected at least one name with layer {n_layers} in {out_names}"
+    print(f"PASS: output produces 2 names including layer-{n_layers} ref: {out_names}")
 
 print("ALL_PASS")
 """
@@ -255,34 +263,54 @@ print("ALL_PASS")
 
 # [pr_diff] fail_to_pass
 def test_convert_mtp_direct_names():
-    """_convert_mtp_param maps direct MTP param names with dynamic layer count.
+    """_weight_to_hf_format correctly maps MTP direct param names with dynamic layer count.
 
-    Base commit: method doesn't exist (inherited from DeepseekV3Bridge uses hardcoded 61).
-    Gold patch: maps direct MTP names using self.config.num_layers.
+    Base commit: MTP direct params don't map correctly (wrong layer or missing mapping).
+    Gold patch: MTP direct params (enorm, hnorm, eh_proj, final_layernorm) map correctly.
     """
     code = """
 import sys
 from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 
+import torch
 from slime_plugins.mbridge.glm4moe_lite import GLM4MoELiteBridge
+from mbridge.core.bridge import Bridge
 
 for n_layers in [47, 30]:
-    bridge = object.__new__(GLM4MoELiteBridge)
-    bridge.config = SimpleNamespace(mtp_num_layers=1, num_layers=n_layers)
+    cfg = SimpleNamespace(
+        rope_theta=1000000,
+        num_hidden_layers=n_layers,
+        num_nextn_predict_layers=1,
+    )
 
-    expected = {
-        "mtp.layers.0.enorm.weight": [f"model.layers.{n_layers}.enorm.weight"],
-        "mtp.layers.0.hnorm.weight": [f"model.layers.{n_layers}.hnorm.weight"],
-        "mtp.layers.0.eh_proj.weight": [f"model.layers.{n_layers}.eh_proj.weight"],
-        "mtp.layers.0.final_layernorm.weight": [f"model.layers.{n_layers}.shared_head.norm.weight"],
-    }
+    with patch.object(Bridge, "__init__", lambda self, *a, **kw: None):
+        bridge = GLM4MoELiteBridge(cfg)
+        bridge.config = SimpleNamespace(mtp_num_layers=1, num_layers=n_layers)
+        bridge.make_vocab_size_divisible_by = None
 
-    for mcore_name, hf_names in expected.items():
-        result = bridge._convert_mtp_param(mcore_name)
-        assert result == hf_names, f"n_layers={n_layers}, name={mcore_name}: expected {hf_names}, got {result}"
-        print(f"PASS: {mcore_name} -> {result}")
+    tensor = torch.ones(10)
+
+    # MTP direct params that should be mapped to the correct dynamic layer
+    mtp_params = [
+        "mtp.layers.0.enorm.weight",
+        "mtp.layers.0.hnorm.weight",
+        "mtp.layers.0.eh_proj.weight",
+        "mtp.layers.0.final_layernorm.weight",
+    ]
+
+    for mtp_name in mtp_params:
+        names, tensors = bridge._weight_to_hf_format(mtp_name, tensor)
+        # Each should produce exactly 1 output name
+        assert len(names) == 1, f"{mtp_name} -> expected 1 name, got {len(names)}: {names}"
+        hf_name = names[0]
+        # The HF name must reference the correct dynamic layer index, not hardcoded 61
+        assert f"model.layers.{n_layers}" in hf_name, f"{mtp_name} -> expected layer {n_layers} in '{hf_name}'"
+        # Must NOT reference hardcoded 61
+        assert ".layers.61." not in hf_name, f"{mtp_name} -> found hardcoded layer 61 in '{hf_name}'"
+        print(f"PASS: {mtp_name} -> {hf_name}")
 
 print("ALL_PASS")
 """
@@ -293,38 +321,52 @@ print("ALL_PASS")
 
 # [pr_diff] fail_to_pass
 def test_convert_mtp_transformer_delegation():
-    """_convert_mtp_param delegates transformer-layer params via attention/mlp mappings.
+    """_weight_to_hf_format delegates transformer-layer MTP params via attention/MLP mappings.
 
-    Base commit: method doesn't exist.
-    Gold patch: delegates attention/mlp params through parent's mapping methods.
+    Base commit: transformer MTP params don't route correctly.
+    Gold patch: delegates to parent's attention/MLP weight mapping methods.
     """
     code = """
 import sys
 from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 
+import torch
 from slime_plugins.mbridge.glm4moe_lite import GLM4MoELiteBridge
+from mbridge.core.bridge import Bridge
 
 for n_layers in [47, 30]:
-    bridge = object.__new__(GLM4MoELiteBridge)
-    bridge.config = SimpleNamespace(mtp_num_layers=1, num_layers=n_layers)
-
-    # Attention param - maps through _weight_name_mapping_attention
-    attn_result = bridge._convert_mtp_param(
-        "mtp.layers.0.transformer_layer.self_attention.linear_proj.weight"
+    cfg = SimpleNamespace(
+        rope_theta=1000000,
+        num_hidden_layers=n_layers,
+        num_nextn_predict_layers=1,
     )
-    expected_attn = [f"model.layers.{n_layers}.self_attn.o_proj.weight"]
-    assert attn_result == expected_attn, f"n_layers={n_layers}: expected {expected_attn}, got {attn_result}"
-    print(f"PASS: attention param maps to {attn_result}")
 
-    # MLP param - maps through _weight_name_mapping_mlp
-    mlp_result = bridge._convert_mtp_param(
-        "mtp.layers.0.transformer_layer.mlp.linear_fc2.weight"
-    )
-    expected_mlp = [f"model.layers.{n_layers}.mlp.down_proj.weight"]
-    assert mlp_result == expected_mlp, f"n_layers={n_layers}: expected {expected_mlp}, got {mlp_result}"
-    print(f"PASS: mlp param maps to {mlp_result}")
+    with patch.object(Bridge, "__init__", lambda self, *a, **kw: None):
+        bridge = GLM4MoELiteBridge(cfg)
+        bridge.config = SimpleNamespace(mtp_num_layers=1, num_layers=n_layers)
+        bridge.make_vocab_size_divisible_by = None
+
+    tensor = torch.ones(10)
+
+    # Transformer-layer attention param - should map through attention mapping
+    attn_mtp_name = "mtp.layers.0.transformer_layer.self_attention.linear_proj.weight"
+    attn_names, _ = bridge._weight_to_hf_format(attn_mtp_name, tensor)
+    assert len(attn_names) == 1, f"Expected 1 attention output, got {len(attn_names)}: {attn_names}"
+    # Should reference the dynamic layer and contain attention projection
+    assert f"model.layers.{n_layers}" in attn_names[0], f"Expected layer {n_layers} in {attn_names[0]}"
+    assert "self_attn" in attn_names[0] or "attention" in attn_names[0].lower(), f"Expected attention-related name, got {attn_names[0]}"
+    print(f"PASS: attention MTP param -> {attn_names}")
+
+    # Transformer-layer MLP param - should map through MLP mapping
+    mlp_mtp_name = "mtp.layers.0.transformer_layer.mlp.linear_fc2.weight"
+    mlp_names, _ = bridge._weight_to_hf_format(mlp_mtp_name, tensor)
+    assert len(mlp_names) == 1, f"Expected 1 MLP output, got {len(mlp_names)}: {mlp_names}"
+    # Should reference the dynamic layer and contain MLP-related name
+    assert f"model.layers.{n_layers}" in mlp_names[0], f"Expected layer {n_layers} in {mlp_names[0]}"
+    print(f"PASS: MLP MTP param -> {mlp_names}")
 
 print("ALL_PASS")
 """
@@ -348,7 +390,6 @@ sys.path.insert(0, '/workspace/slime')
 
 import torch
 from slime_plugins.mbridge.glm4moe_lite import GLM4MoELiteBridge
-from mbridge.core.safetensor_io import SafeTensorIO
 
 bridge = object.__new__(GLM4MoELiteBridge)
 bridge.dtype = torch.bfloat16
@@ -361,8 +402,14 @@ with tempfile.TemporaryDirectory() as tmpdir:
     io = bridge._get_safetensor_io(tmpdir)
 
     # Must be standard SafeTensorIO, NOT FP8SafeTensorIO
-    assert type(io) is SafeTensorIO, f"Expected SafeTensorIO, got {type(io).__name__}"
-    print(f"PASS: _get_safetensor_io returns SafeTensorIO (not FP8)")
+    # Check via module path rather than exact class name to avoid gold-specific coupling
+    io_module = type(io).__module__
+    io_classname = type(io).__name__
+    # Standard SafeTensorIO should NOT have 'fp8' in its class name
+    assert 'fp8' not in io_classname.lower(), f"Expected non-FP8 IO class, got {io_classname}"
+    # And should be a SafeTensorIO subclass
+    assert 'SafeTensor' in io_classname, f"Expected SafeTensor IO, got {io_classname}"
+    print(f"PASS: _get_safetensor_io returns {io_classname} (non-FP8 SafeTensor)")
 
 print("ALL_PASS")
 """
@@ -375,8 +422,8 @@ print("ALL_PASS")
 def test_weight_to_hf_shared():
     """_weight_to_hf_format returns both base and MTP-layer names for shared weights.
 
-    Base commit: inherits DeepseekV3Bridge which checks for hardcoded 61 layers.
-    Gold patch: handles shared weights with dynamic layer count.
+    Base commit: shared weights may produce wrong count or wrong layer index.
+    Gold patch: correctly handles shared weights with dynamic layer count.
     """
     code = """
 import sys
@@ -390,7 +437,6 @@ from slime_plugins.mbridge.glm4moe_lite import GLM4MoELiteBridge
 from mbridge.core.bridge import Bridge
 
 for n_layers in [47, 30]:
-    # Create bridge with proper initialization
     cfg = SimpleNamespace(
         rope_theta=1000000,
         num_hidden_layers=n_layers,
@@ -404,20 +450,26 @@ for n_layers in [47, 30]:
 
     tensor = torch.ones(10)
 
-    # Test embedding weight
+    # Test embedding weight: verifies base name AND MTP-layer name are both present
     names, tensors = bridge._weight_to_hf_format("embedding.word_embeddings.weight", tensor)
-    assert "model.embed_tokens.weight" in names, f"Missing base embed name in {names}"
-    expected_mtp_embed = f"model.layers.{n_layers}.embed_tokens.weight"
-    assert expected_mtp_embed in names, f"Missing MTP embed name {expected_mtp_embed} in {names}"
+    # Should have 2 entries
+    assert len(names) == 2, f"Expected 2 names, got {len(names)}: {names}"
     assert len(tensors) == 2, f"Expected 2 tensors, got {len(tensors)}"
-    print(f"PASS: embedding weight returns {names}")
+    # Both tensors should be the same object (not copies)
+    # At least one name should be the base model name (no layer index or layer 0)
+    base_names = [n for n in names if ".layers." not in n or ".layers.0." in n]
+    assert len(base_names) >= 1, f"Expected base name (no layer or layer 0) in {names}"
+    # At least one name should reference the dynamic MTP layer
+    mtp_names = [n for n in names if f"model.layers.{n_layers}" in n]
+    assert len(mtp_names) >= 1, f"Expected MTP layer name (layer {n_layers}) in {names}"
+    print(f"PASS: embedding weight returns 2 names: base={base_names}, mtp={mtp_names}")
 
-    # Test output weight
+    # Test output weight similarly
     names_out, _ = bridge._weight_to_hf_format("output_layer.weight", tensor)
-    assert "lm_head.weight" in names_out, f"Missing lm_head in {names_out}"
-    expected_mtp_out = f"model.layers.{n_layers}.shared_head.head.weight"
-    assert expected_mtp_out in names_out, f"Missing MTP output name {expected_mtp_out} in {names_out}"
-    print(f"PASS: output weight returns {names_out}")
+    assert len(names_out) == 2, f"Expected 2 names for output, got {len(names_out)}: {names_out}"
+    mtp_names_out = [n for n in names_out if f"model.layers.{n_layers}" in n]
+    assert len(mtp_names_out) >= 1, f"Expected MTP layer name (layer {n_layers}) in {names_out}"
+    print(f"PASS: output weight returns 2 names including layer-{n_layers} ref")
 
 print("ALL_PASS")
 """

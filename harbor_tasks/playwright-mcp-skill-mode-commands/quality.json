@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific file paths like 'packages/playwright/src/mcp/browser/config.ts', 'packages/playwright/src/mcp/browser/response.ts', 'packages/playwright/src/mcp/browser/tab.ts', 'packages/playwright/src/mcp/browser/tools/evaluate.ts', 'packages/playwright/src/mcp/browser/tools/tool.ts', 'packages/playwright/src/mcp/program.ts', 'packages/playwright/src/mcp/terminal/commands.ts', and test files like 'tests/mcp/cli.spec.ts', 'tests/mcp/dialogs.spec.ts', 'tests/mcp/files.spec.ts'. The instruc"
+      "reason": "Tests assert specific file paths like 'packages/playwright/src/mcp/browser/config.ts', 'packages/playwright/src/mcp/browser/response.ts', 'packages/playwright/src/mcp/browser/tab.ts', 'packages/playwright/src/mcp/browser/tools/evaluate.ts', 'packages/playwright/src/mcp/browser/tools/tool.ts', 'packages/playwright/src/mcp/program.ts', 'packages/playwright/src/mcp/terminal/commands.ts', and test files 'tests/mcp/cli.spec.ts', 'tests/mcp/dialogs.spec.ts', 'tests/mcp/files.spec.ts'. The instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies the exact data structure change: 'clearedBy field must carry both the tool identifier and the skill-friendly identifier (e.g., { tool: \"browser_handle_dialog\", skill: \"dialog-accept or dialog-dismiss\" })'. It also specifies the exact auto-wrap logic: 'Expressions that do not contain => should be automatically wrapped in () => (...)'. These are implementation-level details that tell the agent exactly WHAT to change."
+      "reason": "The instruction specifies exact implementation details: clearedBy must be '{ tool: \"browser_handle_dialog\", skill: \"dialog-accept or dialog-dismiss\" }', eval must check for '=>' and wrap in '() => (...)', modal messages must show specific strings like 'dialog-accept or dialog-dismiss' and 'upload'. These are not just behavioral descriptions but specify the exact fix/implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests (visible portion) primarily check syntax balance, file existence, JSON validity, ESLint, TypeScript parsing, and build success. However, the truncated tests likely check for specific content like the exact clearedBy structure '{ tool: ..., skill: ... }', specific command names in help.json, specific SKILL.md content. The instruction dictates exact field names ('tool', 'skill') and exact string values ('dialog-accept or dialog-dismiss', 'upload'), which constrains to essentially one imp"
+      "reason": "The tests (visible portion) mostly check syntax/structure/build rather than behavioral assertions about the specific changes. However, the truncated tests likely assert on exact strings like 'dialog-accept or dialog-dismiss', exact clearedBy structure '{ tool: ..., skill: ... }', and exact command names. An alternative correct fix using different field names (e.g., 'skillName' instead of 'skill') or different message formats would fail. The instruction constrains the solution to gold-specific va"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "The visible tests execute subprocesses (ESLint, TypeScript parser, Node.js syntax checks, build), validate JSON parsing, and check file structure. They go beyond simple text matching by running actual tools on the code."
+      "outcome": "fail",
+      "reason": "The visible tests are almost entirely static checks: balanced braces/parentheses counting, JSON parsing validity, file existence checks, ESLint runs, and TypeScript syntax parsing. None of the visible tests actually import modules, call functions, or verify runtime behavior of the modal states, eval wrapping, or command name changes. They are structural/text-based checks, not behavioral tests."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check ESLint passes, TypeScript compiles, build succeeds, and JSON is valid. A stub implementation that doesn't modify the actual source files correctly would fail these checks since the build/lint would catch type errors from the clearedBy type change from string to object."
+      "outcome": "fail",
+      "reason": "The visible f2p tests (test_syntax_check, test_json_files_valid, test_ts_syntax_node_parse, test_mcp_package_structure, test_repo_help_json_valid, test_repo_package_json_valid) would all pass on the unmodified repo without any changes, since they only check file existence, JSON validity, and balanced syntax - these are pass_to_pass gate tests that don't verify the actual bug fix behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires specific content in SKILL.md (YAML frontmatter with name/description fields, documentation of commands), specific modal state message formatting in skill vs non-skill mode, and specific help.json command name changes. The visible tests only check syntax, JSON validity, build, and lint \u2014 they don't verify the actual behavioral requirements like modal message content, help.json command names, or SKILL.md content (though truncated tests may cover some)."
+      "reason": "The instruction requires: skill-friendly command names in help.json, modal state messages adapting to skill mode, eval auto-wrap behavior, SKILL.md creation with YAML frontmatter. The visible tests don't check any of these behavioral requirements - they only verify syntax, structure, and build. The truncated portions may contain behavioral tests but we cannot confirm all requirements are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_syntax_check, test_json_files_valid, test_repo_eslint_mcp_files, etc.) and include docstrings explaining what each test verifies. They're grouped into 'Gates' and 'Pass-to-pass' sections."
+      "reason": "Tests are well-named (test_syntax_check, test_json_files_valid, etc.), include docstrings explaining what they verify, and are logically grouped into gates (pass_to_pass, static) and repo tests sections with clear comments."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for the clearedBy field: '{ tool: \"browser_handle_dialog\", skill: \"dialog-accept or dialog-dismiss\" }' and specifies help.json must use specific command names."
+      "reason": "The instruction documents the exact clearedBy schema structure ({ tool: string, skill: string }), the help.json command names, and the SKILL.md YAML frontmatter requirements (name: and description: fields)."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,23 +39,25 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the clearedBy structure with exact field names and values, the exact arrow function detection logic ('does not contain =>'), the exact command name mappings ('press', 'keydown', etc.). While it doesn't cite line numbers, it essentially prescribes the implementation."
+      "reason": "The instruction specifies exact implementation details: 'clearedBy field on modal states must carry both the tool identifier and the skill-friendly identifier (e.g., { tool: \"browser_handle_dialog\", skill: \"dialog-accept or dialog-dismiss\" })' and 'Expressions passed to eval that do not contain => should be automatically wrapped in () => (...)'. These describe the exact code changes needed, not just the desired behavior."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-change task, not an agent-md-edits or config-only task."
+      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 7
 }

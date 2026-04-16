@@ -34,6 +34,18 @@ rubric:
   evidence: The patch correctly targets a file within the `frontend/` directory (`frontend/src/components/features/sidebar/user-actions.tsx`)
     to fix the React UI issue.
   category: architecture
+- rule: Place React frontend code in the `frontend` directory.
+  source:
+    path: AGENTS.md
+    lines: 1-2
+  source_text: 'This repository contains the code for OpenHands, an automated AI software
+    engineer. It has a Python backend
+
+    (in the `openhands` directory) and React frontend (in the `frontend` directory).'
+  evidence: The diff modifies a React component (`UserActions`) in the file `frontend/src/components/features/sidebar/user-actions.tsx`,
+    adhering to the directory structure rule for frontend code.
+  category: architecture
+  verification: llm_judge
 checks:
 - id: test_use_should_show_user_features_hook_removed
   type: fail_to_pass

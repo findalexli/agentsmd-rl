@@ -12,8 +12,29 @@ import re
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = "/workspace/workers-sdk"
 VITE_CONFIG = os.path.join(REPO, "packages/workers-playground/vite.config.ts")
+DIST_DIR = os.path.join(REPO, "packages/workers-playground/dist")
+
+
+# ---------------------------------------------------------------------------
+# Shared fixture: build workers-playground once for behavioral output tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def playground_dist():
+    """Build workers-playground and return the dist directory path."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm >/dev/null 2>&1 && "
+         "pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm run build --filter=@cloudflare/workers-playground... 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    return DIST_DIR
 
 
 # ---------------------------------------------------------------------------
@@ -141,104 +162,72 @@ def test_repo_vite_plugin_build():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) — behavioral tests verified against BUILD OUTPUT
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_style_provider_cjs_alias():
-    """@cloudflare/style-provider must be aliased to its CJS build to avoid rolldown crash."""
-    # Use node to parse the config file and extract the alias value
-    script = r"""
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
+def test_style_provider_cjs_alias(playground_dist):
+    """The built bundle must properly include createRenderer from @cloudflare/style-provider.
 
-// Look for the style-provider alias in resolve.alias
-const aliasPattern = /["']@cloudflare\/style-provider["']\s*:\s*["']([^"']+)["']/;
-const match = content.match(aliasPattern);
+    When rolldown mishandles the ESM/CJS hybrid package, createRenderer ends up
+    in an unreachable module initializer and does not appear in the output bundle.
+    Any correct fix (alias to CJS, Vite plugin, etc.) ensures createRenderer is
+    properly included in the bundled output.
+    """
+    bundle_content = ""
+    for js_file in Path(playground_dist).rglob("*.js"):
+        bundle_content += js_file.read_text()
 
-if (!match) {
-    console.error('FAIL: No @cloudflare/style-provider alias found in resolve.alias');
-    process.exit(1);
-}
-
-const target = match[1];
-// The alias must point to the CJS build (lib/ directory), not the ESM build (es/ directory)
-if (!target.includes('lib/')) {
-    console.error('FAIL: style-provider alias points to ' + target + ' — must use CJS build (lib/)');
-    process.exit(1);
-}
-
-console.log('OK: @cloudflare/style-provider aliased to ' + target);
-"""
-    r = subprocess.run(
-        ["node", "-e", script, VITE_CONFIG],
-        capture_output=True, timeout=30,
-    )
-    assert r.returncode == 0, (
-        f"style-provider CJS alias check failed:\n{r.stderr.decode()}"
+    assert "createRenderer" in bundle_content, (
+        "createRenderer not found in the built bundle — "
+        "@cloudflare/style-provider was not properly resolved for rolldown. "
+        "The ESM/CJS hybrid package must be configured so rolldown correctly "
+        "bundles the createRenderer export."
     )
 
 
 # [pr_diff] fail_to_pass
-def test_no_base_playground_option():
-    """base: '/playground' must NOT be used — it causes asset path mismatch with Wrangler."""
-    # Use node to check the config does NOT set base to /playground
-    script = r"""
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
+def test_no_base_playground_option(playground_dist):
+    """Static resource paths in the built HTML must not carry a /playground/ prefix.
 
-// Strip comments to avoid false positives from commented-out code
-const stripped = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    When Vite's base option is set to '/playground', ALL resource URLs
+    (including static assets like favicon) get the /playground/ prefix.
+    This causes a mismatch with Wrangler's asset serving because Wrangler
+    looks up files by their physical dist path. Removing the base option
+    (or using an alternative approach) ensures static resources are
+    referenced without the incorrect prefix.
+    """
+    index_html = Path(playground_dist) / "index.html"
+    assert index_html.exists(), "No index.html found in dist"
+    content = index_html.read_text()
 
-// Check for base: "/playground" or base: '/playground' in the active config
-if (/\bbase\s*:\s*["']\/playground["']/.test(stripped)) {
-    console.error('FAIL: base is set to "/playground" — this causes Wrangler asset path mismatch');
-    process.exit(1);
-}
-
-console.log('OK: base is not set to /playground');
-"""
-    r = subprocess.run(
-        ["node", "-e", script, VITE_CONFIG],
-        capture_output=True, timeout=30,
-    )
-    assert r.returncode == 0, (
-        f"base:/playground check failed:\n{r.stderr.decode()}"
+    assert "/playground/favicon" not in content, (
+        "index.html references /playground/favicon — the Vite base option "
+        "appears to be set to '/playground', which causes Wrangler asset path mismatch. "
+        "Static resources must not have the /playground/ prefix."
     )
 
 
 # [pr_diff] fail_to_pass
-def test_assets_dir_playground():
-    """assetsDir must route built assets under playground/ for correct Wrangler deployment."""
-    # Use node to verify assetsDir is configured with a playground path
-    script = r"""
-const fs = require('fs');
-const content = fs.readFileSync(process.argv[1], 'utf8');
+def test_assets_dir_playground(playground_dist):
+    """Built JS/CSS assets must be physically located under dist/playground/ for Wrangler.
 
-// Strip comments
-const stripped = content.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-
-// Check that assetsDir contains 'playground'
-const match = stripped.match(/assetsDir\s*:\s*["']([^"']+)["']/);
-if (!match) {
-    console.error('FAIL: No assetsDir found in build config');
-    process.exit(1);
-}
-
-const dir = match[1];
-if (!dir.includes('playground')) {
-    console.error('FAIL: assetsDir is "' + dir + '" — must include "playground" for correct deployment');
-    process.exit(1);
-}
-
-console.log('OK: assetsDir = ' + dir);
-"""
-    r = subprocess.run(
-        ["node", "-e", script, VITE_CONFIG],
-        capture_output=True, timeout=30,
+    Wrangler serves assets based on their physical location in the dist directory.
+    For the Workers Playground (hosted at /playground), JS and CSS assets must be
+    under dist/playground/ so Wrangler serves them at the correct URL paths.
+    Any correct approach (assetsDir, post-build move, plugin) must place the
+    compiled assets under this directory.
+    """
+    playground_dir = Path(playground_dist) / "playground"
+    assert playground_dir.is_dir(), (
+        "No playground/ subdirectory found in dist — "
+        "built assets must be under dist/playground/ for correct Wrangler deployment"
     )
-    assert r.returncode == 0, (
-        f"assetsDir check failed:\n{r.stderr.decode()}"
+
+    asset_files = list(playground_dir.rglob("*.js")) + list(playground_dir.rglob("*.css"))
+    assert len(asset_files) > 0, (
+        "No JS/CSS assets found under dist/playground/ — "
+        "assets must be physically in this directory for Wrangler to serve them correctly"
     )
 
 

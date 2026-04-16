@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three file paths, the constant name MARKDOWN_HEADERS, the exact header values, the switch from json() to new Response(), removal of json import, and the client change from .json()/.markdown to .text(). All test assertions (file paths, constant names, header values, import patterns, response patterns) are discoverable from the instruction."
+      "reason": "Instruction names all three file paths, describes Content-Type and X-Robots-Tag header values literally, and specifies status codes 404/500, which are what tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: define MARKDOWN_HEADERS with specific header values, use new Response() instead of json(), remove json import, use response.text() instead of response.json(), remove .markdown extraction. This is a step-by-step implementation guide, not a description of what's broken. A developer reading the instruction doesn't need to reason about WHAT to change \u2014 it's all spelled out."
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior (plain text, headers, remove unused imports) without specifying exact code changes or variable names like MARKDOWN_HEADERS."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the exact variable name 'MARKDOWN_HEADERS' via _extract_headers_obj regex (r\"const\\s+MARKDOWN_HEADERS\\s*=\\s*\"), the exact Content-Type string 'text/markdown; charset=utf-8', and specific patterns like 'new\\s+Response\\s*\\('. An alternative correct fix using a different constant name (e.g., 'MD_HEADERS' or inline headers) would fail the tests despite being functionally correct."
+      "reason": "Tests require a specific constant name `MARKDOWN_HEADERS` via regex `const\\s+MARKDOWN_HEADERS\\s*=\\s*(\\{[^}]+\\})` in _extract_headers_obj; an alternative fix inlining headers or using a different variable name would fail test_doc_endpoint_uses_plain_response and test_guide_endpoint_uses_plain_response."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "While tests do use regex to check source text, they also execute behavioral tests via _run_node() that create real Response objects with the extracted headers, call .text() and .json(), and verify Content-Type headers. The behavioral Node.js subprocess tests go beyond pure text matching."
+      "reason": "Tests spawn Node subprocess to construct real Response objects and call .text()/.json() to verify runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty files or default returns) would fail: the tests check for 'new Response(' patterns, absence of 'json()' patterns, presence of MARKDOWN_HEADERS constant, and run Node.js behavioral tests that verify actual Response behavior. No trivial stub would satisfy these."
+      "reason": "Tests require new Response(), absence of json() wrapper, working Content-Type, and client .text() usage \u2014 a stub couldn't satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by the instruction are tested: MARKDOWN_HEADERS constant definition, Content-Type header, new Response() usage, json import removal, client .text() usage, removal of .json()/.markdown pattern, and error responses as plain text."
+      "reason": "Tests cover response format, Content-Type header, client text reading, and import cleanup as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'fail_to_pass' behavioral tests and 'pass_to_pass' regression tests, with section headers as comments and descriptive function names."
+      "reason": "Tests are grouped with section comments (fail_to_pass, pass_to_pass, repo_tests) and descriptively named."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves changing response format from JSON to plain text markdown, not producing structured data with a specific schema."
+      "reason": "Task produces plain-text responses, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in the instruction match those used in the tests and solution without typos."
+      "reason": "File paths and header strings match between instruction, solution, and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files, the exact constant name MARKDOWN_HEADERS, exact header values, exact methods to use (new Response(), response.text()), and exact imports to remove. This goes far beyond pointing to the buggy area \u2014 it's a complete implementation specification."
+      "outcome": "pass",
+      "reason": "Instruction identifies the files to investigate (expected for a bug fix task) without naming specific lines or buggy functions."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd/config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

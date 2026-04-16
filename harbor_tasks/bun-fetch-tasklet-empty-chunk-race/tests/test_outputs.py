@@ -8,6 +8,7 @@ The bug caused pipeline(Readable.fromWeb(res.body), ...) to stall when an empty
 chunk raced with the streaming callback.
 """
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -32,56 +33,174 @@ def test_zig_syntax_check():
 # Fail-to-pass (pr_diff) - core behavioral verification
 # -----------------------------------------------------------------------------
 
+def _find_guard_condition(src):
+    """Find and parse the guard condition in onBodyReceived.
+
+    Returns the guard block text if found, None otherwise.
+    The guard skips processing when buffer is empty and more data is coming.
+    """
+    # Pattern to find the guard block inside is_waiting_body
+    # It should be before try this.onBodyReceived()
+    # Look for a return statement preceded by buffer empty check
+    pattern = r'if\s*\([^)]*\.list\.items\.len\s*==\s*0[^}]*return\s*;'
+    match = re.search(pattern, src, re.DOTALL)
+    return match.group(0) if match else None
+
+
+def _parse_guard_semantics(guard_text):
+    """Parse the guard to extract its semantic components.
+
+    Returns a dict with:
+    - buffer_empty: bool (checks buffer length == 0)
+    - has_more_check: bool (checks has_more is true)
+    - success_check: bool (checks result is successful)
+    - returns_early: bool (causes early return)
+    """
+    semantics = {
+        'buffer_empty': False,
+        'has_more_check': False,
+        'success_check': False,
+        'returns_early': False,
+    }
+
+    if not guard_text:
+        return semantics
+
+    # Check for buffer empty condition: list.items.len == 0 or similar
+    if re.search(r'\.list\.items\.len\s*==\s*0', guard_text):
+        semantics['buffer_empty'] = True
+
+    # Check for has_more check (result.has_more or similar)
+    if re.search(r'result\.has_more|has_more', guard_text):
+        semantics['has_more_check'] = True
+
+    # Check for success check (result.isSuccess() or !result.isError() or similar)
+    if re.search(r'result\.isSuccess\(\)|result\.isError\(\)|result\.status', guard_text):
+        semantics['success_check'] = True
+
+    # Check for early return
+    if re.search(r'return\s*;', guard_text):
+        semantics['returns_early'] = True
+
+    return semantics
+
+
 def test_empty_chunk_guard_present():
     """The fix adds a guard to skip empty non-terminal chunks in onBodyReceived.
 
-    The race condition occurred when:
-    1. HTTP thread writes to scheduled_response_buffer and enqueues onProgressUpdate
-    2. JS thread touches res.body -> onStartStreaming drains the buffer
-    3. onProgressUpdate task runs and finds empty buffer
+    The guard checks:
+    1. The scheduled_response_buffer is empty (length == 0)
+    2. The response indicates more data is coming (has_more is true)
+    3. The result is successful
 
-    Without the guard, ByteStream.onData was called with len=0, which caused
-    native-readable.ts handleNumberResult(0) to not push(), leaving node:stream
-    state.reading=true forever, stalling the pipeline.
+    If all conditions are met, we return early to avoid calling onBodyReceived
+    with empty data (which would cause the race condition stall).
     """
     src = Path(TARGET_FILE).read_text()
 
-    # The fix adds this specific guard before onBodyReceived():
-    # if (this.scheduled_response_buffer.list.items.len == 0 and
-    #     this.result.has_more and
-    #     this.result.isSuccess())
-    # {
-    #     return;
-    # }
+    # Find the guard block
+    guard_text = _find_guard_condition(src)
 
-    # Check for the key components of the guard
-    guard_components = [
-        "scheduled_response_buffer.list.items.len == 0",
-        "this.result.has_more",
-        "this.result.isSuccess()",
-        "stale-task race",  # The comment explaining the race
-        "onStartStreamingHTTPResponseBodyCallback",  # Referenced in comment
-    ]
+    # Parse its semantics
+    semantics = _parse_guard_semantics(guard_text)
 
-    for component in guard_components:
-        assert component in src, f"Missing guard component: {component}"
+    # Verify all required semantic components are present
+    assert semantics['buffer_empty'], \
+        "Guard must check that buffer is empty (list.items.len == 0)"
+    assert semantics['has_more_check'], \
+        "Guard must check that more data is coming (has_more)"
+    assert semantics['success_check'], \
+        "Guard must check that result is successful (isSuccess/isError/status)"
+    assert semantics['returns_early'], \
+        "Guard must return early when conditions are met"
+
+
+def _find_guard_position(src):
+    """Find the position of the guard relative to key landmarks.
+
+    Returns (guard_start, guard_end, onbody_start) or None if not found.
+    """
+    # Find is_waiting_body block
+    waiting_body_match = re.search(r'if\s*\(\s*this\.is_waiting_body\s*\)', src)
+    if not waiting_body_match:
+        return None
+    waiting_body_start = waiting_body_match.start()
+
+    # Find the guard (buffer empty check followed by return)
+    guard_match = re.search(
+        r'if\s*\([^)]*\.list\.items\.len\s*==\s*0[^}]*return\s*;',
+        src,
+        re.DOTALL
+    )
+    if not guard_match:
+        return None
+    guard_start = guard_match.start()
+    guard_end = guard_match.end()
+
+    # Find onBodyReceived call after the guard
+    onbody_match = re.search(r'try\s+this\.onBodyReceived\(\)', src[guard_end:])
+    if not onbody_match:
+        return None
+    onbody_start = guard_end + onbody_match.start()
+
+    return (guard_start, guard_end, onbody_start, waiting_body_start)
 
 
 def test_guard_placement_correct():
-    """The guard must be placed before onBodyReceived() call inside is_waiting_body block."""
+    """The guard must be placed inside is_waiting_body block, before onBodyReceived().
+
+    The guard should be:
+    1. Inside the is_waiting_body conditional block
+    2. Before the onBodyReceived() call
+
+    This ensures the race condition is handled before we try to process
+    an empty chunk that was already drained by the streaming callback.
+    """
     src = Path(TARGET_FILE).read_text()
 
-    # Find the is_waiting_body section
-    assert "if (this.is_waiting_body)" in src, "Missing is_waiting_body check"
+    positions = _find_guard_position(src)
+    assert positions is not None, \
+        "Guard not found: expected 'if (buffer_len == 0) { return; }' pattern before onBodyReceived()"
 
-    # The guard should be INSIDE the is_waiting_body block, BEFORE onBodyReceived()
-    # We verify by checking the comment comes before the onBodyReceived call
-    waiting_body_pos = src.find("if (this.is_waiting_body)")
-    guard_comment_pos = src.find("stale-task race")
-    onbody_call_pos = src.find("try this.onBodyReceived()", waiting_body_pos)
+    guard_start, guard_end, onbody_start, waiting_body_start = positions
 
-    assert guard_comment_pos > waiting_body_pos, "Guard comment not inside is_waiting_body block"
-    assert guard_comment_pos < onbody_call_pos, "Guard not placed before onBodyReceived() call"
+    # Guard must be inside is_waiting_body block
+    assert guard_start > waiting_body_start, \
+        "Guard must be inside is_waiting_body block"
+
+    # Guard must be before onBodyReceived call
+    assert guard_end < onbody_start, \
+        "Guard must be placed before onBodyReceived() call"
+
+
+def test_terminal_zero_length_chunk_not_affected():
+    """Terminal zero-length chunks (has_more=false) must still be processed.
+
+    The guard should ONLY skip empty chunks when has_more is true (more data coming).
+    When has_more is false, the buffer might be empty at the end of the response,
+    and this is NOT the race condition - it's normal end-of-stream behavior.
+    """
+    src = Path(TARGET_FILE).read_text()
+
+    # Find the guard condition
+    guard_match = re.search(
+        r'if\s*\([^)]*\.list\.items\.len\s*==\s*0[^}]*return\s*;',
+        src,
+        re.DOTALL
+    )
+    assert guard_match is not None, "Guard not found"
+
+    guard_text = guard_match.group(0)
+
+    # The guard must include a has_more check
+    # This ensures that when has_more is false, we don't skip processing
+    assert re.search(r'has_more', guard_text), \
+        "Guard must check has_more to avoid skipping terminal zero-length chunks"
+
+    # Verify the guard is an AND condition (all must be true)
+    # This means has_more is part of the guard, so terminal chunks won't trigger it
+    assert 'and' in guard_text.lower() or '&&' in guard_text, \
+        "Guard must use AND logic so has_more check actually prevents skipping terminal chunks"
 
 
 # -----------------------------------------------------------------------------
@@ -231,7 +350,6 @@ def test_repo_prettier():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
-
 
 
 def test_repo_fetch_body_stream():

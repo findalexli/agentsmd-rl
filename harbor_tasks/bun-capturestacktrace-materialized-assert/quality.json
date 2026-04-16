@@ -2,59 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path (src/bun.js/bindings/FormatStackTraceForJS.cpp), the function (errorConstructorFuncCaptureStackTrace), and all key API calls/patterns tested (hasMaterializedErrorInfo, putDirect, computeErrorInfoToJSValue, setStackFrames, putDirectCustomAccessor, deleteProperty, RETURN_IF_EXCEPTION, JSC_DEFINE_HOST_FUNCTION, spaces indentation, #include root.h, newline/trailing whitespace, 35 non-blank lines, 4 distinct JSC API calls). Every assert target in the tests is disco"
+      "outcome": "fail",
+      "reason": "Tests assert on specific file path 'src/bun.js/bindings/FormatStackTraceForJS.cpp', function name 'errorConstructorFuncCaptureStackTrace', and specific API calls like 'hasMaterializedErrorInfo', 'setStackFrames', 'computeErrorInfoToJSValue', 'putDirect', 'putDirectCustomAccessor', 'DeletePropertyModeScope', 'deleteProperty', 'jsDynamicCast', 'RETURN_IF_EXCEPTION'. While instruction.md mentions many API calls, it does not mention 'computeErrorInfoToJSValue' (test_eager_stack_property_setting chec"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly prescribes the exact fix structure: use a positive hasMaterializedErrorInfo() conditional with if/else, put computeErrorInfoToJSValue and putDirect in the if-branch, put setStackFrames/deleteProperty/putDirectCustomAccessor in the else-branch. This is not just describing what's broken \u2014 it's a step-by-step implementation specification that tells the agent exactly WHAT to change and HOW."
+      "reason": "instruction.md's 'Implementation Requirements' essentially describe the solution structure: must use at least 4 specific JSC API calls from a given set, must handle materialized vs non-materialized states, must not violate the specific ASSERT. Combined with requiring 'hasMaterializedErrorInfo', 'setStackFrames', 'putDirect', 'deleteProperty', etc., this heavily constrains the solution to the exact gold patch approach of branching on hasMaterializedErrorInfo and using putDirect in the materialize"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests enforce very specific implementation details: a positive if(hasMaterializedErrorInfo()) with an else branch, putDirect and computeErrorInfoToJSValue in the if-body, setStackFrames only in else-body, putDirectCustomAccessor in else-body, etc. An alternative correct fix (e.g., using a different conditional structure, a helper function, or a different approach to eagerly setting the stack) would fail these tests even if it correctly fixes the bug."
+      "reason": "Tests assert exact counts: test_stack_handling_separation requires exactly 1 setStackFrames call; test_eager_stack_property_setting requires putdirect_count >= 2 and compute_error_info_count >= 1; test_error_info_branching_behavior requires has_error_info_check and has_else_branch. An alternative correct fix (e.g., always materializing then using putDirect without branching, or using a different API combination) would fail these structural tests even if it correctly fixes the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test is text/pattern matching on the C++ source file (regex searches on file contents, brace-matching scope analysis). No test actually compiles or executes the code, runs the JS reproduction case, or verifies runtime behavior. The subprocess calls just run Python scripts that parse text."
+      "reason": "Despite being wrapped in subprocess calls, the tests fundamentally do static code analysis \u2014 they parse the C++ source text with regex to count API calls, check for if/else structures, and verify string patterns. No test actually compiles or executes the C++ code. Tests like test_error_info_branching_behavior, test_stack_handling_separation, test_eager_stack_property_setting all use _analyze_code_behavior() which is pure text analysis via regex. This is textual pattern matching, not behavioral v"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_materialized_branch_with_else, test_setStackFrames_not_in_materialized_path, test_materialized_path_eagerly_sets_stack) check for structural changes that are not present in the base commit. The base code has 'if (!instance->hasMaterializedErrorInfo())' (negated), no else branch for the materialized path, and no putDirect/computeErrorInfoToJSValue in a materialized branch. A stub or unchanged file would fail these tests."
+      "reason": "A stub or no-op implementation would not pass since tests check for specific structural properties (hasMaterializedErrorInfo check, else branch, exact setStackFrames count=1, putDirect count>=2, computeErrorInfo count>=1) that require actual substantive code changes."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: branching structure (positive hasMaterializedErrorInfo with else), materialized path contents (computeErrorInfoToJSValue, putDirect, no setStackFrames), non-materialized path (setStackFrames, deleteProperty, putDirectCustomAccessor, RETURN_IF_EXCEPTION), 35+ lines, 4+ JSC APIs, spaces indentation, #include root.h, newline ending, no trailing whitespace."
+      "outcome": "fail",
+      "reason": "instruction.md says 'Error.captureStackTrace(err) must produce a correct .stack value regardless of whether err.stack was previously accessed' but no test actually verifies this runtime behavior \u2014 all tests are static code analysis. The core behavioral requirement (correct stack traces) is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, and section comments (Gate, Fail-to-pass, Pass-to-pass, Config-derived). Each test clearly states what it checks."
+      "reason": "Tests are well-organized with descriptive function names (test_error_info_branching_behavior, test_stack_handling_separation, etc.), docstrings explaining rationale, and helper functions grouped logically."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying C++ source code, not producing structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (FormatStackTraceForJS.cpp), exact function (errorConstructorFuncCaptureStackTrace), and prescribes exact implementation details including which API calls go in which branches. This goes far beyond identifying the buggy component \u2014 it's a complete implementation specification."
+      "reason": "instruction.md explicitly names the internal assert 'ASSERT(!m_errorInfoMaterialized)' and specific JSC API functions like 'hasMaterializedErrorInfo', 'setStackFrames', 'materializeErrorInfoIfNeeded', 'computeErrorInfo', 'getFramesForCaller', 'DeletePropertyModeScope', 'putDirectCustomAccessor' \u2014 these are implementation-level details that heavily constrain the solution approach and leak the fix structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path (packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts), the exact string 'import.meta.hot.data ??= {}', the function buildStableSplitComponentStatements, the pattern 'if (import.meta.hot) { import.meta.hot.data ??= {} ... }', and the test command 'pnpm nx run @tanstack/router-plugin:test:unit'. All assert targets in test_outputs.py are discoverable from instruction.md."
+      "reason": "The instruction names the exact file path (packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts), the exact literal string 'import.meta.hot.data ??= {}', the function name buildStableSplitComponentStatements, and the test command. All asserted specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add 'import.meta.hot.data ??= {}' inside the if block before assignments. Section 'Required Fix' gives the exact line to add, the exact operator to use, and the exact placement. A developer doesn't need to reason about what to change\u2014it's spelled out completely."
+      "reason": "The instruction explicitly states the exact fix: add 'import.meta.hot.data ??= {}' inside the if block before assignments. It specifies the exact initialization statement, its placement, and the resulting code structure. This is a direct specification of the solution, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_hmr_data_initialization_in_template asserts the literal string 'import.meta.hot.data ??= {}' in the file, and test_initialization_inside_if_block uses a regex requiring that exact pattern. An alternative correct fix like 'if (!import.meta.hot.data) import.meta.hot.data = {}' or 'import.meta.hot.data = import.meta.hot.data || {}' would fail these tests despite being functionally correct."
+      "reason": "test_hmr_data_initialization_in_template asserts the exact literal string 'import.meta.hot.data ??= {}' via substring match, and test_initialization_inside_if_block uses a regex requiring that exact syntax inside the if block. An alternative correct fix like 'if (!import.meta.hot.data) import.meta.hot.data = {}' or 'import.meta.hot.data = import.meta.hot.data || {}' would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail_to_pass tests (test_hmr_data_initialization_in_template, test_initialization_inside_if_block) are pure text-matching: they read the source file and check for literal strings/regex patterns. They do not import, call, or execute the code. The pass_to_pass tests do run subprocesses, but the core fix validation is text-only."
+      "reason": "The two fail_to_pass tests (test_hmr_data_initialization_in_template and test_initialization_inside_if_block) are purely text-matching: they read the source file and check for literal strings/regex patterns. They do not import, call, or execute the code. While pass_to_pass tests do run subprocesses, the critical f2p tests are text-only."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for the literal string 'import.meta.hot.data ??= {}' in the source file and a regex pattern in the correct location. A stub/no-op implementation would not have this string present in the file, so these tests would fail without the actual fix being applied."
+      "outcome": "fail",
+      "reason": "test_hmr_data_initialization_in_template just checks 'import.meta.hot.data ??= {}' in file content. Adding that exact string as a comment anywhere in the file would pass this test without implementing the actual fix. The regex test is slightly harder to game but still just checks text patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) adding the initialization line, (2) placing it inside the if block before assignments, (3) ensuring existing tests pass. All three are tested: test_hmr_data_initialization_in_template, test_initialization_inside_if_block, and test_router_plugin_unit_tests respectively."
+      "reason": "The instruction requires: (1) exact initialization statement present, (2) placement inside the if block before assignments, (3) existing tests still pass. All three are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_hmr_data_initialization_in_template, test_initialization_inside_if_block, etc.), have docstrings explaining their purpose, and are logically grouped by concern (f2p vs p2p)."
+      "reason": "Tests are well-named (test_hmr_data_initialization_in_template, test_initialization_inside_if_block, etc.), have docstrings explaining fail_to_pass vs pass_to_pass, and are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies source code and does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and function names in instruction.md match their actual counterparts in the codebase."
+      "reason": "All file paths, commands, variable names, and operator syntax are correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file, the exact function (buildStableSplitComponentStatements), and provides the exact code line to add ('import.meta.hot.data ??= {}') with precise placement instructions. This goes far beyond identifying the buggy module\u2014it specifies the complete solution."
+      "reason": "The instruction names the exact file, the exact function (buildStableSplitComponentStatements), and provides the exact code to add ('import.meta.hot.data ??= {}') with exact placement requirements. This goes far beyond naming the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific structural strings like 'details,' and 'Lenient fallback for action-like events' (test_get_event_content_source_v1, test_get_event_content_source_features), and test_repo_translation_completeness runs 'check-translation-completeness' which is not mentioned in instruction.md. The exact comment string 'Lenient fallback for action-like events' is not specified in the instruction (instruction says 'Include a comment explaining the lenient fallback logic' but not the exact wordi"
+      "reason": "test_get_event_content_source_v1 asserts the exact string 'Lenient fallback for action-like events' must appear in the source file. While instruction.md mentions 'Include a comment explaining the lenient fallback logic', it does not specify the exact comment text. Also, test_get_event_content_source_v1 asserts 'details,' must appear in the source, and test_get_event_content_source_features asserts 'details,' must appear \u2014 these exact syntactic patterns are not explicitly stated in instruction.md"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'Return the details value directly without applying a fallback when the value is an empty string' and 'Include a comment explaining the lenient fallback logic for action-like events that fail the strict type guard' \u2014 these are direct implementation instructions telling the agent exactly what code changes to make, not just describing broken behavior."
+      "reason": "instruction.md explicitly states 'Return the details value directly without applying a fallback when the value is an empty string' and 'Include a comment explaining the lenient fallback logic for action-like events that fail the strict type guard' and 'Handle events from the agent source that have an action object but are not strictly valid action events'. These are specific implementation instructions telling the agent exactly what to change, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_get_event_content_source_v1 asserts 'details,' in content (exact syntax) and 'Lenient fallback for action-like events' as an exact comment string. An alternative correct fix using different variable naming, different comment wording, or a different approach (e.g., explicit check `details !== undefined ? details : fallback`) would fail these structural tests even if behaviorally correct."
+      "reason": "test_get_event_content_source_v1 asserts the exact string 'Lenient fallback for action-like events' must appear in the source code, and 'details,' must appear. These are gold-patch-specific implementation details (exact comment text, exact syntax pattern) that a correct alternative fix wouldn't necessarily share. An alternative fix could use a different comment or different variable naming."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_get_event_content_source_v1 and test_get_event_content_source_features are purely textual checks (assert 'details,' in content, assert 'Lenient fallback for action-like events' in content) with no code execution. While other tests do execute vitest, these two tests are pure string-in-file checks."
+      "reason": "test_get_event_content_source_v1 and test_get_event_content_source_features are purely textual assertions: they read source files and check for exact string patterns ('details,' and 'Lenient fallback for action-like events') without executing the code. While other tests do execute behavior via vitest, these structural tests are purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p vitest tests (test_vitest_file_view_action, test_vitest_malformed_action_event) check that getEventContent returns specific values (details==='' and title==='FILEEDITOR') which would not be satisfied by the unpatched code that returns 'Unknown event' fallbacks. A stub returning defaults would not pass."
+      "reason": "The f2p tests (test_vitest_file_view_action, test_vitest_malformed_action_event) run actual vitest tests that check getEventContent returns specific values (details === '' and title === 'FILEEDITOR'). A stub returning default values would not pass the underlying vitest assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (empty details for file view, action kind for action-like events, lint/typecheck passing) are tested by the test suite."
+      "reason": "instruction.md requires: (1) empty details for file view actions, (2) action kind display for action-like events missing tool_name/tool_call_id, (3) lint passing, (4) typecheck passing. All of these are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each tests (e.g., 'fail-to-pass test', 'pass-to-pass test') and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining each test's purpose and whether it's fail-to-pass or pass-to-pass. They are logically grouped by category (behavioral vitest tests, lint/typecheck, structural verification)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code fixes, not structured data output like JSON/CSV/API/DB."
+      "reason": "The task is about fixing UI event rendering logic, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, and variable names in instruction.md are consistent with the test files and solution."
+      "reason": "File paths, commands, variable names, and function names in instruction.md are consistent with the test files and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function (getEventContent), exact file paths, and describes the precise fix ('Return the details value directly without applying a fallback'). It also specifies exact test names and expected return values (title === 'FILEEDITOR', details === ''). This goes well beyond describing what's broken."
+      "reason": "instruction.md names the exact function getEventContent() and the exact two file paths where the fix must be applied, plus specific implementation details like 'Return the details value directly without applying a fallback when the value is an empty string' and 'Include a comment explaining the lenient fallback logic'. This goes beyond describing the bug and tells the agent exactly what to do."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

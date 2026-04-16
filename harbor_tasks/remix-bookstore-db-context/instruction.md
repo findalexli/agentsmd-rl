@@ -2,31 +2,25 @@
 
 ## Problem
 
-The bookstore demo currently stores the database handle on request context via a non-standard approach. Route handlers and middleware access the database by destructuring `db` directly from the context object (e.g., `async function({ db, get })`). This is inconsistent with how other context values like `Session` and `FormData` are accessed — those use the standard `get()` API from `remix/fetch-router`.
+The bookstore demo stores the database handle on request context using a custom `db` property (e.g., `context.db = db` or destructuring `db` from the context parameter in handlers/middleware). This approach is inconsistent with how other context values like `Session` and `FormData` are accessed — those use a standard `get()` API.
 
-There is also a dedicated TypeScript module augmentation file (`app/types/context.db.ts`) that extends `RequestContext` with a custom `db` property, creating an extra escape hatch that doesn't match the rest of the codebase.
-
-The `remix/data-table` package exports a `Database` symbol that should be used as the context key for database access, consistent with the pattern used by `Session`, `FormData`, and other context values in this codebase.
+Additionally, a TypeScript module augmentation file (`app/types/context.db.ts`) extends `RequestContext` with this custom `db` property, which is an escape hatch that doesn't match the rest of the codebase.
 
 ## Expected Behavior
 
-All database access should follow the standard request context pattern:
+All database access should follow the same request context pattern used by `Session`, `FormData`, and other context values in this codebase. Route handlers and middleware should access the database through this standard API, not through a custom property assignment.
 
-- **Middleware (`app/middleware/database.ts`)**: Must store the database handle on request context using the standard `context.set()` API with the `Database` symbol exported by `remix/data-table`, instead of direct property assignment.
+The `remix/data-table` package exports symbols that enable this pattern. The TypeScript augmentation adding a custom `db` property to `RequestContext` should be removed.
 
-- **Handlers and middleware (`app/books.tsx`, `app/cart.tsx`, `app/admin.books.tsx`, `app/middleware/auth.ts`, and others)**: Must read the database back using `get(Database)` instead of destructuring `db` from the context parameter.
+The bookstore demo's README should accurately document the database context pattern used in the codebase.
 
-- **TypeScript types**: The module augmentation file (`app/types/context.db.ts`) that adds `db` to `RequestContext` must be removed.
+## Files to Inspect
 
-- **Documentation**: The bookstore demo's README currently references the old `context.db` pattern in its description of the database middleware. Update the README to accurately describe the new database context pattern using the `Database` symbol and the standard `context.set()` / `get()` API.
-
-## Files to Look At
-
-- `demos/bookstore/app/middleware/database.ts` — stores the database on request context
-- `demos/bookstore/app/middleware/auth.ts` — reads the database from context
-- `demos/bookstore/app/types/context.db.ts` — module augmentation for context.db (to be removed)
-- `demos/bookstore/app/books.tsx` — example route handler that uses the database
+- `demos/bookstore/app/middleware/database.ts` — database middleware
+- `demos/bookstore/app/middleware/auth.ts` — auth middleware that accesses the database
+- `demos/bookstore/app/types/context.db.ts` — TypeScript module augmentation (check if this pattern is used)
+- `demos/bookstore/app/books.tsx` — route handler using the database
 - `demos/bookstore/app/cart.tsx` — another handler using the database
 - `demos/bookstore/app/admin.books.tsx` — CRUD handler using the database
-- `demos/bookstore/README.md` — demo documentation describing the context pattern
-- `demos/bookstore/app/utils/context.ts` — context utilities (uses same key pattern)
+- `demos/bookstore/README.md` — demo documentation
+- `demos/bookstore/app/utils/context.ts` — context utilities (reference for the standard pattern used by other values like Session)

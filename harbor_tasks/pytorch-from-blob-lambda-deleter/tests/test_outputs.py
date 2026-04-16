@@ -24,14 +24,12 @@ def _compile_and_run(cpp_code: str, timeout: int = 60) -> tuple[int, str, str]:
     test_bin = Path(REPO) / "_eval_test"
     test_cpp.write_text(cpp_code)
     try:
-        # Compile
         r = subprocess.run(
             ["g++", "-std=c++17", "-o", str(test_bin), str(test_cpp)],
             capture_output=True, text=True, timeout=timeout, cwd=REPO,
         )
         if r.returncode != 0:
             return r.returncode, "", r.stderr
-        # Run
         r2 = subprocess.run(
             [str(test_bin)], capture_output=True, text=True, timeout=30, cwd=REPO,
         )
@@ -49,7 +47,6 @@ def test_shim_h_two_arg_deleter_compiles():
     """shim.h torch_from_blob compiles with two-arg callback + void* context."""
     src = SHIM_H.read_text()
 
-    # Extract the torch_from_blob declaration parameters
     match = re.search(
         r'AOTI_TORCH_EXPORT\s+AOTITorchError\s+torch_from_blob\s*\(([^;]+)\)\s*;',
         src,
@@ -58,9 +55,6 @@ def test_shim_h_two_arg_deleter_compiles():
     assert match, "No torch_from_blob declaration found in shim.h"
     params = match.group(1).strip()
 
-    # Try to compile a program using the extracted signature
-    # This FAILS on base commit (single-arg deleter) because the test code
-    # passes two_arg_deleter with a context pointer
     cpp_code = f"""\
 #define AOTI_TORCH_EXPORT
 typedef int AOTITorchError;
@@ -96,84 +90,164 @@ int main() {{
 
 def test_ops_h_accepts_capturing_lambda():
     """ops.h from_blob accepts capturing lambdas via template (not just DeleterFnPtr)."""
-    # This test compiles a C++ program that includes ops.h and tries to use
-    # a capturing lambda as the deleter. This ONLY works if from_blob is
-    # a template accepting generic callables.
-    #
-    # Base commit: from_blob takes DeleterFnPtr → fails to compile with lambda
-    # Fix commit: from_blob is a template with SFINAE → compiles and runs
     ops_src = OPS_H.read_text()
-    shim_src = SHIM_H.read_text()
+    lines = ops_src.split('\n')
 
-    # Check if ops.h has the template signature
-    has_template = bool(
-        re.search(
-            r'template\s*<[^;]*>\s+(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(',
-            ops_src,
-        )
-    )
-    assert has_template, (
-        "ops.h from_blob has no template signature — cannot accept capturing lambdas"
+    # Find the from_blob overload that has a deleter parameter
+    deleter_from_blob_line = None
+    for i, line in enumerate(lines):
+        if re.search(r'\bfrom_blob\s*\(', line):
+            block = '\n'.join(lines[i:i + 15])
+            if re.search(r'\bdeleter\b', block):
+                deleter_from_blob_line = i
+                break
+
+    assert deleter_from_blob_line is not None, (
+        "No from_blob overload with deleter parameter found in ops.h"
     )
 
-    # Verify the template uses is_invocable_v<F, void*> for SFINAE
-    has_is_invocable = 'std::is_invocable_v' in ops_src
-    assert has_is_invocable, (
-        "ops.h template doesn't use std::is_invocable_v<F, void*> for SFINAE"
+    # Check whether a template declaration exists above the function
+    is_template = False
+    for j in range(deleter_from_blob_line - 1,
+                    max(deleter_from_blob_line - 5, -1), -1):
+        if 'template' in lines[j]:
+            is_template = True
+            break
+
+    # Extract the deleter parameter type name
+    deleter_type = None
+    for j in range(deleter_from_blob_line,
+                    min(deleter_from_blob_line + 15, len(lines))):
+        m = re.search(r'(?:const\s+)?(\w+)\s*(?:[&*]+)?\s+deleter\b', lines[j])
+        if m:
+            deleter_type = m.group(1)
+            break
+
+    assert deleter_type is not None, (
+        "Could not determine deleter parameter type in ops.h from_blob"
     )
+
+    # Build a minimal C++ test: create a function with the extracted template
+    # (if any) and deleter type, then call it with a capturing lambda.
+    # Base commit: deleter type is a fixed function pointer typedef -> lambda
+    #   cannot convert -> compilation fails.
+    # Fixed commit: deleter type is a template parameter -> lambda matches
+    #   -> compilation succeeds.
+    template_line = f'template <class {deleter_type}>' if is_template else ''
+
+    cpp_code = f"""\
+#include <type_traits>
+#include <cstdio>
+
+typedef void (*DeleterFnPtr)(void*);
+
+{template_line}
+int test_from_blob({deleter_type} deleter) {{
+    deleter(nullptr);
+    return 0;
+}}
+
+int main() {{
+    int captured = 42;
+    auto lambda = [&captured](void*) {{ captured = 0; }};
+    test_from_blob(lambda);
+    if (captured == 0) {{
+        printf("PASS\\n");
+        return 0;
+    }}
+    printf("FAIL\\n");
+    return 1;
+}}
+"""
+    rc, stdout, stderr = _compile_and_run(cpp_code)
+    assert rc == 0, (
+        f"Compilation/execution failed — ops.h from_blob cannot accept "
+        f"capturing lambda as deleter:\n{stderr}"
+    )
+    assert "PASS" in stdout
 
 
 def test_shim_cpp_context_forwarded():
     """shim_common.cpp forwards context pointer through wrapping lambda."""
     src = SHIM_CPP.read_text()
 
-    # Find the torch_from_blob function implementation
-    funcs = re.split(r'(?=AOTI_TORCH_EXPORT\s+AOTITorchError)', src)
-    found_func = None
-    for block in funcs:
-        if 'torch_from_blob' in block and 'for_blob' in block:
-            found_func = block
-            break
-    assert found_func, "No torch_from_blob implementation found in shim_common.cpp"
-
-    # Must have a two-arg deleter callback parameter: void (*xxx)(void*, void*)
-    # Pattern allows for optional parameter names (e.g., void* data, void* ctx)
-    has_two_arg_cb = bool(
-        re.search(
-            r'void\s*\(\s*\*\s*\w+\s*\)\s*\(\s*void\s*\*\s*\w*\s*,\s*void\s*\*\s*\w*\s*\)',
-            found_func,
-        )
+    # Extract the torch_from_blob function definition parameter list
+    match = re.search(
+        r'(?:AOTI_TORCH_EXPORT\s+)?AOTITorchError\s+torch_from_blob\s*\(([^{]+)\)\s*\{',
+        src,
+        re.DOTALL,
     )
-    assert has_two_arg_cb, (
-        "shim_common.cpp torch_from_blob doesn't have two-arg deleter callback parameter"
+    assert match, "No torch_from_blob definition found in shim_common.cpp"
+    params = match.group(1).strip()
+
+    # Detect a two-arg function pointer: void (*name)(... void* ..., void* ...)
+    fp_match = re.search(
+        r'void\s*\(\s*\*\s*(\w+)\s*\)\s*\([^)]*void\s*\*[^)]*,\s*void\s*\*',
+        params,
     )
 
-    # Must have a wrapping lambda that captures deleter_callback and deleter_ctx
-    has_wrapping_lambda = bool(
-        re.search(
-            r'\[\s*deleter_callback\s*,\s*deleter_ctx\s*\]\s*\(\s*void\s*\*\s*\w+\s*\)',
-            found_func,
-        )
-    )
-    assert has_wrapping_lambda, (
-        "shim_common.cpp doesn't have wrapping lambda capturing deleter_callback and deleter_ctx"
-    )
+    if fp_match:
+        callback_name = fp_match.group(1)
+        # The context void* parameter follows the function pointer
+        remaining = params[fp_match.end():]
+        ctx_match = re.search(r'void\s*\*\s*(\w+)', remaining)
+        ctx_name = ctx_match.group(1) if ctx_match else None
+        # First void* parameter is the data pointer
+        data_match = re.search(r'void\s*\*\s*(\w+)', params)
+        data_name = data_match.group(1) if data_match else 'data'
 
-    # The wrapping lambda must call the two-arg callback
-    has_two_arg_call = bool(
-        re.search(
-            r'deleter_callback\s*\(\s*\w+\s*,\s*deleter_ctx\s*\)',
-            found_func,
+        mock_body = (
+            f"    if ({callback_name} != nullptr)\n"
+            f"        {callback_name}({data_name}, {ctx_name});\n"
+            f"    return 0;"
         )
+    else:
+        mock_body = "    return 0;"
+
+    cpp_code = f"""\
+#define AOTI_TORCH_EXPORT
+typedef int AOTITorchError;
+typedef void* AtenTensorHandle;
+#include <cstdint>
+#include <cstdio>
+
+AOTITorchError torch_from_blob({params}) {{
+{mock_body}
+}}
+
+static void context_deleter(void* data, void* ctx) {{
+    *(int*)ctx = 99;
+}}
+
+int main() {{
+    int ctx_val = 0;
+    AtenTensorHandle handle = nullptr;
+    AOTITorchError err = torch_from_blob(
+        nullptr, 1, nullptr, nullptr, 0, 0, 0, 0,
+        &handle, 0, nullptr, 0,
+        context_deleter, &ctx_val);
+    if (err != 0) return 1;
+    if (ctx_val == 99) {{
+        printf("PASS\\n");
+        return 0;
+    }}
+    printf("FAIL: context not forwarded (ctx_val=%d)\\n", ctx_val);
+    return 1;
+}}
+"""
+    rc, stdout, stderr = _compile_and_run(cpp_code)
+    assert rc == 0, (
+        f"Compilation/execution failed — shim_common.cpp torch_from_blob "
+        f"definition doesn't support two-arg deleter + context:\n{stderr}"
     )
-    assert has_two_arg_call, (
-        "shim_common.cpp wrapping lambda doesn't call deleter_callback with two arguments"
+    assert "PASS" in stdout, (
+        f"Context forwarding verification failed — the two-arg callback "
+        f"was not invoked with the context pointer:\n{stdout}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass — backward compatibility + anti-stub (origin: static)
-# These tests read file content to verify structure
 # ---------------------------------------------------------------------------
 
 def test_repo_git_clean():
@@ -183,9 +257,6 @@ def test_repo_git_clean():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"git status failed: {r.stderr}"
-    # Allow changes in:
-    # - test files (_eval_test)
-    # - the specific source files modified by the fix (shim.h, ops.h, shim_common.cpp)
     allowed_patterns = ["_eval_test", "torch/csrc/stable/c/shim.h",
                         "torch/csrc/stable/ops.h", "torch/csrc/shim_common.cpp"]
     lines = [l for l in r.stdout.strip().split("\n") if l.strip()]
@@ -202,7 +273,6 @@ def test_repo_files_exist():
         assert path.exists(), f"{path} does not exist"
         content = path.read_text()
         assert len(content) > 0, f"{path} is empty"
-        # Basic sanity check: files should have expected markers
         assert "#include" in content or "#pragma" in content or "//" in content, (
             f"{path} appears to be corrupted (no expected C++ markers)"
         )
@@ -212,7 +282,6 @@ def test_repo_header_structure():
     """C++ headers have valid include guards/pragma once (pass_to_pass)."""
     for path in [SHIM_H, OPS_H]:
         content = path.read_text()
-        # Check for include guards or pragma once
         has_guard = re.search(r'#ifndef\s+\w+', content) is not None
         has_pragma = "#pragma once" in content
         assert has_guard or has_pragma, (
@@ -222,38 +291,28 @@ def test_repo_header_structure():
 
 def test_repo_code_formatting():
     """Modified files follow basic code formatting rules (pass_to_pass)."""
-    # Check for common formatting issues that clang-format would catch
     for path in [SHIM_H, OPS_H, SHIM_CPP]:
         src = path.read_text()
-
-        # Check for trailing whitespace (clang-format would catch this)
         lines = src.split('\n')
         for i, line in enumerate(lines, 1):
             if line != line.rstrip():
                 assert False, f"{path.name}:{i} has trailing whitespace"
-
-        # Check for tabs (should use spaces per .clang-format)
         if '\t' in src:
             assert False, f"{path.name} contains tab characters, should use spaces"
-
-        # Check file ends with newline
         if src and not src.endswith('\n'):
             assert False, f"{path.name} does not end with a newline"
 
 
 def test_repo_file_structure():
     """Source files have valid internal structure (pass_to_pass)."""
-    # Test shim.h has proper extern "C" guards for C linkage
     shim_src = SHIM_H.read_text()
     assert '#ifdef __cplusplus' in shim_src, "shim.h missing __cplusplus guard"
     assert 'extern "C"' in shim_src, "shim.h missing extern C declaration"
 
-    # Test that ops.h has namespace declarations
     ops_src = OPS_H.read_text()
     has_ns = 'namespace' in ops_src or 'HIDDEN_NAMESPACE_' in ops_src
     assert has_ns, "ops.h missing namespace declarations"
 
-    # Check brace balance (basic syntax validation)
     for path, name in [(OPS_H, "ops.h"), (SHIM_CPP, "shim_common.cpp")]:
         src = path.read_text()
         open_braces = src.count('{')
@@ -262,7 +321,6 @@ def test_repo_file_structure():
             f"{name} has mismatched braces: {open_braces} open, {close_braces} close"
         )
 
-    # Check preprocessor conditional balance
     shim_cpp_src = SHIM_CPP.read_text()
     ifdefs = len(re.findall(r'#if(?:def|ndef)?\b', shim_cpp_src))
     endifs = len(re.findall(r'#endif\b', shim_cpp_src))
@@ -274,16 +332,12 @@ def test_repo_file_structure():
 def test_no_deleter_overload_preserved():
     """The no-deleter from_blob overload still exists for backward compatibility."""
     src = OPS_H.read_text()
-
-    # Count from_blob definitions - there should be at least 2 (with deleter + without)
     from_blob_defs = re.findall(
         r'(?:inline\s+)?(?:\w+::)*\w+\s+from_blob\s*\(', src
     )
     assert len(from_blob_defs) >= 2, (
         f"Expected >= 2 from_blob overloads, found {len(from_blob_defs)}"
     )
-
-    # Check for aoti_torch_create_tensor_from_blob (used by no-deleter path)
     assert 'aoti_torch_create_tensor_from_blob' in src, (
         "Original no-deleter path using aoti_torch_create_tensor_from_blob was removed"
     )
@@ -306,8 +360,6 @@ def test_files_not_stubbed():
 def test_shim_cpp_null_callback_guard():
     """shim_common.cpp still guards against nullptr callback (backward compat)."""
     src = SHIM_CPP.read_text()
-
-    # Find the torch_from_blob function and check it guards deleter_callback != nullptr
     funcs = re.split(r'(?=AOTI_TORCH_EXPORT\s+AOTITorchError)', src)
     found = False
     for block in funcs:
@@ -320,12 +372,10 @@ def test_shim_cpp_null_callback_guard():
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass — CI/CD repo tests (origin: repo_tests)
-# These use subprocess.run() to execute actual CI commands
 # ---------------------------------------------------------------------------
 
 def test_repo_git_history():
     """Repo has expected git history and structure (pass_to_pass)."""
-    # Check git log works (repo has history)
     r = subprocess.run(
         ["git", "log", "-1", "--oneline"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
@@ -336,7 +386,6 @@ def test_repo_git_history():
 
 def test_repo_ci_scripts_syntax():
     """CI scripts have valid Python syntax (pass_to_pass)."""
-    # Check Python syntax of CI scripts that exist in the repo
     ci_scripts = [
         ".github/scripts/collect_ciflow_labels.py",
         ".github/scripts/ensure_actions_will_cancel.py",
@@ -360,7 +409,7 @@ def test_github_scripts_syntax():
     failed = []
     for script_path in python_files:
         if script_path.name.startswith("test_"):
-            continue  # Skip test files, just check source files
+            continue
         r = subprocess.run(
             ["python3", "-m", "py_compile", str(script_path)],
             capture_output=True, text=True, timeout=30, cwd=REPO,

@@ -7,7 +7,6 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import re
 import subprocess
 from pathlib import Path
 
@@ -15,13 +14,79 @@ REPO = "/workspace/trigger.dev"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — API_ORIGIN fallback
+# Helper: Node.js code to extract and evaluate the TRIGGER_API_URL expression
+# from buildImage.ts.  Works regardless of function name or inline logic.
+# Handles multiple TRIGGER_API_URL assignments in the file by probing which
+# one actually performs normalization.
+# ---------------------------------------------------------------------------
+
+_NORMALIZE_HELPER = r"""
+const fs = require('fs');
+const src = fs.readFileSync('packages/cli-v3/src/deploy/buildImage.ts', 'utf8');
+
+// Find ALL TRIGGER_API_URL template expressions (file has multiple build paths)
+const urlMatches = [...src.matchAll(/TRIGGER_API_URL=\$\{([^}]+)\}/g)];
+if (urlMatches.length === 0) {
+    console.error('TRIGGER_API_URL template not found');
+    process.exit(1);
+}
+
+// Extract helper functions referenced by any expression (regardless of name)
+var helpers = '';
+var funcPattern = /(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+?)?\s*\{/g;
+var fm;
+while ((fm = funcPattern.exec(src)) !== null) {
+    var funcName = fm[1];
+    var referenced = urlMatches.some(function(m) { return m[1].includes(funcName); });
+    if (!referenced) continue;
+    var braces = 0, started = false, end = fm.index;
+    for (var i = fm.index; i < src.length; i++) {
+        if (src[i] === '{') { braces++; started = true; }
+        if (src[i] === '}') braces--;
+        if (started && braces === 0) { end = i + 1; break; }
+    }
+    var fSrc = src.slice(fm.index, end);
+    fSrc = fSrc.replace(
+        /^(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)(\s*:\s*[^{]+?)?\s*\{/,
+        function(_, name, params) {
+            var cleaned = params.split(',').map(function(p) {
+                return p.replace(/\s*[?]?\s*:\s*\S+/, '').trim();
+            }).join(', ');
+            return 'function ' + name + '(' + cleaned + ') {';
+        });
+    helpers += fSrc + '\n';
+}
+
+// Identify which expression does normalization by probing on darwin
+var selectedExpr = urlMatches[0][1].trim();
+for (var j = 0; j < urlMatches.length; j++) {
+    try {
+        Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+        var probeCode = helpers + '\nreturn ' + urlMatches[j][1].trim() + ';';
+        var probeResult = new Function('options', probeCode)({ apiUrl: 'http://localhost:9999' });
+        if (probeResult && probeResult.includes('host.docker.internal')) {
+            selectedExpr = urlMatches[j][1].trim();
+            break;
+        }
+    } catch(e) {}
+}
+
+function evalUrl(apiUrl, platform) {
+    Object.defineProperty(process, 'platform', { value: platform, configurable: true });
+    var options = { apiUrl: apiUrl };
+    var code = helpers + '\nreturn ' + selectedExpr + ';';
+    return new Function('options', code)(options);
+}
+"""
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- API_ORIGIN fallback
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_api_origin_preferred_over_app_origin():
     """Env endpoint must prefer API_ORIGIN over APP_ORIGIN for apiUrl."""
-    # Extract the apiUrl expression from the route and evaluate it with mock env
     node_code = r"""
 const fs = require('fs');
 const src = fs.readFileSync(
@@ -32,11 +97,11 @@ if (!match) { console.error('apiUrl assignment not found'); process.exit(1); }
 let expr = match[1].trim();
 expr = expr.replace(/processEnv\./g, 'env.');
 
-// Case 1: both API_ORIGIN and APP_ORIGIN set — API_ORIGIN should win
+// Case 1: both API_ORIGIN and APP_ORIGIN set -- API_ORIGIN should win
 let env = { API_ORIGIN: 'https://api.test', APP_ORIGIN: 'https://app.test' };
 console.log(eval(expr));
 
-// Case 2: only APP_ORIGIN set — should fall back
+// Case 2: only APP_ORIGIN set -- should fall back
 env = { APP_ORIGIN: 'https://app.test' };
 console.log(eval(expr));
 """
@@ -56,25 +121,16 @@ console.log(eval(expr));
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — localhost normalization for Docker builds
+# Fail-to-pass (pr_diff) -- localhost normalization for Docker builds
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_normalize_localhost_darwin():
-    """normalizeApiUrlForBuild must replace localhost with host.docker.internal on macOS."""
-    node_code = r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/cli-v3/src/deploy/buildImage.ts', 'utf8');
-const match = src.match(
-  /function normalizeApiUrlForBuild\(apiUrl(?::\s*\w+)?\)\s*\{([\s\S]*?)\n\}/
-);
-if (!match) { console.error('normalizeApiUrlForBuild not found'); process.exit(1); }
-const body = match[1];
-Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
-const fn = new Function('apiUrl', body);
-console.log(fn('http://localhost:3030'));
-console.log(fn('http://localhost:8080'));
-console.log(fn('https://api.trigger.dev'));
+    """URL normalization must replace localhost with host.docker.internal on macOS."""
+    node_code = _NORMALIZE_HELPER + r"""
+console.log(evalUrl('http://localhost:3030', 'darwin'));
+console.log(evalUrl('http://localhost:8080', 'darwin'));
+console.log(evalUrl('https://api.trigger.dev', 'darwin'));
 """
     r = subprocess.run(
         ["node", "-e", node_code],
@@ -96,18 +152,17 @@ console.log(fn('https://api.trigger.dev'));
 
 # [pr_diff] fail_to_pass
 def test_normalize_preserves_localhost_linux():
-    """normalizeApiUrlForBuild must NOT replace localhost on Linux."""
-    node_code = r"""
-const fs = require('fs');
-const src = fs.readFileSync('packages/cli-v3/src/deploy/buildImage.ts', 'utf8');
-const match = src.match(
-  /function normalizeApiUrlForBuild\(apiUrl(?::\s*\w+)?\)\s*\{([\s\S]*?)\n\}/
-);
-if (!match) { console.error('normalizeApiUrlForBuild not found'); process.exit(1); }
-const body = match[1];
-Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
-const fn = new Function('apiUrl', body);
-console.log(fn('http://localhost:3030'));
+    """URL normalization must be platform-aware and preserve localhost on Linux."""
+    node_code = _NORMALIZE_HELPER + r"""
+// Verify darwin normalization exists (proves the code is platform-aware,
+// not just a raw pass-through that accidentally preserves localhost)
+var darwinResult = evalUrl('http://localhost:3030', 'darwin');
+if (!darwinResult.includes('host.docker.internal')) {
+    console.error('No darwin normalization -- URL handling is not platform-aware');
+    process.exit(1);
+}
+// Now verify Linux preserves localhost
+console.log(evalUrl('http://localhost:3030', 'linux'));
 """
     r = subprocess.run(
         ["node", "-e", node_code],
@@ -120,14 +175,14 @@ console.log(fn('http://localhost:3030'));
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — CONTRIBUTING.md build instructions
+# Fail-to-pass (config_edit) -- CONTRIBUTING.md build instructions
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — modified files exist and are non-trivial
+# Pass-to-pass (static) -- modified files exist and are non-trivial
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -147,7 +202,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI checks that run actual commands
+# Pass-to-pass (repo_tests) -- CI checks that run actual commands
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -162,7 +217,6 @@ def test_repo_no_tabs():
             capture_output=True, text=True, timeout=30,
         )
         assert r.returncode == 0, f"Failed to read {rel_path}"
-        # Check no tab characters (common lint rule)
         assert "\t" not in r.stdout, f"{rel_path} contains tab characters - use spaces"
 
 
@@ -178,7 +232,6 @@ def test_repo_trailing_newline():
             capture_output=True, timeout=30,
         )
         assert r.returncode == 0, f"Failed to check {rel_path}"
-        # File should end with newline (last byte is 0x0a)
         assert r.stdout == b"\n", f"{rel_path} must end with a newline"
 
 
@@ -233,7 +286,6 @@ console.log('OK');
 # [repo_tests] pass_to_pass
 def test_repo_ts_import_validation():
     """TypeScript files have valid import/export structure (repo CI check)."""
-    # Check buildImage.ts for valid ESM-style imports (the repo uses type: "module")
     r = subprocess.run(
         ["node", "-e", f"""
 const fs = require('fs');

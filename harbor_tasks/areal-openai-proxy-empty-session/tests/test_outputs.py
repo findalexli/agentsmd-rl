@@ -18,50 +18,77 @@ TARGET = f"{REPO}/areal/experimental/openai/proxy/workflow.py"
 
 
 # ---------------------------------------------------------------------------
-# Helpers: extract the online-mode interactions-handling tail of arun_episode
+# Helpers: extract the interactions-handling tail using AST
 # ---------------------------------------------------------------------------
 
-def _find_arun_episode(source: str):
-    """Return (AST node, source lines) for arun_episode, or (None, None)."""
+def _find_arun_episode_ast(source: str):
+    """Return the AST node for arun_episode."""
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.AsyncFunctionDef) and node.name == "arun_episode":
-            return node, source.splitlines()
-    return None, None
+            return node
+    return None
 
 
-def _extract_tail(method_lines: list[str], func_node) -> str | None:
-    """Extract the interactions-handling tail from the online-mode branch."""
-    all_lines = method_lines[func_node.lineno - 1 : func_node.end_lineno]
-    tail_start = None
-    tail_end = None
-    for i, line in enumerate(all_lines):
-        s = line.strip().lower()
-        if tail_start is None:
-            if ("record stats" in s
-                or ("interactions" in s and line.strip().startswith("if"))
-                or "list(interactions" in s
-                or ("empty" in s and "interact" in s)
-                or ("no interactions" in s)):
-                tail_start = i
-        if tail_start is not None and line.strip().startswith("return interactions"):
-            tail_end = i + 1
-            for j in range(i + 1, min(i + 5, len(all_lines))):
-                sj = all_lines[j].strip()
-                if sj.startswith("return None") or sj == "return None":
-                    tail_end = j + 1
-                    break
-                if sj and not sj.startswith("#") and not sj.startswith("logger"):
-                    break
+def _find_online_mode_interactions_block(func_node: ast.AsyncFunctionDef, source_lines: list[str]):
+    """
+    Find the interactions-handling block in the online-mode branch of arun_episode.
+
+    Extracts the code AFTER 'interactions = await proxy_client.export_interactions(...)'
+    through the final 'return interactions' at the end of the online-mode branch.
+
+    The test script provides 'interactions' via __INTERACTIONS__, so we skip the
+    interactions assignment itself and extract the subsequent processing code.
+
+    Uses AST traversal to be robust to comment changes, variable renaming, and
+    refactoring.
+    """
+    # Find 'if self.mode == "online"' in the function body
+    online_if = None
+    for item in func_node.body:
+        if isinstance(item, ast.If):
+            test = item.test
+            if isinstance(test, ast.Compare):
+                for cmp in test.left, *test.comparators:
+                    if isinstance(cmp, ast.Attribute) and cmp.attr == "mode":
+                        online_if = item
+                        break
+        if online_if:
             break
-    if tail_start is None:
+
+    if not online_if:
         return None
-    end = tail_end if tail_end else len(all_lines)
-    return textwrap.dedent("\n".join(all_lines[tail_start:end]))
+
+    # Find the interactions assignment and return in the online if body
+    interactions_end_lineno = None
+    return_lineno = None
+    for s in online_if.body:
+        if isinstance(s, ast.Assign):
+            for t in s.targets:
+                if isinstance(t, ast.Name) and t.id == "interactions":
+                    if isinstance(s.value, ast.Await):
+                        call = s.value.value
+                        if isinstance(call, ast.Call):
+                            func_attr = call.func
+                            if isinstance(func_attr, ast.Attribute) and func_attr.attr == "export_interactions":
+                                # The interactions assignment spans multiple lines
+                                interactions_end_lineno = s.end_lineno
+        if isinstance(s, ast.Return):
+            if isinstance(s.value, ast.Name) and s.value.id == "interactions":
+                return_lineno = s.lineno
+
+    if interactions_end_lineno and return_lineno:
+        # Extract from AFTER the interactions assignment to the return
+        block_lines = [
+            l if l.strip() else " "
+            for l in source_lines[interactions_end_lineno : return_lineno]
+        ]
+        return block_lines
+
+    return None
 
 
-# Subprocess script template — uses __PLACEHOLDER__ to avoid f-string conflicts
-# with curly braces in the extracted tail code (e.g. f"...{var}").
+# Subprocess script template
 _SUBPROCESS_TEMPLATE = """\
 import asyncio, json, logging
 from unittest.mock import MagicMock
@@ -98,21 +125,49 @@ print(json.dumps({
 
 
 def _run_tail_subprocess(interactions_code: str, test_id: str) -> dict:
-    """Execute the extracted tail code in a subprocess.
+    """Execute the interactions-handling block in a subprocess.
 
-    Reads workflow.py, extracts the interactions-handling section, runs it
-    with mocked dependencies in a child process, and returns parsed JSON results.
+    Uses AST-based extraction (not text patterns) to find the online-mode
+    interactions handling section, then runs it with mocked dependencies.
     """
     source = Path(TARGET).read_text()
-    func_node, lines = _find_arun_episode(source)
-    assert func_node is not None, "arun_episode not found"
-    tail = _extract_tail(lines, func_node)
-    assert tail is not None, "Could not extract interactions-handling tail"
+    func_node = _find_arun_episode_ast(source)
+    assert func_node is not None, "arun_episode not found in AST"
 
-    tail_indented = textwrap.indent(tail, "    ")
+    lines = source.splitlines()
+    block_lines = _find_online_mode_interactions_block(func_node, lines)
+
+    # Fallback: if AST extraction fails, use structural line-based extraction
+    if block_lines is None or len(block_lines) == 0:
+        in_online = False
+        interactions_end = None
+        return_lineno = None
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if "mode" in stripped and "online" in stripped and "==" in stripped:
+                in_online = True
+            if in_online and "export_interactions" in stripped and "await" in stripped:
+                # Found the interactions assignment - find its closing paren
+                interactions_end = i + 1  # assume single line for fallback
+            if in_online and interactions_end is not None:
+                if stripped.startswith("return ") and "interactions" in stripped:
+                    return_lineno = i
+                    break
+        if interactions_end and return_lineno:
+            block_lines = [
+                l if l.strip() else " "
+                for l in lines[interactions_end:return_lineno]
+            ]
+
+    assert block_lines is not None and len(block_lines) > 0, (
+        f"Could not extract interactions-handling block from arun_episode"
+    )
+
+    tail = "\n".join(block_lines)
+    dedented = textwrap.dedent(tail)
+    tail_indented = textwrap.indent(dedented, "    ")
     script = (
-        _SUBPROCESS_TEMPLATE
-        .replace("__TEST_FUNC__", f"_test_{test_id}")
+        _SUBPROCESS_TEMPLATE.replace("__TEST_FUNC__", f"_test_{test_id}")
         .replace("__LOGGER__", f"_eval_{test_id}")
         .replace("__INTERACTIONS__", interactions_code)
         .replace("__TAIL__", tail_indented)
@@ -120,7 +175,10 @@ def _run_tail_subprocess(interactions_code: str, test_id: str) -> dict:
 
     r = subprocess.run(
         ["python3", "-c", script],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Subprocess failed: {r.stderr}\nstdout: {r.stdout}"
     return json.loads(r.stdout.strip().splitlines()[-1])
@@ -135,13 +193,19 @@ def test_repo_ruff_lint():
     """Repo's Python linting passes (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["ruff", "check", "areal/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -151,13 +215,19 @@ def test_repo_ruff_format():
     """Repo's Python code formatting passes (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["ruff", "format", "--check", "areal/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -167,7 +237,10 @@ def test_repo_workflow_syntax():
     """Modified workflow.py compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", TARGET],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
 
@@ -177,7 +250,10 @@ def test_repo_proxy_gateway_syntax():
     """Proxy gateway module compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/proxy_gateway.py"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"proxy_gateway.py syntax check failed:\n{r.stderr[-500:]}"
 
@@ -187,7 +263,10 @@ def test_repo_online_agent_syntax():
     """Online agent module compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/online_agent.py"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"online_agent.py syntax check failed:\n{r.stderr[-500:]}"
 
@@ -197,7 +276,10 @@ def test_repo_pytest_available():
     """pytest is installed and functional (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "pytest", "--version"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"pytest check failed:\n{r.stderr[-500:]}"
 
@@ -207,13 +289,19 @@ def test_repo_ruff_lint_proxy():
     """Repo's Python linting passes for proxy module (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["ruff", "check", "areal/experimental/openai/proxy/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -223,13 +311,19 @@ def test_repo_ruff_format_proxy():
     """Repo's Python code formatting passes for proxy module (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["ruff", "format", "--check", "areal/experimental/openai/proxy/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -239,7 +333,10 @@ def test_repo_server_syntax():
     """Proxy server module compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/server.py"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"server.py syntax check failed:\n{r.stderr[-500:]}"
 
@@ -251,7 +348,10 @@ def test_repo_pyproject_valid():
         ["python3", "-c",
          "import tomllib; f=open('pyproject.toml', 'rb'); d=tomllib.load(f); "
          "assert 'project' in d and 'name' in d['project'], 'Missing [project] name'"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}"
 
@@ -318,7 +418,7 @@ def test_single_interaction_returns_dict():
 def test_not_stub():
     """arun_episode has a substantial body (not a stub)."""
     source = Path(TARGET).read_text()
-    func_node, _ = _find_arun_episode(source)
+    func_node = _find_arun_episode_ast(source)
     assert func_node is not None, "arun_episode not found"
     body = func_node.body
     skip = 1 if (body and isinstance(body[0], ast.Expr)
@@ -346,7 +446,7 @@ def test_no_wildcard_imports():
 def test_no_print_in_arun_episode():
     """No print() calls in arun_episode — use logger instead (AGENTS.md rule)."""
     source = Path(TARGET).read_text()
-    func_node, _ = _find_arun_episode(source)
+    func_node = _find_arun_episode_ast(source)
     assert func_node is not None, "arun_episode not found"
     for child in ast.walk(func_node):
         if (isinstance(child, ast.Call)
@@ -359,7 +459,7 @@ def test_no_print_in_arun_episode():
 def test_no_gpu_cpu_sync_in_arun_episode():
     """No GPU-CPU sync calls (.item(), .tolist()) in arun_episode hot path (AGENTS.md rule)."""
     source = Path(TARGET).read_text()
-    func_node, _ = _find_arun_episode(source)
+    func_node = _find_arun_episode_ast(source)
     assert func_node is not None, "arun_episode not found"
     for child in ast.walk(func_node):
         if (isinstance(child, ast.Call)

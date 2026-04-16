@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all specific file paths (devtools/BUILD.bazel, devtools/tools/defaults.bzl, devtools/projects/shell-browser/src/BUILD.bazel, devtools/projects/shell-browser/src/app/BUILD.bazel, package.json), key identifiers (bool_flag 'debug', config_setting 'debug_build', 'devtools:build:chrome:debug', 'devtools:build:firefox:debug'), parameter names (minify, sourcemap), literal values ('inline', 'True', '--//devtools:debug'), and script names (detect-angular.ts, backend.ts, ng-validate."
+      "reason": "All file paths, flag names (debug, debug_build), parameter names (minify, sourcemap), script names, and the --//devtools:debug flag are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive about the exact implementation: it specifies the exact flag name ('debug'), exact config_setting name ('debug_build'), exact parameter names (minify, sourcemap), exact values (sourcemap='inline'), and exact npm script names with exact flag syntax ('--//devtools:debug'). It also says exactly which lines to remove ('minify = True'). This leaves very little reasoning for the developer\u2014it's essentially a specification of the solution rather than a descriptio"
+      "outcome": "pass",
+      "reason": "Instruction describes requirements (flag names, behaviors) without providing code snippets or line-level fixes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on implementation-specific details: test_defaults_bzl_esbuild_behavior requires select() with ':debug_build' condition and '**kwargs' delegation pattern; test_debug_flag_behavior requires exact names 'debug' and 'debug_build' with specific flag_values structure; test_injected_scripts_inline_sourcemaps checks for exact 'sourcemap = \"inline\"' text pattern. An alternative correct implementation using a different mechanism (e.g., a different conditional construct, different variable nam"
+      "outcome": "pass",
+      "reason": "Tests check for structural properties (select() with debug_build/False and default/True, **kwargs delegation, flag_values matching True) which correspond to the natural Bazel pattern rather than specific variable names."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Despite claiming to be 'behavioral', most tests are regex-based text parsing: test_defaults_bzl_esbuild_behavior parses .bzl file text with regex looking for 'select(' and ':debug_build' strings; test_debug_flag_behavior parses BUILD.bazel text with regex; test_injected_scripts_inline_sourcemaps (visible from truncated tests) likely checks for text patterns. The test_syntax_check just counts parentheses. None actually execute Bazel, load the Starlark code, or run any build commands."
+      "outcome": "pass",
+      "reason": "Tests parse the Bazel files, extract function signatures, and validate select() structure rather than mere substring matching; package.json is parsed as JSON."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific structural elements that don't exist in the original codebase (bool_flag, config_setting, select() in esbuild wrapper, debug npm scripts). A stub or no-op implementation would not pass these tests since the original files lack these constructs."
+      "reason": "Tests require actual bool_flag, config_setting, function signature changes, and package.json script additions \u2014 stubs cannot satisfy these assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five requirements from the instruction are covered: debug flag in BUILD.bazel (test_debug_flag_behavior), configurable esbuild (test_defaults_bzl_esbuild_behavior), inline sourcemaps for injected scripts (test_injected_scripts_inline_sourcemaps), removal of hardcoded minification (test_no_hardcoded_minify_in_shell_browser), and debug npm scripts (test_package_json_debug_scripts)."
+      "reason": "Debug flag, config_setting, esbuild parameters, package.json scripts, and inline sourcemaps are all covered (visible assertions for each requirement)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings explaining what they verify, and clear section comments separating 'gates (pass_to_pass)' from 'fail-to-pass' tests."
+      "reason": "Tests are grouped with section header comments (Gates / Fail-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces build configuration files, not structured data outputs like JSON/CSV/API/DB."
+      "reason": "Task is build configuration, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and flags are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like 'A config setting named debug_build', 'boolean flag named debug', 'sourcemap = \"inline\"', and 'minify = True' removal from specific files. This goes beyond naming the relevant files and describes the exact changes needed."
+      "outcome": "pass",
+      "reason": "Instruction names files to edit at the requirement level consistent with the task's scope; no line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized to specific additions/removals in 5 files without full-file rewrites, and changes are consistent with the instruction requirements."
+      "reason": "Gold diff is localized to targeted sections of BUILD.bazel, defaults.bzl, and package.json scripts."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

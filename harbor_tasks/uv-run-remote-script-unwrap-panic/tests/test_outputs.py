@@ -3,8 +3,9 @@ Task: uv-run-remote-script-unwrap-panic
 Repo: astral-sh/uv @ 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
 PR:   18707
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+Behavioral test suite.  Core f2p tests inject Rust unit tests into the crate,
+compile and run them via cargo, then assert on the result.  This verifies
+actual code behavior (type system, API shape) rather than grepping source.
 """
 
 import re
@@ -17,10 +18,94 @@ REPO = "/repo"
 RUN_RS = Path(REPO) / "crates/uv/src/commands/project/run.rs"
 LIB_RS = Path(REPO) / "crates/uv/src/lib.rs"
 
+# ---------------------------------------------------------------------------
+# Rust behavioral test module — injected into run.rs for compilation + runtime
+# ---------------------------------------------------------------------------
 
-def _extract_function_body(source: str, func_name: str) -> str:
-    """Extract a Rust function body by name (from fn name to matching closing brace)."""
-    lines = source.split('\n')
+_MARKER_BEGIN = "// __BEHAVIORAL_TEST_BEGIN__"
+
+_RUST_TEST_MODULE = """
+// __BEHAVIORAL_TEST_BEGIN__
+#[cfg(test)]
+mod behavioral_fix_tests {
+    use super::*;
+    use std::ffi::OsString;
+
+    /// Construct a PythonRemote variant with an actual temp file.
+    /// On the base commit PythonRemote holds (DisplaySafeUrl, Vec<OsString>),
+    /// so this fails to compile - proving the variant now embeds a file handle.
+    #[test]
+    fn python_remote_holds_file() {
+        let tf = tempfile::NamedTempFile::new().expect("create temp file");
+        let expected_path = tf.path().to_path_buf();
+        let cmd = RunCommand::PythonRemote(tf, vec![OsString::from("--flag")]);
+        match &cmd {
+            RunCommand::PythonRemote(file, args) => {
+                assert!(file.path().exists(), "embedded temp file must exist");
+                assert_eq!(file.path(), expected_path, "path must match");
+                assert_eq!(args.len(), 1, "args forwarded");
+            }
+            _ => panic!("expected PythonRemote variant"),
+        }
+    }
+
+    /// Compile-time proof: as_command() takes only (&self, &Interpreter).
+    /// On base it requires a third Option<&NamedTempFile> argument,
+    /// so this function body would not compile.
+    #[allow(dead_code)]
+    fn verify_as_command_arity(c: &RunCommand, i: &Interpreter) -> Command {
+        c.as_command(i)
+    }
+}
+"""
+
+
+def _inject_rust_tests():
+    """Append the Rust test module to run.rs (idempotent)."""
+    src = RUN_RS.read_text()
+    if _MARKER_BEGIN in src:
+        return
+    RUN_RS.write_text(src + _RUST_TEST_MODULE)
+
+
+def _remove_rust_tests():
+    """Strip the injected Rust test module from run.rs."""
+    src = RUN_RS.read_text()
+    start = src.find(_MARKER_BEGIN)
+    if start == -1:
+        return
+    while start > 0 and src[start - 1] == "\n":
+        start -= 1
+    RUN_RS.write_text(src[:start])
+
+
+@pytest.fixture(scope="module")
+def behavioral_result():
+    """Inject Rust tests, compile + run them, yield results, clean up."""
+    _inject_rust_tests()
+    try:
+        compile_r = subprocess.run(
+            ["cargo", "test", "-p", "uv", "--lib", "--no-run"],
+            capture_output=True, text=True, timeout=480, cwd=REPO,
+        )
+        run_r = None
+        if compile_r.returncode == 0:
+            run_r = subprocess.run(
+                ["cargo", "test", "-p", "uv", "--lib", "--",
+                 "behavioral_fix_tests"],
+                capture_output=True, text=True, timeout=120, cwd=REPO,
+            )
+        yield {"compile": compile_r, "run": run_r}
+    finally:
+        _remove_rust_tests()
+
+
+# ---------------------------------------------------------------------------
+# Helpers for structural checks
+# ---------------------------------------------------------------------------
+
+def _extract_function_body(source, func_name):
+    lines = source.split("\n")
     in_func = False
     brace_depth = 0
     func_lines = []
@@ -32,47 +117,11 @@ def _extract_function_body(source: str, func_name: str) -> str:
             brace_depth += line.count("{") - line.count("}")
             if brace_depth <= 0 and len(func_lines) > 1:
                 break
-    return '\n'.join(func_lines)
+    return "\n".join(func_lines)
 
 
-def _extract_enum_body(source: str, enum_name: str) -> str:
-    """Extract an enum body by name."""
-    lines = source.split('\n')
-    in_enum = False
-    brace_depth = 0
-    enum_lines = []
-    for line in lines:
-        if not in_enum and re.search(rf"\benum\s+{enum_name}\b", line):
-            in_enum = True
-        if in_enum:
-            enum_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth <= 0 and len(enum_lines) > 1:
-                break
-    return '\n'.join(enum_lines)
-
-
-def _extract_match_arm(body: str, variant_name: str) -> str:
-    """Extract a match arm for a given variant from a function body."""
-    lines = body.split('\n')
-    arm_lines = []
-    in_arm = False
-    brace_depth = 0
-    for line in lines:
-        if variant_name in line and not line.strip().startswith("//"):
-            in_arm = True
-            brace_depth = 0
-        if in_arm:
-            arm_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth <= 0 and len(arm_lines) > 1:
-                break
-    return '\n'.join(arm_lines)
-
-
-def _extract_fn_signature(source: str, func_name: str) -> str:
-    """Extract just the signature of a Rust function (up to opening brace)."""
-    lines = source.split('\n')
+def _extract_fn_signature(source, func_name):
+    lines = source.split("\n")
     in_sig = False
     sig_lines = []
     for line in lines:
@@ -85,171 +134,110 @@ def _extract_fn_signature(source: str, func_name: str) -> str:
     return " ".join(sig_lines)
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) - repo CI/CD checks
-# ---------------------------------------------------------------------------
+def _extract_enum_body(source, enum_name):
+    lines = source.split("\n")
+    in_enum = False
+    brace_depth = 0
+    enum_lines = []
+    for line in lines:
+        if not in_enum and re.search(rf"\benum\s+{enum_name}\b", line):
+            in_enum = True
+        if in_enum:
+            enum_lines.append(line)
+            brace_depth += line.count("{") - line.count("}")
+            if brace_depth <= 0 and len(enum_lines) > 1:
+                break
+    return "\n".join(enum_lines)
+
+
+def _extract_match_arm(body, variant_name):
+    lines = body.split("\n")
+    arm_lines = []
+    in_arm = False
+    brace_depth = 0
+    for line in lines:
+        if variant_name in line and not line.strip().startswith("//"):
+            in_arm = True
+            brace_depth = 0
+        if in_arm:
+            arm_lines.append(line)
+            brace_depth += line.count("{") - line.count("}")
+            if brace_depth <= 0 and len(arm_lines) > 1:
+                break
+    return "\n".join(arm_lines)
+
+
+# ===================================================================
+# SECTION 1 - Tests that do NOT use the behavioral fixture.
+# These run first (pytest executes top-to-bottom), before code injection.
+# ===================================================================
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_check():
     """Repo Rust code compiles with cargo check (pass_to_pass)."""
-    # Use a longer timeout for initial compilation; check is still faster than build
     try:
         r = subprocess.run(
             ["cargo", "check", "-p", "uv"],
             capture_output=True, text=True, timeout=300, cwd=REPO,
         )
-        assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+        assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
     except subprocess.TimeoutExpired:
-        pytest.skip("Cargo check timed out after 5 minutes")
+        pytest.skip("cargo check timed out")
 
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_fmt():
     """Repo Rust code is formatted correctly (pass_to_pass)."""
-    # First, ensure rustfmt is installed
-    r = subprocess.run(
+    subprocess.run(
         ["rustup", "component", "add", "rustfmt"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Then run fmt check
     r = subprocess.run(
         ["cargo", "fmt", "--all", "--check"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_no_unwrap_on_downloaded_script():
-    """No .unwrap() call on downloaded_script in as_command; crate compiles.
-
-    On the base commit, as_command calls downloaded_script.unwrap().path().
-    Any valid fix must remove this unsafe unwrap - by embedding the file in the
-    enum variant, removing the parameter, or using safe error handling.
-    """
-    # Behavioral: verify the refactored Rust code compiles
-    try:
-        r = subprocess.run(
-            ["cargo", "check", "-p", "uv"],
-            capture_output=True, text=True, timeout=480, cwd=REPO,
-        )
-        assert r.returncode == 0, f"Crate does not compile: {r.stderr[:1000]}"
-    except subprocess.TimeoutExpired:
-        pass  # Compilation check skipped due to timeout; structural check below
-
-    # Structural: verify the unwrap is eliminated
-    src = RUN_RS.read_text()
-    body = _extract_function_body(src, "as_command")
-    assert body, "as_command function not found in run.rs"
-
-    for line in body.split('\n'):
-        assert not ("downloaded_script" in line and ".unwrap()" in line), (
-            f"Unsafe .unwrap() on downloaded_script: {line.strip()}"
-        )
-
-
-# [pr_diff] fail_to_pass
-def test_python_remote_not_url_only():
-    """PythonRemote variant no longer holds just a bare URL.
-
-    On the base commit, PythonRemote(DisplaySafeUrl, Vec<OsString>) holds only
-    the URL - the downloaded file is threaded separately as an Option. A correct
-    fix must embed a file type in the variant or restructure so as_command
-    receives a non-optional file.
-    """
-    src = RUN_RS.read_text()
-    enum_body = _extract_enum_body(src, "RunCommand")
-    assert enum_body, "RunCommand enum not found"
-
-    remote_lines = []
-    for line in enum_body.split('\n'):
-        stripped = line.strip()
-        if "PythonRemote" in stripped and not stripped.startswith("//"):
-            remote_lines.append(stripped)
-
-    if not remote_lines:
-        # Variant was removed/renamed - acceptable if handling restructured
-        return
-
-    variant_decl = " ".join(remote_lines)
-
-    file_types = [
-        "NamedTempFile", "TempPath", "PathBuf", "tempfile",
-        "DownloadedScript", "ScriptFile", "File", "DownloadedFile",
-    ]
-    has_file_type = any(ft in variant_decl for ft in file_types)
-
-    if "DisplaySafeUrl" in variant_decl:
-        assert has_file_type, (
-            f"PythonRemote still holds only a URL (no file type): {variant_decl}"
-        )
-    else:
-        assert has_file_type, (
-            f"PythonRemote does not hold a file type: {variant_decl}"
-        )
-
-
-# [pr_diff] fail_to_pass
-def test_as_command_no_option_downloaded_script():
-    """as_command no longer takes downloaded_script as an Option parameter.
-
-    On the base commit, as_command signature includes:
-        downloaded_script: Option<&tempfile::NamedTempFile>
-    A correct fix removes this parameter or makes it non-optional.
-    """
-    src = RUN_RS.read_text()
-    sig = _extract_fn_signature(src, "as_command")
-    assert sig, "as_command function not found"
-
-    has_option_ds = ("downloaded_script" in sig and "Option" in sig)
-    assert not has_option_ds, (
-        "as_command still takes Option<downloaded_script> parameter"
-    )
+    assert r.returncode == 0, f"cargo fmt failed:\n{r.stderr[-500:]}"
 
 
 # [pr_diff] fail_to_pass
 def test_run_fn_no_downloaded_script_param():
-    """run() function in run.rs no longer takes downloaded_script as a parameter.
+    """run() in run.rs must not accept downloaded_script as a parameter.
 
-    On the base commit, run() in run.rs has:
-        downloaded_script: Option<&tempfile::NamedTempFile>
-    The fix must remove this loose Option threading entirely.
+    Verifies the function signature after confirming the crate compiles.
     """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
     src = RUN_RS.read_text()
     sig = _extract_fn_signature(src, "run")
     assert sig, "run() function not found in run.rs"
-
     assert "downloaded_script" not in sig, (
-        "run() still takes downloaded_script parameter - "
-        "the Option threading should be eliminated"
+        "run() still takes downloaded_script parameter"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_lib_no_downloaded_script_threading():
-    """lib.rs no longer threads downloaded_script through run_project().
+    """run_project() in lib.rs must not thread downloaded_script.
 
-    On the base commit, lib.rs creates a downloaded_script variable and
-    passes it through run_project(). The fix must eliminate this threading
-    so the download is handled closer to where it is used.
+    Verifies the function signature after confirming the crate compiles.
     """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
     src = LIB_RS.read_text()
     sig = _extract_fn_signature(src, "run_project")
-    assert sig, "run_project function not found in lib.rs"
-
+    assert sig, "run_project not found in lib.rs"
     assert "downloaded_script" not in sig, (
-        "run_project() still takes downloaded_script parameter - "
-        "the Option threading through lib.rs should be eliminated"
+        "run_project() still takes downloaded_script"
     )
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) - anti-stub + structural integrity
-# ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_as_command_not_stub():
@@ -257,15 +245,14 @@ def test_as_command_not_stub():
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")
     assert body, "as_command function not found"
-
     meaningful = [
-        line for line in body.split('\n')
+        line for line in body.split("\n")
         if line.strip()
         and not line.strip().startswith("//")
         and line.strip() not in ("{", "}", "}")
     ]
     assert len(meaningful) >= 8, (
-        f"as_command has only {len(meaningful)} meaningful lines - likely a stub"
+        f"as_command has only {len(meaningful)} meaningful lines"
     )
 
 
@@ -273,58 +260,108 @@ def test_as_command_not_stub():
 def test_python_remote_variant_exists():
     """PythonRemote variant still exists in RunCommand enum."""
     src = RUN_RS.read_text()
-    enum_body = _extract_enum_body(src, "RunCommand")
-    assert enum_body, "RunCommand enum not found"
-    assert "PythonRemote" in enum_body, (
-        "PythonRemote variant missing from RunCommand enum"
-    )
+    body = _extract_enum_body(src, "RunCommand")
+    assert body, "RunCommand enum not found"
+    assert "PythonRemote" in body, "PythonRemote variant missing"
 
 
 # [static] pass_to_pass
 def test_as_command_handles_all_variants():
-    """as_command still handles PythonRemote alongside other variants.
-
-    Ensures the fix did not just delete PythonRemote handling from as_command.
-    """
+    """as_command still handles PythonRemote alongside other variants."""
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")
     assert body, "as_command function not found"
-
     for variant in ["Python(", "PythonRemote"]:
-        assert variant in body, (
-            f"as_command does not handle {variant} - match arms incomplete"
-        )
+        assert variant in body, f"as_command missing {variant}"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
+# ===================================================================
+# SECTION 2 - Tests that USE the behavioral fixture.
+# The fixture injects a Rust test module into run.rs, compiles/runs it,
+# then cleans up.  These MUST come after all non-fixture tests.
+# ===================================================================
 
-# [agent_config] fail_to_pass - CLAUDE.md:7 @ 867e535f
-def test_no_panic_apis_in_remote_handling():
-    """No .unwrap() or panic!() in PythonRemote arm of as_command.
+# [pr_diff] fail_to_pass
+def test_no_unwrap_on_downloaded_script(behavioral_result):
+    """Behavioral: injected Rust tests compile and pass, proving the
+    .unwrap() on downloaded_script is eliminated and PythonRemote is safe.
 
-    CLAUDE.md line 7: AVOID using panic!, unreachable!, .unwrap(), unsafe code
+    On the base commit the injected module fails to compile because
+    as_command's signature and PythonRemote's type differ from the fix.
     """
+    cr = behavioral_result["compile"]
+    assert cr.returncode == 0, (
+        f"Behavioral tests failed to compile (fix not applied):\n"
+        f"{cr.stderr[:1000]}"
+    )
+    rr = behavioral_result["run"]
+    assert rr is not None and rr.returncode == 0, (
+        f"Behavioral tests failed:\n"
+        f"{rr.stderr[:500] if rr else 'not run'}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_python_remote_not_url_only(behavioral_result):
+    """Behavioral: PythonRemote(NamedTempFile, args) compiles and works.
+
+    On the base commit PythonRemote takes (DisplaySafeUrl, Vec<OsString>),
+    so constructing it with a NamedTempFile fails to compile.
+    """
+    cr = behavioral_result["compile"]
+    assert cr.returncode == 0, (
+        f"PythonRemote still holds a URL, not a file:\n{cr.stderr[:1000]}"
+    )
+    rr = behavioral_result["run"]
+    assert rr is not None and rr.returncode == 0, (
+        f"PythonRemote file test failed:\n"
+        f"{rr.stderr[:500] if rr else 'not run'}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_as_command_no_option_downloaded_script(behavioral_result):
+    """Behavioral: as_command(&self, &Interpreter) compiles with 2 args.
+
+    On the base commit as_command requires a third Option<&NamedTempFile>
+    argument, so verify_as_command_arity() would not compile.
+    """
+    cr = behavioral_result["compile"]
+    assert cr.returncode == 0, (
+        f"as_command still requires optional downloaded_script:\n"
+        f"{cr.stderr[:1000]}"
+    )
+
+
+# [agent_config] fail_to_pass
+def test_no_panic_apis_in_remote_handling(behavioral_result):
+    """No .unwrap()/panic!()/unreachable!() in PythonRemote arm of as_command.
+
+    Verified both by compiling Rust behavioral tests (which exercise
+    PythonRemote construction and as_command) and by inspecting the match arm.
+    """
+    cr = behavioral_result["compile"]
+    assert cr.returncode == 0, (
+        f"Behavioral tests do not compile:\n{cr.stderr[:500]}"
+    )
+
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")
     assert body, "as_command function not found"
-
     arm = _extract_match_arm(body, "PythonRemote")
 
     if not arm:
-        # PythonRemote handling may be restructured - check whole function
         assert "downloaded_script" not in body or ".unwrap()" not in body, (
-            "PythonRemote arm not found but downloaded_script.unwrap() still present"
+            "PythonRemote arm not found but downloaded_script.unwrap() present"
         )
         return
 
     assert ".unwrap()" not in arm, (
-        f"PythonRemote arm uses .unwrap() (violates CLAUDE.md:7):\n{arm}"
+        f"PythonRemote arm uses .unwrap(): {arm}"
     )
     assert "panic!" not in arm, (
-        f"PythonRemote arm uses panic!() (violates CLAUDE.md:7):\n{arm}"
+        f"PythonRemote arm uses panic!(): {arm}"
     )
     assert "unreachable!" not in arm, (
-        f"PythonRemote arm uses unreachable!() (violates CLAUDE.md:7):\n{arm}"
+        f"PythonRemote arm uses unreachable!(): {arm}"
     )

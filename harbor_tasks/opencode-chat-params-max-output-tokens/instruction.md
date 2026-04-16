@@ -2,25 +2,18 @@
 
 ## Problem
 
-The `chat.params` plugin hook allows plugins to modify LLM parameters like `temperature`, `topP`, and `topK` before they are sent to the model. However, `maxOutputTokens` is not exposed through this hook — it is computed independently and used directly in the `streamText` call, bypassing any plugin modifications.
+The `chat.params` plugin hook allows plugins to modify LLM parameters before they are sent to the model. The hook output type includes `temperature`, `topP`, `topK`, `maxOutputTokens`, and `options`. However, the implementation in `packages/opencode/src/session/llm.ts` has a bug: `maxOutputTokens` is computed after `Plugin.trigger("chat.params", ...)` is called, and the `streamText` function uses a local variable instead of the `params.maxOutputTokens` value returned from the hook. This means plugins cannot actually modify `maxOutputTokens` even though it appears in the hook type.
 
-A plugin that tries to adjust `maxOutputTokens` via the `chat.params` hook has no effect. The value is neither included in the hook's output parameter nor read back from the hook's return.
+## Affected Files
+
+- `packages/opencode/src/session/llm.ts` - Contains the `streamText` call and `Plugin.trigger("chat.params", ...)` hook invocation
+- `packages/plugin/src/index.ts` - Contains the `chat.params` hook type definition
 
 ## Expected Behavior
 
-Plugins should be able to modify `maxOutputTokens` through the `chat.params` hook, just like they can modify `temperature`, `topP`, and `topK`.
+When a plugin modifies `maxOutputTokens` via the `chat.params` hook, that modified value should be passed to the `streamText` function instead of the original computed value.
 
-Specifically:
-
-1. The `chat.params` hook output type must include `maxOutputTokens` with type `number | undefined` alongside the existing fields `temperature`, `topP`, `topK`, and `options`
-
-2. The `maxOutputTokens` value must be computed **before** the `Plugin.trigger("chat.params", ...)` call is made, so that it can be included in the output object passed to the hook
-
-3. The `chat.params` hook output object passed to plugins must contain `maxOutputTokens` alongside `temperature`, `topP`, `topK`, and `options`
-
-4. The `streamText` call must use `params.maxOutputTokens` (the value returned from the hook) rather than a bare local variable, so that plugins can override the value
-
-The hook's output type should be:
+The hook output type in `packages/plugin/src/index.ts` defines:
 ```typescript
 output: {
   temperature: number
@@ -30,3 +23,5 @@ output: {
   options: Record<string, any>
 }
 ```
+
+The `chat.params` hook must receive `maxOutputTokens` in its output object alongside `temperature`, `topP`, `topK`, and `options`, and the `streamText` call must use this value from the hook's return so that plugins can override it.

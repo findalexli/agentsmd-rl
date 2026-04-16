@@ -2,59 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the target file path, the template name `buildStableSplitComponentStatements`, the specific patterns (`import.meta.hot?.data?.[%%hotDataKey%%]`, `import.meta.hot.data[%%hotDataKey%%]`, `import.meta.hot.data ??= {}`), the test file path, and the build/test commands. All assert'd specifics in the tests are discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert the exact literal string `import.meta.hot.data ??= {}` must appear in the source file, and check ordering relative to `import.meta.hot.data[%%hotDataKey%%]`. The instruction.md never mentions this exact syntax `??= {}` or the template placeholder `%%hotDataKey%%` explicitly enough for the agent to know these are required literal strings. Also, test_hmr_test_file_exists checks for `packages/router-plugin/tests/add-hmr.test.ts` which is not mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the three required patterns including 'import.meta.hot.data ??= {}' initialization and that it must come before the data access. Combined with naming the exact file and template, this essentially tells the agent exactly what line to add and where, leaving no reasoning required."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (import.meta.hot.data being undefined before properties are set) and says the generated code must handle this case, but does not specify the exact fix syntax like `??= {}` or the exact line to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_source_code_initializes_hot_data asserts the exact string 'import.meta.hot.data ??= {}' must appear in the source. An alternative correct fix like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail the F2P tests despite being functionally correct."
+      "reason": "test_source_code_initializes_hot_data asserts the exact string `import.meta.hot.data ??= {}` must appear in the file. An alternative correct fix like `import.meta.hot.data = import.meta.hot.data || {}` or `if (!import.meta.hot.data) import.meta.hot.data = {}` would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) exclusively use `assert 'string' in open(path).read()` pattern matching on source file content. They never import, call, or execute the code. The P2P tests do run builds/tests, but the F2P tests are pure text matching."
+      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) are purely text-matching: they read the source file and assert specific strings appear in it. They do not import, call, or execute the code. While P2P tests do run builds/tests, the primary F2P tests are entirely `assert 'foo' in open(path).read()` style."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The F2P tests check for the specific string 'import.meta.hot.data ??= {}' which does not exist in the original source file (the gold patch adds it). A stub or unmodified file would fail these assertions."
+      "outcome": "fail",
+      "reason": "The F2P test test_source_code_initializes_hot_data checks for the literal string `import.meta.hot.data ??= {}` in the source file. A trivial 'fix' of just inserting that string as a comment anywhere before the data access line would pass both F2P tests without actually fixing the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires initialization before data access, correct template structure, and that builds/tests pass. All of these are tested by the test suite."
+      "reason": "The instruction requires: (1) build succeeds - tested by test_router_plugin_build, (2) existing tests pass - tested by test_router_plugin_unit_tests, (3) HMR data initialization handled - tested by test_source_code_initializes_hot_data. All three requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_source_code_initializes_hot_data, test_source_has_correct_template_structure, etc.), include docstrings with F2P/P2P labels, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, grouped by concern (source code checks, build, unit tests, lint, types, etc.)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves source code modification, not structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and patterns are all correct and consistent between instruction.md and tests."
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (react-stable-hmr-split-route-components.ts), the exact template (buildStableSplitComponentStatements), and the exact fix pattern ('import.meta.hot.data ??= {}' before writing). This is excessive localization that eliminates the need for the agent to diagnose the bug."
+      "reason": "The instruction explicitly names the exact file `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts`, identifies the exact template function `buildStableSplitComponentStatements`, and mentions the template placeholder `%%hotDataKey%%`. This significantly narrows localization, making it trivial to find the exact spot to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

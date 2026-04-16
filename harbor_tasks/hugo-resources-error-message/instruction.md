@@ -14,25 +14,29 @@ The old error messages were:
 
 ## Task
 
-Find the code in the Hugo repository that handles image operations on resources and improve the error message to provide:
+Modify the `getImageOps` function in `resources/transform.go` to improve the error message when image operations are called on non-raster resources.
 
-1. **Resource identification**: Include the resource name in the error
+The error message should provide:
+
+1. **Resource identification**: Include the resource name
 2. **Media type information**: Show the actual media type of the resource
 3. **Actionable guidance**: Tell users which reflection methods to use for checking resource capabilities
 
-The improved error message should reference these three reflection methods:
-- `reflect.IsImageResource`
-- `reflect.IsImageResourceProcessable`
-- `reflect.IsImageResourceWithMeta`
-
-The error message should use `fmt.Sprintf` for formatting and follow Go conventions for error messages with quoted strings (using `%q` verb or similar).
-
 ## Requirements
 
-- The old error messages "this method is only available for raster images" and "this method is only available for image resources" should no longer be used
-- The improved error message should include the resource name and media type
-- The improved error message should mention the three reflection helper methods
-- Use `fmt.Sprintf` to format the error message
+1. **New error message format**: The error message must use `fmt.Sprintf` and include both the resource name and media type. Use quoted format verbs (`%q`) for the resource name and media type.
+
+2. **Reflection method hints**: The error message must reference these three reflection methods:
+   - `reflect.IsImageResource`
+   - `reflect.IsImageResourceProcessable`
+   - `reflect.IsImageResourceWithMeta`
+
+3. **Removed old messages**: The following old error patterns must be removed from the code:
+   - "this method is only available for raster images"
+   - "this method is only available for image resources"
+   - `if eq .MediaType.SubType "svg"` (SVG type check pattern)
+
+4. **Maintain function signature**: The function `func (r *resourceAdapter) getImageOps()` must continue to exist with its original signature.
 
 ## Context
 

@@ -36,7 +36,7 @@ def test_p2p_results_utils_file_exists():
 def test_p2p_results_utils_has_formatresults():
     """Results.utils.ts exports formatResults function (pass_to_pass)."""
     r = subprocess.run(
-        ["grep", "-q", "export function formatResults", 
+        ["grep", "-q", "export function formatResults",
          f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts"],
         capture_output=True,
     )
@@ -86,7 +86,7 @@ def test_p2p_results_utils_has_getresultsheaders():
 def test_p2p_results_utils_tests_exist():
     """Results.utils.test.ts test file exists (pass_to_pass)."""
     r = subprocess.run(
-        ["test", "-f", 
+        ["test", "-f",
          f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.test.ts"],
         capture_output=True,
     )
@@ -105,7 +105,7 @@ def test_p2p_results_component_exists():
 def test_p2p_results_has_component_definition():
     """Results.tsx defines the Results component (pass_to_pass)."""
     r = subprocess.run(
-        ["grep", "-q", "const Results", 
+        ["grep", "-q", "const Results",
          f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx"],
         capture_output=True,
     )
@@ -152,96 +152,216 @@ def test_p2p_repo_prettier_check():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
-# ============ Original tests ============
+# ============ Behavioral tests ============
 
 def test_typescript_compiles():
-    """Modified TypeScript files must compile without errors (static check)."""
-    results_tsx = Path(f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx")
-    utils_ts = Path(f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts")
+    """Modified TypeScript files must exist and define the Results component."""
+    results_tsx = f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx"
+    utils_ts = f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts"
 
-    assert results_tsx.exists(), "Results.tsx must exist"
-    assert utils_ts.exists(), "Results.utils.ts must exist"
+    for path in [results_tsx, utils_ts]:
+        r = subprocess.run(["test", "-f", path], capture_output=True)
+        assert r.returncode == 0, f"{path} must exist"
 
-    content = results_tsx.read_text()
-    assert "const Results" in content or "export default" in content, "Results component must be defined"
+    r = subprocess.run(
+        ["grep", "-q", "const Results", results_tsx],
+        capture_output=True,
+    )
+    assert r.returncode == 0, "Results component must be defined"
+
+
+def test_format_clipboard_value_behavior():
+    """formatClipboardValue must return '' for null, JSON.stringify for objects/arrays, String for primitives."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", """
+import { formatClipboardValue } from "./apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils"
+
+if (typeof formatClipboardValue !== 'function') {
+    console.error('formatClipboardValue is not exported as a function from Results.utils')
+    process.exit(1)
+}
+
+const tests: [unknown, string][] = [
+    [null, ''],
+    [{a: 1}, '{"a":1}'],
+    [[1, 2], '[1,2]'],
+    ['hello', 'hello'],
+    [42, '42'],
+    [false, 'false'],
+]
+
+for (const [input, expected] of tests) {
+    const result = formatClipboardValue(input)
+    if (result !== expected) {
+        console.error('FAIL: formatClipboardValue(' + JSON.stringify(input) + ') = ' + JSON.stringify(result) + ', expected ' + JSON.stringify(expected))
+        process.exit(1)
+    }
+}
+console.log('All formatClipboardValue tests passed')
+"""],
+        capture_output=True, text=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"formatClipboardValue behavioral test failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_format_cell_value_behavior():
+    """formatCellValue must return 'NULL' for null, string as-is, JSON.stringify for others."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", """
+import { formatCellValue } from "./apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils"
+
+if (typeof formatCellValue !== 'function') {
+    console.error('formatCellValue is not exported as a function from Results.utils')
+    process.exit(1)
+}
+
+const tests: [unknown, string][] = [
+    [null, 'NULL'],
+    ['hello', 'hello'],
+    [{a: 1}, '{"a":1}'],
+    [42, '42'],
+    [true, 'true'],
+    [[1, 2], '[1,2]'],
+]
+
+for (const [input, expected] of tests) {
+    const result = formatCellValue(input)
+    if (result !== expected) {
+        console.error('FAIL: formatCellValue(' + JSON.stringify(input) + ') = ' + JSON.stringify(result) + ', expected ' + JSON.stringify(expected))
+        process.exit(1)
+    }
+}
+console.log('All formatCellValue tests passed')
+"""],
+        capture_output=True, text=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"formatCellValue behavioral test failed:\n{r.stderr}\n{r.stdout}"
 
 
 def test_single_context_menu_pattern():
-    """Results.tsx must use single shared context menu, not per-cell."""
-    results_tsx = Path(f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx")
-    content = results_tsx.read_text()
+    """Results.tsx must use a single shared context menu, not one per cell (verified via TypeScript AST)."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", """
+import { readFileSync } from 'fs'
+import * as ts from 'typescript'
 
-    assert "useRef" in content, "Must use useRef for shared context menu pattern"
-    assert "triggerRef" in content, "Must have triggerRef for shared context menu"
-    assert "contextMenuCellRef" in content, "Must have contextMenuCellRef for storing cell context"
-    assert "handleContextMenu" in content, "Must have handleContextMenu function"
-    assert "useCallback" in content, "Must use useCallback for handleContextMenu"
+const filePath = 'apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx'
+const source = readFileSync(filePath, 'utf-8')
+const sf = ts.createSourceFile('Results.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 
-    lines = content.split("\n")
-    in_render_cell = False
-    render_cell_depth = 0
-    context_menu_in_render_cell = False
+// Verify ContextMenu_Shadcn_ is used somewhere in the component
+if (!source.includes('ContextMenu_Shadcn_')) {
+    console.error('Results.tsx must include ContextMenu_Shadcn_')
+    process.exit(1)
+}
 
-    for line in lines:
-        stripped = line.strip()
-        if "renderCell:" in stripped or "renderCell :" in stripped:
-            in_render_cell = True
-            render_cell_depth = 0
-        if in_render_cell:
-            render_cell_depth += stripped.count("{") - stripped.count("}")
-            if "ContextMenu_Shadcn_" in stripped or "ContextMenu_Shadcn" in stripped:
-                context_menu_in_render_cell = True
-            if render_cell_depth <= 0 and stripped.count("}") > 0:
-                in_render_cell = False
+// Walk AST: check that no nested function (depth >= 2) contains ContextMenu_Shadcn_.
+// Depth 0 = module scope, depth 1 = component function, depth 2+ = inner functions
+// (cell renderers, callbacks, etc). If ContextMenu is inside an inner function,
+// it would be instantiated per-cell, causing the performance bug.
+function hasContextMenuInNestedFn(node: ts.Node, fnDepth: number): boolean {
+    const isFn = ts.isArrowFunction(node) || ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)
+    const newDepth = isFn ? fnDepth + 1 : fnDepth
 
-    assert not context_menu_in_render_cell, \
-        "ContextMenu must NOT be inside renderCell - use shared pattern instead"
-    assert "<ContextMenu_Shadcn_" in content, "Must have shared ContextMenu_Shadcn_ component"
+    if (isFn && newDepth >= 2) {
+        const text = source.substring(node.getStart(), node.getEnd())
+        if (text.includes('ContextMenu_Shadcn_')) {
+            return true
+        }
+        return false
+    }
 
+    let found = false
+    ts.forEachChild(node, child => {
+        if (hasContextMenuInNestedFn(child, newDepth)) found = true
+    })
+    return found
+}
 
-def test_results_utils_functions():
-    """formatClipboardValue and formatCellValue must work correctly and be extracted to Results.utils.ts."""
-    utils_ts = Path(f"{REPO}/apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts")
-    content = utils_ts.read_text()
+if (hasContextMenuInNestedFn(sf, 0)) {
+    console.error('ContextMenu_Shadcn_ must not be inside a per-cell rendering function. Use a single shared context menu at the component level.')
+    process.exit(1)
+}
 
-    assert "export function formatClipboardValue" in content, \
-        "formatClipboardValue must be exported from Results.utils.ts"
-    assert "export function formatCellValue" in content, \
-        "formatCellValue must be exported from Results.utils.ts"
-
-    # Check that test file has proper test definitions (vitest execution has dep issues)
-    test_file = Path(f"{REPO}/apps/studio/tests/components/SQLEditor/Results.utils.test.ts")
-    test_content = test_file.read_text()
-    assert "describe('formatClipboardValue'" in test_content or "describe('formatCellValue'" in test_content, \
-        "Results.utils.test.ts must have describe blocks for utility functions"
+console.log('Single context menu pattern verified via AST')
+"""],
+        capture_output=True, text=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Context menu pattern test failed:\n{r.stderr}\n{r.stdout}"
 
 
 def test_queryblock_flex_layout():
-    """QueryBlock must use flex layout instead of overflow-auto for double scrollbar fix."""
-    queryblock_tsx = Path(f"{REPO}/apps/studio/components/ui/QueryBlock/QueryBlock.tsx")
-    content = queryblock_tsx.read_text()
+    """QueryBlock must not use overflow-auto on the Results container (causes double scrollbar in Firefox)."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", r"""
+import { readFileSync } from 'fs'
 
-    assert "flex flex-col" in content, \
-        "QueryBlock must use flex flex-col layout for Results container (Firefox/DataGrid fix)"
+const content = readFileSync('apps/studio/components/ui/QueryBlock/QueryBlock.tsx', 'utf-8')
+const lines = content.split('\n')
 
-    lines = content.split("\n")
-    for i, line in enumerate(lines):
-        if "Results rows={results}" in line:
-            for j in range(max(0, i-5), i):
-                prev_line = lines[j]
-                if "flex flex-col" in prev_line and "max-h-64" in prev_line:
-                    return
-    assert "flex flex-col" in content, "QueryBlock must use flex layout"
+for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('Results') && lines[i].includes('rows=')) {
+        // Find the immediate parent div by searching backwards for the first opening <div
+        for (let j = i - 1; j >= Math.max(0, i - 5); j--) {
+            if (lines[j].includes('<div') && lines[j].includes('className')) {
+                // This is the direct parent container div
+                if (lines[j].includes('overflow-auto')) {
+                    console.error('The container wrapping <Results> must not use overflow-auto (causes double scrollbar in Firefox)')
+                    process.exit(1)
+                }
+                console.log('QueryBlock layout check passed - no overflow-auto on Results wrapper')
+                process.exit(0)
+            }
+        }
+        console.log('QueryBlock layout check passed')
+        process.exit(0)
+    }
+}
+
+console.error('Could not find <Results rows=...> in QueryBlock.tsx')
+process.exit(1)
+"""],
+        capture_output=True, text=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"QueryBlock layout test failed:\n{r.stderr}\n{r.stdout}"
 
 
 def test_results_component_tests_pass():
-    """The Results component tests for single context menu must exist and test single context menu pattern."""
-    # Check that test file has proper test definitions (vitest execution has dep issues)
-    test_file = Path(f"{REPO}/apps/studio/tests/components/SQLEditor/Results.test.tsx")
-    test_content = test_file.read_text()
+    """The Results component test file must exist, be valid TypeScript, and define tests."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", """
+import { existsSync, readFileSync } from 'fs'
+import * as ts from 'typescript'
 
-    # Check for tests that verify single context menu behavior
-    assert "contextMenuMountCount" in test_content, \
-        "Results.test.tsx must test single context menu via mount counting"
-    assert "expect(contextMenuMountCount).toBe(1)" in test_content, \
-        "Results.test.tsx must verify only one context menu is rendered regardless of row count"
+const testPath = 'apps/studio/tests/components/SQLEditor/Results.test.tsx'
+if (!existsSync(testPath)) {
+    console.error('Results.test.tsx must exist at ' + testPath)
+    process.exit(1)
+}
+
+// Parse as TSX to verify it is syntactically valid TypeScript
+const source = readFileSync(testPath, 'utf-8')
+ts.createSourceFile('Results.test.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+
+// Verify it contains test case definitions
+if (!(source.includes('test(') || source.includes('it('))) {
+    console.error('Results.test.tsx must contain test case definitions (test/it)')
+    process.exit(1)
+}
+
+// Verify it references the Results component
+if (!source.includes('Results')) {
+    console.error('Results.test.tsx must reference the Results component')
+    process.exit(1)
+}
+
+console.log('Results.test.tsx validation passed')
+"""],
+        capture_output=True, text=True, timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Results component test validation failed:\n{r.stderr}\n{r.stdout}"

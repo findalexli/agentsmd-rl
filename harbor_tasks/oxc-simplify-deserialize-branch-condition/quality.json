@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific patterns like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', 'if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceByteLen;', 'for (; i < sourceByteLen && uint8[i] < 128; i++);', 'sourceStartPos, firstNonAsciiPos;' in the Rust file, and 'if (pos >= sourceStartPos && end <= firstNonAsciiPos)' for oxlint. While instruction.md mentions the general simplification and hints at reviewing test_outputs.py, the exact literal strings like 'sourceStartPos, f"
+      "reason": "Tests assert very specific literal strings like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', 'if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceByteLen;', 'for (; i < sourceByteLen && uint8[i] < 128; i++);', 'sourceStartPos, firstNonAsciiPos;' in the Rust generator, and 'if (pos >= sourceStartPos && end <= firstNonAsciiPos)' for oxlint. The instruction.md mentions the general idea of simplification but does not specify these exact forms. The instruction says 'Reviewing"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md states the exact simplified condition form: 'pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos) can be reduced to a simpler form'. Combined with the note to review test_outputs.py which contains exact expected patterns, and the instruction explicitly telling the agent to look at tests, this effectively gives the solution. Additionally, the instruction says 'The patterns include exact variable declarations and condition forms' directing agents to copy test asser"
+      "reason": "The instruction states the exact simplified condition form: 'pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos) can be reduced to a simpler form that doesn't require a separate ASCII flag variable.' While it doesn't give the exact replacement, combined with the hint to review test_outputs.py (which the agent can't see), the description strongly implies the solution direction. However, it doesn't explicitly state the exact replacement like 'if (end <= firstNonAsciiPos)', so th"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', 'for (; i < sourceByteLen && uint8[i] < 128; i++);', and 'sourceStartPos, firstNonAsciiPos;'. An alternative correct implementation using different variable names (e.g., 'endPos' instead of 'end'), different loop structures, or different whitespace would fail. These are gold-specific implementation details."
+      "reason": "Tests assert exact literal strings like 'if (end <= firstNonAsciiPos)', 'let end = pos + len;', 'if (pos >= sourceStartPos && end <= firstNonAsciiPos)', 'sourceStartPos, firstNonAsciiPos;', 'for (; i < sourceByteLen && uint8[i] < 128; i++);'. An alternative correct fix could use 'pos + len <= firstNonAsciiPos' directly without introducing an 'end' variable, or could use a while loop instead of for loop, or could name the variable differently. These would all be functionally correct but fail the "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, test_napi_parser_first_non_ascii_calculation, test_napi_parser_no_sourceIsAscii_variable, test_oxlint_no_sourceIsAscii_variable) are purely text-matching with patterns like 'assert \"if (end <= firstNonAsciiPos)\" in content'. The JS files are never executed or parsed to verify actual deserialization behavior. test_js_syntax_valid only checks for balanced braces, not actual execution."
+      "reason": "The fail-to-pass tests (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, test_napi_parser_no_sourceIsAscii_variable, test_oxlint_no_sourceIsAscii_variable) are entirely string-matching via 'assert X in content' or 'assert X not in content' on file contents. They never execute the JavaScript deserializer or test actual deserialization behavior. The pass-to-pass tests do run cargo commands, but the core behavioral tests are all text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific new patterns (e.g., 'if (end <= firstNonAsciiPos)') that don't exist in the original files, and check for absence of old patterns (e.g., 'sourceIsAscii'). A stub or no-op would not pass these since the original files contain sourceIsAscii and lack the new patterns."
+      "reason": "The fail-to-pass tests check for specific new patterns ('if (end <= firstNonAsciiPos)') that don't exist in the original files and check that old patterns ('sourceIsAscii') are removed. A stub/no-op implementation would not pass these tests since the original files contain 'sourceIsAscii' and lack 'if (end <= firstNonAsciiPos)'."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says the deserializer should 'correctly handle ASCII-only source text, non-ASCII characters, empty strings, UTF-8 decoding', but no test actually verifies these functional behaviors through execution. Tests only check text patterns in files."
+      "reason": "Instruction says the deserializer should correctly handle ASCII-only source text, non-ASCII characters, empty strings, and UTF-8 decoding. None of these behaviors are actually tested \u2014 tests only check for text patterns in source files, never executing the deserializer with actual inputs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, etc.), docstrings explaining old vs new patterns, and clear grouping by file type and concern."
+      "reason": "Tests are well-named (test_napi_parser_simplified_condition, test_oxlint_simplified_condition, etc.), have docstrings explaining old vs new patterns, and are labeled with fail-to-pass vs pass-to-pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves code refactoring of JavaScript/Rust source files, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the repository structure."
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function 'deserializeStr', the exact variables 'sourceIsAscii' and 'firstNonAsciiPos', the exact old condition 'pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos)', and explicitly directs agents to read the test file for exact patterns. This goes beyond describing what's broken."
+      "reason": "The instruction explicitly names the exact condition to simplify ('pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos)'), names the exact variables to remove ('sourceIsAscii', 'firstNonAsciiPos'), specifies the exact function ('deserializeStr'), and names both the generator file and all output files. It also says 'Reviewing the test file at tests/test_outputs.py will clarify what patterns the tests expect', directly hinting at the hidden test file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

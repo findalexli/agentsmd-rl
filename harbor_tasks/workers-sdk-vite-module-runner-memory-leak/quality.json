@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts), the function names (runInRunnerObject, executeCallback), the class name (__VITE_RUNNER_OBJECT__), and the module-scope variables (pendingCallbacks, callbackResults, nextCallbackId) \u2014 all of which are referenced in the tests. The tests check for these exact identifiers, and they are all discoverable from instruction.md."
+      "reason": "The instruction names the file path (packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts), the function names (runInRunnerObject, executeCallback), the class name (__VITE_RUNNER_OBJECT__), and the module-scope variables (pendingCallbacks, callbackResults, nextCallbackId) \u2014 all of which are referenced in the tests. The tests extract and execute runInRunnerObject's body using these exact names, all discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (entries not cleaned up on error) and the expected behavior (cleanup in runInRunnerObject regardless of success/failure), but does not specify the exact fix (e.g., 'add try/finally'). A developer must still reason about the implementation approach."
+      "reason": "The instruction describes the bug (entries leak when executeCallback throws) and the expected behavior (cleanup regardless of success/failure, within runInRunnerObject itself), but does not specify the implementation (e.g., 'use try/finally', 'add .delete() calls at line X'). A developer must still reason about what pattern to use."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_error_handling_around_rpc_call requires 'try' in the function body and either 'finally' or 'catch'. An alternative correct fix using .then()/.catch() promise chaining without the keyword 'try' would fail this test. test_caller_cleans_up_pending_callbacks asserts 'pendingCallbacks.delete' must appear literally in runInRunnerObject \u2014 an alternative that uses pendingCallbacks.clear() or reconstructs the Map would fail. These tests over-constrain to the gold solution's specific implementation p"
+      "outcome": "pass",
+      "reason": "The tests extract runInRunnerObject's body and execute it behaviorally \u2014 they check that pendingCallbacks and callbackResults maps are empty after both success and error paths, and that correct values are returned. Alternative implementations (try/catch/finally, explicit delete in both paths, a wrapper function, etc.) would all pass as long as they achieve the cleanup behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_cleanup_on_error extracts the function body, builds a runnable JS file with mocked environments, executes it via Node.js subprocess, and checks that Maps are empty after both error and success paths. This is genuine behavioral testing. While test_caller_cleans_up_pending_callbacks and test_error_handling_around_rpc_call are text-matching, test_cleanup_on_error actually executes the code, so not every test is purely textual."
+      "reason": "The fail-to-pass tests (test_cleanup_on_error, test_caller_cleans_up_pending_callbacks, test_error_handling_around_rpc_call) extract the function body, construct JavaScript test harnesses with mock environments, execute them via Node.js subprocess, and check return codes. test_typescript_syntax does a few string checks but these are pass_to_pass gates. The core behavioral tests execute actual code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty function) would fail test_not_stub (requires pendingCallbacks.set, callbackResults, nextCallbackId, executeCallback in the body) and test_cleanup_on_error (which checks that the function returns 42 and 'hello' on success path). The f2p tests require actual working logic plus cleanup behavior."
+      "reason": "A stub runInRunnerObject that does nothing (returns undefined) would fail because: (1) the tests check return values (e.g., r1 !== 42), (2) the tests check that pendingCallbacks.size === 0 after calls \u2014 a stub that still does pendingCallbacks.set(id, callback) without cleanup would fail, and a stub that doesn't set it would fail the mock executeCallback which checks pendingCallbacks.get(id). The original buggy code also fails these tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires cleanup of both pendingCallbacks and callbackResults on success and error, within runInRunnerObject itself. Tests verify: cleanup on error (test_cleanup_on_error error path), cleanup on success (test_cleanup_on_error success path), cleanup in runInRunnerObject specifically (test_caller_cleans_up_pending_callbacks), and error handling (test_error_handling_around_rpc_call). All stated requirements are tested."
+      "reason": "The instruction requires: (1) cleanup of pendingCallbacks on success and error \u2014 tested by test_cleanup_on_error and test_caller_cleans_up_pending_callbacks, (2) cleanup of callbackResults on success and error \u2014 tested by test_cleanup_on_error, (3) cleanup within runInRunnerObject itself \u2014 tested by test_caller_cleans_up_pending_callbacks (mock doesn't delete from pendingCallbacks), (4) error propagation \u2014 tested by test_error_handling_around_rpc_call."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, anti-stub), descriptive function names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named (test_typescript_syntax, test_cleanup_on_error, test_caller_cleans_up_pending_callbacks, test_error_handling_around_rpc_call), have docstrings, and are grouped into pass_to_pass (gates) and fail_to_pass (core behavioral) sections with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a memory leak in TypeScript code, not producing structured data output."
+      "reason": "The task involves fixing a memory leak in TypeScript code; it does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, variable names, function names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the specific file, which is appropriate since the task is about fixing a specific bug. It describes the bug mechanism in detail but this is necessary context, not localization leakage \u2014 the file is already obvious from the task domain. It does not specify exact line numbers or the exact fix."
+      "reason": "The instruction names the file and the relevant functions/variables, which is appropriate since the task domain (fixing a specific memory leak) requires knowing where to look. It does not specify exact line numbers or the specific fix pattern (try/finally). The level of localization is appropriate for the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

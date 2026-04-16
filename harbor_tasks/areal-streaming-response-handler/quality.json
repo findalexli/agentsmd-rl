@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: (1) test_stream_stripped_from_kwargs looks for a function named '_call_client_create' and expects kwargs.pop('stream', None) pattern with specific 'if stream:' conditional block structure; (2) test_sse_generator_format looks for an inner async generator function inside 'chat_completions' that yields SSE events with model_dump_json(); (3) test_response_model_allows_streaming checks for 'response_model=None' in decora"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_stream_stripped_from_kwargs checks for a function named '_call_client_create' with a 'stream' parameter, kwargs.pop('stream',...) pattern, and conditional kwargs['stream'] setting. test_sse_generator_format checks for StreamingResponse return and async generator with Yield nodes. test_not_stub_call_client_create checks '_call_client_create' has substantial implementation. The instruction never mentions '_call_c"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (stream field leaking, SSE format issues, ResponseValidationError) and required behaviors, but does not prescribe the exact code changes like 'add kwargs.pop' or 'set response_model=None'."
+      "reason": "The instruction describes what's broken (stream field leaking, SSE format, ResponseValidationError) and required behavior, but does not specify exact code changes like 'add kwargs.pop(\"stream\", None)' or 'set response_model=None'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are highly specific to the gold solution's structure: test_stream_stripped_from_kwargs extracts code from '_call_client_create' and exec's it expecting specific variable names ('kwargs', 'stream') and pop pattern; test_sse_generator_format requires an inner async generator function inside chat_completions with specific yield patterns; test_response_model_allows_streaming checks for exact string 'response_model=None' in decorator. Alternative valid fixes (e.g., filtering stream in a middlew"
+      "reason": "test_stream_stripped_from_kwargs requires very specific implementation: _call_client_create must have a 'stream' parameter, must use kwargs.pop('stream',...) or del kwargs['stream'], and must have an if-statement checking 'stream' that sets kwargs['stream']. An alternative fix that e.g. filters kwargs via a new dict comprehension with different variable names, or handles stream isolation in the endpoint function rather than _call_client_create, would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests are primarily AST/text inspection: test_stream_stripped_from_kwargs extracts code lines via string matching and exec's them in isolation; test_sse_generator_format extracts an inner function via AST and runs it with mocks; test_response_model_allows_streaming is purely string/AST checking ('response_model=None' in decorator_area). None of the tests actually import and run the server or make HTTP requests."
+      "reason": "All fail-to-pass tests (test_stream_stripped_from_kwargs, test_sse_generator_format, test_response_model_allows_streaming) use only AST parsing and source text inspection. None import the module, call any function, make HTTP requests, or execute the code. They are pure static/text analysis checks."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests do verify real behavior: test_stream_stripped_from_kwargs exec's extracted code and checks 6 scenarios; test_sse_generator_format runs the extracted async generator and verifies SSE format; a stub/empty implementation would not have the expected functions or code patterns."
+      "outcome": "fail",
+      "reason": "Since tests are purely AST-based, a stub _call_client_create that contains the right syntactic patterns (kwargs.pop('stream', None), if stream: kwargs['stream']=True, yield 'data: ...', 'data: [DONE]') but does nothing meaningful would pass all tests. The tests check code structure, not actual runtime behavior."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The three main required behaviors (stream field isolation, SSE format compliance, streaming response support) are all tested: test_stream_stripped_from_kwargs covers stream isolation, test_sse_generator_format covers SSE format, test_response_model_allows_streaming covers streaming response support."
+      "outcome": "fail",
+      "reason": "Instruction requires that 'Non-streaming requests continue to work as before' and specifies a full table of body stream / param stream combinations, but no test verifies these behavioral combinations. The SSE content field requirement ('JSON payload containing id and content fields') is also not tested beyond checking for 'data:' prefix."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped with comments indicating gate vs fail-to-pass categories, and each has a detailed docstring explaining what it verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The SSE format schema is documented in instruction.md: 'data: {json}\\n\\n' with JSON containing 'id' and 'content' fields, terminated by 'data: [DONE]\\n\\n'."
+      "reason": "The SSE format is documented in instruction.md with exact format: 'data: {json}\\n\\n' with id and content fields, and termination 'data: [DONE]\\n\\n'."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify: 'areal/experimental/openai/proxy/proxy_rollout_server.py' and the exact endpoint '/chat/completions'. While the file path is somewhat domain-obvious, the instruction also hints at specific mechanisms ('stream field from the request body must not reach the underlying OpenAI client call via **kwargs') which narrows the solution space significantly."
+      "reason": "Instruction explicitly names the target file path and specifies implementation-level details like 'response_model=None in the route decorator' and 'stream field must be removed from kwargs before the client call', which are essentially the solution steps rather than just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -49,12 +49,14 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 6
 }

@@ -1,0 +1,81 @@
+# Evaluation manifest for ant-design Typography ellipsis performance fix
+source:
+  type: github_pr
+  owner: ant-design
+  repo: ant-design
+  pr_number: 57566
+  base_commit: 770c522e044586e64a31d6daf95d8c8fba08fa4a
+  merge_commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  url: https://github.com/ant-design/ant-design/pull/57566
+
+checks:
+  # Fail-to-pass tests: these verify the fix was applied correctly
+  - id: test_needNativeEllipsisMeasure_variable_exists
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify needNativeEllipsisMeasure variable exists and is defined correctly
+
+  - id: test_isEleEllipsis_gated_by_needNativeEllipsisMeasure
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify isEleEllipsis call is gated by needNativeEllipsisMeasure
+
+  - id: test_useEffect_dependency_includes_needNativeEllipsisMeasure
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify useEffect dependencies include needNativeEllipsisMeasure
+
+  - id: test_tooltipProps_moved_before_needNativeEllipsisMeasure
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify tooltipProps is defined before needNativeEllipsisMeasure
+
+  - id: test_isMergedEllipsis_uses_needNativeEllipsisMeasure
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify isMergedEllipsis calculation uses needNativeEllipsisMeasure
+
+  - id: test_intersection_observer_uses_needNativeEllipsisMeasure
+    type: fail_to_pass
+    origin: pr_fix
+    description: Verify IntersectionObserver logic uses needNativeEllipsisMeasure
+
+  # Pass-to-pass tests: these verify no regressions
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome linter passes on Typography Base component
+
+  - id: test_repo_biome_lint_typography_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome linter passes on entire Typography directory
+
+  - id: test_repo_biome_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome check (lint + format) passes on Typography Base
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on Typography Base component
+
+  - id: test_repo_typescript_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript parser validates Typography Base component
+
+  - id: test_typography_base_required_imports
+    type: pass_to_pass
+    origin: static
+    description: Required imports exist in Typography Base
+
+  - id: test_typography_base_exports
+    type: pass_to_pass
+    origin: static
+    description: Typography Base component exports correctly
+
+rubric:
+  - id: no_config_changes_required
+    rule: No documentation or config file changes are required for this performance optimization - the fix is purely internal code that does not affect public API or behavior descriptions

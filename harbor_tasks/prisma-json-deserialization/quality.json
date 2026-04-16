@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names deserializeJsonObject, normalizeJsonProtocolValues, Raw/FieldRef/Enum tagged types, wrapRawValues ?? true pattern, @prisma/client-engine-runtime exports, and all the behavioral expectations tested. The test for grep on 'wrapRawValues ?? true' in 'packages/client/src/runtime/core/jsonProtocol/serializeJsonQuery.ts' is discoverable from the instruction's description of the wrapRawValues default change and the package context."
+      "reason": "Instruction names deserializeJsonObject, normalizeJsonProtocolValues, the tagged types Raw/FieldRef/Enum, the raw value wrapping default, and pnpm commands matching test assertions."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction item 4 explicitly states the fix: 'The default should be true, using the pattern wrapRawValues ?? true'. This tells the agent the exact code pattern to write rather than just describing the broken behavior. Similarly, item 1 effectively says 'export a function named deserializeJsonObject' which is the fix itself."
+      "outcome": "pass",
+      "reason": "Instruction describes symptoms and expected behavior without specifying line numbers or exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_wrap_raw_values_default_true uses grep for the exact string 'wrapRawValues ?? true' in a specific file path. An alternative correct fix like 'wrapRawValues === undefined ? true : wrapRawValues' or using a different variable name would fail this test despite being functionally correct. The test asserts on gold-specific implementation details."
+      "reason": "test_wrap_raw_values_default_true greps for the exact literal string 'wrapRawValues ?? true' in a specific file path, which would reject a semantically equivalent fix like 'wrapRawValues !== false' or different default expression."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_wrap_raw_values_default_true is purely a grep-based text search (assert result.returncode == 0 from grep 'wrapRawValues ?? true') with no behavioral execution. While most other tests do execute code via tsx, this test only checks for a literal string pattern in source code."
+      "outcome": "pass",
+      "reason": "Tests execute tsx scripts calling deserializeJsonObject/normalizeJsonProtocolValues and run pnpm test commands; one grep test exists but most verify runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (deserialize_handles_raw_type, normalize_handles_fieldref, normalize_handles_enum, deserialize_json_object_is_a_function) all execute actual code and check specific return values or function existence. A stub returning None/undefined would fail these checks (e.g., result !== 42 check, typeof check)."
+      "reason": "Tests assert specific return values (42 for Raw, $type preserved for FieldRef/Enum) that require real implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: deserializeJsonObject export (test 2), Raw type handling (test 3), FieldRef handling (test 4), Enum handling (test 5), wrapRawValues default (test 6), existing tests passing (tests 1, 8, 9), prettier-check (test 7), check-engines-override (test 8)."
+      "reason": "All four behaviors from instruction (export, Raw, FieldRef, Enum, wrap default) have corresponding tests, plus prettier/check-engines."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deserialize_handles_raw_type, test_normalize_handles_fieldref, etc.), each has a docstring explaining what it verifies and the base vs fix behavior, and they are logically grouped."
+      "reason": "Tests have descriptive names and docstrings explaining base vs fix behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing code behavior, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos observed in paths or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact pattern 'wrapRawValues ?? true' and specifies the file context (JSON query serialization code). It also explicitly says to add 'deserializeJsonObject' as an export name, which is telling the agent the exact fix rather than just describing the symptom."
+      "outcome": "pass",
+      "reason": "Instruction refers to modules/functions at appropriate abstraction level without line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

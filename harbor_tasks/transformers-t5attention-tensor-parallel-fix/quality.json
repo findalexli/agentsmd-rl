@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' and 'kv_input_shape = (batch_size, current_states.shape[1], -1, self.key_value_proj_dim)' and '.view(batch_size, seq_length, -1)' and '(1, query_states.shape[1], seq_length, key_length)'. While the instruction describes the general approach (pin sequence length, infer heads), it does not specify these exact variable names (q_input_shape, kv_input_shape) or the exact code patterns that "
+      "reason": "Tests assert exact literal strings like 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' and 'kv_input_shape = (batch_size, current_states.shape[1], -1, self.key_value_proj_dim)' and '.view(batch_size, seq_length, -1)' and '(1, query_states.shape[1], seq_length, key_length)'. While the instruction describes the conceptual fix (pin seq_length, infer heads), it does not specify these exact variable names (q_input_shape, kv_input_shape) or the exact code patterns that the tes"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix for each of the four locations: e.g., 'keep seq_length explicit and let the heads dimension be inferred', 'should use the actual sequence length from current_states input', 'head dimension here should come from the actual query states shape', 'keep seq_length fixed and let the remaining dimension be inferred'. This is telling the agent exactly what to change, not just describing what's broken."
+      "reason": "The instruction explicitly describes exactly what to change at each of four locations: e.g., 'keep seq_length explicit and let the heads dimension be inferred', 'should use the actual sequence length from current_states input', 'head dimension here should come from the actual query states shape', 'keep seq_length fixed and let the remaining dimension be inferred'. This is essentially the complete fix strategy, leaving minimal reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests grep for exact literal strings like 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' and 'kv_input_shape = (batch_size, current_states.shape[1], -1, self.key_value_proj_dim)'. An alternative correct fix that uses different variable names (e.g., 'query_shape' instead of 'q_input_shape') or inlines the shape computation would fail these string-matching tests despite being functionally correct."
+      "reason": "Tests like test_t5attention_tp_compatible grep for the exact string 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)'. A correct alternative that uses inline view(batch_size, seq_length, -1, self.key_value_proj_dim) without the intermediate variable name 'q_input_shape' would fail. Similarly, test_kv_attention_shape_correct requires the exact string 'kv_input_shape = (batch_size, current_states.shape[1], -1, self.key_value_proj_dim)'. These are gold-specific variable names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_t5attention_tp_compatible, test_kv_attention_shape_correct, test_position_bias_dynamic, test_attn_output_reshape) all use 'if <literal_string> in src' pattern - pure text matching with no code execution. test_view_operations_runtime_semantics runs a numpy simulation but doesn't import or call any actual T5Attention code. No test actually imports or executes the modified T5Attention.forward method."
+      "reason": "The core fail-to-pass tests (test_t5attention_tp_compatible, test_kv_attention_shape_correct, test_position_bias_dynamic, test_attn_output_reshape) are all pure text-matching: they read source files and check for specific string patterns using 'in src'. Only test_view_operations_runtime_semantics runs actual code, but it's a standalone numpy simulation that doesn't import or execute the modified code. No test actually imports T5Attention or calls its forward method."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are all string-matching checks (e.g., checking if 'q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' appears in the file). An agent could pass these by simply inserting the exact expected strings as dead code/comments without actually fixing the bug. test_view_operations_runtime_semantics tests numpy logic unrelated to the actual codebase changes."
+      "reason": "The fail-to-pass tests are string-matching tests. A developer could satisfy them by inserting the exact expected strings as comments or dead code without actually fixing the bug. For example, adding '# q_input_shape = (batch_size, seq_length, -1, self.key_value_proj_dim)' as a comment would pass test_t5attention_tp_compatible. test_view_operations_runtime_semantics passes independently of any code changes since it's a self-contained numpy script."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four fix locations described in the instruction (query reshape, KV reshape, position bias, attn output reshape) have corresponding tests, and the copy-to-other-files requirement is tested via syntax/compile/class-existence checks on all six files."
+      "reason": "All four changes described in the instruction (query reshape, KV reshape, position bias, attn output reshape) are tested, and the requirement to apply changes to all 6 files is checked via syntax/compile/class-existence tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into sections (gates/static, fail-to-pass, pass-to-pass) with comments, and descriptive function names."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code modification, not structured data output."
+      "reason": "This task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across the instruction and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exactly which method (T5Attention.forward), exactly which four locations to change, and the exact approach for each (e.g., 'pin the known dimension (sequence length) explicitly and let -1 cover the potentially-sharded dimension'). It also names the exact variable 'current_states' for KV reshape and 'query_states' for position bias, going well beyond what's needed for task context."
+      "reason": "The instruction names exact locations ('four locations in the forward method'), describes exactly what each view call should become ('keep seq_length explicit and let the heads dimension be inferred'), and specifies 'query_states.shape[1]' for the position bias fix. This goes beyond describing the bug and essentially prescribes the solution implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

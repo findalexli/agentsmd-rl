@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific details not mentioned in instruction.md: exact file paths like 'packages/playwright/src/cli/daemon/daemon.ts', 'packages/playwright/src/mcp/test/browserBackend.ts', 'packages/playwright/src/cli/client/program.ts'; exact function names like 'decorateServer', 'sessionConfigFromArgs', 'runDaemonForContext', 'startMcpDaemonServer'; exact property name '_onDidFinishTestFunctionCallbacks'; exact values like 'actionTimeout = 5000'; exact regex patterns like 'if (!noShutdown)'"
+      "outcome": "pass",
+      "reason": "Instruction names all asserted files, function names (decorateServer, sessionConfigFromArgs, runDaemonForContext, startMcpDaemonServer, _onDidFinishTestFunctionCallbacks), literal strings (PWPAUSE=cli, timeout=0, actionTimeout=5000, Bash(npx:*), Bash(npm:*)), and paths (references/playwright-tests.md)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (expose CLI mode, support multiple handlers, export utilities, update docs) but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'."
+      "reason": "Instruction describes what behavior is required but does not specify exact line changes or patches; agent must still determine how to wire things."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable name '_onDidFinishTestFunctionCallbacks' with 'new Set<' initialization and 'for...of' iteration pattern; exact function names 'decorateServer', 'sessionConfigFromArgs', 'runDaemonForContext'; exact regex 'if (!noShutdown)'; exact value 'actionTimeout = 5000'. An alternative correct implementation using e.g. an array instead of Set, different parameter names, or actionTimeout=3000 would fail."
+      "reason": "Tests enforce gold-specific implementation details: test_finish_callbacks_is_set requires exact name `_onDidFinishTestFunctionCallbacks`, a `new Set<` initializer, and a `for...of` iteration, excluding valid alternatives like arrays or forEach; test_pwpause_cli_overrides requires an `else if` structure and exact `overrides.timeout = 0` assignment form."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests use regex/string matching on source files (e.g., test_finish_callbacks_is_set checks for regex patterns in source code, test_pwpause_cli_overrides checks regex patterns). The pass-to-pass tests do run TypeScript compilation, but no behavioral test actually imports and executes the modified code or runs a Playwright test with PWPAUSE=cli."
+      "reason": "Tests primarily regex source files via _run_node (e.g., test_decorate_server_exported, test_session_config_exported, test_pwpause_cli_overrides, test_run_daemon_for_context_exported) rather than executing the code paths; only tsc/lint are executed."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While tests are text-based, they check for specific non-trivial patterns (exported functions, Set initialization, specific parameter names, guard conditions) that a stub/empty implementation would not satisfy."
+      "reason": "Each f2p test checks for the presence of specific named symbols/behaviors that a stub would not satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires that after the test finishes, a daemon server is started and remains running until stopped. No test verifies this actual runtime behavior - tests only check source code text patterns."
+      "outcome": "pass",
+      "reason": "All eight instruction requirements map to corresponding tests (network export, program.ts overrides, testInfo callbacks, daemon noShutdown, browserBackend export, program.ts client export, SKILL.md, playwright-tests.md)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear section comments (pass-to-pass repo_tests, gates, fail-to-pass pr_diff, fail-to-pass agent_config) and descriptive docstrings for each test function."
+      "reason": "Tests are clearly grouped with section headers (pass-to-pass, gates, fail-to-pass code, fail-to-pass agent_config) and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is not about producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames, paths, and symbol names in instruction are consistent with tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly names specific file paths like 'packages/playwright/src/skill/SKILL.md', 'packages/playwright/src/skill/references/playwright-tests.md' and mentions specific internal details like 'Bash(npx:*)' and 'Bash(npm:*)', reducing the localization challenge."
+      "outcome": "pass",
+      "reason": "Instruction identifies files in the spec naturally since the task scope is wiring across these files; no line-specific guidance given."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs (SKILL.md updates, new reference doc) are localized additions/modifications, not full-file rewrites, and are consistent with the instruction requirements."
+      "reason": "SKILL.md edits are localized to frontmatter allowed-tools, description, and a link to the new reference file."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

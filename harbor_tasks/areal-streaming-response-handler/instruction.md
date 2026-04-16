@@ -2,40 +2,54 @@
 
 ## Problem
 
-The `/chat/completions` endpoint in `areal/experimental/openai/proxy/proxy_rollout_server.py` raises a `ResponseValidationError` when a client sends `stream=true` in the request body.
+The `/chat/completions` endpoint in the OpenAI proxy server raises a `ResponseValidationError` when handling streaming responses. The error occurs because FastAPI attempts to validate a streaming response as a non-streaming `ChatCompletion` object.
 
 ## Symptoms
 
-1. When a request includes `{"stream": true}` in the body, the OpenAI client returns an `AsyncGenerator` instead of a `ChatCompletion` dict, causing FastAPI validation to fail with `ResponseValidationError`.
+1. When a request includes `{"stream": true}` in the body, the endpoint raises:
+   ```
+   ResponseValidationError: 1 validation error for ChatCompletion
+   ```
 
-2. Even when the explicit `stream` parameter is used, the response format is incorrect for SSE streaming clients.
+2. The `stream` field from the request body leaks into the client call kwargs, interfering with explicit stream parameter control.
 
-## Required Behaviors
+3. Streaming responses do not follow the OpenAI SSE format:
+   - Each chunk should be: `data: {"id": "...", "content": "..."}\n\n`
+   - Termination should be: `data: [DONE]\n\n`
 
-The implementation must satisfy all of the following:
+## Target File
 
-1. **Stream field isolation**: The `stream` field from the request body must not reach the underlying OpenAI client call via `**kwargs`. Only the explicit `stream` parameter passed to the client should control streaming behavior.
+`/workspace/AReaL/areal/experimental/openai/proxy/proxy_rollout_server.py`
 
-2. **SSE format compliance**: When streaming is enabled, the endpoint must return Server-Sent Events in the OpenAI SSE format:
-   - Each chunk: `data: {json}\n\n` (JSON contains `id` and `content` fields)
-   - Termination: `data: [DONE]\n\n`
+## Required Behavior
 
-3. **Streaming response support**: The endpoint must be capable of returning a streaming response without FastAPI attempting to validate it as a non-streaming `ChatCompletion` response.
+1. **Stream field isolation**: The request body's `stream` field must be removed from kwargs before the client call. The explicit `stream` parameter should control whether streaming actually occurs, independent of what the request body contained.
+
+2. **SSE format compliance**: When streaming is enabled, the endpoint must yield Server-Sent Events matching this exact format:
+   - Event prefix: `data: `
+   - JSON payload containing `id` and `content` fields
+   - Line ending: `\n\n`
+   - Termination event: `data: [DONE]\n\n`
+
+3. **Response validation bypass**: The endpoint must allow streaming responses without triggering FastAPI's `ResponseValidationError`. This requires either:
+   - `response_model=None` in the route decorator, OR
+   - Return type annotation of `StreamingResponse`
 
 4. **Behavior under stream parameter combinations**:
 
    | Body stream | Param stream | Expected behavior |
    |-------------|--------------|-------------------|
-   | `true`      | `false`      | Strip body stream, non-streaming |
-   | `true`      | `true`       | Strip body stream, streaming |
-   | `false`     | `false`      | Strip body stream, non-streaming |
-   | `false`     | `true`       | Strip body stream, streaming |
-   | omitted     | `false`      | No stream in kwargs, non-streaming |
-   | omitted     | `true`       | Add stream=True to kwargs, streaming |
+   | `true`      | `false`      | Non-streaming (body value ignored) |
+   | `true`      | `true`       | Streaming (body value ignored) |
+   | `false`     | `false`      | Non-streaming (body value ignored) |
+   | `false`     | `true`       | Streaming (body value ignored) |
+   | omitted     | `false`      | Non-streaming |
+   | omitted     | `true`       | Streaming |
 
 ## Verification
 
 The fix is correct when:
 - `ResponseValidationError` is no longer raised for streaming requests
-- SSE clients receive properly formatted `data: ` events with `content` fields
+- SSE clients receive properly formatted `data: ` events containing `id` and `content` fields
 - Non-streaming requests continue to work as before
+- The `stream` field from request body never reaches the underlying client call

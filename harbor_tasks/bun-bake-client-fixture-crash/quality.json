@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files (client-fixture.mjs, bake-harness.ts), the function (loadPage), the concepts (retry logic, null content-type, unhandledRejection handler, exit code propagation), and references exitCodeMap.reloadFailed. The test for unhandledRejection checks for 'process.on(\"unhandledRejection\"' and 'reloadFailed'/'exitCodeMap' in the handler body, and the instruction explicitly mentions unhandled rejection handling with meaningful exit code. The test for exit code propag"
+      "reason": "instruction.md names both files (client-fixture.mjs, bake-harness.ts), the function loadPage, the unhandledRejection handler requirement, exit code propagation to this.output.exitCode, and the content-type handling \u2014 all test assertions reference these."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (no retry logic, null content-type crashes, no unhandledRejection handler, no try/catch on initial load, exit code not propagated) and the expected behavior, but does not prescribe exact code changes, line numbers to modify, or specific implementation patterns like 'use maxRetries variable'."
+      "reason": "Instruction describes problems (no retry, null header TypeError, missing handler) without prescribing exact code changes like 'replace line X with Y'."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_unhandled_rejection_handler extracts the handler body using brace-depth matching and then executes it in a constructed script that imports from '/workspace/bun/test/bake/exit-code-map.mjs'. It checks for specific string patterns like 'process.exit' and 'reloadFailed' or 'exitCodeMap' in the handler body. More critically, test_exit_code_propagation (truncated but visible pattern) checks for specific patterns like 'proc.exited' and 'this.output.exitCode' \u2014 an alternative correct implementatio"
+      "outcome": "pass",
+      "reason": "Tests check behavior (retry count >=3, no crash on null content-type, exit code 34, proc.exited assignment to this.output.exitCode) which the instruction explicitly requires, and allow multiple implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The tests use behavioral verification: _run_extractor actually starts an HTTP server and runs the extracted loadPage function, verifying request counts and outcomes. test_unhandled_rejection_handler executes the handler code in a subprocess. test_null_content_type_handled and test_retry_on_transient_failures both execute code and verify behavioral outcomes (request counts, status codes). While test_unhandled_rejection_handler does some text inspection, it also executes the handler behaviorally."
+      "reason": "Tests execute node subprocesses, extract and run loadPage against a live HTTP server, trigger unhandled rejections, and check exit codes."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_retry_on_transient_failures requires >=3 requests (anti-stub: a stub that doesn't retry would only make 1 request). test_null_content_type_handled requires req >= 1 and status OK/EXIT (a stub wouldn't fetch). test_unhandled_rejection_handler requires exit code 34 from actual handler execution. These cannot be satisfied by trivial stubs."
+      "reason": "A stub loadPage would fail the null-ct test (requires req>=1 and no crash) and retry test (requires req>=3 with success); unhandled rejection test requires actual exit code 34."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behaviors from the instruction are tested: retry logic (test_retry_on_transient_failures), null content-type handling (test_null_content_type_handled), unhandledRejection handler (test_unhandled_rejection_handler), initial page load error handling (implicitly covered by the loadPage tests), and exit code propagation (test_exit_code_propagation). The static import convention is tested by test_no_dynamic_imports."
+      "reason": "All five instruction points (retry, null content-type, unhandledRejection, initial load try/catch implicitly, exit code propagation) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_null_content_type_handled, test_retry_on_transient_failures, etc.), have docstrings explaining the bug and anti-stub logic, and are categorized with comments like '[static] pass_to_pass' and '[pr_diff] fail_to_pass'."
+      "reason": "Tests are grouped with comment headers (Gate, Fail-to-pass) and descriptive names with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing bug handling in test fixtures, not producing structured data output."
+      "reason": "Task is code-fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (test/bake/client-fixture.mjs, test/bake/bake-harness.ts), function names (loadPage), and variable names (exitCodeMap, reloadFailed) are all correctly spelled and consistent between instruction and tests."
+      "reason": "Paths and names (client-fixture.mjs, bake-harness.ts, exitCodeMap, reloadFailed) are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the files (client-fixture.mjs, bake-harness.ts) and approximate location ('around line 817') but these are natural for a bug report. It doesn't specify exact line numbers for the bugs or exact code to write. The 'around line 817' reference for the harness is reasonable context for a two-file fix."
+      "reason": "Instruction references 'around line 817' which is a guidance hint but does not dictate the exact code; files are already named in the problem domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

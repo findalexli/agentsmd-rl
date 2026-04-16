@@ -109,6 +109,41 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 8-8
+- rule: Use ubuntu-latest for long-running jobs (e.g., polling)
+  source:
+    path: .claude/rules/github-actions.md
+    lines: 7-19
+  source_text: '## Use `ubuntu-slim` for Lightweight Tasks
+
+
+    Prefer `ubuntu-slim` over `ubuntu-latest` for simple jobs (e.g., labeling, commenting,
+    notifications).
+
+
+    Note: `ubuntu-slim` has a 15-minute timeout limit. Use `ubuntu-latest` for long-running
+    jobs (e.g., polling).
+
+
+    ```yaml
+
+    # Bad
+
+    runs-on: ubuntu-latest
+
+
+    # Good
+
+    runs-on: ubuntu-slim
+
+    ```'
+  collision_type: scope_ambiguity
+  why_distracting: 'The gold diff adds a bash script to poll in the background within
+    a Claude Skill definition file (.md). This rule mentions using ''ubuntu-latest''
+    specifically for ''long-running jobs (e.g., polling)''. An agent might mistakenly
+    think this rule applies and attempt to add GitHub Actions configurations (like
+    `runs-on: ubuntu-latest`) to the Markdown file, even though this rule is strictly
+    for `.github/workflows/**/*.yml` files.'
+  severity: high
 hierarchy_analysis: The repository has a flat, single-file configuration (`CLAUDE.md`)
   at the root level. The rules in `CLAUDE.md` are heavily tailored towards the MLflow
   Python backend and Databricks integration, which are largely out of scope for this

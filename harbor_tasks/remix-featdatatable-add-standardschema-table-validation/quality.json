@@ -1,56 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key files (table.ts, database.ts, index.ts, AGENTS.md, README.md), the function names (createTable, validatePartialRow, timestampSchema, createSchema), the Standard Schema interface (~standard, version, vendor, validate), the DataSchema re-export removal, and documentation requirements. The test specifics like checking `from './table.ts'` import string in database.ts are discoverable from the instruction saying 'import and use validatePartialRow from ./table.ts'. The cr"
+      "outcome": "fail",
+      "reason": "Tests assert on a specific exported function name `validatePartialRow` (test_validate_partial_row_exported and test_write_path_uses_shared_validator), but instruction.md never mentions this function name \u2014 it only describes consolidating validation logic without naming the helper."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (Standard Schema compatibility, shared validator, refactored imports, documentation updates) but does not specify exact code changes, line numbers, or implementation details. A developer must still reason about how to implement the ~standard property, how to structure validatePartialRow, and how to refactor database.ts."
+      "reason": "Instruction describes what is broken (Standard Schema incompatibility, duplicated validation) without dictating exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_write_path_uses_shared_validator asserts the exact string `from './table.ts'` in database.ts. An equally valid alternative might use `from './table'` (without .ts extension) or `from '../lib/table'` or other path forms. Also test_timestamp_schema_uses_create_schema uses a regex that requires the import to come from the exact string `@remix-run/data-schema`. The test for validatePartialRow requires the exact function name and specific return shape (checking 'issues' in result), which the ins"
+      "reason": "test_validate_partial_row_exported requires a specific exported symbol named `validatePartialRow` and test_write_path_uses_shared_validator requires `import { validatePartialRow } from './table.ts'` \u2014 an alternative fix using a differently-named helper (e.g., `parsePartialRow`) would fail despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Key tests like test_standard_schema_validation and test_validate_partial_row_exported actually execute TypeScript code that imports modules, creates tables, calls functions, and checks runtime behavior. While some tests (test_write_path_uses_shared_validator, test_timestamp_schema_uses_create_schema) are text-based, the majority of behavioral tests execute real code. The test suite also runs typecheck, lint, format, and existing unit tests."
+      "reason": "Tests execute TypeScript via node, run lint/typecheck/unit tests, and invoke parseSafe/validatePartialRow at runtime."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_standard_schema_validation creates a table and verifies that parseSafe works with it, checking that partial inputs are accepted, unknown columns are rejected, and invalid values are rejected. A stub returning defaults would fail these checks. test_validate_partial_row_exported calls the function with valid and invalid inputs and checks different return shapes. These require real implementation."
+      "reason": "Tests check positive and negative cases (partial accepted, unknown rejected, invalid rejected) so stubs cannot pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from the instruction are tested: Standard Schema compatibility (test_standard_schema_validation), validatePartialRow export (test_validate_partial_row_exported), database.ts refactoring (test_write_path_uses_shared_validator), DataSchema removal (test_dataschema_type_removed_from_exports), timestampSchema using createSchema (test_timestamp_schema_uses_create_schema), AGENTS.md update (test_agents_md_cross_package_rule), README update (test_readme_data_validation)."
+      "reason": "Standard Schema compatibility, partial/unknown validation, DataSchema removal, createSchema usage, AGENTS.md and README updates are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names like test_standard_schema_validation, test_validate_partial_row_exported, test_write_path_uses_shared_validator, etc. Each test has a clear purpose and includes informative assertion messages."
+      "reason": "Each test function is named per-check and maps 1:1 to a rubric check per the docstring."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction references the Standard Schema spec (https://standardschema.dev/) and specifies the expected interface properties (~standard with version, vendor, validate). The validatePartialRow return shape is documented (issues key presence indicates failure)."
+      "outcome": "not_applicable",
+      "reason": "Task is code/API behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, package names, and variable names in the instruction match those used in the tests and codebase. No typos detected."
+      "reason": "Paths and commands appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify and the functions to create/modify, which is appropriate for a refactoring task. It doesn't specify exact line numbers or precise code changes. The file list is naturally scoped to the task domain."
+      "reason": "Instruction names the files to edit, but localization is explicitly part of the task scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task with documentation updates, not a config-edit-only task."
+      "reason": "Not primarily an agentmd-edits task; documentation edits are narrow additions."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 7,
+  "fail_count": 2
 }

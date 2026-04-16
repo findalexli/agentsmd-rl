@@ -1,0 +1,58 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14685
+  merge_commit: df520e315087210e069050a873fb5e208659af91
+  base_commit: b55d452e46e81369a65978459a0683efa484c11b
+
+checks:
+  # Fail-to-pass tests (the actual bug fix)
+  - id: test_reader_independence_f2p
+    type: fail_to_pass
+    origin: pr_regression
+    description: Multiple readers from ValueAsOpenReadSeekCloser must be independent
+
+  - id: test_opener_returns_new_reader_f2p
+    type: fail_to_pass
+    origin: pr_regression
+    description: Each call to opener must return a new reader with full content
+
+  # Pass-to-pass tests (repo CI/CD compatibility)
+  - id: test_pagemeta_package_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: pagemeta package unit tests pass
+
+  - id: test_go_build_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo binary builds successfully
+
+  - id: test_code_compiles_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code passes go vet checks
+
+  - id: test_specific_unit_tests_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing pagemeta unit tests pass
+
+  - id: test_gofmt_check_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo code passes gofmt check
+
+  - id: test_go_mod_verify_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go module dependencies verify
+
+  - id: test_pagemeta_staticcheck_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: staticcheck passes on pagemeta package
+
+# Note: This task is a pure code bug fix (PR #14685) with no config/documentation
+# file changes. The rubric is intentionally minimal since the judge evaluates
+# config file edits, not code changes. Code quality is ensured by the test suite.

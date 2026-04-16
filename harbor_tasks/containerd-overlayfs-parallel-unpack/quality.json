@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names every literal string, function signature, condition check, and pattern that the tests assert on: `func bindToOverlay(mounts []mount.Mount) []mount.Mount` (implied by signature details), `len(mounts) != 1 || mounts[0].Type != \"bind\"`, `Type: \"overlay\"`, `if o != \"rbind\"`, `upperdir=\"+mounts[0].Source`, `if i > 0 && parallel && unpack.SnapshotterKey == \"overlayfs\"`, `mounts = bindToOverlay(mounts)`, `containerd/issues/13030`, `TODO: this is a temporary workaroun"
+      "reason": "Instruction names TestBindToOverlay, describes the function behavior, input/output transformations, and references issue #13030."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: the exact function name `bindToOverlay`, exact condition strings like `len(mounts) != 1 || mounts[0].Type != \"bind\"`, exact mount field values, exact filter condition `if o != \"rbind\"`, exact call pattern `mounts = bindToOverlay(mounts)`, and exact guard condition `if i > 0 && parallel && unpack.SnapshotterKey == \"overlayfs\"`. This is not describing what's broken \u2014 it's prescribing the exact code to write, leaving no reasoning for the"
+      "outcome": "pass",
+      "reason": "Instruction describes conditions and expected behavior without specifying line numbers or exact function names to create."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like the specific function name `bindToOverlay`, exact condition string `len(mounts) != 1 || mounts[0].Type != \"bind\"`, exact filter `if o != \"rbind\"`, and exact call pattern `mounts = bindToOverlay(mounts)`. An alternative correct fix (e.g., naming the function `convertBindToOverlay`, using a switch statement, or inlining the logic) would fail these string-matching tests even if functionally correct."
+      "reason": "test_bind_to_overlay_unit_tests runs `-run TestBindToOverlay` which requires a specific test function name; also the unit test in gold patch calls `bindToOverlay` (lowercase) directly \u2014 alternative fixes using different function names (e.g., `convertBindToOverlay`) would fail since package tests import and call this specific identifier."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_bind_to_overlay_single_bind, test_bind_to_overlay_passthrough, test_bind_to_overlay_multiple, test_parallel_unpack_invokes_bind_to_overlay, test_imports_correct, and test_no_regression_unpack_logic are all pure text-matching (`assert '...' in content`). While test_unit_unpacker, test_build, test_vet, test_go_fmt, and test_go_mod_verify do execute subprocesses, the majority of f2p tests are text-only checks."
+      "outcome": "pass",
+      "reason": "Tests run go test, go build, go vet executing actual code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The test_unit_unpacker test runs `go test -run TestBindToOverlay` which executes actual Go test cases that verify the bindToOverlay function's behavior with reflect.DeepEqual. A stub implementation would fail these Go-level tests. test_build and test_vet also require compilable code."
+      "reason": "Tests execute the conversion function with real inputs and assert on returned mount structures."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (detecting conditions, converting bind to overlay, passthrough for non-bind/multiple mounts, integration call, reference comment) are tested by corresponding test functions."
+      "reason": "Tests cover single bind conversion, overlay passthrough, and multiple mounts passthrough as described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_bind_to_overlay_single_bind, test_parallel_unpack_invokes_bind_to_overlay, etc.) with clear docstrings explaining what each test verifies."
+      "reason": "Tests are separate functions with docstrings explaining purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Go source code modifications, not structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact code patterns including the exact condition `if i > 0 && parallel && unpack.SnapshotterKey == \"overlayfs\"`, exact function signature, exact filter logic `if o != \"rbind\"`, and the exact call site pattern. This goes far beyond naming the buggy file/module \u2014 it prescribes the exact implementation at a code-line level."
+      "outcome": "pass",
+      "reason": "Instruction references the domain (unpacker with overlayfs) without pointing to exact line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

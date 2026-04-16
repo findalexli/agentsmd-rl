@@ -1,37 +1,40 @@
-# XSS Vulnerability in Playground Config Parsing
+# Fix XSS Vulnerability in Playground Config Parsing
 
 ## Problem
 
-The React Compiler Playground's configuration editor has a cross-site scripting (XSS) vulnerability. The config override parsing uses `new Function()` to evaluate user-provided configuration text. This means any JavaScript code entered in the config editor will be executed, allowing arbitrary code execution in the user's browser.
+The React Compiler Playground's configuration editor has a cross-site scripting (XSS) vulnerability. The config override parsing currently uses `new Function()` to evaluate user-provided configuration text, which allows arbitrary JavaScript code to be executed in the user's browser.
 
-The current config format requires a TypeScript-style wrapper (`import type { PluginOptions } from '...'` and `satisfies PluginOptions`), which is unnecessarily complex for what is essentially a JSON-like configuration object.
+The existing config format also requires TypeScript-style wrappers (`import type { PluginOptions }` statements and `satisfies PluginOptions` keywords), which are unnecessarily complex for what should be a plain configuration object.
 
-## Expected Behavior
+## Symptom
 
-Configuration parsing should use a safe JSON-like parser that supports comments and trailing commas but does **not** execute arbitrary JavaScript. The config format should be simplified to plain objects (e.g., `{ compilationMode: "all" }`) without TypeScript wrappers.
-
-The editor UI should use JSON language mode instead of TypeScript.
+When a user enters JavaScript code in the config editor — such as `({ compilationMode: eval("all") })` — the current parser executes it directly rather than rejecting it as invalid syntax. This allows code injection attacks via the config override field.
 
 ## Requirements
 
-The fix must satisfy all of the following:
+Your fix must satisfy all of the following:
 
-1. **Safe parsing**: Replace any `new Function()`-based config parsing with a library that parses JSON-like data safely. The library must:
-   - Support comments (both `//` and `/* */`)
+1. **Safe parsing**: Replace any `new Function()`-based config parsing with a safe alternative. The replacement must:
+   - Support single-line comments (`//`)
+   - Support multi-line comments (`/* */`)
    - Support trailing commas
-   - Reject arbitrary JavaScript expressions (IIFEs, `eval()`, template literals, etc.)
+   - Reject arbitrary JavaScript expressions (IIFEs, `eval()`, template literals, variable references, function calls, constructor calls)
 
-2. **Exported function**: The config parsing logic must be exported as a named function so it can be unit tested via `node --test`. The test file must be named `parseConfigOverrides.test.mjs` and located in the playground's `__tests__` directory.
+2. **Testable export**: The config parsing logic must be accessible to Node.js test runners via a named exported function. A test file named `parseConfigOverrides.test.mjs` must exist in the playground's `__tests__` directory and pass `node --test`.
 
-3. **Simplified config format**: Default config and all config editor inputs must use plain objects without TypeScript type wrappers (`import type` statements or `satisfies` keywords).
+3. **Simplified config format**: The default config and all config editor inputs must use plain objects without TypeScript type wrappers. Specifically:
+   - No `import type { PluginOptions }` statements
+   - No `satisfies PluginOptions` keywords
 
-4. **Editor mode**: The Monaco editor for config must use JSON language mode, not TypeScript mode.
+4. **Editor language**: The Monaco editor instance used for config editing must use a JSON-compatible language mode, not TypeScript.
 
-5. **Dependencies**: Any required parsing library must be added as a dependency in the playground package.
+5. **Dependency**: Any parsing library required for safe config handling must be added as a dependency in the playground's `package.json`.
 
 ## Verification
 
-The solution will be verified by:
-- Running `node --test` on the config parsing test suite
-- Confirming the parsing library rejects malicious inputs (code injection attempts)
-- Confirming the config editor uses JSON language mode
+Your solution will be verified by:
+- Running `node --test` on the config parsing test suite — it must pass
+- Confirming the parser rejects code injection attempts (IIFEs, eval expressions, template literals, etc.)
+- Confirming no `new Function()` calls remain in the config parsing path
+- Confirming the config editor uses a JSON-compatible language mode
+- Running the existing repository test suite to ensure no regressions

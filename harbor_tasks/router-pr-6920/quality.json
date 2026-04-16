@@ -1,57 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/start-plugin-core/src/build-sitemap.ts), the function (jsonToXml), the error (xhtml namespace not defined), and hints about the root XML element's .ele() call and namespace declarations. The specific strings like 'xmlns:xhtml', 'http://www.w3.org/1999/xhtml', and the sitemap schema URL are standard sitemap protocol knowledge referenced by the instruction. The test assertions check these discoverable elements."
+      "reason": "instruction.md names the file path, function (jsonToXml), and the error message; the namespace URL 'http://www.w3.org/1999/xhtml' is a well-known W3C standard referenced by the sitemap protocol."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the symptom (namespace prefix xhtml not defined) and hints to look at the root XML element and namespace declarations, but does not specify the exact fix (adding 'xmlns:xhtml': 'http://www.w3.org/1999/xhtml' to the .ele() call). A developer must reason about what to change."
+      "reason": "Instruction describes the problem (missing namespace) and hints at root element/namespace declarations but doesn't state the exact code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_xmlns_xhtml_in_ele_call and test_namespace_order_correct use regex patterns (e.g., r'\\.ele\\s*\\(\\s*\\w+\\s*,\\s*\\{[^}]*xmlns:xhtml[^}]*\\}') that enforce the namespace must appear specifically inside a .ele() call with a specific object literal syntax. An alternative valid fix \u2014 such as adding the namespace declaration via a separate method call (e.g., .att('xmlns:xhtml', '...')) or using a different XML builder API \u2014 would fail these tests despite being correct."
+      "reason": "test_xmlns_xhtml_in_ele_call and test_namespace_order_correct require the namespace to be in a .ele() call's attributes object, which is specific to the xmlbuilder2 API usage; an alternative fix (e.g., using a different XML construction approach or adding the attribute via .att()) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core fail_to_pass tests (test_xmlns_xhtml_namespace_declared, test_xmlns_xhtml_in_ele_call, test_namespace_order_correct) are purely text-matching: they read the source file and check for string/regex patterns. test_sitemap_xml_generation_valid attempts execution but falls back to source text matching if the subprocess fails. The pass_to_pass tests do execute builds/lints, but the primary bug-fix validation is text-based."
+      "outcome": "pass",
+      "reason": "test_sitemap_xml_generation_valid executes a Node.js script to run jsonToXml, and test_package_builds/test_repo_unit_tests invoke subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for 'xmlns:xhtml' and 'http://www.w3.org/1999/xhtml' in the source file. A stub or no-op implementation would not contain these strings, so the tests cannot be trivially passed without making the actual fix."
+      "reason": "F2P tests require specific namespace strings and placement in .ele() attributes, which cannot be satisfied by a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that generated sitemaps pass XML validation with proper namespace declarations for xhtml:link elements. The tests verify this by checking namespace declarations exist, are in the right location, and that the package builds and passes type/lint checks."
+      "reason": "Tests verify xmlns:xhtml namespace is declared on the root element, matching instruction's expected behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_xmlns_xhtml_namespace_declared, test_sitemap_xml_generation_valid, etc.), have docstrings with fail_to_pass/pass_to_pass annotations, and are logically grouped by concern."
+      "reason": "Tests are named descriptively and include docstrings marking fail_to_pass/pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing XML generation code, not producing structured data output with a schema to document."
+      "reason": "No structured data schema required from the agent beyond the implied XML namespace."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, namespace URIs, and commands are all correctly spelled throughout the instruction and test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file (build-sitemap.ts) and function (jsonToXml), which is appropriate given the task domain. It hints at the root XML element and namespace declarations but doesn't specify the exact line or exact code change needed."
+      "reason": "Instruction names the file which is appropriate scoping, not specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code fix task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

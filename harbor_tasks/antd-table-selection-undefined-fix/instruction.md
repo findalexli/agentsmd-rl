@@ -9,42 +9,36 @@ The Ant Design Table component crashes with a runtime error when:
 
 The crash occurs because `mergedSelectedKeys` becomes `undefined` and subsequent code tries to iterate over it using `forEach` or pass it to functions expecting an array.
 
-## Where to Look
+## Expected Behavior
 
-Focus on `components/table/hooks/useSelection.tsx`. This hook manages the selection state and is where the crash originates.
+The Table must not crash when `selectedRowKeys` transitions from `[]` to `undefined` while `preserveSelectedRowKeys` is enabled. The component should handle this transition gracefully.
 
-Look for:
-- The `mergedSelectedKeys` variable that comes from `useMergedState`
-- How `mergedSelectedKeys` is used in `useEffect` for `updatePreserveRecordsCache`
-- How `mergedSelectedKeys` is used in `useMemo` for `derivedSelectedKeys`
+## What to Fix
 
-## Expected Fix
-
-The fix should ensure that `mergedSelectedKeys` is always treated as an array even when it's `undefined`. A clean approach is to create a fallback variable using the nullish coalescing operator.
-
-The fix should:
-1. Add a fallback: `const mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST;`
-2. Use `mergedSelectedKeyList` instead of `mergedSelectedKeys` in:
-   - The `useEffect` that calls `updatePreserveRecordsCache`
-   - The `useMemo` that computes `derivedSelectedKeys`
-3. Update dependency arrays to use the new variable
-
-## What You Should NOT Do
-
-- Don't add runtime checks at every usage site (clutters the code)
-- Don't modify the test file (tests are already provided)
-- Don't change the public API or prop types
-- Don't use `|| []` instead of `?? EMPTY_LIST` (could cause issues with falsy values)
+The fix must ensure the selection state is always treated as an array even when the underlying value is `undefined`. Specifically, introduce a local constant (e.g., `mergedSelectedKeyList`) that holds `mergedSelectedKeys ?? EMPTY_LIST` and use it in place of raw `mergedSelectedKeys` throughout the hook. The regression tests that validate this fix are:
+- "works with preserveSelectedRowKeys after receive selectedRowKeys from [] to undefined"
+- "works with selectionType radio receive selectedRowKeys from [] to undefined"
+- "cache with preserveSelectedRowKeys" (Table rowSelection test)
 
 ## Verification
 
-The test file at `components/table/__tests__/Table.rowSelection.test.tsx` already includes a regression test that covers this scenario. Run the specific test:
-
+Run the Table rowSelection tests:
 ```bash
-npm test -- Table.rowSelection.test.tsx --testNamePattern "works with preserveSelectedRowKeys after receive selectedRowKeys from \[\] to undefined"
+npm test -- Table.rowSelection.test.tsx --testNamePattern "preserveSelectedRowKeys"
 ```
 
-The test should pass after your fix.
+All linting checks must pass:
+```bash
+npm run lint:script -- components/table/
+npm run lint:biome
+npm run lint:md
+npm run lint:changelog
+```
+
+TypeScript compilation must succeed:
+```bash
+npx tsc --noEmit
+```
 
 ## Related Issue
 

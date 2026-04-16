@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (worker.ts, thread.ts, app.tsx, .opencode/command/changelog.md), the RPC method name 'snapshot', the filenames 'tui.heapsnapshot' and 'server.heapsnapshot', the 'onSnapshot' callback name, the 'node:v8'/'v8' module, 'writeHeapSnapshot', 'client.call', the changelog section headers (# TUI, # Desktop, # Core, # Misc), and UPCOMING_CHANGELOG.md. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names all key file paths (worker.ts, thread.ts, app.tsx), the RPC method name 'snapshot', the filenames 'tui.heapsnapshot' and 'server.heapsnapshot', the 'onSnapshot' callback, 'node:v8'/'v8' imports, 'writeHeapSnapshot', 'client.call', and the changelog sections (# TUI, # Desktop, # Core, # Misc) and output file (UPCOMING_CHANGELOG.md). The test for changelog also checks for 'appropriate section' or 'append.*section' pattern, and the instruction mentions 'Each subagent should ap"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details: 'An RPC method named snapshot on the worker that calls writeHeapSnapshot to server.heapsnapshot', 'An onSnapshot callback in the TUI thread that triggers both snapshot writes', 'onSnapshot callback must be passed as an optional prop'. This goes beyond describing what's broken and prescribes exactly what to implement, including method names, callback signatures, and prop threading."
+      "reason": "The instruction explicitly states the exact implementation: 'An RPC method named snapshot on the worker that writes the server heap to server.heapsnapshot', 'An onSnapshot callback in the TUI thread that triggers both snapshot writes (TUI locally, server via RPC) and returns both file paths', 'The onSnapshot callback must be passed as an optional prop through to the App component'. This is prescriptive of WHAT to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for exact string patterns like 'snapshot()' in worker.ts, 'onSnapshot?:' in app.tsx, 'onSnapshot={input.onSnapshot}' in app.tsx, and 'client.call(\"snapshot\"' in thread.ts. An alternative correct implementation using e.g. 'heapSnapshot' as the RPC method name, or passing the callback differently (e.g. via context), or using a different prop-passing pattern would fail these text-matching tests."
+      "reason": "Tests check for exact string matches like 'snapshot()' in worker.ts, 'onSnapshot?:' in app.tsx, 'onSnapshot={input.onSnapshot}' in app.tsx, and 'client.call(\"snapshot\"' in thread.ts. An alternative correct implementation using e.g. 'heapSnapshot' as the method name, or destructuring the prop differently (e.g., `onSnapshot={props.onSnapshot}`), or using a different RPC calling pattern would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_worker_has_snapshot_rpc, test_thread_implements_onsnapshot, test_app_accepts_onsnapshot_prop, test_changelog_command_updated) all exclusively use string matching (includes/regex) on file contents. None of them import, instantiate, or execute the modified code. They are purely textual grep-style checks."
+      "reason": "The four fail-to-pass tests (test_worker_has_snapshot_rpc, test_thread_implements_onsnapshot, test_app_accepts_onsnapshot_prop, test_changelog_command_updated) all exclusively read file contents as strings and check for substring/regex matches. None of them import, execute, or call the code to verify actual behavior. They are pure text-matching tests."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "While the tests are text-based, they check for specific additions (writeHeapSnapshot import, snapshot() method, server.heapsnapshot string, onSnapshot callback, client.call invocation, changelog sections) that don't exist in the base commit. A stub/no-op wouldn't contain these strings."
+      "outcome": "fail",
+      "reason": "A stub implementation that simply adds the right string literals to each file (e.g., adding dead-code comments containing 'writeHeapSnapshot', 'snapshot()', 'server.heapsnapshot', 'onSnapshot?:', 'client.call(\"snapshot\"', etc.) would pass all four fail-to-pass tests without implementing any actual functionality, since the tests only check for string presence in file contents."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: worker snapshot RPC, thread onSnapshot coordination, app prop threading, toast notification (implicitly via onSnapshot return), and changelog restructuring."
+      "reason": "All behaviors described in the instruction are tested: worker snapshot RPC method, thread onSnapshot callback with TUI/server coordination, App component accepting onSnapshot prop, and changelog section structure. The toast notification displaying both paths is partially tested via the app.tsx checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and identifiers in the instruction are consistent and correctly spelled throughout."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the RPC method must be named 'snapshot', the callback must be named 'onSnapshot', filenames must be 'tui.heapsnapshot' and 'server.heapsnapshot', and the callback must be 'passed as an optional prop through to the App component'. This over-constrains the solution space beyond what's needed to describe the problem."
+      "reason": "The instruction explicitly names all three files to modify (worker.ts, thread.ts, app.tsx) and prescribes exactly what to add to each: an RPC method named 'snapshot' in worker, an 'onSnapshot' callback in thread, and an optional prop in app. This goes beyond describing the bug to prescribing the exact implementation architecture."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The changelog.md edit is a localized content rewrite of a single command file, and the code changes are additions to three specific files. The gold patch doesn't contradict other tier-1 files."
+      "reason": "The changelog.md edit is localized (restructuring content of one file) and doesn't contradict other files. The code edits are also localized additions to existing files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

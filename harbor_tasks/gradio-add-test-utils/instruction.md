@@ -22,7 +22,7 @@ The `@gradio/tootils` package (`js/tootils/`) provides unit testing utilities fo
 
 ### Test Fixtures
 
-Create test fixture constants named exactly:
+Create a file at `js/tootils/src/fixtures.ts` exporting test fixture constants named exactly:
 - `TEST_TXT`
 - `TEST_JPG`
 - `TEST_PNG`
@@ -34,37 +34,37 @@ Each should be a `FileData` instance pointing to files in `test/test_files/`.
 
 ### File Operation Utilities
 
-Implement three async utilities:
+Create a file at `js/tootils/src/download.ts` implementing three async utilities:
 - `download_file` - clicks an element and captures the resulting file download, returning the suggested filename and text content
 - `upload_file` - sets files on a file input using Playwright's `setInputFiles()`
 - `drop_file` - simulates drag-and-drop by constructing a `DataTransfer` with `File` objects and dispatching `dragenter`/`dragover`/`drop` events
 
 ### Browser Commands
 
-Register these Vitest browser command names:
+Register these Vitest browser command names in `js/spa/vite.config.ts`:
 - `expect_download`
 - `set_file_inputs`
 - `drop_files`
 
 ### Event Buffering
 
-Implement event buffering using an array named `event_buffer` to store all dispatched events from mount time. The `listen` helper must accept a `retrospective` option that replays buffered events onto the mock when enabled.
+In `js/tootils/src/render.ts`, implement event buffering using an array named `event_buffer` to store all dispatched events from mount time. The `listen` helper must accept a `retrospective` option that replays buffered events onto the mock when enabled.
 
 The `event_buffer.push` method must be used to add events to the buffer.
 
 ### Mock Client
 
-Create a `mock_client` function that returns an object with:
+In `js/tootils/src/render.ts`, create a `mock_client` function that returns an object with:
 - `upload` method (echo-back behavior)
 - `stream` method (no-op)
 
 ### Package Configuration
 
-The package must include an export entry for `./download-command`.
+The package at `js/tootils/package.json` must include an export entry for `./download-command`.
 
 ### Documentation
 
-Completely rewrite the README.md to accurately document `@gradio/tootils`, covering:
+Completely rewrite `js/tootils/README.md` to accurately document `@gradio/tootils`, covering:
 - `render` function and its parameters (Component, props)
 - `listen` helper with the `retrospective` option for replaying buffered events
 - `cleanup`, `fireEvent`

@@ -2,55 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes the class name (DeepseekV2DecoderLayer), file path, method names (__init__, forward), the dtype checks (torch.uint8, float8_e4m3fn), the string values (mxfp4, fp8, empty string), and the requirement for a detection method with str return type. All test assertions (quant/format attribute names, detect method naming, cached usage in forward, dtype checks) are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_forward_uses_cached_quant_format checks that forward() calls 'prepare_attn' with a 'self.*' attribute (this method name is never mentioned in instruction.md); test_cached_quant_format_attribute looks for a separate detection method containing 'uint8' and 'float8'/'fp8' logic; test_detect_quant_format_method_exists checks that detection lives outside forward(). The instruction never mentions 'prepare_attn', 'fus"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (cache the value, add a method, use it in forward) but does not specify exact code, line numbers, or variable names. A developer still needs to reason about the implementation details."
+      "reason": "The instruction describes what is broken (recomputation in forward) and says to fix it by computing once during construction, but does not specify exact code changes, line numbers, or variable names for the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on specific naming conventions: test_cached_quant_format_attribute checks for 'quant' or 'format' in the attribute name AND 'detect' in the method name; test_detect_quant_format_method_exists checks for 'detect' or 'quant' in method names; test_forward_uses_cached_quant_format uses regex r'self\\.\\(\\w*(?:quant|format)\\w*)' to find references. A correct alternative using e.g. self._gfx95_cached_value or a method named _compute_gfx95_mode() would fail these tests. The tests enforce gol"
+      "reason": "Tests enforce specific implementation choices: test_cached_quant_format_attribute searches for a separate detection method (not __init__/forward/op_*) containing both 'uint8' and 'float8'/'fp8', and tries to execute it standalone. An equally correct alternative that inlines the detection in __init__ without a separate method would follow a different code path in the test. Additionally, test_forward_uses_cached_quant_format specifically checks AST for a self.* attribute passed to 'prepare_attn', "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing to inspect code structure (not just string matching), compile the detection method, run subprocess execution to verify the method is valid Python, and check syntax via py_compile. While they don't instantiate the class, they do meaningful structural and compilation checks beyond simple text matching."
+      "reason": "test_cached_quant_format_attribute actually extracts the detection method via AST, builds a test class, instantiates it with mock objects, and calls the method to verify return values for different dtypes. test_detection_method_executable does similar execution. While some tests are AST-based text inspection, the key behavioral test actually executes the detection logic."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would fail: test_cached_quant_format_attribute requires a self.<method>() call in __init__ assigning to an attribute with 'quant' or 'format'; test_detection_method_executable verifies the method body contains 'uint8' and 'float8'/'fp8' checks and compiles successfully; test_forward_uses_cached_quant_format checks the old inline pattern is removed. These cannot be satisfied by empty stubs."
+      "reason": "A stub implementation (e.g., empty forward, no detection method) would fail: test_cached_quant_format_attribute requires the detection method to return 'mxfp4' for uint8, 'fp8' for float8_e4m3fn, and '' for other dtypes. test_forward_uses_cached_quant_format requires prepare_attn to be called with a self.* attribute. These cannot be satisfied without actual implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies: (1) a named method with str return type - tested by test_detect_quant_format_method_exists; (2) result stored as instance attribute in __init__ - tested by test_cached_quant_format_attribute; (3) forward() uses cached value - tested by test_forward_uses_cached_quant_format; (4) method contains real dtype logic - tested by test_detection_method_executable."
+      "reason": "The instruction requires: (1) quant format computed once during construction, (2) reused in forward, (3) correct handling of all three dtype cases. Tests verify all three: detection logic outside forward, cached attribute passed in forward, and correct dtype-to-format mapping including edge cases."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, clear docstrings, and section comments grouping them into 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', and 'Pass-to-pass (repo_tests / static)' categories."
+      "reason": "Tests are well-named (test_syntax_check, test_cached_quant_format_attribute, test_detect_quant_format_method_exists, test_forward_uses_cached_quant_format, test_detection_method_executable) with docstrings and grouped into gates vs fail-to-pass sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not structured data output."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across the instruction, tests, and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file and class, which is appropriate for the task domain. It describes the behavioral problem (recomputation on every forward call) without specifying exact line numbers or the precise code to write."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact file (python/sglang/srt/models/deepseek_v2.py), the exact class (DeepseekV2DecoderLayer), and that the detection accesses 'self.self_attn.fused_qkv_a_proj_with_mqa.weight.dtype' implicitly through the dtype table. It also specifies to 'Only modify python/sglang/srt/models/deepseek_v2.py', removing localization effort entirely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
 }

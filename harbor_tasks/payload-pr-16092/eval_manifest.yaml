@@ -1,0 +1,87 @@
+owner: payloadcms
+repo: payload
+repo_short: payload
+pr_number: 16092
+base_commit: 727d74eff1476bcd8236f716282275e42f8786ad
+merge_commit: e0b3e81f316050203e8ef293a7004160dd2eaa30
+
+title: "fix(sdk): pass trash to request"
+description: |
+  The REST SDK documents a `trash` option on `find`, `findVersions`, and `findVersionByID`,
+  but that flag was never added to the request URL. The Local API and REST handlers already
+  support `trash` via query params. This PR extends `buildSearchParams` to serialize the
+  `trash` boolean into the query string.
+
+target_file: packages/sdk/src/utilities/buildSearchParams.ts
+distinctive_line: "if (typeof args.trash === 'boolean')"
+
+checks:
+  - id: test_build_params_trash_true
+    description: buildSearchParams includes trash=true when trash is true
+    type: fail_to_pass
+    origin: code_fix
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+
+  - id: test_build_params_trash_false
+    description: buildSearchParams includes trash=false when trash is false
+    type: fail_to_pass
+    origin: code_fix
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+
+  - id: test_build_params_trash_absent
+    description: buildSearchParams omits trash param when trash is absent
+    type: pass_to_pass
+    origin: code_fix
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+
+  - id: test_build_params_trash_with_other_args
+    description: buildSearchParams includes trash alongside other params
+    type: fail_to_pass
+    origin: code_fix
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+
+  - id: test_repo_lint_sdk
+    description: Repo's linter passes for SDK package
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_unit_tests
+    description: Repo's unit tests pass
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_typecheck
+    description: Repo's type checking passes
+    type: pass_to_pass
+    origin: repo_tests
+
+rubric:
+  - id: types_over_interfaces
+    description: |
+      Prefer types over interfaces (except when extending external types).
+      The PR adds `trash?: boolean` to the OperationArgs type.
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+    source_ref: "Prefer types over interfaces (except when extending external types)"
+    reference: |
+      Added to OperationArgs type: `trash?: boolean`
+      Consistent with existing fields `draft?: boolean` and `pagination?: boolean` which are also types
+
+  - id: single_object_parameters
+    description: |
+      Prefer single object parameters (improves backwards-compatibility).
+      The fix uses buildSearchParams({ trash: true }) with an object argument.
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+    source_ref: "Prefer single object parameters (improves backwards-compatibility)"
+    reference: |
+      buildSearchParams({ trash: true }) - single object parameter
+      Not buildSearchParams(true) - positional argument
+
+  - id: boolean_prefixes
+    description: |
+      Prefix booleans with is/has/can/should for clarity.
+      The trash parameter is named without prefix following existing pattern.
+    source: packages/sdk/src/utilities/buildSearchParams.ts
+    source_ref: "Prefix booleans with is/has/can/should (e.g., isValid, hasData) for clarity"
+    reference: |
+      Property named `trash` - bare boolean without is/has/should prefix
+      Consistent with existing bare booleans: `draft`, `pagination`

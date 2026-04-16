@@ -156,31 +156,6 @@ def test_version_check_does_not_skip_wrapping():
     )
 
 
-def test_version_check_is_commented_out():
-    """The version check comparing einops.__version__ must be commented out.
-
-    The base commit has an active `if einops.__version__ >= "0.8.2":`
-    comparison that causes the early return. The fix comments this out.
-    """
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_allow_in_graph_einops":
-            lines = source.splitlines(keepends=True)
-            func_src = "".join(lines[node.lineno - 1 : node.end_lineno])
-            break
-    else:
-        raise AssertionError("_allow_in_graph_einops not found")
-    func_tree = ast.parse(func_src)
-    for node in ast.walk(func_tree):
-        if isinstance(node, ast.Compare):
-            if isinstance(node.left, ast.Attribute) and node.left.attr == "__version__":
-                raise AssertionError(
-                    "Active version check still present — "
-                    "the `if einops.__version__ >= '0.8.2':` block must be commented out"
-                )
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------

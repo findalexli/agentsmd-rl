@@ -1,58 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_use_should_show_user_features_hook_removed checks for removal of 'useShouldShowUserFeatures' which is never named in the instructions. test_context_menu_always_rendered checks for regex pattern 'key={menuResetCount}' - menuResetCount is never mentioned. test_context_menu_div_always_present checks for exact CSS string '\"opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto\"' which"
+      "outcome": "pass",
+      "reason": "Instruction names the file path, UserContextMenu, useMe, useShouldShowUserFeatures, key={menuResetCount}, the exact opacity class string, and the verification commands matching the tests."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (context menu not visible in OSS mode) and desired behavior (always rendered, CSS-controlled visibility) but doesn't specify exact code changes like 'remove useShouldShowUserFeatures' or 'delete the conditional wrapper'. The agent must inspect the code to determine what to change."
+      "outcome": "fail",
+      "reason": "Instruction essentially dictates the fix: 'rendered unconditionally with key={menuResetCount}', the exact className string 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto', and 'file should not reference the hook useShouldShowUserFeatures' \u2014 this specifies the precise code change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_context_menu_always_rendered asserts regex 'key={menuResetCount}' which is a gold-specific implementation detail. An alternative fix could rename the variable or use a different reset mechanism. test_context_menu_div_always_present checks for exact CSS string 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto' - an alternative fix could use different CSS classes (e.g., 'hidden group-hover:block'). test_use_should_show_user_features_hook_removed requires s"
+      "outcome": "pass",
+      "reason": "Tests check for behavioral patterns (opacity classes, key={menuResetCount}, no shouldShowUserActions conditional) that any correct fix matching the described behavior would share."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_use_should_show_user_features_hook_removed, test_context_menu_always_rendered, test_context_menu_div_always_present, test_component_imports_clean) are purely text-based: they read the file and check string/regex patterns. While there are pass-to-pass tests that run builds/lints/unit tests, the core behavioral assertion tests are all 'assert X in open(path).read()' style checks."
+      "outcome": "pass",
+      "reason": "Tests run npm build, lint, typecheck, and vitest unit tests against UserContextMenu and Sidebar in addition to textual checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for removal of 'useShouldShowUserFeatures' and presence of unconditional UserContextMenu rendering. A stub/no-op implementation (leaving the file unchanged) would fail test_use_should_show_user_features_hook_removed since the hook exists in the original file. The tests require actual code modification."
+      "reason": "Unit tests for sidebar/user-context-menu plus build/typecheck require actual working code, not just text stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: context menu present for all users (test_context_menu_always_rendered, test_context_menu_div_always_present), required imports preserved (test_component_imports_clean), no dead code (test_frontend_lint_user_actions_clean), build passes (test_repo_build, test_repo_typecheck, test_repo_lint), and unit tests pass (test_repo_unit_tests_user_context_menu, test_repo_unit_tests_sidebar)."
+      "reason": "All instruction requirements (hook removed, unconditional render, opacity classes, required imports preserved, build/lint/tests pass) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, have docstrings explaining their purpose, and include comments separating fail-to-pass from pass-to-pass tests. The module docstring describes the overall purpose."
+      "reason": "Tests are named descriptively and grouped with section comments separating fail-to-pass from pass-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a UI component, not producing structured data output."
+      "reason": "No structured data output involved."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and component names are all correctly spelled and consistent between instruction.md and test files."
+      "reason": "Paths, commands, and names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (user-actions.tsx) which is reasonable given the task domain, but doesn't name specific lines, the useShouldShowUserFeatures hook, or the exact conditional pattern to remove. The fix requires code inspection."
+      "outcome": "fail",
+      "reason": "Instruction specifies the exact literal class string and key prop name to use and names the exact hook 'useShouldShowUserFeatures' to remove, telling the agent exactly what to write."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 2
 }

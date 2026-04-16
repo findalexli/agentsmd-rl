@@ -1,58 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths, specific patterns to add/remove (e.g., 'val data = when (data.moduleKind)', 'TestModuleKind.Source, TestModuleKind.ScriptSource', 'AnalysisApiTestConfiguratorFactoryData()', 'TestModuleKind.SourceLike', 'AnalysisApiFirTestConfiguratorFactory.createConfigurator'), and all files checked by the tests. The 'Specific Values Required' section maps directly to test assertions."
+      "reason": "All file paths, patterns like 'val data = when (data.moduleKind)', 'AnalysisApiTestConfiguratorFactoryData()', 'TestModuleKind.SourceLike', and 'AnalysisApiFirTestConfiguratorFactory.createConfigurator' are explicitly listed in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: remove 'val data = when (data.moduleKind)' pattern, replace constructors with 'AnalysisApiTestConfiguratorFactoryData()', use 'TestModuleKind.SourceLike' in the generated file, and even specifies copyright years should be 2026. The 'Specific Values Required' section is essentially a complete solution specification \u2014 there is no reasoning left for the agent to do."
+      "reason": "Instruction.md's 'Specific Values Required' section essentially dictates the exact literal strings that should/shouldn't appear, including 'AnalysisApiTestConfiguratorFactoryData()' empty constructor and removal of 'val data = when (data.moduleKind)' \u2014 this tells the agent precisely what text to write."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like 'AnalysisApiTestConfiguratorFactoryData()' (empty parens), 'AnalysisApiFirTestConfiguratorFactory.createConfigurator', and the absence of specific literal strings. An alternative correct fix that, e.g., used named default parameters like 'AnalysisApiTestConfiguratorFactoryData(moduleKind = TestModuleKind.SourceLike)' would fail test_generator_uses_default_constructor even though it would be functionally correct."
+      "outcome": "pass",
+      "reason": "Tests assert on the public API patterns (empty constructor usage, SourceLike, createConfigurator) that any correct fix would produce; alternatives would still satisfy these."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test uses only text pattern matching: 'assert \"pattern\" in content' or 'assert \"pattern\" not in content' via read_file(). No test imports, compiles, or executes any Kotlin/Java code. The pass-to-pass tests only check git tracking, file existence, and basic brace counting \u2014 no behavioral execution."
+      "reason": "All f2p tests are string `in` checks on file contents (e.g., 'AnalysisApiTestConfiguratorFactoryData()' in content); no code is compiled, imported, or executed to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific text patterns that must be absent (workaround code) and present (empty constructors, SourceLike). The original repo at the base commit would fail these tests because it contains the workaround and uses explicit constructor parameters. A stub/no-op would not satisfy them."
+      "reason": "A stub wouldn't pass; tests require both presence of new patterns and absence of old ones across multiple files."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction specifies 5 main behaviors (remove remapping, use empty constructors, use SourceLike in generated file, replace wildcard imports, update copyright years). Tests cover items 1-3 and partially 4-5. The wildcard import replacement and copyright year update are mentioned in instruction but test_workaround_removed_from_main_factory and others don't explicitly test those, but the core behaviors are covered."
+      "outcome": "fail",
+      "reason": "Instruction requires copyright years updated to 2026 and wildcard imports replaced, but no test verifies these requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section headers ('FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS'), each test has a descriptive name and docstring explaining what it verifies and the before/after expectations."
+      "reason": "Tests are grouped with section headers (FAIL-TO-PASS, PASS-TO-PASS) and have descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing source code files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is code refactoring, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, class names, method names, and patterns in the instruction match those used in the test file. No typos detected."
+      "reason": "File paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The 'Specific Values Required' section explicitly names exact patterns to add/remove per file, e.g., 'The pattern val data = when (data.moduleKind) must NOT appear' and 'The pattern AnalysisApiTestConfiguratorFactoryData() must appear in: GenerateSirTests.kt'. This is effectively providing the complete diff specification, not just describing the bug."
+      "reason": "Instruction names exact buggy patterns like 'val data = when (data.moduleKind)' and 'TestModuleKind.Source, TestModuleKind.ScriptSource' that should not appear \u2014 this is precise line-level localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "This is a code task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 5,

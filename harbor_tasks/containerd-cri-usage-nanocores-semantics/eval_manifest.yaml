@@ -1,0 +1,102 @@
+source_pr: "https://github.com/containerd/containerd/pull/13138"
+source_repo: "containerd/containerd"
+base_commit: "b7a467e4f3a46c4b13d5fac5a4206738d6ee2883"
+merge_commit: "6ebe1ce6abef411ccaf374844372133a4504fc7c"
+description: |
+  Fix CRI CPU stats UsageNanoCores to mirror cAdvisor semantics.
+  The getUsageNanoCores function now returns *uint64 instead of uint64,
+  allowing it to return nil when there's not enough data to compute an
+  instantaneous rate. This avoids publishing authoritative zero before a
+  valid rate exists.
+
+agent_config_rules: []
+
+checks:
+  # Pass-to-pass tests (repo quality gates)
+  - id: test_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go code compiles successfully"
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Unit tests in the repo pass (TestContainerMetricsCPUNanoCoreUsage)"
+
+  - id: test_cri_server_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CRI server test file compiles"
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go modules verify successfully"
+
+  - id: test_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet passes for CRI server package"
+
+  - id: test_gofmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go code is properly formatted"
+
+  - id: test_cri_server_core_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CRI server core unit tests pass"
+
+  - id: test_uint64Ptr_helper_exists
+    type: pass_to_pass
+    origin: agent_config
+    description: "uint64Ptr helper function exists for test expectations"
+
+  - id: test_stats_collector_returns_pointer
+    type: pass_to_pass
+    origin: agent_config
+    description: "Stats collector path returns pointer"
+
+  # Fail-to-pass tests (the actual fix)
+  - id: test_getUsageNanoCores_returns_pointer
+    type: fail_to_pass
+    origin: agent_config
+    description: "getUsageNanoCores function returns *uint64 instead of uint64"
+
+  - id: test_nil_return_on_first_sample
+    type: fail_to_pass
+    origin: agent_config
+    description: "First sample returns nil (no previous data to compute rate)"
+
+  - id: test_nil_return_on_zero_or_negative_interval
+    type: fail_to_pass
+    origin: agent_config
+    description: "Zero or negative time interval returns nil"
+
+  - id: test_nil_return_on_counter_backwards
+    type: fail_to_pass
+    origin: agent_config
+    description: "Counter going backwards returns nil"
+
+  - id: test_container_stats_nil_check
+    type: fail_to_pass
+    origin: agent_config
+    description: "Container stats checks nanoUsage != nil before assigning"
+
+  - id: test_sandbox_stats_nil_check
+    type: fail_to_pass
+    origin: agent_config
+    description: "Sandbox stats checks nanoUsage != nil before assigning"
+
+  - id: test_test_expects_nil_for_first_sample
+    type: fail_to_pass
+    origin: agent_config
+    description: "Tests expect nil (not 0) for first sample"
+
+  - id: test_error_returns_use_nil
+    type: fail_to_pass
+    origin: agent_config
+    description: "Error return paths use nil instead of 0"
+
+rubric: []

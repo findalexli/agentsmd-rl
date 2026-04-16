@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (discovery.rs, installation.rs), function names (python_interpreters \u2192 python_installations, python_interpreters_from_executables \u2192 python_installations_from_executables, python_interpreters_with_executable_name \u2192 python_installations_with_executable_name, from_tuple, find_python_installations, PythonInstallation), return types (impl Iterator<Item = Result<PythonInstallation, Error>>), and field access patterns (.source, .interpreter) that the tests "
+      "outcome": "fail",
+      "reason": "Tests assert specific renamed helper function names 'python_installations', 'python_installations_from_executables', 'python_installations_with_executable_name', but instruction.md does not name these specific function names \u2014 it only describes 'Three internal helper functions'."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exact renames (python_interpreters \u2192 python_installations), exact return types, exact field access patterns to use (.source/.interpreter instead of tuple destructuring), exact struct literal construction (PythonInstallation { source, interpreter }), and the exact method to remove (from_tuple). This is a step-by-step implementation guide, not a problem description."
+      "outcome": "pass",
+      "reason": "Instruction describes what to refactor (return types, struct construction, field access) without specifying exact line numbers or verbatim code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names (python_installations, python_installations_from_executables, python_installations_with_executable_name), exact return type signatures (Result<PythonInstallation), exact struct construction pattern (PythonInstallation\\{), minimum counts of .source/.interpreter field accesses (>=5), and absence of specific tuple destructuring patterns. An alternative correct refactoring using different names or patterns would fail."
+      "reason": "test_helper_signatures_return_python_installation asserts exact function names python_installations/python_installations_from_executables/python_installations_with_executable_name, which are gold-specific renames not mandated by the instruction (agent could reasonably keep old names python_interpreters* since instruction says nothing about renaming)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are text-matching on source files (regex searches for function names, return types, field accesses, struct construction patterns). While test_refactored_code_compiles and test_repo_cargo_check_uv_python run cargo check, and test_repo_cargo_fmt/clippy run actual tools, the core structural tests (test_helper_signatures_return_python_installation, test_closures_use_field_access_not_tuple_destructuring, test_python_installation_constructed_in_from_executables, test_find_python_installatio"
+      "outcome": "pass",
+      "reason": "Tests include cargo check, cargo fmt, cargo clippy subprocess executions in addition to static regex checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_refactored_code_compiles, test_from_tuple_removed) cannot be satisfied by stubs: from_tuple exists in the base code so must be actively removed, and cargo check requires the code to actually compile after changes."
+      "reason": "f2p tests require compilation (cargo check) and removal of from_tuple, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: renamed helpers with correct return types, from_tuple removal, struct construction in from_executables, field access instead of tuple destructuring, find_python_installations remaining public, and compilation."
+      "reason": "Tests cover from_tuple removal, return type changes, struct construction, field access, and public API preservation as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Fail-to-pass, Pass-to-pass, Repo CI/CD), descriptive function names, and docstrings explaining each check's purpose."
+      "reason": "Tests are grouped under clear comment headers (Gates, Fail-to-pass, Pass-to-pass, CI/CD) with descriptive names and tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves Rust code refactoring, not structured data output."
+      "reason": "Task is a code refactor, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos detected in paths or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact function renames (python_interpreters \u2192 python_installations), exact struct literal syntax (PythonInstallation { source, interpreter }), exact method to remove (from_tuple), and exact field access patterns. This goes far beyond naming the relevant files/modules and constitutes implementation-level guidance."
+      "outcome": "pass",
+      "reason": "Instruction names the domain (Python discovery pipeline, PythonInstallation, from_tuple) appropriately without pointing at exact line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not a config edit task."
+      "reason": "Code-only refactor task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

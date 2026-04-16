@@ -3,60 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific details not fully specified in instruction.md. For example, test_readme_checkpointing_section checks for literal strings like '### Checkpointing', '--ckpt.resume_step' or '--ckpt.resume-step', and 'step_' in README.md. test_trainer_ckpt_module checks for 'CheckpointManager' class with 'save' and 'load' methods. test_weights_module checks for 'save_weight_checkpoint' and 'pytorch_model.bin'. test_orchestrator_ckpt_module checks for 'CheckpointManager' class. test_training"
+      "reason": "The tests check many specifics not fully discoverable from instruction.md alone. For example: test_readme_checkpointing_section checks for the literal string 'step_' in README.md (instruction says 'step_{n}' but tests check exact content); test_trainer_ckpt_has_checkpointmanager and test_orchestrator_ckpt_has_checkpointmanager check for specific class attributes and method names via source inspection; test_weights_module checks for 'pytorch_model.bin' in source AND a callable 'save_weight_checkp"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be built (checkpoint management classes, configuration fields, documentation updates) but does not give exact code, line numbers, or specific implementation details like 'change line X to Y'. The agent still needs to reason about how to implement the CheckpointManager classes, how to structure configs, etc."
+      "reason": "The instruction describes what needs to be built (CheckpointManager classes, configuration fields, documentation updates) but does not specify exact code to write or exact line changes. The developer must still design the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details. For example, test_trainer_ckpt_module asserts the class must be named exactly 'CheckpointManager' with methods 'save' and 'load'. test_training_config_resume_step checks for exact field name 'resume_step' with ge=1 metadata. test_orchestrator_config_paths checks for exact field names 'rollout_path', 'weights_path', 'clean'. An alternative correct implementation using different class names (e.g., 'CkptManager'), method names (e.g., 'save_check"
+      "reason": "Tests assert on very specific implementation details that constrain to essentially one solution. For example: test_trainer_ckpt_has_checkpointmanager checks that 'class CheckpointManager' and 'def save' and 'def load' appear in the source text of ckpt.py; test_trainer_progress_dataclass checks for 'total_tokens' and 'total_samples' and 'total_problems' as literal strings in source; test_training_config_resume_step checks that TrainingConfig().ckpt.resume_step exists with a specific attribute pat"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many tests are purely text-based checks. test_readme_checkpointing_section, test_readme_developer_section, test_readme_configs_section all just check 'string in open(path).read()'. test_trainer_ckpt_module, test_orchestrator_ckpt_module, test_weights_module check for string presence in source files using hasattr/inspect rather than actually calling save/load methods. test_orchestrator_utils_weight_name and test_orchestrator_client_weight_name check for 'pytorch_model.bin' string in source code. "
+      "reason": "Many tests are pure text/source-code grep checks rather than behavioral tests. For example: test_trainer_ckpt_has_checkpointmanager reads source and checks 'class CheckpointManager' in text; test_weights_module checks 'pytorch_model.bin' in source text; test_readme_checkpointing_section checks string presence in README.md; test_orchestrator_utils_references checks 'pytorch_model.bin' in source text. While some tests do import and call code (test_training_config_resume_step, test_import_training_"
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Several f2p tests can be satisfied with stub implementations. test_trainer_ckpt_module just checks that a class named CheckpointManager exists with save/load methods - a class with 'def save(self): pass' and 'def load(self): pass' would pass. test_weights_module checks for a function 'save_weight_checkpoint' that contains 'pytorch_model.bin' string - 'def save_weight_checkpoint(): \"pytorch_model.bin\"' would pass. test_progress_state_tracking checks that a dataclass has certain fields - a datacla"
+      "outcome": "pass",
+      "reason": "The pass-to-pass tests (running existing unit test suites, ruff linting, syntax checks) cannot be satisfied by stub implementations since they run the actual project test suite. The f2p tests like test_training_config_resume_step actually instantiate TrainingConfig and check attribute access, which requires real implementation. A stub returning None would fail the attribute access checks."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires 'Progress State Tracking: track step (incremented on save), epoch, total_tokens, total_samples' including the behavior 'incremented on save', but no test verifies that step is actually incremented when save is called. The instruction also requires 'save_async field for controlling asynchronous checkpoint saves' and 'Interval configuration' but no test verifies these fields exist in config. The instruction mentions 'Checkpoint path configuration' but only the README text test"
+      "reason": "Instruction requires CheckpointManager to 'increment step on each save operation' and track Progress with specific fields, but no test actually calls save() and verifies step increment behavior. Tests only check source text for class/method presence. The save_async field requirement is mentioned but only checked via text presence in README, not via config instantiation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped by category (gates for pass_to_pass tests, feature tests for new functionality), and each test has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are well-named with descriptive docstrings, grouped by category (gates/pass_to_pass for existing tests, then feature-specific tests for new functionality), and each test maps to a specific requirement."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output. It involves code changes, configuration updates, and documentation."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it's about code and configuration changes."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction.md. File paths like 'src/zeroband/training/ckpt.py', 'src/zeroband/training/weights.py', field names like 'resume_step', 'save_async' are consistent."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact files to modify (src/zeroband/training/ckpt.py, src/zeroband/training/orchestrator/ckpt.py, src/zeroband/training/weights.py, src/zeroband/training/orchestrator/utils.py, src/zeroband/training/orchestrator/client.py), exact class names (CheckpointManager), exact method names (save, load), exact field names (resume_step, save_async, rollout_path, weights_path, clean), and exact string replacements ('## Contributing' to '## Developer', '### Config System' to "
+      "outcome": "pass",
+      "reason": "The instruction specifies file paths and class names which are part of the requirements (what to build), not hints about where bugs are. This is a feature implementation task, not a bug-fix localization task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch (solve.sh) only modifies README.md with localized changes: renaming two section headers and adding a new Checkpointing subsection. It doesn't contradict other files or require full-file rewrites."
+      "reason": "The gold patch (solve.sh) only modifies README.md with localized changes (renaming headings, adding a checkpointing section). It doesn't rewrite entire files or contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 4
 }

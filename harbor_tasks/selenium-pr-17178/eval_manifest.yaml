@@ -1,0 +1,123 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17178
+  title: "[dotnet] [bidi] Revert... Wait until events are dispatched"
+  base_commit: 41e422ae7922295d71929874f09f5e9957b91e54
+  merge_commit: 74220fa0950d543ac85c8d330b0f8af4527634fc
+
+checks:
+  # Fail-to-pass checks - must fail on base commit, pass after fix
+  - id: test_process_events_awaiter_method_exists
+    type: fail_to_pass
+    origin: pr_change
+    description: ProcessEventsAwaiterAsync method exists (renamed from ProcessEventsAsync)
+
+  - id: test_pending_event_struct_exists
+    type: fail_to_pass
+    origin: pr_change
+    description: PendingEvent readonly record struct exists (replaces EventItem)
+
+  - id: test_drain_async_removed
+    type: fail_to_pass
+    origin: pr_change
+    description: DrainAsync method is removed (drain mechanism reverted)
+
+  - id: test_handlers_property_exposed
+    type: fail_to_pass
+    origin: pr_change
+    description: Handlers property exposed publicly on EventRegistration
+
+  - id: test_event_emitter_task_field
+    type: fail_to_pass
+    origin: pr_change
+    description: _eventEmitterTask field exists (renamed from _processEventsTask)
+
+  - id: test_task_factory_field_exists
+    type: fail_to_pass
+    origin: pr_change
+    description: _myTaskFactory static TaskFactory field exists
+
+  - id: test_no_sequence_tracking
+    type: fail_to_pass
+    origin: pr_change
+    description: Sequence tracking fields (_enqueueSeq, _processedSeq) are removed
+
+  - id: test_no_drain_waiters
+    type: fail_to_pass
+    origin: pr_change
+    description: Drain waiter infrastructure (_drainWaiters) is removed
+
+  - id: test_pending_event_includes_method_field
+    type: fail_to_pass
+    origin: pr_change
+    description: PendingEvent struct includes Method field
+
+  - id: test_handlers_to_array_iteration
+    type: fail_to_pass
+    origin: pr_change
+    description: Handlers are iterated using ToArray() for thread-safety
+
+  # Pass-to-pass checks - must pass on both base and fixed
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: static
+    description: EventDispatcher.cs file exists
+
+  - id: test_csharp_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: EventDispatcher.cs has valid C# syntax
+
+  - id: test_class_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: EventDispatcher class has proper structure
+
+  - id: test_event_registration_class_exists
+    type: pass_to_pass
+    origin: static
+    description: EventRegistration nested class exists
+
+  - id: test_channel_usage
+    type: pass_to_pass
+    origin: static
+    description: Channel is used for pending events
+
+  - id: test_concurrent_dictionary_for_events
+    type: pass_to_pass
+    origin: static
+    description: ConcurrentDictionary is used for thread-safe event storage
+
+  # CI-based pass-to-pass checks - run actual repo CI commands
+  - id: test_repo_dotnet_format_eventdispatcher
+    type: pass_to_pass
+    origin: repo_tests
+    description: dotnet format check passes on EventDispatcher.cs
+
+  - id: test_repo_dotnet_format_bidi_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: dotnet format check passes on BiDi module
+
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: dotnet format whitespace check passes on EventDispatcher.cs
+
+  - id: test_repo_dotnet_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: dotnet format style check passes on EventDispatcher.cs
+
+rubric:
+  # NOTE: This is a code-only revert task (reverts drain mechanism in EventDispatcher.cs).
+  # No documentation/config file changes are required - gold solution only modifies code.
+  - id: no_doc_changes_required
+    rule: "This is an internal code refactoring task - no documentation or config file updates are required"
+    reference: "The gold solution only modifies dotnet/src/webdriver/BiDi/EventDispatcher.cs"
+  - id: internal_api_change
+    rule: "Changes are to internal sealed class only - no public API documentation updates needed"
+    reference: "EventDispatcher is 'internal sealed class' so no public-facing docs need updating"
+  - id: revert_simplification
+    rule: "This is a revert/simplification that removes code - no new features requiring documentation"
+    reference: "PR removes DrainAsync, sequence tracking, and simplifies event handling - pure code cleanup"

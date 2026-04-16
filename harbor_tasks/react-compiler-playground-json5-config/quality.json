@@ -2,60 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "instruction.md explicitly names all key specifics tested: `parseConfigOverrides` function name, `config.json5` filename, `export const defaultConfig = \\`` template literal syntax, `compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs` test file path, `json5` dependency in `compiler/apps/playground/package.json`, the files `compilation.ts`, `defaultStore.ts`, `ConfigEditor.tsx`, and the prohibition of `import type`/`satisfies PluginOptions`. All assert'd paths, function names, literal"
+      "outcome": "fail",
+      "reason": "Tests assert on specific undiscoverable details: test_parse_config_unit_tests_pass expects a file at '__tests__/parseConfigOverrides.test.mjs' (exact filename never mentioned in instruction.md); test_config_editor_uses_json_language asserts 'config.json5' literal string in ConfigEditor.tsx; test_default_config_is_valid_json5 checks for absence of 'satisfies PluginOptions' and 'import type'; test_parse_config_overrides_rejects_xss_patterns requires 'export function parseConfigOverrides' as an exp"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md essentially prescribes the exact fix: use JSON5 parser instead of `new Function()`, export as `parseConfigOverrides`, use `config.json5`, use `export const defaultConfig = \\`` template literal, remove TypeScript syntax, add json5 dependency, create specific test file. This goes well beyond describing what's broken \u2014 it specifies the exact implementation details of the solution (function name, file format, dependency, template syntax)."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (XSS via eval/new Function, TypeScript syntax in config) and desired behavior (JSON5-like data-only parsing) but does not specify exact code changes, line numbers, or the specific replacement (JSON5.parse)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: `test_parse_config_overrides_rejects_xss_patterns` checks for the exact string 'export function parseConfigOverrides' in source; `test_default_config_is_valid_json5` checks for exact string 'export const defaultConfig = \\`'; `test_config_editor_uses_json_language` checks for exact string 'config.json5'. An alternative correct fix using a different safe parser (e.g., a custom sandboxed evaluator), different function name, or different config f"
+      "reason": "Tests are tightly coupled to the gold solution: test_parse_config_overrides_rejects_xss_patterns asserts the exact string 'export function parseConfigOverrides' in compilation.ts; test_config_editor_uses_json_language asserts the literal 'config.json5' in ConfigEditor.tsx; test_parse_config_unit_tests_pass requires a specific test file at '__tests__/parseConfigOverrides.test.mjs' that imports json5 and implements parseConfigOverrides in a specific way. An alternative correct fix (e.g., using a d"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Several critical tests are purely text-matching: `test_parse_config_overrides_rejects_xss_patterns` checks `'export function parseConfigOverrides' in src` (string search, not import/execution); `test_default_config_is_valid_json5` searches for `'export const defaultConfig = \\`'` in source text; `test_config_editor_uses_json_language` checks `'config.json5' in src`. The XSS rejection tests use JSON5 from `/opt/test-deps` directly rather than importing/calling the agent's actual `parseConfigOverri"
+      "reason": "Several key tests are text-matching only: test_parse_config_overrides_rejects_xss_patterns checks 'export function parseConfigOverrides' via string search in source; test_config_editor_uses_json_language checks for 'json' and 'config.json5' as substrings; test_default_config_is_valid_json5 checks for absence of 'satisfies PluginOptions' string. While some tests do execute Node.js subprocesses against JSON5 directly, they test JSON5 library behavior rather than the agent's actual code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_parse_config_overrides_rejects_xss_patterns only checks (1) that the string 'export function parseConfigOverrides' exists in the file, and (2) that JSON5 from /opt/test-deps rejects XSS patterns \u2014 it never actually calls the agent's parseConfigOverrides. An agent could add `export function parseConfigOverrides() { return {}; }` to compilation.ts and pass this test. Similarly, test_parse_config_overrides_parses_valid_json5 tests JSON5 from test-deps, not the agent's code."
+      "reason": "test_parse_config_overrides_rejects_xss_patterns and test_parse_config_overrides_parses_valid_json5 test JSON5.parse behavior directly (from /opt/test-deps), not the agent's implementation. They pass as long as json5 is installed in test-deps, regardless of whether the agent correctly wired JSON5 into compilation.ts. The XSS rejection test proves JSON5 rejects patterns but doesn't prove the agent's code uses JSON5."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors explicitly required by instruction.md are tested: parseConfigOverrides function export, config.json5 reference, defaultConfig template format without TS syntax, test file existence, json5 dependency."
+      "reason": "The instruction requires: rejecting executable code (tested), accepting comments/trailing commas/unquoted keys (tested), unit test suite (tested), JSON5 dependency (tested), removal of TypeScript syntax from default config (tested)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass, pass_to_pass, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive function names, grouped by category (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), and include docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output like JSON/CSV/API/DB; it's a code security fix task."
+      "reason": "The task involves config parsing and security fixes, not producing structured data output with a specific schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in instruction.md match those referenced in the tests without typos."
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files and the exact buggy function (`parseOptions` function in `compilation.ts`), specifies the exact replacement function name (`parseConfigOverrides`), the exact config file name (`config.json5`), the exact template literal format, and the exact test file path. This goes beyond pointing to the problem area \u2014 it prescribes the solution architecture."
+      "outcome": "pass",
+      "reason": "The instruction lists files to examine (compilation.ts, defaultStore.ts, ConfigEditor.tsx, package.json) which is reasonable for a playground security task. It doesn't specify exact lines or exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config-edit task."
+      "reason": "This is a code-change task, not an agentmd-edits/config-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 4
 }

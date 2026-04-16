@@ -1,8 +1,8 @@
-# Parenthesize expression in RUF050 fix
+# Fix RUF050 parenthesization of multiline expressions
 
 ## Bug Description
 
-The RUF050 rule (`unnecessary-if`) rewrites empty `if` statements like `if cond: pass` into just the condition expression `cond` when the condition has side effects. However, the auto-fix does not correctly handle multiline expressions that need parentheses to remain valid as standalone expression statements.
+The RUF050 rule (`unnecessary-if`) rewrites empty `if` statements like `if cond: pass` into just the condition expression when the condition has side effects. However, the auto-fix does not correctly handle multiline expressions that need parentheses to remain valid as standalone expression statements.
 
 For example:
 
@@ -14,26 +14,17 @@ if (
     pass
 ```
 
-The current fixer extracts just the inner expression `id(0)\n    + 0` without wrapping it in parentheses, producing invalid Python:
-
-```python
-id(0)
-    + 0
-```
-
-This is a syntax error because without parentheses, the `+ 0` on the next line is treated as a separate (improperly indented) statement.
+The current fixer extracts just the inner expression without ensuring it has parentheses, potentially producing invalid Python where continuation lines become incorrectly indented statements.
 
 ## Required Changes
 
-### 1. Rust Implementation (`crates/ruff_linter/src/rules/ruff/rules/unnecessary_if.rs`)
+### 1. Rust Implementation (RUF050 rule)
 
-The fix needs to detect when the extracted expression spans multiple lines at the top level (outside of any brackets/parens) and either:
-- Preserve the existing parentheses from the `if` condition, or
-- Add new parentheses around the expression
+Modify the RUF050 rule implementation to detect when an `if` condition is a multiline expression and ensure it is properly parenthesized when extracted as a standalone expression statement.
 
-The existing handling for walrus operators (named expressions) already adds parentheses using a `format!` macro. The walrus operator handling must be preserved while generalizing to any multiline expression.
+The fix must preserve existing handling for walrus operators (named expressions like `(x := foo())`), which already requires parentheses. The solution must not break existing walrus operator support.
 
-The following literal strings must be present in the modified source code:
+The following literal strings must be present in the modified Rust source code:
 - `parenthesized_range` - for tracking existing parentheses in the condition
 - `has_top_level_line_break` - for detecting multiline expressions at the top level
 - `condition_as_expression` - for the expression output function
@@ -41,10 +32,15 @@ The following literal strings must be present in the modified source code:
 - `needs_parens` or `nesting` or `spans_multiple` - for determining when parentheses are required
 - `is_named_expr` - for preserving walrus operator handling
 - `format!` with `"({}` - the format string pattern used for parenthesizing expressions
+- `unnecessary_if` - the rule module name
+- `StmtIf` - the AST node type for if statements
+- `has_side_effects` - for checking if condition has side effects
+- `Edit` - for creating code edits
+- `Fix` - for creating fixes
 
-### 2. Test Cases (`crates/ruff_linter/resources/test/fixtures/ruff/RUF050.py`)
+### 2. Test Cases (RUF050.py fixture)
 
-Add test cases covering multiline expressions that need parentheses:
+Add test cases to the RUF050.py fixture file covering multiline expressions that need parentheses:
 
 **Multiline arithmetic expression (BinOp):**
 - An `if` statement where the condition is a binary operation (like `+`) split across multiple lines

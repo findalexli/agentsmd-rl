@@ -1,0 +1,55 @@
+version: "1.0"
+
+source:
+  type: github_pr
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17187
+  base_commit: 7cebc1065fd21fb3cd2613ab94600eb69e019e6f
+  merge_commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+  title: "[java] Fix duplicate field name handling in InstanceCoercer#getFieldWriters"
+
+checks:
+  - id: test_fix_applied_in_source
+    type: fail_to_pass
+    origin: pr_behavior
+    description: InstanceCoercer includes merge function throwing JsonException for duplicate field names, and code compiles
+
+  - id: test_merge_function_throws_json_exception
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Merge function throws JsonException (not IllegalStateException) with correct message
+
+  - id: test_getfieldwriters_has_merge_function
+    type: fail_to_pass
+    origin: pr_behavior
+    description: getFieldWriters uses Collectors.toMap with merge function for duplicate key handling
+
+  - id: test_json_library_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: The JSON library builds successfully with Bazel
+
+  - id: test_json_test_suite_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's JSON test suite passes without regressions
+
+  - id: test_core_small_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Core selenium unit tests pass (use JSON serialization)
+
+  - id: test_remote_small_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Remote module tests pass (JSON serialization/deserialization)
+
+rubric:
+  - id: api_abi_compatibility
+    rule: "The fix maintains API/ABI compatibility - adding error handling for duplicate fields doesn't change the existing public API"
+    weight: 1.0
+
+  - id: small_reversible_diffs
+    rule: "The fix is a small, focused change (adding a merge function to Collectors.toMap) - no repo-wide refactors or formatting changes"
+    weight: 1.0

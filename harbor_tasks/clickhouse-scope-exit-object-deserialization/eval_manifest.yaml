@@ -1,0 +1,52 @@
+source:
+  repo: ClickHouse/ClickHouse
+  pr_number: 102068
+  base_commit: 7edb784eccbce08cebbec3147591f56d11dd5f9f
+  merge_commit: 857a9cba17dd4ac4ffe4134b79fef78e952e00a4
+  title: "Fix use-after-scope in parallel Object type deserialization"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_scope_exit_pattern_present
+    type: fail_to_pass
+    origin: behavioral
+    description: "SCOPE_EXIT with task->tryExecute() and task->wait() pattern must be present"
+
+  - id: test_scope_exit_placed_after_task_size
+    type: fail_to_pass
+    origin: behavioral
+    description: "SCOPE_EXIT must be placed after task_size calculation and before the for loop"
+
+  - id: test_task_vector_exists_before_scope_exit
+    type: fail_to_pass
+    origin: behavioral
+    description: "tasks vector must be declared before SCOPE_EXIT references it"
+
+  - id: test_no_dangling_lambda_captures
+    type: fail_to_pass
+    origin: behavioral
+    description: "The dangling lambda capture bug pattern must be mitigated by SCOPE_EXIT"
+
+  - id: test_original_pr_descriptive_comment
+    type: fail_to_pass
+    origin: behavioral
+    description: "Fix must include the descriptive comment explaining the use-after-scope issue"
+
+  # Pass-to-pass tests
+  - id: test_file_structure_basic
+    type: pass_to_pass
+    origin: static
+    description: "Modified code should have balanced braces and valid structure"
+
+  - id: test_repo_file_valid_utf8
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file is valid UTF-8 and not corrupted"
+
+  - id: test_repo_code_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code follows basic ClickHouse patterns (namespace, includes)"
+
+rubric: []
+# No agent config files (CLAUDE.md, AGENTS.md, etc.) found in this repo at base commit

@@ -104,6 +104,20 @@ distractors:
   source:
     path: AGENTS.md
     lines: 38-40
+- rule: compile/fullgraph/ tests do not target particular features
+  source:
+    path: tests/compile/README.md
+    lines: '4'
+  source_text: '- `compile/fullgraph/` : full model tests, including all tests previously
+    in compile/piecewise. These tests do not target particular features. New test
+    files added here will be included in CI automatically'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is tasked with fixing the GPTQ compile correctness test
+    on ROCm, which tests a specific quantization feature. Reading that 'fullgraph'
+    tests 'do not target particular features', the agent might incorrectly conclude
+    that this feature-specific logic shouldn't be added to `test_basic_correctness.py`
+    and might incorrectly attempt to move it to `compile/test_*.py`.
+  severity: medium
 hierarchy_analysis: The hierarchy is flat. CLAUDE.md simply redirects to AGENTS.md,
   which contains generic repository contribution guidelines rather than specific coding
   standards.

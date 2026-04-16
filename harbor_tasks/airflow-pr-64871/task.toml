@@ -1,0 +1,30 @@
+# Task configuration for apache/airflow#64871
+
+[task]
+name = "airflow-celery-hpa-config"
+title = "Add workers.celery.hpa configuration to Helm chart"
+difficulty = "medium"
+tags = ["helm", "kubernetes", "configuration", "deprecation", "backward-compatibility"]
+
+[task.time_estimates]
+human_minutes = 45
+agent_minutes = 15
+
+[task.source]
+owner = "apache"
+repo = "airflow"
+pr_number = 64871
+base_commit = "fc861cbf12857fbfed34d6e934706639d9d761f1"
+merge_commit = "8dc4305675a6817f55d5ebcc88367859da21beca"
+
+[task.files]
+primary = [
+    "chart/values.yaml",
+    "chart/values.schema.json",
+    "chart/templates/NOTES.txt",
+    "chart/templates/workers/worker-deployment.yaml"
+]
+tests = [
+    "helm-tests/tests/helm_tests/other/test_hpa.py",
+    "helm-tests/tests/helm_tests/airflow_core/test_worker.py"
+]

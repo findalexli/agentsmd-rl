@@ -2,24 +2,17 @@
 
 ## Problem
 
-The `NoProjectsOnPaidOrgInfo` component in `apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx` should display a warning `Admonition` banner when an organization is on a paid plan but has zero projects. Currently the component returns `null` and the banner never appears.
+The `NoProjectsOnPaidOrgInfo` component in `apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx` displays a warning `Admonition` banner when an organization is on a paid plan but has zero projects. Currently, the component always returns `null` and the banner never appears.
 
-## Expected Behavior
+The component currently defines a `NoProjectsOnPaidOrgInfoProps` interface and accepts `organization` as a prop. However, no caller provides this prop, so `organization` is always `undefined`.
 
-The component must:
+## Required Change
 
-1. Render an `Admonition` banner from `ui-patterns` (imported as `import { Admonition } from 'ui-patterns'`)
-2. Import and use `Link` from `next/link`
-3. Check whether the current organization is on a paid plan (i.e., its `plan.id` is not one of: `free`, `platform`, `enterprise`)
-4. Display the organization's `plan.name` in the banner
-5. Provide a link to billing settings
+The component should use the `useSelectedOrganizationQuery` hook (importable from `@/hooks/misc/useSelectedOrganization`) to obtain the organization data internally, rather than receiving it via props. After the change, the component should take no parameters and have no props interface.
 
-The eligibility check uses `isEligible = organization != null && !EXCLUDED_PLANS.includes(organization.plan.id ?? '')`, where `EXCLUDED_PLANS = ['free', 'platform', 'enterprise']`.
+## Expected Result
 
-The project count is obtained via `useOrgProjectsInfiniteQuery`.
-
-## Constraints
-
-- The component's parameter list must not include `organization` as a destructured prop
-- No `NoProjectsOnPaidOrgInfoProps` interface should be present
-- The `EXCLUDED_PLANS` array and `isEligible` logic must remain unchanged
+- The `Admonition` banner renders correctly when the organization is eligible, displaying the organization's `plan.name` and a `Link` to billing settings
+- The `NoProjectsOnPaidOrgInfoProps` interface is removed
+- The component's existing plan-eligibility checks and project-count query logic remain intact
+- All existing tests, linting (`pnpm run lint`), and formatting (`prettier`) continue to pass

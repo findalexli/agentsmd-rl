@@ -1,0 +1,56 @@
+source_pr:
+  repo: "gohugoio/hugo"
+  number: 14657
+  title: "commands: Preserve non-content files in convert output"
+  merge_commit: "c4fb61d9dfb7a2a638ef69ef8ba4e4dc3ecd93ef"
+  base_commit: "d88a29e002ebc31bf9b4e1e024f141cc0b39a657"
+
+checks:
+  # Pass-to-pass tests (repo health)
+  - id: test_repo_convert_command
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's convert command test passes"
+
+  - id: test_hugo_build_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo binary compiles successfully"
+
+  - id: test_go_vet_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet passes on commands package"
+
+  - id: test_gofmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go code passes gofmt formatting check"
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go modules are valid and dependencies verify"
+
+  - id: test_repo_go_test_build_only
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo tests compile without running"
+
+  # Fail-to-pass tests (the actual fix)
+  - id: test_copy_content_dirs_function_exists
+    type: fail_to_pass
+    origin: gold_patch
+    description: "The copyContentDirsForOutput function exists with proper imports"
+
+  - id: test_bundle_files_preserved_during_convert
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Bundle non-content files are preserved during hugo convert"
+
+  - id: test_convert_output_inside_content_tree
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Convert handles output dir inside content tree without recursive copy"
+
+rubric: []

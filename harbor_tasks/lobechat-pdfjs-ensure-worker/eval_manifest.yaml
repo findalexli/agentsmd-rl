@@ -74,6 +74,37 @@ rubric:
     clear **Trigger conditions** (bullet list) and **Workflow:** (numbered steps 1-2-3),
     replacing the old paragraph-style description.
   category: documentation
+- rule: Third-party integrations belong in src/libs
+  source:
+    path: .cursor/rules/project-structure.mdc
+    lines: '141'
+  source_text: '- Third-party Integrations: `src/libs` — analytics, oidc etc.'
+  evidence: The gold diff extracts the `react-pdf` dependency usage and encapsulates
+    it in a newly created wrapper file at `src/libs/pdfjs/index.tsx`, correctly isolating
+    the third-party integration from UI feature components.
+  category: architecture
+  verification: llm_judge
+- rule: Keep 'type' for utility types, 'interface' for object shapes
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '14'
+  source_text: '- prefer `interface` over `type` for object shapes (e.g., React component
+    props). Keep `type` for unions, intersections, and utility types.'
+  evidence: The diff defines `export type DocumentProps = ComponentProps<typeof PdfDocument>;`.
+    It correctly uses `type` here rather than `interface` because `ComponentProps`
+    is a TypeScript utility type.
+  category: typing
+  verification: llm_judge
+- rule: Use semantically meaningful variables
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '30'
+  source_text: '- Use semantically meaningful variable, function, and class names.'
+  evidence: 'The diff renames the unused mapping parameter `el` to `_` in `Array.from({
+    length: numPages }, (_, index) => {`. The underscore is the semantically meaningful
+    standard convention for an ignored variable.'
+  category: naming
+  verification: llm_judge
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -129,6 +160,32 @@ distractors:
   source:
     path: AGENTS.md
     lines: 54-55
+- rule: Component Selection Priority
+  source:
+    path: .cursor/rules/react.mdc
+    lines: '11'
+  source_text: '- Component selection priority: src/components > installed component
+    packages > lobe-ui > antd'
+  collision_type: architecture_boundary
+  why_distracting: Since `react-pdf` is an installed component package, an agent might
+    incorrectly prioritize importing its components directly in `src/features/...`
+    (as was previously done) rather than abstracting them behind a new `src/libs`
+    integration module.
+  severity: medium
+- rule: Defer Non-Critical Third-Party Libraries
+  source:
+    path: .agents/vercel-react-best-practices/AGENTS.md
+    lines: 441-443
+  source_text: '### 2.3 Defer Non-Critical Third-Party Libraries
+
+
+    **Impact: MEDIUM (loads after hydration)**'
+  collision_type: would_cause_bug
+  why_distracting: An agent might attempt to use Next.js `next/dynamic` to lazy-load
+    the heavy `react-pdf` library to optimize bundle size. However, PDF.js relies
+    on a specific global worker assignment. Dynamically importing it without the static
+    worker initialization wrapper would break PDF rendering entirely.
+  severity: high
 hierarchy_analysis: The workspace has two root-level configuration files (`AGENTS.md`
   and `CLAUDE.md`). The task requires the agent to modify `CLAUDE.md` itself, which
   is a meta-referential action. The agent must distinguish between the rules it should

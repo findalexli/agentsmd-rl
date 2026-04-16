@@ -53,6 +53,26 @@ rubric:
     `npx nx` as per the guardrails.
   category: tooling
   verification: llm_judge
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '21'
+  source_text: '- Framework-agnostic core logic separated from React/Solid bindings'
+  evidence: The diff correctly imports the `deepEqual` utility from the framework-agnostic
+    `@tanstack/router-core` package into the React bindings (`@tanstack/react-router`)
+    instead of implementing a React-specific version.
+  category: architecture
+  verification: llm_judge
+- rule: Core logic separated from framework bindings
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '159'
+  source_text: '- **Framework Agnostic**: Core logic separated from framework bindings'
+  evidence: The diff correctly imports the `deepEqual` utility from the framework-agnostic
+    `@tanstack/router-core` package into the React bindings (`@tanstack/react-router`)
+    instead of implementing a React-specific version.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Use workspace protocol for internal dependencies (`workspace:*`)
   collision_type: scope_ambiguity
@@ -64,6 +84,51 @@ distractors:
   source:
     path: AGENTS.md
     lines: 17-17
+- rule: Use workspace protocol for internal dependencies
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '23'
+  source_text: '- Use workspace protocol for internal dependencies (`workspace:*`)'
+  collision_type: meta_confusion
+  why_distracting: This rule applies only to package.json dependency declarations.
+    An agent might mistakenly try to use the `workspace:*` protocol directly in the
+    TypeScript import statements (e.g., `import { deepEqual } from 'workspace:@tanstack/router-core'`),
+    which is invalid syntax.
+  severity: high
+- rule: Use file-based routing in src/routes/ directories
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '117'
+  source_text: '- Use file-based routing in `src/routes/` directories'
+  collision_type: architecture_boundary
+  why_distracting: This instruction is for users building applications with TanStack
+    Router. An agent modifying the internal framework code (`Scripts.tsx` and `headContentUtils.tsx`)
+    might mistakenly try to move these internal framework components into a `src/routes/`
+    folder.
+  severity: high
+- rule: Update corresponding documentation when adding features
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '73'
+  source_text: '- Update corresponding documentation in `docs/` directory when adding
+    features'
+  collision_type: scope_ambiguity
+  why_distracting: The diff implements an internal performance optimization (adding
+    `deepEqual` to `useStore` hooks) to prevent unnecessary re-renders. It does not
+    introduce a public-facing feature, so updating user documentation would be a waste
+    of effort.
+  severity: medium
+- rule: Type-safe routing with search params and path params
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '22'
+  source_text: '- Type-safe routing with search params and path params'
+  collision_type: scope_ambiguity
+  why_distracting: This describes a core capability of the library. An agent might
+    mistakenly try to add or enforce search/path parameter typings in the internal
+    structural components (`Scripts.tsx` and `headContentUtils.tsx`), which are completely
+    unrelated to param typing.
+  severity: medium
 hierarchy_analysis: The configuration is a flat, single-file `AGENTS.md` at the root
   level. There is no complex hierarchy or overriding required.
 version: '2.0'

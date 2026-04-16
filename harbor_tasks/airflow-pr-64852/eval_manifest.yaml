@@ -1,0 +1,90 @@
+task:
+  name: airflow-optional-theme-tokens
+  title: Make UI theme tokens field optional in Airflow
+  description: |
+    Make the tokens field optional in UI theme configuration to support
+    CSS-only customization, icon-only themes, or empty configuration to
+    restore OSS defaults.
+
+source:
+  repo: apache/airflow
+  pr_number: 64852
+  base_commit: 0d465d48d2b644095362f22c3ecc143689cfb60e
+  merge_commit: d736ea7450a608af0e0400eb87ed71bc0be4cf92
+
+checks:
+  - id: test_theme_accepts_none_tokens
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Theme model accepts None for tokens field
+
+  - id: test_theme_works_with_only_globalcss
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Theme model works with only globalCss, no tokens
+
+  - id: test_theme_works_with_only_icon
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Theme model works with only icon field, no tokens
+
+  - id: test_theme_empty_config
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Theme model accepts empty configuration
+
+  - id: test_theme_with_tokens_still_works
+    type: pass_to_pass
+    origin: regression
+    description: Theme model still works when tokens are provided
+
+  - id: test_themecolors_validation_still_works
+    type: pass_to_pass
+    origin: regression
+    description: ThemeColors still requires at least one color token
+
+  - id: test_theme_serialization_excludes_none
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Theme serialization excludes None values
+
+  - id: test_syntax_check_types_file
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Coding Standards section"
+      commit: 0d465d48d2b644095362f22c3ecc143689cfb60e
+    description: Syntax check passes on the modified types.py file
+
+  - id: test_syntax_check_config_file
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Coding Standards section"
+      commit: 0d465d48d2b644095362f22c3ecc143689cfb60e
+    description: Syntax check passes on the modified config.py file
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff lint passes on modified files
+
+  - id: test_no_assert_in_production_code
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Coding Standards section"
+      commit: 0d465d48d2b644095362f22c3ecc143689cfb60e
+    description: No assert statements in production code
+
+  - id: test_multiple_theme_configurations
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Various theme configurations work correctly
+
+# rubric: Not applicable - this task is a code fix that doesn't involve config/documentation file edits.
+# The judge evaluates config file diffs (CLAUDE.md, AGENTS.md), but solve.sh only modifies Python code.
+# Code quality rules (ruff formatting, pytest patterns) are verified through the pass_to_pass tests instead.

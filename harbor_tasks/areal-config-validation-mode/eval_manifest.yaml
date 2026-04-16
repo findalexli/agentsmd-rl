@@ -75,7 +75,8 @@ checks:
 - id: test_repo_precommit_hooks
   type: pass_to_pass
   origin: repo_tests
-  description: Repo pre-commit hooks pass (ruff, yaml check, trailing whitespace, etc.)
+  description: Repo pre-commit hooks pass (ruff, yaml check, trailing whitespace,
+    etc.)
 - id: test_repo_yaml_valid
   type: pass_to_pass
   origin: repo_tests
@@ -112,6 +113,28 @@ rubric:
     with `metadata={help: ..., choices: ...}`, adhering to the established pattern
     for CLI argument dataclasses in the module'
   category: style
+- rule: Use `__post_init__` for validation and raise `ValueError` with clear message
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-38
+  source_text: '- Use `__post_init__` for validation
+
+    - Raise `ValueError` with clear message:'
+  evidence: The diff adds `__post_init__` methods to both `WandBConfig` and `SwanlabConfig`
+    to validate the `mode` field, raising a `ValueError` with a descriptive message
+    if an invalid mode is provided.
+  category: Validation
+  verification: llm_judge
+- rule: Fields exposed to CLI must have clear `help` in metadata
+  source:
+    path: .claude/rules/api-config.md
+    lines: 54-54
+  source_text: '- Fields exposed to CLI must have clear `help` in metadata'
+  evidence: The diff updates the `mode` fields in `WandBConfig` and `SwanlabConfig`
+    to use `dataclasses.field` with a `metadata` dictionary that includes a clear
+    `help` string describing the tracking mode.
+  category: CLI Integration
+  verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in areal/api/cli_args.py.'
   collision_type: meta_confusion
@@ -134,6 +157,31 @@ distractors:
   source:
     path: AGENTS.md
     lines: 60-62
+- rule: Use `monkeypatch` for environment variables
+  source:
+    path: .claude/rules/testing.md
+    lines: 54-54
+  source_text: '- Use `monkeypatch` for environment variables'
+  collision_type: scope_ambiguity
+  why_distracting: The code uses `os.getenv("SWANLAB_API_KEY")` to read an environment
+    variable. An AI might see the rule about using `monkeypatch` for environment variables
+    and try to apply it here, but that rule is strictly for test files (as defined
+    by the paths in testing.md), not for the actual application code. Using `monkeypatch`
+    in `cli_args.py` would cause a bug.
+  severity: high
+- rule: Read the model's `config.json` to identify model_type
+  source:
+    path: .claude/skills/add-archon-model/SKILL.md
+    lines: 35-37
+  source_text: "1. Read the model's `config.json` (via `AutoConfig.from_pretrained`)\
+    \ to identify:\n\n   - `model_type` string (this is the key used for registry\
+    \ lookup)"
+  collision_type: meta_confusion
+  why_distracting: The diff modifies `WandBConfig` and `SwanlabConfig`, which both
+    contain a `config` attribute. An AI might confuse these CLI/tracking configurations
+    with the HuggingFace model configurations mentioned in the skill, incorrectly
+    attempting to integrate `AutoConfig.from_pretrained` or `config.json` logic here.
+  severity: low
 hierarchy_analysis: The agent must recognize that the specific user instruction to
   modify `areal/api/cli_args.py` overrides the general repository constraint in `AGENTS.md`
   and `CLAUDE.md` that requires asking for permission before modifying config structures.

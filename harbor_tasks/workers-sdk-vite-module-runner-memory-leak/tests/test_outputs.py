@@ -206,32 +206,171 @@ main().catch(e => { console.error("FAIL: " + e.message + "\n" + e.stack); proces
 
 # [pr_diff] fail_to_pass
 def test_caller_cleans_up_pending_callbacks():
-    """runInRunnerObject must clean up pendingCallbacks within its own body."""
+    """runInRunnerObject must clean up pendingCallbacks within its own body, not rely on executeCallback."""
     source = TARGET.read_text()
-    full_text, _ = _extract_function(source, "runInRunnerObject")
+    _, body = _extract_function(source, "runInRunnerObject")
 
-    # In the buggy version, pendingCallbacks.delete(id) is only in executeCallback,
-    # not in runInRunnerObject itself. The fix adds cleanup to runInRunnerObject.
-    assert "pendingCallbacks.delete" in full_text, (
-        "runInRunnerObject must clean up pendingCallbacks "
-        "(missing cleanup causes memory leak on error)"
+    js_func = f"async function runInRunnerObject(env, callback) {body}"
+
+    # Mock executeCallback runs the callback and stores results but does NOT
+    # delete from pendingCallbacks. If runInRunnerObject doesn't handle its
+    # own cleanup, the map will leak entries.
+    test_js = (
+        "const pendingCallbacks = new Map();\n"
+        "const callbackResults = new Map();\n"
+        "let nextCallbackId = 0;\n\n"
+        + js_func
+        + "\n\n"
+        + r"""
+async function main() {
+    const env = {
+        __VITE_RUNNER_OBJECT__: {
+            get() {
+                return {
+                    async executeCallback(id) {
+                        const cb = pendingCallbacks.get(id);
+                        if (!cb) throw new Error("No pending callback with id " + id);
+                        const result = await cb();
+                        callbackResults.set(id, result);
+                        // Deliberately NOT calling pendingCallbacks.delete(id).
+                        // The caller (runInRunnerObject) must handle its own cleanup.
+                    }
+                };
+            }
+        }
+    };
+
+    // Single call: verify cleanup after one successful call
+    const result = await runInRunnerObject(env, async () => 99);
+    if (result !== 99) {
+        console.error("FAIL: expected 99, got " + result);
+        process.exit(1);
+    }
+    if (pendingCallbacks.size !== 0) {
+        console.error("FAIL: pendingCallbacks has " + pendingCallbacks.size + " entry after single call (caller must clean up)");
+        process.exit(1);
+    }
+
+    // Multiple calls: verify no accumulation over time
+    for (let i = 0; i < 10; i++) {
+        const r = await runInRunnerObject(env, async () => i * 2);
+        if (r !== i * 2) {
+            console.error("FAIL: call " + i + " expected " + (i*2) + ", got " + r);
+            process.exit(1);
+        }
+    }
+    if (pendingCallbacks.size !== 0) {
+        console.error("FAIL: pendingCallbacks has " + pendingCallbacks.size + " entries after 10 calls");
+        process.exit(1);
+    }
+
+    console.log("PASS: caller cleans up pendingCallbacks");
+}
+
+main().catch(e => { console.error("FAIL: " + e.message + "\n" + e.stack); process.exit(1); });
+"""
     )
+
+    test_path = Path("/tmp/test_caller_cleanup.mjs")
+    test_path.write_text(test_js)
+
+    r = subprocess.run(
+        ["node", str(test_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Caller cleanup test failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_error_handling_around_rpc_call():
-    """runInRunnerObject must wrap the RPC call in error handling."""
+    """runInRunnerObject must handle RPC errors: propagate them and still clean up maps."""
     source = TARGET.read_text()
-    full_text, _ = _extract_function(source, "runInRunnerObject")
+    _, body = _extract_function(source, "runInRunnerObject")
 
-    has_try = "try" in full_text
-    has_finally = "finally" in full_text
-    has_catch = "catch" in full_text
+    js_func = f"async function runInRunnerObject(env, callback) {body}"
 
-    assert has_try and (has_finally or has_catch), (
-        "runInRunnerObject must use try/catch or try/finally "
-        "to ensure cleanup on error"
+    test_js = (
+        "const pendingCallbacks = new Map();\n"
+        "const callbackResults = new Map();\n"
+        "let nextCallbackId = 0;\n\n"
+        + js_func
+        + "\n\n"
+        + r"""
+async function main() {
+    const env = {
+        __VITE_RUNNER_OBJECT__: {
+            get() {
+                return {
+                    async executeCallback(id) {
+                        throw new Error("RPC transport error");
+                    }
+                };
+            }
+        }
+    };
+
+    // Test that the RPC error propagates to the caller
+    let errorCaught = false;
+    try {
+        await runInRunnerObject(env, async () => "value");
+    } catch (e) {
+        errorCaught = true;
+        if (!e.message.includes("RPC transport error")) {
+            console.error("FAIL: error message was altered: " + e.message);
+            process.exit(1);
+        }
+    }
+
+    if (!errorCaught) {
+        console.error("FAIL: RPC error was swallowed instead of propagating");
+        process.exit(1);
+    }
+
+    // After the error, both maps must be clean (no leaked entries)
+    if (pendingCallbacks.size !== 0) {
+        console.error("FAIL: pendingCallbacks leaked " + pendingCallbacks.size + " entries after RPC error");
+        process.exit(1);
+    }
+    if (callbackResults.size !== 0) {
+        console.error("FAIL: callbackResults leaked " + callbackResults.size + " entries after RPC error");
+        process.exit(1);
+    }
+
+    // A second error call must also clean up (no stale state from first call)
+    errorCaught = false;
+    try {
+        await runInRunnerObject(env, async () => "another");
+    } catch (e) {
+        errorCaught = true;
+    }
+    if (!errorCaught) {
+        console.error("FAIL: second RPC error was swallowed");
+        process.exit(1);
+    }
+    if (pendingCallbacks.size !== 0) {
+        console.error("FAIL: pendingCallbacks leaked after second error");
+        process.exit(1);
+    }
+
+    console.log("PASS: errors propagated and maps cleaned up");
+}
+
+main().catch(e => { console.error("FAIL: " + e.message + "\n" + e.stack); process.exit(1); });
+"""
     )
+
+    test_path = Path("/tmp/test_error_handling.mjs")
+    test_path.write_text(test_js)
+
+    r = subprocess.run(
+        ["node", str(test_path)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Error handling test failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

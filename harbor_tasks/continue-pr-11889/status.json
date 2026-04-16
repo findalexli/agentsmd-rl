@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T04:07:21.009989",
+  "total_time": 1660.71,
+  "sandbox_id": "ihivudhkv416uoqp3em56",
+  "backend": "fireworks",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2429.33,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 783.21,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 2,
+      "notes": "Docker build, NOP (reward=0), and Gold (reward=1) all pass. Rubric judge fails (ICR=0/4) due to fundamental incompatibility: rubric rules were auto-generated from .continue/rules/*.md files describing code quality standards (avoid any, pure functions, etc.), but the judge mechanism (call_judge) only checks for config file modifications via extract_config_hunks. The gold solution is a pure code change to OpenAI.ts - it never modifies any .md files. extract_config_hunks also doesn't recognize .ts files (only config files like CLAUDE.md, .md, etc.). The rubric rules are genuinely unreasonable for this task type but cannot be removed per instructions.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 642.06
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.28,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pytest, pytest-timeout']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 24.98,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "minimax",
+      "time": 4632.14,
+      "at": "2026-04-14T20:59:44.623768"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1660.71,
+      "at": "2026-04-15T04:07:21.009989"
+    }
+  ]
+}

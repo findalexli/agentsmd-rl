@@ -3,55 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all key details tested: file path `src/vite-plugin-caddy.ts`, export name `caddyPlugin`, plugin name `vite-plugin-caddy`, required methods `configureServer` and `buildEnd`, `vite.config.ts` with `host: true` and `caddyPlugin()`, `AGENTS.md` must remove `UPGRADE!` and mention `HTTP/2` and `proxy`, README must mention `Caddy`, `HTTP/2`, connection limit explanation, and `caddy trust`. All assert targets are discoverable from the instruction."
+      "reason": "The instruction specifies all key details tested: file path `src/vite-plugin-caddy.ts`, export name `caddyPlugin`, plugin name `vite-plugin-caddy`, `configureServer` and `buildEnd` methods, `vite.config.ts` with `server.host: true`, `AGENTS.md` must remove `UPGRADE!` text and mention HTTP/2 and proxy, `README.md` must mention Caddy, HTTP/2, connection limit explanation, and `caddy trust` command. All asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and what properties/behaviors are needed, but doesn't give exact code implementations. The agent must still reason about how to implement the Vite plugin, what the configureServer/buildEnd functions do, and the exact wording for documentation updates."
+      "reason": "The instruction describes what's broken (slow shapes, outdated AGENTS.md tip) and what to create (a Vite plugin, config changes, documentation updates) but does not give exact code, line numbers, or the specific replacement text. The agent must reason about implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literal strings like `plugin.name === 'vite-plugin-caddy'`, exact presence of `caddyPlugin()` as a string in vite.config.ts, and `host: true` as a literal string match. While the plugin name is specified in the instruction, the test `test_vite_config_uses_caddy` uses `assert 'caddyPlugin()' in content` which would fail if someone wrote `caddyPlugin({})` or stored the result in a variable first. Similarly `assert 'host: true' in content` is fragile to formatting like `host:true"
+      "outcome": "pass",
+      "reason": "Tests check for the plugin name `vite-plugin-caddy` (specified in instructions), presence of `configureServer`/`buildEnd` as functions (specified in instructions), `server.host === true` (specified), regex matches for HTTP/2/proxy/Caddy keywords, and `caddy trust` in code blocks. These are behavioral requirements from the spec, not gold-specific implementation details. Alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_vite_plugin_exports actually imports and executes the plugin code (behavioral). However, test_vite_config_uses_caddy is purely text-matching (`assert 'caddyPlugin' in content`, `assert 'host: true' in content`). test_agents_md_http2_proxy_tip and test_readme_documents_caddy are also purely text searches. The documentation tests are inherently text-based which is acceptable, but test_vite_config_uses_caddy checks config correctness only via string matching, not by loading/evaluating the conf"
+      "outcome": "pass",
+      "reason": "test_vite_plugin_exports actually imports and executes the plugin module via Node. test_vite_config_uses_caddy evaluates the config with a custom module loader. The AGENTS.md and README tests run Node scripts that parse markdown structure. While the doc tests are regex-based, they execute scripts rather than simple file reads, and the code tests genuinely import and call the modules."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_vite_plugin_exports requires a real module that exports caddyPlugin returning an object with name='vite-plugin-caddy' and two function properties. A stub returning None or empty object would fail. The text-based tests require specific content that wouldn't exist by default. The file vite-plugin-caddy.ts doesn't exist at the base commit, so a trivial no-op wouldn't pass."
+      "reason": "A stub caddyPlugin returning {} would fail because tests check plugin.name === 'vite-plugin-caddy' and typeof configureServer/buildEnd === 'function'. An empty vite.config.ts would fail because tests check for the plugin in the plugins array and server.host. Empty/default AGENTS.md and README would fail the content regex checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: plugin creation with correct exports (test_vite_plugin_exports), vite config integration (test_vite_config_uses_caddy), AGENTS.md fix (test_agents_md_http2_proxy_tip), README documentation (test_readme_documents_caddy), plus regression guards for existing plugins and linting."
+      "reason": "All four requirements from the instruction are tested: (1) plugin exports and shape, (2) vite.config.ts integration with host:true, (3) AGENTS.md fix removing UPGRADE and mentioning HTTP/2+proxy, (4) README with Caddy, HTTP/2, connection limit explanation, and caddy trust command."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass code behavior, fail-to-pass config/docs, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names (test_vite_plugin_exports, test_vite_config_uses_caddy, test_agents_md_http2_proxy_tip, test_readme_documents_caddy), section comments separating code vs documentation tests, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB schemas; it's about creating a Vite plugin and updating documentation files."
+      "reason": "The task produces code files and markdown documentation, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, commands, and variable names in the instruction are consistent with what the tests check. No typos detected."
+      "reason": "All file paths, function names, plugin names, and commands in the instruction match what the tests expect: `vite-plugin-caddy.ts`, `caddyPlugin`, `vite-plugin-caddy`, `vite.config.ts`, `AGENTS.md`, `README.md`, `caddy trust`."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and what content to include but doesn't specify exact line numbers or the precise text to write. It says to remove 'UPGRADE!' text and replace with HTTP/2/proxy info, which is a reasonable description of the fix without over-specifying."
+      "reason": "The instruction mentions the outdated text pattern ('UPGRADE!') to identify what to remove but doesn't specify exact line numbers or replacement text. The files to modify are inherent to the task domain. This is appropriate guidance, not localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff for AGENTS.md is a single-line change (line 200), and vite.config.ts changes are localized additions. The README changes are more extensive but still scoped to the specific file. No contradictions with other tier-1 files."
+      "reason": "The gold AGENTS.md diff is a single-line change (line 200), and the vite.config.ts change is adding a plugin import and server.host config. These are localized edits, not full-file rewrites, and don't contradict other files."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

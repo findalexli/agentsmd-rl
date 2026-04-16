@@ -15,22 +15,25 @@ This causes flows to continue executing (and potentially emitting values) even a
 - `native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.kt` - Kotlin side of the flow iterator implementation
 - `native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift` - Swift side that wraps the Kotlin iterator
 
-## Key Components to Modify
+## Required Behavior
 
 ### Kotlin Side (`KotlinCoroutineSupport.kt`)
 
-The `SwiftFlowIterator` class needs to:
-1. Maintain a `CoroutineScope` that is shared across all flow operations (instead of creating a new scope for `launch()`)
-2. Ensure the `cancel()` method cancels this scope to stop flow collection
-3. Register cancellation handlers using `invokeOnCancellation` in the two `suspendCancellableCoroutine` blocks (for `State.Ready` and `State.AwaitingConsumer` states) so that coroutine cancellation also triggers flow cancellation
+The `SwiftFlowIterator` class must:
+- Maintain a shared `CoroutineScope` field with a default value (using any appropriate context such as `EmptyCoroutineContext` or `Dispatchers.Default`)
+- The `cancel()` method must call `.cancel(CancellationException(...))` on the stored coroutine scope (not call `complete()` directly)
+- The `State.Ready` handling block in `next()` must register a cancellation callback using `continuation.invokeOnCancellation { ... }` that calls `cancel()`
+- The `State.AwaitingConsumer` handling block in `next()` must similarly register an `invokeOnCancellation` callback that calls `cancel()`
+- The `launch()` method must use the stored coroutine scope's `.launch { ... }` rather than creating a new `CoroutineScope` for each invocation
 
 ### Swift Side (`KotlinCoroutineSupport.swift`)
 
-The flow sequence implementation needs to:
-1. Introduce a new `Iterator` class that wraps `KotlinFlowIterator` and handles cancellation in its `deinit`
-2. Make `KotlinFlowIterator` internal (currently public) since it should only be accessed through the new `Iterator` wrapper
-3. Move the cancellation logic from `KotlinFlowIterator.deinit` to the new `Iterator.deinit`
-4. Have `makeAsyncIterator()` return the new `Iterator` type instead of `KotlinFlowIterator` directly
+The `KotlinFlowSequence` must:
+- Have a nested `Iterator` class conforming to `AsyncIteratorProtocol` with a `deinit` that cancels the underlying Kotlin iterator
+- The `Iterator.deinit` must call `_kotlin_swift_SwiftFlowIterator_cancel` on the wrapped `KotlinFlowIterator` instance
+- The `makeAsyncIterator()` method must return this `Iterator` wrapper type (not a bare `KotlinFlowIterator`)
+- The `KotlinFlowIterator` class must have `internal` visibility (not `public`) so only the `Iterator` wrapper is publicly accessible
+- The `KotlinFlowIterator` class must NOT have a `deinit` (the cancellation logic belongs in the Swift `Iterator` wrapper)
 
 ## Expected Behavior After Fix
 

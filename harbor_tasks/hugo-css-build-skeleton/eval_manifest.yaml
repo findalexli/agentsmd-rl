@@ -1,0 +1,72 @@
+source_pr:
+  repo: gohugoio/hugo
+  number: 14631
+  title: "create/skeletons: Use css.Build in theme skeleton"
+  merge_commit: 404ac00001de49c0ccbff4131be40fa2651e4a06
+  base_commit: 06fcb724219eecdc20367e86e1a8134d3d7e0e5b
+
+checks:
+  # Fail-to-pass checks - these test the bug fix
+  - id: test_header_css_exists
+    type: fail_to_pass
+    origin: functional
+    description: Header component CSS file should exist with correct content
+
+  - id: test_footer_css_exists
+    type: fail_to_pass
+    origin: functional
+    description: Footer component CSS file should exist with correct content
+
+  - id: test_main_css_uses_imports
+    type: fail_to_pass
+    origin: functional
+    description: main.css should use @import for component files, not inline styles
+
+  - id: test_css_html_uses_css_build
+    type: fail_to_pass
+    origin: functional
+    description: css.html should use css.Build for CSS processing with minify and sourceMap options
+
+  - id: test_js_html_updated_options
+    type: fail_to_pass
+    origin: functional
+    description: js.html should have updated build options (linked sourceMap, no targetPath)
+
+  - id: test_js_html_uses_cond_dict_pattern
+    type: fail_to_pass
+    origin: functional
+    description: js.html should use cond-based dict pattern matching css.html style
+
+  # Pass-to-pass checks - these verify repo health
+  - id: test_repo_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo should compile successfully
+
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go vet should pass on relevant packages (create and tpl/css)
+
+  - id: test_repo_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go code should be properly formatted
+
+  - id: test_repo_css_build_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: CSS Build unit tests should pass (tests css.Build functionality)
+
+  - id: test_repo_create_package_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Create package unit tests should pass (tests skeleton functionality)
+
+  - id: test_skeleton_templates_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Skeleton theme templates should be valid and buildable
+
+# No agent config files were found in the repository
+rubric: []

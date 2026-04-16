@@ -1,0 +1,171 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39144
+  base_commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+  merge_commit: "c4a4efa50a02f404829c8cf8a169d5b70e8e35ae"
+
+# Track 2: Config edits (gold reference extracted from solve.sh)
+config_edits:
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "# Close the browser\nplaywright-cli close\n# Delete user data for the default session\nplaywright-cli delete-data"
+    gold_removed: "playwright-cli close                      # stop the default session"
+
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "# Close all browsers\nplaywright-cli session-close-all\n# Forcefully kill all browser processes\nplaywright-cli session-kill-all"
+    gold_removed: "playwright-cli session-close-all          # stop all sessions\nplaywright-cli delete-data                # delete user data for default session\nplaywright-cli kill-all                   # forcefully kill all daemon processes"
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 2
+    gold_added: "playwright-cli session-kill-all"
+    gold_removed: "playwright-cli kill-all"
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 2
+    gold_added: "playwright-cli open https://example.com --config=.playwright/my-cli.json"
+    gold_removed: "playwright-cli open https://example.com --config=playwright-cli.json"
+
+# Track 1: Code correctness checks (via test_outputs.py)
+checks:
+  # Code behavior checks (f2p)
+  - id: workspace_dir_hash_replaces_installation_dir_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts must use workspaceDirHash instead of installationDirHash"
+
+  - id: find_workspace_dir_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts must have findWorkspaceDir function to detect workspace root"
+
+  - id: commands_install_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "commands.ts: install command has 'Initialize workspace' description with --skills flag"
+
+  - id: commands_session_kill_all_renamed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "commands.ts: kill-all renamed to session-kill-all"
+
+  - id: config_file_path_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts: config file path changed to .playwright/cli.config.json"
+
+  - id: daemon_profiles_dir_scoped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts: daemon profiles directory includes workspaceDirHash"
+
+  # Config/documentation checks (f2p)
+  - id: skill_md_has_session_kill_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must document session-kill-all instead of kill-all"
+
+  - id: session_md_has_session_kill_all
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-management.md must use session-kill-all command"
+
+  - id: session_md_config_path_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session-management.md must reference .playwright/ config path"
+
+  - id: skill_md_close_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md close command description updated to 'Close the browser'"
+
+  - id: skill_md_has_install_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must have both install and install-browser commands documented"
+
+  # Pass-to-pass checks
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax"
+
+  - id: mcp_dev_skill_unchanged
+    type: pass_to_pass
+    origin: static
+    description: "MCP dev skill file exists and is unchanged"
+
+  - id: command_schemas_complete
+    type: pass_to_pass
+    origin: static
+    description: "All expected command schemas are defined in commands.ts"
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "When renaming CLI commands, update SKILL.md documentation to reflect new names"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "22-23"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "SKILL.md and session-management.md updated with session-kill-all and install commands"
+    category: documentation_sync
+    verification: llm_judge
+
+  - rule: "Keep session commands grouped under 'session' category"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "175-185"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "session-kill-all maintains 'session' category as per commands.ts"
+    category: consistency
+    verification: llm_judge
+
+  - rule: "Use descriptive command names that indicate scope (session-* for session-related)"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "15-28"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "session-kill-all clearly indicates it's a session management command"
+    category: naming
+    verification: llm_judge
+
+  - rule: "Update config file references when default paths change"
+    source:
+      path: "packages/playwright/src/skill/references/session-management.md"
+      lines: "120-125"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "session-management.md updated from playwright-cli.json to .playwright/my-cli.json"
+    category: documentation_accuracy
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that create collisions
+distractors:
+  - rule: "Keep old command names for backward compatibility"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "20"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: rule_conflict
+    why_distracting: "PR completely removes old names (kill-all), doesn't keep compatibility aliases"
+    severity: medium
+
+  - rule: "Only update code files, documentation changes are separate PRs"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "22-23"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: scope_ambiguity
+    why_distracting: "SKILL.md explicitly says to update skill files when adding commands - doc updates are part of CLI changes"
+    severity: medium
+
+  - rule: "Always use installation directory for daemon scoping (not workspace)"
+    source:
+      path: "packages/playwright/src/mcp/terminal/program.ts"
+      lines: "45-55"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: architecture_boundary
+    why_distracting: "The entire PR is about changing from installation-scoped to workspace-scoped daemons"
+    severity: high

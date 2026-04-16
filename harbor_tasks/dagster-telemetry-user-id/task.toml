@@ -1,0 +1,42 @@
+name = "dagster-telemetry-user-id"
+title = "Add anonymous user_id to telemetry payload"
+difficulty = "medium"
+estimated_time = "15-25 minutes"
+
+[description]
+brief = "Add a persistent user-level identifier to telemetry events that is independent of DAGSTER_HOME"
+details = """
+This task involves adding a user_id field to Dagster's telemetry system. Unlike instance_id
+which varies by DAGSTER_HOME directory, user_id should be stored in ~/.dagster/.telemetry/
+and remain consistent across all Dagster instances for a given user.
+
+Key requirements:
+1. Add get_or_set_user_id() function that returns/creates a persistent user ID
+2. Store user_id in ~/.dagster/.telemetry/user_id.yaml (ignoring DAGSTER_HOME)
+3. Add user_id field to TelemetryEntry NamedTuple
+4. Include user_id in all telemetry payloads
+5. Ensure user_id is consistent across different DAGSTER_HOME values
+"""
+
+[source]
+repo = "dagster-io/dagster"
+pr_number = 33320
+base_commit = "1bccaaca43c35a850e824e65a70655ab9f0136b8"
+merge_commit = "dc6e45a1a39120970c173bc5ac34bfc3ef883367"
+
+[files]
+dockerfile = "environment/Dockerfile"
+solve_script = "solution/solve.sh"
+test_script = "tests/test.sh"
+test_outputs = "tests/test_outputs.py"
+manifest = "eval_manifest.yaml"
+instruction = "instruction.md"
+
+[tags]
+category = ["telemetry", "feature-addition"]
+language = ["python"]
+domain = ["data-engineering", "observability"]
+
+[settings]
+timeout_seconds = 600
+max_retries = 1

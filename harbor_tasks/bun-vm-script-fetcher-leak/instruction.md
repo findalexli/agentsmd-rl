@@ -27,25 +27,14 @@ console.log(`Leaked Script objects: ${after - before}`);
 
 The same leak occurs with `vm.compileFunction("return 1")` (leaks `FunctionExecutable` objects) and `new vm.SourceTextModule("export const a = 1;")` (leaks `NodeVMSourceTextModule` objects).
 
-## Implementation Requirements
+## Requirements
 
-The fix must satisfy all of the following requirements:
+The fix must satisfy all of the following:
 
-1. **Header includes**: The solution must include the JavaScriptCore weak reference headers:
-   - `#include <JavaScriptCore/Weak.h>`
-   - `#include <JavaScriptCore/WeakInlines.h>`
+1. **Uncollectable root prevention**: The owner back-reference must not form a GC root that prevents the owning object from being collected.
 
-2. **Owner reference type**: The member field storing the back-reference to the owner must use `Weak<SomeType>` instead of `Strong<SomeType>` to avoid creating a GC root that prevents collection.
+2. **Owner accessor safety**: The `owner()` accessor must handle the case where the owning object has already been collected — it must return a safe fallback value rather than a null or invalid reference.
 
-3. **Owner getter null check**: The `owner()` accessor must check whether the weak reference is still alive before returning it. If the referenced object has been collected, the getter must return a safe fallback value using one of:
-   - `jsUndefined()`
-   - `jsNull()`
-   - `JSValue()` (empty/undefined JSValue)
+3. **Owner assignment validation**: When setting the owner reference, the code must verify the value is a valid GC cell before storing it.
 
-4. **Owner setter guards**: When setting the owner via setter method or constructor, the code must verify the value is a valid GC cell before creating the weak reference. Use `isCell()` or `isObject()` checks on the `JSValue` before assignment to `Weak<>`.
-
-5. **Regression test**: Add a test that verifies `vm.Script`, `vm.compileFunction`, and `vm.SourceTextModule` objects are properly garbage-collected when no longer referenced.
-
-## Where to look
-
-The leak is in the Bun JavaScriptCore bindings related to script fetching. Look for classes that extend `JSC::ScriptFetcher` and hold back-references to script/function/module wrapper objects. The problematic code creates uncollectable reference cycles between the fetcher and its owner.
+4. **Regression test**: Add a test that verifies `vm.Script`, `vm.compileFunction`, and `vm.SourceTextModule` objects are properly garbage-collected when no longer referenced.

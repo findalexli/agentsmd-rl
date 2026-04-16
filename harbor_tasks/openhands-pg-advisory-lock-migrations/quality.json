@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-specific literals are discoverable from instruction.md: the lock ID 3617572382373537863, the exact comment phrases, the file path enterprise/migrations/env.py, the function names run_migrations_online/run_migrations_offline, the sqlalchemy text import requirement, and the text() wrapper requirement are all explicitly stated in the instructions."
+      "reason": "The instruction explicitly names the file path (enterprise/migrations/env.py), function names (run_migrations_online, run_migrations_offline), the lock ID (3617572382373537863), the text() wrapper requirement, the MD5 hash origin comment, and ruff config requirements. All specifics tested (lock ID, text import from sqlalchemy, ordering before context.run_migrations(), before begin_transaction, ruff checks) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: use text('SELECT pg_advisory_lock(3617572382373537863)'), add specific exact-phrase comments, import text from sqlalchemy, place it before context.run_migrations(). This leaves virtually no reasoning about WHAT to change \u2014 the instruction is a step-by-step recipe for the exact code to write."
+      "reason": "The instruction explicitly states: 'Use a PostgreSQL advisory lock with lock ID 3617572382373537863', 'Execute the lock call before migrations run (before context.run_migrations())', 'Use SQLAlchemy's text() wrapper for raw SQL execution', 'Include comments explaining the lock number origin and release behavior'. This is essentially the complete fix specification, not just a description of what's broken. A competent developer doesn't need to reason about WHAT to change \u2014 it's all spelled out."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: test_advisory_lock_uses_text_wrapper checks AST for a text() call with pg_advisory_lock as a string argument (ruling out alternatives like using connection.exec_driver_sql or a different wrapping approach). test_lock_comment_present requires exact phrase strings. An alternative correct fix using e.g. conn.exec_driver_sql('SELECT pg_advisory_lock(...)') would fail."
+      "reason": "test_lock_acquires_before_transaction checks that pg_advisory_lock appears before begin_transaction via string position in the function source. An alternative correct fix that places the lock inside a 'with connection.begin():' block (which is a valid alternative pattern since advisory locks are not transactional) would fail this test. Also, tests use AST parsing to enforce that text() must be called as a Name node (node.func.id == 'text'), so 'sqlalchemy.text()' as a qualified call would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are text/AST inspection of the source file (regex search for pg_advisory_lock, AST walking for text() wrapper, string search for comments). The only 'execution' tests are ruff linting and py_compile syntax checks. No test actually runs the migration code, connects to a database, or verifies the advisory lock behavior."
+      "reason": "The core fail-to-pass tests (test_pg_advisory_lock_call_present, test_advisory_lock_before_migrations, test_advisory_lock_uses_text_wrapper, test_lock_in_run_migrations_online, test_lock_acquires_before_transaction) are ALL pure text/AST inspection of the source file \u2014 none actually execute the migration code, connect to a database, or verify that concurrent migrations are serialized. The ruff/syntax tests do execute subprocesses, but the behavioral tests are entirely static analysis."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_text_import_from_sqlalchemy, test_pg_advisory_lock_call_present, test_advisory_lock_before_migrations, test_advisory_lock_uses_text_wrapper) all check for specific code additions that don't exist in the base commit. A stub or no-op implementation would not pass these checks since they require specific strings and AST structures in the file."
+      "reason": "A stub/no-op implementation would not pass the f2p tests. test_text_import_from_sqlalchemy checks for 'text' in sqlalchemy imports via AST. test_pg_advisory_lock_call_present checks for a text() call containing pg_advisory_lock with a positive integer. test_advisory_lock_before_migrations checks ordering. These all require actual code changes, not just pass/return None."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six explicit requirements from instruction.md are tested: text import (test_text_import_from_sqlalchemy), lock ID (test_pg_advisory_lock_call_present), lock before migrations (test_advisory_lock_before_migrations), text() wrapper (test_advisory_lock_uses_text_wrapper), comments (test_lock_comment_present), and location requirement (test_lock_in_run_migrations_online)."
+      "reason": "All behaviors described in instruction.md are tested: advisory lock with specific ID, text() wrapper, placement in run_migrations_online (not offline), ordering before run_migrations and begin_transaction, comments about lock number origin, ruff lint/format checks, and valid Python syntax."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, individually documented with docstrings explaining whether they are fail-to-pass or pass-to-pass, and the module has a top-level docstring explaining the purpose."
+      "reason": "Tests are well-named (test_pg_advisory_lock_call_present, test_advisory_lock_before_migrations, etc.), each has a docstring explaining what it tests and whether it's fail-to-pass or pass-to-pass, and the module has a top-level docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a Python source file, not producing structured data output."
+      "reason": "The task produces a code file modification, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or literal strings across the task files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or the lock ID across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (enterprise/migrations/env.py), exact function (run_migrations_online()), exact lock ID, exact import to add, exact comment text, and exact SQL to use. This goes far beyond identifying the buggy area \u2014 it specifies the complete solution including implementation details like the text() wrapper pattern."
+      "reason": "The instruction specifies the exact function to modify (run_migrations_online), the exact lock ID (3617572382373537863), the exact import to add (text from sqlalchemy), and exact placement (before context.run_migrations()). This goes well beyond naming the relevant file \u2014 it specifies the precise implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Python source file, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

@@ -2,52 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the component file path, the hooks (useDagRunServiceGetDagRun, useDagVersionServiceGetDagVersions), the URL params (dagId, runId), the data shape (dag_versions), the filtering logic (runId+runData conditional), and the constraints (TypeScript, ESLint, Prettier). All test assertions reference these named elements."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_component_filters_versions_conditionally checks for the exact variable name 'runData' and the regex pattern 'runId !== undefined && runData|runId && runData'. The instruction never mentions the variable name 'runData' or the specific conditional pattern. Also, test_component_extracts_runid_from_params asserts a specific destructuring pattern 'const {.*runId.*} = useParams' which is not specified in the instruction"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent to 'destructure runId from useParams alongside the existing dagId', use 'useDagRunServiceGetDagRun' with specific parameters, destructure as '{ data: runData }', use the hook's 'enabled' option, and describes the exact conditional logic 'runId !== undefined && runData'. This is a near-complete implementation specification, not just a bug description."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (version dropdown shows all versions instead of run-specific ones) and expected behavior, but does not specify the exact code changes, line numbers, or variable names to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_component_filters_versions_conditionally uses regex to assert the exact pattern 'runId\\s*!==\\s*undefined\\s*&&\\s*runData|runId\\s*&&\\s*runData' and asserts the literal string 'runData' appears in the file. A correct alternative using a different variable name (e.g., 'dagRunData') or different conditional structure (e.g., an if-statement with different formatting) would fail these text-matching tests."
+      "reason": "test_component_filters_versions_conditionally asserts the exact variable name 'runData' via `assert 'runData' in content` and a specific conditional pattern `runId !== undefined && runData|runId && runData`. An alternative correct fix using a different variable name (e.g., 'dagRunResponse' or 'selectedRun') or a different conditional structure (e.g., if-else block, separate useMemo) would fail these regex-based checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_component_imports_dag_run_service, test_component_extracts_runid_from_params, and test_component_filters_versions_conditionally are purely text-matching (assert string in file content, regex on source). While test_vitest_dagversionselect_filtering does execute the component, three of six fail_to_pass tests are purely textual."
+      "reason": "Three of the seven tests (test_component_imports_dag_run_service, test_component_extracts_runid_from_params, test_component_filters_versions_conditionally) are purely text-matching tests using `assert X in content` and regex searches on the source file, with no execution or behavioral verification. While test_vitest_dagversionselect_filtering does execute the component, the majority of f2p-specific tests are text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The vitest test (test_vitest_dagversionselect_filtering) renders the component with mocked data and asserts on the number of rendered items (2 vs 3), which cannot be satisfied by a stub/no-op implementation. The base code would show 3 items in both cases."
+      "reason": "The vitest test (test_vitest_dagversionselect_filtering) renders the component with a mocked DagRun and asserts exactly 2 items are shown instead of 3, which cannot be satisfied by a stub/no-op implementation. The text-based tests also check for specific imports and patterns that aren't present in the original file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: filtering when runId is present, showing all versions when no runId, TypeScript compilation, ESLint passing, Prettier formatting, and existing tests passing. All of these are tested."
+      "reason": "The instruction requires two behaviors: (1) filter versions when a DagRun is selected, and (2) show all versions when no DagRun is selected. Both are tested in the vitest tests ('shows all versions when no DagRun is selected' and 'shows only the selected run's versions when a DagRun is selected')."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies and whether it's a fail_to_pass or pass_to_pass test."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, and the vitest tests use describe/it blocks with clear descriptions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a React component, not producing structured data output."
+      "reason": "This task involves modifying a UI component, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, hook names, and commands are all correctly spelled and consistent between instruction and tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (DagVersionSelect.tsx), the exact variable names to use (runData, runId), the exact hook parameters, and the exact conditional pattern. This goes well beyond identifying the buggy area."
+      "reason": "The instruction explicitly names the exact file path 'airflow-core/src/airflow/ui/src/components/DagVersionSelect.tsx' and specifies that 'The DagRun response includes a dag_versions array field' and mentions specific API hooks like 'useDagRunServiceGetDagRun' by naming the 'openapi/queries' module. While the component file is somewhat obvious, naming the exact API hook module and response field structure is significant hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],

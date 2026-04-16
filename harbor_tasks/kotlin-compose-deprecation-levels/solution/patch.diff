@@ -1,0 +1,294 @@
+diff --git a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerGradlePluginExtension.kt b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerGradlePluginExtension.kt
+index d7bc543056551..9d66c4681847c 100644
+--- a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerGradlePluginExtension.kt
++++ b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerGradlePluginExtension.kt
+@@ -44,7 +44,10 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      *
+      * Generally used for tooling.
+      */
+-    @Deprecated("The user facing property is deprecated. Intended for tooling use only. Will be removed in future releases.")
++    @Deprecated(
++        message = "The user facing property is deprecated. Intended for tooling use only. Will be removed in Kotlin 2.5.0.",
++        level = DeprecationLevel.ERROR,
++    )
+     val generateFunctionKeyMetaClasses: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(false)
+ 
+     /**
+@@ -113,7 +116,10 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      * }
+      * ```
+      */
+-    @Deprecated("Use the featureFlags option instead")
++    @Deprecated(
++        message = "Use the featureFlags option instead. Will be removed in Kotlin 2.5.0",
++        level = DeprecationLevel.ERROR
++    )
+     val enableIntrinsicRemember: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
+ 
+     /**
+@@ -126,7 +132,10 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      *
+      * This feature is still considered experimental and is thus disabled by default.
+      */
+-    @Deprecated("Use the featureFlags option instead")
++    @Deprecated(
++        message = "Use the featureFlags option instead. Will be removed in Kotlin 2.5.0",
++        level = DeprecationLevel.ERROR
++    )
+     val enableNonSkippingGroupOptimization: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(false)
+ 
+     /**
+@@ -139,7 +148,10 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      * For more information, see this link:
+      *  - [AndroidX strong skipping](https://github.com/JetBrains/kotlin/blob/master/plugins/compose/design/strong-skipping.md)
+      */
+-    @Deprecated("Use the featureFlags option instead")
++    @Deprecated(
++        message = "Use the featureFlags option instead. Will be removed in Kotlin 2.5.0",
++        level = DeprecationLevel.ERROR
++    )
+     val enableStrongSkippingMode: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
+ 
+     /**
+@@ -148,7 +160,10 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      * For more information, see this link:
+      *  - [AndroidX stability configuration file](https://developer.android.com/develop/ui/compose/performance/stability/fix#configuration-file)
+      */
+-    @Deprecated("Use the stabilityConfigurationFiles option instead")
++    @Deprecated(
++        message = "Use the stabilityConfigurationFiles option instead. Will be removed in Kotlin 2.5.0",
++        level = DeprecationLevel.ERROR
++    )
+     abstract val stabilityConfigurationFile: RegularFileProperty
+ 
+     /**
+@@ -216,7 +231,7 @@ abstract class ComposeCompilerGradlePluginExtension @Inject internal constructor
+      *
+      * @see ComposeFeatureFlag
+      */
+-    @Suppress("DEPRECATION")
++    @Suppress("DEPRECATION_ERROR", "DEPRECATION")
+     val featureFlags: SetProperty<ComposeFeatureFlag> = objectFactory
+         .setProperty(ComposeFeatureFlag::class.java)
+         .convention(
+diff --git a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerSubplugin.kt b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerSubplugin.kt
+index 18d4d07a42aa0..e20b57cbce866 100644
+--- a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerSubplugin.kt
++++ b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeCompilerSubplugin.kt
+@@ -63,7 +63,7 @@ class ComposeCompilerGradleSubplugin : KotlinCompilerPluginSupportPlugin {
+         val allPluginProperties = project.objects
+             .listProperty(SubpluginOption::class.java)
+             .apply {
+-                @Suppress("DEPRECATION")
++                @Suppress("DEPRECATION_ERROR")
+                 add(composeExtension.generateFunctionKeyMetaClasses.map { value ->
+                     if (value) SubpluginOption("generateFunctionKeyMetaClasses", value.toString())
+                     else EMPTY_OPTION
+@@ -86,7 +86,7 @@ class ComposeCompilerGradleSubplugin : KotlinCompilerPluginSupportPlugin {
+                     FilesSubpluginOption("reportsDestination", listOf(it.asFile))
+                 }.orElse(EMPTY_OPTION))
+ 
+-                @Suppress("DEPRECATION")
++                @Suppress("DEPRECATION_ERROR")
+                 add(composeExtension.stabilityConfigurationFile.map<SubpluginOption> {
+                     FilesSubpluginOption("stabilityConfigurationPath", listOf(it.asFile))
+                 }.orElse(EMPTY_OPTION))
+@@ -99,7 +99,7 @@ class ComposeCompilerGradleSubplugin : KotlinCompilerPluginSupportPlugin {
+                     SubpluginOption("traceMarkersEnabled", it.toString())
+                 })
+ 
+-                @Suppress("DEPRECATION")
++                @Suppress("DEPRECATION_ERROR", "DEPRECATION")
+                 addAll(
+                     composeExtension.featureFlags
+                         .zip(composeExtension.enableIntrinsicRemember) { featureFlags, intrinsicRemember ->
+diff --git a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeFeatureFlags.kt b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeFeatureFlags.kt
+index aa7b2fe6a3a32..b62d93c47c84f 100644
+--- a/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeFeatureFlags.kt
++++ b/libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ComposeFeatureFlags.kt
+@@ -90,7 +90,10 @@ sealed interface ComposeFeatureFlag : Named, Serializable {
+          * }
+          * ```
+          */
+-        @Deprecated("This flag should be enabled by default and will be removed in the future versions.")
++        @Deprecated(
++            message = "This flag should be enabled by default and will be removed with Kotlin 2.5.0.",
++            level = DeprecationLevel.ERROR
++        )
+         @JvmField
+         val StrongSkipping: ComposeFeatureFlag = Enabled(Feature.StrongSkipping)
+ 
+@@ -108,7 +111,10 @@ sealed interface ComposeFeatureFlag : Named, Serializable {
+          * }
+          * ```
+          */
+-        @Deprecated("This flag should be enabled by default and will be removed in the future versions.")
++        @Deprecated(
++            message = "This flag should be enabled by default and will be removed with Kotlin 2.5.0.",
++            level = DeprecationLevel.ERROR
++        )
+         @JvmField
+         val IntrinsicRemember: ComposeFeatureFlag = Enabled(Feature.IntrinsicRemember)
+ 
+@@ -128,6 +134,10 @@ sealed interface ComposeFeatureFlag : Named, Serializable {
+          * }
+          * ```
+          */
++        @Deprecated(
++            message = "This flag should be enabled by default and will be removed in the future versions.",
++            level = DeprecationLevel.WARNING
++        )
+         @JvmField
+         val OptimizeNonSkippingGroups: ComposeFeatureFlag = Enabled(Feature.OptimizeNonSkippingGroups)
+ 
+@@ -145,6 +155,10 @@ sealed interface ComposeFeatureFlag : Named, Serializable {
+          * }
+          * ```
+          */
++        @Deprecated(
++            message = "This flag should be enabled by default and will be removed in the future versions.",
++            level = DeprecationLevel.WARNING
++        )
+         @JvmField
+         val PausableComposition: ComposeFeatureFlag = Enabled(Feature.PausableComposition)
+     }
+diff --git a/libraries/tools/kotlin-compose-compiler/src/functionalTest/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ExtensionConfigurationTest.kt b/libraries/tools/kotlin-compose-compiler/src/functionalTest/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ExtensionConfigurationTest.kt
+index 681e3511faf39..815d6c4e3291d 100644
+--- a/libraries/tools/kotlin-compose-compiler/src/functionalTest/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ExtensionConfigurationTest.kt
++++ b/libraries/tools/kotlin-compose-compiler/src/functionalTest/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/ExtensionConfigurationTest.kt
+@@ -138,7 +138,7 @@ class ExtensionConfigurationTest {
+         }
+     }
+ 
+-    @Suppress("DEPRECATION")
++    @Suppress("DEPRECATION_ERROR")
+     @Test
+     fun testStabilityConfigurationFile() {
+         testComposeOptions(
+@@ -194,7 +194,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun disableIntrinsicRemember() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         testComposeFeatureFlags(listOf("-IntrinsicRemember")) { extension ->
+             extension.featureFlags.value(setOf(ComposeFeatureFlag.IntrinsicRemember.disabled()))
+         }
+@@ -202,7 +202,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun disableStrongSkipping() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         testComposeFeatureFlags(listOf("-StrongSkipping")) { extension ->
+             extension.featureFlags.value(setOf(ComposeFeatureFlag.StrongSkipping.disabled()))
+         }
+@@ -210,6 +210,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun disableNonSkippingGroupOptimization() {
++        @Suppress("DEPRECATION")
+         testComposeFeatureFlags(listOf("-OptimizeNonSkippingGroups")) { extension ->
+             extension.featureFlags.value(setOf(ComposeFeatureFlag.OptimizeNonSkippingGroups.disabled()))
+         }
+@@ -217,6 +218,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun disablePausableComposition() {
++        @Suppress("DEPRECATION")
+         testComposeFeatureFlags(listOf("-PausableComposition")) { extension ->
+             extension.featureFlags.value(setOf(ComposeFeatureFlag.PausableComposition.disabled()))
+         }
+@@ -225,7 +227,7 @@ class ExtensionConfigurationTest {
+     @Test
+     fun disableIntrinsicRememberCompatibility() {
+         testComposeFeatureFlags(listOf("-IntrinsicRemember")) { extension ->
+-            @Suppress("DEPRECATION")
++            @Suppress("DEPRECATION_ERROR")
+             extension.enableIntrinsicRemember.value(false)
+         }
+     }
+@@ -233,7 +235,7 @@ class ExtensionConfigurationTest {
+     @Test
+     fun disableStrongSkippingCompatibility() {
+         testComposeFeatureFlags(listOf("-StrongSkipping")) { extension ->
+-            @Suppress("DEPRECATION")
++            @Suppress("DEPRECATION_ERROR")
+             extension.enableStrongSkippingMode.value(false)
+         }
+     }
+@@ -241,14 +243,14 @@ class ExtensionConfigurationTest {
+     @Test
+     fun enableNonSkippingGroupOptimizationCompatibility() {
+         testComposeFeatureFlags(listOf("OptimizeNonSkippingGroups")) { extension ->
+-            @Suppress("DEPRECATION")
++            @Suppress("DEPRECATION_ERROR")
+             extension.enableNonSkippingGroupOptimization.value(true)
+         }
+     }
+ 
+     @Test
+     fun enableMultipleFlags() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR", "DEPRECATION")
+         testComposeFeatureFlags(listOf("OptimizeNonSkippingGroups", "-StrongSkipping", "-IntrinsicRemember")) { extension ->
+             extension.featureFlags.set(
+                 setOf(
+@@ -262,7 +264,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun enableMultipleFlagsCompatibility() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         testComposeFeatureFlags(listOf("OptimizeNonSkippingGroups", "-StrongSkipping", "-IntrinsicRemember")) { extension ->
+             extension.enableStrongSkippingMode.value(false)
+             extension.enableNonSkippingGroupOptimization.value(true)
+@@ -272,7 +274,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun enableMultipleFlagsCompatibilityDefaults() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         testComposeFeatureFlags(emptyList()) { extension ->
+             extension.enableStrongSkippingMode.value(true)
+             extension.enableNonSkippingGroupOptimization.value(false)
+@@ -282,7 +284,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun combineDeprecatedPropertiesWithFeatureFlags() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         val project = buildProjectWithJvm {
+             val composeExtension = extensions.getByType<ComposeCompilerGradlePluginExtension>()
+             composeExtension.enableNonSkippingGroupOptimization.set(true)
+@@ -306,7 +308,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun contradictInConfiguredFlags() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         val project = buildProjectWithJvm {
+             val composeExtension = extensions.getByType<ComposeCompilerGradlePluginExtension>()
+             composeExtension.enableStrongSkippingMode.set(false)
+@@ -327,7 +329,7 @@ class ExtensionConfigurationTest {
+ 
+     @Test
+     fun combineDeprecatedPropertiesWithFeatureFlags_StrongSkipping() {
+-        @Suppress("DEPRECATION")
++        @Suppress("DEPRECATION_ERROR")
+         val project = buildProjectWithJvm {
+             val composeExtension = extensions.getByType<ComposeCompilerGradlePluginExtension>()
+             composeExtension.enableStrongSkippingMode.set(false)
+diff --git a/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/ComposeIT.kt b/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/ComposeIT.kt
+index 3941cad17ef55..6eef32876da3c 100644
+--- a/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/ComposeIT.kt
++++ b/libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/ComposeIT.kt
+@@ -266,7 +266,7 @@ class ComposeIT : KGPBaseTest() {
+                 |composeCompiler {
+                 |    metricsDestination.set(project.layout.buildDirectory.dir("metrics"))
+                 |    reportsDestination.set(project.layout.buildDirectory.dir("reports"))
+-                |    stabilityConfigurationFile.set(project.layout.projectDirectory.file("stability-configuration.conf"))
++                |    stabilityConfigurationFiles.set(listOf(project.layout.projectDirectory.file("stability-configuration.conf")))
+                 |}
+                 """.trimMargin()
+             )

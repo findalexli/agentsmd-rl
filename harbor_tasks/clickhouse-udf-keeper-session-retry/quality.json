@@ -2,55 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "Every assert in the tests checks for strings, variable names, patterns, and file paths that are explicitly named in instruction.md: the include files, 'catch (const zkutil::KeeperException & e)', 'isHardwareError(e.code)', 'throw;', 'ZooKeeperRetriesControl retries_ctl(', 'max_retries', 'initial_backoff_ms', 'max_backoff_ms', 'retries_ctl.retryLoop', 'function_names_and_asts.clear()', 'Keeper hardware error', 'backQuote(object_name)', 'transient', 're-throw', and the target file path."
+      "outcome": "fail",
+      "reason": "Tests assert specific patterns like 'catch (const zkutil::KeeperException & e)', 'Coordination::isHardwareError(e.code)', '.retryLoop([', 'ZooKeeperRetriesControl \\w+(', 'backQuote(\\w+)', 'LOG_WARNING(...hardware error...)', exact include paths '#include <Common/ZooKeeper/ZooKeeperCommon.h>' and '#include <Common/ZooKeeper/ZooKeeperRetries.h>', and variable names like 'max_retries', 'initial_backoff_ms', 'max_backoff_ms'. While instruction.md mentions concepts like isHardwareError(), ZooKeeperRe"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact variable names ('retries_ctl', 'max_retries', 'initial_backoff_ms', 'max_backoff_ms'), exact catch syntax ('catch (const zkutil::KeeperException & e)'), exact method calls ('retries_ctl.retryLoop', 'function_names_and_asts.clear()'), exact log messages ('Keeper hardware error'), and exact include files. This is effectively dictating the solution line-by-line rather than describing what's broken."
+      "reason": "Instruction.md essentially describes the exact implementation: add specific includes, catch KeeperException, check isHardwareError, re-throw hardware errors, use ZooKeeperRetriesControl with configurable parameters, wrap in retry loop, clear results inside retry loop. This is a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'retries_ctl', 'max_retries', 'initial_backoff_ms', 'max_backoff_ms', 'function_names_and_asts'; exact syntax like 'ZooKeeperRetriesControl retries_ctl('; exact log message 'Keeper hardware error'; exact include paths. An alternative correct fix using different variable names, a different retry library, or different error handling structure would fail."
+      "reason": "Tests assert gold-specific implementation details: exact variable names 'max_retries', 'initial_backoff_ms', 'max_backoff_ms' (test_zookeeper_retries_control_usage); exact pattern '.retryLoop([' (test_retry_loop_pattern); exact catch signature 'const zkutil::KeeperException &' (test_keeper_exception_handler); 'backQuote()' usage (test_error_logging). An alternative correct fix using different variable names, a manual retry loop instead of retryLoop(), or fmt::format instead of backQuote() would "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_hardware_error_include through test_comment_documentation) are all pure text-matching: they read the file content and check for string presence with 'in content'. No code is compiled, executed, or behaviorally tested. The p2p tests only do basic style checks (tabs, whitespace, etc.)."
+      "reason": "All f2p tests use pattern matching on source file text (regex searches on file content). None compile, execute, or call the code. Tests like test_keeper_exception_handler do strip comments which is slightly better than raw string matching, but fundamentally they are still 'assert pattern in open(path).read()' style checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "An agent could simply append the required strings as comments to the existing file (e.g., add comment blocks containing all the required includes, variable names, catch blocks as dead code or comments) without actually implementing the bug fix, and all text-matching tests would pass."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific code patterns (KeeperException catch block, isHardwareError check, retryLoop call, ZooKeeperRetriesControl instantiation) that don't exist in the original source file. A stub/no-op implementation would not pass these tests since the base file lacks these patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements listed in instruction.md (includes, exception handling, retry logic, comments, logging) are tested by corresponding test functions."
+      "reason": "All behavioral requirements from instruction.md are tested: includes (test_hardware_error_include, test_retries_include), KeeperException handling (test_keeper_exception_handler), retry logic (test_zookeeper_retries_control_usage, test_retry_loop_pattern), logging (test_error_logging), and comments (test_comment_documentation)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_hardware_error_include, test_keeper_exception_handler, etc.), docstrings explaining what each test verifies, and logical grouping of f2p vs p2p tests."
+      "reason": "Tests are well-organized with descriptive function names (test_hardware_error_include, test_keeper_exception_handler, etc.), docstrings explaining what each test checks, and clear separation between behavioral tests and style/CI checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "Task involves C++ source code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No obvious typos found in filenames, paths, function names, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file ('src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp'), exact function names ('tryLoadObject()', 'refreshObjects()'), exact variable names, exact catch syntax, and exact log messages. This goes far beyond naming the buggy module."
+      "reason": "Instruction.md names the exact class 'UserDefinedSQLObjectsZooKeeperStorage', exact function 'isHardwareError()', exact class 'ZooKeeperRetriesControl', and specifies exact headers 'Common/ZooKeeper'. Combined with the step-by-step behavioral requirements, the agent needs minimal reasoning about what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [

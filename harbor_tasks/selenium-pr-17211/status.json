@@ -1,0 +1,101 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T02:26:12.779174",
+  "total_time": 3117.21,
+  "sandbox_id": "isd269g399lc6mc4u8a0x",
+  "backend": "fireworks",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 1293.56,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 1380.05,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks pass. Fixed eval_manifest.yaml rubric format (description->rule) and adjusted rubric rules for code-only task (original rules were designed for config file edits, which this task doesn't have).",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 1230.22
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 3.71,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:11: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 20.67,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 5
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 3986.07,
+      "at": "2026-04-13T19:47:46.122301"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1482.57,
+      "at": "2026-04-15T05:52:51.081086"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 571.77,
+      "at": "2026-04-15T13:26:04.108900"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3117.21,
+      "at": "2026-04-16T02:26:12.779174"
+    }
+  ]
+}

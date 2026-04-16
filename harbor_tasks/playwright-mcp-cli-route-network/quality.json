@@ -3,58 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions reference file paths, type names (RouteEntry), method names (routes(), addRoute, removeRoute), tool names (browser_route, browser_route_list, browser_unroute), command names, category strings ('network'), import patterns, and SKILL.md content that are explicitly specified in instruction.md."
+      "reason": "All assert'd file paths (e.g., route.ts, context.ts, tools.ts, commands.ts, helpGenerator.ts, SKILL.md), literal strings (e.g., 'browser_route', 'RouteEntry', 'category: network', '## Building', 'Do not run test --debug', 'npm run flint', 'flint:mcp'), and schema keys are explicitly mentioned in instruction.md. The test for SKILL.md also checks an alternative path (README.md) but the instruction describes the primary path. All specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what to implement (features, types, methods, commands) but does not give exact code or line-by-line changes. A developer must still reason about implementation details like handler logic, route fulfillment vs continuation, etc."
+      "outcome": "fail",
+      "reason": "The instruction provides extremely detailed implementation guidance including exact type definitions (RouteEntry fields), exact method signatures (routes(), addRoute(), removeRoute()), exact import statements pattern ('import route from ./tools/route'), exact spread syntax ('...route'), and exact string literals for commands. This goes beyond describing 'what's broken' \u2014 it essentially dictates the exact implementation, leaving little reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like \"import route from './tools/route'\" and \"...route\" in tools.ts, \"name: 'route'\" in commands.ts, and exact content like \"Do not run test --debug\" and \"npm run flint\". While instruction.md specifies these, the tests also check for exact import syntax (e.g., single vs double quotes) which constrains alternatives. More critically, test_route_exported_from_tools asserts the exact import statement format 'import route from ./tools/route' which rules out valid al"
+      "reason": "Tests assert on gold-specific implementation details: test_route_exported_from_tools checks for exact string 'import route from ./tools/route' and '...route'; test_context_has_route_entry_type checks for exact string 'RouteEntry'; test_terminal_commands_defined checks for exact strings like \"name: 'route'\", \"name: 'route-list'\", \"category: 'network'\". An alternative correct implementation using different variable names or import patterns would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are purely text-matching (assert 'string' in file.read_text()). The only behavioral tests are test_build_succeeds and test_lint_succeeds which run npm commands. No test actually imports/calls the route tools, executes browser_route, or verifies that network mocking works. The core functionality is untested behaviorally."
+      "reason": "Almost every test is pure text matching: e.g., test_route_tools_file_exists does 'assert \"browser_route\" in content', test_context_has_route_entry_type does 'assert \"RouteEntry\" in content', test_terminal_commands_defined does string matching. Only test_build_succeeds and test_lint_succeeds execute subprocesses. No test actually imports/calls the route tools or validates runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub route.ts containing just comments with 'browser_route', 'browser_route_list', 'browser_unroute' strings would pass test_route_tools_file_exists. Similarly, adding string literals to commands.ts without functional implementation would pass test_terminal_commands_defined and test_route_command_maps_arguments_correctly. The build/lint tests provide some guard but the feature-specific tests are satisfiable without real implementation."
+      "reason": "A stub route.ts file containing only comments with the strings 'browser_route', 'browser_route_list', 'browser_unroute' would pass test_route_tools_file_exists. Similarly, adding 'RouteEntry', 'routes()', 'addRoute', 'removeRoute' as comments in context.ts would pass test_context_has_route_entry_type. The text-matching tests can be satisfied without implementing actual functionality, though test_build_succeeds and test_lint_succeeds provide some guard."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires route.ts to support fulfilling with mock response AND modifying headers and continuing, defines specific RouteEntry fields (handler, addHeaders, etc.), and requires removeRoute to return number of routes removed. None of these behavioral requirements are tested - only string presence in files is checked."
+      "reason": "Instruction requires specific behaviors like: browser_route should 'support both fulfilling with mock response AND modifying headers and continuing', removeRoute 'should return number of routes removed', browser_route_list should 'display all registered routes with their configuration'. None of these runtime behaviors are actually tested \u2014 only string presence in source files is checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Pass-to-Pass, Fail-to-Pass code, Fail-to-Pass config, Build/Type Tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Pass-to-Pass, Fail-to-Pass code, Fail-to-Pass config, Build/Type Tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code files and documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task produces TypeScript source code and markdown documentation, not structured data formats like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and strings in instruction.md are consistent with those in tests and solution. The 'flint' command name (not 'lint') is intentional per the codebase convention."
+      "reason": "File paths, commands, variable names, and string literals in both instruction.md and tests are consistent and free of typos. The 'flint' command name (used for 'npm run flint') appears intentional as it's consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction specifies what files to create/modify and what features to add, which is appropriate for a feature implementation task. It references existing files as patterns but doesn't give exact line numbers or the solution code."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact file paths, exact type names, exact method signatures, exact import patterns, and exact string literals to use. For example, it specifies 'Must define a type named RouteEntry with fields: pattern, status, body, contentType, addHeaders, removeHeaders, and handler' \u2014 this is implementation-level detail that eliminates any need for the agent to reason about the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The SKILL.md config changes are localized additions (Building sections, testing notes, lint command change) and don't contradict other files. The gold diff shows targeted insertions rather than a full rewrite."
+      "reason": "The SKILL.md config changes in the gold patch are localized additions (Building sections, 'Do not run test --debug' lines, flint:mcp -> flint change) and don't contradict other files."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 6
 }

@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (src/bun.js/api/bun/dns.zig), the three functions (Request.isExpired, GlobalCache.get, freeaddrinfo), and describes the refcount, valid flag, and TTL behaviors that each test checks. The tests don't assert on any SHA, literal string, or schema key that isn't discoverable from the instruction."
+      "reason": "instruction.md names dns.zig and describes expiration, callback invalidation, and cache behavior; tests examine isExpired, get, freeaddrinfo which align with 'expiration' and 'callbacks' described."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md essentially describes the exact fix: it says isExpired conflates refcount with TTL (implying remove the refcount check), that expired entries with active references should not be freed (implying add a refcount==0 guard in get()), and that 'valid' should only transition to invalid on error (implying make the assignment conditional). This is very close to specifying the code changes rather than just describing broken behavior."
+      "outcome": "pass",
+      "reason": "instruction describes symptoms (stale entries served, callbacks invalidating valid entries) without prescribing specific code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex to check for specific patterns like 'refcount == 0' before deinit, absence of 'refcount > 0' in isExpired, 'err != 0' branch with 'valid = false' in freeaddrinfo. An alternative correct fix using different variable names, helper functions, or restructured logic (e.g., using a separate 'shouldFree' method, or checking 'refcount != 0' instead of 'refcount == 0') could fail these pattern-matching tests."
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties (no refcount short-circuit in isExpired, conditional deinit in get, valid not overwritten on success) rather than specific variable names or line positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests are pure text/regex analysis of the source file via subprocess Python AST-analyzers. They search for patterns like 'refcount > 0', 'refcount == 0', 'err != 0', 'valid = false' in the source text. No test actually compiles, runs, or executes the code. This is sophisticated grep, not behavioral testing."
+      "reason": "Tests only parse source text via regex on dns.zig (e.g., searching for 'refcount' position relative to 'or' in if statements) \u2014 no code is compiled, imported, or executed; this is static text/AST-lite analysis, not behavior verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for absence of buggy patterns (refcount > 0 in isExpired) and presence of fix patterns (refcount == 0 guard, conditional valid assignment). A stub or no-op would not pass since the original buggy code is present in the repo and the tests specifically detect the buggy patterns."
+      "reason": "Tests require specific structural changes (removing refcount short-circuit, adding refcount==0 guard before deinit, conditional err!=0 for valid flag) that a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from the instruction (TTL expiry independent of refcount, no freeing while in-use, conditional valid flag) are tested by the three f2p tests (test_isexpired_no_refcount_gate, test_get_refcount_guard, test_freeaddrinfo_conditional_valid)."
+      "reason": "The three behaviors described (TTL expiry, not invalidating valid entries, proper cache eviction) each map to a test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_isexpired_no_refcount_gate, test_get_refcount_guard, test_freeaddrinfo_conditional_valid), have docstrings explaining the bug and fix, and are logically grouped with clear pass_to_pass vs fail_to_pass sections."
+      "reason": "Tests are named descriptively with docstrings and grouped by section comments (Gate, Fail-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves fixing source code, not producing structured data output."
+      "reason": "Task is a code bug fix with no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact methods (Request.isExpired, GlobalCache.get, freeaddrinfo) and describes the specific code logic that's buggy (e.g., 'refcount > 0' condition in isExpired, unconditional 'valid' flag overwrite). This goes beyond naming the file and effectively localizes the bug to specific lines and conditions."
+      "outcome": "pass",
+      "reason": "Instruction names dns.zig file but localization within the file is still required; doesn't name specific lines or functions like isExpired."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

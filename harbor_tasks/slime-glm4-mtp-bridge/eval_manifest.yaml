@@ -1,75 +1,114 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "THUDM/slime"
+  repo: THUDM/slime
   pr: 1712
-  base_commit: "57e76686346beeaaec4010ebefc56b9949686457"
-  merge_commit: "e70e6476632ebd551d5eb82186ad1cc948e0d8f5"
-
+  base_commit: 57e76686346beeaaec4010ebefc56b9949686457
+  merge_commit: e70e6476632ebd551d5eb82186ad1cc948e0d8f5
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: test_repo_syntax_glm4moe_lite
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: glm4moe_lite.py must have valid Python syntax"
-
-  - id: test_repo_syntax_model_provider
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: model_provider.py must have valid Python syntax"
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: ruff linting passes on modified files"
-
-  - id: test_repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: black formatting check passes on modified files"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: isort import ordering check passes on modified files"
-
-  - id: test_repo_mtp_bridge_mapping
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: MTP bridge mapping unit tests pass"
-
-  - id: rope_theta_patched
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GLM4MoELiteBridge.__init__ extracts rope_theta from rope_parameters dict"
-
-  - id: shared_mapping_dynamic_layers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_SHARED_STATE_DICT_MAPPING uses dynamic num_hidden_layers instead of hardcoded 61"
-
-  - id: convert_mtp_direct_names
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_convert_mtp_param maps direct MTP param names with dynamic layer count"
-
-  - id: convert_mtp_transformer_delegation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_convert_mtp_param delegates transformer-layer params via attention/mlp mappings"
-
-  - id: safetensor_io_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_get_safetensor_io returns standard SafeTensorIO, not FP8 dequant"
-
-  - id: weight_to_hf_shared
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_weight_to_hf_format returns both base and MTP-layer names for shared weights"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: test_repo_syntax_glm4moe_lite
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: glm4moe_lite.py must have valid Python syntax'
+- id: test_repo_syntax_model_provider
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: model_provider.py must have valid Python syntax'
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: ruff linting passes on modified files'
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: black formatting check passes on modified files'
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: isort import ordering check passes on modified files'
+- id: test_repo_mtp_bridge_mapping
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MTP bridge mapping unit tests pass'
+- id: rope_theta_patched
+  type: fail_to_pass
+  origin: pr_diff
+  description: GLM4MoELiteBridge.__init__ extracts rope_theta from rope_parameters
+    dict
+- id: shared_mapping_dynamic_layers
+  type: fail_to_pass
+  origin: pr_diff
+  description: _SHARED_STATE_DICT_MAPPING uses dynamic num_hidden_layers instead of
+    hardcoded 61
+- id: convert_mtp_direct_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: _convert_mtp_param maps direct MTP param names with dynamic layer count
+- id: convert_mtp_transformer_delegation
+  type: fail_to_pass
+  origin: pr_diff
+  description: _convert_mtp_param delegates transformer-layer params via attention/mlp
+    mappings
+- id: safetensor_io_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: _get_safetensor_io returns standard SafeTensorIO, not FP8 dequant
+- id: weight_to_hf_shared
+  type: fail_to_pass
+  origin: pr_diff
+  description: _weight_to_hf_format returns both base and MTP-layer names for shared
+    weights
 rubric: []
+distractors:
+- rule: Return RolloutFnTrainOutput and RolloutFnEvalOutput from rollout functions
+  source:
+    path: .agents/skills/add-rollout-function/SKILL.md
+    lines: 43-46
+  source_text: '### Step 3: Implement Train and Eval Branches Explicitly
+
+
+    - For training (`evaluation=False`), return `RolloutFnTrainOutput(samples=...,
+    metrics=...)`
+
+    - For evaluation (`evaluation=True`), return `RolloutFnEvalOutput(data=..., metrics=...)`'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff implements MTP support for GLM-4.7. Since MTP is
+    typically used to accelerate rollout generation via speculative decoding, an agent
+    might incorrectly assume this change belongs in the rollout generation module
+    and try to apply rollout output conventions. However, the changed file is a bridge
+    (`mbridge/glm4moe_lite.py`) that strictly handles Megatron-to-HF weight mapping.
+  severity: high
+- rule: Add tests for new features and follow existing naming conventions
+  source:
+    path: .agents/skills/add-tests-and-ci/SKILL.md
+    lines: 21-25
+  source_text: '### Step 1: Pick the Right Test Pattern
+
+
+    - Follow existing naming: `tests/test_<feature>.py`
+
+    - Start from nearest existing test file for your model/path
+
+    - Keep test scope small and behavior-focused'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to add unit tests for the newly created
+    GLM4MoELiteBridge. However, the gold diff correctly ignores this convention, likely
+    because this bridge implementation is a straightforward parameter mapping that
+    does not require a standalone unit test in the scope of this specific PR.
+  severity: medium
+- rule: Return scalar numeric rewards unless your pipeline explicitly uses keyed rewards.
+  source:
+    path: /workspace/repo/.claude/skills/add-reward-function/SKILL.md
+    lines: '49'
+  source_text: '- Return scalar numeric rewards unless your pipeline explicitly uses
+    keyed rewards.'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff correctly modifies the Megatron critic model layer
+    to output a scalar dimension (output_size=1) for value/reward prediction. An agent
+    might see this rule and mistakenly try to implement a custom Python reward function
+    (RM) returning a scalar float, entirely missing the required model architecture
+    layer modification.
+  severity: high

@@ -3,56 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: e.g., test_last_import_removed_from_stores_ts checks that 'last' is removed from imports in stores.ts; test_router_ts_uses_last_on_matches_id checks for the exact string 'last(this.stores.matchesId.state)'; test_vue_link_no_manual_from_computed checks for 'const _options = Vue.computed'; test_vue_link_uses_options_directly checks for exact string 'router.buildLocation(options as any)' in SSR section. None of these exact patterns/stri"
+      "reason": "Tests assert very specific things not mentioned in instruction.md: e.g., test_last_import_removed_from_stores_ts checks that 'last' is removed from imports in stores.ts; test_router_ts_uses_last_on_matches_id checks for the exact string 'last(this.stores.matchesId.state)'; test_vue_link_no_manual_from_computed checks for 'const _options = Vue.computed'; test_vue_link_uses_options_directly checks for exact string 'router.buildLocation(options as any)' in SSR section. None of these specific patter"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's wrong (inconsistent from handling, unnecessary stores) and the goal (delegate to buildLocation), but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'. The developer must still reason about what specifically to change."
+      "reason": "instruction.md describes the problem (inconsistent from handling) and goal (delegate to buildLocation) but doesn't specify exact code changes like 'replace X with Y on line Z'. It gives investigation guidance but the agent must still reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_router_ts_uses_last_on_matches_id requires the exact string 'last(this.stores.matchesId.state)' \u2014 an alternative correct fix might use matchesId.state[matchesId.state.length-1] or matchesId.state.at(-1). test_vue_link_uses_options_directly requires exact string 'router.buildLocation(options as any)' in a specific section. These are implementation-specific assertions that reject valid alternatives."
+      "reason": "Tests assert gold-specific implementation details: test_router_ts_uses_last_on_matches_id requires exact string 'last(this.stores.matchesId.state)'; test_vue_link_uses_options_directly requires exact string 'router.buildLocation(options as any)' in SSR section; test_vue_link_no_manual_from_computed checks for absence of 'const _options = Vue.computed'. An alternative correct refactoring (e.g., using matchesId.state.at(-1) instead of last()) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_last_match_id_removed_from_stores_ts, test_last_import_removed_from_stores_ts, test_last_match_route_full_path_removed, test_router_ts_uses_last_on_matches_id, test_vue_link_no_manual_from_computed, test_vue_link_uses_options_directly) are ALL text-matching assertions using 'assert X in/not in open(path).read()' with no execution or behavioral verification. The pass-to-pass tests do run builds/tests, but every f2p test is purely textual."
+      "reason": "The fail-to-pass tests (test_last_match_id_removed_from_stores_ts, test_last_import_removed_from_stores_ts, test_last_match_route_full_path_removed, test_router_ts_uses_last_on_matches_id, test_vue_link_no_manual_from_computed, test_vue_link_uses_options_directly) are ALL pure text-matching assertions like 'assert X not in content' or 'assert X in content' with no code execution. The pass-to-pass tests do execute builds/tests, but the core f2p tests are entirely text-based."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for removal of specific stores and patterns that exist in the base commit code. A stub/no-op implementation would leave the original code intact, which would fail these assertions (e.g., 'lastMatchId:' would still be present in stores.ts)."
+      "outcome": "fail",
+      "reason": "A stub that simply deletes the relevant lines/stores from the source files (without implementing any actual fix logic) would pass all f2p tests since they only check for absence/presence of strings. For example, removing 'lastMatchId' from stores.ts and removing '_options' computed from link.tsx would pass without correctly wiring up last(this.stores.matchesId.state)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction says to remove manual from computation, delegate to buildLocation, and remove unnecessary stores. The tests verify all these behaviors: removal of lastMatchId/lastMatchRouteFullPath stores, removal of _options computed wrapper, direct passing of options to buildLocation, plus build/type/lint/unit test passing."
+      "reason": "The instruction describes: removing manual from computation, removing unnecessary stores, delegating to buildLocation directly. Tests check for removal of lastMatchId, lastMatchRouteFullPath, _options computed, and direct buildLocation calls, covering the described behavioral requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two clearly commented sections ('Structural Tests (Fail-to-pass)' and 'Repo CI/CD Tests (Pass-to-pass)') with descriptive function names and docstrings."
+      "reason": "Tests are clearly grouped into 'Structural Tests (Fail-to-pass)' and 'Repo CI/CD Tests (Pass-to-pass)' sections with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task, not one that produces structured data output."
+      "reason": "This task is a code refactoring task, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the actual repository structure."
+      "reason": "File paths, variable names, and commands in instruction.md and tests match the actual repository structure correctly."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the files to investigate (stores.ts, router.ts, routerStores.ts, link.tsx) which is appropriate for the task domain. It mentions the last() utility and buildLocation patterns but doesn't specify exact line numbers or the precise code changes needed."
+      "outcome": "fail",
+      "reason": "instruction.md names exact files (stores.ts, router.ts, routerStores.ts, link.tsx) and mentions specific implementation details like 'last() utility from ./utils' and that stores 'only exist to support this manual computation'. Combined with 'Investigation Guidance' step 3 about last(), this significantly narrows the solution space beyond what's needed to understand the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code-only refactoring task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

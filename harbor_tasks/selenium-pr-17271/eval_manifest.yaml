@@ -1,0 +1,114 @@
+source:
+  type: github_pr
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17271
+  base_commit: 5d23d81b3f04954eca5a6319ba2ac5a15cc05a33
+  merge_commit: 16c046a0a642281d0c03ab7554faf11b9e499adb
+  title: "[py] Improve Selenium Manager platform/architecture detection"
+
+checks:
+  # Fail-to-pass: Windows ARM64 rejection
+  - id: TestWindowsArm64Rejection::test_windows_arm64_raises_exception
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Windows with ARM64 architecture should raise WebDriverException with clear error
+
+  - id: TestWindowsArm64Rejection::test_windows_arm64_lowercase_raises_exception
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Windows with lowercase arm64 architecture should also raise
+
+  - id: TestWindowsArm64Rejection::test_cygwin_arm64_raises_exception
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Cygwin with ARM64 should also raise exception
+
+  # Fail-to-pass: BSD platform normalization
+  - id: TestBsdPlatformNormalization::test_freebsd_with_version_number
+    type: fail_to_pass
+    origin: pr_behavior
+    description: FreeBSD with version number (e.g., freebsd15) should work
+
+  - id: TestBsdPlatformNormalization::test_freebsd14_with_amd64
+    type: fail_to_pass
+    origin: pr_behavior
+    description: FreeBSD 14 with amd64 architecture should work
+
+  - id: TestBsdPlatformNormalization::test_openbsd_with_version_number
+    type: fail_to_pass
+    origin: pr_behavior
+    description: OpenBSD with version number (e.g., openbsd7) should work
+
+  # Fail-to-pass: Architecture normalization (Linux only - Windows uses "any" on base)
+  - id: TestArchitectureNormalization::test_linux_amd64_normalization
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Linux with amd64 should work (normalized to x86_64)
+
+  # Pass-to-pass: Windows AMD64 (works on base with "any", works on fix with x86_64)
+  - id: TestArchitectureNormalization::test_windows_amd64_uppercase
+    type: pass_to_pass
+    origin: regression
+    description: Windows with uppercase AMD64 continues to work
+
+  - id: TestArchitectureNormalization::test_windows_amd64_lowercase
+    type: pass_to_pass
+    origin: regression
+    description: Windows with lowercase amd64 continues to work
+
+  # Fail-to-pass: FreeBSD warning message improvement
+  - id: TestFreebsdWarningMessage::test_freebsd_warning_contains_brandelf
+    type: fail_to_pass
+    origin: pr_behavior
+    description: FreeBSD warning should mention brandelf for actionable guidance
+
+  - id: TestFreebsdWarningMessage::test_freebsd_warning_contains_linux64ko
+    type: fail_to_pass
+    origin: pr_behavior
+    description: FreeBSD warning should mention linux64.ko for kernel module loading
+
+  # Pass-to-pass: Existing behavior preservation
+  - id: TestExistingBehavior::test_linux_x86_64_still_works
+    type: pass_to_pass
+    origin: regression
+    description: Linux with x86_64 should continue to work
+
+  - id: TestExistingBehavior::test_darwin_any_arch_still_works
+    type: pass_to_pass
+    origin: regression
+    description: macOS should continue to work with any architecture
+
+  - id: TestExistingBehavior::test_invalid_platform_still_raises
+    type: pass_to_pass
+    origin: regression
+    description: Invalid platform should still raise exception
+
+  # Pass-to-pass: Repository tests
+  - id: TestRepoUnitTests::test_repo_selenium_manager_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository's selenium_manager_tests.py should pass
+
+  # Pass-to-pass: Repository linting
+  - id: TestRepoLinting::test_repo_ruff_lint_selenium_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff lint check passes on selenium_manager.py
+
+  - id: TestRepoLinting::test_repo_ruff_format_selenium_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on selenium_manager.py
+
+  - id: TestRepoLinting::test_repo_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: pyproject.toml is valid
+
+rubric:
+  # NOTE: This task is a pure code fix (platform/architecture detection improvements).
+  # The gold solution modifies only source code files, not config/documentation files.
+  # Standard rubric rules (from AGENTS.md) describe coding conventions that the code follows,
+  # but they are not evaluable by the config-file-edit judge since no config files are changed.
+  # Keeping a structural marker to indicate rubric was considered but not applicable.

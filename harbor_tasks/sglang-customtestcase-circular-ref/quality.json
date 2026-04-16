@@ -2,57 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check specific implementation details not mentioned in instruction.md: test_no_circular_ref_in_setup_defaults inspects __func__.__defaults__ for bound methods with __self__; test_no_double_wrap_subclass checks for _safe_setup_wrapped attribute; test_dill_no_recursive_ref_warning uses dill.dumps with warnings.catch_warnings checking for 'recursive self-references' string. The instruction mentions these behaviors conceptually but does not name the specific attribute '_safe_setup_wrapped', th"
+      "outcome": "pass",
+      "reason": "The instruction describes all key behaviors tested: no dill recursive-reference warnings, no circular reference in function defaults, original setUpClass still invoked, no double-wrapping, meaningful __init_subclass__, and code quality checks. The specific file path `python/sglang/test/test_utils.py` and class `CustomTestCase` are named. The string 'recursive self-references' used in tests is explicitly mentioned in the instruction. All test specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (circular reference through bound-method defaults) and expected behavior but does not specify the exact code change (extracting __func__ before closure, removing _orig default parameter)."
+      "reason": "The instruction describes the symptom (circular reference via dill warnings) and the requirements (no circular ref in defaults, no double-wrapping, etc.) but does not specify the exact fix. It doesn't say 'change _orig=setup to orig_func = setup.__func__' or anything implementation-specific. A developer must reason about how the default parameter creates the cycle."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check behavioral properties (no dill warnings, no circular refs in defaults, original still called, no double-wrap) rather than specific implementation. Alternative fixes like using weakref, storing the function in a cell variable, or using functools.wraps differently would all pass as long as they break the circular reference and maintain behavior."
+      "reason": "The tests check behavioral properties: no dill warnings, no circular ref in defaults, setUpClass still invoked, no double-wrapping, and __init_subclass__ has \u22653 statements. Alternative fixes (e.g., using a closure variable instead of default param, using weakref, storing __func__ differently) would all pass these behavioral tests. Tests don't assert on specific variable names like 'orig_func' or exact line positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests execute actual code in subprocesses: they create CustomTestCase subclasses, call dill.dumps, inspect function defaults, run setUpClass, and check unittest behavior. The pass-to-pass tests run linters and compile checks. Tests are not mere string matching on source."
+      "reason": "Tests execute code in subprocesses via _run_python, actually calling dill.dumps, instantiating CustomTestCase subclasses, checking defaults at runtime, and verifying setUpClass invocation. The static tests compile/parse files and run linters. The test_init_subclass_meaningful does inspect source text for statement count, but this is supplementary to behavioral tests. The core f2p tests are behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests would fail on the original (unfixed) code: test_dill_no_recursive_ref_warning fails because the bound-method default creates a circular reference causing dill warnings; test_no_circular_ref_in_setup_defaults fails because the original code uses `_orig=setup` which holds a bound method with __self__ referencing back to the class. A stub/no-op would not satisfy these."
+      "reason": "A stub/no-op implementation would fail: test_dill_no_recursive_ref_warning would fail because the original code has the circular reference bug. test_no_circular_ref_in_setup_defaults checks that defaults don't contain bound methods referencing the subclass \u2014 the original code's `_orig=setup` default creates exactly this. test_original_setup_still_invoked verifies setUpClass actually runs (side effects checked). These cannot pass without a real fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md are tested: (1) no dill warning (test_dill_no_recursive_ref_warning), (2) no circular reference (test_no_circular_ref_in_setup_defaults), (3) original still called (test_original_setup_called), (4) no double-wrap for subclass of subclass (test_no_double_wrap_subclass)."
+      "reason": "All 6 requirements from the instruction are tested: (1) no dill warning - test_dill_no_recursive_ref_warning, (2) no circular ref in defaults - test_no_circular_ref_in_setup_defaults, (3) original setUpClass invoked + tearDown on exception - test_original_setup_still_invoked + test_teardown_called_on_setup_failure, (4) no double-wrapping - test_no_double_wrapping, (5) meaningful __init_subclass__ - test_init_subclass_meaningful, (6) code quality - multiple linter/formatter tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates/static checks vs fail-to-pass behavioral tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments ('Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Python class, not producing structured data output."
+      "reason": "This task involves fixing a Python class, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or string literals across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the implementation mechanism: 'the wrapped setUpClass function must not capture the original bound method as a default parameter that holds a reference back to the class (via __self__)'. This directly reveals the root cause (bound-method default parameter) and the fix direction, making localization and diagnosis trivial."
+      "reason": "The instruction explicitly describes the internal implementation detail that the circular reference exists 'in function defaults' (Requirement 2: 'Inspecting SubclassOfCustomTestCase.setUpClass.__func__.__defaults__') and mentions '_safe_setup_wrapped attribute' (Requirement 4). This reveals the exact mechanism of the bug (default parameter capturing a bound method) and the internal guard attribute, significantly narrowing the search space beyond just describing the symptom."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a Python source file, not a config edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

@@ -1,4 +1,4 @@
-# Bug: Bun crashes with assertion failure after catching a stack overflow
+# Bug: Bun crashes with assertion failure when a pending termination exception meets a new error
 
 ## Summary
 
@@ -21,29 +21,20 @@ Actual: process crashes with an assertion failure.
 
 ## Root Cause
 
-The crash originates in `src/bun.js/bindings/JSGlobalObject.zig`. When a termination exception (such as a stack overflow) is pending on the JavaScriptCore VM, `createErrorInstance` returns `.zero`. Several functions in `JSGlobalObject` that call `createErrorInstance` do not handle this case — they either assert the return is non-zero or proceed to call into the VM's error-throwing path, which internally asserts no exception is already pending.
+When a termination exception (such as a stack overflow) is already pending on the JavaScriptCore VM, certain operations that internally call into the VM's error-throwing path will hit a `releaseAssertNoException` assertion because the VM detects that an exception is already pending.
 
-## Required Changes
+The problem occurs in functions that call `createErrorInstance` — when it returns `.zero` (indicating an exception is already pending), the code must not proceed with the normal error-throwing machinery. Instead, it must detect this condition and return an error cleanly via Zig's error return type (`error.JSError`), without triggering assertions or crash-inducing constructs.
 
-Fix the following functions in `src/bun.js/bindings/JSGlobalObject.zig`:
+## What to Fix
 
-1. **`throw`** - Must check if `createErrorInstance` returns `.zero` and return `error.JSError` instead of asserting non-zero with `bun.assert(instance != .zero)`.
+The following functions all call `createErrorInstance` and must handle the case where it returns `.zero`:
+- `throw()` and `throwPretty()` — currently use `bun.assert(instance != .zero)` which crashes; replace with `if (instance == .zero) { bun.assert(this.hasException()); return error.JSError; }`
+- `throwTODO()` and `createRangeError()` — must add the same `.zero` handling pattern
+- `throwValue()` — must guard against calling `vm().throwError()` when an exception is already pending; add `if (this.hasException()) return error.JSError;` before `vm().throwError`
+- `throwError(anyerror)` — must route through `throwValue` (which has the guard) rather than calling `vm().throwError` directly
 
-2. **`throwPretty`** - Same pattern: must check if `createErrorInstance` returns `.zero` and return `error.JSError` instead of asserting non-zero.
+Error handling must use `error.JSError` for propagated errors. Do not use `@panic`, `unreachable`, or other crash-inducing constructs in error paths.
 
-3. **`throwTODO`** - Must check if `createErrorInstance` returns `.zero` and return `error.JSError` instead of proceeding to use the `.zero` value.
+## File Location
 
-4. **`createRangeError`** - Must check if `createErrorInstance` returns `.zero` and handle it appropriately by returning `.zero` (after asserting `this.hasException()` is true).
-
-5. **`throw`** with error options (the overload that takes a `comptime message, args` pattern for creating custom errors with `.code`, `.name`, `.errno` fields) - Must check if `createErrorInstance` returns `.zero` and return `error.JSError`.
-
-6. **`throwValue`** - Must check `this.hasException()` (or equivalent) before calling `this.vm().throwError()`. When an exception is already pending, it should return `error.JSError` immediately instead of attempting to throw another error.
-
-7. **`throwError(anyerror)`** - Must route through `throwValue` or have its own exception guard before calling `vm().throwError()`.
-
-The pattern to use when checking for pending exceptions is:
-- Check if `createErrorInstance` returned `.zero` OR check `this.hasException()` before throwing
-- Assert that `this.hasException()` is true when `.zero` is returned
-- Return `error.JSError` to propagate the error to callers
-
-Do not use `@panic`, `unreachable`, or other crash-inducing constructs in error paths.
+The code to modify lives in the Zig bindings for Bun's JavaScript runtime, in a file that defines `pub const JSGlobalObject = opaque` near the top and contains the throw functions listed above. The file is tracked in the Bun repository under `src/`.

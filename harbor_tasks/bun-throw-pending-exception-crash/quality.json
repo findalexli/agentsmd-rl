@@ -2,59 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig), all seven function names (throw, throwPretty, throwTODO, createRangeError, throwValue, throwError), the specific patterns to check (createErrorInstance returning .zero, hasException, error.JSError, bun.assert), and the assertion to remove (bun.assert(instance != .zero)). All test assertions reference these same specifics."
+      "outcome": "fail",
+      "reason": "Tests assert on the exact file path 'src/bun.js/bindings/JSGlobalObject.zig' (FILE variable in tests), specific function signatures like 'pub fn throwTODO(', 'pub fn createRangeError(', 'pub fn throwError(', 'pub fn throwValue(', 'pub fn throwTypeError(', 'pub fn throwDOMException(', and specific patterns like 'bun.assert(instance != .zero)'. The instruction.md never names the exact file path (it only says 'under src/'), and while it mentions the function names, it does not mention throwTypeErro"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix for each function: e.g., 'Must check if createErrorInstance returns .zero and return error.JSError instead of asserting non-zero with bun.assert(instance != .zero)', 'Must check this.hasException() before calling this.vm().throwError()', 'Must route through throwValue or have its own exception guard'. This is a step-by-step implementation guide, not just a bug description."
+      "reason": "The instruction.md explicitly states the exact fix: 'replace with if (instance == .zero) { bun.assert(this.hasException()); return error.JSError; }' for throw/throwPretty, 'add if (this.hasException()) return error.JSError; before vm().throwError' for throwValue, and 'must route through throwValue rather than calling vm().throwError directly' for throwError. This is essentially the complete solution specification."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation patterns: test_crash_assert_removed checks for regex 'if\\s*\\(.*==\\s*\\.zero\\)' and 'error.JSError' in throw/throwPretty bodies; test_throwvalue_guarded checks that 'hasException' appears before 'vm().throwError' positionally. An alternative correct fix (e.g., using a wrapper function, or checking via a different mechanism like catching the error) would fail these pattern-matching tests."
+      "reason": "Tests assert very specific implementation patterns: e.g., test_throwvalue_guarded checks that 'hasException' appears before 'vm().throwError' in throwValue's body and that 'error.JSError' appears within 120 chars after 'hasException'. An alternative correct fix (e.g., using a different guard method name, or restructuring the function differently) would fail. test_crash_assert_removed checks for regex pattern 'if\\s*\\(.*==\\s*\\.zero\\)' which is gold-specific syntax."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file and does string/regex matching (e.g., checking 'bun.assert(instance != .zero)' not in code, regex for 'if\\s*\\(.*==\\s*\\.zero\\)'). No test compiles the code, runs a subprocess, or executes the JavaScript reproduction case. These are purely textual checks."
+      "reason": "Every test reads the source file as text and checks for string patterns (regex matches, substring presence, positional ordering of strings). No test compiles the code, runs the reproduction script, or executes any behavior. All tests are pure text/pattern matching on source code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original file (e.g., the original has 'bun.assert(instance != .zero)' which must be removed, and 'if (... == .zero)' checks must be added). A stub or no-op would not pass since the original file content would fail these assertions."
+      "reason": "The fail-to-pass tests check for specific patterns that do NOT exist in the original code (e.g., the original has 'bun.assert(instance != .zero)' which must be removed, and 'hasException' guard in throwValue which must be added). A stub or no-op would not pass these tests since they check for presence of new code patterns."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All seven functions mentioned in the instruction (throw, throwPretty, throwTODO, createRangeError, the throw overload with error options, throwValue, throwError) have corresponding test coverage. The instruction's requirements about handling .zero returns and hasException guards are all tested."
+      "outcome": "fail",
+      "reason": "The instruction specifies that the reproduction script should 'print OK and exit cleanly', but no test actually runs the JavaScript reproduction code or checks runtime behavior. The tests only verify source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_crash_assert_removed, test_throwvalue_guarded, test_throwtodo_handles_zero, etc.), have docstrings explaining what they check, and are tagged with categories like [pr_diff] fail_to_pass and [static] pass_to_pass."
+      "reason": "Tests are well-named with descriptive function names and docstrings, and are annotated with comments like '[pr_diff] fail_to_pass', '[static] pass_to_pass', '[agent_config] pass_to_pass' indicating their category."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing source code, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction match those in the actual codebase and tests. No typos detected."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (src/bun.js/bindings/JSGlobalObject.zig) and lists all 7 specific functions with their exact fix patterns. While naming the file is reasonable, specifying 'bun.assert(instance != .zero)' must be replaced with 'if createErrorInstance returns .zero, return error.JSError' is detailed line-level implementation guidance."
+      "reason": "The instruction explicitly states 'replace with if (instance == .zero) { bun.assert(this.hasException()); return error.JSError; }' and names exact functions with exact replacement code. It also describes the file as defining 'pub const JSGlobalObject = opaque' which effectively identifies the exact file. This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

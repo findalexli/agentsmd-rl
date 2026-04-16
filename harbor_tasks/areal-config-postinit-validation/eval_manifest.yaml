@@ -132,6 +132,20 @@ rubric:
     to align the test suite with the new validation timing (failing at config instantiation
     rather than downstrea
   category: testing
+- rule: Use `__post_init__` for validation in config dataclasses and raise `ValueError`
+    with a clear message.
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-43
+  source_text: "- Use `__post_init__` for validation\n- Raise `ValueError` with clear\
+    \ message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
+    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
+    )\n  ```"
+  evidence: The diff moves validation logic from `Normalization.__init__` into `NormConfig.__post_init__`
+    and adds `__post_init__` to `BaseExperimentConfig`, raising `ValueError` with
+    clear, formatted messages when constraints are violated.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: rule_conflict
@@ -152,6 +166,35 @@ distractors:
   source:
     path: AGENTS.md
     lines: '56'
+- rule: Prefer composition over inheritance
+  source:
+    path: .claude/rules/code-style.md
+    lines: 7-11
+  source_text: "- **Prefer composition over inheritance**: Avoid deep class hierarchies\n\
+    \  - Good: `Engine` holds a `Checkpointer` instance\n  - Avoid: `CheckpointableEngine(Engine)`\
+    \ →\n    `FSDPCheckpointableEngine(CheckpointableEngine)`\n- Keep inheritance\
+    \ shallow (≤2 levels when possible)"
+  collision_type: architecture_boundary
+  why_distracting: The AI might see the inheritance in `SFTConfig(BaseExperimentConfig)`
+    or the use of `super().__post_init__()` and attempt to refactor the configuration
+    dataclasses to use composition instead of inheritance. However, configuration
+    dataclasses often rely on inheritance to compose CLI arguments, and changing this
+    would break the argument parsing architecture.
+  severity: high
+- rule: 'Log levels: ERROR for failures'
+  source:
+    path: .claude/rules/code-style.md
+    lines: 22-26
+  source_text: "- Log levels:\n  - DEBUG: Detailed tracing (avoid in hot paths)\n\
+    \  - INFO: Milestones (training start, checkpoint saved)\n  - WARNING: Recoverable\
+    \ issues\n  - ERROR: Failures requiring attention"
+  collision_type: would_cause_bug
+  why_distracting: The AI might see the validation failures (e.g., invalid mean_level)
+    and decide to use the custom logger to log an ERROR instead of raising a `ValueError`.
+    For configuration validation, raising an exception is the correct behavior to
+    halt execution; logging an error and continuing would cause a bug by allowing
+    invalid configurations to pass.
+  severity: medium
 hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain the strict rule to 'Ask
   first' before modifying `areal/api/cli_args.py`. However, the specific task instructions
   explicitly command the agent to modify this exact file. The agent must recognize

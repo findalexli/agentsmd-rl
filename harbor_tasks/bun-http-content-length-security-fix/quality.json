@@ -3,61 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific strings like 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' (test_httpparser_has_duplicate_content_length_fix), 'mightHave(\"content-length\")' (exact bloom filter call syntax), and exact test case names like 'rejects conflicting duplicate Content-Length headers' and 'rejects empty-valued Content-Length followed by smuggled Content-Length' (test_request_smuggling_test_exists). While instruction.md mentions bloom filter usage and RFC compliance, it does not specify the exact error"
+      "reason": "Tests assert on implementation-specific details not mentioned in instruction.md: test_httpparser_has_duplicate_content_length_fix checks for 'mightHave(\"content-length\")' (bloom filter method), 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' (specific error code), and 'strncmp(h->value.data())' or 'contentLengthString' (specific variable/function names). The instruction never mentions these identifiers. Also test_pr_comments_script_exists checks for 'gh api --paginate' and 'graphql' which are mention"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states implementation details: 'Use the bloom filter (req->bf.mightHave) to short-circuit', 'Walk all Content-Length headers (not just the first one)', 'Reject with HTTP 400 if any values differ'. It also specifies exact method names and the bloom filter approach. This tells the agent exactly WHAT to change and HOW, not just what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (parser only inspects first Content-Length header) and the requirements (reject conflicting duplicates, reject empty values, accept identical duplicates) without specifying exact code changes, line numbers, or variable names to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_httpparser_has_duplicate_content_length_fix asserts exact strings like 'mightHave(\"content-length\")' and 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' and 'strncmp(h->value.data()' or 'contentLengthString'. An alternative correct fix could use different variable names, a different comparison method (e.g., memcmp, == operator on string_view), or a different error constant name, and would fail these text-matching assertions."
+      "reason": "test_httpparser_has_duplicate_content_length_fix asserts gold-specific implementation details: 'mightHave(\"content-length\")' (the bloom filter call), 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' (specific error constant), and 'strncmp(h->value.data())' or 'contentLengthString' (specific variable name). An alternative correct fix using different variable names, different comparison methods, or a different error constant would fail these assertions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function uses only `assert 'string' in file.read_text()` or JSON parsing checks. No test compiles the C++ code, runs the HTTP server, sends actual HTTP requests, or executes the TypeScript script. All tests are pure text/content matching with no behavioral verification."
+      "reason": "Nearly all tests are pure text-matching: they read file contents and assert substrings (e.g., 'assert \"RFC 9112\" in content', 'assert \"mightHave\" in content', 'assert \"pr:comments\" in content'). No test compiles the C++ code, runs the HTTP server, executes the TypeScript script, or checks any runtime behavior. Every single test function uses only `Path.read_text()` and string assertions."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All f2p tests (test_httpparser_has_duplicate_content_length_fix, test_request_smuggling_test_exists, test_claude_md_documents_pr_comments, test_package_json_has_pr_comments_script, test_pr_comments_script_exists) only check for the presence of specific strings in files. An agent could write stub files containing the required strings without implementing any actual bug fix or functional code, and all tests would pass."
+      "reason": "A stub pr-comments.ts file containing the right keywords ('gh api --paginate', 'graphql', 'resolved', 'import', 'async', 'await') without any real implementation would pass test_pr_comments_script_exists and test_pr_comments_script_typescript_valid. Similarly, adding the right string literals to HttpParser.h without a correct fix would pass test_httpparser_has_duplicate_content_length_fix. The tests only check for text presence, not behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires functional behaviors like 'Reject with HTTP 400 if any values differ' and 'Accept requests where duplicate Content-Length headers have identical values', but no test actually verifies these HTTP behaviors. Tests only check for string presence in source files."
+      "reason": "Instruction requires actual HTTP 400 rejection behavior for conflicting Content-Length headers, but no test verifies this runtime behavior. The tests only check that certain strings exist in source files. The security fix behavior (rejecting/accepting specific HTTP requests) is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., 'config edit test', 'code edit test', 'pass_to_pass')."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks (e.g., 'config edit test', 'code edit test', 'pass_to_pass'), and are organized by concern (CLAUDE.md, package.json, script, parser, test file, syntax validation)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "instruction.md documents the JSON output schema for pr:comments --json mode including fields like when, user, kind, location, body, url, resolved, outdated."
+      "reason": "The instruction documents the JSON mode schema for pr:comments with specific fields: when, user, kind, location, body, url, resolved, outdated. This matches what the tests check for ('resolved' in content)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correctly spelled."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/bun-uws/src/HttpParser.h), the exact method to use (req->bf.mightHave), and specific implementation details like 'getHeader()' being the current problematic call. This goes beyond identifying the domain and into specifying the exact location and mechanism."
+      "outcome": "pass",
+      "reason": "The instruction says 'Locate the HTTP parser code that handles the Content-Length header validation' without naming the specific file (HttpParser.h) or specific lines/functions. Finding the exact file is left to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs (CLAUDE.md addition, package.json one-line addition) are localized additions that don't contradict other files."
+      "reason": "The gold config diffs are localized: appending a section to CLAUDE.md, adding one line to package.json scripts, and creating a new file. No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 5
 }

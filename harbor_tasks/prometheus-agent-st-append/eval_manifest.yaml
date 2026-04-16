@@ -1,0 +1,97 @@
+source_pr:
+  owner: prometheus
+  repo: prometheus
+  number: 18270
+  merge_commit: a3217fe94f9ca231f4b94ff80441cb3f25b6dc7a
+  base_commit: 788d122903baae36e823ec3b6c759aeb877ba1a7
+
+task:
+  name: prometheus-agent-st-append
+  title: "Fix Start Timestamp (ST) append in Prometheus agent mode"
+  description: |
+    Fix a bug in the Prometheus agent mode where the Start Timestamp (ST) field
+    was not being correctly persisted to WAL samples when the --enable-feature=st-storage
+    flag was enabled. The fix requires adding the ST field to record.RefSample
+    when appending samples in appenderV2.
+
+checks:
+  - id: test_agent_st_append_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Agent code compiles without errors"
+
+  - id: test_go_vet_tsdb_agent
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet passes on tsdb/agent package"
+
+  - id: test_go_fmt_tsdb_agent
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go fmt passes on tsdb/agent package"
+
+  - id: test_append_v2_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream AppendV2 unit tests pass"
+
+  - id: test_rollback_append_v2
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rollback AppendV2 unit tests pass"
+
+  - id: test_wal_replay_append_v2
+    type: pass_to_pass
+    origin: repo_tests
+    description: "WAL replay AppendV2 unit tests pass"
+
+  - id: test_st_zero_injection_append_v2
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ST zero injection AppendV2 unit tests pass"
+
+  - id: test_st_field_persisted_to_wal_samples
+    type: fail_to_pass
+    origin: gold_patch
+    description: "ST field is correctly written to WAL samples"
+
+  - id: test_st_persistence_with_varying_timestamps
+    type: fail_to_pass
+    origin: gold_patch
+    description: "ST values with varying timestamps are correctly persisted"
+
+  - id: test_invalid_series_append_v2
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Invalid series handling in AppendV2 works"
+
+  - id: test_code_compiles_after_fix
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All agent-related code compiles"
+
+rubric: []
+
+files:
+  - path: tsdb/agent/db_append_v2.go
+    description: "Main file with the ST append fix"
+  - path: tsdb/agent/db_append_v2_test.go
+    description: "Test file validating ST persistence"
+  - path: tsdb/agent/db.go
+    description: "Agent DB options including EnableSTStorage"
+
+estimates:
+  difficulty: "easy"
+  time_minutes: 15
+  skills_required:
+    - Go programming
+    - Understanding of struct initialization
+    - Basic WAL concepts
+
+tags:
+    - go
+    - bugfix
+    - prometheus
+    - tsdb
+    - agent-mode
+    - timestamp-handling

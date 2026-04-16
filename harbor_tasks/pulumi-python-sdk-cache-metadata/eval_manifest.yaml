@@ -1,0 +1,123 @@
+source_pr:
+  owner: pulumi
+  repo: pulumi
+  number: 22422
+  merge_commit: 91c0ddd97a76a8c7bce9de5c8530d879f5d71e05
+  base_commit: e0c59e5dd6bb3b55d16113be96e338bce3172cf5
+
+task_description: |
+  Cache type metadata and class references in Python SDK to reduce CPU overhead
+  during serialization. The PR adds @functools.cache to _py_properties and
+  _types_from_py_properties in _types.py, and implements module-level caching
+  for class references in known_types.py.
+
+checks:
+  # Fail-to-pass tests (behavioral changes that fail before the fix)
+  - id: test_py_properties_is_cached
+    type: fail_to_pass
+    origin: agent_config
+    description: _py_properties should be decorated with @functools.cache
+    source:
+      file: sdk/python/lib/pulumi/_types.py
+      line_ref: "_py_properties function"
+
+  - id: test_py_properties_cache_works
+    type: fail_to_pass
+    origin: agent_config
+    description: _py_properties caching actually works and returns identical objects
+    source:
+      file: sdk/python/lib/pulumi/_types.py
+      line_ref: "_py_properties function with functools.cache"
+
+  - id: test_types_from_py_properties_is_cached
+    type: fail_to_pass
+    origin: agent_config
+    description: _types_from_py_properties should be decorated with @functools.cache
+    source:
+      file: sdk/python/lib/pulumi/_types.py
+      line_ref: "_types_from_py_properties function"
+
+  - id: test_types_from_py_properties_cache_works
+    type: fail_to_pass
+    origin: agent_config
+    description: _types_from_py_properties caching actually works
+    source:
+      file: sdk/python/lib/pulumi/_types.py
+      line_ref: "_types_from_py_properties function with functools.cache"
+
+  - id: test_known_types_has_module_caches
+    type: fail_to_pass
+    origin: agent_config
+    description: known_types.py should have module-level cache variables
+    source:
+      file: sdk/python/lib/pulumi/runtime/known_types.py
+      line_ref: "Module-level cache variables (_Asset, _Archive, etc.)"
+
+  - id: test_is_asset_caches_class
+    type: fail_to_pass
+    origin: agent_config
+    description: is_asset should cache the Asset class reference
+    source:
+      file: sdk/python/lib/pulumi/runtime/known_types.py
+      line_ref: "is_asset function with caching"
+
+  - id: test_is_output_caches_class
+    type: fail_to_pass
+    origin: agent_config
+    description: is_output should cache the Output class reference
+    source:
+      file: sdk/python/lib/pulumi/runtime/known_types.py
+      line_ref: "is_output function with caching"
+
+  - id: test_is_resource_caches_class
+    type: fail_to_pass
+    origin: agent_config
+    description: is_resource should cache the Resource class reference
+    source:
+      file: sdk/python/lib/pulumi/runtime/known_types.py
+      line_ref: "is_resource function with caching"
+
+  - id: test_py_properties_returns_tuple
+    type: fail_to_pass
+    origin: agent_config
+    description: _py_properties should return tuple instead of Iterator for caching
+    source:
+      file: sdk/python/lib/pulumi/_types.py
+      line_ref: "_py_properties return type annotation"
+
+  # Pass-to-pass tests (ensure existing functionality still works)
+  - id: test_repo_types_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python SDK type-related unit tests pass (pytest)
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on modified SDK files
+
+  - id: test_repo_mypy_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Mypy type checker passes on modified SDK files
+
+  - id: test_repo_serialization_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Serialization tests that exercise the type system pass
+
+rubric:
+  - rule: "Python files should be linted after changes"
+    source:
+      file: sdk/python/AGENTS.md
+      line_ref: "If you change... Python files → mise exec -- make lint"
+
+  - rule: "Python SDK tests should pass after changes"
+    source:
+      file: sdk/python/AGENTS.md
+      line_ref: "If you change... Python files → mise exec -- make test_fast"
+
+  - rule: "Changes to public SDK surface should be escalated"
+    source:
+      file: AGENTS.md
+      line_ref: "Escalate immediately if: A change touches the public SDK surface"

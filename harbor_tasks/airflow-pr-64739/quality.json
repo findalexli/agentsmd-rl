@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (pod-template-file.kubernetes-helm-yaml, values.yaml, values.schema.json, NOTES.txt), the new config paths (workers.celery.extraContainers, workers.kubernetes.extraContainers), the legacy path (workers.extraContainers), priority behavior, deprecation warning requirement, and schema updates. All assert'd keys and paths in the tests are discoverable from the instruction."
+      "reason": "Instruction names all relevant files (pod-template-file, values.yaml, values.schema.json, NOTES.txt) and config paths (workers.celery.extraContainers, workers.kubernetes.extraContainers, workers.extraContainers) that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change (add new config paths, backward compatibility, deprecation warning, schema updates) but does not specify exact line changes, template syntax, or implementation details. A developer must reason about how to implement the changes."
+      "reason": "Instruction describes requirements (new paths, priority, deprecation warning) without specifying exact lines or code edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_deprecation_warning_for_legacy_extra_containers asserts exact strings like 'DEPRECATION WARNING' and '.Values.workers.extraContainers' in NOTES.txt content. An alternative valid implementation might use 'Deprecation Warning' (different casing), 'DEPRECATED' instead of 'DEPRECATION WARNING', or place the warning in a different template file. The test also checks for literal file content rather than rendered behavior, constraining implementation unnecessarily."
+      "outcome": "pass",
+      "reason": "Tests check rendered YAML behavior and schema/values keys generically; multiple implementations (default/or/if) would satisfy the assertions."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_deprecation_warning_for_legacy_extra_containers reads NOTES.txt raw and does `assert 'DEPRECATION WARNING' in notes_content` \u2014 pure text matching with no execution. test_values_schema_has_kubernetes_extra_containers and test_values_schema_has_celery_extra_containers just read JSON and check key existence. test_values_yaml_has_kubernetes_extra_containers_default and test_values_yaml_has_celery_extra_containers_default just read YAML and check key existence. Only 3 of 9 f2p tests actually exe"
+      "outcome": "pass",
+      "reason": "Tests invoke `helm template` subprocess and parse rendered YAML output, plus inspect JSON/YAML structure."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stub implementations. For example, test_kubernetes_extra_containers_in_pod_template runs helm template and checks that 'sidecar-k8s' appears in rendered containers, which requires actual template logic changes. The schema/values tests require structural additions to existing files."
+      "reason": "F2P tests require actual rendering behavior (sidecar-k8s container present, priority over legacy) that can't be faked by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 6 requirements from instruction.md are tested: (1) kubernetes.extraContainers in pod-template, (2) priority over legacy, (3) legacy fallback, (4) deprecation warning, (5) schema updates for both celery and kubernetes, (6) default values for both paths."
+      "reason": "Tests cover new path, priority, legacy fallback, deprecation warning, schema updates, and values.yaml defaults."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments into 'FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS' sections, each test has a descriptive name and docstring explaining its purpose."
+      "reason": "Tests are clearly sectioned with FAIL-TO-PASS and PASS-TO-PASS comment headers and descriptive names."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction specifies the JSON schema structure (values.schema.json) and YAML structure (values.yaml) that need to be updated, with clear nesting paths like workers.kubernetes.extraContainers."
+      "outcome": "not_applicable",
+      "reason": "Task is Helm chart configuration, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, config keys, or variable names across instruction.md and tests."
+      "reason": "File paths and config keys match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction lists files to investigate (appropriate for a Helm chart task) but doesn't specify exact line numbers, template syntax to use, or specific code changes. The files listed are the obvious ones for this domain."
+      "reason": "Instruction lists files to investigate but does not pinpoint exact lines; localization within those files remains the agent's task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to specific sections of 5 files (pod-template, values.yaml, values.schema.json, NOTES.txt, docs) without full-file rewrites, and changes are consistent with the instruction requirements."
+      "reason": "Gold patch is localized to specific template/schema/values sections without full-file rewrites."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

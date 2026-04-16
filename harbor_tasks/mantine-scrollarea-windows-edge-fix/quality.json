@@ -3,59 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file path TARGET_FILE, variable names like isAtTop/isAtBottom/canScrollHorizontally, exact strings like 'const handleWheel = (event:', 'onWheel?.(event)', 'event.stopPropagation()', 'scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1', 'scrollWidth > clientWidth', 'onWheel={handleWheel}', 'ctx.scrollbarXEnabled', 'ctx.viewport', 'event.shiftKey') are all explicitly stated in instruction.md's Requirements and Expected Behavior sections."
+      "reason": "The instruction specifies the file path, component name, context variables (scrollbarXEnabled, viewport, onViewportChange), variable names (isAtTop, isAtBottom, canScrollHorizontally), the handler name (handleWheel), the conditions for stopPropagation, the onWheel forwarding pattern, and attachment to Box. All test-specific details (boundary thresholds like scrollTop < 1, scrollTop >= scrollHeight - clientHeight - 1, scrollWidth > clientWidth, event.shiftKey, ctx.scrollbarXEnabled) are documente"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: specific variable names (isAtTop, isAtBottom, canScrollHorizontally), exact function signature ('const handleWheel = (event:'), exact call syntax ('onWheel?.(event)'), exact boundary conditions ('scrollTop < 1', 'scrollTop >= scrollHeight - clientHeight - 1'), and exact attachment ('onWheel={handleWheel}'). This is essentially the complete solution spelled out step by step, not just a description of what's broken."
+      "reason": "The instruction essentially dictates the exact implementation: extract onWheel, define handleWheel with specific signature, use optional chaining onWheel?.(event), name variables isAtTop/isAtBottom/canScrollHorizontally, specify exact boundary conditions (scrollTop < 1, scrollTop >= scrollHeight - clientHeight - 1), and attach onWheel={handleWheel}. This is a step-by-step implementation guide, not a bug description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names (isAtTop, isAtBottom, canScrollHorizontally), exact string literals ('const handleWheel = (event:', 'onWheel?.(event)', 'onWheel={handleWheel}'), and exact expression forms ('scrollTop < 1', 'scrollWidth > clientWidth'). A correct alternative using different variable names (e.g., 'atTopEdge'), different function names (e.g., 'wheelHandler'), or equivalent expressions (e.g., 'scrollTop === 0') would fail these tests."
+      "reason": "The instruction mandates specific variable names (isAtTop, isAtBottom, canScrollHorizontally), specific handler name (handleWheel), specific extraction of onWheel from props, and specific attachment pattern. The tests (via JEST_TEST_MAP entries like 'wheel_handler_active', 'onwheel_prop_forwarding') appear to test these specific implementation choices. An alternative correct fix using different variable names or a different handler structure (e.g., inline handler, useCallback, different naming) "
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_onwheel_prop_extracted, test_handlewheel_function_exists, test_handlewheel_calls_onwheel, test_stoppropagation_at_boundaries, test_shiftkey_check, test_scrollbarXEnabled_in_handlewheel_condition, test_handlewheel_attached_to_box, test_horizontal_scroll_check, test_viewport_boundaries_logic) are ALL pure text-matching: they read the file and assert specific strings/patterns are present. While pass_to_pass tests do run TypeScript/ESLint/Jest, every fail_to_pass test is"
+      "outcome": "pass",
+      "reason": "The tests run Jest behavioral tests via subprocess that render the component with @testing-library/react and check wheel event handling behavior (stopPropagation calls, handler forwarding). They also run TypeScript compilation, ESLint, Prettier, and existing Jest tests as subprocesses. These are execution-based, not text-matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all f2p tests are string-matching tests, an agent could simply insert a comment block containing all the required strings (e.g., '// const handleWheel = (event: ... onWheel?.(event) ... isAtTop ... isAtBottom ... event.stopPropagation() ...') without implementing any actual functionality, and all f2p tests would pass. The TypeScript compilation test might catch non-compilable code but the Jest test for ScrollArea is pass_to_pass (existing tests, not new behavioral tests)."
+      "outcome": "pass",
+      "reason": "The behavioral Jest tests verify that wheel events have stopPropagation called at boundaries but not in the middle, that shift key is required, that scrollbarXEnabled is required, etc. A stub/no-op implementation would not stop propagation and would fail these tests. The unmodified file has no wheel handler at all, so all f2p tests would fail without the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (onWheel extraction, handleWheel function, calling user's onWheel, boundary detection with isAtTop/isAtBottom, canScrollHorizontally check, shiftKey check, stopPropagation, attaching to Box) are tested."
+      "reason": "All behaviors specified in the instruction are tested: stopPropagation at vertical boundaries with shift+scroll, onWheel forwarding, shiftKey requirement, scrollbarXEnabled requirement, horizontal scrollability check, boundary detection logic, and handler attachment to the rendered element."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks. They are logically grouped by concern (prop extraction, function existence, boundary logic, etc.)."
+      "reason": "Tests are well-organized with clear names (test_shiftkey_check, test_stoppropagation_at_boundaries, etc.), grouped into fail-to-pass behavioral tests and pass-to-pass repo integrity tests, with docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a React component, not producing structured data output."
+      "reason": "This task is about fixing a UI component's event handling behavior, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and other identifiers in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, commands, and component names are consistent and correctly spelled throughout the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, exact variable names to use, exact function signature, exact conditional logic, and exact method calls. This goes well beyond naming the buggy file \u2014 it's a complete implementation specification including 'const handleWheel = (event:', 'isAtTop', 'isAtBottom', 'canScrollHorizontally', 'scrollTop < 1', etc."
+      "reason": "The instruction names the exact file (ScrollAreaViewport.tsx with full path), specifies exact variable names to use (isAtTop, isAtBottom, canScrollHorizontally, handleWheel), exact boundary thresholds (scrollTop < 1, scrollTop >= scrollHeight - clientHeight - 1), and the exact handler signature pattern. This goes well beyond identifying the buggy component."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a single TypeScript component file, not a config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -152,6 +152,27 @@ rubric:
     within the markdown text.
   category: style
   verification: llm_judge
+- rule: Use code font for code-related text (filenames, variables, commands).
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 38-38
+  source_text: '- **Code formatting:** Use code font for code-related text (filenames,
+    variables, commands).'
+  evidence: The diff applies backticks to format the code-related term 'Eager' as
+    code font, changing 'default change detection' to '`Eager` change detection' and
+    'without `OnPush` strategy' to 'with the `Eager` strategy'.
+  category: style
+  verification: llm_judge
+- rule: Aim for one idea per sentence. Keep sentences short.
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 28-28
+  source_text: '- **Conciseness:** Aim for one idea per sentence. Keep sentences short.'
+  evidence: 'The diff splits a longer sentence about ChangeDetectionStrategy.OnPush
+    into two shorter, more concise sentences: ''...is the default strategy (since
+    v22). This mode reduces the amount of checking...'''
+  category: style
+  verification: llm_judge
 config_edits:
 - path: adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md
   tier: 2

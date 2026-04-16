@@ -1,56 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant file (packages/router-cli/src/index.ts), the CLI commands (tsr --help, tsr generate, tsr watch), the tool (yargs), and the expected behaviors. The hints mention process.argv and yargs helpers. The structural tests check for 'hideBin' and 'yargs/helpers' which are discoverable from the hints about 'yargs provides a helper function to strip the node path and script path from argv' and the yargs documentation."
+      "reason": "Instruction names the file packages/router-cli/src/index.ts, commands (tsr --help, generate, watch), and the exact pattern yargs(hideBin(process.argv)) used in structural tests."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes symptoms (silent failure), mentions process.argv and that yargs has a helper function, but does not say 'use hideBin' or 'change yargs() to yargs(hideBin(process.argv))'. A developer must still reason about the specific fix."
+      "outcome": "fail",
+      "reason": "Instruction explicitly provides the fix: 'using the pattern `yargs(hideBin(process.argv))`' and describes hideBin's role, leaving essentially nothing to reason about."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_yargs_receives_argv asserts the exact string 'yargs(hideBin(process.argv))' must appear in the source. An alternative correct fix like 'yargs(process.argv.slice(2))' would pass all behavioral tests but fail this structural test. Similarly test_yargs_import_exists requires 'hideBin' and 'from \\'yargs/helpers\\''. These are gold-specific implementation details."
+      "reason": "test_yargs_receives_argv asserts the literal string 'yargs(hideBin(process.argv))' and test_yargs_import_exists requires \"from 'yargs/helpers'\", rejecting valid alternatives like yargs.default(process.argv.slice(2)) or different quote styles."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The majority of tests (test_cli_help_shows_usage, test_cli_recognizes_generate_command, test_cli_recognizes_watch_command, build/lint/types tests) execute subprocesses and check behavioral output. While two structural tests do text-matching on source, they supplement rather than replace the behavioral tests."
+      "reason": "Tests execute the CLI via subprocess (node CLI_DIST) and check runtime behavior, in addition to structural checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that the CLI produces meaningful output or non-zero exit codes when given commands. A stub/no-op implementation (the buggy yargs() without argv) would silently exit with code 0 and empty output, which these tests explicitly reject."
+      "reason": "Behavioral tests require real CLI output for --help, generate, watch; a stub cannot produce 'tsr', 'generate', 'watch' in help output."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md (--help shows usage, generate attempts to run, watch attempts to run) are tested by test_cli_help_shows_usage, test_cli_recognizes_generate_command, and test_cli_recognizes_watch_command respectively."
+      "reason": "Tests cover --help output, generate command recognition, and watch command recognition as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names, docstrings explaining the expected behavior with and without the fix, and comments indicating fail-to-pass vs pass-to-pass classification."
+      "reason": "Tests have descriptive names and docstrings explaining fail-to-pass vs pass-to-pass intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a CLI tool, not producing structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (packages/router-cli/src/index.ts) which is reasonable as the CLI entry point, and mentions process.argv and yargs helpers as hints. It does not name exact line numbers or the specific function hideBin."
+      "outcome": "fail",
+      "reason": "Instruction names the exact file (packages/router-cli/src/index.ts) and provides the exact fix pattern yargs(hideBin(process.argv)), eliminating localization and solution discovery."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
 }

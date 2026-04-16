@@ -15,6 +15,10 @@ In the OpenCode app, users can queue followup messages during an active session.
 
 The followup queue should survive project switches. When the user returns to the original project, their queued followups (including paused and failed entries) should still be present.
 
+## File to modify
+
+The fix must be implemented in `packages/app/src/pages/session.tsx`. The page function must remain exported as `export default function Page`.
+
 ## Technical requirements
 
 The fix must satisfy all of the following:
@@ -23,10 +27,10 @@ The fix must satisfy all of the following:
 
 2. **Store implementation**: The followup state must use SolidJS's `createStore` (not `createSignal`).
 
-3. **Persistence layer**: The followup store must be wrapped with a persistence layer — any import from a module whose name contains "persist" that is applied to the store.
+3. **Persistence layer**: The followup store must be wrapped with a persistence layer using imports from a module whose name contains "persist" (e.g., `@/utils/persist`).
 
-4. **Workspace scoping**: The persistence must be scoped per-project (using `.workspace()` API or equivalent workspace/directory-based scoping), not global. Without this, followups would still be lost on project switch.
+4. **Workspace scoping**: The persistence must be scoped per-project using the `.workspace()` API (or equivalent workspace/directory-based scoping using `sdk.directory`), not global. Without this, followups would still be lost on project switch.
 
 5. **No `any` type**: The followup persistence block must not use TypeScript's `any` type (neither `as any` nor `: any` annotations).
 
-6. **No try/catch, else, or for loops** in the followup persistence block.
+6. **No try/catch, else, or for loops** in the followup persistence block. Use functional array methods instead of for loops, prefer early returns over else statements, and avoid try/catch where possible.

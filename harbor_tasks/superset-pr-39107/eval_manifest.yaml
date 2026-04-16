@@ -1,0 +1,181 @@
+source:
+  repo: apache/superset
+  pr_number: 39107
+  base_commit: 92747246fc7e562eef527034e8fcceec50aad9ab
+  merge_commit: 83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21
+  primary_files:
+    - superset/mcp_service/utils/token_utils.py
+    - superset/mcp_service/middleware.py
+
+checks:
+  # Existence and import tests
+  - id: test_info_tools_constant_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: INFO_TOOLS constant should be defined in token_utils with all 4 info tools
+
+  - id: test_truncate_oversized_response_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response function should be importable
+
+  # _truncate_strings tests
+  - id: test_truncates_long_strings
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings should truncate strings exceeding max_chars
+
+  - id: test_does_not_truncate_short_strings
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings should not modify strings within limit
+
+  - id: test_truncates_multiple_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings should truncate multiple long string fields
+
+  # _truncate_strings_recursive tests
+  - id: test_truncates_nested_strings_in_list_items
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings_recursive should truncate strings inside list items
+
+  - id: test_truncates_nested_strings_in_dicts
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings_recursive should truncate strings inside nested dicts
+
+  - id: test_respects_depth_limit
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings_recursive should stop recursing at depth 10
+
+  - id: test_handles_empty_structures
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_strings_recursive should handle empty dicts and lists gracefully
+
+  # _truncate_lists tests
+  - id: test_truncates_long_lists
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_lists should truncate lists exceeding max_items without inline markers
+
+  - id: test_does_not_truncate_short_lists
+    type: fail_to_pass
+    origin: behavioral
+    description: _truncate_lists should not truncate lists within limit
+
+  # _summarize_large_dicts tests
+  - id: test_summarizes_large_dicts
+    type: fail_to_pass
+    origin: behavioral
+    description: _summarize_large_dicts should replace large dicts with key summaries
+
+  - id: test_does_not_summarize_small_dicts
+    type: fail_to_pass
+    origin: behavioral
+    description: _summarize_large_dicts should not summarize dicts within limit
+
+  # _replace_collections_with_summaries tests
+  - id: test_replaces_lists_and_dicts
+    type: fail_to_pass
+    origin: behavioral
+    description: _replace_collections_with_summaries should clear non-empty collections
+
+  # truncate_oversized_response tests
+  - id: test_no_truncation_needed
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response should return original data when under limit
+
+  - id: test_truncates_large_string_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response should truncate long strings to fit
+
+  - id: test_truncates_large_lists
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response should truncate lists when strings alone are not enough
+
+  - id: test_returns_non_dict_unchanged
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response should return non-dict responses unchanged
+
+  - id: test_progressive_truncation_phases
+    type: fail_to_pass
+    origin: behavioral
+    description: truncate_oversized_response should progressively apply truncation phases
+
+  # INFO_TOOLS content tests
+  - id: test_info_tools_excludes_list_tools
+    type: fail_to_pass
+    origin: behavioral
+    description: INFO_TOOLS should not contain list or write tools
+
+  - id: test_info_tools_is_immutable
+    type: fail_to_pass
+    origin: behavioral
+    description: INFO_TOOLS should be a frozenset (immutable)
+
+  # Edge case tests
+  - id: test_dashboard_with_many_charts
+    type: fail_to_pass
+    origin: behavioral
+    description: Should handle dashboard with 30 charts each having long descriptions
+
+  # Syntax tests (pass_to_pass)
+  - id: test_token_utils_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: token_utils.py should have valid Python syntax
+
+  - id: test_middleware_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: middleware.py should have valid Python syntax
+
+  # Ruff linting tests (pass_to_pass) - from repo's pre-commit config
+  - id: test_ruff_check_token_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: ruff check passes on token_utils.py
+
+  - id: test_ruff_check_middleware
+    type: pass_to_pass
+    origin: repo_tests
+    description: ruff check passes on middleware.py
+
+  - id: test_ruff_format_token_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: ruff format check passes on token_utils.py
+
+  - id: test_ruff_format_middleware
+    type: pass_to_pass
+    origin: repo_tests
+    description: ruff format check passes on middleware.py
+
+  # Import and base functionality tests (pass_to_pass)
+  - id: test_token_utils_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: token_utils module imports successfully
+
+  - id: test_estimate_token_count_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: estimate_token_count function works correctly
+
+  - id: test_estimate_response_tokens_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: estimate_response_tokens function works correctly
+
+rubric:
+  - id: no_config_changes_required
+    description: "This task is a pure code change that does not require any config/documentation file updates - PASS if no config files were modified"
+    rule: "No config file changes are required for this pure code implementation task"

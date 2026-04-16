@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (commands.ts, program.ts, route.ts, config.d.ts, SKILL.md, request-mocking.md), the command names (install-skills, install-browser), the capability name ('network'), the target directory (.claude/skills/playwright/), and the documentation sections (### Network, ### Install, route-list, unroute). All asserted specifics in tests are discoverable from the instruction."
+      "reason": "Instruction names all required literals (install-browser, install-skills, network, route-list, unroute, playwright-cli route-list, playwright-cli unroute) and file areas (SKILL.md, request-mocking.md, ToolCapability type, route tools)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change (rename command, add new command, move capability, update docs) but does not specify exact code changes like 'change line X to Y'. A developer must still reason about implementation details."
+      "reason": "Instruction describes what needs to change conceptually (rename command, add capability, move tools) without specifying exact line edits or code snippets."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex patterns like /declareCommand\\(\\{[\\s\\S]*?name:\\s*['\"]([^'\"]+)['\"]/g to extract command names, which assumes the exact syntax pattern 'declareCommand({...name: '...''). A correct alternative using a different declaration style (e.g., a helper function, object literal, or different formatting) would fail. Similarly, test_install_skills_implementation checks for exact strings like '.cp(' or 'cpSync' and '.claude' \u2014 an alternative using fs.mkdirSync + fs.copyFileSync recursively with"
+      "outcome": "pass",
+      "reason": "Tests check for command names, capability values, presence of function name 'installSkills', and literal doc strings \u2014 all reasonably required by any correct fix."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_install_skills_command_declared, test_install_renamed_to_install_browser, test_route_capability_network, test_network_capability_type, test_install_skills_implementation, test_skill_md_documents_network_commands) are purely textual \u2014 they read source files and check for string patterns or regex matches. None of them actually execute the CLI commands, import modules, or verify runtime behavior. The pass-to-pass tests do run builds/typechecks but the core f2p tests ar"
+      "reason": "Tests largely grep source files via regex/string matching (e.g., test_install_skills_implementation checks for '.claude' and 'cpSync' substrings); no test actually invokes install-skills to verify files are copied."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific non-default content: command names like 'install-skills' and 'install-browser' in declareCommand blocks, 'network' capability in defineTool blocks, specific function names and copy logic in program.ts. A stub/empty implementation would not pass these checks."
+      "reason": "Each f2p test requires specific code changes (renaming command, adding capability, implementing installSkills with copy logic) that a stub wouldn't satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that install-skills 'copies the skill files from packages/playwright/src/skill/ into the user's local .claude/skills/playwright/ directory, including the SKILL.md and the references/ subdirectory.' No test actually runs the install-skills command and verifies the files are copied correctly. test_install_skills_implementation only checks for string patterns in program.ts source code."
+      "outcome": "pass",
+      "reason": "All instruction-required behaviors (rename, new command, capability move, SKILL.md sections, request-mocking.md strings) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/static, Fail-to-pass/pr_diff, Config/documentation), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped under commented sections (Gates, Fail-to-pass, Config/documentation) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, and variable names in the instruction are consistent and correct. No typos detected in the instruction.md."
+      "reason": "No typos in instruction.md paths or command names."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files that are natural targets given the task domain (CLI commands, route tools, config types, skill docs). It doesn't specify exact line numbers or exact code to write, just describes what needs to change at a functional level."
+      "reason": "Instruction names the relevant files/commands but does not point to exact lines; localization within files is still required."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold diff touches config.d.ts with a single line addition ('network' to the union type), SKILL.md with section additions, and other files with localized changes. No full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task; primary changes are code."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

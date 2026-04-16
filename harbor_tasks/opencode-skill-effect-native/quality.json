@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/opencode/src/skill/index.ts), the helper function names (add, scan, loadSkills), the patterns to remove (Effect.runPromise, Effect.promise, .then(), Promise.all, Config.get(), Config.directories()), the patterns to add (Effect.fnUntraced/fn/gen, yield* Config.Service, yield* Bus.Service, Layer.provide(Config.*, Layer.provide(Bus.*), and related identifiers like InstanceState, SKILL.md, Session.Event.Error. All test assertions map to items explicitly "
+      "reason": "The instruction names all key patterns tested: Effect.fnUntraced/fn/gen for add/scan/loadSkills, Config.get()/Config.directories() static facades, Effect.runPromise, Effect.promise(() => loadSkills(...)), .then() chains, Promise.all, yield* Config.Service, yield* Bus.Service, Layer.provide(Config./Bus.), Layer.Layer type dependencies, SKILL.md, InstanceState, Skill.state, Session.Event.Error, and AGENTS.md rules (no try/catch, no any, no fs/promises, no fetch). All asserted specifics are discove"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive about the exact fix: it specifies that helpers must use Effect.fn/fnUntraced/gen, that Config.Service and Bus.Service must be yielded, that Layer.provide(Config.* and Layer.provide(Bus.* must be present in defaultLayer, that Promise.all must be replaced with Effect.forEach/Effect.all, etc. This goes well beyond describing what's broken \u2014 it tells the agent exactly what code patterns to use as replacements."
+      "reason": "The instruction explicitly tells the agent exactly what to change: 'add and scan helper functions should use Effect generators instead of async', 'use yield* Config.Service and yield* Bus.Service', 'replace Effect.runPromise with native yield', 'replace Effect.promise(() => loadSkills(...))' wrapper, 'replace Promise.all with Effect.forEach or Effect.all', 'defaultLayer must provide Config and Bus layers'. These are precise implementation directives, not just symptom descriptions."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex patterns like /\\bconst\\s+add\\s*=\\s*Effect\\.(fnUntraced|fn|gen)\\b/ that require specific variable assignment syntax. An alternative correct fix that, e.g., defines add as a method on a class, or uses a different naming convention, or wraps the generator differently, would fail. The tests also check for exact patterns like 'yield* Config.Service' and 'Layer.provide(Config.' which are implementation-specific rather than behavioral."
+      "reason": "Tests use regex to assert very specific patterns like `const add = Effect.(fnUntraced|fn|gen)`, `const scan = Effect.(fnUntraced|fn|gen)`, `loadSkills = Effect.(fnUntraced|fn|gen)`, `yield\\* Config\\.Service`, `Layer\\.provide\\(\\s*Config\\.\\w+`. A correct alternative that e.g. uses a different variable structure (like inlining helpers, using pipe-based composition, or naming variables differently) would fail these regex tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file and checks for regex patterns in the text (e.g., checking if 'const add = Effect.fnUntraced' appears in the code, checking absence of '.then(' strings). No test actually imports, compiles, or runs the code. This is purely textual/syntactic matching, not behavioral verification."
+      "reason": "Every single test reads the source file and runs regex pattern matching on its text content. No test imports the module, instantiates the Effect layer, calls any function, or verifies runtime behavior. The Node.js subprocess just reads the file text and runs regex\u2014it doesn't execute the code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., add being an Effect generator, loadSkills being an Effect generator). A stub or no-op wouldn't satisfy these regex-based checks \u2014 the specific Effect patterns must actually be written into the file."
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests are pure text/regex checks. A stub file containing the right string patterns (e.g., `const add = Effect.fnUntraced`, `const loadSkills = Effect.fn`, `yield* Config.Service`, `Layer.provide(Config.`) without any real implementation would pass all tests. No behavioral execution occurs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behavioral requirements listed in instruction.md (Effect generators for helpers, removal of static facades, removal of Effect.runPromise, removal of monolithic wrapper, removal of .then() chains, removal of Promise.all, yielding Config.Service/Bus.Service, defaultLayer providing Config/Bus) are tested."
+      "reason": "All behaviors described in instruction.md (Effect generators for helpers, removal of static facades, removal of Effect.runPromise, removal of monolithic wrapper, removal of .then() chains, removal of Promise.all, yielding services, layer dependencies, defaultLayer provisions, AGENTS.md rules) are tested via corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (fail_to_pass core behavioral, pass_to_pass regression, agent_config rules) with descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (fail_to_pass for core behavioral, pass_to_pass for regression, agent_config for AGENTS.md rules), descriptive function names, and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves refactoring TypeScript code, not producing structured data output."
+      "reason": "The task involves refactoring TypeScript code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (packages/opencode/src/skill/index.ts), the exact function names (add, scan, loadSkills), and specifies exact replacement patterns (Effect.fnUntraced/fn/gen, yield* Config.Service, yield* Bus.Service, Layer.provide(Config.*, Layer.provide(Bus.*). This is detailed localization and solution specification, not just a bug description."
+      "reason": "The instruction explicitly names the exact file (packages/opencode/src/skill/index.ts) and the exact function names (add, scan, loadSkills) to modify, plus specific API patterns to use (yield* Config.Service, yield* Bus.Service, Effect.forEach, Layer.provide). This goes beyond identifying the buggy module\u2014it provides a detailed recipe."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only refactoring task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

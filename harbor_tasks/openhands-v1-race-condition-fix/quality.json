@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files (settings.ts, use-settings.ts, use-create-conversation.ts), the specific changes (v1_enabled: true, export getSettingsQueryFn, ensureQueryData, DEFAULT_SETTINGS fallback, organizationId in query key), and the patterns tested. All assert'd specifics like import paths, function names, and variable names are discoverable from the instruction."
+      "reason": "The instruction names all three files (settings.ts, use-settings.ts, use-create-conversation.ts), the specific changes (v1_enabled: true, export getSettingsQueryFn, ensureQueryData, DEFAULT_SETTINGS fallback, organizationId in query key), and the concepts tested. All assert'd specifics like 'ensureQueryData', 'DEFAULT_SETTINGS', 'getSettingsQueryFn', 'useSelectedOrganizationId', and 'organizationId' are mentioned in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'DEFAULT_SETTINGS object contains a v1_enabled property that must be true', 'getSettingsQueryFn function must be exported', 'Use a query-key pattern that includes the organization ID', 'TanStack Query ensureQueryData helper can be used', 'Fall back to DEFAULT_SETTINGS when settings cannot be fetched'. These are implementation-level prescriptions, not just descriptions of what's broken."
+      "reason": "The instruction explicitly states the exact fixes: 'DEFAULT_SETTINGS object contains a v1_enabled property that must be true', 'getSettingsQueryFn function must be exported', 'Use a query-key pattern that includes the organization ID', 'Fall back to DEFAULT_SETTINGS when settings cannot be fetched', and 'ensureQueryData helper can be used to wait for a query to complete'. These are not descriptions of what's broken but prescriptions of exactly what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact string 'export const getSettingsQueryFn' in use-settings.ts, 'await queryClient.ensureQueryData' in use-create-conversation.ts, 'settings = DEFAULT_SETTINGS' exact string, specific import paths like 'import { getSettingsQueryFn } from \"#/hooks/query/use-settings\"', and queryKey pattern with organizationId. An alternative correct fix (e.g., using fetchQuery, or a different variable name, or a wrapper function) would fail these text-matching"
+      "reason": "Tests assert on gold-specific implementation details: test_use_create_conversation_uses_ensureQueryData checks for 'await queryClient.ensureQueryData' literally, test_use_create_conversation_has_fallback checks for 'settings = DEFAULT_SETTINGS' literally, test_use_create_conversation_uses_organizationId checks for exact queryKey pattern via regex. An alternative correct fix (e.g., using fetchQuery, or a different variable name like 'userSettings', or a different fallback pattern) would fail thes"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_default_settings_v1_enabled, test_getSettingsQueryFn_exported, test_use_create_conversation_uses_ensureQueryData, test_use_create_conversation_has_fallback, test_use_create_conversation_uses_organizationId, test_use_create_conversation_imports) are ALL pure text-matching with regex/string searches on file contents. While there are pass-to-pass tests that run builds/typechecks/tests, every f2p test is 'assert X in open(path).read()' pattern."
+      "reason": "The fail-to-pass tests (test_default_settings_v1_enabled, test_getSettingsQueryFn_exported, test_use_create_conversation_uses_ensureQueryData, test_use_create_conversation_has_fallback, test_use_create_conversation_uses_organizationId, test_use_create_conversation_imports, test_typescript_no_new_errors) are ALL text-matching tests using regex/string searches on file contents. While there are pass-to-pass tests that run builds/tests, the f2p tests that verify the fix are purely textual pattern ma"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in source files. An agent could satisfy them by adding dead code comments or unused imports containing the required strings (e.g., adding '// ensureQueryData' and 'settings = DEFAULT_SETTINGS' in comments) without actually fixing the race condition. The pass-to-pass tests (typecheck, build, lint) provide some guard but don't verify the race condition fix behavior."
+      "reason": "The f2p tests are text-matching only. A stub that simply contains the right string patterns (e.g., inserting dead-code comments with 'ensureQueryData', 'DEFAULT_SETTINGS', 'settings = DEFAULT_SETTINGS', etc.) without actually fixing the race condition would pass all f2p tests. The text checks don't verify runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (v1_enabled default change, export of getSettingsQueryFn, ensureQueryData usage, DEFAULT_SETTINGS fallback, organizationId in query key) are tested, plus build/typecheck/lint/existing tests pass."
+      "reason": "All behaviors described in the instruction (v1_enabled default to true, export getSettingsQueryFn, use ensureQueryData, fallback to DEFAULT_SETTINGS, use organizationId in query key) are tested, plus pass-to-pass tests verify the build/typecheck/lint still work."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with clear comments and descriptive function names and docstrings."
+      "reason": "Tests are clearly grouped into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with comments, and each test has a descriptive name and docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, function names, and commands in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files and exact changes needed: 'frontend/src/services/settings.ts \u2014 The DEFAULT_SETTINGS object contains a v1_enabled property that must be true', 'frontend/src/hooks/query/use-settings.ts \u2014 The getSettingsQueryFn function must be exported', specific mention of ensureQueryData helper. This goes well beyond naming the buggy module."
+      "reason": "The instruction names exact files and exact changes: 'frontend/src/services/settings.ts \u2014 v1_enabled property that must be true', 'frontend/src/hooks/query/use-settings.ts \u2014 getSettingsQueryFn function must be exported', 'frontend/src/hooks/mutation/use-create-conversation.ts \u2014 must use ensureQueryData'. This goes beyond describing the bug to specifying implementation-level details of the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config editing task."
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [

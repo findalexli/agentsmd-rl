@@ -1,0 +1,29 @@
+name = "langchain-openai-vcr-cassette-fix"
+description = "Fix broken VCR cassette playback in langchain-openai integration tests"
+
+# Repository information
+owner = "langchain-ai"
+repo = "langchain"
+base_commit = "8c15649127b3714b2b8f1903968163db70e6b90c"
+merge_commit = "deb85b6c4ccba4a41f1b71a500880ace13f0b5a5"
+pr_number = 36502
+
+# Task categorization
+difficulty = "medium"
+tags = ["python", "testing", "vcr", "langchain", "openai", "integration-tests"]
+
+# Time estimates (in minutes)
+estimated_time = { default = 30, min = 15, max = 60 }
+
+# Target files that the PR modifies
+target_files = [
+    "libs/partners/openai/tests/conftest.py",
+    "libs/partners/openai/tests/integration_tests/chat_models/test_responses_api.py",
+]
+
+# Distinctive lines from the patch for idempotency checks
+distinctive_lines = [
+    'if m != "uri"',
+    'bound_llm.invoke("whats 5 * 4")',
+    'What was the third tallest buliding in the year 2000?',
+]

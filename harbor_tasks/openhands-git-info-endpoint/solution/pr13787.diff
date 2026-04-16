@@ -1,0 +1,467 @@
+diff --git a/enterprise/integrations/resolver_context.py b/enterprise/integrations/resolver_context.py
+index 29192d155406..1ec84a0cea0a 100644
+--- a/enterprise/integrations/resolver_context.py
++++ b/enterprise/integrations/resolver_context.py
+@@ -3,7 +3,7 @@
+ from openhands.app_server.user.user_context import UserContext
+ from openhands.app_server.user.user_models import UserInfo
+ from openhands.integrations.provider import PROVIDER_TOKEN_TYPE, ProviderHandler
+-from openhands.integrations.service_types import ProviderType
++from openhands.integrations.service_types import ProviderType, UserGitInfo
+ from openhands.sdk.secret import SecretSource, StaticSecret
+ from openhands.server.user_auth.user_auth import UserAuth
+ 
+@@ -85,3 +85,6 @@ async def get_secrets(self) -> dict[str, SecretSource]:
+ 
+     async def get_mcp_api_key(self) -> str | None:
+         return await self.saas_user_auth.get_mcp_api_key()
++
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        return await self.saas_user_auth.get_user_git_info()
+diff --git a/enterprise/server/routes/user.py b/enterprise/server/routes/user.py
+index 610775f3547d..f98f73f4b8d7 100644
+--- a/enterprise/server/routes/user.py
++++ b/enterprise/server/routes/user.py
+@@ -146,12 +146,13 @@ async def saas_get_user_repositories(
+     )
+ 
+ 
+-@saas_user_router.get('/info', response_model=User)
++@saas_user_router.get('/info', response_model=User, deprecated=True)
+ async def saas_get_user(
+     provider_tokens: PROVIDER_TOKEN_TYPE | None = Depends(get_provider_tokens),
+     access_token: SecretStr | None = Depends(get_access_token),
+     user_id: str | None = Depends(get_user_id),
+ ) -> User | JSONResponse:
++    """Get the current user git info. Use GET /api/v1/users/git-info instead"""
+     if not provider_tokens:
+         if not access_token:
+             return JSONResponse(
+diff --git a/openhands/app_server/user/auth_user_context.py b/openhands/app_server/user/auth_user_context.py
+index 663ab0bbfda8..cfdb40e3cce7 100644
+--- a/openhands/app_server/user/auth_user_context.py
++++ b/openhands/app_server/user/auth_user_context.py
+@@ -14,6 +14,7 @@
+     ProviderHandler,
+     ProviderType,
+ )
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.sdk.secret import SecretSource, StaticSecret
+ from openhands.server.user_auth.user_auth import UserAuth, get_user_auth
+ 
+@@ -117,6 +118,9 @@ async def get_mcp_api_key(self) -> str | None:
+         mcp_api_key = await self.user_auth.get_mcp_api_key()
+         return mcp_api_key
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        return await self.user_auth.get_user_git_info()
++
+ 
+ USER_ID_ATTR = 'user_id'
+ 
+diff --git a/openhands/app_server/user/specifiy_user_context.py b/openhands/app_server/user/specifiy_user_context.py
+index 087aac9e7f1c..69d35e019d8b 100644
+--- a/openhands/app_server/user/specifiy_user_context.py
++++ b/openhands/app_server/user/specifiy_user_context.py
+@@ -6,6 +6,7 @@
+ from openhands.app_server.user.user_context import UserContext
+ from openhands.app_server.user.user_models import UserInfo
+ from openhands.integrations.provider import PROVIDER_TOKEN_TYPE, ProviderType
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.sdk.secret import SecretSource
+ 
+ 
+@@ -40,6 +41,9 @@ async def get_secrets(self) -> dict[str, SecretSource]:
+     async def get_mcp_api_key(self) -> str | None:
+         raise NotImplementedError()
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        raise NotImplementedError()
++
+ 
+ USER_CONTEXT_ATTR = 'user_context'
+ ADMIN = SpecifyUserContext(user_id=None)
+diff --git a/openhands/app_server/user/user_context.py b/openhands/app_server/user/user_context.py
+index 625b4cd43ea7..303c195ef6fe 100644
+--- a/openhands/app_server/user/user_context.py
++++ b/openhands/app_server/user/user_context.py
+@@ -5,6 +5,7 @@
+     UserInfo,
+ )
+ from openhands.integrations.provider import PROVIDER_TOKEN_TYPE, ProviderType
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.sdk.secret import SecretSource
+ from openhands.sdk.utils.models import DiscriminatedUnionMixin
+ 
+@@ -58,6 +59,10 @@ async def get_secrets(self) -> dict[str, SecretSource]:
+     async def get_mcp_api_key(self) -> str | None:
+         """Get an MCP API Key."""
+ 
++    @abstractmethod
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        """Get an User Meta"""
++
+ 
+ class UserContextInjector(DiscriminatedUnionMixin, Injector[UserContext], ABC):
+     """Injector for user contexts."""
+diff --git a/openhands/app_server/user/user_router.py b/openhands/app_server/user/user_router.py
+index 4d4353eb2b73..c09d55c1db11 100644
+--- a/openhands/app_server/user/user_router.py
++++ b/openhands/app_server/user/user_router.py
+@@ -10,6 +10,7 @@
+ from openhands.app_server.user.user_context import UserContext
+ from openhands.app_server.user.user_models import UserInfo
+ from openhands.app_server.utils.dependencies import get_dependencies
++from openhands.integrations.service_types import UserGitInfo
+ 
+ _logger = logging.getLogger(__name__)
+ 
+@@ -44,6 +45,17 @@ async def get_current_user(
+     return user
+ 
+ 
++@router.get('/git-info')
++async def get_current_user_git_info(
++    user_context: UserContext = user_dependency,
++) -> UserGitInfo:
++    """Get the current authenticated user's metadata from the git provider."""
++    user = await user_context.get_user_git_info()
++    if user is None:
++        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Not authenticated')
++    return user
++
++
+ async def _validate_session_key_ownership(
+     user_context: UserContext,
+     session_api_key: str | None,
+diff --git a/openhands/integrations/service_types.py b/openhands/integrations/service_types.py
+index 38f7a83da5bc..e96d61a18493 100644
+--- a/openhands/integrations/service_types.py
++++ b/openhands/integrations/service_types.py
+@@ -126,7 +126,7 @@ class CreateMicroagent(BaseModel):
+     title: str | None = None
+ 
+ 
+-class User(BaseModel):
++class UserGitInfo(BaseModel):
+     id: str
+     login: str
+     avatar_url: str
+@@ -135,6 +135,10 @@ class User(BaseModel):
+     email: str | None = None
+ 
+ 
++# Keep old name of UserGitInfo for now for backwards compatibility
++User = UserGitInfo
++
++
+ class Branch(BaseModel):
+     name: str
+     commit_sha: str
+diff --git a/openhands/server/routes/git.py b/openhands/server/routes/git.py
+index 2cbb3d9864c8..b4a4084c5701 100644
+--- a/openhands/server/routes/git.py
++++ b/openhands/server/routes/git.py
+@@ -113,12 +113,13 @@ async def get_user_repositories(
+     raise AuthenticationError('Git provider token required. (such as GitHub).')
+ 
+ 
+-@app.get('/info', response_model=User)
++@app.get('/info', response_model=User, deprecated=True)
+ async def get_user(
+     provider_tokens: PROVIDER_TOKEN_TYPE | None = Depends(get_provider_tokens),
+     access_token: SecretStr | None = Depends(get_access_token),
+     user_id: str | None = Depends(get_user_id),
+ ) -> User | JSONResponse:
++    """Get the current user git info. Use GET /api/v1/users/git-info instead"""
+     if provider_tokens:
+         client = ProviderHandler(
+             provider_tokens=provider_tokens, external_auth_token=access_token
+diff --git a/openhands/server/user_auth/user_auth.py b/openhands/server/user_auth/user_auth.py
+index f8f8ee4f5d7b..7ebc94593b56 100644
+--- a/openhands/server/user_auth/user_auth.py
++++ b/openhands/server/user_auth/user_auth.py
+@@ -14,7 +14,8 @@
+ from fastapi import Request
+ from pydantic import SecretStr
+ 
+-from openhands.integrations.provider import PROVIDER_TOKEN_TYPE
++from openhands.integrations.provider import PROVIDER_TOKEN_TYPE, ProviderHandler
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.server.settings import Settings
+ from openhands.server.shared import server_config
+ from openhands.storage.data_models.secrets import Secrets
+@@ -87,6 +88,20 @@ def get_auth_type(self) -> AuthType | None:
+     async def get_mcp_api_key(self) -> str | None:
+         """Get an mcp api key for the user"""
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        """Get git meta for the current user"""
++        provider_tokens = await self.get_provider_tokens()
++        if not provider_tokens:
++            return None
++
++        access_token = await self.get_access_token()
++        client = ProviderHandler(
++            provider_tokens=provider_tokens, external_auth_token=access_token
++        )
++
++        user: UserGitInfo = await client.get_user()
++        return user
++
+     @classmethod
+     @abstractmethod
+     async def get_instance(cls, request: Request) -> UserAuth:
+diff --git a/tests/unit/app_server/test_settings_api.py b/tests/unit/app_server/test_settings_api.py
+index e3c82ecd2853..8af3360050e9 100644
+--- a/tests/unit/app_server/test_settings_api.py
++++ b/tests/unit/app_server/test_settings_api.py
+@@ -7,6 +7,7 @@
+ from pydantic import SecretStr
+ 
+ from openhands.integrations.provider import ProviderToken, ProviderType
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.server.app import app
+ from openhands.server.user_auth.user_auth import UserAuth
+ from openhands.storage.data_models.secrets import Secrets
+@@ -51,6 +52,9 @@ async def get_secrets(self) -> Secrets | None:
+     async def get_mcp_api_key(self) -> str | None:
+         return None
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        return None
++
+     @classmethod
+     async def get_instance(cls, request: Request) -> UserAuth:
+         return MockUserAuth()
+diff --git a/tests/unit/app_server/test_user_git_info.py b/tests/unit/app_server/test_user_git_info.py
+new file mode 100644
+index 000000000000..89db61094449
+--- /dev/null
++++ b/tests/unit/app_server/test_user_git_info.py
+@@ -0,0 +1,181 @@
++"""Unit tests for the GET /users/git-info endpoint in user_router.py.
++
++Tests:
++- GET /api/v1/users/git-info
++- get_current_user_git_info function
++"""
++
++from unittest.mock import AsyncMock
++
++import pytest
++
++
++class TestGetCurrentUserGitInfo:
++    """Test suite for get_current_user_git_info function."""
++
++    @pytest.fixture
++    def mock_user_context(self):
++        """Create a mock user context."""
++        return AsyncMock()
++
++    async def test_returns_user_git_info_when_authenticated(self, mock_user_context):
++        """Authenticated user with git info returns the git info."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        expected_git_info = UserGitInfo(
++            id='user-123',
++            login='testuser',
++            avatar_url='https://example.com/avatar.png',
++            company='Test Company',
++            name='Test User',
++            email='test@example.com',
++        )
++        mock_user_context.get_user_git_info = AsyncMock(return_value=expected_git_info)
++
++        # Import inside test to avoid circular imports at collection time
++        from openhands.app_server.user.user_router import get_current_user_git_info
++
++        result = await get_current_user_git_info(user_context=mock_user_context)
++
++        mock_user_context.get_user_git_info.assert_called_once()
++        assert result.id == 'user-123'
++        assert result.login == 'testuser'
++        assert result.avatar_url == 'https://example.com/avatar.png'
++        assert result.company == 'Test Company'
++        assert result.name == 'Test User'
++        assert result.email == 'test@example.com'
++
++    async def test_returns_user_git_info_with_minimal_fields(self, mock_user_context):
++        """User git info with only required fields returns successfully."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        minimal_git_info = UserGitInfo(
++            id='user-456',
++            login='minimaluser',
++            avatar_url='https://example.com/default.png',
++        )
++        mock_user_context.get_user_git_info = AsyncMock(return_value=minimal_git_info)
++
++        from openhands.app_server.user.user_router import get_current_user_git_info
++
++        result = await get_current_user_git_info(user_context=mock_user_context)
++
++        assert result.id == 'user-456'
++        assert result.login == 'minimaluser'
++        assert result.avatar_url == 'https://example.com/default.png'
++        assert result.company is None
++        assert result.name is None
++        assert result.email is None
++
++    async def test_raises_401_when_user_git_info_is_none(self, mock_user_context):
++        """When get_user_git_info returns None, raises 401 Unauthorized."""
++        from fastapi import HTTPException
++
++        mock_user_context.get_user_git_info = AsyncMock(return_value=None)
++
++        from openhands.app_server.user.user_router import get_current_user_git_info
++
++        with pytest.raises(HTTPException) as exc_info:
++            await get_current_user_git_info(user_context=mock_user_context)
++
++        assert exc_info.value.status_code == 401
++        assert 'Not authenticated' in exc_info.value.detail
++        mock_user_context.get_user_git_info.assert_called_once()
++
++    async def test_raises_401_when_user_git_info_returns_none_for_company(
++        self, mock_user_context
++    ):
++        """Ensure None values in optional fields don't trigger 401."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        git_info = UserGitInfo(
++            id='user-789',
++            login='companyuser',
++            avatar_url='https://example.com/company.png',
++            company=None,
++            name=None,
++            email=None,
++        )
++        mock_user_context.get_user_git_info = AsyncMock(return_value=git_info)
++
++        from openhands.app_server.user.user_router import get_current_user_git_info
++
++        result = await get_current_user_git_info(user_context=mock_user_context)
++
++        # Should NOT raise 401 - None optional fields are valid
++        assert result.id == 'user-789'
++        assert result.login == 'companyuser'
++
++    async def test_propagates_exceptions_from_user_context(self, mock_user_context):
++        """When get_user_git_info raises an exception, it should propagate."""
++        mock_user_context.get_user_git_info = AsyncMock(
++            side_effect=Exception('Database error')
++        )
++
++        from openhands.app_server.user.user_router import get_current_user_git_info
++
++        with pytest.raises(Exception, match='Database error'):
++            await get_current_user_git_info(user_context=mock_user_context)
++
++
++class TestUserGitInfoModel:
++    """Tests for the UserGitInfo model itself."""
++
++    def test_user_git_info_full_fields(self):
++        """Test UserGitInfo with all fields populated."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        git_info = UserGitInfo(
++            id='full-user',
++            login='fulllogin',
++            avatar_url='https://example.com/full.png',
++            company='Full Company',
++            name='Full Name',
++            email='full@example.com',
++        )
++
++        assert git_info.id == 'full-user'
++        assert git_info.login == 'fulllogin'
++        assert git_info.avatar_url == 'https://example.com/full.png'
++        assert git_info.company == 'Full Company'
++        assert git_info.name == 'Full Name'
++        assert git_info.email == 'full@example.com'
++
++    def test_user_git_info_model_dump_json(self):
++        """Test UserGitInfo serializes correctly to JSON."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        git_info = UserGitInfo(
++            id='json-user',
++            login='jsonlogin',
++            avatar_url='https://example.com/json.png',
++            company='JSON Corp',
++            name='JSON Name',
++            email='json@example.com',
++        )
++
++        json_str = git_info.model_dump_json()
++        # Check for key fields in the JSON output (Pydantic uses compact JSON by default)
++        assert '"id":"json-user"' in json_str
++        assert '"login":"jsonlogin"' in json_str
++        assert '"company":"JSON Corp"' in json_str
++        assert '"name":"JSON Name"' in json_str
++        assert '"email":"json@example.com"' in json_str
++
++    def test_user_git_info_model_dump(self):
++        """Test UserGitInfo model_dump works correctly."""
++        from openhands.integrations.service_types import UserGitInfo
++
++        git_info = UserGitInfo(
++            id='dump-user',
++            login='dumplogin',
++            avatar_url='https://example.com/dump.png',
++        )
++
++        data = git_info.model_dump()
++        assert data['id'] == 'dump-user'
++        assert data['login'] == 'dumplogin'
++        assert data['avatar_url'] == 'https://example.com/dump.png'
++        assert data['company'] is None
++        assert data['name'] is None
++        assert data['email'] is None
+diff --git a/tests/unit/server/routes/test_skills_api.py b/tests/unit/server/routes/test_skills_api.py
+index e6467d801f1e..b1daa1bee013 100644
+--- a/tests/unit/server/routes/test_skills_api.py
++++ b/tests/unit/server/routes/test_skills_api.py
+@@ -8,6 +8,7 @@
+ from pydantic import SecretStr
+ 
+ from openhands.integrations.provider import ProviderToken, ProviderType
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.server.app import app
+ from openhands.server.user_auth.user_auth import UserAuth
+ from openhands.storage.data_models.secrets import Secrets
+@@ -52,6 +53,9 @@ async def get_secrets(self) -> Secrets | None:
+     async def get_mcp_api_key(self) -> str | None:
+         return None
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        return None
++
+     @classmethod
+     async def get_instance(cls, request: Request) -> UserAuth:
+         return MockUserAuth()
+diff --git a/tests/unit/server/test_openapi_schema_generation.py b/tests/unit/server/test_openapi_schema_generation.py
+index eb967e496c68..868776a7e944 100644
+--- a/tests/unit/server/test_openapi_schema_generation.py
++++ b/tests/unit/server/test_openapi_schema_generation.py
+@@ -7,6 +7,7 @@
+ from pydantic import SecretStr
+ 
+ from openhands.integrations.provider import ProviderToken, ProviderType
++from openhands.integrations.service_types import UserGitInfo
+ from openhands.server.app import app
+ from openhands.server.user_auth.user_auth import UserAuth
+ from openhands.storage.data_models.secrets import Secrets
+@@ -49,6 +50,9 @@ async def get_secrets(self) -> Secrets | None:
+     async def get_mcp_api_key(self) -> str | None:
+         return None
+ 
++    async def get_user_git_info(self) -> UserGitInfo | None:
++        return None
++
+     @classmethod
+     async def get_instance(cls, request: Request) -> UserAuth:
+         return MockUserAuth()

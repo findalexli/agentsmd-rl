@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path (components/typography/Base/index.tsx), the function (isEleEllipsis), the hook (useTooltipProps), the variable name (needNativeEllipsisMeasure), and all the behavioral requirements checked by the tests (gating condition, dependency arrays, isMergedEllipsis calculation, IntersectionObserver conditions). All test-asserted specifics are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'needNativeEllipsisMeasure' (test_needNativeEllipsisMeasure_variable_exists), the exact position of tooltipProps relative to useEffect (test_tooltipProps_before_useEffect), the useTooltipProps hook call being moved (test_tooltipProps_moved_before_measurement), and specific dependency array contents (test_useEffect_dependencies_include_measurement_flag, test_intersection_observer_dependencies). Whil"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The variable name used for the condition combining CSS ellipsis and tooltip title must match exactly `needNativeEllipsisMeasure`' and specifies exactly what the variable should combine (cssEllipsis && tooltipProps.title), plus details like 'The useEffect that controls ellipsis measurement includes the appropriate dependency' and 'The IntersectionObserver useEffect's early-return condition properly reflects whether native ellipsis measurement is needed.' Combine"
+      "reason": "Instruction.md essentially describes the exact fix: 'The expensive isEleEllipsis measurement is gated behind a condition that checks both cssEllipsis and whether a tooltip title is present', 'The hook that provides tooltip configuration is accessible before any measurement-dependent logic', 'The useEffect that controls ellipsis measurement includes appropriate dependencies', 'The IntersectionObserver setup properly reflects whether native ellipsis measurement is needed'. These 6 numbered points "
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the exact variable name 'needNativeEllipsisMeasure' (test_needNativeEllipsisMeasure_variable_exists), exact regex patterns like 'enableEllipsis && (\\w+) && textEle', and specific structural positions. An alternative correct fix using a different variable name (e.g., 'shouldMeasureEllipsis') or a different code structure (e.g., inline condition) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_needNativeEllipsisMeasure_variable_exists checks for a variable named 'needNativeEllipsisMeasure' with the pattern 'cssEllipsis && !!tooltipProps.title'. An alternative correct fix could use a different variable name (e.g., 'shouldMeasureEllipsis') or a different expression (e.g., 'cssEllipsis && tooltipProps.title != null') and would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All visible tests use Node.js to read the source file and check string patterns via regex (e.g., content.match, content.indexOf, content.includes). None of them actually import, compile, or execute the Typography component. They are pure text/structure analysis tests, equivalent to 'assert pattern in open(path).read()'."
+      "reason": "The tests primarily use AST parsing of the source code to check structural properties (variable names, positions, dependency arrays) rather than executing the component and observing its behavior. For example, test_isEleEllipsis_gated_by_tooltip_check parses the AST to find the condition guarding isEleEllipsis, test_needNativeEllipsisMeasure_variable_exists checks for a variable declaration pattern. No tests actually render the Typography component or measure whether isEleEllipsis is called."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific code transformations (variable definitions, reordered declarations, modified dependency arrays) that would not be present in the base commit's code. A stub or no-op would not pass because the base file lacks the needNativeEllipsisMeasure variable and has tooltipProps defined after the measurement useEffect."
+      "reason": "The tests check for specific structural changes in the code (e.g., the isEleEllipsis call must be inside an if statement with a tooltip title check, tooltipProps must be declared before the useEffect). A stub or no-op implementation would not pass because the base code lacks these structural properties."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six behavioral requirements from the instruction (gating isEleEllipsis, useTooltipProps ordering, useEffect dependencies, isMergedEllipsis calculation, IntersectionObserver early-return, IntersectionObserver dependencies) are tested by corresponding test functions."
+      "reason": "All 6 requirements from instruction.md are covered by corresponding tests: gating isEleEllipsis (test 1), tooltip config accessibility (test 2/3), useEffect dependencies (test 4), IntersectionObserver setup (test 5), and IntersectionObserver dependencies (test 6)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_isEleEllipsis_gated_by_combined_condition, test_tooltipProps_computed_before_measurement, etc.), have docstrings explaining before/after behavior, and are logically grouped into fail-to-pass categories."
+      "reason": "Tests are well-organized with clear docstrings, descriptive function names, and a comment separating 'FAIL-TO-PASS' tests from 'PASS-TO-PASS' tests. Helper functions are clearly named and documented."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a React component, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a React component's performance issue, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction appear correct and consistent with the codebase."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact variable name 'needNativeEllipsisMeasure', describes precisely which useEffect dependencies to change, and details the exact isMergedEllipsis calculation modification. This goes well beyond describing what's broken and into prescribing the exact implementation."
+      "reason": "Instruction.md names the exact file 'components/typography/Base/index.tsx', mentions specific hooks ('useTooltipProps'), specific functions ('isEleEllipsis'), and specific implementation patterns ('IntersectionObserver dependency array'). The 6 numbered requirements essentially describe the exact code changes needed rather than just the observable bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

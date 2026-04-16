@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'onFocusRef = useCallbackRef(onFocus)' and 'onBlurRef = useCallbackRef(onBlur)' (test_onfocus_uses_callbackref, test_onblur_uses_callbackref). The instruction.md mentions using a 'ref-based pattern' and points to the utils directory but never names the exact variable names 'onFocusRef' or 'onBlurRef', making these specific assertions undiscoverable from the instruction alone."
+      "reason": "Tests assert exact variable names like 'onFocusRef = useCallbackRef(onFocus)' and 'onBlurRef = useCallbackRef(onBlur)' (test_onfocus_uses_callbackref, test_onblur_uses_callbackref). The instruction.md mentions using a 'ref-based pattern' and points to the utils directory but never names 'useCallbackRef' explicitly, nor the variable names 'onFocusRef'/'onBlurRef'. These specifics are not discoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md states 'The solution should use a ref-based pattern that allows accessing the current callback without breaking memoization' and points to 'The utils directory in the same package contains helper hooks that can be used to solve this type of stale closure problem.' Combined with 'handleFocusIn and handleFocusOut event handlers inside the hook should have empty dependency arrays', this effectively tells the agent exactly what to do: use useCallbackRef from utils to wrap the callback"
+      "reason": "Instruction.md explicitly states: 'The solution should use a ref-based pattern that allows accessing the current callback without breaking memoization' and 'The utils directory in the same package contains helper hooks that can be used to solve this type of stale closure problem' and 'handleFocusIn and handleFocusOut event handlers inside the hook should have empty dependency arrays'. This effectively tells the developer exactly what to change (wrap callbacks with a ref-based utility from utils,"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests test_onfocus_uses_callbackref and test_onblur_uses_callbackref assert exact strings 'onFocusRef = useCallbackRef(onFocus)' and 'onBlurRef = useCallbackRef(onBlur)'. An alternative correct fix using different variable names (e.g., 'focusCallback = useCallbackRef(onFocus)') or using useRef directly with a useEffect pattern would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact strings like 'onFocusRef = useCallbackRef(onFocus)' and 'onBlurRef = useCallbackRef(onBlur)' in test_onfocus_uses_callbackref and test_onblur_uses_callbackref. An alternative correct fix using different variable names (e.g., 'focusCallback = useCallbackRef(onFocus)') or a manual useRef pattern would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_use_callback_ref_imported, test_onfocus_uses_callbackref, test_onblur_uses_callbackref, test_handle_focus_in_no_deps, test_handle_focus_out_no_deps are all pure text-matching assertions (reading file content and checking for string patterns). While test_hooks_jest_passes does execute tests, the majority of fail-to-pass tests are text-based."
+      "reason": "Most fail-to-pass tests (test_use_callback_ref_imported, test_onfocus_uses_callbackref, test_onblur_uses_callbackref, test_handle_focus_in_no_deps, test_handle_focus_out_no_deps) only do text/regex matching on the source file with patterns like `assert 'useCallbackRef' in content`. While test_hooks_jest_passes does run subprocess tests, the core f2p tests are predominantly text-based assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns (useCallbackRef import, variable assignments) and Jest test execution that would fail without the actual fix. A stub or no-op implementation would not pass test_hooks_jest_passes which runs the actual Jest test suite including the stale closure test."
+      "reason": "The f2p tests check for specific code patterns (useCallbackRef import, variable assignments, empty dependency arrays) and run Jest tests. A stub/no-op implementation would not have 'useCallbackRef' in the file or pass the Jest behavioral tests that verify counter incrementing across multiple focus/blur cycles."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) latest callback invocation - tested by Jest, (2) empty dependency arrays - tested by regex checks, (3) ref-based pattern - tested by useCallbackRef checks, (4) TypeScript compilation - tested, (5) Jest tests pass - tested. All explicitly required behaviors are covered."
+      "reason": "All behaviors described in instruction.md are tested: latest callback invocation (Jest tests), empty dependency arrays (regex tests), TypeScript compilation, ref-based pattern usage, and test passing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating what each test checks, and they include comments distinguishing fail-to-pass from pass-to-pass tests."
+      "reason": "Tests are well-named with descriptive docstrings indicating what each tests (e.g., 'Fix: useCallbackRef is imported from utils (fail-to-pass)') and grouped logically by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React hook, not producing structured data output."
+      "reason": "This task involves fixing a React hook bug, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file 'packages/@mantine/hooks/src/use-focus-within/use-focus-within.ts', describes that handleFocusIn/handleFocusOut should have 'empty dependency arrays', and points to the utils directory for the solution pattern. This goes beyond describing what's broken and specifies the implementation approach in detail."
+      "reason": "Instruction.md explicitly names the exact file path ('packages/@mantine/hooks/src/use-focus-within/use-focus-within.ts'), points to the utils directory as containing the solution, describes that handleFocusIn/handleFocusOut should have empty dependency arrays, and specifies the ref-based pattern. This goes well beyond describing the bug and essentially prescribes the implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

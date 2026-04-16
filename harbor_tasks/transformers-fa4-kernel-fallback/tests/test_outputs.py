@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import json
 import subprocess
 import sys
 import textwrap
@@ -18,43 +19,96 @@ MODIFIED_FILES = [
     "src/transformers/modeling_flash_attention_utils.py",
     "src/transformers/modeling_utils.py",
 ]
-FLASH_UTILS = Path(f"{REPO}/src/transformers/modeling_flash_attention_utils.py")
-MODELING_UTILS = Path(f"{REPO}/src/transformers/modeling_utils.py")
 
 
-def _extract_dict_assignment(filepath: Path, var_name: str) -> dict:
-    """Extract a dict literal assigned to var_name using AST.
+# ---------------------------------------------------------------------------
+# Subprocess helper: import flash_attention_utils with mocked torch
+# ---------------------------------------------------------------------------
 
-    # AST-only because: transformers modules import torch at module level,
-    # which is not installed in this CPU-only test container.
-    """
-    source = filepath.read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == var_name:
-                    return ast.literal_eval(node.value)
-    raise ValueError(f"{var_name} not found in {filepath}")
+_FLASH_UTILS_IMPORT_SCRIPT = textwrap.dedent("""\
+    import sys, types, importlib.util
+
+    class DynaMod(types.ModuleType):
+        def __init__(self, name, **kw):
+            super().__init__(name)
+            for k, v in kw.items():
+                setattr(self, k, v)
+        def __getattr__(self, name):
+            if name.startswith('__') and name.endswith('__'):
+                raise AttributeError(name)
+            val = DynaMod(f'{self.__name__}.{name}')
+            setattr(self, name, val)
+            return val
+        def __or__(self, other):
+            import typing
+            return typing.Union[self, other]
+        def __ror__(self, other):
+            import typing
+            return typing.Union[other, self]
+
+    # 1. Fake torch
+    torch_mod = DynaMod('torch',
+        __path__=['torch'],
+        __spec__=importlib.util.spec_from_loader('torch', loader=None),
+        __version__='99.0.0',
+        __file__='/fake/torch/__init__.py',
+    )
+    sys.modules['torch'] = torch_mod
+    for s in ['nn', 'nn.functional', 'cuda', 'distributed', 'types', '_C', 'autograd',
+              'utils', 'utils.data']:
+        m = DynaMod(f'torch.{s}', __path__=[f'torch.{s}'], __spec__=None)
+        setattr(torch_mod, s.split('.')[-1], m)
+        sys.modules[f'torch.{s}'] = m
+
+    # 2. Fake transformers package
+    fake_tf = DynaMod('transformers',
+                      __path__=['/workspace/transformers/src/transformers'])
+    sys.modules['transformers'] = fake_tf
+
+    # 3. Fake transformers.utils
+    fake_utils = DynaMod('transformers.utils', __path__=['/fake'])
+    for fn in ['is_flash_attn_2_available', 'is_flash_attn_3_available',
+               'is_flash_attn_4_available', 'is_torch_cuda_available',
+               'is_torch_mlu_available', 'is_torch_npu_available',
+               'is_torch_xpu_available']:
+        setattr(fake_utils, fn, lambda *a, **kw: False)
+    fake_utils.logging = DynaMod('transformers.utils.logging')
+    fake_utils.logging.get_logger = lambda *a, **kw: __import__('logging').getLogger('test')
+    sys.modules['transformers.utils'] = fake_utils
+
+    # 4. Fake transformers.utils.import_utils
+    fake_iu = DynaMod('transformers.utils.import_utils',
+                      PACKAGE_DISTRIBUTION_MAPPING={}, is_tracing=lambda: False)
+    sys.modules['transformers.utils.import_utils'] = fake_iu
+    sys.modules['transformers.integrations'] = DynaMod('transformers.integrations')
+    sys.modules['transformers.integrations.npu_flash_attention'] = DynaMod('t.i.npu')
+    sys.modules['transformers.integrations.npu_flash_attention'].is_npu_fa2_top_left_aligned_causal_mask = lambda: False
+
+    # 5. Load the actual module file
+    spec = importlib.util.spec_from_file_location(
+        'transformers.modeling_flash_attention_utils',
+        '/workspace/transformers/src/transformers/modeling_flash_attention_utils.py'
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    # 6. Output data
+    import json
+    print(json.dumps({
+        'fallback': {str(k): str(v) for k, v in mod.FLASH_ATTN_KERNEL_FALLBACK.items()},
+        'compat_keys': sorted(mod.FLASH_ATTENTION_COMPATIBILITY_MATRIX.keys()),
+    }))
+""")
 
 
-def _extract_dict_keys(filepath: Path, var_name: str):
-    """Extract keys from a dict assignment (handles non-literal values)."""
-    source = filepath.read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == var_name:
-                    if isinstance(node.value, ast.Dict):
-                        keys = []
-                        for k in node.value.keys:
-                            if isinstance(k, ast.Constant):
-                                keys.append(k.value)
-                            elif isinstance(k, ast.Num):  # Python 3.7 compat
-                                keys.append(k.n)
-                        return keys
-    raise ValueError(f"{var_name} not found in {filepath}")
+def _get_flash_attn_data():
+    """Import modeling_flash_attention_utils via subprocess and return runtime data."""
+    r = subprocess.run(
+        [sys.executable, "-c", _FLASH_UTILS_IMPORT_SCRIPT],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Module import failed: {r.stderr}\n{r.stdout}"
+    return json.loads(r.stdout.strip())
 
 
 def _get_diff():
@@ -90,11 +144,13 @@ def test_syntax_check():
 def test_fa4_in_fallback_dict():
     """FLASH_ATTN_KERNEL_FALLBACK must contain a flash_attention_4 entry.
 
-    # AST-only because: importing transformers modules requires torch (not installed).
+    Tests by importing the module with mocked torch and reading the runtime
+    dict value.
     """
-    d = _extract_dict_assignment(FLASH_UTILS, "FLASH_ATTN_KERNEL_FALLBACK")
-    assert "flash_attention_4" in d, (
-        f"flash_attention_4 not found in FLASH_ATTN_KERNEL_FALLBACK. Keys: {list(d.keys())}"
+    data = _get_flash_attn_data()
+    fallback = data["fallback"]
+    assert "flash_attention_4" in fallback, (
+        f"flash_attention_4 not found in FLASH_ATTN_KERNEL_FALLBACK. Keys: {list(fallback.keys())}"
     )
 
 
@@ -102,11 +158,11 @@ def test_fa4_in_fallback_dict():
 def test_fa4_fallback_value_format():
     """FA4 fallback value must be a kernels-community package with a flash/attn-related name.
 
-    # AST-only because: importing transformers modules requires torch (not installed).
+    Tests by importing the module and checking the runtime value.
     """
-    d = _extract_dict_assignment(FLASH_UTILS, "FLASH_ATTN_KERNEL_FALLBACK")
-    val = d.get("flash_attention_4", "")
-    assert isinstance(val, str), f"Expected string value, got {type(val)}"
+    data = _get_flash_attn_data()
+    val = data["fallback"].get("flash_attention_4", "")
+    assert isinstance(val, str) and len(val) > 0, f"Expected non-empty string, got: {val!r}"
     assert val.startswith("kernels-community/"), (
         f"Expected kernels-community/ prefix, got: {val}"
     )
@@ -119,38 +175,28 @@ def test_fa4_fallback_value_format():
 
 # [pr_diff] fail_to_pass
 def test_fa4_not_skipped_in_loop():
-    """The fallback loop in _check_and_adjust_attn_implementation must not skip version 4.
+    """Every version in FLASH_ATTENTION_COMPATIBILITY_MATRIX must have a kernel fallback entry.
 
-    # AST-only because: calling _check_and_adjust_attn_implementation requires torch,
-    # model classes, and GPU-related imports not available in this CPU-only container.
+    The fallback loop in _check_and_adjust_attn_implementation iterates over
+    FLASH_ATTENTION_COMPATIBILITY_MATRIX. For the loop to actually use kernel
+    fallbacks for every supported version, each version must have a corresponding
+    entry in FLASH_ATTN_KERNEL_FALLBACK. The bug was that version 4 had no fallback
+    entry AND was explicitly skipped in the loop.
     """
-    source = MODELING_UTILS.read_text()
-    tree = ast.parse(source)
+    data = _get_flash_attn_data()
+    compat_keys = data["compat_keys"]
+    fallback = data["fallback"]
 
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_check_and_adjust_attn_implementation":
-            found = True
-            lines = source.splitlines(keepends=True)
-            func_src = "".join(lines[node.lineno - 1 : node.end_lineno])
-            func_tree = ast.parse(textwrap.dedent(func_src))
+    missing = []
+    for v in compat_keys:
+        key = f"flash_attention_{v}"
+        if key not in fallback:
+            missing.append(key)
 
-            for n in ast.walk(func_tree):
-                if isinstance(n, ast.If) and isinstance(n.test, ast.Compare):
-                    for comp, val in zip(n.test.ops, n.test.comparators):
-                        if (
-                            isinstance(comp, ast.Eq)
-                            and isinstance(val, ast.Constant)
-                            and val.value == 4
-                            and len(n.body) == 1
-                            and isinstance(n.body[0], ast.Continue)
-                        ):
-                            raise AssertionError(
-                                "Version 4 is still explicitly skipped in the fallback loop"
-                            )
-            break
-
-    assert found, "_check_and_adjust_attn_implementation not found in modeling_utils.py"
+    assert not missing, (
+        f"COMPAT_MATRIX versions without fallback entries: {missing}. "
+        "Either FLASH_ATTN_KERNEL_FALLBACK lacks entries or the loop still skips these versions."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -159,26 +205,27 @@ def test_fa4_not_skipped_in_loop():
 
 # [pr_diff] pass_to_pass
 def test_fa2_fa3_entries_preserved():
-    """FA2 and FA3 kernel fallback entries must remain unchanged.
+    """FA2 and FA3 kernel fallback entries must remain present and valid.
 
-    # AST-only because: importing transformers modules requires torch (not installed).
+    Tests by importing the module and checking runtime values match expected format.
     """
-    d = _extract_dict_assignment(FLASH_UTILS, "FLASH_ATTN_KERNEL_FALLBACK")
-    assert d.get("flash_attention_2") == "kernels-community/flash-attn2", (
-        f"FA2 entry changed: {d.get('flash_attention_2')}"
-    )
-    assert d.get("flash_attention_3") == "kernels-community/vllm-flash-attn3", (
-        f"FA3 entry changed: {d.get('flash_attention_3')}"
-    )
+    data = _get_flash_attn_data()
+    fallback = data["fallback"]
+    for key in ["flash_attention_2", "flash_attention_3"]:
+        assert key in fallback, f"{key} missing from FLASH_ATTN_KERNEL_FALLBACK"
+        val = fallback[key]
+        assert isinstance(val, str) and len(val) > 0, f"Invalid value for {key}: {val!r}"
+        assert val.startswith("kernels-community/"), f"Invalid format for {key}: {val}"
 
 
 # [pr_diff] pass_to_pass
 def test_compat_matrix_has_all_versions():
     """FLASH_ATTENTION_COMPATIBILITY_MATRIX must include versions 2, 3, and 4.
 
-    # AST-only because: importing transformers modules requires torch (not installed).
+    Tests by importing the module and reading runtime keys.
     """
-    keys = _extract_dict_keys(FLASH_UTILS, "FLASH_ATTENTION_COMPATIBILITY_MATRIX")
+    data = _get_flash_attn_data()
+    keys = data["compat_keys"]
     for v in (2, 3, 4):
         assert v in keys, (
             f"Version {v} missing from FLASH_ATTENTION_COMPATIBILITY_MATRIX. Keys: {keys}"

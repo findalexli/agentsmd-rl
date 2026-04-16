@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check exact regex patterns like 'void\\s+RUNTIME_NORETURN\\s+HandleCurrentExceptionWhenLeavingKotlinCode' for .h/.cpp but 'void\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\(\\s*\\)\\s+RUNTIME_NORETURN\\s*;' for .kt (attribute AFTER function name). The instruction says 'Mark HandleCurrentExceptionWhenLeavingKotlinCode with the RUNTIME_NORETURN attribute' but does NOT specify the different placement conventions (before function name in .h/.cpp, after function signature in .kt). Also tests lik"
+      "reason": "The tests assert very specific patterns like `|void HandleCurrentExceptionWhenLeavingKotlinCode() RUNTIME_NORETURN;` with a pipe prefix in the regex for the Kotlin file (test_c_adapter_exporter_generates_correct_output and test_all_three_locations_consistent). The instruction.md never mentions that RUNTIME_NORETURN should go AFTER the function declaration in the Kotlin-generated code vs BEFORE it in the .h/.cpp files. It also doesn't mention the pipe-prefixed template syntax used in the Kotlin f"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'Mark HandleCurrentExceptionWhenLeavingKotlinCode with the RUNTIME_NORETURN attribute in all relevant locations' and the Validation section spells out exactly what to do in each of the three files. This is the complete solution, not just a problem description."
+      "reason": "The instruction explicitly states 'Your fix should ensure that HandleCurrentExceptionWhenLeavingKotlinCode is marked with RUNTIME_NORETURN consistently across all three locations where it appears' and names the exact macro (RUNTIME_NORETURN), the exact function, and the exact three files. This essentially tells the agent exactly what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact regex patterns that enforce specific placement of RUNTIME_NORETURN. For example, test_exceptions_h_has_noreturn requires 'void RUNTIME_NORETURN HandleCurrentExceptionWhenLeavingKotlinCode()' but a developer might place it as 'RUNTIME_NORETURN void HandleCurrentExceptionWhenLeavingKotlinCode()' (which is how __attribute__((noreturn)) is commonly used in GCC/Clang and how ThrowException is declared). The test would fail for this equally correct alternative placement."
+      "reason": "Tests use exact regex patterns like `r'void\\s+RUNTIME_NORETURN\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\('` requiring RUNTIME_NORETURN between void and the function name, and `r'\\|void\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\(\\s*\\)\\s+RUNTIME_NORETURN'` requiring it after. An alternative correct fix using `[[noreturn]]` C++11 attribute or `__attribute__((noreturn))` directly would fail. Even placing RUNTIME_NORETURN before `void` (which is valid C/C++) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_exceptions_h_has_noreturn, test_exceptions_cpp_has_noreturn, test_c_adapter_exporter_has_noreturn) and most structural tests are purely text-matching with regex on file contents. No test compiles the code or verifies the warning is actually suppressed. The subprocess tests (clang, git) are pass-to-pass only."
+      "reason": "While test_exceptions_h_has_noreturn uses Clang AST inspection and test_c_adapter_exporter_generates_correct_output compiles mock code, the key tests for Exceptions.cpp (test_exceptions_cpp_has_noreturn) and CAdapterApiExporter.kt (test_c_adapter_exporter_generates_correct_output, test_all_three_locations_consistent) primarily use regex text matching on source files. test_exceptions_cpp_has_noreturn's main assertion is `re.search(pattern, content)` on the file text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for RUNTIME_NORETURN being present in specific patterns that don't exist in the original files, so a stub/no-op solution would not pass them."
+      "reason": "The f2p tests check for RUNTIME_NORETURN which is not present in the original code. A stub or no-op would not pass since the original files lack the RUNTIME_NORETURN annotation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's three validation criteria (RUNTIME_NORETURN in .h declaration, .cpp definition, and .kt generated code) are all tested by the fail-to-pass tests."
+      "reason": "The instruction requires RUNTIME_NORETURN on HandleCurrentExceptionWhenLeavingKotlinCode in all three files, and the tests check all three files plus verify the noreturn attribute works to suppress warnings."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, comments separating FAIL-TO-PASS, STRUCTURAL, PASS-TO-PASS, and STATIC categories, and descriptive docstrings."
+      "reason": "Tests are well-named (test_exceptions_h_has_noreturn, test_exceptions_cpp_has_noreturn, etc.), have docstrings explaining what they verify, and are logically grouped by the file/aspect they test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code edits, not structured data output."
+      "reason": "This task involves fixing C++/Kotlin source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, macro names, and commands appear correct and consistent across instruction and test files."
+      "reason": "File paths, function names, macro names, and commands in the instruction and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names all three exact files, the exact function name, and the exact attribute to add (RUNTIME_NORETURN). The 'Validation' section explicitly states what each file should contain, making the task trivial localization+application rather than requiring any debugging."
+      "reason": "The instruction names the exact three files, the exact function name, and the exact macro to use (RUNTIME_NORETURN), effectively telling the agent exactly what to do. The 'Validation' section explicitly states the fix: 'marked with RUNTIME_NORETURN consistently across all three locations.'"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only editing task, not a config file editing task."
+      "reason": "This is a code-only task involving C++/Kotlin source files, not configuration edits."
     }
   },
   "tier_a_fails": [

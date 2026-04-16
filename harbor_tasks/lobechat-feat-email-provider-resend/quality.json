@@ -3,27 +3,27 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The test `test_agents_md_has_project_description` asserts for the literal string 'AI Agent Workspace' and 'LobeHub' in AGENTS.md. While instruction.md does mention these under 'Documentation Requirements > AGENTS.md Project Description', the test `test_resend_impl_file_structure` checks for the exact file path 'src/server/services/email/impls/resend/index.ts' and exact class name 'ResendImpl' \u2014 the instruction says 'Create a Resend implementation following the pattern established by NodemailerIm"
+      "reason": "The test `test_agents_md_has_project_description` asserts for the exact literal string 'AI Agent Workspace' in AGENTS.md. While instruction.md does mention 'AI Agent Workspace' under Documentation Requirements, it also asserts 'LobeHub' which is mentioned. However, the test `test_resend_impl_file_structure` checks for `class ResendImpl` and `implements EmailServiceImpl` \u2014 the class name 'ResendImpl' is not explicitly stated in instruction.md (it only says 'Create a Resend implementation'). Also,"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be built (a Resend provider, enum extension, env config, etc.) but does not specify exact code lines or replacements. It describes requirements at a design level, leaving implementation reasoning to the agent."
+      "reason": "The instruction describes what needs to be built (a Resend provider, factory registration, env config, etc.) but does not specify exact code lines, diffs, or copy-paste solutions. It describes requirements at a functional level."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: `test_enum_includes_resend` checks for exact regex `/Resend\\s*=\\s*'resend'/` and `new ResendImpl()`. `test_email_service_resolves_provider` checks for the literal string 'emailEnv' \u2014 an alternative implementation could import the env config under a different variable name (e.g., `emailConfig`, `envConfig`). `test_resend_impl_file_structure` requires the class be named exactly `ResendImpl` and be located at exactly `src/server/services/email/impl"
+      "reason": "Tests assert on gold-specific implementation details: `test_resend_impl_file_structure` requires the exact class name `class ResendImpl` and `implements EmailServiceImpl`; `test_enum_includes_resend` requires `Resend = 'resend'` (exact regex), `new ResendImpl()`, and `EmailImplType.Resend`. An alternative correct implementation using a different class name (e.g., `ResendEmailImpl`) or different factory pattern would fail. The test `test_email_service_resolves_provider` asserts `emailEnv` must ap"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching: `test_resend_impl_file_structure` reads the .ts file and checks for string presence ('class ResendImpl', 'implements EmailServiceImpl', etc.), `test_enum_includes_resend` does regex matching on source code, `test_env_configures_resend_vars` checks string presence in file content, `test_email_service_resolves_provider` checks string presence, `test_email_readme_documents_resend` checks string presence, `test_agents_md_has_project_descripti"
+      "reason": "Most fail-to-pass tests are purely text-based checks: `test_resend_impl_file_structure` reads a .ts file and checks for string patterns like `code.includes('class ResendImpl')`. `test_enum_includes_resend` uses regex on source code. `test_env_configures_resend_vars`, `test_email_service_resolves_provider`, `test_email_readme_documents_resend`, `test_agents_md_has_project_description` all just read files and check for substring presence. None of the fail-to-pass tests actually import, compile, or"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub file at `src/server/services/email/impls/resend/index.ts` containing the right keywords (class ResendImpl implements EmailServiceImpl, async sendMail, TRPCError, RESEND_API_KEY, from 'resend') without any actual working implementation would pass `test_resend_impl_file_structure`. Similarly, adding the right string literals to env and service files without functional logic would pass the text-matching tests."
+      "reason": "A stub file at `src/server/services/email/impls/resend/index.ts` containing comments/strings with all the required keywords (class ResendImpl, implements EmailServiceImpl, async sendMail, TRPCError, RESEND_API_KEY, from 'resend') without any actual implementation logic would pass `test_resend_impl_file_structure`. Similarly, adding string literals to env and service files without functional code would pass the text-matching tests."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires 'Convert Buffer attachments to base64 strings for the Resend API' and 'Handle missing sender addresses by falling back to a configured default' \u2014 neither of these behaviors is tested. The instruction also requires specific TRPCError codes (PRECONDITION_FAILED, SERVICE_UNAVAILABLE) which are not behaviorally verified. Only string presence of 'TRPCError' is checked."
+      "reason": "The instruction requires 'Convert Buffer attachments to base64 strings for the Resend API' and 'Handle missing sender addresses by falling back to a configured default' \u2014 these behavioral requirements are not tested at all. No test actually sends an email or verifies attachment conversion or fallback behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,19 +31,19 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code files and configuration, not structured data output like JSON/CSV/API responses."
+      "reason": "This task produces code files and documentation, not structured data outputs like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies target files (src/server/services/email/impls/index.ts, src/envs/email.ts, etc.) which is appropriate given the task domain. It doesn't leak specific line numbers or exact code snippets."
+      "reason": "The instruction specifies file paths like `src/server/services/email/impls/index.ts` and `src/envs/email.ts`, but these are the natural locations for the described changes and are part of describing the task domain, not revealing specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold solution makes localized edits to specific files (adding enum values, new implementation files, env vars, documentation sections) without full-file rewrites, and doesn't contradict other tier-1 files."
+      "reason": "The gold solution's config edits (AGENTS.md, README.md, email.ts) are localized additions/insertions, not full-file rewrites, and don't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [

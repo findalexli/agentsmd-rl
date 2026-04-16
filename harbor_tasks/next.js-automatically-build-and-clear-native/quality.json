@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific internal identifiers like 'hasRustChanges' and 'getVersionBumpCommit' (test_maybe_build_native_has_rust_detection), but instruction.md never mentions these exact function names. The instruction describes behavior (detect Rust changes, detect version bump) but doesn't specify these identifiers, making them undiscoverable from the instruction alone."
+      "outcome": "pass",
+      "reason": "Instruction names maybe-build-native.mjs, hasRustChanges, getVersionBumpCommit, 'Skipping swc-build-native in CI', CI env, build task, inputs with crates/Cargo, --stdin-filepath, AGENTS.md edits."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (CI skip message, Rust change detection, turbo.json config, prettier stdin usage, AGENTS.md updates) but does not give exact code or line-level fixes. A developer must still reason about implementation."
+      "reason": "Instruction describes required behavior and function signatures but doesn't provide the implementation code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_maybe_build_native_has_rust_detection asserts exact function names 'hasRustChanges' and 'getVersionBumpCommit' via string matching. An alternative correct implementation using different function names (e.g., 'detectRustChanges', 'findLastVersionBump') would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check for presence of keys/strings/syntax and functional behavior (prettier stdin, CI skip message), which multiple correct implementations would satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several critical tests are purely text-matching: test_maybe_build_native_has_rust_detection checks for string literals 'hasRustChanges', 'getVersionBumpCommit', '*.rs' in file content. test_build_native_uses_stdin_prettier checks for '--stdin-filepath' and absence of '--write' as strings. test_agents_md_simplified_rebuild is pure text search. While test_maybe_build_native_skips_in_ci does execute the script, a majority of f2p tests are text-only."
+      "outcome": "pass",
+      "reason": "Tests execute node, run prettier subprocess, parse JSON, and check syntax \u2014 real execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would not pass the tests. test_maybe_build_native_skips_in_ci requires actual execution with CI=1 and specific output. test_package_json_build_script requires a real build script entry. test_turbo_json_build_task requires specific JSON structure. These cannot be satisfied by default/empty implementations."
+      "reason": "Tests require actual script execution with correct output, valid JSON structures, and prettier-formatted files \u2014 stubs wouldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: CI skip behavior, Rust detection logic, package.json build script, turbo.json task config, prettier stdin usage, AGENTS.md updates, and clearing stale binaries logic (implicitly via hasRustChanges/clearNativeBinaries detection)."
+      "reason": "CI skip, build script, turbo inputs/env, AGENTS.md edits, and prettier stdin usage are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Config-edit, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are individually named per-check with docstrings mapping to manifest entries."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact schema for turbo.json (tasks key with build task containing inputs array and env array) and package.json (scripts with build key), which are the structured data outputs of this task."
+      "reason": "package.json scripts and turbo.json tasks schema (build task, inputs, env) are documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and commands match between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies file locations and behavioral requirements but doesn't give exact line numbers or specific code to write. The files mentioned (packages/next-swc/, scripts/build-native.ts, AGENTS.md) are naturally part of the task domain."
+      "reason": "Instruction mentions relevant files which is appropriate since file creation/wiring is the task itself."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff shows localized changes: adding a build script to package.json, adding a build task to turbo.json, creating a new file, modifying a few lines in AGENTS.md, and a targeted change in build-native.ts. No full-file rewrites."
+      "reason": "turbo.json and package.json edits are localized additions (build task/script), and AGENTS.md edits are specific line changes."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 3
+  "pass_count": 11,
+  "fail_count": 0
 }

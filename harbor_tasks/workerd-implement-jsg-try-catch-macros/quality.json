@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: 'JsgCatchScope' class name (test_jsg_catch_scope_implementation, test_jsg_catch_scope_class_declared), 'getCaughtException' method name, 'catchException' method name. The instruction never specifies these class/method names - only the macro names JSG_TRY/JSG_CATCH. Also test_repo_python_lint checks 'tools/update_node_version.py' and test_repo_shellcheck_build_script checks 'build-releases.sh', neither mentioned in inst"
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_jsg_catch_scope_class_declared checks for 'class JsgCatchScope', 'getCaughtException', and 'catchException' method names. test_jsg_catch_scope_implementation checks for 'JsgCatchScope::catchException' in jsg.c++. The instruction never mentions the class name 'JsgCatchScope' or the method names 'getCaughtException'/'catchException'. Also test_readme_documents_exception_handling_update checks for literal strings 'js"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (verbose lambda pattern) and the desired outcome (macros with specific usage patterns) but does not specify exact implementation details like line numbers or specific code changes."
+      "reason": "The instruction describes what to build (macros JSG_TRY/JSG_CATCH, migration of call sites, documentation updates) but does not specify exact implementation code, line numbers, or the specific class/method structure needed. The agent must design the supporting infrastructure."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_jsg_catch_scope_class_declared requires 'class JsgCatchScope', 'getCaughtException', and 'catchException' as exact names. A correct alternative implementation could use different class names (e.g., 'JsgTryCatchHelper', 'TryCatchScope') or different method names and would fail these tests despite being functionally correct."
+      "reason": "Tests assert gold-specific implementation details: test_jsg_catch_scope_class_declared requires exactly 'class JsgCatchScope', 'getCaughtException', and 'catchException' as identifiers. test_jsg_catch_scope_implementation requires 'JsgCatchScope::catchException' in jsg.c++. An alternative correct implementation could use different class/method names (e.g., 'JsgTryCatchHelper', 'getException', 'handleException') and would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are pure text/grep checks: test_jsg_try_macro_defined greps for '#define JSG_TRY', test_jsg_catch_scope_implementation greps for 'JsgCatchScope::catchException', test_callers_migrated_to_jsg_try greps for 'JSG_TRY', test_readme_documents_jsg_try_catch checks string presence. No test compiles the code, runs it, or verifies actual exception-handling behavior."
+      "reason": "All fail-to-pass tests are text/grep-based checks: grep for '#define JSG_TRY', grep for 'JsgCatchScope::catchException', string presence checks in files. No test compiles the code, runs it, or checks behavioral correctness. Every test is essentially 'assert string in file_content' or subprocess grep."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that merely adds '#define JSG_TRY(js) if(true)' and '#define JSG_CATCH(x) else' to jsg.h, declares an empty 'class JsgCatchScope' with stub getCaughtException/catchException methods, adds 'JSG_TRY' text to the migrated files, and updates README.md with the required strings would pass all tests without implementing actual exception handling."
+      "reason": "A stub implementation that merely adds '#define JSG_TRY(js)' and '#define JSG_CATCH(exception)' to jsg.h, adds a class declaration with the right method names, puts a stub in jsg.c++, adds JSG_TRY text to migrated files and README would pass all tests without implementing any actual exception handling functionality. No test verifies compilation or runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires macros that 'automatically convert both JavaScript exceptions and KJ exceptions to jsg::Value', 'set up proper try/catch infrastructure', 'support nested usage', 'support optional ExceptionToJsOptions', and 'be if-else friendly'. None of these behavioral requirements are tested - only text presence is checked."
+      "reason": "Instruction requires: automatic conversion of JsExceptionThrown and kj::Exception to jsg::Value, setup of try/catch infrastructure on construction, nested usage support, ExceptionToJsOptions support, if-else friendliness. None of these behavioral requirements are tested - only string presence checks are performed."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass core, Fail-to-pass config/documentation, Pass-to-pass regression, Pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces C++ macros, classes, and documentation updates - no structured data output like JSON/CSV/API/DB."
+      "reason": "Task produces C++ macros, class implementations, and documentation - not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, macro names, and commands in the instruction and tests appear correct with no typos detected."
+      "reason": "File paths, function names, macro names, and commands appear correct and consistent across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies which files to modify (jsg.h, jsg.c++, README.md, migration files) but this is appropriate for the task domain. It doesn't specify exact line numbers or internal implementation details like JsgCatchScope."
+      "reason": "The instruction specifies which files to modify (jsg.h, jsg.c++, README.md, and migration targets) which is appropriate for the task scope. It doesn't leak specific line numbers or exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not an agentmd-edits/config-only task."
+      "reason": "This is a code implementation task, not an agentmd-edits or config-only task."
     }
   },
   "tier_a_fails": [

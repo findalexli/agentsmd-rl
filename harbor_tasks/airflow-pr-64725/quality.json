@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all file paths (Dockerfile, Dockerfile.ci, scripts/docker/install_os_dependencies.sh, .github/workflows/additional-ci-image-checks.yml), the function name install_rustup, exact SHA-256 checksums, architecture mappings, version 1.29.0, RUSTUP_HOME/CARGO_HOME values, timeout values (25, 1320), curl flags, and the call ordering after install_additional_dev_dependencies. All test assertions map to explicitly stated requirements."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (Dockerfile, Dockerfile.ci, scripts/docker/install_os_dependencies.sh, .github/workflows/additional-ci-image-checks.yml), function name 'install_rustup', SHA-256 checksums for both architectures, architecture-to-target mappings, RUSTUP_HOME/CARGO_HOME paths, version 1.29.0, curl security flags, timeout values (25, 1320), and the pattern of calling after install_additional_dev_dependencies (implied by 'all development bu"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially specifies the complete implementation: exact function name, exact checksums, exact env var values, exact curl flags, exact placement after install_additional_dev_dependencies, exact timeout values. While framed as requirements, this is effectively dictating the solution line-by-line rather than describing broken behavior. A developer doesn't need to reason about what to change \u2014 they just transcribe the specification."
+      "reason": "The instruction essentially dictates the exact implementation: specific function name 'install_rustup', exact ENV variable values, exact file locations, exact version, exact checksums, exact timeout values, and even the invocation pattern ('after install_additional_dev_dependencies' is tested via regex). This leaves very little reasoning for the agent about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching like 'function install_rustup()' (not just checking for a rustup installation), regex patterns like r'install_additional_dev_dependencies\\s*\\n\\s*install_rustup' requiring exact adjacent line placement, exact strings like 'RUSTUP_HOME=\"/usr/local/rustup\"' and '--proto \\'=https\\''. An alternative correct implementation using e.g. 'install_rustup ()' (with space), or placing the call with a comment line between them, or using different quoting for env vars would fail"
+      "reason": "Tests assert extremely specific implementation details: exact function name 'function install_rustup()' as a string, exact regex pattern 'install_additional_dev_dependencies\\s*\\n\\s*install_rustup' enforcing specific call ordering and placement, exact string 'RUSTUP_HOME=\"/usr/local/rustup\"' with specific quoting. An alternative correct fix using a different function name (e.g., 'install_rust'), different call site, or different ENV quoting style would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is purely text matching: 'assert X in content' or 'assert re.search(pattern, content)'. No test actually builds a Docker image, runs the install function, executes cargo, or verifies any runtime behavior. This is entirely textual/syntactic verification."
+      "reason": "Every fail-to-pass test uses only `assert 'string' in content` or `re.search(pattern, content)` on file contents. No test builds a Docker image, runs a script, or executes any code. This is pure text matching with no behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings (checksums, function definitions, env vars, timeout values) that do not exist in the base commit files. A stub or no-op implementation would not add these strings to the files, so the tests would fail."
+      "reason": "The tests check for specific strings that don't exist in the base commit (function install_rustup(), SHA checksums, RUSTUP_HOME, timeout values). A stub or no-op change would not introduce these strings into the files, so the tests cannot be trivially satisfied."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: function definition in all 3 files, checksums, architecture mappings, function invocation ordering, env vars, version pinning, HTTPS/TLS flags, and CI timeout values."
+      "reason": "All explicitly required behaviors from instruction.md are tested: function definition in all 3 files, SHA256 verification, architecture mapping, version pinning, HTTPS+TLS security flags, env vars in both Dockerfiles, CI timeout updates, and invocation in build flow."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments ('Fail-to-pass tests', 'Pass-to-pass tests'), have descriptive names and docstrings indicating which file and what aspect they verify."
+      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass tests', 'Pass-to-pass tests'), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Dockerfiles and shell scripts, not structured data formats like JSON/CSV/API/DB."
+      "reason": "This task produces configuration/infrastructure file edits, not structured data outputs like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, checksums, and commands in the instruction match what the tests expect. No typos detected."
+      "reason": "No typos found in filenames, paths, commands, variable names, or checksums in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact function names, exact placement ('after the existing install_additional_dev_dependencies step'), exact variable names and values, and exact timeout numbers. This goes well beyond describing the problem domain and effectively specifies the complete diff."
+      "reason": "The instruction names exact files to modify, exact function names to create, exact placement ('after install_additional_dev_dependencies'), and exact variable assignments. While the files are domain-relevant, specifying 'install_rustup after install_additional_dev_dependencies' is implementation-level detail leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized: small additions to 4 specific files, no full-file rewrites, and changes are consistent with the instruction requirements."
+      "reason": "The gold patch makes localized additions to 4 files (adding function definitions, ENV declarations, function calls, and timeout changes) without full-file rewrites, and the changes don't contradict other configuration."
     }
   },
   "tier_a_fails": [

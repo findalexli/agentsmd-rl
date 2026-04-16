@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes all key behaviors tested: string image format, structured image with tag/digest, digest precedence, pullPolicy rendering, mixed formats, Python schema classes (InitContainerImage, InitContainerWithStructuredImage with .name property), and values.schema.json updates with $defs.InitContainerImage. All assert targets (image strings like 'busybox:1.36', 'busybox@sha256:abc123def456', class names, property names) are explicitly mentioned in instruction.md."
+      "reason": "Instruction names all relevant files, class names (InitContainerImage, InitContainerWithStructuredImage), .name property behavior, field names, and rendering expectations that tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the helper template names ('dagster.initContainerImage.name' and 'dagster.initContainer'), that deployment-user.yaml must use 'range $container := $deployment.initContainers', that kindIs \"string\" must be used for detection, exact Pydantic model field names and property implementations, and exact JSON schema structure with $defs keys. This goes beyond describing what's broken and prescribes the specific fix."
+      "outcome": "pass",
+      "reason": "Instruction describes what helpers/classes should exist and what they should produce, without dictating exact code changes or line edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests primarily verify behavioral outcomes (rendered image strings, Python class behavior, JSON schema structure) rather than implementation-specific details like helper template names or internal variable names. An alternative implementation using different helper names or different template logic would still pass as long as it produces the correct rendered output."
+      "reason": "Tests check rendered image strings, imagePullPolicy values, and class behavior \u2014 not gold-specific internal names beyond those mandated by the instruction itself."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute 'helm template' via subprocess and parse YAML output to check rendered container specs. Python schema tests import and instantiate classes, checking property values. The values.schema.json test loads and inspects JSON structure. These are behavioral/execution tests, not simple text grep."
+      "reason": "Tests invoke helm template via subprocess, parse YAML, and import/instantiate Python classes to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass these tests. The helm template tests require actual Helm template rendering that produces specific image strings from structured input. The Python tests require classes with working .name properties that format strings correctly. No default/empty return would satisfy assertions like 'containers[0][\"image\"] == \"busybox:1.36\"'."
+      "reason": "Each test asserts specific rendered strings like 'busybox@sha256:abc123def456' and class .name outputs that cannot be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from instruction.md are tested: string format backward compat, structured with tag, structured with digest, digest precedence over tag, pullPolicy rendering, mixed formats, Python schema classes existence and behavior, and values.schema.json updates."
+      "reason": "Tests cover string format, structured with tag, digest precedence, pullPolicy, mixed formats, and Python schema classes as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_init_container_string_image_format, test_init_container_structured_image_with_tag, etc.), have docstrings explaining what they test and whether they're F2P, and are logically grouped by feature area."
+      "reason": "Test functions have descriptive names and docstrings describing F2P intent."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact JSON schema structure needed ($defs.InitContainerImage with properties repository, tag, digest, pullPolicy; $defs.InitContainerWithStructuredImage with name and image), including the anyOf patterns for type unions."
+      "reason": "Instruction documents the JSON schema $defs structure and Pydantic model fields explicitly."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, variable names, and schema keys in instruction.md are consistent with the codebase structure and test expectations. No typos detected."
+      "reason": "Paths and names appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files to modify (deployment-user.yaml, _helpers.tpl, values.schema.json, kubernetes.py, user_deployments.py) and specifies exact template names ('dagster.initContainerImage.name', 'dagster.initContainer'), exact iteration syntax ('range $container := $deployment.initContainers'), and exact detection method ('kindIs \"string\"'). This is excessive localization that removes the need for the agent to reason about where and how to make changes."
+      "outcome": "pass",
+      "reason": "Instruction names files to modify as domain context but does not point to buggy lines; localization of changes is part of the task."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch modifies specific sections of multiple files (adding helper templates, updating deployment template iteration, adding JSON schema definitions) rather than doing full-file rewrites. Changes are localized and consistent across files."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 9,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

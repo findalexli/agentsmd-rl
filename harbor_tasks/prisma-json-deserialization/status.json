@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T10:31:08.172292",
+  "total_time": 56.09,
+  "sandbox_id": "iswqofnmp0fgvsfz604je",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1379.94,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1945.86,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build passes. NOP test correctly fails with reward=0. Gold test correctly passes with reward=1. Rubric judge returns 0.0 due to fundamental incompatibility: judge runs git diff on host filesystem (/workspace/task/environment) which is not a git repo (repo is inside Docker container). Rubric rules expect config file edits but gold modifies only code files - no config hunks to compare.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 573.69
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.37,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] f2p_p2p_classification_correct @ eval_manifest.yaml: yaml parse error: mapping values are not allowed here\\n  in \"<un', 'B:[B] no_network_during_tests @ tests/test.sh:3: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 11.78,
+      "tier_a_fails": [
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 1
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":376,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.29
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 7714.04,
+      "at": "2026-04-14T22:19:09.843305"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2565.19,
+      "at": "2026-04-15T05:46:18.787971"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 719.23,
+      "at": "2026-04-15T13:14:47.741081"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5423.13,
+      "at": "2026-04-16T02:15:39.371066"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 56.09,
+      "at": "2026-04-16T10:31:08.172292"
+    }
+  ]
+}

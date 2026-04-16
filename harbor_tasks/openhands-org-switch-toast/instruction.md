@@ -1,4 +1,4 @@
-# Task: Add Visual Feedback for Organization Switching
+# Add Visual Feedback for Organization Switching
 
 ## Problem
 
@@ -8,8 +8,8 @@ When users switch between organizations in the OpenHands frontend, there is no v
 
 Add a toast notification that displays when users switch between organizations, with different messages depending on the target:
 
-1. **Switching to a regular organization**: Show `"You have switched to organization: {name}"` where `{name}` is interpolated via the i18n variable `{{name}}`.
-2. **Switching to personal workspace**: Show `"You have switched to your personal workspace."`
+1. **Switching to a regular organization**: Show a message that includes the organization name via i18n interpolation.
+2. **Switching to personal workspace**: Show a fixed message with no interpolation.
 
 ## Relevant Files
 
@@ -30,41 +30,37 @@ Add a toast notification that displays when users switch between organizations, 
 
 ### 1. i18n keys and translations
 
-Add the following two i18n keys to `declaration.ts` and `translation.json`:
+Add two i18n keys to `declaration.ts` and `translation.json`. The keys must:
 
-- **`ORG$SWITCHED_TO_ORGANIZATION`** — message for switching to a team org. Must use the `{{name}}` interpolation variable to embed the organization name.
-- **`ORG$SWITCHED_TO_PERSONAL_WORKSPACE`** — message for switching to a personal workspace. No interpolation needed.
-
-Both keys must have translations in all **15** supported language codes:
-
-```
-en, ja, zh-CN, zh-TW, ko-KR, no, it, pt, es, ar, fr, tr, de, uk, ca
-```
+- Have translations in all **15** supported language codes: `en, ja, zh-CN, zh-TW, ko-KR, no, it, pt, es, ar, fr, tr, de, uk, ca`
+- Use `{{name}}` interpolation for the team organization key
 
 The English translations must be:
-- `ORG$SWITCHED_TO_ORGANIZATION`: `"You have switched to organization: {{name}}"`
-- `ORG$SWITCHED_TO_PERSONAL_WORKSPACE`: `"You have switched to your personal workspace."`
+- Team organization key: `"You have switched to organization: {{name}}"`
+- Personal workspace key: `"You have switched to your personal workspace."`
+
+Name the keys something descriptive that clearly indicates their purpose (e.g., something like `ORG$SWITCHED_TO_ORGANIZATION` and `ORG$SWITCHED_TO_PERSONAL_WORKSPACE`).
 
 ### 2. Mutation hook changes
 
-Modify `useSwitchOrganization` in `use-switch-organization.ts` so that:
+Modify `useSwitchOrganization` in `use-switch-organization.ts` to show a toast on successful organization switch:
 
-- The mutation function accepts parameters named **`orgId`**, **`orgName`**, and **`isPersonal`** (the hook currently only receives `orgId`; extend it to also receive the org name and whether it is personal).
-- It imports and uses **`displaySuccessToast`** and **`useTranslation`** from react-i18next.
-- In the `onSuccess` callback, it selects the appropriate i18n key (`ORG$SWITCHED_TO_ORGANIZATION` or `ORG$SWITCHED_TO_PERSONAL_WORKSPACE`) based on `isPersonal`, calls `t()` with `{ name: orgName }` as the interpolation argument for the team-org case, and passes the result to `displaySuccessToast`.
+- The mutation function needs to know the organization name and whether it's a personal workspace (derive this from the organization's `is_personal` field)
+- In the `onSuccess` callback, use the appropriate i18n key to generate the toast message, passing the organization name as the interpolation argument for team organizations
+- Import and use `displaySuccessToast` from `#/utils/custom-toast-handlers`
+- Import and use `useTranslation` from react-i18next to call the `t()` function
 
 ### 3. Component changes
 
-Modify `OrgSelector` in `org-selector.tsx` so that:
+Modify `OrgSelector` in `org-selector.tsx` so that when the user selects an organization:
 
-- Before calling `switchOrganization`, it finds the selected organization object from the organizations list using a lookup pattern like `organizations?.find(…)` matching by ID.
-- It passes **`orgName`** and **`isPersonal`** (derived from the found org's `is_personal` field) to the mutation alongside `orgId`.
+- Look up the organization object from the organizations list before calling the switch mutation
+- Pass enough information to the mutation so it can display the appropriate toast (include whether it's a personal workspace so the hook can choose the right message)
 
 ### 4. Unit tests
 
-Extend the test file `org-selector.test.tsx` with:
+Extend the test file `org-selector.test.tsx` with tests that verify the toast notifications appear correctly:
 
-- A test described as **`"should display toast with organization name when switching to a team organization"`** that verifies `displaySuccessToast` is called with the string `"You have switched to organization: Acme Corp"`.
-- A test described as **`"should display toast for personal workspace when switching to personal workspace"`** that verifies `displaySuccessToast` is called with `"You have switched to your personal workspace."`.
-- The mock for `useTranslation` must accept a `params` argument typed as `params?: Record<string, string>` and handle the interpolation via `params?.name` (or `params.name`).
-- Spy on `displaySuccessToast` from `#/utils/custom-toast-handlers` to assert its calls.
+- One test that verifies the toast shows with the organization name when switching to a team organization (use organization name "Acme Corp" in the test)
+- One test that verifies the toast shows the personal workspace message when switching to a personal workspace
+- The mock for `useTranslation` should accept a `params` argument for handling interpolation

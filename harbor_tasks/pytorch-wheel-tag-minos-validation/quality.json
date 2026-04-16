@@ -2,56 +2,53 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_not_stub asserts each function has >=3 non-docstring body statements, which is never mentioned; (2) test_repo_shellcheck runs shellcheck on .ci/pytorch/check_binary.sh, which instruction.md never mentions; (3) test_smoke_test_ruff requires ruff compliance but instruction.md never mentions linting; (4) test_malformed_tag_rejected tests specific malformed tag formats like 'cp312-linux_x86_64' and 'cp312-cp312-linux_x8"
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (.ci/pytorch/smoke_test/check_wheel_tags.py, smoke_test.py), function names (_extract_wheel_tags, check_wheel_platform_tag, check_mac_wheel_minos, EXPECTED_PLATFORM_TAGS), expected behaviors (malformed tag rejection, multiple wheels rejection, platform mismatch), and integration requirements. The tests verify these same named entities. The specific test assertions (e.g., exact malformed tag examples like 'cp312-linux_x86_64') are explicitly listed in inst"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be built (functions, dict, integration) but does not give exact code, line numbers to change, or the literal implementation. A developer must still reason about how to implement the extraction, validation logic, regex patterns, and integration."
+      "reason": "The instruction describes WHAT to build (functions, their signatures, expected behaviors, validation rules) but does not give line-by-line code or say 'change line X to Y'. A developer must still decide implementation details like how to read zip files, how to structure the regex matching logic, etc."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific implementation details: test_not_stub requires each function to have >=3 non-docstring body statements; test_platform_patterns_correct checks the exact dict name EXPECTED_PLATFORM_TAGS and specific keys like 'linux', 'windows'/'win32', 'darwin'; test_extract_wheel_tags_basic checks the exact function name _extract_wheel_tags (with underscore prefix). A correct alternative using different internal structure (e.g., a class-based approach, different helper names, or a diffe"
+      "outcome": "pass",
+      "reason": "Tests check behavior: they call _extract_wheel_tags with real zip files and verify returned tags, call check_wheel_platform_tag and check it raises/doesn't raise RuntimeError. The function names and module name are specified in the instruction itself (they're part of the API contract). Alternative implementations with different internal helpers, different control flow, or different regex formulations would all pass as long as the public API behaves correctly."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests actually import and call the functions (_extract_wheel_tags, check_wheel_platform_tag), create real wheel files, check return values, and verify RuntimeError is raised. test_smoke_test_integration uses AST parsing rather than pure string matching. Most tests execute actual behavior."
+      "reason": "Tests import and call the actual functions (_extract_wheel_tags, check_wheel_platform_tag, check_mac_wheel_minos), create real wheel zip files, set environment variables, and verify behavior via pytest.raises and assert on returned values. test_smoke_test_integration uses AST parsing (not raw string matching) to verify imports/calls. Only test_smoke_test_structure and test_smoke_test_integration use AST-based structural checks, which is reasonable for integration verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Stub implementations would fail: _extract_wheel_tags returning [] fails test_extract_wheel_tags_basic which asserts len==2 and specific tag presence; check_wheel_platform_tag as pass would fail test_platform_tag_rejects_mismatch which expects RuntimeError; EXPECTED_PLATFORM_TAGS as empty dict fails test_platform_patterns_correct."
+      "reason": "A stub _extract_wheel_tags returning [] would fail test_extract_wheel_tags_varied (which asserts len(tags) == len(expected_tags) > 0). A stub check_wheel_platform_tag doing nothing would fail test_platform_tag_rejects_mismatch and test_malformed_tag_rejected (which expect RuntimeError). A stub check_mac_wheel_minos doing nothing passes on Linux (which is correct behavior per spec), but the platform tag tests are non-trivially exercised."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors described in instruction.md are tested: _extract_wheel_tags function, EXPECTED_PLATFORM_TAGS dict, check_wheel_platform_tag validation (including multiple wheel rejection, mismatch rejection, valid acceptance), integration into smoke_test.py, and malformed tag handling."
+      "reason": "The instruction requires: tag extraction, EXPECTED_PLATFORM_TAGS dict, platform validation with malformed tag rejection, multiple wheel rejection, macOS minos checking, and smoke_test.py integration. Tests cover: extraction (test_extract_wheel_tags_varied, test_extract_wheel_tags_no_wheel_file), valid/invalid platform tags (multiple tests), malformed tags (test_malformed_tag_rejected), multiple wheels (test_multiple_wheels_rejected), integration (test_smoke_test_integration). The ruff/shellcheck"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_extract_wheel_tags_basic, test_platform_tag_rejects_mismatch, test_multiple_wheels_rejected, etc.) and organized by the aspect they test."
+      "reason": "Tests are well-named (test_extract_wheel_tags_varied, test_platform_tag_rejects_mismatch, test_malformed_tag_rejected, etc.) and each has a docstring explaining its purpose. They're logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces Python code modules, not structured data like JSON/CSV/API/DB."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in instruction.md appear correct and consistent with the test expectations."
+      "reason": "File paths, function names, variable names, and commands are consistent between instruction.md and tests. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the new module to create and its integration point but doesn't reference specific buggy lines or implementation details beyond what's needed for the task description."
+      "reason": "The instruction specifies the new file to create and functions to implement, which is the task itself (not leaking a bugfix location). It doesn't point to specific buggy lines in existing code since this is a new feature addition task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code creation/modification task, not a config-edit task."
+      "reason": "This is a code-creation task (new module + integration), not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

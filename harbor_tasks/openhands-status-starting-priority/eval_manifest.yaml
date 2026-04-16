@@ -65,6 +65,15 @@ rubric:
     follow the frontend-specific tooling instructions to lint and build.
   category: tooling
   verification: llm_judge
+- rule: Use Vitest as the testing framework for frontend tests.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '90'
+  source_text: '    - Our test framework is vitest'
+  evidence: The gold diff utilizes vitest test syntax blocks such as `describe` and
+    `it`, along with `expect` assertions in `frontend/__tests__/utils/status.test.ts`.
+  category: testing patterns
+  verification: llm_judge
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands
@@ -92,6 +101,62 @@ distractors:
   source:
     path: AGENTS.md
     lines: 38-40
+- rule: Write all tests in tests/unit/test_*.py using pytest
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 79-81
+  source_text: "    - All tests are in `tests/unit/test_*.py`\n    - To test new code,\
+    \ run `poetry run pytest tests/unit/test_xxx.py` where `xxx` is the appropriate\
+    \ file for the current functionality\n    - Write all tests with pytest"
+  collision_type: architecture_boundary
+  why_distracting: This testing rule applies exclusively to the Python backend. An
+    agent working on the frontend status utility might mistakenly attempt to write
+    a python pytest file or place frontend tests in the backend tests/unit directory.
+  severity: high
+- rule: Format translation keys as ACTION_MESSAGE$ACTION_NAME
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '271'
+  source_text: '    3. Add a translation key in the format `ACTION_MESSAGE$ACTION_NAME`
+    to the i18n files'
+  collision_type: scope_ambiguity
+  why_distracting: The diff adds a UI status code using an I18n translation key `I18nKey.COMMON$STARTING`.
+    An agent might mistakenly apply this Action-specific format convention to a status
+    translation key.
+  severity: medium
+- rule: Wrap API calls in TanStack Query and follow custom hook naming patterns
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 100-104
+  source_text: "    - Data Access Layer: API client methods are located in `frontend/src/api`\
+    \ and should never be called directly from UI components - they must always be\
+    \ wrapped with TanStack Query\n    - Custom hooks are located in `frontend/src/hooks/query/`\
+    \ and `frontend/src/hooks/mutation/`\n    - Query hooks should follow the pattern\
+    \ use[Resource] (e.g., `useConversationSkills`)\n    - Mutation hooks should follow\
+    \ the pattern use[Action] (e.g., `useDeleteConversation`)\n    - Architecture\
+    \ rule: UI components → TanStack Query hooks → Data Access Layer (`frontend/src/api`)\
+    \ → API endpoints"
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies a simple utility function (`status.ts`). An agent
+    might mistakenly think it needs to overcomplicate the logic by creating TanStack
+    Query hooks to access frontend statuses.
+  severity: medium
+- rule: Use relative imports without enterprise prefix in enterprise code
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 203-205
+  source_text: '- Use relative imports without `enterprise.` prefix in enterprise
+    code
+
+    - Example: `from storage.database import a_session_maker` not `from enterprise.storage.database
+    import a_session_maker`
+
+    - This ensures code works in both OpenHands and enterprise contexts'
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to the Python enterprise backend code. An agent
+    might see this rule and apply relative enterprise imports to the frontend TypeScript
+    files.
+  severity: low
 hierarchy_analysis: The configuration consists of a single root-level `AGENTS.md`
   file containing generic repository guidelines. There is no deep hierarchy or complex
   rule inheritance to navigate.

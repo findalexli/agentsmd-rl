@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (HeaderUpgradeButton.tsx, LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), the event name 'header_upgrade_cta_clicked', the interface name 'HeaderUpgradeCtaClickedEvent', the experiment ID 'headerUpgradeCta', the hook names (useTrack, usePHFlag, useTrackExperimentExposure), the plan check ('free'), the @group Events JSDoc annotation, and the TelemetryEvent union type \u2014 all of which are checked by the tests."
+      "reason": "The instruction explicitly names all file paths (HeaderUpgradeButton.tsx, LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), the event name 'header_upgrade_cta_clicked', the interface name 'HeaderUpgradeCtaClickedEvent', the experiment ID 'headerUpgradeCta', the hooks (useTrack, usePHFlag, useTrackExperimentExposure), the '@group Events' JSDoc annotation, the 'free' plan check, the onClick prop, and the TelemetryEvent union type \u2014 all of which are tested. "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to build and where, but does not give exact code lines, diffs, or literal implementation. A developer must still reason about how to wire up the component, hooks, and telemetry."
+      "reason": "The instruction describes what to build and the interface shape but does not give exact code lines to change, exact line numbers, or copy-paste solutions. A developer still needs to reason about how to implement the component, wire up the hooks, and integrate into the existing layout files."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_header_upgrade_tracks_click_event checks for a click handler with 'handle' and 'click' in the name (case-insensitive) AND requires track() to appear within 5 lines of it with the exact event name. An alternative implementation using an inline arrow function like `onClick={() => track('header_upgrade_cta_clicked')}` without a named handler containing 'handle' and 'click' would fail this test despite being a correct solution. The test also uses regex on track() call syntax that assumes string"
+      "reason": "test_header_upgrade_tracks_click_event checks that a click handler contains 'handle' and 'click' in its name (case-insensitive) with 'track(' within 5 lines. An alternative correct implementation using a different handler name (e.g., 'onButtonPress', 'trackAndNavigate', or an inline arrow function without a named handler) would fail this test despite being behaviorally correct. Similarly, the test uses regex on track() call patterns that would miss valid alternatives like `track({ action: 'heade"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests are text/pattern matching: reading file contents and checking for string presence, regex matches, or running Node scripts that do fs.readFileSync and string includes checks. No test actually imports, renders, or executes the React components. Every test is fundamentally `assert 'foo' in open(path).read()` or equivalent Node string inspection."
+      "reason": "Nearly all tests are text/pattern matching: reading file contents and checking for string presence (e.g., 'assert \"useTrack\" in content', 'assert \"header_upgrade_cta_clicked\" in content', regex on file text). The Node subprocess tests also just read files and check string patterns. No test actually imports, compiles, renders, or executes the React components. This is essentially all `assert 'foo' in open(path).read()` with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific file existence, specific string patterns, interface definitions, and structural properties that would not be satisfied by stub/empty implementations. For example, HeaderUpgradeButton.tsx must exist and contain 'headerUpgradeCta', 'free', 'UpgradePlanButton', 'useTrack', and 'header_upgrade_cta_clicked' in specific patterns."
+      "reason": "The tests check for file existence, specific exported component names, specific string patterns (experiment ID, event name, hook usage, onClick prop in interface), and JSX rendering in layout files. A stub/empty file would fail these checks since it wouldn't contain the required strings, interface definitions, or import/JSX patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's key requirements are tested: component existence with experiment gating and free-plan check, click tracking with useTrack, onClick prop on UpgradePlanButton, telemetry interface definition, rendering in both LayoutHeader and MobileNavigationBar, and naming conventions."
+      "reason": "The instruction's key requirements are tested: HeaderUpgradeButton component creation with experiment gating and free-plan check, click tracking with useTrack, UpgradePlanButton onClick prop addition, telemetry interface definition with correct shape and JSDoc, rendering in both LayoutHeader and MobileNavigationBar, and event naming conventions. Experiment exposure tracking is the one area less directly tested, but the component file is checked for the experiment ID reference."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_header_upgrade_button_component, test_header_upgrade_tracks_click_event, etc.), grouped into 'fail-to-pass (pr_diff)' and 'fail-to-pass (agent_config)' sections with descriptive docstrings."
+      "reason": "Tests are well-organized with descriptive function names (test_header_upgrade_button_component, test_header_upgrade_tracks_click_event, etc.), docstrings explaining each test's purpose, and section comments separating 'fail-to-pass (pr_diff)' from 'fail-to-pass (agent_config)' groups."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction provides the exact TypeScript interface shape for HeaderUpgradeCtaClickedEvent including the action field value and groups type."
+      "reason": "The telemetry event interface shape (HeaderUpgradeCtaClickedEvent with action and groups fields) is explicitly documented in instruction.md with a TypeScript code block."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, event names, and hook names in the instruction match those checked in the tests without typos."
+      "reason": "All file paths, variable names, event names, hook names, and interface names in the instruction match those referenced in tests and solution without typographical errors."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify (LayoutHeader.tsx, MobileNavigationBar.tsx, UpgradePlanButton.tsx, telemetry-constants.ts), specifies adding an 'onClick?: () => void' prop to UpgradePlanButton and forwarding it to Button, and gives the exact interface shape. This goes beyond describing what's needed and into specifying implementation details like 'add an onClick?: () => void prop and forward it to the rendered Button'."
+      "reason": "The instruction specifies exact file paths to modify, exact prop names to add ('onClick?: () => void'), exact placement ('forward it to the rendered Button'), and essentially describes the complete implementation approach. While not giving line numbers, the 'Files to Look At' section with detailed per-file instructions about what to change (e.g., 'add an `onClick?: () => void` prop and forward it to the rendered Button') is quite prescriptive beyond what's needed for a feature description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task involving React component creation and modification, not a config-edit task."
     }
   },
   "tier_a_fails": [

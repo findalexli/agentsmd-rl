@@ -1,0 +1,105 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39729
+  base_commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+  merge_commit: "7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a"
+
+# Config edits extracted from the gold patch
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: "Before committing, run `npm run flint` and fix errors."
+    gold_removed: ""
+
+# Track 1: Code correctness checks
+checks:
+  # Config/instruction file update check
+  - id: claude_md_includes_lint_instruction
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must include the pre-commit lint instruction"
+
+  # Core functional checks
+  - id: tracing_group_returns_disposable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tracing.group() must import and return DisposableStub that calls groupEnd()"
+
+  - id: types_d_ts_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type definitions must show Tracing.group() returns Promise<Disposable>"
+
+  - id: documentation_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "API documentation must indicate Disposable return type"
+
+# Track 3: Rubric rules - conventions the gold solution follows
+rubric:
+  - rule: "Import DisposableStub from './disposable' using named import"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold uses named import pattern matching other client files"
+    category: imports
+    verification: llm_judge
+
+  - rule: "Return disposable immediately after async channel call"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold returns DisposableStub on the line after await this._channel.tracingGroup()"
+    category: code_structure
+    verification: llm_judge
+
+  - rule: "Update CLAUDE.md workflow instructions when adding new tooling requirements"
+    source:
+      path: "CLAUDE.md"
+      lines: "96-102"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold adds lint instruction in Commit Convention section"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Update both types.d.ts files in core and client packages"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold changes Promise<void> to Promise<Disposable> in both type files"
+    category: type_consistency
+    verification: programmatic
+
+# Track 4: Distractors - rules that seem relevant but shouldn't be followed
+distractors:
+  - rule: "Use full imports instead of named imports from local modules"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: rule_conflict
+    why_distracting: "Playwright codebase consistently uses named imports from './disposable'"
+    severity: medium
+
+  - rule: "Add version numbers or dates to CLAUDE.md updates"
+    source:
+      path: "CLAUDE.md"
+      lines: "96-102"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: scope_ambiguity
+    why_distracting: "CLAUDE.md is evergreen documentation; dates/version numbers are not used"
+    severity: low
+
+  - rule: "Create a new section for lint instructions instead of adding to Commit Convention"
+    source:
+      path: "CLAUDE.md"
+      lines: "96-102"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: meta_confusion
+    why_distracting: "The lint instruction relates to committing, so Commit Convention is the appropriate section"
+    severity: low

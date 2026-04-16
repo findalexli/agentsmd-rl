@@ -1,0 +1,179 @@
+# SPDX-License-Identifier: Apache-2.0
+
+source:
+  repo: apache/airflow
+  pr_number: 64807
+  base_commit: d53a7ad5c7e6feaa930bd35c9142b12cd61f5394
+  merge_commit: c2f83ea7c973aef140b732d17fd720024644ef6e
+
+checks:
+  # Function existence tests
+  - id: test_inject_parent_job_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: The inject_parent_job_information_into_emr_serverless_properties function should be importable
+
+  - id: test_inject_transport_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: The inject_transport_information_into_emr_serverless_properties function should be importable
+
+  - id: test_get_or_create_spark_defaults_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: The _get_or_create_spark_defaults_properties helper function should exist
+
+  # Helper function behavior tests
+  - id: test_creates_spark_defaults_when_empty
+    type: fail_to_pass
+    origin: behavioral
+    description: When applicationConfiguration is empty, creates spark-defaults entry
+
+  - id: test_finds_existing_spark_defaults
+    type: fail_to_pass
+    origin: behavioral
+    description: When spark-defaults exists, returns its properties dict
+
+  - id: test_creates_spark_defaults_alongside_other_configs
+    type: fail_to_pass
+    origin: behavioral
+    description: When other classifications exist but not spark-defaults, adds it
+
+  # Parent job injection tests
+  - id: test_inject_parent_into_none_config
+    type: fail_to_pass
+    origin: behavioral
+    description: When configuration_overrides is None, creates full structure
+
+  - id: test_inject_parent_preserves_existing_properties
+    type: fail_to_pass
+    origin: behavioral
+    description: Existing spark-defaults properties are preserved when injecting
+
+  - id: test_inject_parent_does_not_mutate_input
+    type: fail_to_pass
+    origin: behavioral
+    description: The original configuration_overrides dict is not mutated
+
+  - id: test_inject_parent_skips_if_already_present
+    type: fail_to_pass
+    origin: behavioral
+    description: Injection is skipped when parent job info already exists
+
+  # Transport injection tests
+  - id: test_inject_transport_into_none_config
+    type: fail_to_pass
+    origin: behavioral
+    description: When configuration_overrides is None, creates full structure
+
+  - id: test_inject_transport_skips_if_already_present
+    type: fail_to_pass
+    origin: behavioral
+    description: Injection is skipped when transport info already exists
+
+  # Compat layer tests
+  - id: test_compat_layer_exports_parent_injection_function
+    type: fail_to_pass
+    origin: behavioral
+    description: The compat layer should export inject_parent_job_information_into_emr_serverless_properties
+
+  - id: test_compat_layer_exports_transport_injection_function
+    type: fail_to_pass
+    origin: behavioral
+    description: The compat layer should export inject_transport_information_into_emr_serverless_properties
+
+  - id: test_compat_layer_all_exports_include_new_functions
+    type: fail_to_pass
+    origin: behavioral
+    description: The __all__ in compat layer should include the new EMR functions
+
+  # Edge case tests
+  - id: test_monitoring_config_preserved
+    type: fail_to_pass
+    origin: behavioral
+    description: The monitoringConfiguration key should be preserved after injection
+
+  - id: test_multiple_classifications_preserved
+    type: fail_to_pass
+    origin: behavioral
+    description: Multiple applicationConfiguration entries are preserved
+
+  # Pass-to-pass tests: existing functionality still works (static checks)
+  - id: test_existing_glue_injection_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing inject_parent_job_information_into_glue_arguments function still exists
+
+  - id: test_existing_spark_properties_injection_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing inject_parent_job_information_into_spark_properties function still exists
+
+  - id: test_existing_transport_glue_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing inject_transport_information_into_glue_arguments function still exists
+
+  - id: test_existing_transport_spark_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing inject_transport_information_into_spark_properties function still exists
+
+  - id: test_existing_is_parent_job_info_present_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing _is_parent_job_information_present_in_spark_properties helper still exists
+
+  - id: test_is_parent_job_info_present_detects_namespace
+    type: pass_to_pass
+    origin: static
+    description: The _is_parent_job_information_present_in_spark_properties correctly detects namespace key
+
+  - id: test_is_transport_info_present_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The existing _is_transport_information_present_in_spark_properties helper still exists
+
+  - id: test_is_transport_info_present_detects_transport_type
+    type: pass_to_pass
+    origin: static
+    description: The _is_transport_information_present_in_spark_properties correctly detects transport key
+
+  # Pass-to-pass tests: actual repo CI commands (subprocess-based)
+  - id: test_repo_syntax_check_spark_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check on spark.py passes
+
+  - id: test_repo_syntax_check_compat_spark_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check on compat spark.py passes
+
+  - id: test_repo_lint_spark_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting on spark.py module passes
+
+  - id: test_repo_lint_compat_spark_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting on compat spark.py module passes
+
+  - id: test_repo_format_check_spark_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check on spark.py module passes
+
+rubric:
+  - id: follows_existing_function_patterns
+    rule: New EMR Serverless injection functions follow the same patterns as existing injection functions in spark.py
+    reference: "The functions inject_parent_job_information_into_emr_serverless_properties and inject_transport_information_into_emr_serverless_properties follow the same pattern as inject_parent_job_information_into_spark_properties and inject_transport_information_into_glue_arguments"
+
+  - id: compat_layer_exports_new_functions
+    rule: The compat layer in providers/common/compat exports the new EMR Serverless functions
+    reference: "The compat spark.py file adds inject_parent_job_information_into_emr_serverless_properties and inject_transport_information_into_emr_serverless_properties to __all__ and provides fallback implementations"
+
+  - id: uses_deep_copy_for_immutability
+    rule: The injection functions use deep copy to avoid mutating input arguments
+    reference: "Both EMR injection functions use copy.deepcopy(configuration_overrides) to ensure the original dict is not modified"

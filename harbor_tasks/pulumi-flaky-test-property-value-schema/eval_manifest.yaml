@@ -1,0 +1,68 @@
+checks:
+  # Fail-to-pass tests (the main tests for the fix)
+  - id: test_json_schema_has_float_definition
+    type: fail_to_pass
+    description: JSON schema must have Float property values definition
+
+  - id: test_float_object_generator_exists
+    type: fail_to_pass
+    description: Test file must have FloatObjectGenerator function
+
+  - id: test_generator_registered_in_object_value_generator
+    type: fail_to_pass
+    description: FloatObjectGenerator must be registered in ObjectValueGenerator
+
+  - id: test_test_property_value_schema_passes
+    type: fail_to_pass
+    description: TestPropertyValueSchema/serialized subtest must pass (non-flaky)
+
+  # Pass-to-pass tests (repo CI checks)
+  - id: test_go_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go code should compile
+
+  - id: test_go_vet_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: go vet should pass
+
+  - id: test_json_schema_is_valid
+    type: pass_to_pass
+    origin: static
+    description: JSON schema file must be valid JSON
+
+  - id: test_pkg_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests in pkg/resource/stack pass
+
+  - id: test_gofmt_pkg_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go formatting check passes for pkg/
+
+  - id: test_checkpoint_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Checkpoint tests in resource/stack pass
+
+  - id: test_serialize_property_value_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: SerializePropertyValue tests pass
+
+  - id: test_deserialize_property_value_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: DeserializePropertyValue tests pass
+
+  - id: test_round_trip_property_value_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: RoundTripPropertyValue tests pass
+
+  - id: test_sdk_apitype_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: SDK apitype tests pass

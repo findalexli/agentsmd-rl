@@ -62,6 +62,20 @@ rubric:
     method, preserving the fluent interface and Action pattern structure defined in
     the documentation.
   category: architecture
+- rule: Inside `Http` directories for services, file names for endpoint actions must
+    be restricted to `Get.php`, `Update.php`, `Create.php`, `Delete.php`, or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 37-37
+  source_text: 3. Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`. We call it `XList`, because
+    `List` is a reserved keyword and PHP would not like that. Never use any other
+    words! Let's say you want a method to be `blockUser`, tempting to add `Users/Block.php`,
+    instead, think of the resource and property it affec
+  evidence: The modified file is named `Create.php` and is located within the `Http/Project/Variables/`
+    directory, adhering to the strict naming convention for HTTP endpoint actions.
+  category: naming
+  verification: llm_judge
 distractors:
 - rule: Action pattern example defines ID parameters with an empty string default
     and no optional flag.
@@ -85,23 +99,23 @@ source:
   base_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
   merge_commit: 597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd
 checks:
-  - id: test_repo_composer_validate
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's composer.json is valid"
-  - id: test_repo_php_syntax_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: All PHP files in modified module have valid syntax
-  - id: test_repo_pint_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo passes PSR-12 lint checks using Laravel Pint
-  - id: test_repo_phpstan_variables
-    type: pass_to_pass
-    origin: repo_tests
-    description: Modified file passes PHPStan level 3 static analysis
-  - id: test_repo_unit_custom_id
-    type: pass_to_pass
-    origin: repo_tests
-    description: CustomId validator unit tests pass
+- id: test_repo_composer_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's composer.json is valid
+- id: test_repo_php_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PHP files in modified module have valid syntax
+- id: test_repo_pint_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes PSR-12 lint checks using Laravel Pint
+- id: test_repo_phpstan_variables
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes PHPStan level 3 static analysis
+- id: test_repo_unit_custom_id
+  type: pass_to_pass
+  origin: repo_tests
+  description: CustomId validator unit tests pass

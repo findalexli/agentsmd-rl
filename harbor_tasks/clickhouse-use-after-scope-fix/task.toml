@@ -1,0 +1,19 @@
+name = "clickhouse-use-after-scope-fix"
+difficulty = "medium"
+description = "Fix a use-after-scope bug in parallel Object type deserialization by adding proper task cleanup on exception paths"
+time_limit = "900"  # 15 minutes
+required_tools = ["ninja", "clang++"]
+
+[tags]
+categories = ["memory-safety", "concurrency", "exception-safety", "c++"]
+paradigms = ["bugfix", "raii"]
+
+[source]
+repo = "ClickHouse/ClickHouse"
+pr_number = 102073
+base_commit = "cafce4334d43cfade5382a9bde6910e787d69437"
+merge_commit = "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
+
+[target]
+file = "src/DataTypes/Serializations/SerializationObject.cpp"
+language = "cpp"

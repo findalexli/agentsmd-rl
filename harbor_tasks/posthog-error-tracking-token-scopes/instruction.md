@@ -1,34 +1,63 @@
-# Fix missing token scope mappings for error tracking issue actions
+# Fix API token access for error tracking issue endpoints
 
 ## Problem
 
-The error tracking issue endpoints have several custom actions — `merge`, `split`, `assign`, `cohort`, `bulk`, and `values` — that work fine with session-authenticated web flows. However, when accessing these same endpoints using a Personal API key or OAuth token with the appropriate `error_tracking:read` or `error_tracking:write` scopes, the server returns:
+When accessing error tracking issue endpoints with a Personal API key or OAuth token that has the appropriate `error_tracking:read` or `error_tracking:write` scopes, the server returns:
 
 ```
 This action does not support Personal API Key access
 ```
 
-For example, calling `GET /api/environments/{team_id}/error_tracking/issues/values?key=name&value=Type` with a `Bearer` token that has `error_tracking:read` scope fails with a 403 even though the user should have read access.
+The following endpoints are affected:
 
-Similarly, `POST /api/environments/{team_id}/error_tracking/issues/{id}/merge` with an `error_tracking:write` scoped token also returns 403.
+**Read endpoints that should work with `error_tracking:read` scope:**
+- `GET /api/environments/{team_id}/error_tracking/issues` (list issues)
+- `GET /api/environments/{team_id}/error_tracking/issues/{id}` (retrieve issue)
+- `GET /api/environments/{team_id}/error_tracking/issues/values` (get distinct values for a property)
+
+**Write endpoints that should work with `error_tracking:write` scope:**
+- `POST /api/environments/{team_id}/error_tracking/issues` (create issue)
+- `PUT /api/environments/{team_id}/error_tracking/issues/{id}` (update issue)
+- `PATCH /api/environments/{team_id}/error_tracking/issues/{id}` (partial update)
+- `DELETE /api/environments/{team_id}/error_tracking/issues/{id}` (destroy)
+- `POST /api/environments/{team_id}/error_tracking/issues/{id}/merge` (merge issues)
+- `POST /api/environments/{team_id}/error_tracking/issues/{id}/split` (split issue)
+- `POST /api/environments/{team_id}/error_tracking/issues/{id}/assign` (assign issue)
+- `POST /api/environments/{team_id}/error_tracking/issues/{id}/cohort` (create cohort from issue)
+- `POST /api/environments/{team_id}/error_tracking/issues/bulk` (bulk update issues)
+
+These endpoints work correctly with session-based authentication (web UI), but return 403 when using Bearer tokens with the appropriate scopes.
 
 ## Expected Behavior
 
-Personal API keys and OAuth tokens with the correct error tracking scopes should be able to access all error tracking issue endpoints, including custom actions — not just the standard CRUD operations.
+Personal API keys and OAuth tokens with the `error_tracking:read` scope should be able to access all read endpoints. Tokens with the `error_tracking:write` scope should be able to access all write endpoints.
 
-To enable this, the `ErrorTrackingIssueViewSet` class must define two class-level attributes:
+When investigating this issue:
+1. Find the ViewSet handling error tracking issue endpoints
+2. Examine how it inherits scope-checking behavior from its parent classes
+3. Identify why custom actions (like `merge`, `split`, `assign`, `cohort`, `bulk`, `values`) and standard DRF actions (`patch`, `destroy`) are not being validated against the proper scopes
 
-1. **`scope_object_read_actions`** — A list containing the read action names. This must include:
-   - Standard DRF read actions: `"list"`, `"retrieve"`
-   - Custom read action: `"values"`
+The scope object for error tracking endpoints is `"error_tracking"`, and the available scopes are `error_tracking:read` and `error_tracking:write`.
 
-2. **`scope_object_write_actions`** — A list containing the write action names. This must include:
-   - Standard DRF write actions: `"create"`, `"update"`, `"partial_update"`
-   - Custom write actions: `"merge"`, `"split"`, `"assign"`, `"cohort"`, `"bulk"`
+## Required Scope Mappings
 
-Without these attributes, the ViewSet falls back to default scopes that only cover standard CRUD operations, causing 403 errors on custom actions when using scoped tokens.
+After the fix, the following actions must be accessible with their respective scopes:
 
-## Files to Look At
+**Read scope (`error_tracking:read`) must allow:**
+- `list` - for listing issues
+- `retrieve` - for retrieving a single issue  
+- `values` - for getting distinct values for a property
 
-- `products/error_tracking/backend/api/issues.py` — The `ErrorTrackingIssueViewSet` that handles all error tracking issue API endpoints. The custom actions are defined here but token scope mappings are incomplete.
-- `posthog/api/routing.py` — Contains `TeamAndOrgViewSetMixin` which provides the scope-checking infrastructure that ViewSets hook into.
+**Write scope (`error_tracking:write`) must allow:**
+- `create` - for creating issues
+- `update` - for full updates
+- `partial_update` - for PATCH updates
+- `patch` - the DRF patch action
+- `destroy` - for DELETE requests
+- `merge` - for merging issues
+- `split` - for splitting an issue
+- `assign` - for assigning an issue
+- `cohort` - for creating a cohort from an issue
+- `bulk` - for bulk updates
+
+Note that setting scope mappings overrides any defaults, so all actions requiring access must be explicitly included.

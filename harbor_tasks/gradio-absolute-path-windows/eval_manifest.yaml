@@ -74,6 +74,28 @@ distractors:
   source:
     path: AGENTS.md
     lines: 21-24
+- rule: Import gradio as gr
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '32'
+  source_text: import gradio as gr
+  collision_type: would_cause_bug
+  why_distracting: The agent is modifying an internal backend file (`gradio/utils.py`).
+    Importing the top-level `gradio` module inside its own internal utility files
+    would likely cause circular import errors.
+  severity: high
+- rule: Create custom HTML components for missing component functionality
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+  collision_type: architecture_boundary
+  why_distracting: This rule is intended for end-users building applications with
+    Gradio. The agent is fixing a path resolution bug in the core backend library,
+    which requires pure Python logic and not a user-level frontend component workaround
+    like `gr.HTML`.
+  severity: high
 hierarchy_analysis: The configuration consists of a single, flat file (`AGENTS.md`)
   at the root level containing generic repository contribution guidelines. There are
   no overlapping or conflicting rules to resolve.

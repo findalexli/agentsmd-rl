@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key files (todo.ts, registry.ts, session/todo.ts, tool.ts), the specific patterns (Tool.defineEffect, Effect.gen(function* ...), yield* Todo.Service, export const defaultLayer, Todo.defaultLayer in registry), and the requirement for type checks and tests to pass. The test assertions check for these exact patterns and files, all of which are discoverable from the instruction."
+      "reason": "The instruction names all key file paths (todo.ts, registry.ts, session/todo.ts, tool.ts), the specific patterns required (Tool.defineEffect, Effect.gen(function* ...), yield* Todo.Service, export const defaultLayer, Todo.defaultLayer in registry), and the requirement for existing tests to pass. All test assertions map to these explicitly stated requirements."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Use Tool.defineEffect(...) instead of Tool.define(...)', 'Yield the service with yield* Todo.Service', 'Export defaultLayer', 'Provide Todo.defaultLayer in registry.ts'. These are not descriptions of what's broken but precise implementation steps telling the agent exactly what code to write."
+      "reason": "The instruction explicitly states the exact changes: 'Use Tool.defineEffect instead of Tool.define', 'Yield the service with yield* Todo.Service', 'Export defaultLayer', 'Provide Todo.defaultLayer in registry.ts'. These are direct implementation instructions (what to change and how), not just a description of what's broken. A competent developer doesn't need to reason about WHAT to change\u2014it's all spelled out."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'yield* Todo.Service' (test_todowrite_yields_service), 'Todo.defaultLayer' (test_registry_provides_todo_layer), and regex 'export\\s+const\\s+defaultLayer' (test_todo_default_layer_exported). An alternative correct implementation using e.g. 'yield* todoService' or a differently-named export would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests assert on exact literal strings like 'yield* Todo.Service' (test_todowrite_yields_service), 'Todo.defaultLayer' (test_registry_provides_todo_layer), 'export const defaultLayer' (test_todo_default_layer_exported), and 'Effect.gen(function*' (test_effect_gen_composition). An alternative correct implementation using e.g. 'yield* todoService' or a different variable name pattern, or pipe-based composition instead of Effect.gen, would fail these text-matching tests despite being functionally co"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text matching: test_todowrite_yields_service checks 'yield* Todo.Service' in source text, test_todo_default_layer_exported uses regex on source, test_registry_provides_todo_layer checks string 'Todo.defaultLayer' in source. Only test_todowrite_is_effect actually executes code. The majority of f2p tests are string-in-file checks with no behavioral execution."
+      "reason": "Several core fail-to-pass tests are purely text-matching: test_todo_default_layer_exported uses regex on source text, test_registry_provides_todo_layer checks 'Todo.defaultLayer' in src, test_todowrite_yields_service checks 'yield* Todo.Service' in src, test_effect_gen_composition uses regex. Only test_todowrite_is_effect actually executes code. The majority of f2p tests are string-in-file assertions, not behavioral."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_todowrite_is_effect actually imports and checks Effect.isEffect(TodoWriteTool), which would fail on a stub. The text-matching tests require specific non-trivial code patterns that wouldn't appear in a default/empty file. The typecheck and test suite executions require real working code."
+      "reason": "test_todowrite_is_effect actually imports and checks Effect.isEffect(TodoWriteTool), which requires a real implementation change from Tool.define to Tool.defineEffect. A stub or no-op wouldn't pass. The text-matching tests also require specific code patterns that wouldn't exist in the base commit. The typecheck test ensures the code actually compiles."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six requirements from the instruction are tested: Tool.defineEffect (test_todowrite_is_effect), Effect.gen (test_effect_gen_composition), yield* Todo.Service (test_todowrite_yields_service), export defaultLayer (test_todo_default_layer_exported), Todo.defaultLayer in registry (test_registry_provides_todo_layer), and existing tests passing (multiple pass-to-pass tests)."
+      "reason": "All six requirements from the instruction are tested: Tool.defineEffect (test_todowrite_is_effect), Effect.gen (test_effect_gen_composition), yield* Todo.Service (test_todowrite_yields_service), export defaultLayer (test_todo_default_layer_exported), Todo.defaultLayer in registry (test_registry_provides_todo_layer), and existing tests passing (multiple pass_to_pass tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive docstrings, and meaningful function names that indicate what each test verifies."
+      "reason": "Tests are clearly organized with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring of TypeScript files, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves refactoring TypeScript code patterns, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact functions and patterns to use: 'Tool.defineEffect(...)', 'Effect.gen(function* () { ... })', 'yield* Todo.Service', 'export const defaultLayer'. This goes beyond naming the buggy file/module and specifies the exact code constructs to write, eliminating the need for the agent to reason about the solution."
+      "reason": "The instruction explicitly names the exact files, exact function calls to change (Tool.define \u2192 Tool.defineEffect), exact code patterns to use (yield* Todo.Service, Effect.gen(function* () {...})), and exact export to add (export const defaultLayer). This goes well beyond identifying what's broken\u2014it's a step-by-step implementation guide."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

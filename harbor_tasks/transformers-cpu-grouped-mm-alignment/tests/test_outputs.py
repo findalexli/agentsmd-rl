@@ -19,7 +19,12 @@ REPO = "/repo"
 
 
 def _ensure_grouped_mm():
-    """Return context-manager patches that make grouped_mm appear available."""
+    """Return context-manager patches that make grouped_mm appear available.
+
+    Torch 2.6.0 in the test image lacks grouped_mm.  We mock it so the
+    function-under-test can reach the alignment-check code path instead of
+    short-circuiting on "no grouped_mm".
+    """
     patches = []
     if not hasattr(torch.nn.functional, "grouped_mm"):
         patches.append(
@@ -34,20 +39,6 @@ def _ensure_grouped_mm():
             )
         )
     return patches
-
-
-def _mock_old_torch():
-    """Mock is_torch_less_or_equal to return True, simulating torch <= 2.10.
-
-    The fix only adds the alignment check for torch <= 2.10. If a newer torch
-    is installed in the test image, the check is skipped (PyTorch fixed it
-    upstream). We mock the version gate so the alignment logic is always exercised.
-    """
-    return unittest.mock.patch(
-        "transformers.integrations.moe.is_torch_less_or_equal",
-        return_value=True,
-        create=True,
-    )
 
 
 def _make_misaligned(shape, dtype=torch.bfloat16):
@@ -86,29 +77,32 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_misaligned_weight_returns_false():
-    """_can_use_grouped_mm returns False when weight tensor is misaligned."""
+    """_can_use_grouped_mm returns False when weight tensor is misaligned on CPU.
+
+    No version-check mock needed: torch 2.6.0 in the test image is naturally
+    <= 2.10.0, so any correct implementation's version gate will fire.
+    """
     patches = _ensure_grouped_mm()
     for p in patches:
         p.start()
     try:
-        with _mock_old_torch():
-            from transformers.integrations.moe import _can_use_grouped_mm
+        from transformers.integrations.moe import _can_use_grouped_mm
 
-            test_cases = [
-                ((2, 8), (16, 8)),
-                ((4, 16), (32, 16)),
-                ((1, 4), (8, 4)),
-            ]
-            for inp_shape, w_shape in test_cases:
-                aligned_i = torch.randn(*inp_shape, dtype=torch.bfloat16)
-                misaligned_w = _make_misaligned(w_shape)
-                offs = torch.tensor([inp_shape[0]], dtype=torch.int32)
+        test_cases = [
+            ((2, 8), (16, 8)),
+            ((4, 16), (32, 16)),
+            ((1, 4), (8, 4)),
+        ]
+        for inp_shape, w_shape in test_cases:
+            aligned_i = torch.randn(*inp_shape, dtype=torch.bfloat16)
+            misaligned_w = _make_misaligned(w_shape)
+            offs = torch.tensor([inp_shape[0]], dtype=torch.int32)
 
-                assert aligned_i.data_ptr() % 16 == 0
-                result = _can_use_grouped_mm(aligned_i, misaligned_w, offs)
-                assert result is False, (
-                    f"Misaligned weight {w_shape} should return False, got {result}"
-                )
+            assert aligned_i.data_ptr() % 16 == 0
+            result = _can_use_grouped_mm(aligned_i, misaligned_w, offs)
+            assert result is False, (
+                f"Misaligned weight {w_shape} should return False, got {result}"
+            )
     finally:
         for p in patches:
             p.stop()
@@ -116,29 +110,32 @@ def test_misaligned_weight_returns_false():
 
 # [pr_diff] fail_to_pass
 def test_misaligned_input_returns_false():
-    """_can_use_grouped_mm returns False when input tensor is misaligned."""
+    """_can_use_grouped_mm returns False when input tensor is misaligned on CPU.
+
+    No version-check mock needed: torch 2.6.0 in the test image is naturally
+    <= 2.10.0, so any correct implementation's version gate will fire.
+    """
     patches = _ensure_grouped_mm()
     for p in patches:
         p.start()
     try:
-        with _mock_old_torch():
-            from transformers.integrations.moe import _can_use_grouped_mm
+        from transformers.integrations.moe import _can_use_grouped_mm
 
-            test_cases = [
-                ((2, 8), (16, 8)),
-                ((4, 16), (32, 16)),
-                ((1, 4), (8, 4)),
-            ]
-            for inp_shape, w_shape in test_cases:
-                misaligned_i = _make_misaligned(inp_shape)
-                aligned_w = torch.randn(*w_shape, dtype=torch.bfloat16)
-                offs = torch.tensor([inp_shape[0]], dtype=torch.int32)
+        test_cases = [
+            ((2, 8), (16, 8)),
+            ((4, 16), (32, 16)),
+            ((1, 4), (8, 4)),
+        ]
+        for inp_shape, w_shape in test_cases:
+            misaligned_i = _make_misaligned(inp_shape)
+            aligned_w = torch.randn(*w_shape, dtype=torch.bfloat16)
+            offs = torch.tensor([inp_shape[0]], dtype=torch.int32)
 
-                assert aligned_w.data_ptr() % 16 == 0
-                result = _can_use_grouped_mm(misaligned_i, aligned_w, offs)
-                assert result is False, (
-                    f"Misaligned input {inp_shape} should return False, got {result}"
-                )
+            assert aligned_w.data_ptr() % 16 == 0
+            result = _can_use_grouped_mm(misaligned_i, aligned_w, offs)
+            assert result is False, (
+                f"Misaligned input {inp_shape} should return False, got {result}"
+            )
     finally:
         for p in patches:
             p.stop()
@@ -146,16 +143,36 @@ def test_misaligned_input_returns_false():
 
 # [pr_diff] fail_to_pass
 def test_force16bytes_removed_from_mappings():
-    """Force16BytesAlignment no longer used in conversion_mapping."""
+    """Force16BytesAlignment no longer used in conversion_mapping.
+
+    Checks that _build_checkpoint_conversion_mapping() returns real MoE model
+    entries (not empty) and that none of them reference Force16BytesAlignment.
+    """
     from transformers.conversion_mapping import _build_checkpoint_conversion_mapping
-    from transformers.core_model_loading import WeightConverter
 
     mappings = _build_checkpoint_conversion_mapping()
+    assert len(mappings) > 0, "Empty mappings"
+
+    # Verify real MoE model entries exist with operations (prevents trivial stub)
+    moe_models_with_ops = 0
+    for model_name in ("mixtral", "qwen3_moe"):
+        assert model_name in mappings, f"{model_name} missing from mappings"
+        converters = mappings[model_name]
+        assert isinstance(converters, list) and len(converters) > 0, (
+            f"{model_name} has no converters"
+        )
+        for conv in converters:
+            if hasattr(conv, "operations") and conv.operations:
+                moe_models_with_ops += 1
+                break
+    assert moe_models_with_ops > 0, "No MoE model converters have operations"
+
+    # Check that no converter uses Force16BytesAlignment
     found = []
     for model_name, converters in mappings.items():
         if isinstance(converters, list):
             for conv in converters:
-                if isinstance(conv, WeightConverter) and conv.operations:
+                if hasattr(conv, "operations") and conv.operations:
                     for op in conv.operations:
                         if type(op).__name__ == "Force16BytesAlignment":
                             found.append(model_name)
@@ -174,18 +191,17 @@ def test_aligned_tensors_return_true():
     for p in patches:
         p.start()
     try:
-        with _mock_old_torch():
-            from transformers.integrations.moe import _can_use_grouped_mm
+        from transformers.integrations.moe import _can_use_grouped_mm
 
-            shapes = [(1, 8, 8, 8), (4, 16, 32, 16), (8, 32, 64, 32)]
-            for bi, ki, ko, ki2 in shapes:
-                inp = torch.randn(bi, ki, dtype=torch.bfloat16)
-                w = torch.randn(ko, ki2, dtype=torch.bfloat16)
-                offs = torch.tensor([bi], dtype=torch.int32)
-                assert inp.data_ptr() % 16 == 0
-                assert w.data_ptr() % 16 == 0
-                r = _can_use_grouped_mm(inp, w, offs)
-                assert r is True, f"Aligned {inp.shape},{w.shape} should return True, got {r}"
+        shapes = [(1, 8, 8, 8), (4, 16, 32, 16), (8, 32, 64, 32)]
+        for bi, ki, ko, ki2 in shapes:
+            inp = torch.randn(bi, ki, dtype=torch.bfloat16)
+            w = torch.randn(ko, ki2, dtype=torch.bfloat16)
+            offs = torch.tensor([bi], dtype=torch.int32)
+            assert inp.data_ptr() % 16 == 0
+            assert w.data_ptr() % 16 == 0
+            r = _can_use_grouped_mm(inp, w, offs)
+            assert r is True, f"Aligned {inp.shape},{w.shape} should return True, got {r}"
     finally:
         for p in patches:
             p.stop()
@@ -290,7 +306,6 @@ def test_moe_module_imports():
         [
             sys.executable, "-c",
             "from transformers.integrations.moe import _can_use_grouped_mm; "
-            "from transformers.utils.import_utils import is_torch_less_or_equal; "
             "print('OK')",
         ],
         cwd=REPO,

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths (packages/react-router/src/Match.tsx, packages/react-router/tests/Scripts.test.tsx, packages/solid-router/src/Match.tsx), exact strings tested (return null, useLayoutEffect(() => {, isServer ?? router.isServer, type: 'onRendered', prevHrefRef, resetKey, router.emit, suppressHydrationWarning, <script), build/test commands, and the sentinel tag pattern. The test for solid-router checks for 'needs to run' or 'committed', both mentioned in the instr"
+      "reason": "The instruction names all relevant file paths (packages/react-router/src/Match.tsx, packages/react-router/tests/Scripts.test.tsx, packages/solid-router/src/Match.tsx), function names (OnRendered), literal strings ('isServer ?? router.isServer', 'suppressHydrationWarning', 'onRendered', '<script></script>'), prop names (resetKey, prevHrefRef), and imports (useLayoutEffect from './utils'). The test assertions check for these same elements."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md effectively specifies the exact implementation: it says the file must contain 'return null', 'useLayoutEffect(() => {', 'isServer ?? router.isServer', 'type: \"onRendered\"', 'prevHrefRef', 'resetKey', 'router.emit', and must NOT contain both '<script' and 'suppressHydrationWarning'. This is essentially dictating the replacement code rather than just describing the bug. The acceptance criteria are a recipe for the exact fix."
+      "reason": "The instruction explicitly tells the agent exactly what to implement: 'return null instead of rendering a <script> tag', 'Use the expression `isServer ?? router.isServer`', 'Import useLayoutEffect from ./utils', 'Use a ref named prevHrefRef', 'accept `{ resetKey }: { resetKey: number }`', 'Include resetKey in the effect dependency array'. This is a complete specification of the fix, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'useLayoutEffect(() => {' (with specific formatting including space before parenthesis), 'isServer ?? router.isServer', 'prevHrefRef', and 'return null'. An alternative correct fix might use useEffect instead of useLayoutEffect, use a different variable name than prevHrefRef, or check isServer differently. These are implementation-specific assertions that rule out valid alternatives."
+      "reason": "Tests assert on gold-specific implementation details: test_onrendered_emits_event_via_effect checks for exact string 'useLayoutEffect(() => {' (specific formatting), 'prevHrefRef' (specific variable name), 'type: 'onRendered'' as literal string. An alternative correct fix using e.g. useEffect, a differently-named ref, or slightly different formatting would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_onrendered_returns_null_no_script_tag, test_onrendered_emits_event_via_effect, test_ssr_output_no_sentinel_script, and test_typescript_types_correct are purely text-matching (assert 'string' in open(path).read()). However, test_build_succeeds, test_unit_tests_pass, and the p2p tests do execute subprocesses. Since the primary f2p tests (1-4) are entirely text-based with no execution, and they form a significant portion of the test suite, this is a fail."
+      "reason": "Tests test_onrendered_returns_null_no_script_tag, test_onrendered_emits_event_via_effect, test_ssr_output_no_sentinel_script, test_typescript_types_correct, and test_solid_router_consistency are purely text-matching tests (reading files and checking for string presence). While test_build_succeeds and test_unit_tests_pass do execute subprocesses, the f2p tests are entirely 'assert X in open(path).read()' pattern."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The build and unit test execution tests (test_build_succeeds, test_unit_tests_pass, and p2p tests) would fail on a stub implementation because the code must actually compile and pass real unit tests. A stub returning None or empty wouldn't pass the build or the existing Scripts.test.tsx tests."
+      "reason": "The f2p tests check for specific content changes (e.g., 'return null' in Match.tsx, removal of '<script></script>' sentinel from test expectations, 'useLayoutEffect' presence). A stub/no-op implementation that doesn't modify the files would fail these checks since the base commit has <script> tags and suppressHydrationWarning. The build and unit test executions also verify real behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: the source file constraints (no script+suppressHydrationWarning, return null, useLayoutEffect, isServer check, onRendered event, prevHrefRef, resetKey, router.emit), the test file sentinel tag removal, the solid-router comment update, build verification, and unit test passing."
+      "reason": "All behaviors required by instruction.md are tested: no script rendering (test_onrendered_returns_null_no_script_tag), server-side detection (same test checks isServer), layout effect usage (test_onrendered_emits_event_via_effect), prevHrefRef tracking (same), resetKey prop (test_typescript_types_correct), SSR test update (test_ssr_output_no_sentinel_script), solid-router comment (test_solid_router_consistency), build and unit tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_onrendered_returns_null_no_script_tag, test_build_succeeds, etc.), docstrings explaining what each test verifies, and a clear separation between f2p tests and p2p tests with a comment header."
+      "reason": "Tests are well-named, grouped logically (f2p tests for source changes, build/test verification, p2p tests for CI checks), and have descriptive docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying source code and tests, not producing structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves code changes to React components and tests, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and string literals in instruction.md and tests match correctly with no apparent typos."
+      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (packages/react-router/src/Match.tsx) and specifies exact strings that must appear in the solution: 'return null', 'useLayoutEffect(() => {', 'isServer ?? router.isServer', 'type: \"onRendered\"', 'prevHrefRef', 'resetKey'. This goes beyond identifying the buggy area and effectively dictates the implementation details."
+      "reason": "The instruction names exact files, exact function (OnRendered), exact variable names (prevHrefRef), exact expressions ('isServer ?? router.isServer'), exact import paths ('useLayoutEffect from ./utils'), and exact prop signatures ('{ resetKey }: { resetKey: number }'). This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-editing task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

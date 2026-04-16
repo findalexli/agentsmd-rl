@@ -165,6 +165,33 @@ rubric:
     commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
   reference: '- WebCore fixes applied: MessagePortChannel memory leak, JSAbortController
     signal reason, BroadcastChannel use-after-free, EventListenerMap thread affinity.'
+- rule: Visit custom objects and properties in visitChildrenImpl for correct Garbage
+    Collection
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 165-169
+  source_text: 'Visit in `visitChildrenImpl`:
+
+
+    ```cpp
+
+    m_JSFooClassStructure.visit(visitor);
+
+    ```'
+  evidence: The gold diff correctly ensures proper garbage collection traversal by
+    explicitly adding `thisObject->wrapped().signal().reason().visit(visitor);` inside
+    `JSAbortController::visitChildrenImpl`, successfully preventing a GC memory leak.
+  category: architecture
+  verification: llm_judge
+- rule: Implement visitChildren() for custom heap objects to resolve GC issues
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 230-230
+  source_text: '- Implement `visitChildren()` for custom heap objects'
+  evidence: The gold diff resolves a memory/GC issue by invoking `visit(visitor)`
+    on `thisObject->wrapped().signal().reason()` in `JSAbortController.cpp`'s `visitChildrenImpl`.
+  category: memory_management
+  verification: llm_judge
 distractors:
 - rule: Always use bun.* APIs instead of std.*
   collision_type: architecture_boundary
@@ -184,6 +211,61 @@ distractors:
   source:
     path: AGENTS.md
     lines: 26-28
+- rule: Prefer Bun APIs over std
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+  source_text: '## Prefer Bun APIs over `std`
+
+
+    **Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace (`@import("bun")`)
+    provides cross-platform wrappers that preserve OS error info and never use `unreachable`.
+    Using `std.fs`, `std.posix`, or `std.os` directly is wrong in this codebase.'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff modifies C++ WebCore binding files (`.cpp` and `.h`)
+    where the C++ standard library (`std::`) is correctly used (e.g., `std::atomic`
+    and `std::memory` in `EventListenerMap.h`). This rule applies exclusively to the
+    Zig codebase (`src/*.zig`), but its general wording could trick an agent into
+    incorrectly attempting to replace C++ `std::` components with non-existent `bun::`
+    equivalents.
+  severity: high
+- rule: 'Memory & Allocators: Use bun.default_allocator'
+  source:
+    path: src/CLAUDE.md
+    lines: 230-234
+  source_text: '## Memory & Allocators
+
+
+    **Use `bun.default_allocator` for almost everything.** It''s backed by mimalloc.
+
+
+    `bun.handleOom(expr)` converts `error.OutOfMemory` into a crash without swallowing
+    other errors:'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff addresses memory management (fixing leaks and use-after-free
+    issues) in C++ classes using idiomatic C++ approaches like `ThreadSafeWeakPtr`.
+    An agent might mistakenly apply this Zig-specific allocator rule to C++ code instead
+    of utilizing proper reference counting and smart pointers.
+  severity: medium
+- rule: Handle Scopes for V8 Memory Management
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 220-224
+  source_text: '### Handle Scopes
+
+
+    - All V8 values must be created within an active handle scope
+
+    - Use `isolate->currentHandleScope()->createLocal<T>()` to create handles
+
+    - Handle scopes automatically clean up when destroyed'
+  collision_type: scope_ambiguity
+  why_distracting: The diff resolves memory lifetime issues in WebCore C++ bindings
+    (`BroadcastChannel.cpp`). An agent might mistakenly read the V8 implementation
+    guide and attempt to use V8 `HandleScope` mechanisms to manage these lifetimes,
+    crossing the architectural boundary between native WebCore implementations and
+    the Node.js V8 API compatibility shim.
+  severity: high
 hierarchy_analysis: The config hierarchy provides rules for Zig and JS/TS testing,
   but the task is entirely within the C++ WebCore bindings. The agent must recognize
   that the Zig-specific rules in `src/AGENTS.md` do not apply to `.cpp` files, crossing

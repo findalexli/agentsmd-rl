@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths Broker.cs/EventDispatcher.cs, method name TryGetJsonTypeInfo, signature with [NotNullWhen(true)], field name _eventRegistrations, EnqueueEvent signature with EventArgs, PendingEvent record struct, 'no event type mapping was found' string, 'paramsReader' variable, 'JsonSerializer.Deserialize(ref paramsReader' pattern, System.Diagnostics.CodeAnalysis import) are explicitly documented in instruction.md's Specific Requirements section."
+      "reason": "All asserted strings (TryGetJsonTypeInfo, EnqueueEvent, EventArgs, paramsReader, _eventRegistrations, 'no event type mapping was found', PendingEvent, JsonSerializer.Deserialize(ref) and file paths) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: specific variable names ('paramsReader'), exact assignment statements ('paramsReader = reader'), exact method signatures, exact method calls ('JsonSerializer.Deserialize(ref paramsReader, jsonTypeInfo)'), exact field renames ('_events' to '_eventRegistrations'), and exact struct definitions. This leaves virtually no reasoning for the developer about WHAT to change \u2014 it's a detailed specification of the exact code changes."
+      "outcome": "pass",
+      "reason": "Instruction describes the required signatures and behavioral changes but doesn't show diff/line-level code; agent still needs to wire it up."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_params_reader_snapshot_pattern checks for exact string 'paramsReader = reader', test_deserialization_moved_to_broker checks for exact string 'JsonSerializer.Deserialize(ref paramsReader', test_event_registrations_field_renamed checks for exact field name '_eventRegistrations'. An alternative correct implementation using different variable names (e.g., 'eventParamsReader') or different deserialization patterns would fail these tests."
+      "reason": "Tests assert on specific gold-chosen names like field name '_eventRegistrations' (test_event_registrations_field_usage forbids '_events'), variable 'paramsReader', and exact warning phrase 'no event type mapping was found' \u2014 although these are dictated in instruction, alternative correct refactorings using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_try_get_json_type_info_method_exists, test_deserialization_moved_to_broker, test_enqueue_event_accepts_event_args, test_pending_event_struct_simplified, test_event_registrations_field_renamed, test_broker_validates_event_type_before_deserialize, test_params_reader_snapshot_pattern, test_no_byte_index_tracking, test_system_diagnostics_code_analysis_import) are ALL regex/string searches on file content (read_text() + re.search/string 'in'). Only test_dotnet_build execu"
+      "reason": "Most fail_to_pass tests are regex/substring checks on file contents (e.g., test_try_get_json_type_info_method_exists, test_enqueue_event_accepts_event_args, test_pending_event_struct_simplified); only the build/format tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific code patterns that don't exist in the original codebase (e.g., TryGetJsonTypeInfo method, _eventRegistrations field, paramsReader variable). A stub or no-op wouldn't pass because the original files lack these patterns and the tests check both presence of new patterns and absence of old ones."
+      "reason": "Each f2p test asserts a specific code change that a stub no-op cannot satisfy without the refactor."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are covered by tests: TryGetJsonTypeInfo method (test_try_get_json_type_info_method_exists), deserialization in Broker (test_deserialization_moved_to_broker), EnqueueEvent signature (test_enqueue_event_accepts_event_args), PendingEvent struct (test_pending_event_struct_simplified), field rename (test_event_registrations_field_renamed), type validation (test_broker_validates_event_type_before_deserialize), paramsReader snapshot (test_params_reader_sna"
+      "reason": "Tests cover the renamed field, new method, EnqueueEvent signature, PendingEvent struct, deserialization location, and warning validation as specified."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, include docstrings explaining the purpose and categorization (pass_to_pass vs fail_to_pass), and are logically grouped by the component they test (Broker vs EventDispatcher)."
+      "reason": "Tests have descriptive names, docstrings, and clear separation between pass_to_pass build/format tests and fail_to_pass behavioral tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves C# code refactoring, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task is a code refactor, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (dotnet/src/webdriver/BiDi/Broker.cs, dotnet/src/webdriver/BiDi/EventDispatcher.cs), variable names (paramsReader, _eventRegistrations, TryGetJsonTypeInfo), and method signatures are consistent between instruction.md and tests."
+      "reason": "Filenames, method names, and identifiers are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: exact variable names ('paramsReader'), exact assignment statements ('paramsReader = reader'), exact method call patterns ('JsonSerializer.Deserialize(ref paramsReader, jsonTypeInfo)'), exact field renames, and exact struct definitions. This goes well beyond naming the buggy file/module \u2014 it prescribes the exact code changes line by line."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify, which is appropriate; no line-number leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a configuration edit task."
+      "reason": "This is a code-only refactoring task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

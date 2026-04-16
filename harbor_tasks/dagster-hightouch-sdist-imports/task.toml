@@ -1,0 +1,21 @@
+name = "dagster-hightouch-sdist-imports"
+difficulty = "easy"
+time_limit = 900
+tags = ["python", "imports", "packaging", "sdist"]
+
+[description]
+brief = "Fix dagster-hightouch sdist packaging by converting relative imports to absolute imports"
+detail = """
+The dagster-hightouch package has issues with source distribution (sdist) packaging
+due to the use of relative imports (e.g., `from .resources import ...`) which can
+fail when the package is installed from sdist.
+
+The fix involves:
+1. Converting all relative imports to absolute imports (e.g., `from dagster_hightouch.resources import ...`)
+2. Changing the DagsterLibraryRegistry import from `dagster._core.libraries` to `dagster_shared.libraries`
+3. Removing the pyproject.toml file which causes issues with check-manifest CI
+"""
+
+[env]
+image = "task-env"
+workdir = "/workspace/dagster/python_modules/libraries/dagster-hightouch"

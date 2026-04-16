@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific paths like 'packages/playwright/src/skill/SKILL.md', 'packages/playwright/src/mcp/config.d.ts', 'packages/playwright/src/mcp/browser/tools/route.ts', the exact CLI path './packages/playwright/lib/mcp/terminal/cli.js', the literal string 'Skills installed to', the string 'capability: \\'network\\'', and the 'name:' field in SKILL.md. The instruction mentions some of these (e.g., SKILL.md path, 'Skills installed to', 'network' capability, config type definitions) but does no"
+      "outcome": "pass",
+      "reason": "Instruction names all key paths (packages/playwright/src/skill/SKILL.md, .claude/skills/playwright/, references/), strings ('Skills installed to', 'name:', 'playwright-cli', 'install-skills', 'install-browser', '--in-memory'), and capability 'network' used by tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is expected (rename install to install-browser, add install-skills command, change route capability to network, update help text) but does not specify exact code changes, line numbers, or implementation details. A developer must still figure out how to implement each change."
+      "reason": "Instruction describes what needs to change (rename, add command, recategorize) without dictating specific code lines or function implementations."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_route_capability_is_network asserts the exact string 'capability: \\'network\\'' exists in route.ts, which is implementation-specific. test_skill_file_exists checks for exact strings 'name:' and 'playwright-cli' in SKILL.md. test_network_capability_in_config checks for the literal '\\'network\\'' in config.d.ts. An alternative correct implementation that uses different formatting (e.g., capability: \"network\" with double quotes) would fail. The install-skills command output must contain exactly "
+      "outcome": "pass",
+      "reason": "Tests check observable behavior (help output contains string, files copied, capability value in source) which any correct implementation would satisfy."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute subprocesses (node CLI commands, npm run build, npm run tsc), run install-skills and check filesystem side effects (directory creation, file copying), and verify CLI help output. While some tests do read source files (test_route_capability_is_network, test_skill_file_exists), the majority test actual behavior via execution. The mix is acceptable as not 'every test' is pure text matching."
+      "reason": "Tests execute the CLI via subprocess (node MCP_CLI --help, install-skills) and verify file copying behavior, not just text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require non-trivial implementation: test_install_skills_copies_files runs the CLI command in a temp directory and checks that actual files are created on disk including a references/ subdirectory. test_install_skills_command_exists requires the command to appear in help output. test_skill_file_exists requires a real file with specific content. A stub/empty implementation would not pass these tests."
+      "reason": "test_install_skills_copies_files requires actual command execution, file creation at .claude/skills/playwright/, SKILL.md, and references/ dir \u2014 cannot be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All seven expected behaviors from the instruction are tested: install-skills command existence, file copying with references/, install-browser rename, route tools using network capability, network in config types, help text showing --in-memory (tested via test_in_memory_help_text which appears in the truncated tests), and SKILL.md existence/content."
+      "reason": "Tests cover install-skills existence, install-browser rename, file copying, route capability change, network in config, SKILL.md existence/content."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, descriptive function names, and comments categorizing them as [static], [pr_diff], or [repo_tests] with pass_to_pass/fail_to_pass labels. Helper functions are separated from test functions."
+      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Pass-to-pass) and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves CLI commands and file operations, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output format."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md. (Note: the gold solution has 'GitGub' typo in commands.ts but that's in the solution, not the instruction.)"
+      "reason": "Paths and commands in instruction appear correct and consistent with test expectations."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions file paths like 'packages/playwright/src/skill/SKILL.md' and '.claude/skills/playwright/' which are necessary for the task specification, but doesn't point to specific lines or exact files to modify for the route/config changes. The mention of route tools being under 'core' is a behavioral description, not a code localization hint."
+      "reason": "Instruction mentions files by general area (route tools, config type definitions, help text) without pointing to specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task involving TypeScript source changes and new file creation, not a config-edit-scoped task."
+      "reason": "This is a code task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

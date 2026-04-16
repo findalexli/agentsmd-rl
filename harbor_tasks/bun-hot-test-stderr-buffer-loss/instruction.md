@@ -2,34 +2,44 @@
 
 ## Summary
 
-Three tests in `test/cli/hot/hot.test.ts` intermittently hang and time out:
+Three tests intermittently hang and time out:
 - "should work with sourcemap generation"
 - "should work with sourcemap loading"
 - "should work with sourcemap loading with large files"
 
 All three tests verify exactly 50 reload cycles (asserting `toBe(50)` or `toEqual(50)`).
 
-## Root Cause
+## Target
 
-All three tests share the same error-handling loop pattern for driving a hot-reload cycle. They read stderr chunks, split by newline, and iterate over lines looking for error messages. When a duplicate/stale error is detected (from the previous reload cycle), the code sets `str = ""` inside the inner loop before doing `continue outer` to jump back to reading the next stderr chunk. This discards any remaining unprocessed lines from the current chunk that haven't been iterated yet. The lost lines may contain the expected error output, causing the test to wait forever for data that was already consumed and thrown away.
+**File:** `test/cli/hot/hot.test.ts` in the `oven-sh/bun` repository @ commit `af24e281ebacd6ac77c0f14b4206599cf4ae1c9f`
 
-Additionally, two of the three tests spawn a bundler subprocess with `--watch` and use `stdout: "inherit"` and/or `stderr: "inherit"`. When the test runner's pipe buffer fills up, the bundler blocks on writes, creating backpressure that can stall the entire test.
+## Symptoms
 
-A third issue: the bundler-based tests don't detect early bundler exits. If the bundler process terminates unexpectedly, the test continues waiting on stderr from the runner process indefinitely instead of failing fast.
+1. **Stale error lines corrupt state**: When processing stderr chunks split by newline, duplicate/stale errors from previous reload cycles can cause the test to lose track of which lines have been processed, leading to the test waiting for output that will never arrive.
 
-## Symptoms to Fix
+2. **Pipe buffer issues with bundler subprocesses**: Bundler subprocesses spawned with `--watch` may cause the test runner to hang, possibly related to how stdout/stderr is configured for those processes.
 
-1. **Data loss when skipping duplicate errors**: When a duplicate error is detected and the code continues to the next outer iteration, the remaining unprocessed lines from the current split must be preserved (e.g., by saving the trailing partial line with `pop()`, `at(-1)`, or similar array operations) rather than discarded via `str = ""`.
+3. **No early-exit detection for bundler**: If a bundler process terminates unexpectedly, the test continues waiting indefinitely instead of failing fast.
 
-2. **Pipe backpressure in bundler subprocesses**: Bundler subprocesses (those spawned with `--watch`) must not use `stdout: "inherit"` or `stderr: "inherit"` as this causes pipe buffer backpressure.
+4. **Performance issue with large strings**: Large repetitive strings constructed using certain patterns may be slow in debug JavaScriptCore builds. The test conventions (see `test/CLAUDE.md`) require a specific approach for constructing such strings efficiently.
 
-3. **No early-exit detection**: Bundler-based tests must implement early-exit detection (e.g., via `Promise.race`, monitoring `bundler.exited`, or `AbortController`) so they fail fast if the bundler dies unexpectedly.
+## What must be fixed
 
-## Constraints
+The three sourcemap tests must pass reliably without hanging. Specifically:
 
-- The fix must change at least 10 non-comment lines (the file is ~350+ lines).
-- The modified code must pass:
-  - Prettier@3.6.2 formatting check
-  - oxlint with 0 errors
-  - TypeScript typecheck in `test/` directory
-- The three sourcemap tests must continue to exist and verify 50 reload cycles each.
+1. The stderr processing must correctly handle all lines from each chunk — no lines from a chunk may be silently discarded when processing errors.
+
+2. Bundler subprocesses (those spawned with `--watch`) must be configured such that they do not cause the test runner to hang.
+
+3. Bundler-based tests must be able to detect when the bundler process exits early.
+
+4. Large repetitive strings (100+ repetitions) must be constructed using an approach that performs well in debug JavaScriptCore builds.
+
+## Verification requirements
+
+After fixing, the code must still satisfy:
+- All three sourcemap test names and their `toBe(50)` / `toEqual(50)` assertions must remain
+- At least 10 non-comment lines must be modified in the target file
+- The file must pass Prettier@3.6.2 formatting check
+- The file must pass oxlint with 0 errors
+- The file must pass TypeScript typecheck in the `test/` directory

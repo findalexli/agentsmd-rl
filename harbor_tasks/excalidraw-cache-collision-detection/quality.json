@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names every asserted string pattern: cachedPoint, cachedElement, cachedThreshold, cachedHit, WeakRef, pointsEqual, the <= operator, pointsEqual(point, cachedPoint), cachedElement?.deref(), derefElement.version === element.version, derefElement.versionNonce === element.versionNonce, result = hitElement || hitFrameName, cachedHit = result, return cachedHit, WeakRef<ExcalidrawElement>, new WeakRef(element), and the file path packages/element/src/collision.ts."
+      "reason": "The instruction.md explicitly lists every specific string pattern, variable name, and check that the tests verify: cachedPoint, cachedElement, cachedThreshold, cachedHit, WeakRef, pointsEqual, the <= operator, pointsEqual(point, cachedPoint), cachedElement?.deref(), derefElement.version === element.version, derefElement.versionNonce === element.versionNonce, result = hitElement || hitFrameName, cachedHit = result, return cachedHit. All test assertions are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially dictates the exact implementation: specific variable names (cachedPoint, cachedElement, cachedThreshold, cachedHit), exact expressions (pointsEqual(point, cachedPoint), cachedElement?.deref(), derefElement.version === element.version), exact patterns (result = hitElement || hitFrameName, cachedHit = result, return cachedHit), and the threshold comparison operator (<=). This leaves virtually no reasoning for the developer \u2014 it is a dictation of the solution, not a descr"
+      "reason": "The instruction.md essentially dictates the exact implementation: it specifies exact variable names (cachedPoint, cachedElement, cachedThreshold, cachedHit), exact patterns (cachedElement?.deref(), new WeakRef(element), pointsEqual(point, cachedPoint)), exact comparison operators (<=), exact result patterns (result = hitElement || hitFrameName, cachedHit = result, return cachedHit). This leaves virtually no reasoning for the developer - it's a line-by-line specification of the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'cachedThreshold <= threshold', 'pointsEqual(point, cachedPoint)', 'cachedElement?.deref()', 'derefElement.version === element.version', 'cachedHit = result', 'return cachedHit', 'new WeakRef(element)', 'WeakRef<ExcalidrawElement>'. An alternative correct caching implementation using different variable names (e.g., hitCache, savedPoint), a Map-based cache, or different code structure would fail despite being functionally correct."
+      "reason": "Tests assert exact string patterns like 'cachedThreshold <= threshold', 'pointsEqual(point, cachedPoint)', 'cachedElement?.deref()', 'const result = hitElement || hitFrameName', 'cachedHit = result', 'return cachedHit', 'new WeakRef(element)', 'WeakRef<ExcalidrawElement>'. Alternative correct implementations using different variable names (e.g., hitCache, lastPoint), Map-based caching, or different code structure would all fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_collision_cache_implements_caching, test_cache_reuses_result_for_increased_threshold, test_cache_invalidates_on_version_change, test_uses_weakref_for_element_cache, test_cache_stores_hit_result) all work by reading the source file and checking for string patterns with 'in content' checks. None of them import the function, call it, or verify runtime behavior. The pass-to-pass tests do run actual commands but the core f2p tests are purely text-based."
+      "reason": "Nearly all fail-to-pass tests (test_collision_cache_implements_caching, test_cache_reuses_result_for_increased_threshold, test_cache_invalidates_on_version_change, test_uses_weakref_for_element_cache, test_cache_stores_hit_result) exclusively check for string patterns in the source file using 'in content' checks. None of them import the function and call it with test data to verify actual caching behavior. The test_collision_module_imports test attempts an import but doesn't assert on its result"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the required string patterns as comments or dead code in collision.ts (e.g., '// cachedPoint cachedElement cachedThreshold cachedHit WeakRef pointsEqual') would pass test_collision_cache_implements_caching. Similarly, adding exact string literals like 'cachedThreshold <= threshold' as comments would pass test_cache_reuses_result_for_increased_threshold. The tests check text presence, not behavior."
+      "reason": "A stub implementation that simply adds the required string patterns as comments or dead code in collision.ts would pass all fail-to-pass tests. For example, adding '// cachedPoint cachedElement cachedThreshold cachedHit WeakRef pointsEqual' and similar comment lines containing all checked strings would satisfy every assertion without implementing any actual caching logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (cache variables, WeakRef usage, threshold comparison, version checks, result storage and return) are checked by corresponding tests."
+      "reason": "All behaviors listed in instruction.md (cache variables, WeakRef usage, pointsEqual, threshold comparison with <=, version checks, result storage and return) are tested, though only via string matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_collision_cache_implements_caching, test_cache_reuses_result_for_increased_threshold, etc.), have docstrings explaining what they verify, and are logically grouped by concern."
+      "reason": "Tests are well-named and organized with docstrings explaining what each test verifies. There are clear sections for fail-to-pass tests and pass-to-pass CI tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/element/src/collision.ts), the exact function (hitElementItself), and dictates exact variable names, expressions, and operator choices (e.g., '<= not >=', 'cachedElement?.deref()', 'result = hitElement || hitFrameName'). This goes far beyond identifying the buggy module \u2014 it specifies the implementation line by line."
+      "reason": "The instruction.md specifies the exact file (packages/element/src/collision.ts), exact function (hitElementItself), and then goes further to specify exact variable names, exact code patterns, and exact string patterns that must appear. This goes far beyond identifying the buggy location - it provides the complete implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a TypeScript source file, not a config-edit task."
     }
   },
   "tier_a_fails": [

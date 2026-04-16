@@ -1,0 +1,175 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39116
+  base_commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  merge_commit: f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea
+checks:
+- id: kill_all_command_declared_in_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all command must be declared in commands.ts with correct schema
+- id: kill_all_implemented_in_program
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all must be implemented in program.ts with daemon killing logic
+- id: skill_md_documents_kill_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document the kill-all command in the Sessions section
+- id: session_management_md_documents_kill_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-management.md must document kill-all usage for zombie processes
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must compile without errors
+- id: skill_md_has_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md must have valid frontmatter with name and description
+- id: commands_array_exported
+  type: pass_to_pass
+  origin: static
+  description: commands array must be properly exported from commands.ts
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli kill-all  # forcefully kill all daemon processes (for
+    stale/zombie processes)'
+  gold_removed: ''
+- path: packages/playwright/src/skill/references/session-management.md
+  tier: 1
+  gold_added: '# Forcefully kill all daemon processes (for stale/zombie processes)
+
+    playwright-cli kill-all
+
+    '
+  gold_removed: ''
+- path: packages/playwright/src/skill/references/session-management.md
+  tier: 1
+  gold_added: '# If sessions become unresponsive or zombie processes remain
+
+    playwright-cli kill-all
+
+    '
+  gold_removed: ''
+rubric:
+- rule: Command documentation should include inline comments explaining purpose
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-50
+    commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  evidence: 'Gold adds inline comment: ''forcefully kill all daemon processes (for
+    stale/zombie processes)'''
+  category: documentation_style
+  verification: programmatic
+  check_id: skill_md_documents_kill_all
+- rule: Session management commands should be grouped in Sessions section
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 180-190
+    commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  evidence: kill-all added to existing Sessions command block with session-list, session-stop,
+    etc.
+  category: organization
+  verification: programmatic
+  check_id: skill_md_documents_kill_all
+- rule: Reference docs should document both the command and when to use it
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: 1-50
+    commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  evidence: Gold adds both the command and 'If sessions become unresponsive...' usage
+    guidance
+  category: documentation_completeness
+  verification: programmatic
+  check_id: session_management_md_documents_kill_all
+- rule: Daemon process cleanup should handle both Windows and Unix platforms
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 1-30
+    commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  evidence: Gold implements win32 PowerShell branch and Unix ps aux/SIGKILL branch
+  category: cross_platform
+  verification: programmatic
+  check_id: kill_all_implemented_in_program
+- rule: Commands should be declared with proper schema including name, description,
+    category
+  source:
+    path: packages/playwright/src/mcp/terminal/commands.ts
+    lines: 1-50
+    commit: 7aaffc87da20df44d19cf6114efb44a5c99de106
+  evidence: 'killAll declared with name: ''kill-all'', description, category: ''session'',
+    and added to commandsArray'
+  category: code_structure
+  verification: programmatic
+  check_id: kill_all_command_declared_in_commands
+- rule: Register new CLI commands in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-28
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The diff registers the 'kill-all' command by exporting it as 'killAll'
+    in the commands array within packages/playwright/src/mcp/terminal/commands.ts.
+  category: architecture
+  verification: llm_judge
+- rule: Update SKILL.md and documentation references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The diff documents the new 'kill-all' command by modifying packages/playwright/src/skill/SKILL.md
+    and packages/playwright/src/skill/references/session-management.md.
+  category: documentation
+  verification: llm_judge
+- rule: Document new CLI commands in the main SKILL file
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 45-45
+  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`.
+    It contains documentation for all available CLI commands and MCP tools. Update
+    it whenever you add new commands or tools.
+  evidence: The diff explicitly adds the 'playwright-cli kill-all' command to the
+    documentation list in packages/playwright/src/skill/SKILL.md.
+  category: documentation
+  verification: llm_judge
+distractors:
+- rule: Implement corresponding MCP tool for CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 24-24
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: The 'kill-all' command operates at the OS level to forcefully terminate
+    stale daemons. Implementing it as an MCP tool would incorrectly place it inside
+    the very daemon it needs to kill, fundamentally failing its purpose.
+  severity: high
+- rule: Create new MCP tools in browser tools directory
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 9-11
+  source_text: '- Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  collision_type: architecture_boundary
+  why_distracting: Because the agent might mistakenly assume 'kill-all' needs an MCP
+    tool counterpart, it could try to scaffold unnecessary files in the browser tools
+    directory, violating the domain isolation of a pure CLI OS-level command.
+  severity: high
+- rule: Place new CLI tests in cli-<category>.spec.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 31-31
+  source_text: '- Place new tests in `tests/mcp/cli-<category>.spec.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: Testing OS-level process termination ('kill-all') is highly flaky
+    and often requires complex test scaffolding. An agent might waste significant
+    effort trying to write tests for this, which are intentionally omitted in the
+    gold diff.
+  severity: medium

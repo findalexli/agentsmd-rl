@@ -1,37 +1,41 @@
-# Vendor and simplify minimist as TypeScript
+# Vendor minimist as a local TypeScript module in the Playwright CLI client
 
 ## Problem
 
-The CLI client in `packages/playwright-core/src/tools/cli-client/` currently depends on the external `minimist` npm package for command-line argument parsing (`require('minimist')`). This introduces an unnecessary external dependency when the actual usage is simple enough to vendor directly.
+The Playwright CLI client at `packages/playwright-core/src/tools/cli-client/` depends on the external `minimist` npm package for command-line argument parsing. In `program.ts`, parsing is done via `require('minimist')` followed by extensive post-processing that manually converts values to strings, removes unspecified boolean options (to avoid default `false` values), and detects `--bool=value` usage to emit errors. Both `program.ts` and `session.ts` independently define their own local `MinimistArgs` type rather than sharing one.
 
-Additionally, the current code in `program.ts` has significant post-processing logic after calling minimist: it manually converts all values to strings, removes unspecified boolean options (to avoid default `false`), and detects `--bool=value` usage to emit errors. This post-processing should be integrated into the parser itself.
+This external dependency should be replaced with a local, vendored TypeScript implementation that incorporates the post-processing directly into the parser, so the call sites become simple.
 
-## Expected Behavior
+## Requirements
 
-1. **Create a vendored minimist implementation** as a new file `minimist.ts` in the cli-client directory (`packages/playwright-core/src/tools/cli-client/minimist.ts`). The module must:
-   - Export a named function called `minimist` that accepts `(args: string[], opts?)` and returns parsed arguments
-   - Export a `MinimistArgs` type with `_` (string array for positional args) and an index signature for string/boolean options
-   - Parse `--key value`, `--key=value`, `--no-key`, `-f` short flags, and positional args
-   - Accept `boolean` and `string` option declarations
-   - NOT assign default `false` to unspecified boolean options
-   - Throw an error when a boolean option is passed with `=value` (e.g. `--verbose=true`). The error message must include the option name so users know which flag caused the issue
-   - Handle the `--` separator: all arguments after `--` must be treated as positional (stored in `_`), not parsed as flags
+### Parser behavior
 
-2. **Update program.ts** to import the `minimist` function and `MinimistArgs` type from the local `'./minimist'` path, replacing the `require('minimist')` call and the local `MinimistArgs` type definition. The file must contain an import using `from './minimist'` and must no longer contain `require('minimist')`.
+The vendored module should export a `minimist` function and a `MinimistArgs` type (with `_` as a string array for positional args and an index signature for string/boolean options). The parser must support:
 
-3. **Update session.ts** to import the `MinimistArgs` type from `'./minimist'`, replacing the local type definition.
+- `--key value` and `--key=value` long options
+- `--no-key` negation (sets the key to `false`)
+- `-f` short flags
+- Positional arguments collected in `_`
+- `boolean` and `string` option type declarations
+- Boolean options that are not explicitly passed should **not** default to `false`
+- If a boolean option is passed with `=value` (e.g. `--verbose=true`), the parser must throw an error whose message includes the option name
+- The `--` separator: everything after `--` must be treated as positional, not parsed as flags
 
-4. **Update DEPS.list** in the cli-client directory. The DEPS.list uses a section-based format where each section header is a filename in square brackets (e.g. `[program.ts]`, `[session.ts]`) followed by its allowed imports listed one per line. You must:
-   - Add the literal string `./minimist.ts` as an allowed import entry under the sections for files that import from it (e.g. `[program.ts]` and `[session.ts]`)
-   - Add a new section with the header `[minimist.ts]` containing `"strict"` as its declaration
+### Integration
 
-5. **Remove `@types/minimist`** from devDependencies in `package.json` since the vendored module provides its own types.
+- `program.ts` should import `minimist` and `MinimistArgs` from the local `'./minimist'` module instead of using `require('minimist')`. The manual post-processing workarounds currently applied after the `require` call should no longer be necessary.
+- `session.ts` should use the shared `MinimistArgs` type from the local module rather than defining its own copy.
+- The `@types/minimist` entry in `devDependencies` of the root `package.json` is no longer needed once the vendored module provides its own TypeScript types.
 
-6. **Update CLAUDE.md** in the commit message conventions section to add a rule that includes the phrase "Generated with" — specifically, a rule stating never to add that phrase in commit messages.
+### Project conventions
 
-## Files to Look At
+- **DEPS.list**: The cli-client directory uses a `DEPS.list` file to declare allowed imports per source file. Sections are headed by filenames in brackets (e.g. `[program.ts]`, `[session.ts]`). The new module must be registered: files that import from it need `./minimist.ts` as an allowed import in their section, and the new module itself needs its own section (`[minimist.ts]`) declaring `"strict"` mode.
+- **CLAUDE.md**: The project's `CLAUDE.md` documents commit message conventions. It should include a rule that commit messages must never contain the phrase "Generated with".
 
-- `packages/playwright-core/src/tools/cli-client/program.ts` — main CLI entry point, currently uses `require('minimist')`
-- `packages/playwright-core/src/tools/cli-client/session.ts` — session management, has its own local `MinimistArgs` type
-- `packages/playwright-core/src/tools/cli-client/DEPS.list` — import boundary declarations for the cli-client module
-- `CLAUDE.md` — project-level agent instructions, including commit conventions
+## Relevant files
+
+- `packages/playwright-core/src/tools/cli-client/program.ts` — CLI entry point, currently uses `require('minimist')` with post-processing
+- `packages/playwright-core/src/tools/cli-client/session.ts` — session management, defines its own `MinimistArgs` type
+- `packages/playwright-core/src/tools/cli-client/DEPS.list` — import boundary declarations
+- `package.json` — root package, contains `@types/minimist` in devDependencies
+- `CLAUDE.md` — project-level conventions including commit message rules

@@ -3,58 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: WorkItem struct must not have 'idx: u32' (test_workitem_tracks_multiple_indices), workbuf.append count must be <11 (test_double_push_eliminated), specific function names like matchPatternDir/matchPatternFile (test_both_match_functions_present), specific identifiers like GlobWalker/workbuf/patternComponents (test_core_api_preserved), and iteration patterns near match calls (test_pattern_matching_iterates_active_indic"
+      "reason": "Tests assert on specific struct names (e.g., 'WorkItem' in test_workitem_tracks_multiple_indices), specific file paths (src/collections/bit_set.zig), specific functions like 'handleRecursivePattern', 'singleSet', and checks for 'bun.handleOom()' vs 'catch bun.outOfMemory()'. While instruction.md mentions some constraints (bun.handleOom, relevant files), it does not mention 'WorkItem' by name, 'singleSet', 'handleRecursivePattern', or the specific structural requirement that WorkItem must lose it"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (directories visited twice at **/X boundaries due to NFA state handling) and expected behavior (each directory opened once) but does not prescribe a specific fix like 'use a bitset in WorkItem' or 'replace idx:u32 with ComponentSet'."
+      "outcome": "fail",
+      "reason": "instruction.md states 'The walker must be able to track multiple active states when processing a directory, so that a single readdir call evaluates all pending pattern states instead of re-opening the directory for each state.' This directly describes the fix approach (multi-state tracking in a single readdir), not just the bug symptoms. It tells the agent WHAT to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_workitem_tracks_multiple_indices checks for specific patterns like 'BitSet', 'AutoBitSet', 'ArrayList', 'BoundedArray', etc. in WorkItem struct body. An alternative fix that deduplicates at the workbuf level (e.g., using a visited hashset to skip already-seen directories) without changing WorkItem's fields would fail this test. test_double_push_eliminated requires workbuf.append count < 11, which assumes consolidation approach rather than dedup-on-pop."
+      "reason": "test_workitem_tracks_multiple_indices asserts that WorkItem must NOT have 'idx: u32' and MUST have specific multi-value patterns from a fixed list (BitSet, ArrayList, etc.). test_recursive_pattern_no_double_visit checks for removal of 'handleRecursivePattern' function. test_single_set_helper checks for a function named 'singleSet'. These are gold-specific implementation details \u2014 an alternative fix using e.g. a linked list, or a differently-named helper, or keeping idx but adding a second field,"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_workitem_tracks_multiple_indices, test_double_push_eliminated, test_pattern_matching_iterates_active_indices) are purely text/regex searches on source code\u2014they read the file and check for string patterns. They do not compile, execute, or test actual behavior. The comment in test_outputs.py explicitly states 'AST-only because: Zig code requires Zig compiler + WebKit/JSC; not available in container'."
+      "reason": "The fail_to_pass tests (test_workitem_tracks_multiple_indices, test_recursive_pattern_no_double_visit, test_single_set_helper, test_no_banned_patterns_in_new_code) are ALL source-text inspection tests using regex on file contents, not behavioral execution. The pass_to_pass tests do execute subprocesses (test_repo_glob_sources, etc.), but ALL fail_to_pass tests are purely 'assert pattern in open(path).read()' style checks."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check structural properties that would not be satisfied by a stub: test_workitem_tracks_multiple_indices verifies WorkItem no longer has 'idx: u32' and has a multi-value field; test_double_push_eliminated checks workbuf.append count changed from 11; test_pattern_matching_iterates_active_indices checks for iteration near match calls. A no-op or stub change would leave the original code intact and fail these checks."
+      "outcome": "fail",
+      "reason": "A stub that simply removes the 'idx: u32' line from WorkItem, adds a field named 'active: BitSet' (even non-functional), renames handleRecursivePattern to something else, and adds an empty 'singleSet' function would pass all fail_to_pass structural tests without actually fixing the double-visit bug. The tests check source text patterns, not runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'Correctness must be preserved: all matches found by the original code must still be found' and 'The scan should complete in time proportional to the number of files', but no test verifies correctness of glob matching results or performance. Tests only check source code structure."
+      "reason": "instruction.md requires 'Correctness must be preserved: all matches found by the original code must still be found' and 'should handle arbitrarily deep patterns (130+ components)'. No test verifies the 130+ component depth requirement, and no test actually verifies glob correctness with **/X patterns (the core bug scenario). The behavioral test (test_repo_glob_sources) runs a generic glob scan, not specifically the double-visit pattern."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass/static, Fail-to-pass/pr_diff, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear separation between pass_to_pass (gates) and fail_to_pass (fix verification) sections, with descriptive docstrings explaining the purpose and behavioral reasoning for each test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data (JSON/CSV/API/DB); it's a bug fix in Zig source code."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (src/glob/GlobWalker.zig, src/collections/bit_set.zig), function names, and commands appear correct with no typos."
+      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction mentions only the two relevant files (GlobWalker.zig, bit_set.zig) which are natural for the task domain. It describes the bug mechanism (NFA states causing double visits) but doesn't point to specific lines, structs like WorkItem, or fields like idx."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact files to modify (src/glob/GlobWalker.zig, src/collections/bit_set.zig) and describes the specific fix approach ('track multiple active states'). While naming GlobWalker.zig is reasonable, also naming bit_set.zig as relevant leaks that the fix involves adding BitSet functionality, which is an implementation detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 2,
+  "fail_count": 7
 }

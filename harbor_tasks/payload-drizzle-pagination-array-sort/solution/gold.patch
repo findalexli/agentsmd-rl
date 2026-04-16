@@ -1,0 +1,229 @@
+diff --git a/packages/drizzle/src/find/findMany.ts b/packages/drizzle/src/find/findMany.ts
+index d6dfb2a14a5..fa23efe8030 100644
+--- a/packages/drizzle/src/find/findMany.ts
++++ b/packages/drizzle/src/find/findMany.ts
+@@ -1,6 +1,6 @@
+ import type { FindArgs, FlattenedField, TypeWithID } from 'payload'
+ 
+-import { inArray } from 'drizzle-orm'
++import { asc, desc, inArray, max, min } from 'drizzle-orm'
+ 
+ import type { DrizzleAdapter } from '../types.js'
+ 
+@@ -96,20 +96,59 @@ export const findMany = async function find({
+ 
+   const db = await getTransaction(adapter, req)
+ 
+-  const selectDistinctResult = await selectDistinct({
+-    adapter,
+-    db,
+-    joins,
+-    query: ({ query }) => {
+-      if (orderBy) {
+-        query = query.orderBy(() => orderBy.map(({ column, order }) => order(column)))
+-      }
+-      return query.offset(offset).limit(limit)
+-    },
+-    selectFields,
+-    tableName,
+-    where,
+-  })
++  const oneToManyJoinedTableNames = new Set(
++    joins.filter((j) => j.isOneToMany).map((j) => getNameFromDrizzleTable(j.table)),
++  )
++
++  const hasSortOnOneToMany =
++    oneToManyJoinedTableNames.size > 0 &&
++    orderBy?.some(({ column }) =>
++      oneToManyJoinedTableNames.has(getNameFromDrizzleTable(column.table)),
++    )
++
++  let selectDistinctResult: { id: number | string }[] | undefined
++
++  // avoid duplicate results by using a group query instead of select distinct when there is a sort on a one-to-many joined table
++  if (hasSortOnOneToMany) {
++    const mainTable = adapter.tables[tableName]
++    let groupQuery = (db as any).select({ id: mainTable.id }).from(mainTable).$dynamic()
++
++    if (where) {
++      groupQuery = groupQuery.where(where)
++    }
++
++    joins.forEach(({ type, condition, table }) => {
++      groupQuery = groupQuery[type ?? 'leftJoin'](table, condition)
++    })
++
++    groupQuery = groupQuery.groupBy(mainTable.id)
++
++    groupQuery = groupQuery.orderBy(() =>
++      orderBy.map(({ column, order }) => {
++        if (oneToManyJoinedTableNames.has(getNameFromDrizzleTable(column.table))) {
++          return order === asc ? asc(min(column)) : desc(max(column))
++        }
++        return order(column)
++      }),
++    )
++
++    selectDistinctResult = await groupQuery.offset(offset).limit(limit)
++  } else {
++    selectDistinctResult = await selectDistinct({
++      adapter,
++      db,
++      joins,
++      query: ({ query }) => {
++        if (orderBy) {
++          query = query.orderBy(() => orderBy.map(({ column, order }) => order(column)))
++        }
++        return query.offset(offset).limit(limit)
++      },
++      selectFields,
++      tableName,
++      where,
++    })
++  }
+ 
+   if (selectDistinctResult) {
+     if (selectDistinctResult.length === 0) {
+diff --git a/packages/drizzle/src/queries/addJoinTable.ts b/packages/drizzle/src/queries/addJoinTable.ts
+index d876d2b45f9..84e1d559e34 100644
+--- a/packages/drizzle/src/queries/addJoinTable.ts
++++ b/packages/drizzle/src/queries/addJoinTable.ts
+@@ -9,11 +9,13 @@ import { getNameFromDrizzleTable } from '../utilities/getNameFromDrizzleTable.js
+ export const addJoinTable = ({
+   type,
+   condition,
++  isOneToMany,
+   joins,
+   queryPath,
+   table,
+ }: {
+   condition: SQL
++  isOneToMany?: boolean
+   joins: BuildQueryJoinAliases
+   queryPath?: string
+   table: GenericTable | PgTableWithColumns<any>
+@@ -22,6 +24,6 @@ export const addJoinTable = ({
+   const name = getNameFromDrizzleTable(table)
+ 
+   if (!joins.some((eachJoin) => getNameFromDrizzleTable(eachJoin.table) === name)) {
+-    joins.push({ type, condition, queryPath, table })
++    joins.push({ type, condition, isOneToMany, queryPath, table })
+   }
+ }
+diff --git a/packages/drizzle/src/queries/buildQuery.ts b/packages/drizzle/src/queries/buildQuery.ts
+index e66647a3e9d..5c26322b7c7 100644
+--- a/packages/drizzle/src/queries/buildQuery.ts
++++ b/packages/drizzle/src/queries/buildQuery.ts
+@@ -10,6 +10,8 @@ import { parseParams } from './parseParams.js'
+ 
+ export type BuildQueryJoinAliases = {
+   condition: SQL
++  // with parent
++  isOneToMany?: boolean
+   queryPath?: string
+   table: GenericTable | PgTableWithColumns<any>
+   type?: 'innerJoin' | 'leftJoin' | 'rightJoin'
+diff --git a/packages/drizzle/src/queries/getTableColumnFromPath.ts b/packages/drizzle/src/queries/getTableColumnFromPath.ts
+index 3ab09ac00b7..4b5c6902f9b 100644
+--- a/packages/drizzle/src/queries/getTableColumnFromPath.ts
++++ b/packages/drizzle/src/queries/getTableColumnFromPath.ts
+@@ -158,12 +158,14 @@ export const getTableColumnFromPath = ({
+           }
+           addJoinTable({
+             condition: and(...conditions),
++            isOneToMany: true,
+             joins,
+             table: adapter.tables[newTableName],
+           })
+         } else {
+           addJoinTable({
+             condition: eq(arrayParentTable.id, adapter.tables[newTableName]._parentID),
++            isOneToMany: true,
+             joins,
+             table: adapter.tables[newTableName],
+           })
+diff --git a/test/database/int.spec.ts b/test/database/int.spec.ts
+index 53d3ea6bde1..012aa689164 100644
+--- a/test/database/int.spec.ts
++++ b/test/database/int.spec.ts
+@@ -1518,6 +1518,80 @@ describe('database', () => {
+     })
+   })
+ 
++  it('should return the correct number of docs per page when sorting on an array sub-field', async () => {
++    const createdIds: string[] = []
++    const TOTAL = 10
++    const ITEMS_PER_DOC = 3
++    const LIMIT = 5
++
++    const testPrefix = `SortArraySubField-${Date.now()}`
++
++    // Each post has ITEMS_PER_DOC array items with distinct text values so the JOIN
++    // produces TOTAL * ITEMS_PER_DOC rows — enough to expose the LIMIT-before-dedup bug.
++    for (let i = 0; i < TOTAL; i++) {
++      const doc = await payload.create({
++        collection: postsSlug,
++        data: {
++          arrayWithIDs: Array.from({ length: ITEMS_PER_DOC }, (_, j) => ({
++            text: `${testPrefix}-doc${String(i).padStart(2, '0')}-item${j}`,
++          })),
++          title: `${testPrefix}-${i}`,
++        },
++      })
++
++      createdIds.push(String(doc.id))
++    }
++
++    const page1 = await payload.find({
++      collection: postsSlug,
++      limit: LIMIT,
++      page: 1,
++      sort: 'arrayWithIDs.text',
++      where: { title: { contains: testPrefix } },
++    })
++
++    const page2 = await payload.find({
++      collection: postsSlug,
++      limit: LIMIT,
++      page: 2,
++      sort: 'arrayWithIDs.text',
++      where: { title: { contains: testPrefix } },
++    })
++
++    expect(page1.totalDocs).toBe(TOTAL)
++    expect(page1.totalPages).toBe(TOTAL / LIMIT)
++    expect(page1.docs).toHaveLength(LIMIT)
++    expect(page2.docs).toHaveLength(LIMIT)
++
++    // No document should appear in both pages
++    const page1Ids = new Set(page1.docs.map((d) => d.id))
++    const duplicates = page2.docs.filter((d) => page1Ids.has(d.id))
++    expect(duplicates).toHaveLength(0)
++
++    // Verify sort order: each doc's minimum array text is `${testPrefix}-docXX-item0`,
++    // so ascending sort should place doc-00 first and doc-09 last.
++    // Collect all docs across pages and verify they are in non-decreasing text order.
++    const allDocs = [...page1.docs, ...page2.docs]
++    const minTexts = allDocs.map((d) => {
++      const texts = (d.arrayWithIDs ?? []).map((item) => item.text).filter(Boolean)
++      return texts.length > 0 ? texts.sort()[0] : ''
++    })
++
++    for (let i = 1; i < minTexts.length; i++) {
++      expect(minTexts[i - 1]! <= minTexts[i]!).toBe(true)
++    }
++
++    // Page 1 docs should all have smaller sort keys than page 2 docs
++    const page1MaxText = minTexts.slice(0, LIMIT).at(-1)!
++    const page2MinText = minTexts.slice(LIMIT)[0]!
++    expect(page1MaxText <= page2MinText).toBe(true)
++
++    await payload.delete({
++      collection: postsSlug,
++      where: { id: { in: createdIds } },
++    })
++  })
++
+   describe('Compound Indexes', () => {
+     beforeEach(async () => {
+       await payload.delete({ collection: 'compound-indexes', where: {} })

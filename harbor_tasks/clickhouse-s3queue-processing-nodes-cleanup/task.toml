@@ -1,0 +1,37 @@
+name = "clickhouse-s3queue-processing-nodes-cleanup"
+title = "ClickHouse S3Queue: Fix cleanup of stale processing nodes with version checking"
+difficulty = "hard"
+category = "cpp"
+tags = ["cpp", "clickhouse", "s3queue", "zookeeper", "concurrency", "race-condition"]
+
+[time]
+estimated_minutes = 45
+
+[repository]
+name = "ClickHouse"
+url = "https://github.com/ClickHouse/ClickHouse"
+base_commit = "c71831a6b0df9e6b69eaba0e4cf83801c1fb3832"
+merge_commit = "dae8318c5ed52baecd784a85a67c45d985b20d6a"
+pr_number = 101930
+
+[files]
+primary = [
+    "src/Storages/ObjectStorageQueue/ObjectStorageQueueMetadata.cpp"
+]
+
+[description]
+summary = """
+Fix a race condition in S3Queue's cleanup of stale ZooKeeper processing nodes.
+The bug: nodes were removed without version checking, causing potential data
+loss if a node was modified between read and delete operations.
+
+The fix:
+1. Track node version alongside path in nodes_to_remove
+2. Use version in tryRemove() for optimistic concurrency control
+3. Handle ZBADVERSION error gracefully (node was modified)
+4. Track and log actual vs attempted removals for better observability
+"""
+
+[environment]
+dockerfile = "Dockerfile"
+base_image = "python:3.12-slim"

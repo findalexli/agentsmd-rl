@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions the file path (packages/solid-router/src/useBlocker.tsx), the BlockComponent interface, LegacyPromptProps, PromptProps types, the exact export pattern 'export const Block: BlockComponent', the '= function Block(' pattern, and the useBlocker hook. All test assertions check for these elements which are explicitly named in the instruction."
+      "reason": "All test assertions check for things explicitly described in instruction.md: 'export const Block: BlockComponent', removal of deprecated overload, '= function Block(' syntax, LegacyPromptProps/PromptProps types, useBlocker export, and parameter type 'PromptProps | LegacyPromptProps'. The file path 'packages/solid-router/src/useBlocker.tsx' is named. The exact target format is shown in the code block in the Requirements section."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly provides the exact target code: 'export const Block: BlockComponent = function Block(opts: PromptProps | LegacyPromptProps): SolidNode { // existing implementation }'. This is not describing what's broken but literally stating the exact replacement code, leaving no reasoning for the agent."
+      "reason": "instruction.md provides the exact target code under 'The result should look like:' with the precise export const Block: BlockComponent = function Block(...) signature. This tells the agent exactly what to write, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific textual patterns like '= function Block(' in test_block_has_function_implementation and the exact regex 'export const Block: BlockComponent = function Block\\(([^)]+)\\)' in test_block_uses_correct_param_type. An alternative valid solution using an arrow function like 'export const Block: BlockComponent = (opts: PromptProps | LegacyPromptProps): SolidNode => {' would fail these tests despite being functionally correct."
+      "reason": "test_block_has_function_implementation asserts '= function Block(' literally, and test_block_uses_correct_param_type uses a regex matching the exact pattern 'export const Block: BlockComponent = function Block(...)'. An alternative correct fix using an arrow function (e.g., 'export const Block: BlockComponent = (opts: ...) => {...}') would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests (test_block_export_uses_const_arrow, test_no_deprecated_function_overload, test_block_has_function_implementation, test_legacy_prompt_props_still_exists, test_useBlocker_hook_exports, test_prompt_props_type_exists, test_block_uses_correct_param_type) only do string/regex matching on the source file. Only test_repo_eslint_solid_router and test_repo_unit_tests_blocker execute the code. The majority of f2p tests are purely textual."
+      "reason": "Most f2p tests (test_block_export_uses_const_arrow, test_no_deprecated_function_overload, test_block_has_function_implementation, test_block_uses_correct_param_type) only do string/regex matching on file content. While test_repo_eslint_solid_router and test_repo_unit_tests_blocker do execute code, the f2p-specific tests are purely textual assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns that wouldn't exist in the original file (e.g., 'export const Block: BlockComponent', '= function Block('), and test_no_deprecated_function_overload checks that the old pattern is removed. A stub or no-op wouldn't satisfy these since the original file has the old pattern."
+      "reason": "The f2p tests check for specific patterns that don't exist in the original file (e.g., 'export const Block: BlockComponent' and '= function Block(') and check for removal of the deprecated overload. A stub/no-op would not pass these since the original file has 'export function Block' patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: const declaration (test_block_export_uses_const_arrow), BlockComponent interface (same test), arrow function with named expression (test_block_has_function_implementation), removal of deprecated overload (test_no_deprecated_function_overload), unchanged types (test_legacy_prompt_props_still_exists, test_prompt_props_type_exists), and TypeScript compilation via ESLint/unit tests."
+      "reason": "All requirements from instruction.md are tested: const declaration (test_block_export_uses_const_arrow), BlockComponent interface (same test), arrow/named function syntax (test_block_has_function_implementation), removal of deprecated overload (test_no_deprecated_function_overload), TypeScript compilation (eslint test), and functional correctness (blocker unit tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, have docstrings explaining what they check, and include comments distinguishing F2P from P2P tests."
+      "reason": "Tests have descriptive names, docstrings with P2P/F2P annotations, and are logically grouped by concern (export pattern, backward compatibility, compilation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves refactoring TypeScript code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task involves refactoring a TypeScript component export, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, type names (BlockComponent, LegacyPromptProps, PromptProps, SolidNode), and commands are all consistent and correct across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides the exact before and after code snippets, including the precise file to modify (packages/solid-router/src/useBlocker.tsx) and the exact replacement pattern. This goes beyond naming the file and leaks the complete solution."
+      "reason": "instruction.md names the exact file (packages/solid-router/src/useBlocker.tsx) and provides both the exact before and after code, including the precise export signature to write. This goes beyond naming the file - it provides the complete solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

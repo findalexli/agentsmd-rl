@@ -1,0 +1,22 @@
+[task]
+name = "superset-mcp-truncation"
+title = "Add dynamic response truncation for oversized MCP info tool responses"
+description = """
+When MCP info tools (get_chart_info, get_dataset_info, get_dashboard_info, get_instance_info)
+return responses exceeding the configured token limit, they are currently blocked entirely with
+an error. This PR adds progressive truncation that dynamically truncates large fields to fit
+within the token budget while preserving partial data.
+"""
+difficulty = "medium"
+time_estimate_minutes = 45
+tags = ["python", "backend", "mcp", "truncation", "superset"]
+
+[source]
+repo = "apache/superset"
+pr_number = 39107
+base_commit = "92747246fc7e562eef527034e8fcceec50aad9ab"
+merge_commit = "83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+workdir = "/workspace/superset"

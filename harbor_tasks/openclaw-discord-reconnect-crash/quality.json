@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific identifiers like 'drainPendingGatewayErrors', 'drainPending(', 'disallowed-intents', 'runDiscordGatewayLifecycle', 'lifecycleStopping', and specific regex patterns like 'lifecycleStopping && event.type === reconnect-exhausted'. While the instruction mentions 'drainPendingGatewayErrors' and 'lifecycleStopping' and 'reconnect-exhausted', it does not mention 'drainPending(' (the inner call pattern), 'disallowed-intents', or 'runDiscordGatewayLifecycle'. The agent would need to"
+      "reason": "Tests assert on specific identifiers like 'drainPendingGatewayErrors', 'drainPending(', 'disallowed-intents', 'runDiscordGatewayLifecycle', 'lifecycleStopping', and specific regex patterns like 'lifecycleStopping && event.type === \"reconnect-exhausted\"'. The instruction.md mentions drainPendingGatewayErrors and lifecycleStopping but does not mention 'drainPending(' (the inner call), 'disallowed-intents' event type, or 'runDiscordGatewayLifecycle' export. Tests also check config rules from CLAUDE"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The reconnect-exhausted event type should be treated as a graceful stop event unconditionally, regardless of whether lifecycleStopping has been flipped yet' \u2014 this directly describes the fix (remove the lifecycleStopping guard from the reconnect-exhausted condition). It also names the exact function ('drainPendingGatewayErrors') and the exact variable ('lifecycleStopping') involved in the conditional that needs changing."
+      "reason": "The instruction explicitly states: 'The reconnect-exhausted event type should be treated as a graceful stop event unconditionally, regardless of whether lifecycleStopping has been flipped yet.' This directly tells the agent to remove the lifecycleStopping guard from the reconnect-exhausted condition, which is exactly the gold patch fix. It goes beyond describing what's broken and prescribes the specific code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the absence of specific bug patterns (lifecycleStopping && event.type === 'reconnect-exhausted') rather than asserting a specific fix implementation. Any correct fix that removes the lifecycleStopping guard \u2014 whether by restructuring the conditional, using separate if-blocks, or other approaches \u2014 would pass as long as reconnect-exhausted is handled unconditionally."
+      "reason": "The fail-to-pass tests check for the absence of the bug pattern (lifecycleStopping && event.type === 'reconnect-exhausted') via regex. Any correct fix that removes this guard\u2014whether by separating the conditions with OR, restructuring the if-block, or using a switch statement\u2014would pass. The tests don't assert on gold-specific variable names or exact line positions beyond what's necessary."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the source file as text and uses string matching or regex patterns. No test imports/executes the TypeScript code, runs the function, or checks runtime behavior. For example, test_drain_reconnect_exhausted_not_gated does `src = _read_target()` then `re.search(bug_pattern, src[...])`. All tests are purely textual/structural inspection."
+      "reason": "Every single test in test_outputs.py reads the source file as text and performs string/regex matching (e.g., `re.search(bug_pattern, src[...])`, `assert 'disallowed-intents' in src`). No test imports the module, executes the code, runs vitest, or checks runtime behavior. This is pure text inspection."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_drain_reconnect_exhausted_not_gated, test_drain_reconnect_exhausted_returns_stop, test_drain_no_parenthesized_lifecycle_guard) all check for the ABSENCE of the buggy pattern. The original unmodified file contains the bug pattern, so these tests would fail on the original code but pass on ANY modification that removes or alters the specific text pattern \u2014 including simply deleting the entire function body or replacing it with a stub, which would also pass these tests."
+      "reason": "The fail-to-pass tests (test_drain_reconnect_exhausted_not_gated, test_drain_reconnect_exhausted_returns_stop, test_drain_no_parenthesized_lifecycle_guard) only check that the original buggy pattern is absent from the source text. The unmodified original file contains the bug pattern, so these tests fail on the original. But a 'fix' that simply deletes the entire drainPending callback or replaces it with a stub that doesn't contain the bug pattern would pass all three f2p tests. The test_not_stu"
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that reconnect-exhausted be treated as a graceful stop unconditionally (not gated by lifecycleStopping). The fail-to-pass tests verify this by checking the guard is removed. The instruction also implicitly requires preserving existing functionality, which pass-to-pass tests cover (disallowed-intents, lifecycleStopping flag, exports)."
+      "reason": "The instruction requires that reconnect-exhausted be treated as a graceful stop unconditionally, and the tests verify the removal of the lifecycleStopping guard on reconnect-exhausted. The core behavioral requirement is tested, along with regression checks for disallowed-intents and lifecycleStopping preservation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clearly labeled sections (fail-to-pass behavioral, pass-to-pass regression/anti-stub, config-derived), with descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped with section comments ('Fail-to-pass', 'Pass-to-pass', 'Config-derived'), have descriptive names, and include docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+      "reason": "This task involves fixing a TypeScript source file, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and the test file."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file ('extensions/discord/src/monitor/provider.lifecycle.ts'), the exact function ('drainPendingGatewayErrors'), the exact variable ('lifecycleStopping'), and describes the exact conditional logic that's buggy. This goes beyond naming the file to effectively pinpointing the exact lines to change."
+      "reason": "The instruction names the exact function 'drainPendingGatewayErrors()' and the exact flag 'lifecycleStopping' and describes the precise conditional logic that needs changing. Combined with naming the single file to modify, this leaves almost no localization work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only fix task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

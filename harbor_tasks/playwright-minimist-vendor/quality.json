@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions check for things explicitly stated in instruction.md: file paths (minimist.ts, program.ts, session.ts, DEPS.list, package.json, CLAUDE.md), exact import syntax strings, interface/function names (MinimistOptions, MinimistArgs, minimist), the error message \"should not be passed with '=value'\", and the CLAUDE.md rule text. Every asserted specific is discoverable from the instruction."
+      "reason": "All asserted specifics in tests \u2014 file paths (minimist.ts, program.ts, session.ts, DEPS.list, package.json, CLAUDE.md), exact import strings ('import { minimist } from \\'./minimist\\''), interface names (MinimistOptions, MinimistArgs), the error message \"should not be passed with '=value'\", and the CLAUDE.md rule text \u2014 are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact import syntax to use (e.g., `import { minimist } from './minimist'`), exact interface names, exact error message text, exact DEPS.list section structure, and the exact CLAUDE.md rule text. This is essentially a specification of the complete solution rather than a description of what's broken."
+      "reason": "instruction.md gives extremely precise implementation details: exact import syntax to use, exact error message strings, exact section names for DEPS.list, exact content for CLAUDE.md. It specifies 'import { minimist } from \\'./minimist\\'' and 'import type { MinimistArgs } from \\'./minimist\\'' verbatim. The agent doesn't need to reason about what to change \u2014 it's told exactly what lines to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string matches like `export function minimist` (not just that the function exists), `export interface MinimistOptions`, `export interface MinimistArgs`, exact import syntax `import { minimist } from './minimist'`, and `import type { MinimistArgs } from './minimist'`. An alternative correct implementation using `export default function` or `export const minimist =` or different import styles would fail despite being functionally correct."
+      "reason": "Tests assert exact string matches like 'export function minimist' and 'export interface MinimistOptions' and 'export interface MinimistArgs'. An alternative correct implementation using 'export default function' or naming the interface 'ParsedArgs' or using 'export type' instead of 'export interface' would fail these text-matching tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are text-matching: test_minimist_ts_exists checks `'export function minimist' in content`, test_program_uses_vendored_minimist checks exact import strings in file content, test_session_uses_vendored_minimist checks import strings, test_minimist_exports_correct_types checks exact export strings. Only test_typescript_compiles and test_boolean_option_with_equals_throws attempt execution, and the latter falls back to text checking (`assert 'should not be passed with' in minimist_content`)"
+      "reason": "Most tests are pure text-matching: test_minimist_ts_exists checks 'export function minimist' in content, test_program_uses_vendored_minimist checks exact import strings, test_session_uses_vendored_minimist checks string presence, test_minimist_exports_correct_types checks exact string patterns. test_boolean_option_with_equals_throws attempts execution but falls back to string matching. Only test_typescript_compiles actually executes code behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would fail most tests: test_minimist_ts_exists checks for specific export strings, test_program_uses_vendored_minimist checks that require('minimist') is removed and new imports exist, test_typescript_compiles runs tsc, test_boolean_option_with_equals_throws checks for error throwing behavior. These cannot be satisfied by default/empty implementations."
+      "reason": "A stub implementation that just creates empty files or returns None would fail \u2014 tests check for specific exported interfaces, specific import patterns in modified files, TypeScript compilation, and error-throwing behavior. The tests require substantive content."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: minimist.ts creation with correct exports, program.ts import changes, session.ts import changes, DEPS.list updates, package.json @types/minimist removal, TypeScript compilation, boolean error behavior, and CLAUDE.md update."
+      "reason": "All major requirements from instruction.md are tested: minimist.ts creation with exports, program.ts import changes, session.ts import changes, DEPS.list updates, package.json dependency removal, TypeScript compilation, boolean error behavior, and CLAUDE.md update."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into three labeled categories (Code Behavior Tests, Config/Documentation Update Tests, Pass-to-Pass Tests) with descriptive function names and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear category comments (Category 1: Code Behavior Tests, Category 2: Config/Documentation Update Tests, Category 3: Pass-to-Pass Tests), descriptive function names, and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output; it's about code vendoring and file modifications."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, and variable names in instruction.md appear correct and consistent with the repository structure and test expectations."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact import syntax lines to use (e.g., `import { minimist } from './minimist'`), exact interface names, exact error message strings, and exact DEPS.list section content. This goes beyond describing the task domain and essentially provides the implementation details."
+      "reason": "instruction.md specifies exact import syntax lines to use (e.g., 'import { minimist } from \\'./minimist\\'' and 'import type { MinimistArgs } from \\'./minimist\\''), exact section names to add in DEPS.list, and exact error message text. This goes beyond describing what's broken into specifying the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs (CLAUDE.md, DEPS.list, package.json, package-lock.json) are all localized single-line or few-line changes, not full-file rewrites, and are consistent with the test expectations."
+      "reason": "The CLAUDE.md edit is a single line addition. The DEPS.list changes are localized additions to existing sections plus one new section. package.json change is a single line removal. All config edits are well-scoped."
     }
   },
   "tier_a_fails": [

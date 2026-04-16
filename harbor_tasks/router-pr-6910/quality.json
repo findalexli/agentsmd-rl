@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes the expected behavior for promises, thenables, and regular objects. All test-asserted behaviors (native promises not equal, same-reference equal, nested promises, arrays with promises, regular objects still work, custom thenables, promise vs regular object) are discoverable from the instruction's description of expected behavior."
+      "reason": "instruction.md names the file packages/solid-router/src/useRouterState.tsx and describes the deepEqual function behavior that is tested."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken and gives hints about detecting promise-like values via .then method, but doesn't specify exact code changes, line numbers to modify, or the specific implementation (e.g., doesn't say 'add isPromiseLike function' or 'add check after Object.is'). A developer still needs to reason about the implementation."
+      "reason": "Instruction hints at checking .then method but doesn't specify exact code changes, leaving implementation details to the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests use regex to extract functions by name: `src.match(/function isPromiseLike\\(value: unknown\\)[^{]*\\{([\\s\\S]*?)^\\}/m)`. This means the tests specifically look for a function named 'isPromiseLike' with the exact TypeScript signature `(value: unknown)`. An alternative correct fix that inlines the promise check directly in deepEqual (without a separate isPromiseLike function) or uses a differently-named helper would cause the regex extraction to fail or return empty, potentially breaking th"
+      "reason": "Tests use regex to extract a function literally named `isPromiseLike` (e.g., `/function isPromiseLike\\(value: unknown\\)/`) from the source; an alternative correct fix that inlines the check or names the helper differently would fail extraction."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the deepEqual function from source, construct executable JavaScript via `new Function()`, and run it with `node -e`. They actually execute the comparison logic and check return values, not just text patterns."
+      "reason": "Tests extract the functions from source and execute them via Node's Function constructor, calling deepEqual with real Promise objects."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check that deepEqual(Promise.resolve(1), Promise.resolve(1)) returns false. A stub that always returns true would fail (same-reference test expects true but different-reference expects false). A stub returning false would fail on regular object equality tests. The tests require actual bug-fix logic."
+      "reason": "A stub returning false would fail the pass_to_pass regular objects test, and returning true would fail the promise tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors listed in instruction.md are tested: different promises not equal (test_deepequal_native_promises), thenables handled (test_deepequal_custom_thenables in truncated tests), promise vs regular object returns false (test_deepequal_promise_vs_regular_object in truncated tests), regular objects still work (test_deepequal_regular_objects_still_work)."
+      "reason": "Tests cover native promises, nested promises, promises in arrays, and regular object comparison as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deepequal_native_promises, test_deepequal_nested_promises, etc.), have docstrings explaining the scenario and whether it's fail_to_pass or pass_to_pass, and the file has a module-level docstring."
+      "reason": "Tests have descriptive names and docstrings explaining fail_to_pass vs pass_to_pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a comparison function, not producing structured data output."
+      "reason": "No structured data output required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands in the instruction and tests are correct and consistent."
+      "reason": "Paths and function names are consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function which is appropriate for the task domain. It gives conceptual hints about detecting promise-like objects but doesn't specify exact line numbers or the precise code to add."
+      "reason": "File location is appropriately provided as the task is about fixing a specific function; no exact line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [

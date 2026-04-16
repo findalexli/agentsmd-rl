@@ -1,0 +1,27 @@
+name = "clickhouse-fix-use-after-scope-object-deserialization"
+description = "Fix use-after-scope in parallel Object type deserialization by adding SCOPE_EXIT for task cleanup"
+repository = "https://github.com/ClickHouse/ClickHouse"
+pr_number = 102072
+difficulty = "medium"
+tags = ["c++", "concurrency", "memory-safety", "thread-pool", "raii"]
+
+[time_estimates]
+setup = 300
+coding = 600
+validation = 300
+
+[source]
+owner = "ClickHouse"
+repo = "ClickHouse"
+base_commit = "f6d41a8d988b0f7cdb811e7c60b97c327677e493"
+merge_commit = "d7d050adc6d3c148950b263f8f81498751dc944d"
+
+[environment]
+base_image = "ubuntu:22.04"
+language = "cpp"
+build_system = "cmake"
+
+[files]
+target = [
+    "src/DataTypes/Serializations/SerializationObject.cpp"
+]

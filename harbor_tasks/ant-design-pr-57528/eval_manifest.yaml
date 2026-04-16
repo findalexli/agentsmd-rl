@@ -1,0 +1,68 @@
+source:
+  repo: ant-design/ant-design
+  pr_number: 57528
+  title: "feat(Popconfirm): add icon semantic support"
+  base_commit: 611be598bdba1665aebd09bfedebb7001926a5c1
+  merge_commit: 7174900c22aa12f2e3853dc4d6c480268ddbb48b
+
+checks:
+  - id: test_repo_jest_popconfirm
+    type: pass_to_pass
+    origin: repo_tests
+    description: Jest tests pass for popconfirm component
+
+  - id: test_popconfirm_semantic_type_has_icon
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PopconfirmSemanticType includes icon in classNames and styles
+
+  - id: test_purepanel_applies_classnames_icon
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PurePanel applies classNames?.icon to icon span element
+
+  - id: test_purepanel_applies_styles_icon
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PurePanel applies styles?.icon to icon span element
+
+  - id: test_icon_element_uses_clsx
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Icon element uses clsx to combine base class with custom class
+
+  - id: test_popconfirm_type_exported
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PopconfirmSemanticType is a distinct type definition
+
+  - id: test_imports_from_popover_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PurePanel uses PopconfirmSemanticAllType from popconfirm index
+
+  - id: test_overlay_props_use_popconfirm_types
+    type: fail_to_pass
+    origin: pr_behavior
+    description: OverlayProps uses PopconfirmSemanticAllType for semantic types
+
+  - id: test_repo_lint_popconfirm
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for popconfirm component files
+
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes for popconfirm component files
+
+  - id: test_icon_semantic_integration
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Icon semantic props properly extend PopoverSemanticType
+
+# Rubric rules not applicable for this code-only PR.
+# The judge.py evaluates config/documentation file edits, but this PR only modifies code files.
+# The original rules (TypeScript strict, functional components, etc.) describe coding conventions
+# that the gold solution follows, but the judge cannot evaluate them for code-only changes.
+rubric: []

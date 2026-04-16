@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific method names like `.count()`, `.findFirstSet()`, and the literal `null` near `setNameFilter`. The instruction does mention these (under 'Required behavior'), but test_repo_oxlint_js, test_repo_prettier_check_scripts, test_repo_prettier_check_docs, test_repo_prettier_check_glob_tests, and test_repo_git_status_clean reference specific directories/files (e.g., 'src/js', 'scripts/', 'docs/', 'test/js/node/fs/glob.test.ts') that are not mentioned anywhere in instruction.md. An a"
+      "reason": "Tests assert specific implementation details like 'active.count()', 'findFirstSet', '@intCast' \u2014 these exact API names are not mentioned in instruction.md. The instruction mentions 'BitSet called active' and 'computeNtFilter takes a single u32 component index' but never names findFirstSet(), active.count(), or @intCast as required methods/constructs. A developer would need to discover these from the Zig BitSet API documentation, which is not cited."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'use `.count()` to get the number of set bits and `.findFirstSet()` to retrieve the index of the first set bit', 'When only one component is active, compute the NT filter with that single index', 'When multiple components are active, `setNameFilter` must receive `null`'. This is a direct specification of the solution code structure, not just a description of the bug."
+      "reason": "instruction.md explicitly states the exact fix logic: 'When only one component is active, compute the NT filter with that single index and pass it to setNameFilter' and 'When multiple components are active, setNameFilter must receive null'. This describes precisely WHAT to change, not just what's broken. The 'Required behavior' section is essentially pseudocode for the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_fix_uses_active_bitset checks for regex `active\\.\\w+\\(` near setNameFilter, test_multi_active_conditional checks for `.count()` specifically and `null`. An alternative correct fix using e.g. `active.iterator()` to iterate and collect, or using a different variable name after extracting from active, or using `active.popcount()` instead of `.count()`, would fail these tests."
+      "reason": "Tests assert gold-specific implementation details: 'active.count()' (test_active_count_used), 'findFirstSet' (test_findFirstSet_used), '@intCast' (test_intCast_used). An alternative correct fix could use active.iterator() to count and get the first set bit, or use a different BitSet method, or use @as() instead of @intCast, and would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_buggy_component_idx_removed, test_fix_uses_active_bitset, test_multi_active_conditional) are purely textual \u2014 they read the source file and check for string/regex patterns. No test compiles or executes the Zig code. The tests are literally `assert 'foo' in open(path).read()` style checks with no behavioral execution."
+      "reason": "Every test reads the source file as text and checks for string presence (e.g., assert 'active.count()' in context, assert 'findFirstSet' in context). No test compiles the code, runs it, or checks any runtime behavior. This is purely textual pattern matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op would not pass: the original file contains `computeNtFilter(component_idx)` which test_buggy_component_idx_removed checks is removed, and test_fix_uses_active_bitset/test_multi_active_conditional check for new code patterns that don't exist in the original. Doing nothing fails the f2p tests."
+      "reason": "A stub or no-op would not pass \u2014 the original buggy file contains 'component_idx' which would fail test_buggy_component_idx_not_in_setNameFilter_context, and lacks 'active.count()', 'findFirstSet', etc. The tests do require actual changes to the source file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are tested: removal of component_idx reference, use of active BitSet methods, count() check, null fallback, setNameFilter preserved, computeNtFilter preserved and called."
+      "reason": "All five required behaviors listed in instruction.md are tested: no component_idx, derive from active BitSet, single component filter, multiple components null, setNameFilter preserved, computeNtFilter still called."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass, regression checks), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into named classes (TestBuggyPatternRemoved, TestFixUsesActiveBitSet, TestMultiActiveConditional, etc.) with descriptive docstrings on each test method."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves fixing a compile error in Zig source code, not producing structured data output."
+      "reason": "Task is a code bug fix, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in any of the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names the exact file (src/glob/GlobWalker.zig), exact line number (715), exact broken call (`computeNtFilter(component_idx)`), and prescribes the exact methods to use (.count(), .findFirstSet()). This goes well beyond identifying the bug location \u2014 it specifies the implementation."
+      "reason": "instruction.md names the exact file (src/glob/GlobWalker.zig), the exact buggy call (setNameFilter(this.computeNtFilter(component_idx))), the exact variable that was removed (component_idx), the replacement variable (active BitSet), and effectively specifies the exact fix logic with if/else on count."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

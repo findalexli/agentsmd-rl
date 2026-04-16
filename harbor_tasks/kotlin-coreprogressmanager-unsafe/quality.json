@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the file path, the imports to remove/add, the exact field declarations with types and initializers, the Javadoc requirements mentioning both 'sun.misc.Unsafe' and 'ConcurrentLongObjectMap', structural integrity requirements, package declaration, class declaration signature, and field count \u2014 all of which correspond to what the tests assert."
+      "reason": "The instruction names the file path, the two field names (currentIndicators, threadTopLevelIndicators), Long keys, and forbids the specific imports tested."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: remove specific imports, add 'import java.util.concurrent.*;', change both fields to 'ConcurrentMap<Long, ProgressIndicator>' initialized with 'new ConcurrentHashMap<>()', and update Javadoc. This is a complete specification of WHAT to change, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes constraints (no Java11Shim, thread-safe, Long keys) without specifying the exact replacement type ConcurrentHashMap."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use rigid regex patterns like 'private static final ConcurrentMap<Long, ProgressIndicator> currentIndicators\\s*=\\s*\\n?\\s*new ConcurrentHashMap<>\\(\\)' which would reject correct alternatives such as using 'ConcurrentHashMap<Long, ProgressIndicator>' as the declared type instead of 'ConcurrentMap', or importing specific classes like 'import java.util.concurrent.ConcurrentHashMap;' instead of the wildcard 'import java.util.concurrent.*;'."
+      "reason": "test_concurrentmap_import_present requires literal 'import java.util.concurrent.*;' (wildcard) \u2014 a valid fix using 'import java.util.concurrent.ConcurrentHashMap;' and 'import java.util.concurrent.ConcurrentMap;' would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Almost all tests are pure text/regex checks on file content (e.g., 'assert \"import ...\" not in content'). The test_repo_java_syntax test does run javac but expects it to fail and only checks for certain error strings in stderr. No test actually imports, instantiates, or calls the Java class to verify runtime behavior."
+      "outcome": "pass",
+      "reason": "test_repo_java_syntax invokes javac via subprocess to verify compilation syntax."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for removal of old imports/patterns and presence of new ones. A stub or no-op (leaving the original file unchanged) would fail because the original file contains 'import com.intellij.util.Java11Shim;' and 'ConcurrentLongObjectMap<ProgressIndicator> currentIndicators', which the tests assert must NOT be present."
+      "reason": "F2P tests check both removal of forbidden types and presence of ConcurrentMap<Long, ProgressIndicator>, so stubs wouldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 requirements from instruction.md are tested: removed imports (tests 1-2), added import (test 7), field declarations (tests 3-4), no Unsafe in code (test 13), Javadoc updated (test 8), structural integrity including class declaration/braces/package (tests 9-11, 14), and field count (test 12)."
+      "reason": "Tests cover the listed constraints: no forbidden imports, thread-safe map types with Long keys, balanced syntax, class declaration, field count."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_no_java11shim_import, test_uses_concurrenthashmap_for_currentindicators) and each has a docstring with F2P/P2P annotations indicating test categories."
+      "reason": "Tests are individually named with docstrings indicating F2P vs P2P intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing a Java source file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, class names, and import statements in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths and identifiers appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file path, exact imports to remove and add, exact field declaration syntax including type parameters and initializer expressions. This goes far beyond identifying the buggy file \u2014 it specifies the complete solution line by line."
+      "outcome": "pass",
+      "reason": "The buggy file is appropriately named as the subject of the task; no specific line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (editing a Java source file), not a config-edit task."
+      "reason": "Code-only task, not config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

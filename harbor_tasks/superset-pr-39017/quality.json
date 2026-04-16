@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths (list_charts.py, list_dashboards.py, list_datasets.py, schema_discovery.py, chart/schemas.py, dataset/schemas.py), all variable names (DEFAULT_CHART_COLUMNS, DEFAULT_DATASET_COLUMNS, CHART_DEFAULT_COLUMNS, DATASET_DEFAULT_COLUMNS, DASHBOARD_DEFAULT_COLUMNS, CHART_EXTRA_COLUMNS, DATASET_EXTRA_COLUMNS), all class names (ChartInfo, DatasetInfo), all function names (serialize_chart_object, serialize_dataset_object), and all literal string fields (ce"
+      "reason": "All file paths, variable names (CHART_DEFAULT_COLUMNS, DATASET_EXTRA_COLUMNS, etc.), class names (ChartInfo, DatasetInfo), field names (certified_by, certification_details), and serializer details are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md is extremely prescriptive about the exact implementation: it specifies exact variable names to modify, exact fields to add, and even the exact code pattern to use (e.g., 'certified_by=getattr(chart, \"certified_by\", ...)' keyword arguments in serialize_chart_object). This goes beyond describing what's broken and essentially dictates the fix."
+      "reason": "Instruction explicitly dictates the fix, e.g. 'must include `certified_by=getattr(chart, \"certified_by\", ...)`' and lists exactly which keys/fields to add to each constant, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_chart_serializer_includes_certification assert on exact string patterns like 'certified_by=getattr(chart, \"certified_by\"' via string matching in source code. An alternative correct implementation that uses bracket access (chart['certified_by']) or a dictionary unpacking pattern would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check for presence of specific keys/fields that are inherent to the required behavior; alternate correct fixes would still include these identifiers."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses AST parsing of source files or raw string matching (e.g., 'assert '\"certified_by\"' in content'). No test imports any module, instantiates any class, calls any function, or verifies runtime behavior. Tests like test_chart_serializer_includes_certification literally do 'assert 'certified_by=getattr(chart, \"certified_by\"' in content' which is pure text matching."
+      "reason": "Tests use AST parsing and string containment checks (e.g., `'certified_by=getattr(chart, \"certified_by\"' in content`) rather than importing and executing the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings and AST structures that don't exist in the base commit code. A stub or no-op implementation would not add these strings to the source files, so the tests would fail without actual changes."
+      "reason": "Each f2p test checks for specific field/key presence that requires actually adding the fields; a stub would not satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (schema_discovery defaults, list tool defaults, Pydantic schema fields, serializer getattr patterns, extra columns dicts) have corresponding test functions."
+      "reason": "Tests cover schema_discovery constants, Pydantic field presence, list tool defaults, extra columns dicts, and serializer getattr calls as specified."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with a clear section comment '# FAIL-TO-PASS TESTS', descriptive function names (test_chart_default_columns_include_certification, etc.), and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped under a 'FAIL-TO-PASS TESTS' section header with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying Python source code (constants, Pydantic models, serializers), not producing structured data output like JSON/CSV/API responses."
+      "reason": "Task is about code constants/schemas, not a data output format."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, class names, and field names in the instruction match those used in the tests and solution without typos."
+      "reason": "Paths and variable names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact variable names (DEFAULT_CHART_COLUMNS, CHART_EXTRA_COLUMNS, etc.), exact file paths, exact function signatures (serialize_chart_object with getattr pattern), and exact class names. This goes well beyond domain-obvious information and essentially specifies the complete implementation."
+      "reason": "Instruction specifies exact constant names, exact fields to add, and even the exact keyword-argument pattern `getattr(chart, \"certified_by\", ...)` for the serializer, essentially providing the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Python source files, not configuration files."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -105,6 +105,16 @@ rubric:
     path: .github/copilot-instructions.md
     lines: 191-194
     commit: 260770c977f376c9b0190c03ed1a41920725f079
+- rule: Guard against unexpected null or state
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: '366'
+  source_text: ✅ **Null/state checks** - Guard against unexpected null or state
+  evidence: The gold diff explicitly adds a state check `if (AppInfoUtils.IsPackagedApp)`
+    before calling `EnsureDeclared()`, guarding against the unexpected state of running
+    as an unpackaged app.
+  category: error handling
+  verification: llm_judge
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1
@@ -167,3 +177,28 @@ config_edits:
 
     > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
     from this PR and let us know i'
+distractors:
+- rule: Always add correct API entries to PublicAPI.Unshipped.txt files
+  source:
+    path: .github/copilot-instructions.md
+    lines: '125'
+  source_text: '- **Always add correct API entries** to PublicAPI.Unshipped.txt files'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying `Permissions.windows.cs` might mistakenly believe
+    it needs to update the public API tracking files. However, this PR only modifies
+    the internal implementation of the permission methods and does not alter their
+    public signatures, making this rule a distractor.
+  severity: high
+- rule: Create UI tests for GitHub issues
+  source:
+    path: .github/skills/write-ui-tests/SKILL.md
+    lines: '12'
+  source_text: Creates UI tests that reproduce a GitHub issue, following .NET MAUI
+    conventions.
+  collision_type: scope_ambiguity
+  why_distracting: An agent trying to be thorough might attempt to invoke the write-ui-tests
+    skill for this bug fix. However, testing Windows OS-level permission capabilities
+    (like Microphone access) is typically out of scope for the standard UI test suite
+    since it involves interacting with native OS prompts, which Appium UI tests handle
+    poorly.
+  severity: medium

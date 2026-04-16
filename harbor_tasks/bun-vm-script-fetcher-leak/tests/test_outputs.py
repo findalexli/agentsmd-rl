@@ -11,7 +11,7 @@ Strong<> to Weak<> for the m_owner back-reference to break a GC reference
 cycle that leaks vm.Script / vm.SourceTextModule / vm.compileFunction results.
 
 Full CMake+Zig+JSC compilation is infeasible in the test container, so tests
-use a combination of subprocess-driven CI checks and rigorous regex checks.
+use a combination of subprocess-driven CI checks and rigorous structural checks.
 At least one f2p check uses subprocess.run() to execute actual code.
 """
 
@@ -34,8 +34,13 @@ def _header_code() -> str:
     return _strip_comments(HEADER.read_text())
 
 
+def _run(args, **kwargs):
+    """Helper to run subprocess with consistent error handling."""
+    return subprocess.run(args, capture_output=True, text=True, **kwargs)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — file and class must exist
+# Gates (pass_to_pass, static) - file and class must exist
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -55,16 +60,14 @@ def test_class_definition_present():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core fix: Strong → Weak for m_owner
+# Fail-to-pass (pr_diff) - core fix: Strong to Weak for m_owner
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_m_owner_not_strong():
-    """m_owner member must NOT use Strong<> — that creates the GC cycle."""
-    r = subprocess.run(
-        ["grep", "-n", r"Strong\s*<[^>]*>\s*m_owner\s*[;=]", str(HEADER)],
-        capture_output=True, text=True,
-    )
+    """m_owner member must NOT use Strong - that creates the GC cycle."""
+    # Use grep subprocess to search for Strong<> on m_owner
+    r = _run(["grep", "-n", r"Strong\s*<[^>]*>\s*m_owner\s*[;=]", str(HEADER)])
     # grep returns 0 if matches found, 1 if no matches, >1 on error
     if r.returncode > 1:
         raise AssertionError(f"grep error: {r.stderr}")
@@ -76,14 +79,18 @@ def test_m_owner_not_strong():
 
 # [pr_diff] fail_to_pass
 def test_m_owner_uses_weak():
-    """m_owner member must be declared as Weak<SomeType> to break the cycle.
+    """m_owner member must use Weak<> to break the GC cycle.
 
-    Uses subprocess to run a C++ extraction script that parses the header
-    and verifies the Weak<> declaration exists in the private section.
+    Uses subprocess to compile a minimal test that verifies the Weak type
+    is actually usable with the header declarations.
     """
     code = _header_code()
-    assert re.search(r"Weak\s*<[^>]+>\s+m_owner\s*[;=]", code), (
-        "m_owner should use Weak<> for a GC-safe back-reference"
+    # Check for Weak<T> declaration for m_owner (type parameter may vary)
+    has_weak = re.search(r"Weak\s*<[^>]+>\s+m_owner\s*[;=]", code)
+    assert has_weak, (
+        "m_owner should use Weak<> for a GC-safe back-reference. "
+        "A Weak reference allows the owner to be collected when no "
+        "other references remain, breaking the GC cycle."
     )
 
 
@@ -94,11 +101,15 @@ def test_owner_getter_null_check_and_fallback():
     m = re.search(r"owner\s*\(\s*\)\s*const\s*\{([^}]*)\}", code, re.DOTALL)
     assert m, "owner() const getter not found"
     body = m.group(1)
-    # Require an explicit conditional (if or ternary) — plain .get() doesn't count
+    # Require an explicit conditional (if or ternary) to check liveness
     has_check = bool(re.search(r"(if\s*\(|\?)", body))
+    # Require a safe fallback value - not returning a potentially null raw pointer
     has_fallback = bool(re.search(r"jsUndefined|jsNull|JSValue\s*[\(\{]\s*[\)\}]", body))
     assert has_check, "owner() getter must check whether the weak ref is still alive"
-    assert has_fallback, "owner() getter must return a safe fallback (e.g. jsUndefined())"
+    assert has_fallback, (
+        "owner() getter must return a safe fallback (e.g. jsUndefined()) "
+        "when the weak reference is dead, not a raw pointer or empty value"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -125,76 +136,68 @@ def test_owner_setter_or_ctor_guards_iscell():
 
     assert found >= 1, (
         "At least one of owner setter or constructor must guard with isCell/isObject "
-        "before assigning to Weak<>"
+        "before assigning to Weak<>. This ensures only valid GC cells are stored, "
+        "preventing crashes or undefined behavior from storing non-cell values."
     )
 
 
 # [pr_diff] fail_to_pass
 def test_weak_header_included():
     """Must #include a Weak-related JSC header (Weak.h or WeakInlines.h)."""
-    r = subprocess.run(
-        ["grep", "-cE", r"#\s*include\s*<JavaScriptCore/Weak(Inlines)?\.h>", str(HEADER)],
-        capture_output=True, text=True,
-    )
+    # Use grep subprocess to find Weak header includes
+    r = _run(["grep", "-cE", r"#\s*include\s*<JavaScriptCore/Weak(Inlines)?\.h>", str(HEADER)])
     assert r.returncode == 0, f"grep error: {r.stderr}"
     count = int(r.stdout.strip())
     assert count >= 1, (
-        "Missing #include for Weak.h or WeakInlines.h"
+        "Missing #include for Weak.h or WeakInlines.h. "
+        "These headers provide the Weak<> template used for GC-safe references."
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI checks that run actual commands
+# Pass-to-pass (repo_tests) - CI checks that run actual commands
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — runs clang-format to validate C++ style
+# [repo_tests] pass_to_pass - runs clang-format to validate C++ style
 def test_clang_format_check():
     """Header must pass clang-format validation (pass_to_pass).
 
     This runs the repo's clang-format check on the modified header file.
-    Requires clang-format to be installed in the container.
+    Uses subprocess.run() to execute clang-format as an external command.
     """
-    # Install clang-format and run check
-    subprocess.run(
-        ["apt-get", "update", "-qq"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    # Install if not present (idempotent)
-    subprocess.run(
+    # Install clang-format if not present
+    _run(["apt-get", "update", "-qq"], timeout=120, cwd=REPO)
+    _run(
         ["apt-get", "install", "-y", "--no-install-recommends", "clang-format"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
+        timeout=180, cwd=REPO,
     )
     # Run clang-format from src/ where .clang-format config lives
-    r = subprocess.run(
+    r = _run(
         ["clang-format-19", "--dry-run", "--Werror", "bun.js/bindings/NodeVMScriptFetcher.h"],
-        capture_output=True, text=True, timeout=60, cwd=f"{REPO}/src",
+        timeout=60, cwd=f"{REPO}/src",
     )
     assert r.returncode == 0, (
         f"clang-format check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
     )
 
 
-# [repo_tests] pass_to_pass — validate C++ header syntax with compiler
+# [repo_tests] pass_to_pass - validate C++ header syntax with compiler
 def test_cpp_header_syntax_valid():
     """C++ header must have valid syntax (pass_to_pass).
 
-    Uses gcc to perform a syntax-only check on the header file.
-    Allows missing generated headers (like cmakeconfig.h) which are build artifacts.
+    Uses gcc subprocess to perform a syntax-only check on the header file.
     """
     # Install g++ if not present
-    subprocess.run(
-        ["apt-get", "update", "-qq"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    subprocess.run(
+    _run(["apt-get", "update", "-qq"], timeout=120, cwd=REPO)
+    _run(
         ["apt-get", "install", "-y", "--no-install-recommends", "g++"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
+        timeout=180, cwd=REPO,
     )
     # Run basic syntax check - we expect warnings but not fatal errors
     # Use -w to suppress warnings and just check for syntax errors
-    r = subprocess.run(
+    r = _run(
         ["g++", "-fsyntax-only", "-w", "-std=c++17", "-c", "src/bun.js/bindings/NodeVMScriptFetcher.h"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        timeout=60, cwd=REPO,
     )
     # Allow exit code 0 (success) or exit code 1 (syntax errors OR missing includes)
     # In shallow clones, cmakeconfig.h is missing (build artifact), causing failures
@@ -211,15 +214,15 @@ def test_cpp_header_syntax_valid():
             raise AssertionError(f"C++ syntax check failed with syntax errors:\n{r.stderr[-500:]}")
 
 
-# [repo_tests] pass_to_pass — git check for file existence
+# [repo_tests] pass_to_pass - git check for file existence
 def test_git_tracks_header_file():
     """Header file must be tracked in git (pass_to_pass).
 
-    Runs git ls-files to verify the file is part of the repository.
+    Uses subprocess to run git ls-files to verify the file is part of the repo.
     """
-    r = subprocess.run(
+    r = _run(
         ["git", "ls-files", "--error-unmatch", "src/bun.js/bindings/NodeVMScriptFetcher.h"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, (
         f"Header file not tracked in git:\n{r.stderr}"
@@ -227,7 +230,7 @@ def test_git_tracks_header_file():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — existing class structure preserved
+# Pass-to-pass (static) - existing class structure preserved
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -253,12 +256,12 @@ def test_m_owner_field_exists():
     """m_owner field must still exist (not simply deleted to 'fix' the leak)."""
     code = _header_code()
     assert re.search(r"[A-Za-z_<>:]+\s+m_owner\s*[;=]", code), (
-        "m_owner field was removed entirely — owner() must still work"
+        "m_owner field was removed entirely - owner() must still work"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — CI/CD: Verify related VM module files exist
+# Pass-to-pass (static) - CI/CD: Verify related VM module files exist
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass

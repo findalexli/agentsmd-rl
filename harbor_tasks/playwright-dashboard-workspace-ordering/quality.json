@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (grid.tsx, dashboardApp.ts, DEPS.list), variable names (currentWorkspace, clientInfo), function names (createClientInfo), import paths (../cli-client/registry), literal strings ('Global'), schema keys (sessions, clientInfo), and the comparison pattern (key === currentWorkspace) that are asserted in the tests."
+      "reason": "The instruction names all three files (grid.tsx, dashboardApp.ts, DEPS.list), the API endpoint /api/sessions/list, the clientInfo and sessions fields, the createClientInfo import from '../cli-client/registry', the 'Global' fallback, currentWorkspace variable usage, and localeCompare sorting. All assert'd specifics in tests (file paths, string literals like 'Global', schema keys like sessions/clientInfo, import path '../cli-client/registry.ts') are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact fix: 'Define a derived variable named currentWorkspace that resolves to clientInfo?.workspaceDir || \"Global\"', 'Use currentWorkspace (not the raw clientInfo?.workspaceDir) when filtering', 'sendJSON(response, { sessions, clientInfo })', and 'import { createClientInfo } from ../cli-client/registry'. This is a complete specification of what code to write, not just a description of what's broken."
+      "reason": "The instruction essentially dictates the exact implementation: 'const currentWorkspace = clientInfo?.workspaceDir || \"Global\"', use 'key === currentWorkspace', import createClientInfo from '../cli-client/registry', response must include { sessions, clientInfo }. This goes beyond describing what's broken and specifies exactly what code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_grid_workspace_ordering checks for the exact regex pattern 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' and the literal string 'key === currentWorkspace'. test_dashboard_api_sends_client_info checks for the exact import string 'import { createClientInfo } from ../cli-client/registry'' and exact sendJSON pattern 'sendJSON(response, { sessions, clientInfo })'. An alternative correct fix using different variable names, destruct"
+      "reason": "Tests assert exact source patterns like 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' (regex match), 'key === currentWorkspace' (string inclusion), exact import statement \"import { createClientInfo } from '../cli-client/registry'\", and exact sendJSON pattern 'sendJSON(response, { sessions, clientInfo })'. An alternative correct fix using different variable names (e.g., 'activeWorkspace'), different fallback syntax (e.g., ternary operator), or different response construction would fai"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_grid_workspace_ordering, test_dashboard_api_sends_client_info, test_deps_declares_cli_client_import) are almost entirely text-matching: they read source files and check for specific string patterns via regex and includes(). test_grid_workspace_ordering does simulate sorting logic but extracts the fallback value from source text first. None of the f2p tests import/call the actual code or test runtime behavior."
+      "reason": "The fail-to-pass tests (test_grid_workspace_ordering, test_dashboard_api_sends_client_info, test_deps_declares_cli_client_import) are purely text/pattern matching: they read source files and check for specific strings/regex patterns. None import or execute the actual code. test_grid_workspace_ordering does simulate sorting logic but with its own reimplementation, not by calling the actual code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_deps_declares_cli_client_import just checks if a string exists in a file \u2014 adding a single line '../cli-client/registry.ts' to DEPS.list passes it without any functional implementation. test_dashboard_api_sends_client_info only checks text patterns in the source file, so adding the import line and a commented-out call would pass portions. These are text-matching tests that can be satisfied by superficial edits."
+      "reason": "test_deps_declares_cli_client_import only checks if a string exists in a file. test_dashboard_api_sends_client_info only checks source text patterns. test_grid_workspace_ordering checks source text and then simulates its own sorting logic (not the actual code). A stub that simply contains the right text patterns without correct runtime behavior would pass all f2p tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from the instruction (API includes clientInfo, grid sorts current workspace first with 'Global' fallback, DEPS.list updated) are tested by corresponding test functions."
+      "reason": "All three behavioral requirements from the instruction (API includes clientInfo, grid sorts current workspace first with Global fallback, DEPS.list updated) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config, repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-grouped with section comments (fail_to_pass, pass_to_pass, config-derived, repo_tests), each function has a descriptive name and docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the API response schema: 'sendJSON(response, { sessions, clientInfo })' with clientInfo containing workspaceDir. This is documented in the instruction."
+      "reason": "The instruction documents the API response schema: the /api/sessions/list response must include both 'sessions' and 'clientInfo' fields, with clientInfo containing workspaceDir."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names ('currentWorkspace'), exact code patterns ('clientInfo?.workspaceDir || \"Global\"'), exact function calls ('createClientInfo()'), and exact response shapes ('sendJSON(response, { sessions, clientInfo })'). This goes far beyond naming the buggy file \u2014 it prescribes the exact implementation."
+      "reason": "The instruction specifies exact implementation details: 'use it to identify the current workspace group', 'When clientInfo.workspaceDir is undefined, treat Global as the current workspace', 'Use the identified current workspace value (not the raw clientInfo?.workspaceDir property)' \u2014 this last point specifically tells the agent to create a local variable rather than use the property directly, which is the exact bug fix."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not an agentmd-edits task."
+      "outcome": "pass",
+      "reason": "The DEPS.list change is a single line addition, and the gold patch is localized across three files with minimal changes. No full-file rewrites."
     }
   },
   "tier_a_fails": [
@@ -56,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
+  "pass_count": 6,
   "fail_count": 5
 }

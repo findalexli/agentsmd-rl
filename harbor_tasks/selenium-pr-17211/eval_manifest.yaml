@@ -1,0 +1,85 @@
+source:
+  type: github_pr
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17211
+  base_commit: 874358a3c4b503095669565e1ba26414439ec6a3
+  merge_commit: 85bc60cdb48682563d7dbdc1f175bffc91fb1231
+
+checks:
+  # Fail-to-pass tests: verify the fix is implemented
+  - id: test_session_read_timeout_method_exists
+    type: fail_to_pass
+    origin: pr_description
+    description: sessionReadTimeout(Capabilities) method extracts pageLoad from capabilities
+
+  - id: test_read_timeout_buffer_constant
+    type: fail_to_pass
+    origin: pr_description
+    description: READ_TIMEOUT_BUFFER constant (30 seconds) provides safety margin
+
+  - id: test_node_client_key_class_exists
+    type: fail_to_pass
+    origin: pr_description
+    description: NodeClientKey class enables caching by (URI, timeout) pairs
+
+  - id: test_timeout_calculation_uses_max
+    type: fail_to_pass
+    origin: pr_description
+    description: Effective timeout computed as max(pageLoad, nodeTimeout) + buffer
+
+  - id: test_long_from_helper_method
+    type: fail_to_pass
+    origin: pr_description
+    description: longFrom() helper handles both Long and Integer numeric types
+
+  - id: test_fetch_node_timeout_returns_optional
+    type: fail_to_pass
+    origin: pr_description
+    description: fetchNodeTimeout returns Optional to allow retry on failed fetches
+
+  - id: test_node_timeout_cache_field
+    type: fail_to_pass
+    origin: pr_description
+    description: nodeTimeoutCache reduces redundant /se/grid/node/status calls
+
+  - id: test_http_clients_map_uses_node_client_key
+    type: fail_to_pass
+    origin: pr_description
+    description: httpClients map keyed by NodeClientKey instead of plain URI
+
+  # Pass-to-pass tests: verify code still compiles and works
+  - id: test_bazel_build_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Bazel build compiles the router module successfully
+
+  - id: test_handle_session_class_structure
+    type: pass_to_pass
+    origin: static
+    description: HandleSession maintains HttpHandler interface contract
+
+  - id: test_java_file_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Java file has valid syntax
+
+  - id: test_repo_spotbugs
+    type: pass_to_pass
+    origin: repo_tests
+    description: SpotBugs static analysis passes on router module
+
+  - id: test_repo_router_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: RouterTest unit tests pass on router module
+
+  - id: test_repo_java_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Java code formatting check passes on HandleSession.java
+
+rubric:
+  - id: code_only_task
+    rule: "This is a code-only task with no documentation updates required - the Java code change to HandleSession.java follows project conventions"
+    reference: "No documentation file changes needed - the gold solution only modifies HandleSession.java"

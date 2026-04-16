@@ -3,56 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (src/js/internal/streams/readable.ts), the pipe method, the ondata callback, the error code ERR_INVALID_ARG_TYPE, and the expected behavior (error emitted on dest stream, dest destroyed). The tests check these same elements. The specific function name 'ondata' is mentioned in the instruction ('specifically in the ondata callback'). The test assertions about dest.destroy, error propagation, and normal write/backpressure behavior are all discoverable from the "
+      "reason": "The instruction names the target file (src/js/internal/streams/readable.ts), the function (ondata in the pipe method), the error type (ERR_INVALID_ARG_TYPE), and the expected behavior (error emitted on destination stream, stream destroyed). The tests check these same elements. The specific file path and function name 'ondata' are mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (error not caught, process crashes instead of emitting error) and points to the ondata callback in the pipe method, but does not specify the exact fix (try/catch wrapping dest.write with dest.destroy in catch). A developer must still reason about how to implement the error handling."
+      "reason": "The instruction describes the bug (error not caught, process crashes) and points to the ondata callback in the pipe method, but does not specify the exact fix (e.g., 'wrap in try/catch and call dest.destroy'). A developer still needs to reason about the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The tests extract the 'function ondata' body via string parsing, then eval it and call it directly with mock objects. This approach is tightly coupled to the specific implementation pattern. For example, the tests assume 'ondata' is a named function findable by 'function ondata' string search, that it calls dest.write(chunk) and dest.destroy(err), and that there's a 'pause' function in scope. An alternative fix that renames the function, uses an arrow function, or handles errors at a different l"
+      "outcome": "pass",
+      "reason": "The tests accept ANY valid error notification mechanism - they check for either dest.destroy(err) or dest.emit('error', err) being called. The tests extract and eval the ondata function body, checking behavior rather than specific implementation details. An alternative fix using emit('error') instead of destroy() would also pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests extract the ondata function, eval it, and actually execute it with mock objects that throw errors, checking that dest.destroy is called and errors don't escape. The pass-to-pass tests similarly execute the function. test_ondata_not_stub checks both text content and meaningful structure. This is primarily behavioral testing."
+      "reason": "The fail-to-pass tests extract the ondata function from the source file, eval it in Node.js with mock objects, and verify behavioral outcomes (error caught, error propagated, no crash). They execute code, not just grep for text patterns."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub ondata that does nothing would fail test_normal_write_still_works (written===null check) and test_backpressure_pause (paused not called). A stub that just calls dest.write without try/catch would fail test_write_error_caught_and_forwarded (threwUncaught would be true). The tests require actual error-catching logic."
+      "reason": "A stub/no-op ondata function would not call dest.destroy() or dest.emit('error'), so the tests checking notifyMethod and notifyErr would fail. The tests specifically verify that when dest.write() throws, the error is caught and forwarded, which requires actual try/catch logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) error emitted on dest stream's error event - tested via dest.destroy(err) propagation, (2) dest destroyed with error - tested explicitly, (3) catchable via for-await - not directly tested but the core mechanism (error forwarding) is tested. The main behaviors are covered."
+      "reason": "The instruction specifies three behaviors: (1) error emitted on destination stream - tested by test_write_error_caught_and_forwarded, (2) destination stream destroyed with error - tested by test_exact_error_object_propagated, (3) catchable via for-await - while not directly tested with for-await, the underlying error-forwarding mechanism is tested. The core behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass, Anti-stub), descriptive function names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gate, Fail-to-pass, Pass-to-pass), descriptive function names (test_write_error_caught_and_forwarded, test_exact_error_object_propagated, etc.), and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a streaming bug, not producing structured data output."
+      "reason": "This task involves fixing stream error handling behavior, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths (src/js/internal/streams/readable.ts), function names (ondata, Readable.prototype.pipe), error codes (ERR_INVALID_ARG_TYPE), and commands are all correctly spelled and consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The issue is in the pipe method implementation in src/js/internal/streams/readable.ts, specifically in the ondata callback that handles chunks flowing from source to destination.' This names the exact file, method, and inner callback function, which significantly reduces the localization effort required."
+      "reason": "The instruction explicitly states 'The issue is in the pipe method implementation in src/js/internal/streams/readable.ts, specifically in the ondata callback that handles chunks flowing from source to destination.' This narrows the fix location to a specific function in a specific file, removing the localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

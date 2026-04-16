@@ -2,59 +2,53 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific file path 'src/bun.js/bindings/BunPlugin.cpp', function name 'JSMock__jsModuleMock', specific guard patterns like 'argumentCount()' and 'isEmpty()', and exact regex patterns for type guards \u2014 none of which are mentioned in instruction.md. The instruction only mentions mock.module() crashing and needing a TypeError, not the specific C++ file, function name, or existing guards."
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact error type (TypeError), exact error message ('mock(module, fn) requires a module name string'), the non-string argument types to test (SharedArrayBuffer, objects, numbers, Symbols), the test location (test/js/bun/), and the assertion style (toThrow). The test oracle's fail-to-pass tests rely on the agent's test file being discoverable and passing, and the instruction provides sufficient detail to create such a file. The pass-to-pass repo tests (mock-fn, mock-m"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md Requirements section explicitly lists acceptable type guard patterns ('isString(', 'isCell(', etc.), error throwing patterns ('throwException', 'createTypeError', etc.), and return patterns ('return JSValue', 'RETURN_IF_EXCEPTION', etc.). It also states 'Type validation must occur before string conversion' and 'argumentCount() and isEmpty() validation guards must remain in place'. This essentially specifies the implementation approach, not just the bug."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (crash on non-string) and what the fix should achieve (throw TypeError with specific message), but does not specify the exact file to change (BunPlugin.cpp), the exact function (JSMock__jsModuleMock), or the exact code changes (isString() guard). A developer must still locate and reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use broad regex pattern lists for type guards, error patterns, and return patterns. An alternative fix using e.g. isCell() instead of isString(), or createError instead of createTypeError, would still pass. The tests check for categories of patterns rather than exact code."
+      "reason": "The tests verify behavior (TypeError thrown with the right message for non-string args, existing tests still pass) rather than implementation details. An alternative fix using e.g. jsTypeOf check, isObject/isNumber guards, or a different C++ approach would all pass as long as the TypeError with the specified message is thrown. The test discovery uses broad keyword matching (TypeError, SharedArrayBuffer, etc.) so different test file names/structures would be found."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_type_guard_before_tostring, test_type_guard_error_path, test_error_message_descriptive) are purely text/regex searches on source code \u2014 they use re.search on file contents without any compilation or execution. The pass-to-pass tests do run subprocesses, but the core fail-to-pass tests only do 'assert regex in open(path).read()' style checks."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests execute the agent's test file via 'bun test' subprocess and check the return code. The pass-to-pass tests also execute actual test suites and commands (bun test, tsc, oxlint). They verify runtime behavior, not just text content of files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op wouldn't pass the fail-to-pass tests because they check for the presence of specific type guard patterns before toString() in the function body, error throwing code, and early return patterns \u2014 none of which exist in the base code at the specified commit."
+      "reason": "The fail-to-pass tests run the agent's test file which must assert that mock.module(SharedArrayBuffer, ...) throws TypeError instead of crashing. Without the actual fix in the C++ code, the process would crash (segfault) rather than throw, so the test would fail. A stub/no-op implementation would not satisfy these tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: type validation before string conversion (test_type_guard_before_tostring), error thrown with early return (test_type_guard_error_path), descriptive error message (test_error_message_descriptive), and existing validation preserved (test_existing_guards_preserved)."
+      "reason": "The instruction requires: (1) TypeError for non-string args - tested via agent test execution, (2) exact error message - the agent test is expected to assert on this, (3) existing argumentCount/isEmpty guards preserved - tested by test_existing_guards_preserved. All three requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive function names like test_type_guard_before_tostring, test_error_message_descriptive, test_existing_guards_preserved, and include docstrings explaining what each test verifies. They are grouped into fail-to-pass and pass-to-pass sections with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a bug fix in C++ code, not structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md Requirements section names exact internal C++ patterns like 'isString(', 'isCell(', 'toStringOrNull', 'throwException', 'createTypeError', 'RETURN_IF_EXCEPTION', and mentions 'argumentCount()' and 'isEmpty()' guards. These are implementation-level details that leak the solution location and approach."
+      "outcome": "pass",
+      "reason": "The instruction does not name the buggy file (BunPlugin.cpp), the specific function (JSMock__jsModuleMock), or the line number. It only describes the observable bug and expected behavior, leaving localization to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

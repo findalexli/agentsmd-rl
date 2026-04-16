@@ -1,0 +1,127 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5834
+  merge_commit: 645ee9f6afe2542eb1297b568570ae5e237227b6
+  base_commit: b9b226ad3ced5c05afd2d6c8b31f7352bfd7c2d2
+
+task_name: kotlin-searchpath-absolute-fix
+title: "[BTA] Fix SearchPathType arguments aren't resolved to absolute paths"
+difficulty: medium
+tags: [kotlin, build-tools, paths, bugfix]
+estimated_time: 20m
+
+files:
+  primary:
+    - compiler/build-tools/kotlin-build-tools-options-generator/src/org/jetbrains/kotlin/buildtools/options/generator/BtaImplGenerator.kt
+    - compiler/build-tools/kotlin-build-tools-compat/gen/org/jetbrains/kotlin/buildtools/internal/compat/arguments/JvmCompilerArgumentsImpl.kt
+    - compiler/build-tools/kotlin-build-tools-impl/gen/org/jetbrains/kotlin/buildtools/internal/arguments/JvmCompilerArgumentsImpl.kt
+
+  # Distinctive line for idempotency check
+distinctive_line: "absolutePathStringOrThrow"
+
+checks:
+  # Fail-to-pass: Generator fix
+  - id: test_generator_has_absolute_path_fix
+    type: fail_to_pass
+    origin: gold_patch
+    description: Generator code maps SearchPathType through absolutePathStringOrThrow
+
+  # Fail-to-pass: Generated files fix
+  - id: test_compat_generated_has_absolute_path_fix
+    type: fail_to_pass
+    origin: gold_patch
+    description: Compat generated code resolves paths to absolute before joinToString
+
+  - id: test_impl_generated_has_absolute_path_fix
+    type: fail_to_pass
+    origin: gold_patch
+    description: Impl generated code resolves paths to absolute before joinToString
+
+  - id: test_no_raw_joinToString_for_searchpaths
+    type: fail_to_pass
+    origin: gold_patch
+    description: SearchPathType arguments do not use raw joinToString without mapping
+
+  # Pass-to-pass: Syntax validation
+  - id: test_kotlin_syntax_valid_generator
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generator Kotlin file has valid syntax
+
+  - id: test_kotlin_syntax_valid_compat
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compat generated file has valid syntax
+
+  - id: test_kotlin_syntax_valid_impl
+    type: pass_to_pass
+    origin: repo_tests
+    description: Impl generated file has valid syntax
+
+  # Pass-to-pass: Repository structure and content validation (grep-based)
+  - id: test_repo_generator_has_searchpath_type
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generator source contains SearchPathType handling
+
+  - id: test_repo_generator_has_pathlist_type
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generator source contains PathListType handling
+
+  - id: test_repo_compat_generated_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compat generated JvmCompilerArgumentsImpl.kt exists
+
+  - id: test_repo_impl_generated_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Impl generated JvmCompilerArgumentsImpl.kt exists
+
+  - id: test_repo_compat_has_x_klib
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compat generated code contains X_KLIB handling
+
+  - id: test_repo_compat_has_classpath
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compat generated code contains CLASSPATH handling
+
+  - id: test_repo_compat_has_module_path
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compat generated code contains X_MODULE_PATH handling
+
+  - id: test_repo_impl_has_x_klib
+    type: pass_to_pass
+    origin: repo_tests
+    description: Impl generated code contains X_KLIB handling
+
+  - id: test_repo_impl_has_classpath
+    type: pass_to_pass
+    origin: repo_tests
+    description: Impl generated code contains CLASSPATH handling
+
+  - id: test_repo_impl_has_module_path
+    type: pass_to_pass
+    origin: repo_tests
+    description: Impl generated code contains X_MODULE_PATH handling
+
+  - id: test_repo_generator_has_jointostring
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generator source uses joinToString for SearchPathType
+
+  - id: test_repo_generator_has_kotlinpoet_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generator source imports KotlinPoet library
+
+rubric: []
+
+# No relevant agent config rules for this specific PR - the change is
+# straightforward bugfix that doesn't interact with style/process rules
+# from the Kotlin repository's agent configs.

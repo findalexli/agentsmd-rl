@@ -10,23 +10,23 @@ Additionally, repository forks need to merge local issue catalogs with upstream 
 
 ### 1. Setting Rename: `HTML_S3_PATH` → `S3_REPORT_BUCKET`
 
-The setting must be renamed everywhere it is used. After the rename, the following must hold:
+Rename the `HTML_S3_PATH` setting to `S3_REPORT_BUCKET` everywhere it is used. After the rename:
 
-- The `Settings` class (in `ci/praktika/settings.py`) must declare: `S3_REPORT_BUCKET: str = ""`
-- The `_USER_DEFINED_SETTINGS` list must contain the string `"S3_REPORT_BUCKET"` (replacing the old entry)
-- All code that previously referenced `Settings.HTML_S3_PATH` must instead use `Settings.S3_REPORT_BUCKET` — use grep to find every occurrence across the codebase
-- The validator must produce the error message: `"S3_REPORT_BUCKET Setting must be defined"`
+- The `Settings` class must have a `S3_REPORT_BUCKET` attribute (type `str`, default empty string)
+- The `_USER_DEFINED_SETTINGS` list must contain `"S3_REPORT_BUCKET"`
+- All code that previously referenced `HTML_S3_PATH` must use `S3_REPORT_BUCKET` instead
+- The validator must produce an error message that references `S3_REPORT_BUCKET`
 - No non-comment references to `HTML_S3_PATH` may remain in any source file
-- The legacy compatibility module `ci/settings/settings.py` must export `S3_REPORT_BUCKET = S3_REPORT_BUCKET_NAME` (replacing the old `HTML_S3_PATH` alias)
+- The legacy compatibility module must export `S3_REPORT_BUCKET`
 
-The file `ci/jobs/collect_statistics.py` currently imports `S3_REPORT_BUCKET_NAME` from `ci.settings.settings` and uses it to build S3 paths. It must be updated to import `Settings` via `from ci.praktika.settings import Settings` and use `Settings.S3_REPORT_BUCKET` for S3 path construction. The `S3_REPORT_BUCKET_NAME` import must be removed entirely.
+The file that currently imports `S3_REPORT_BUCKET_NAME` from `ci.settings.settings` must be updated to use `Settings.S3_REPORT_BUCKET` instead.
 
 ### 2. New Setting: `S3_UPSTREAM_REPORT_BUCKET`
 
-A new optional setting must be added to the `Settings` class:
+Add a new optional setting to the `Settings` class:
 
-- Attribute declaration: `S3_UPSTREAM_REPORT_BUCKET: str = ""`
-- Listed in `_USER_DEFINED_SETTINGS` as `"S3_UPSTREAM_REPORT_BUCKET"`
+- Attribute name: `S3_UPSTREAM_REPORT_BUCKET` (type `str`, default empty string)
+- Must be listed in `_USER_DEFINED_SETTINGS`
 
 When non-empty, this setting specifies an upstream S3 bucket from which to pull and merge issue catalogs.
 
@@ -34,10 +34,10 @@ When non-empty, this setting specifies an upstream S3 bucket from which to pull 
 
 The `TestCaseIssueCatalog` class must support downloading and merging catalogs from an upstream bucket:
 
-- The module must import `Settings` via: `from praktika.settings import Settings`
-- A new classmethod with signature `def _download_catalog(cls, bucket, suffix="")` must handle downloading and decompressing a single catalog from a given S3 bucket
-- The `to_s3()` method currently uploads to a hardcoded `"clickhouse-test-reports/statistics"` path — it must use `{Settings.S3_REPORT_BUCKET}/statistics` instead
-- The `from_s3()` method must download the main catalog from `Settings.S3_REPORT_BUCKET`, then check `if Settings.S3_UPSTREAM_REPORT_BUCKET:` — if set, also download the upstream catalog using `"_upstream"` as a local file suffix, merge upstream issues into the main catalog (deduplicating by issue number), and print merge statistics. If only the upstream catalog is available (main is None), return the upstream catalog.
+- Import `Settings` from the praktika settings module
+- Add a classmethod that downloads a catalog from a given S3 bucket
+- The `to_s3()` method must use the `S3_REPORT_BUCKET` setting for the bucket portion of the upload path
+- The `from_s3()` method must use `S3_REPORT_BUCKET` for the main catalog, and if `S3_UPSTREAM_REPORT_BUCKET` is set, also download and merge the upstream catalog (deduplicating by issue number and reporting statistics). If only the upstream catalog is available, return the upstream catalog.
 
 ## Verification
 

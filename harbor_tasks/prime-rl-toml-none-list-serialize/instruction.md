@@ -29,8 +29,20 @@ print(none_to_none_str({"key": [{"nested": None}]}))  # None not converted
 
 `none_to_none_str()` should recursively convert all `None` values to `"None"` strings, regardless of whether they appear in dicts, lists, or any nesting combination.
 
-The fix requires a helper function named `_convert_none` that takes a value and returns it with all `None` values recursively converted to `"None"` strings. `none_to_none_str()` should call this helper to process its input.
+After the fix, passing `{"items": [None, "hello", None]}` to `none_to_none_str()` must return `{"items": ["None", "hello", "None"]}`, and the result must serialize via `tomli_w.dumps()` without raising `TypeError`.
 
 ## Files
 
-- `src/prime_rl/utils/config.py` — contains `none_to_none_str()` and the `_convert_none` helper function
+- `src/prime_rl/utils/config.py` — contains `none_to_none_str()`
+- Your fix must not use `try`/`except` blocks anywhere in this file
+- Keep the code clean — avoid comments that describe past work or refactoring decisions
+
+## Verification
+
+Your fix will be checked against:
+- `none_to_none_str({"k": [None, "a", None]})` must equal `{"k": ["None", "a", "None"]}`
+- `none_to_none_str({"k": [{"n": None, "ok": 1}]})` must equal `{"k": [{"n": "None", "ok": 1}]}`
+- `none_to_none_str({"k": [[None, 1], [2, None]]})` must equal `{"k": [["None", 1], [2, "None"]]}`
+- `tomli_w.dumps(none_to_none_str({"items": [None, "hello", None]}))` must not raise
+- No `try`/`except` blocks in `config.py`
+- Ruff linter must pass on the modified file

@@ -106,6 +106,56 @@ distractors:
   source:
     path: AGENTS.md
     lines: 24-26
+- rule: Event Listeners use the component.event_name() signature
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 161-191
+  source_text: "## Event Listeners\n\nAll event listeners share the same signature:\n\
+    \n```python\ncomponent.event_name(\n    fn: Callable | None | Literal[\"decorator\"\
+    ] = \"decorator\",\n    inputs: Component | Sequence[Component] | set[Component]\
+    \ | None = None,\n    outputs: Component | Sequence[Component] | set[Component]\
+    \ | None = None,\n    api_name: str | None = None,\n    api_description: str |\
+    \ None | Literal[False] = None,\n    scroll_to_output: bool = False,\n    show_progress:\
+    \ Literal[\"full\", \"minimal\", \"hidden\"] = \"full\",\n    show_progress_on:\
+    \ Component | Sequence[Component] | None = None,\n    queue: bool = True,\n  \
+    \  batch: bool = False,\n    max_batch_size: int = 4,\n    preprocess: bool =\
+    \ True,\n    postprocess: bool = True,\n    cancels: dict[str, Any] | list[dict[str,\
+    \ Any]] | None = None,\n    trigger_mode: Literal[\"once\", \"multiple\", \"always_last\"\
+    ] | None = None,\n    js: str | Literal[True] | None = None,\n    concurrency_limit:\
+    \ int | None | Literal[\"default\"] = \"default\",\n    concurrency_id: str |\
+    \ None = None,\n    api_visibility: Literal[\"public\", \"private\", \"undocumented\"\
+    ] = \"public\",\n    time_limit: int | None = None,\n    stream_every: float =\
+    \ 0.5,\n    key: int | str | tuple[int | str, ...] | None = None,\n    validator:\
+    \ Callable | None = None,\n) -> Dependency\n```"
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies variables related to events (`pending_messages_per_event`,
+    `event_id`). An agent might see the word 'event' and mistakenly attempt to apply
+    Gradio UI component event listener patterns. However, the modified files reside
+    in the API client (`gradio_client`), which deals with network Server-Sent Events
+    (SSE), completely separate from UI component interactions.
+  severity: high
+- rule: Gradio Blocks and Interface for creating apps
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 27-63
+  source_text: "## Core Patterns\n\n**Interface** (high-level): wraps a function with\
+    \ input/output components.\n\n```python\nimport gradio as gr\n\ndef greet(name):\n\
+    \    return f\"Hello {name}!\"\n\ngr.Interface(fn=greet, inputs=\"text\", outputs=\"\
+    text\").launch()\n```\n\n**Blocks** (low-level): flexible layout with explicit\
+    \ event wiring.\n\n```python\nimport gradio as gr\n\nwith gr.Blocks() as demo:\n\
+    \    name = gr.Textbox(label=\"Name\")\n    output = gr.Textbox(label=\"Greeting\"\
+    )\n    btn = gr.Button(\"Greet\")\n    btn.click(fn=lambda n: f\"Hello {n}!\"\
+    , inputs=name, outputs=output)\n\ndemo.launch()\n```\n\n**ChatInterface**: high-level\
+    \ wrapper for chatbot UIs.\n\n```python\nimport gradio as gr\n\ndef respond(message,\
+    \ history):\n    return f\"You said: {message}\"\n\ngr.ChatInterface(fn=respond).launch()\n\
+    ```"
+  collision_type: architecture_boundary
+  why_distracting: An agent reading this repository's skill documentation might think
+    it needs to use `gr.Interface` or `gr.Blocks` for this Python task. However, the
+    agent is working inside `client/python/gradio_client`, an API client built to
+    programmatically query remote Gradio servers. Utilizing Gradio UI library constructs
+    here breaks a hard architecture boundary.
+  severity: high
 hierarchy_analysis: The config hierarchy is flat, consisting of a single AGENTS.md
   file at the root. The file contains generic repository contribution guidelines rather
   than specific architectural or coding rules.

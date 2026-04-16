@@ -3,55 +3,58 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the affected files (packages/react-router/src/useBlocker.tsx, packages/solid-router/src/useBlocker.tsx, packages/vue-router/src/useBlocker.tsx), the type name ShouldBlockFnLocation, the error TS4023, the useBlocker hook, and the docs file. All test-asserted paths and identifiers are discoverable from the instruction."
+      "reason": "The instruction names all three affected files (packages/react-router/src/useBlocker.tsx, packages/solid-router/src/useBlocker.tsx, packages/vue-router/src/useBlocker.tsx), the type name ShouldBlockFnLocation, the TS4023 error, the useBlocker hook, and the docs file. All test-asserted paths and identifiers are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (TS4023 error when wrapping useBlocker) and affected files but does not state the fix of changing 'interface' to 'type'. A developer must reason about what change to make."
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the problem as related to 'how TypeScript handles type declarations that reference internal types' and that the fix involves the ShouldBlockFnLocation type in specific files. While it doesn't literally say 'change interface to type', the combination of naming the exact type, the exact error (TS4023 which is well-known to be caused by interfaces vs types), and stating 'The issue is related to how TypeScript handles type declarations' makes the solution essenti"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_interface_converted_to_type_react assert 'type ShouldBlockFnLocation<' in content and assert 'interface ShouldBlockFnLocation<' not in content, plus test_type_alias_has_equals_sign_react checks for '> = {' syntax. An alternative correct fix (e.g., exporting the interface so it can be named, or re-exporting the type from index.tsx) would also fix TS4023 but would fail these text-matching tests."
+      "reason": "Tests like test_interface_converted_to_type_react assert specifically for 'type ShouldBlockFnLocation<' in the file content and assert 'interface ShouldBlockFnLocation<' is NOT present. test_type_alias_has_equals_sign_react checks for '> = {' syntax. An alternative valid fix like exporting the interface (adding 'export' keyword) or renaming it would also fix TS4023 but would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_interface_converted_to_type_react/solid/vue and test_type_alias_has_equals_sign_react are purely text-matching (assert 'type ShouldBlockFnLocation<' in content). While there are also behavioral tests (build, type-check, unit tests), the core fail_to_pass tests are all string-in-file checks with no execution."
+      "reason": "Tests test_interface_converted_to_type_react, test_interface_converted_to_type_solid, test_interface_converted_to_type_vue, and test_type_alias_has_equals_sign_react are purely text-matching tests (assert 'type ShouldBlockFnLocation<' in content). While there ARE behavioral tests (build, type-check, unit tests, eslint), all 4 fail-to-pass tests are purely string-in-file checks with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that 'interface ShouldBlockFnLocation<' is NOT in the file and 'type ShouldBlockFnLocation<' IS present. A stub/no-op wouldn't satisfy these since the base code has 'interface'. The agent must actually modify the source files."
+      "reason": "The f2p tests check for 'type ShouldBlockFnLocation<' which requires actually changing the interface declaration to a type alias. A stub/no-op wouldn't pass since the base code has 'interface ShouldBlockFnLocation<'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: fixing TS4023 across three router packages and updating docs. Tests cover all three packages (react, solid, vue), build/type-check/lint, unit tests, and the docs file is modified in the solution."
+      "reason": "The instruction requires: (1) fixing TS4023 for useBlocker wrapping - tested by compilation and build tests, (2) consistent fix across React/Solid/Vue - tested for all three packages, (3) docs update - the solve.sh patches docs. All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_interface_converted_to_type_react, test_repo_build_react_router, etc.), have docstrings explaining fail_to_pass vs pass_to_pass, and are logically grouped by package and concern."
+      "reason": "Tests are well-named (e.g., test_interface_converted_to_type_react, test_repo_build_react_router), have detailed docstrings explaining fail_to_pass vs pass_to_pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves TypeScript source code changes, not structured data output."
+      "reason": "This task involves fixing TypeScript type declarations, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the repository structure."
+      "reason": "All file paths, variable names, commands, and identifiers in the instruction and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the affected files which is appropriate since they are the domain-relevant files. It doesn't specify exact lines or the interface-to-type fix."
+      "outcome": "fail",
+      "reason": "The instruction names the exact files (packages/react-router/src/useBlocker.tsx etc.) and the exact internal type name (ShouldBlockFnLocation) that needs changing. Combined with mentioning 'how TypeScript handles type declarations that reference internal types', this strongly hints at the interface\u2192type solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 4
 }

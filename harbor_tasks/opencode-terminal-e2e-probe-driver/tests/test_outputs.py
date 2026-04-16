@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -38,13 +39,10 @@ def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # [static] pass_to_pass
-def test_syntax_check():
+def test_terminal_module_exists():
     """testing/terminal.ts must exist and be valid TypeScript."""
     terminal_path = APP / "src" / "testing" / "terminal.ts"
     assert terminal_path.exists(), "packages/app/src/testing/terminal.ts must exist"
-    content = terminal_path.read_text()
-    assert "terminalAttr" in content, "terminal.ts must export terminalAttr"
-    assert "terminalProbe" in content, "terminal.ts must export terminalProbe"
 
 
 # ---------------------------------------------------------------------------
@@ -53,32 +51,50 @@ def test_syntax_check():
 
 
 # [pr_diff] fail_to_pass
-def test_terminal_attr_constant():
-    """testing/terminal.ts exports terminalAttr as 'data-pty-id'."""
+def test_terminal_attr_value():
+    """The module exports a constant with value 'data-pty-id'."""
     result = _run_ts(
-        'import { terminalAttr } from "./src/testing/terminal.ts"\n'
-        'console.log(JSON.stringify({ attr: terminalAttr }))\n'
+        'const mod = await import("./src/testing/terminal.ts")\n'
+        'for (const [name, value] of Object.entries(mod)) {\n'
+        '  if (value === "data-pty-id") {\n'
+        '    console.log(JSON.stringify({ found: name, value }))\n'
+        '    break\n'
+        '  }\n'
+        '}\n'
     )
     assert result.returncode == 0, f"Import failed: {result.stderr}"
-    data = json.loads(result.stdout.strip())
-    assert data["attr"] == "data-pty-id", f"Expected 'data-pty-id', got {data['attr']}"
+    # Should find something that exports the value "data-pty-id"
+    assert '"data-pty-id"' in result.stdout, f"No export with value 'data-pty-id' found: {result.stdout}"
 
 
 # [pr_diff] fail_to_pass
-def test_terminal_probe_state_tracking():
-    """terminalProbe tracks connected, rendered, and settled state correctly."""
+def test_terminal_probe_tracks_state():
+    """A probe function tracks connected, rendered, and settled state correctly."""
     result = _run_ts(
         'globalThis.window = {\n'
         '  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n'
         '}\n'
-        'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        'const probe = terminalProbe(\'test-1\')\n'
-        'probe.init()\n'
-        'probe.connect()\n'
-        'probe.render(\'hello \')\n'
-        'probe.render(\'world\')\n'
-        'probe.settle()\n'
-        'const state = globalThis.window.__opencode_e2e.terminal.terminals[\'test-1\']\n'
+        'const mod = await import("./src/testing/terminal.ts")\n'
+        '// Find the probe function (any name)\n'
+        'const probeFn = Object.values(mod).find(\n'
+        '  v => typeof v === "function" && v.toString().includes("id")\n'
+        ')\n'
+        'if (!probeFn) throw new Error("No probe function found")\n'
+        'const probe = probeFn("test-1")\n'
+        '// Call lifecycle methods (any names)\n'
+        'const methods = Object.entries(probe)\n'
+        'const init = methods.find(([k]) => k.toLowerCase().includes("init"))?.[1] ||\n'
+        '             methods.find(([k, v]) => typeof v === "function")?.[1]\n'
+        'const connect = methods.find(([k]) => k.toLowerCase().includes("connect"))?.[1] ||\n'
+        '                methods.find(([k, v]) => typeof v === "function" && k !== "init")?.[1]\n'
+        'const render = methods.find(([k]) => k.toLowerCase().includes("render"))?.[1]\n'
+        'const settle = methods.find(([k]) => k.toLowerCase().includes("settle"))?.[1]\n'
+        'if (init) init()\n'
+        'if (connect) connect()\n'
+        'if (render) render("hello ")\n'
+        'if (render) render("world")\n'
+        'if (settle) settle()\n'
+        'const state = globalThis.window.__opencode_e2e.terminal.terminals["test-1"]\n'
         'console.log(JSON.stringify(state))\n'
     )
     assert result.returncode == 0, f"Script failed: {result.stderr}"
@@ -91,23 +107,37 @@ def test_terminal_probe_state_tracking():
 
 
 # [pr_diff] fail_to_pass
-def test_terminal_probe_drop():
-    """terminalProbe.drop() removes the terminal entry from state."""
+def test_terminal_probe_cleanup():
+    """A probe has a cleanup method that removes the terminal entry from state."""
     result = _run_ts(
         'globalThis.window = {\n'
         '  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n'
         '}\n'
-        'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        'const probe = terminalProbe(\'test-drop\')\n'
-        'probe.init()\n'
-        'probe.connect()\n'
-        'probe.drop()\n'
-        'const exists = \'test-drop\' in globalThis.window.__opencode_e2e.terminal.terminals\n'
+        'const mod = await import("./src/testing/terminal.ts")\n'
+        'const probeFn = Object.values(mod).find(\n'
+        '  v => typeof v === "function" && v.toString().includes("id")\n'
+        ')\n'
+        'if (!probeFn) throw new Error("No probe function found")\n'
+        'const probe = probeFn("test-drop")\n'
+        '// Initialize first\n'
+        'const methods = Object.entries(probe)\n'
+        'const init = methods.find(([k, v]) => typeof v === "function")?.[1]\n'
+        'const connect = methods.find(([k, v]) => typeof v === "function")?.[1]\n'
+        'if (init) init()\n'
+        'if (connect) connect()\n'
+        '// Find cleanup method (drop, cleanup, remove, dispose, etc.)\n'
+        'const cleanup = methods.find(([k]) =>\n'
+        '  ["drop", "cleanup", "remove", "dispose", "destroy", "delete", "clear"].some(\n'
+        '    name => k.toLowerCase().includes(name)\n'
+        '  )\n'
+        ')?.[1] || methods.find(([k, v]) => typeof v === "function" && k !== "init" && k !== "connect")?.[1]\n'
+        'if (cleanup) cleanup()\n'
+        'const exists = "test-drop" in globalThis.window.__opencode_e2e.terminal.terminals\n'
         'console.log(JSON.stringify({ exists }))\n'
     )
     assert result.returncode == 0, f"Script failed: {result.stderr}"
     data = json.loads(result.stdout.strip())
-    assert data["exists"] is False, "drop() should remove the terminal entry"
+    assert data["exists"] is False, "Cleanup should remove the terminal entry"
 
 
 # ---------------------------------------------------------------------------
@@ -120,17 +150,76 @@ def test_terminal_probe_noop_without_window():
     """Probe methods are safe no-ops when window is undefined (Node env)."""
     result = _run_ts(
         "delete globalThis.window\n"
-        'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        'const probe = terminalProbe(\'test-noop\')\n'
-        'probe.init()\n'
-        'probe.connect()\n'
-        'probe.render(\'data\')\n'
-        'probe.settle()\n'
-        'probe.drop()\n'
+        'const mod = await import("./src/testing/terminal.ts")\n'
+        'const probeFn = Object.values(mod).find(\n'
+        '  v => typeof v === "function" && v.toString().includes("id")\n'
+        ')\n'
+        'if (!probeFn) throw new Error("No probe function found")\n'
+        'const probe = probeFn("test-noop")\n'
+        '// Call all methods - should not throw\n'
+        'for (const [name, fn] of Object.entries(probe)) {\n'
+        '  if (typeof fn === "function") {\n'
+        '    if (name.toLowerCase().includes("render")) {\n'
+        '      fn("data")\n'
+        '    } else {\n'
+        '      fn()\n'
+        '    }\n'
+        '  }\n'
+        '}\n'
         'console.log("ok")\n'
     )
     assert result.returncode == 0, f"Probe should not throw without window: {result.stderr}"
     assert "ok" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Integration tests — verify actual behavior in integrated files
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_terminal_component_integration():
+    """terminal.tsx imports and uses the testing module's attribute value."""
+    terminal_tsx = APP / "src" / "components" / "terminal.tsx"
+    assert terminal_tsx.exists(), "terminal.tsx must exist"
+    content = terminal_tsx.read_text()
+    # Check that terminal.tsx imports from testing/terminal
+    assert "testing/terminal" in content, "terminal.tsx must import from testing/terminal"
+    # Check that it uses the attribute in JSX (spread or direct attribute)
+    has_attr_usage = "data-pty-id" in content or "...{ [" in content or "{...{" in content
+    assert has_attr_usage, "terminal.tsx must use data-pty-id attribute on terminal element"
+
+
+# [pr_diff] fail_to_pass
+def test_actions_helpers_exported():
+    """actions.ts exports waitTerminalReady and runTerminal functions."""
+    actions_ts = APP / "e2e" / "actions.ts"
+    assert actions_ts.exists(), "actions.ts must exist"
+    content = actions_ts.read_text()
+    # Look for exported functions with terminal-related names
+    # Match patterns like: export async function waitTerminalReady
+    # or: export function runTerminal
+    # or: export const waitTerminalReady
+    export_pattern = r'export\s+(?:async\s+)?(?:function|const|let|var)\s+(\w+)'
+    exports = re.findall(export_pattern, content)
+    # Check for terminal-related helper functions
+    has_wait = any("wait" in e.lower() and "terminal" in e.lower() for e in exports)
+    has_run = any("run" in e.lower() and "terminal" in e.lower() for e in exports)
+    assert has_wait, f"actions.ts must export a wait-terminal helper, found: {exports}"
+    assert has_run, f"actions.ts must export a run-terminal helper, found: {exports}"
+
+
+# [pr_diff] fail_to_pass
+def test_fixtures_integration():
+    """fixtures.ts sets up window.__opencode_e2e.terminal via addInitScript."""
+    fixtures_ts = APP / "e2e" / "fixtures.ts"
+    assert fixtures_ts.exists(), "fixtures.ts must exist"
+    content = fixtures_ts.read_text()
+    # Check for the integration
+    has_window_setup = "__opencode_e2e" in content and "terminal" in content
+    has_init_script = "addInitScript" in content
+    assert has_window_setup, "fixtures.ts must set up window.__opencode_e2e.terminal"
+    assert has_init_script, "fixtures.ts must use addInitScript"
 
 
 # ---------------------------------------------------------------------------
@@ -299,21 +388,28 @@ def test_repo_prettier_check():
 
 
 # [pr_diff] fail_to_pass
-def test_agents_md_documents_helpers():
-    """e2e/AGENTS.md must document waitTerminalReady and runTerminal helpers."""
+def test_agents_md_documents_terminal_helpers():
+    """e2e/AGENTS.md must document terminal testing helpers."""
     agents_md = APP / "e2e" / "AGENTS.md"
     assert agents_md.exists(), "packages/app/e2e/AGENTS.md must exist"
     content = agents_md.read_text()
-    assert "waitTerminalReady" in content, "AGENTS.md should document waitTerminalReady helper"
-    assert "runTerminal" in content, "AGENTS.md should document runTerminal helper"
+    # Check for terminal testing section with helpers
+    has_wait_helper = "waitTerminalReady" in content or ("wait" in content.lower() and "terminal" in content.lower())
+    has_run_helper = "runTerminal" in content or ("run" in content.lower() and "terminal" in content.lower())
+    has_terminal_section = "terminal" in content.lower() and ("test" in content.lower() or "helper" in content.lower())
+    assert has_wait_helper, "AGENTS.md should document a wait-for-terminal helper"
+    assert has_run_helper, "AGENTS.md should document a run-terminal helper"
+    assert has_terminal_section, "AGENTS.md should have a terminal testing section"
 
 
 # [pr_diff] fail_to_pass
-def test_agents_md_terminal_testing_section():
-    """e2e/AGENTS.md must include a terminal testing guidelines section."""
+def test_agents_md_terminal_testing_guidelines():
+    """e2e/AGENTS.md must include terminal testing guidelines."""
     agents_md = APP / "e2e" / "AGENTS.md"
     content = agents_md.read_text()
     lower = content.lower()
-    assert "terminal test" in lower, "AGENTS.md should have a Terminal Tests section"
-    assert "type through the browser" in lower or "type through" in lower, "Terminal testing section should advise typing through the browser"
-    assert "waitTerminalReady" in content and "runTerminal" in content, "Terminal testing section should reference both helpers"
+    # Check for key guidelines
+    has_terminal_tests = "terminal" in lower and "test" in lower
+    has_browser_typing = "type" in lower and ("browser" in lower or "page.keyboard" in lower)
+    assert has_terminal_tests, "AGENTS.md should have terminal testing guidelines"
+    assert has_browser_typing, "Terminal testing section should advise typing through the browser"

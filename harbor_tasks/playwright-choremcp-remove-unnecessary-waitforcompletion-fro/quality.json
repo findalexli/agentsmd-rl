@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four affected files (keyboard.ts, mouse.ts, snapshot.ts, SKILL.md), the tool names (browser_type, browser_hover, browser_select_option, browser_mouse_move_xy), the waitForCompletion wrapper, the submit/slowly parameters, and the SKILL.md --submit flag documentation requirement. The tests check these same files, tool names, and conditions. The regression tests for browser_click and browser_press_key are discoverable from the instruction's note that 'Other tools that CAN "
+      "reason": "All asserted file paths (keyboard.ts, mouse.ts, snapshot.ts, SKILL.md) and tool names (browser_type, browser_hover, browser_select_option, browser_mouse_move_xy, browser_click, browser_press_key) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (unnecessary waitForCompletion wrapping) and what the expected behavior should be, but does not specify exact code changes like 'change line X to Y' or 'replace foo() with bar()'. The developer must figure out the implementation details."
+      "reason": "Instruction describes the problem and expected behavior without prescribing specific code changes or line edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_type_tool_conditional_wait asserts that the handler must contain the literal strings 'params.submit' and 'params.slowly', and that waitForCompletion must be preceded by an 'if (' within 5 lines. An alternative correct fix could use a different guard style (e.g., 'const needsWait = submit || slowly; if (needsWait)' with the condition farther than 5 lines, or destructured variables like 'const { submit, slowly } = params' checked as 'if (submit || slowly)' without 'params.submit' appearing). "
+      "outcome": "pass",
+      "reason": "Tests check for presence/absence of waitForCompletion, conditional guarding by params.submit/slowly, and relevant API calls \u2014 allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests are purely textual/structural: they read source files as strings and check for presence/absence of 'waitForCompletion', 'params.submit', 'params.slowly', and regex patterns like 'if\\s*\\('. None of them import, compile, or execute the actual tool handlers. The regression tests (test_click_still_uses_wait_for_completion, test_press_enter_still_uses_wait_for_completion) also just check string presence in source. This is entirely 'assert X in open(path).read()' style testing."
+      "outcome": "pass",
+      "reason": "Tests execute Node scripts that parse handler bodies with brace counting, beyond simple text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests would fail on the original unmodified code: e.g., test_hover_no_wait_for_completion fails because the original hover handler contains waitForCompletion, test_type_tool_conditional_wait fails because the original has unconditional waitForCompletion without params.submit/params.slowly guards. A stub/no-op implementation would also fail since the tests check for presence of specific functional code like '.hover(' and 'mouse.move'."
+      "reason": "A stub would fail: tests require both presence of original API calls (.hover(), selectOption, mouse.move) and absence of waitForCompletion, plus conditional guards for browser_type."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors stated in instruction.md are tested: conditional waitForCompletion for browser_type (submit/slowly), removal for browser_hover, browser_select_option, browser_mouse_move_xy, preservation for browser_click and browser_press_key, and SKILL.md --submit documentation."
+      "reason": "All four tool changes and SKILL.md --submit documentation are tested, plus regression checks on click and press_key."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_type_tool_conditional_wait, test_hover_no_wait_for_completion, etc.), grouped into sections with comments (Gates, Fail-to-pass, Pass-to-pass regression), and each has a docstring explaining its purpose."
+      "reason": "Tests grouped with section comment headers (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "Task modifies code behavior, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, tool names, parameter names, and commands in instruction.md match the actual repository structure and test expectations without typos."
+      "reason": "File paths and tool names match across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the relevant files but this is appropriate since the task domain requires knowing which files contain which tool handlers. It doesn't specify exact line numbers or the precise code changes needed."
+      "reason": "Instruction names files to look at, which is appropriate scoping; does not specify exact line numbers or code to replace."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not an agentmd-edits/config-edit task."
+      "outcome": "pass",
+      "reason": "SKILL.md edit is a two-line localized change (comment + --submit flag on fill example)."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

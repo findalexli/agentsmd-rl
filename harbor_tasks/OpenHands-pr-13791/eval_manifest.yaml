@@ -1,0 +1,128 @@
+source_pr:
+  repo: "All-Hands-AI/OpenHands"
+  number: 13791
+  title: "fix(slack): immediately display 'No Repository' option"
+  merge_commit: "384c3246525e96de2c078e7a85cedffe0f3de256"
+  base_commit: "4e68f578075e60376cc805ffd98428bb5e80be4f"
+
+task:
+  name: "openhands-slack-no-repository-button"
+  description: "Fix Slack repository selection UX by making 'No Repository' immediately available via a button instead of requiring a network request through external_select dropdown"
+
+# Every check here should map 1:1 to a test_* function in test_outputs.py
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_repo_selection_form_has_button_and_dropdown
+    type: fail_to_pass
+    description: "_generate_repo_selection_form returns button + external_select"
+    origin: test_outputs
+
+  - id: test_build_repo_options_excludes_no_repository
+    type: fail_to_pass
+    description: "_build_repo_options does NOT include 'No Repository' option"
+    origin: test_outputs
+
+  - id: test_build_repo_options_empty_list
+    type: fail_to_pass
+    description: "_build_repo_options returns empty list when no repos provided"
+    origin: test_outputs
+
+  - id: test_build_repo_options_allows_100_repos
+    type: fail_to_pass
+    description: "_build_repo_options allows up to 100 repos (not 99)"
+    origin: test_outputs
+
+  - id: test_parse_form_action_button_click
+    type: fail_to_pass
+    description: "_parse_form_action handles button click with no_repository: prefix"
+    origin: test_outputs
+
+  - id: test_parse_form_action_dropdown_selection
+    type: fail_to_pass
+    description: "_parse_form_action handles dropdown selection with repository_select: prefix"
+    origin: test_outputs
+
+  - id: test_parse_form_action_unknown_action
+    type: fail_to_pass
+    description: "_parse_form_action returns None for unknown action_id"
+    origin: test_outputs
+
+  - id: test_receive_form_interaction_button_click
+    type: fail_to_pass
+    description: "receive_form_interaction correctly processes button click"
+    origin: test_outputs
+
+  - id: test_receive_form_interaction_dropdown_selection
+    type: fail_to_pass
+    description: "receive_form_interaction still works for dropdown selection"
+    origin: test_outputs
+
+  - id: test_receive_form_interaction_unknown_action_logs_warning
+    type: fail_to_pass
+    description: "receive_form_interaction logs warning and returns for unknown action"
+    origin: test_outputs
+
+  - id: test_form_has_updated_instruction_text
+    type: fail_to_pass
+    description: "Form shows updated instruction text"
+    origin: test_outputs
+
+  # Pass-to-pass tests (verify existing functionality still works)
+  - id: test_repo_unit_tests_exist
+    type: pass_to_pass
+    description: "Verify the repo's unit tests exist and can be imported"
+    origin: test_outputs
+
+  - id: test_run_repo_unit_tests
+    type: pass_to_pass
+    description: "Run the repo's own unit tests for Slack integration"
+    origin: test_outputs
+
+  # Pass-to-pass tests using subprocess.run() (repo_tests origin)
+  - id: test_repo_slack_manager_compiles
+    type: pass_to_pass
+    description: "slack_manager.py has valid Python syntax"
+    origin: repo_tests
+
+  - id: test_repo_slack_routes_compiles
+    type: pass_to_pass
+    description: "slack.py routes file has valid Python syntax"
+    origin: repo_tests
+
+  - id: test_repo_slack_integration_test_compiles
+    type: pass_to_pass
+    description: "test_slack_integration.py has valid Python syntax"
+    origin: repo_tests
+
+  - id: test_repo_enterprise_pyproject_valid
+    type: pass_to_pass
+    description: "enterprise pyproject.toml is valid TOML"
+    origin: repo_tests
+
+  - id: test_repo_pytest_ini_valid
+    type: pass_to_pass
+    description: "pytest.ini is valid and exists"
+    origin: repo_tests
+
+  - id: test_repo_slack_manager_ast_valid
+    type: pass_to_pass
+    description: "slack_manager.py has valid AST structure with required functions"
+    origin: repo_tests
+
+  - id: test_repo_test_file_ast_valid
+    type: pass_to_pass
+    description: "test_slack_integration.py has valid AST with test classes"
+    origin: repo_tests
+
+  - id: test_repo_enterprise_directory_structure
+    type: pass_to_pass
+    description: "enterprise directory structure is correct"
+    origin: repo_tests
+
+  - id: test_repo_slack_manager_key_patterns
+    type: pass_to_pass
+    description: "slack_manager.py contains expected code patterns"
+    origin: repo_tests
+
+# No agent config files found in this repo, so rubric is empty
+rubric: []

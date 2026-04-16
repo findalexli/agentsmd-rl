@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction documents all file paths (scripts/docker-image-cache.js, scripts/turbo-cache.mjs, scripts/docker-native-build.js, packages/next-swc/package.json, packages/next-swc/turbo.jsonc), all required exports (exists, get, getStream, put, artifactUrl, healthCheck), URL format rules (vercel.com vs self-hosted, teamId vs slug), the parseArgs/force requirement, the buildImage function requirement, the shebang requirement, and the removal of build-docker-image from package.json and turbo.jsonc"
+      "reason": "All required file paths, function names (artifactUrl, exists, get, getStream, put, healthCheck, buildImage), flag names (--force), URL path formats (/api/v8/artifacts/, /v8/artifacts/), query params (teamId, slug), env vars (TURBO_API, TURBO_TEAM), and config file changes are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT the solution should do (bypass turborepo, use turbo-cache.mjs, specific API contract) but does not give exact code, line numbers, or copy-paste patches. A developer still needs to reason about implementation details."
+      "reason": "Instruction describes the architecture and API contract but does not give line-level edits; agent must still design the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_build_image_preserved asserts the exact string 'function buildImage()' (not arrow function), which forces a specific declaration style. Also test_docker_image_cache_builtin_modules uses a hardcoded allowlist of builtins that would fail if someone used e.g. 'node:crypto' or 'node:fs' or 'node:path' instead of 'crypto'/'fs'/'path'. An alternative correct implementation using 'node:' prefixed imports for crypto/fs/path would fail the regex-based builtin check."
+      "outcome": "pass",
+      "reason": "Tests verify behavior (URL format, exports, flags, script execution) rather than specific variable names or internal helpers; alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are text-inspection: test_build_image_preserved checks 'function buildImage()' in src and 'docker build' in src; test_docker_image_cache_has_parseargs checks 'parseArgs' in src; test_native_build_direct_invocation checks string presence/absence in source. Only test_artifact_url_* and test_turbo_cache_exports actually execute the code. The majority of fail-to-pass tests (test_no_build_docker_script, test_native_build_direct_invocation, test_turbo_jsonc_no_docker_task) are purely text/J"
+      "outcome": "pass",
+      "reason": "Tests invoke node subprocesses to execute the modules (test_artifact_url_vercel, test_turbo_cache_exports, test_docker_image_cache_cli_flags) and parse JSON config files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests like test_artifact_url_vercel actually execute turbo-cache.mjs and check output URLs; test_turbo_cache_exports verifies function types at runtime; test_no_build_docker_script checks JSON structure. A stub returning defaults would fail these (e.g., artifactUrl must return a URL containing specific path segments, exports must be functions)."
+      "reason": "Tests assert specific URL substrings like '/api/v8/artifacts/deadbeef1234' and 'teamId=team_abc123' which require real implementation logic."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires: on cache hit stream zstd-compressed data into docker load; on cache miss build+compress+upload; CI workflow changes to build_and_deploy.yml. The CI workflow change is tested via test_ci_workflow (truncated but implied), but the actual cache hit/miss streaming behavior with zstd compression is never tested - only structural/text checks are performed."
+      "outcome": "pass",
+      "reason": "Tests cover URL formats for both vercel/self-hosted, team parameter, required exports, removal of turbo task, shebangs, built-in-only imports, and --force flag parsing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Static), descriptive function names, and docstrings explaining each test's purpose. Categories are noted in brackets like [pr_diff] and [static]."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and labeled with [static]/[pr_diff]/[repo_tests] tags."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The API contract table in instruction.md documents the turbo-cache.mjs exports with descriptions. The URL format requirements section documents the exact URL structure including path format and query parameters for both Vercel and self-hosted cases."
+      "outcome": "not_applicable",
+      "reason": "Task is code/config-focused, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names (turbo-cache.mjs, docker-image-cache.js, TURBO_API, artifactUrl) are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact files to modify, exact function names to implement (buildImage, artifactUrl), exact script entries to remove (build-docker-image from package.json and turbo.jsonc), and exact invocation patterns (execFileSync('node', [path.join(__dirname, 'docker-image-cache.js'), ...])). This goes beyond describing the bug and into prescribing the solution structure."
+      "outcome": "pass",
+      "reason": "Instruction references files by role (which is necessary since the task is to rewrite them) without leaking exact line-level fixes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The config edits (package.json script removal, turbo.jsonc task removal, workflow YAML changes) are localized removals/modifications, not full-file rewrites, and are consistent with the instruction."
+      "reason": "Gold diff to package.json and turbo.jsonc is a localized removal of the build-docker-image entry, not a full-file rewrite."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

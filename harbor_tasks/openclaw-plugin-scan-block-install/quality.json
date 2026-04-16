@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three file paths (install.ts, install-security-scan.runtime.ts, install-security-scan.ts), the error code constant names (SECURITY_SCAN_BLOCKED, SECURITY_SCAN_FAILED), their string values, the type name InstallSecurityScanResult, the blocked/code field, the hook precedence logic pattern, and the 'Installation continues' string. All test assertions check things discoverable from the instruction."
+      "reason": "Instruction names all relevant files, error code constant names/values, the string 'Installation continues' to remove, field names like 'code', and status values like 'security_scan_blocked'/'security_scan_failed'."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the exact union type '\"security_scan_blocked\" | \"security_scan_failed\" | undefined' for the code field, the exact logic pattern 'hookResult?.blocked ? hookResult : builtinBlocked', the exact error code string values and their constant names, and that error codes must appear 'at least twice' in the file. This goes well beyond describing what's broken and prescribes HOW to fix it."
+      "outcome": "pass",
+      "reason": "Instruction describes expected behavior and required constants/values without dictating specific implementation (e.g., no line numbers or exact code)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_runtime_blocks_critical_findings checks for 'function buildBlockedScanResult' (a specific helper function name from the gold patch), 'builtinScan.critical > 0' (exact expression), test_hook_precedence_over_builtin_block checks for 'const hookResult = await runBeforeInstallHook' (exact variable name from gold). An alternative correct fix using different helper names or inline logic would fail these tests."
+      "reason": "Tests assert on specific helper function name 'buildBlockedScanResult' (test_runtime_blocks_critical_findings) and exact expression patterns like 'builtinScan.critical > 0' and 'builtinScan.status === \"error\"', plus requiring >=3 'const hookResult = await runBeforeInstallHook' captures \u2014 alternative correct implementations using different helper names or different comparisons (e.g., `critical >= 1`) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test reads source files and uses regex pattern matching on the text content. None of them import, call, or execute the actual plugin install functions. For example, test_scan_failure_blocks_install just checks if the string 'Installation continues' is absent and 'SECURITY_SCAN_FAILED' is present in the file text. test_runtime_blocks_critical_findings checks for regex patterns like /function buildBlockedScanResult/ in source text."
+      "reason": "Tests execute Node but only to read files and apply regex checks (e.g., /code:\\s*\"security_scan_blocked\"/.test(code), /function buildBlockedScanResult/) \u2014 no actual invocation of the install/scan functions with inputs/outputs."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific patterns that don't exist in the base code (e.g., SECURITY_SCAN_BLOCKED/FAILED codes, buildBlockedScanResult function, removal of 'Installation continues'). A stub or no-op implementation would not pass these checks since the base code lacks these patterns."
+      "reason": "Each test checks specific required strings/patterns that a stub returning defaults would not contain (e.g., SECURITY_SCAN_FAILED appearing >=2 times, removal of 'Installation continues')."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that installing a plugin with eval('danger') should fail with a clear error, but no test actually executes an install to verify this end-to-end behavior. The instruction also requires the three install paths (package, bundle, file) all need treatment, but tests only check text patterns, not actual execution of those paths."
+      "outcome": "pass",
+      "reason": "Tests cover error code definitions, usage counts, runtime blocking on critical and on errors, hook precedence, and removal of warn-and-continue."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_scan_failure_blocks_install, test_error_codes_defined, etc.), have docstrings explaining what they check, and are logically grouped into gates (pass_to_pass) and behavioral tests (fail_to_pass)."
+      "reason": "Tests are separated with section comments ('Gates', 'Fail-to-pass') and have descriptive names and docstrings."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the exact schema for InstallSecurityScanResult type update (blocked.code field with specific union type) and the PLUGIN_INSTALL_ERROR_CODE constant entries with their string values."
+      "outcome": "not_applicable",
+      "reason": "Task is code-behavior focused; no external structured data format beyond TS types described in instruction."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, error code strings, and type names are consistent between instruction.md and the test file with no apparent typos."
+      "reason": "Filenames and identifiers match across instruction and tests consistently."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact affected files, specifies exact function patterns like 'hookResult?.blocked ? hookResult : builtinBlocked', exact field names and union types, and even specifies that error codes must appear 'at least twice'. This goes beyond identifying the buggy area and prescribes the exact solution structure."
+      "outcome": "pass",
+      "reason": "Instruction identifies affected files which is appropriate scoping; no specific line numbers or code snippets beyond the required public identifiers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no agentmd/config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

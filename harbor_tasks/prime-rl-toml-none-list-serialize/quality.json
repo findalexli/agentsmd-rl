@@ -2,59 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests require the existence of a helper function named `_convert_none` (checked via _load_config_functions which extracts TARGET_FUNCS = {'none_to_none_str', '_convert_none'}). The instruction.md does mention this helper name, so that's covered. However, tests like test_no_unnecessary_try_except, test_no_work_process_comments, test_repo_ruff_check, and test_repo_syntax_all enforce constraints (no try/except, no work-process comments, ruff compliance) that are referenced as 'AGENTS.md' rules but "
+      "outcome": "pass",
+      "reason": "The instruction names the file (src/prime_rl/utils/config.py), the function (none_to_none_str), the exact test cases (e.g., none_to_none_str({\"k\": [None, \"a\", None]}) == {\"k\": [\"None\", \"a\", \"None\"]}), the constraints (no try/except, no work-process comments, ruff must pass), and tomli_w serialization requirements. The tests reference _convert_none in TARGET_FUNCS, but this is only used in _load_config_functions which extracts functions by name if they exist \u2014 it's not strictly required. All beha"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'The fix requires a helper function named `_convert_none` that takes a value and returns it with all None values recursively converted to \"None\" strings. `none_to_none_str()` should call this helper to process its input.' This prescribes the exact implementation approach, helper function name, and call structure, leaving very little reasoning for the developer."
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (None values inside lists not converted) and expected behavior, but does not prescribe the exact fix (e.g., doesn't say 'add a _convert_none helper' or 'change line X to Y'). A developer must reason about how to implement the recursive conversion."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The test infrastructure in _load_config_functions() extracts functions by name from TARGET_FUNCS = {'none_to_none_str', '_convert_none'}. A correct alternative fix that inlines the list-handling logic directly into none_to_none_str() without creating a separate _convert_none function would fail tests that depend on _load_config_functions() extracting both functions (e.g., test_top_level_none_converted, test_nested_dict_none_converted, test_non_none_values_unchanged, test_not_stub). The tests for"
+      "reason": "The test file defines TARGET_FUNCS = {'none_to_none_str', '_convert_none'} and _load_config_functions() extracts functions matching these names. The gold solution introduces a helper named '_convert_none'. An alternative correct fix that handles lists directly inside none_to_none_str (without a separate _convert_none helper) would still work because _load_config_functions extracts any matching functions and the behavioral tests only call none_to_none_str. However, a fix using a differently-named"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core fail-to-pass tests (test_none_inside_flat_list, test_none_inside_dict_in_list, etc.) execute Python code via subprocess and assert on returned values. Pass-to-pass tests exec extracted functions and call them. Tests verify actual behavioral outputs, not just text patterns."
+      "reason": "The fail-to-pass tests use subprocess to import and call the function, asserting on return values. Pass-to-pass tests extract and exec the functions, then call them. The static tests use AST parsing to check for try/except and regex for comments. Tests verify behavior through execution, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests assert specific output values like {'k': ['None', 'a', 'None']} from none_to_none_str({'k': [None, 'a', None]}). A stub returning None, empty dict, or pass-through would fail these assertions."
+      "reason": "The f2p tests assert specific output values (e.g., {\"k\": [\"None\", \"a\", \"None\"]}) and that tomli_w.dumps doesn't raise. A stub returning None, empty dict, or pass would fail these assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes three behaviors: (1) None inside flat lists should be converted, (2) dicts nested inside lists should be recursed into, (3) all nesting combinations should work. All three are tested by test_none_inside_flat_list, test_none_inside_dict_in_list, test_deeply_nested_list_of_list, and test_toml_roundtrip_with_none_in_list."
+      "reason": "All behaviors described in the instruction are tested: flat list None conversion, nested dict-in-list None conversion, deeply nested lists, tomli_w serialization, no try/except, no work-process comments, and ruff compliance."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass, Anti-stub, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Anti-stub, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a Python function, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves fixing a Python utility function, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the file (src/prime_rl/utils/config.py), the buggy function (none_to_none_str), and prescribes the exact fix approach including the helper function name (_convert_none) and its signature. This goes beyond identifying the bug location to specifying the solution architecture."
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is appropriate since the task is about fixing a specific known bug. It doesn't specify exact line numbers or the exact code change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task (fixing a Python function), not an agent config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

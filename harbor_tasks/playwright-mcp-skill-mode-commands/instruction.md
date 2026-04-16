@@ -22,14 +22,31 @@ The following specifics are verified by the test suite and must hold true:
 
 - **Command names in help.json**: The CLI help must use the non-hyphenated names — specifically: `press`, `keydown`, `keyup`, `mousemove`, `mousedown`, `mouseup`, `mousewheel`. The hyphenated variants (`key-press`, `key-down`, etc.) must NOT appear.
 
-- **Skill mode modal message format**: When running in skill mode, modal state messages should display skill-friendly names like `dialog-accept or dialog-dismiss` for dialogs and `upload` for file choosers. In non-skill mode, they should show the underlying tool names (e.g., `browser_handle_dialog`, `browser_file_upload`).
+- **Skill mode modal message format**: When running in skill mode, modal state messages should display skill-friendly names. For dialogs, this means showing `dialog-accept or dialog-dismiss` instead of `browser_handle_dialog`. For file choosers, this means showing `upload` instead of `browser_file_upload`. In non-skill mode, the messages should continue to show the underlying tool names.
 
-- **Modal state clearedBy structure**: The `clearedBy` field on modal states must carry both the tool identifier and the skill-friendly identifier (e.g., `{ tool: "browser_handle_dialog", skill: "dialog-accept or dialog-dismiss" }`).
+- **Modal state clearedBy structure**: The `clearedBy` field on modal states must carry both the tool identifier and the skill-friendly identifier. The structure should have two fields: `tool` containing the tool name (e.g., `browser_handle_dialog`) and `skill` containing the skill-friendly name (e.g., `dialog-accept or dialog-dismiss`).
 
-- **Eval auto-wrap**: Expressions passed to `eval` that do not contain `=>` should be automatically wrapped in `() => (...)` before execution.
+- **Eval auto-wrap**: Expressions passed to `eval` that do not contain the arrow operator (`=>`) should be automatically wrapped to form a valid arrow function before execution.
 
 - **SKILL.md requirements**: The file must exist in the terminal directory, include valid YAML frontmatter with `name:` and `description:` fields, and document the new command names.
 
 - **Build and lint must pass**: The project build and ESLint checks must complete successfully.
 
 - **Existing test compatibility**: Modified code must remain compatible with the existing MCP test suite (including tests in `tests/mcp/`).
+
+## Files to Modify
+
+The following files are involved in this task:
+- `packages/playwright/src/mcp/terminal/commands.ts` — command declarations
+- `packages/playwright/src/mcp/terminal/help.json` — CLI help text
+- `packages/playwright/src/mcp/program.ts` — daemon mode configuration
+- `packages/playwright/src/mcp/browser/tab.ts` — modal state rendering
+- `packages/playwright/src/mcp/browser/tools/tool.ts` — modal state type definitions
+- `packages/playwright/src/mcp/browser/tools/evaluate.ts` — eval expression handling
+- `packages/playwright/src/mcp/browser/config.ts` — configuration types
+- `packages/playwright/src/mcp/browser/response.ts` — response handling
+- `packages/playwright/src/mcp/terminal/SKILL.md` — to be created
+- `utils/build/build.js` — build script for copying markdown files
+- `tests/mcp/cli.spec.ts` — test file for CLI functionality
+- `tests/mcp/dialogs.spec.ts` — test file for dialog handling
+- `tests/mcp/files.spec.ts` — test file for file chooser handling

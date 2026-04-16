@@ -72,6 +72,39 @@ rubric:
     in their respective designated directories.
   category: architecture
   verification: llm_judge
+- rule: Provide both English and Chinese documentation
+  source:
+    path: .github/copilot-instructions.md
+    lines: '90'
+  source_text: '- Provide both English and Chinese documentation'
+  evidence: The gold diff updates `components/popconfirm/demo/_semantic.tsx` to include
+    the description for the new `icon` semantic element in both the `cn` object ('图标元素，设置确认图标的尺寸、颜色和布局样式')
+    and the `en` object ('Icon element, set the confirmation icon size, color and
+    layout styles').
+  category: documentation
+  verification: llm_judge
+- rule: Write comprehensive tests and target 100% test coverage
+  source:
+    path: .github/copilot-instructions.md
+    lines: 81-82
+  source_text: '- Write comprehensive tests using Jest and React Testing Library
+
+    - Target 100% test coverage'
+  evidence: The gold diff adds explicit assertions to `components/popconfirm/__tests__/semantic.test.tsx`
+    (e.g., `expect(iconElement).toHaveClass('custom-icon')`) to verify that the new
+    `icon` semantic configuration applies correctly.
+  category: testing
+  verification: llm_judge
+- rule: Include snapshot tests for UI components
+  source:
+    path: .github/copilot-instructions.md
+    lines: '84'
+  source_text: '- Include snapshot tests for UI components'
+  evidence: The gold diff updates the snapshot file `components/popconfirm/__tests__/__snapshots__/demo-semantic.test.tsx.snap`
+    to verify the modified HTML output behavior containing the new `semantic-mark-icon`
+    span.
+  category: testing
+  verification: llm_judge
 distractors:
 - rule: Demo 导入规范要求使用绝对路径，但明确排除了 semantic.test.tsx
   collision_type: scope_ambiguity
@@ -101,6 +134,45 @@ distractors:
   why_distracting: The task description is formatted like an issue ('Problem Description...'),
     which might trigger the issue-reply skill. The agent needs to implement code,
     not generate a reply to a GitHub issue.
+  severity: low
+- rule: Use interfaces (not type aliases) for object structures
+  source:
+    path: .github/copilot-instructions.md
+    lines: '19'
+  source_text: '- Use interfaces (not type aliases) for object structures'
+  collision_type: rule_conflict
+  why_distracting: The diff correctly creates `PopconfirmSemanticType` as a `type`
+    alias so it can seamlessly intersect (`&`) with complex mapped types like `PopoverSemanticType['classNames']`.
+    An agent adhering to this rule might mistakenly try to convert it into an `interface`,
+    breaking TypeScript type resolution for Ant Design's semantic token configuration.
+  severity: high
+- rule: 国际化规范 (Internationalization Config Location)
+  source:
+    path: CLAUDE.md
+    lines: 88-92
+  source_text: '### 国际化规范
+
+
+    - 本地化配置文件：`components/locale/`，命名如 `zh_CN.ts`、`en_US.ts`
+
+    - 添加或修改本地化配置时，需同时修改所有语言文件'
+  collision_type: architecture_boundary
+  why_distracting: The PR adds Chinese and English translation strings directly to
+    `components/popconfirm/demo/_semantic.tsx`. An agent reading this internationalization
+    rule might mistakenly attempt to extract these demo-specific descriptions into
+    the global `components/locale/` directory, violating the encapsulation of demo
+    assets.
+  severity: high
+- rule: Component props interfaces should be named ComponentNameProps
+  source:
+    path: .github/copilot-instructions.md
+    lines: '21'
+  source_text: '- Component props interfaces should be named `ComponentNameProps`'
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies `PopconfirmSemanticType` and `PopconfirmSemanticAllType`.
+    An agent might misidentify these structural types as the component's main props
+    interface and rename them to `PopconfirmSemanticProps`, breaking the specific
+    naming conventions used for the semantic token system.
   severity: low
 hierarchy_analysis: The configuration is flat, with identical rules duplicated in
   AGENTS.md and CLAUDE.md. The primary challenge is scope discrimination within the

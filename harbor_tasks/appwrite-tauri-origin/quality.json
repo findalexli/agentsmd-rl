@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics: SCHEME_TAURI constant, 'tauri' value, 'Web (Tauri)' friendly name, getNameByScheme() method, Platform.php and Origin.php file paths, the constructor signature `new Origin(['localhost'], ['tauri'])`, test file path, tauri://localhost valid case, tauri://example.com invalid case with 'Web (Tauri)' in error message. The tests check these same things. The p2p tests (composer validate, phpstan, pint, existing unit tests) are regression tests that don't require"
+      "reason": "Instruction names all relevant files (Platform.php, Origin.php, OriginTest.php), the constant name SCHEME_TAURI='tauri', the user-friendly name 'Web (Tauri)', and example constructor usage."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: add constant SCHEME_TAURI with value 'tauri', register it with name 'Web (Tauri)' via getNameByScheme(), include Platform::SCHEME_TAURI in the list of web platforms in Origin.php, and add specific test cases. It specifies the exact constant name, value, method, and implementation pattern. This is a detailed implementation guide, not a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes what to add (scheme constant, name mapping, include in web platforms list) without showing exact line edits or code."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavior (validation results, constant existence, platform name mapping) rather than implementation details. An alternative fix that achieves the same behavior (e.g., different internal variable names, different ordering in arrays) would still pass all tests."
+      "reason": "Tests check observable behavior (isValid results, getDescription contents, constant defined, name mapping) not internal variable names or line positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "All f2p tests execute PHP code via subprocess, instantiate Origin validators, call isValid() and getDescription(), and check runtime behavior. They don't just grep file contents."
+      "reason": "Tests invoke PHP subprocess to actually execute the validator and assert on runtime output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass these tests. test_tauri_localhost_valid requires isValid('tauri://localhost') to return true (default would be false for unknown scheme). test_tauri_unregistered_host_invalid requires specific error message content. test_tauri_constant_exists checks the constant is defined."
+      "reason": "Tests require real behavior: tauri://localhost must validate true, unregistered host must produce a specific error message with 'Web (Tauri)'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors in instruction.md are tested: SCHEME_TAURI constant existence, 'Web (Tauri)' name mapping, tauri://localhost valid, tauri://example.com invalid with proper error message, and existing platforms still working."
+      "reason": "Tests cover valid tauri://localhost, invalid unregistered host with proper error, constant existence, and name mapping as described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_tauri_localhost_valid, test_tauri_unregistered_host_invalid, etc.), have docstrings, and are logically grouped by concern (syntax, behavior, constants, regression)."
+      "reason": "Tests are separate named functions with docstrings describing purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are correct and consistent."
+      "reason": "Filenames and identifiers match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files (src/Appwrite/Network/Platform.php, src/Appwrite/Network/Validator/Origin.php, tests/unit/Network/Validators/OriginTest.php), exact method names (getNameByScheme()), exact constant names (SCHEME_TAURI), and the exact pattern to follow. This goes beyond identifying the buggy module \u2014 it's a step-by-step implementation guide."
+      "outcome": "pass",
+      "reason": "Instruction names files since those are required scope, but does not cite line numbers or exact buggy code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

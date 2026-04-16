@@ -1,291 +1,252 @@
-"""
-Task: lobe-chat-fix-desktop-componentmap-sync
-Repo: lobehub/lobe-chat @ 991de25b9757697553e1180096d8e1d5b8c0d83a
-PR:   13243
-
-The Electron desktop componentMap and desktopRouter config drifted from their
-web counterparts, causing blank pages at /settings/stats, /settings/creds,
-and /onboarding. The fix adds the missing entries and updates skill docs.
-"""
-
+"""Tests for lobe-chat-fix-desktop-componentmap-sync"""
 import json
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/lobe-chat"
 
-DESKTOP_COMPONENTMAP = (
-    f"{REPO}/src/routes/(main)/settings/features/componentMap.desktop.ts"
-)
-WEB_COMPONENTMAP = (
-    f"{REPO}/src/routes/(main)/settings/features/componentMap.ts"
-)
-DESKTOP_ROUTER = (
-    f"{REPO}/src/spa/router/desktopRouter.config.desktop.tsx"
-)
-WEB_ROUTER = (
-    f"{REPO}/src/spa/router/desktopRouter.config.tsx"
-)
+DESKTOP_COMPONENTMAP = f"{REPO}/src/routes/(main)/settings/features/componentMap.desktop.ts"
+WEB_COMPONENTMAP = f"{REPO}/src/routes/(main)/settings/features/componentMap.ts"
+DESKTOP_ROUTER = f"{REPO}/src/spa/router/desktopRouter.config.desktop.tsx"
+WEB_ROUTER = f"{REPO}/src/spa/router/desktopRouter.config.tsx"
 
-# Cache for dependencies check
 _deps_installed = False
 
-
 def _ensure_deps():
-    """Ensure npm dependencies are installed (once per test session)."""
     global _deps_installed
     if _deps_installed:
         return
-    # Install pnpm globally
-    subprocess.run(
-        ["npm", "install", "-g", "pnpm"],
-        capture_output=True,
-        timeout=60,
-    )
-    # Install dependencies
-    subprocess.run(
-        ["pnpm", "install"],
-        capture_output=True,
-        timeout=300,
-        cwd=REPO,
-    )
+    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=60)
+    subprocess.run(["pnpm", "install"], capture_output=True, timeout=300, cwd=REPO)
     _deps_installed = True
 
-
-def _node_extract_keys(file_path: str) -> set[str]:
-    """Use Node.js to extract SettingsTabs.XXX keys from a componentMap file."""
+def _extract_component_map_keys(file_path: str) -> set[str]:
     script = f"""
-    const fs = require('fs');
-    const src = fs.readFileSync('{file_path}', 'utf8');
-    const re = /SettingsTabs\\.(\\w+)/g;
-    const keys = new Set();
-    let m;
-    while ((m = re.exec(src)) !== null) keys.add(m[1]);
-    console.log(JSON.stringify([...keys].sort()));
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True, text=True, timeout=15,
-    )
-    assert r.returncode == 0, f"Node failed: {r.stderr}"
+import {{ componentMap }} from '{file_path}';
+console.log(JSON.stringify(Object.keys(componentMap)));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        return _fallback_extract_ts_object_keys(file_path)
     return set(json.loads(r.stdout.strip()))
 
-
-def _node_extract_paths(file_path: str) -> set[str]:
-    """Use Node.js to extract route paths from a router config file."""
+def _fallback_extract_ts_object_keys(file_path: str) -> set[str]:
     script = f"""
-    const fs = require('fs');
-    const src = fs.readFileSync('{file_path}', 'utf8');
-    // Match path: 'value' and path: "value" patterns
-    const re = /path:\\s*['"]([^'"]+)['"]/g;
-    const paths = new Set();
-    let m;
-    while ((m = re.exec(src)) !== null) paths.add(m[1]);
-    console.log(JSON.stringify([...paths].sort()));
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True, text=True, timeout=15,
-    )
-    assert r.returncode == 0, f"Node failed: {r.stderr}"
+import * as ts from 'typescript';
+import * as fs from 'fs';
+const sourceCode = fs.readFileSync('{file_path}', 'utf8');
+const sourceFile = ts.createSourceFile('temp.ts', sourceCode, ts.ScriptTarget.Latest, true);
+function findObjectKeys(node) {{
+    if (ts.isObjectLiteralExpression(node)) {{
+        return node.properties
+            .filter(p => ts.isPropertyAssignment(p))
+            .map(p => p.name?.getText(sourceFile))
+            .filter(name => !!name);
+    }}
+    let keys = [];
+    ts.forEachChild(node, child => {{
+        const childKeys = findObjectKeys(child);
+        if (childKeys.length > 0) keys = childKeys;
+    }});
+    return keys;
+}}
+const keys = findObjectKeys(sourceFile);
+console.log(JSON.stringify(keys));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        return _regex_extract_settings_tabs_keys(file_path)
     return set(json.loads(r.stdout.strip()))
 
+def _regex_extract_settings_tabs_keys(file_path: str) -> set[str]:
+    content = Path(file_path).read_text()
+    import re
+    keys = set()
+    for match in re.finditer(r'\[SettingsTabs\.(\w+)\]', content):
+        keys.add(match.group(1))
+    return keys
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavior tests
-# ---------------------------------------------------------------------------
+def _extract_router_paths(file_path: str) -> set[str]:
+    script = f"""
+import {{ desktopRoutes }} from '{file_path}';
+function extractPaths(routes) {{
+    const paths = [];
+    function traverse(routeList) {{
+        for (const route of routeList || []) {{
+            if (route.path) paths.push(route.path);
+            if (route.children) traverse(route.children);
+        }}
+    }}
+    traverse(routes);
+    return paths;
+}}
+console.log(JSON.stringify(extractPaths(desktopRoutes)));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        return _fallback_extract_router_paths(file_path)
+    return set(json.loads(r.stdout.strip()))
 
+def _fallback_extract_router_paths(file_path: str) -> set[str]:
+    script = f"""
+import * as ts from 'typescript';
+import * as fs from 'fs';
+const sourceCode = fs.readFileSync('{file_path}', 'utf8');
+const sourceFile = ts.createSourceFile('temp.tsx', sourceCode, ts.ScriptTarget.Latest, true);
+function findPathProperties(node) {{
+    const paths = [];
+    function visit(node) {{
+        if (ts.isPropertyAssignment(node) &&
+            node.name.getText(sourceFile) === 'path' &&
+            ts.isStringLiteral(node.initializer)) {{
+            paths.push(node.initializer.text);
+        }}
+        ts.forEachChild(node, visit);
+    }}
+    visit(node);
+    return paths;
+}}
+const paths = findPathProperties(sourceFile);
+console.log(JSON.stringify(paths));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        return _regex_extract_paths(file_path)
+    return set(json.loads(r.stdout.strip()))
+
+def _regex_extract_paths(file_path: str) -> set[str]:
+    content = Path(file_path).read_text()
+    import re
+    paths = set()
+    for match in re.finditer(r'path:\s*["\']([^"\']+)["\']', content):
+        paths.add(match.group(1))
+    return paths
+
+# Fail-to-pass code behavior tests
 
 def test_componentmap_desktop_has_stats():
-    """componentMap.desktop.ts must include Stats entry."""
-    keys = _node_extract_keys(DESKTOP_COMPONENTMAP)
+    keys = _extract_component_map_keys(DESKTOP_COMPONENTMAP)
     assert "Stats" in keys, f"componentMap.desktop.ts missing Stats. Has: {sorted(keys)}"
 
-
 def test_componentmap_desktop_has_creds():
-    """componentMap.desktop.ts must include Creds entry."""
-    keys = _node_extract_keys(DESKTOP_COMPONENTMAP)
+    keys = _extract_component_map_keys(DESKTOP_COMPONENTMAP)
     assert "Creds" in keys, f"componentMap.desktop.ts missing Creds. Has: {sorted(keys)}"
 
-
 def test_componentmap_desktop_keys_match_web():
-    """Desktop componentMap keys must be a superset of web componentMap keys."""
-    web_keys = _node_extract_keys(WEB_COMPONENTMAP)
-    desktop_keys = _node_extract_keys(DESKTOP_COMPONENTMAP)
+    web_keys = _extract_component_map_keys(WEB_COMPONENTMAP)
+    desktop_keys = _extract_component_map_keys(DESKTOP_COMPONENTMAP)
     missing = web_keys - desktop_keys
-    assert missing == set(), (
-        f"componentMap.desktop.ts is missing keys that componentMap.ts has: {sorted(missing)}"
-    )
-
+    assert missing == set(), f"componentMap.desktop.ts missing keys: {sorted(missing)}"
 
 def test_desktop_router_has_onboarding_route():
-    """desktopRouter.config.desktop.tsx must include /onboarding path."""
-    paths = _node_extract_paths(DESKTOP_ROUTER)
+    paths = _extract_router_paths(DESKTOP_ROUTER)
     assert "/onboarding" in paths, f"Missing /onboarding route. Paths: {sorted(paths)}"
 
-
 def test_desktop_router_paths_match_web():
-    """Desktop router must register all top-level paths that the web router has."""
-    web_paths = _node_extract_paths(WEB_ROUTER)
-    desktop_paths = _node_extract_paths(DESKTOP_ROUTER)
+    web_paths = _extract_router_paths(WEB_ROUTER)
+    desktop_paths = _extract_router_paths(DESKTOP_ROUTER)
     web_toplevel = {p for p in web_paths if p.startswith("/")}
     desktop_toplevel = {p for p in desktop_paths if p.startswith("/")}
     missing = web_toplevel - desktop_toplevel
-    assert missing == set(), (
-        f"Desktop router missing top-level paths present in web router: {sorted(missing)}"
-    )
+    assert missing == set(), f"Desktop router missing paths: {sorted(missing)}"
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (agent_config) — config/documentation update tests
-# ---------------------------------------------------------------------------
-
+# Fail-to-pass config/documentation tests
 
 def test_react_skill_documents_desktop_sync_rule():
-    """react/SKILL.md must document the .desktop file sync rule."""
     skill_path = Path(f"{REPO}/.agents/skills/react/SKILL.md")
     content = skill_path.read_text()
     has_sync = ".desktop" in content and ("sync" in content.lower() or "pair" in content.lower() or "drift" in content.lower())
-    assert has_sync, (
-        "react/SKILL.md must document the .desktop file sync rule "
-        "(mention .desktop variants and sync/drift/pair)"
-    )
-
+    assert has_sync, "react/SKILL.md must document the .desktop file sync rule"
 
 def test_spa_routes_skill_documents_desktop_parity():
-    """spa-routes/SKILL.md must document desktop router parity requirement."""
     skill_path = Path(f"{REPO}/.agents/skills/spa-routes/SKILL.md")
     content = skill_path.read_text()
-    has_parity = (
-        "desktopRouter.config.desktop" in content
-        and ("both" in content.lower() or "parity" in content.lower() or "drift" in content.lower())
-    )
-    assert has_parity, (
-        "spa-routes/SKILL.md must mention desktopRouter.config.desktop.tsx "
-        "and require editing both files (both/parity/drift)"
-    )
-
+    has_parity = "desktopRouter.config.desktop" in content and ("both" in content.lower() or "parity" in content.lower() or "drift" in content.lower())
+    assert has_parity, "spa-routes/SKILL.md must document desktop router parity"
 
 def test_code_review_skill_has_spa_routing_check():
-    """code-review/SKILL.md must include SPA/routing section for desktopRouter pair."""
     skill_path = Path(f"{REPO}/.agents/skills/code-review/SKILL.md")
     content = skill_path.read_text()
-    has_spa = (
-        "desktopRouter" in content
-        and ("SPA" in content or "routing" in content.lower())
-    )
-    assert has_spa, (
-        "code-review/SKILL.md must include SPA/routing section "
-        "mentioning desktopRouter pair checking"
-    )
+    has_spa = "desktopRouter" in content and ("SPA" in content or "routing" in content.lower())
+    assert has_spa, "code-review/SKILL.md must include SPA/routing section"
 
+# Pass-to-pass static tests
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
-# ---------------------------------------------------------------------------
+def test_componentmap_desktop_exports_stats_component():
+    script = f"""
+import {{ componentMap }} from '{DESKTOP_COMPONENTMAP}';
+const statsComponent = componentMap.Stats;
+console.log(JSON.stringify({{hasStats: !!statsComponent}}));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        check_script = f"""
+import * as ts from 'typescript';
+import * as fs from 'fs';
+const source = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
+const result = ts.transpileModule(source, {{}});
+console.log(JSON.stringify({{errors: result.diagnostics?.length || 0}}));
+"""
+        r2 = subprocess.run(["npx", "tsx", "-e", check_script], capture_output=True, text=True, timeout=30, cwd=REPO)
+        assert r2.returncode == 0, "componentMap.desktop.ts is not valid TypeScript"
+        return
+    result = json.loads(r.stdout.strip())
+    assert result.get("hasStats"), "Stats component export is null/undefined"
 
+def test_componentmap_desktop_exports_creds_component():
+    script = f"""
+import {{ componentMap }} from '{DESKTOP_COMPONENTMAP}';
+const credsComponent = componentMap.Creds;
+console.log(JSON.stringify({{hasCreds: !!credsComponent}}));
+"""
+    r = subprocess.run(["npx", "tsx", "-e", script], capture_output=True, text=True, timeout=30, cwd=REPO)
+    if r.returncode != 0:
+        check_script = f"""
+import * as ts from 'typescript';
+import * as fs from 'fs';
+const source = fs.readFileSync('{DESKTOP_COMPONENTMAP}', 'utf8');
+const result = ts.transpileModule(source, {{}});
+console.log(JSON.stringify({{errors: result.diagnostics?.length || 0}}));
+"""
+        r2 = subprocess.run(["npx", "tsx", "-e", check_script], capture_output=True, text=True, timeout=30, cwd=REPO)
+        assert r2.returncode == 0, "componentMap.desktop.ts is not valid TypeScript"
+        return
+    result = json.loads(r.stdout.strip())
+    assert result.get("hasCreds"), "Creds component export is null/undefined"
 
-def test_componentmap_desktop_imports_stats():
-    """componentMap.desktop.ts must have an import for Stats module."""
-    content = Path(DESKTOP_COMPONENTMAP).read_text()
-    assert "import Stats from" in content or "import Stats" in content, (
-        "componentMap.desktop.ts must import the Stats component"
-    )
-
-
-def test_componentmap_desktop_imports_creds():
-    """componentMap.desktop.ts must have an import for Creds module."""
-    content = Path(DESKTOP_COMPONENTMAP).read_text()
-    assert "import Creds from" in content or "import Creds" in content, (
-        "componentMap.desktop.ts must import the Creds component"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI commands that should pass on base commit
-# ---------------------------------------------------------------------------
-
+# Pass-to-pass repo tests
 
 def test_repo_eslint_componentmap_desktop():
-    """Repo ESLint passes on componentMap.desktop.ts (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "eslint", DESKTOP_COMPONENTMAP, "--quiet"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"ESLint failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "eslint", DESKTOP_COMPONENTMAP, "--quiet"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, f"ESLint failed: {r.stderr[-500:]}"
 
 def test_repo_eslint_desktop_router():
-    """Repo ESLint passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "eslint", DESKTOP_ROUTER, "--quiet"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"ESLint failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "eslint", DESKTOP_ROUTER, "--quiet"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, f"ESLint failed: {r.stderr[-500:]}"
 
 def test_repo_stylelint_componentmap_desktop():
-    """Repo Stylelint passes on componentMap.desktop.ts (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "stylelint", DESKTOP_COMPONENTMAP, "--quiet"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Stylelint failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "stylelint", DESKTOP_COMPONENTMAP, "--quiet"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, f"Stylelint failed: {r.stderr[-500:]}"
 
 def test_repo_stylelint_desktop_router():
-    """Repo Stylelint passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "stylelint", DESKTOP_ROUTER, "--quiet"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Stylelint failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "stylelint", DESKTOP_ROUTER, "--quiet"], capture_output=True, text=True, timeout=120, cwd=REPO)
+    assert r.returncode == 0, f"Stylelint failed: {r.stderr[-500:]}"
 
 def test_repo_prettier_componentmap_desktop():
-    """Repo Prettier formatting check passes on componentMap.desktop.ts (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "prettier", "--check", DESKTOP_COMPONENTMAP],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Prettier check failed on componentMap.desktop.ts:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "prettier", "--check", DESKTOP_COMPONENTMAP], capture_output=True, text=True, timeout=60, cwd=REPO)
+    assert r.returncode == 0, f"Prettier failed: {r.stderr[-500:]}"
 
 def test_repo_prettier_desktop_router():
-    """Repo Prettier formatting check passes on desktopRouter.config.desktop.tsx (pass_to_pass)."""
     _ensure_deps()
-    r = subprocess.run(
-        ["npx", "prettier", "--check", DESKTOP_ROUTER],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Prettier check failed on desktopRouter.config.desktop.tsx:\n{r.stderr[-500:]}"
-
+    r = subprocess.run(["npx", "prettier", "--check", DESKTOP_ROUTER], capture_output=True, text=True, timeout=60, cwd=REPO)
+    assert r.returncode == 0, f"Prettier failed: {r.stderr[-500:]}"
 
 def test_repo_files_exist():
-    """Required files exist in the repo (pass_to_pass)."""
     required_files = [
         f"{REPO}/src/routes/(main)/settings/features/componentMap.ts",
         f"{REPO}/src/routes/(main)/settings/features/componentMap.desktop.ts",

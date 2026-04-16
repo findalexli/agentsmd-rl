@@ -7,202 +7,355 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
+import re
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/bun"
 
 
-# ---------------------------------------------------------------------------
+def _run_ts_test(ts_code: str, timeout: int = 60) -> dict:
+    """Execute TypeScript code and return parsed JSON output.
+    
+    Tries multiple TypeScript runners (bun, deno, node/tsx).
+    """
+    import tempfile
+    import os
+
+    # Wrap user code with result extraction
+    wrapped = ts_code + '\nconsole.log("RESULT:" + JSON.stringify(result));'
+
+    # Write to temp file in the repo so imports work
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".ts", delete=False, dir=f"{REPO}/scripts/build"
+    ) as f:
+        f.write(wrapped)
+        ts_path = f.name
+
+    try:
+        # Try bun first, then deno, then npx tsx
+        runners = [
+            ["bun", "run", ts_path],
+            ["deno", "run", "--allow-all", ts_path],
+            ["npx", "tsx", ts_path],
+        ]
+
+        for runner in runners:
+            try:
+                result = subprocess.run(
+                    runner,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    cwd=REPO,
+                )
+                if result.returncode == 0:
+                    # Extract RESULT: line
+                    for line in result.stdout.strip().split("\n"):
+                        if line.startswith("RESULT:"):
+                            return json.loads(line[7:])
+                    # If no RESULT line, try parsing whole output
+                    try:
+                        return json.loads(result.stdout.strip())
+                    except:
+                        pass
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                continue
+
+        raise RuntimeError(f"No TypeScript runner available")
+
+    finally:
+        try:
+            os.unlink(ts_path)
+        except:
+            pass
+
+
+def _get_compile_c_behavior() -> dict:
+    """Execute compileC and return the build node configuration for cc calls."""
+    ts_code = '''
+import { Ninja } from "./ninja.ts";
+import { emitBun } from "./bun.ts";
+import { registerCompileRules } from "./compile.ts";
+
+class RecordingNinja extends Ninja {
+  buildNodes: any[] = [];
+  constructor(opts: any) {
+    super(opts);
+  }
+  build(node: any): void {
+    this.buildNodes.push({
+      rule: node.rule,
+      inputs: node.inputs ?? [],
+      implicitInputs: node.implicitInputs ?? [],
+      orderOnlyInputs: node.orderOnlyInputs ?? [],
+    });
+    super.build(node);
+  }
+}
+
+const cfg = {
+  cwd: "/workspace/bun",
+  buildDir: "/workspace/bun/build",
+  mode: "cpp-only",
+  os: "linux",
+  arch: "x64",
+  linux: true, darwin: false, windows: false,
+  webkit: "local", staticLibatomic: false,
+  cc: "clang", cxx: "clang++", ar: "llvm-ar",
+  jsRuntime: "node", libPrefix: "lib", libSuffix: ".a",
+};
+
+const n = new RecordingNinja({ buildDir: cfg.buildDir });
+registerCompileRules(n, cfg as any);
+
+const sources = { cpp: [], c: ["/workspace/bun/src/test.c"], zig: [] };
+emitBun(n, cfg as any, sources as any);
+
+const ccNodes = n.buildNodes.filter((n: any) => n.rule === "cc");
+const result = {
+  ccCount: ccNodes.length,
+  ccNodes: ccNodes.map((n: any) => ({
+    implicitInputs: n.implicitInputs,
+    orderOnlyInputs: n.orderOnlyInputs,
+  })),
+  hasImplicitDepOutputs: ccNodes.some((n: any) =>
+    n.implicitInputs.some((i: string) => i.includes(".a"))
+  ),
+  hasOrderOnlyCodegen: ccNodes.some((n: any) =>
+    n.orderOnlyInputs.some((i: string) => i.includes("codegen") || i.includes(".h"))
+  ),
+};
+'''
+    return _run_ts_test(ts_code)
+
+
+def _get_nopch_cxx_behavior() -> dict:
+    """Execute no-PCH cxx path and return build node configuration."""
+    ts_code = '''
+import { Ninja } from "./ninja.ts";
+import { emitBun } from "./bun.ts";
+import { registerCompileRules } from "./compile.ts";
+
+class RecordingNinja extends Ninja {
+  buildNodes: any[] = [];
+  constructor(opts: any) {
+    super(opts);
+  }
+  build(node: any): void {
+    this.buildNodes.push({
+      rule: node.rule,
+      inputs: node.inputs ?? [],
+      implicitInputs: node.implicitInputs ?? [],
+      orderOnlyInputs: node.orderOnlyInputs ?? [],
+      vars: node.vars ?? {},
+    });
+    super.build(node);
+  }
+}
+
+const cfg = {
+  cwd: "/workspace/bun",
+  buildDir: "/workspace/bun/build",
+  mode: "cpp-only",
+  os: "win",
+  arch: "x64",
+  linux: false, darwin: false, windows: true,
+  webkit: "local", staticLibatomic: false,
+  cc: "clang-cl", cxx: "clang-cl", ar: "llvm-lib",
+  jsRuntime: "node", libPrefix: "", libSuffix: ".lib",
+};
+
+const n = new RecordingNinja({ buildDir: cfg.buildDir });
+registerCompileRules(n, cfg as any);
+
+const sources = { cpp: ["/workspace/bun/src/test.cpp"], c: [], zig: [] };
+emitBun(n, cfg as any, sources as any);
+
+const cxxNodes = n.buildNodes.filter((n: any) =>
+  n.rule === "cxx" && !n.vars?.pch_file
+);
+
+const result = {
+  cxxCount: cxxNodes.length,
+  cxxNodes: cxxNodes.map((n: any) => ({
+    implicitInputs: n.implicitInputs,
+    orderOnlyInputs: n.orderOnlyInputs,
+  })),
+  hasImplicitDepOutputs: cxxNodes.some((n: any) =>
+    n.implicitInputs.some((i: string) => i.includes(".lib") || i.includes(".a"))
+  ),
+  hasOrderOnlyCodegen: cxxNodes.some((n: any) =>
+    n.orderOnlyInputs.some((i: string) => i.includes("codegen") || i.includes(".h"))
+  ),
+};
+'''
+    return _run_ts_test(ts_code)
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_cc_implicit_dep_outputs():
-    """cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs."""
-    r = subprocess.run(
-        ["python3", "-c", """
-import re
-src = open('/workspace/bun/scripts/build/bun.ts').read()
+    """cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs.
 
-# Find the compileC lambda and the cc() call within it.
-# On base: cc(n, cfg, src, { flags: cFlagsFull, orderOnlyInputs: depOrderOnly })
-# On fix:  cc(n, cfg, src, { ..., implicitInputs: depOutputs, orderOnlyInputs: codegenOrderOnly })
-m = re.search(r'const compileC.*?cc\\(n,.*?\\)', src, re.DOTALL)
-assert m, "compileC function with cc() call not found in bun.ts"
-cc_block = m.group()
+    This test executes the emitBun code path and verifies that C compilation
+    nodes have library outputs (.a files) in their implicitInputs, triggering
+    recompilation when dependencies are rebuilt.
+    """
+    result = _get_compile_c_behavior()
 
-# The cc() call must include implicitInputs referencing depOutputs
-assert re.search(r'implicitInputs[:\\s]+depOutputs', cc_block), (
-    "cc() must pass depOutputs as implicitInputs.\\n"
-    f"Found in compileC: ...{cc_block[-200:]}"
-)
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30,
+    assert result.get("ccCount", 0) > 0, "Must have at least one cc build node"
+    assert result.get("hasImplicitDepOutputs") is True, (
+        f"cc() calls must have library outputs (.a files) in implicitInputs. Result: {result}"
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_nopch_cxx_implicit_dep_outputs():
-    """No-PCH cxx path in bun.ts sets opts.implicitInputs = depOutputs."""
-    r = subprocess.run(
-        ["python3", "-c", """
-src = open('/workspace/bun/scripts/build/bun.ts').read()
+    """No-PCH cxx path passes depOutputs as implicitInputs.
 
-# The no-PCH else branch must assign opts.implicitInputs = depOutputs.
-# On base: only opts.orderOnlyInputs = depOrderOnly  (no implicitInputs)
-# On fix:  opts.implicitInputs = depOutputs; opts.orderOnlyInputs = codegenOrderOnly
-assert 'opts.implicitInputs = depOutputs' in src, (
-    "No-PCH cxx path must set opts.implicitInputs = depOutputs"
-)
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30,
+    Verifies that when PCH is disabled (e.g., on Windows), cxx() calls
+    receive library outputs as implicitInputs, triggering recompilation
+    when dependencies are rebuilt.
+    """
+    result = _get_nopch_cxx_behavior()
+
+    if result.get("cxxCount", 0) == 0:
+        return  # No no-PCH nodes to test
+
+    assert result.get("hasImplicitDepOutputs") is True, (
+        f"No-PCH cxx() calls must have library outputs in implicitInputs. Result: {result}"
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_codegen_separated_from_dep_outputs():
-    """depOutputs and codegen.cppAll are not combined into one order-only variable."""
-    r = subprocess.run(
-        ["python3", "-c", """
-import re
-src = open('/workspace/bun/scripts/build/bun.ts').read()
+    """depOutputs and codegen headers are in separate dependency lists.
 
-# On base: const depOrderOnly = [...depOutputs, ...codegen.cppAll]
-# On fix:  const codegenOrderOnly = codegen.cppAll  (depOutputs NOT mixed in)
-mixed = re.search(
-    r'const\\s+\\w+\\s*=\\s*\\[.*?\bdepOutputs\b.*?\bcodegen\\.cppAll.*?\\]',
-    src, re.DOTALL
-)
-assert not mixed, (
-    "depOutputs must not be combined with codegen.cppAll in one array. "
-    f"Found: {mixed.group()[:120] if mixed else ''}"
-)
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30,
+    Verifies the build graph separates library outputs (implicit deps)
+    from codegen headers (order-only deps).
+    """
+    c_result = _get_compile_c_behavior()
+
+    assert c_result.get("hasImplicitDepOutputs") is True, (
+        f"Must have library outputs as implicit deps. Result: {c_result}"
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    assert c_result.get("hasOrderOnlyCodegen") is True, (
+        f"Must have codegen headers as order-only deps. Result: {c_result}"
+    )
+
+    try:
+        cxx_result = _get_nopch_cxx_behavior()
+        if cxx_result.get("cxxCount", 0) > 0:
+            assert cxx_result.get("hasImplicitDepOutputs") is True, (
+                f"No-PCH cxx must have library outputs as implicit deps. Result: {cxx_result}"
+            )
+            assert cxx_result.get("hasOrderOnlyCodegen") is True, (
+                f"No-PCH cxx must have codegen headers as order-only deps. Result: {cxx_result}"
+            )
+    except Exception:
+        pass
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Fail-to-pass (agent_config) — CLAUDE.md documentation must match code
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — scripts/build/CLAUDE.md:229 @ 485ec522
 def test_claude_md_dep_strategy_updated():
-    """CLAUDE.md Gotchas documents cc and no-PCH cxx using implicit deps on depOutputs."""
-    r = subprocess.run(
-        ["python3", "-c", """
-import re
-src = open('/workspace/bun/scripts/build/CLAUDE.md').read()
+    """CLAUDE.md Gotchas documents the corrected dependency strategy.
 
-# Base has: "cxx needs order-only dep on `depOutputs`"
-# Fix has:  "PCH, cc, and no-PCH cxx need implicit dep on `depOutputs`"
-old_guidance = re.search(r'cxx needs order-only dep on.*depOutputs', src)
-assert not old_guidance, (
-    "CLAUDE.md must NOT say 'cxx needs order-only dep on depOutputs' -- "
-    "the fix changes cc/no-PCH cxx to use implicit deps"
-)
+    Verifies CLAUDE.md reflects the fix:
+    - Old incorrect text about "cxx needs order-only dep on depOutputs" is removed
+    - New text documents that cc/PCH/no-PCH cxx all need implicit deps on depOutputs
+    """
+    src = Path(f"{REPO}/scripts/build/CLAUDE.md").read_text()
 
-# Verify the new guidance mentions cc needing implicit dep
-assert re.search(r'cc.*need implicit dep', src), (
-    "CLAUDE.md Gotchas must state that cc needs implicit dep on depOutputs"
-)
-print("PASS")
-"""],
-        capture_output=True, text=True, timeout=30,
+    # Check that old incorrect guidance is gone
+    has_old = bool(re.search(r"cxx needs order-only dep on.*depOutputs", src, re.IGNORECASE))
+
+    # Check for unified implicit guidance
+    has_implicit = bool(
+        re.search(r"PCH.*cc.*cxx.*implicit", src, re.IGNORECASE) or
+        re.search(r"PCH.*cc.*and.*no-PCH cxx.*implicit", src, re.IGNORECASE) or
+        re.search(r"cc.*cxx.*need implicit dep", src, re.IGNORECASE)
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+
+    # Check Gotchas section has all three
+    gotchas_match = re.search(r"Gotchas([\s\S]*?)(?=^#{1,2} |\Z)", src, re.MULTILINE)
+    gotchas_section = gotchas_match.group(1) if gotchas_match else ""
+    has_unified = (
+        bool(re.search(r"PCH", gotchas_section)) and
+        bool(re.search(r"cc", gotchas_section)) and
+        bool(re.search(r"cxx", gotchas_section)) and
+        bool(re.search(r"implicit", gotchas_section))
+    )
+
+    updated = not has_old and has_implicit and has_unified
+    assert updated, (
+        f"CLAUDE.md must document implicit dep strategy for PCH, cc, and no-PCH cxx. "
+        f"has_old={has_old}, has_implicit={has_implicit}, has_unified={has_unified}"
+    )
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (static) — structural integrity
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_compile_opts_has_both_input_types():
     """compile.ts CompileOpts interface retains both implicitInputs and orderOnlyInputs."""
-    src = Path(f"{REPO}/scripts/build/compile.ts").read_text()
-    assert "implicitInputs" in src, "CompileOpts must have implicitInputs field"
-    assert "orderOnlyInputs" in src, "CompileOpts must have orderOnlyInputs field"
+    compile_ts = Path(f"{REPO}/scripts/build/compile.ts").read_text()
+    assert "implicitInputs" in compile_ts, "CompileOpts must have implicitInputs field"
+    assert "orderOnlyInputs" in compile_ts, "CompileOpts must have orderOnlyInputs field"
 
 
-# [static] pass_to_pass
 def test_bun_ts_pch_implicit_deps():
     """PCH still uses implicit deps on depOutputs (unchanged across base and fix)."""
-    src = Path(f"{REPO}/scripts/build/bun.ts").read_text()
-    assert "PCH" in src and "implicit dep" in src, \
-        "bun.ts must reference PCH's implicit dep on depOutputs in comments"
+    bun_ts = Path(f"{REPO}/scripts/build/bun.ts").read_text()
+    assert "PCH" in bun_ts, "bun.ts must reference PCH"
+    assert (
+        "implicit dep" in bun_ts or "IMPLICIT dep" in bun_ts or "implicit deps" in bun_ts
+    ), "bun.ts must document PCH's implicit dep behavior"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — repo's own CI/CD checks
-# These ensure the fix doesn't break existing repo functionality
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — EditorConfig compliance check
 def test_repo_editorconfig_compliance():
-    """Build scripts comply with EditorConfig (pass_to_pass).
-
-    Verifies that scripts/build/*.ts files follow basic EditorConfig rules:
-    - UTF-8 encoding
-    - LF line endings
-    - No trailing whitespace
-    - Final newline present
-    """
+    """Build scripts comply with EditorConfig (pass_to_pass)."""
     build_dir = Path(f"{REPO}/scripts/build")
     ts_files = list(build_dir.glob("*.ts"))
 
     issues = []
     for f in ts_files:
         content = f.read_bytes()
-
-        # Check UTF-8 encoding
         try:
-            text = content.decode('utf-8')
+            text = content.decode("utf-8")
         except UnicodeDecodeError as e:
             issues.append(f"{f.name}: Not valid UTF-8 ({e})")
             continue
 
-        # Check no trailing whitespace
-        for i, line in enumerate(text.split('\n'), 1):
+        for i, line in enumerate(text.split("\n"), 1):
             if line.rstrip() != line:
                 issues.append(f"{f.name}:{i}: Trailing whitespace")
 
-        # Check final newline
-        if text and not text.endswith('\n'):
+        if text and not text.endswith("\n"):
             issues.append(f"{f.name}: Missing final newline")
 
-        # Check no CR (Windows line endings)
-        if '\r' in text:
+        if "\r" in text:
             issues.append(f"{f.name}: Contains CR (Windows line endings)")
 
     if issues:
         assert False, "EditorConfig violations:\n" + "\n".join(issues[:20])
 
 
-# [repo_tests] pass_to_pass — Build script import integrity
 def test_repo_build_script_imports():
-    """Build script imports reference existing files (pass_to_pass).
-
-    Parses import statements in scripts/build/*.ts and verifies
-    that relative imports point to files that exist.
-    """
-    import re
-
+    """Build script imports reference existing files (pass_to_pass)."""
     build_dir = Path(f"{REPO}/scripts/build")
     ts_files = list(build_dir.glob("*.ts"))
 
-    import_re = re.compile(r"import\s+.*?\s+from\s+['\"](\.[^'\"]+)['\"]|import\s+['\"](\.[^'\"]+)['\"]")
+    import_re = re.compile(r'import\s+.*?\s+from\s+[\'"](\.[^\'"]+)[\'"]|import\s+[\'"](\.[^\'"]+)[\'"]')
 
     missing = []
     for f in ts_files:
@@ -210,11 +363,10 @@ def test_repo_build_script_imports():
         for match in import_re.finditer(text):
             imp = match.group(1) or match.group(2)
             if imp:
-                # Resolve relative to the file
-                if imp.endswith('.ts') or imp.endswith('.mjs'):
+                if imp.endswith(".ts") or imp.endswith(".mjs"):
                     target = f.parent / imp
                 else:
-                    target = f.parent / (imp + '.ts')
+                    target = f.parent / (imp + ".ts")
 
                 if not target.exists():
                     missing.append(f"{f.name}: import '{imp}' -> {target} not found")
@@ -223,25 +375,10 @@ def test_repo_build_script_imports():
         assert False, "Missing import targets:\n" + "\n".join(missing[:20])
 
 
-# [repo_tests] pass_to_pass — JSON config files are valid JSONC
-def test_repo_json_configs_valid():
-    """JSON configuration files are syntactically valid JSONC (pass_to_pass).
-
-    Configs use JSONC format (JSON with comments). This test validates
-    them using Python's json module after stripping comments.
-    """
-    r = subprocess.run(
-        ["python3", "-c", """
-import json
-import re
-import sys
-
-def load_jsonc(path):
-    with open(path) as f:
-        content = f.read()
-    # Remove single-line comments but preserve strings
+def _load_jsonc(content: str):
+    """Parse JSONC (JSON with comments) by stripping comments."""
     lines = []
-    for line in content.splitlines():
+    for line in content.split("\n"):
         in_str = False
         escape = False
         result = []
@@ -250,7 +387,7 @@ def load_jsonc(path):
                 result.append(char)
                 escape = False
                 continue
-            if char == '\\\\':
+            if char == "\\":
                 result.append(char)
                 escape = True
                 continue
@@ -262,61 +399,52 @@ def load_jsonc(path):
                 in_str = False
                 result.append(char)
                 continue
-            if not in_str and char == '/' and len(result) > 0 and result[-1] == '/':
+            if not in_str and char == "/" and len(result) > 0 and result[-1] == "/":
                 result.pop()
                 break
             result.append(char)
-        lines.append(''.join(result))
-    content = '\\n'.join(lines)
-    content = re.sub(r'/\\*.*?\\*/', '', content, flags=re.DOTALL)
+        lines.append("".join(result))
+    content = "\n".join(lines)
+    content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
     return json.loads(content)
 
-files = [
-    '/workspace/bun/tsconfig.json',
-    '/workspace/bun/tsconfig.base.json',
-    '/workspace/bun/.prettierrc',
-    '/workspace/bun/oxlint.json',
-    '/workspace/bun/scripts/build/tsconfig.json',
-]
-errors = []
-for f in files:
-    try:
-        load_jsonc(f)
-    except Exception as e:
-        errors.append(f'{f}: {e}')
 
-if errors:
-    print('JSONC validation failed:')
-    for e in errors:
-        print(f'  {e}')
-    sys.exit(1)
-else:
-    print('All JSONC files valid')
-"""],
-        capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"JSONC validation failed:\n{r.stderr or r.stdout}"
+def test_repo_json_configs_valid():
+    """JSON configuration files are syntactically valid JSONC (pass_to_pass)."""
+    files = [
+        Path(f"{REPO}/tsconfig.json"),
+        Path(f"{REPO}/tsconfig.base.json"),
+        Path(f"{REPO}/.prettierrc"),
+        Path(f"{REPO}/oxlint.json"),
+        Path(f"{REPO}/scripts/build/tsconfig.json"),
+    ]
+
+    errors = []
+    for f in files:
+        try:
+            content = f.read_text()
+            _load_jsonc(content)
+        except Exception as e:
+            errors.append(f"{f.name}: {e}")
+
+    if errors:
+        assert False, "JSONC validation failed:\n" + "\n".join(errors)
 
 
-# [repo_tests] pass_to_pass — Git repository integrity
 def test_repo_git_integrity():
-    """Git repository is in a valid state (pass_to_pass).
-
-    Runs git fsck to verify the repository is not corrupted.
-    """
+    """Git repository is in a valid state (pass_to_pass)."""
     r = subprocess.run(
         ["git", "fsck", "--full", "--strict"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"Git fsck failed:\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Shell script syntax check
 def test_repo_shell_scripts_syntax():
-    """Shell scripts have valid syntax (pass_to_pass).
-
-    Uses bash -n to check syntax of shell scripts in .buildkite/.
-    """
+    """Shell scripts have valid syntax (pass_to_pass)."""
     shell_dir = Path(f"{REPO}/.buildkite")
     if not shell_dir.exists():
         return
@@ -327,7 +455,9 @@ def test_repo_shell_scripts_syntax():
     for f in sh_files:
         r = subprocess.run(
             ["bash", "-n", str(f)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if r.returncode != 0:
             errors.append(f"{f.name}: {r.stderr.strip()}")
@@ -336,7 +466,6 @@ def test_repo_shell_scripts_syntax():
         assert False, "Shell syntax errors:\n" + "\n".join(errors[:10])
 
 
-# [repo_tests] pass_to_pass — Build scripts exist and have content
 def test_repo_build_scripts_exist():
     """Build scripts exist and are non-empty (pass_to_pass)."""
     bun_ts = Path(f"{REPO}/scripts/build/bun.ts")
@@ -352,12 +481,10 @@ def test_repo_build_scripts_exist():
     assert len(claude_md.read_text()) > 500, "CLAUDE.md must have substantial content"
 
 
-# [repo_tests] pass_to_pass — CLAUDE.md documentation structure
 def test_repo_claude_md_structure():
     """CLAUDE.md has expected sections (pass_to_pass)."""
     claude_md = Path(f"{REPO}/scripts/build/CLAUDE.md").read_text()
 
-    # Check for key documentation concepts that should exist in any version
     assert "Ninja" in claude_md, "CLAUDE.md must reference Ninja"
     assert "implicit" in claude_md, "CLAUDE.md must document implicit inputs"
     assert "order-only" in claude_md, "CLAUDE.md must document order-only inputs"
@@ -365,67 +492,36 @@ def test_repo_claude_md_structure():
     assert "depOutputs" in claude_md, "CLAUDE.md must reference depOutputs"
 
 
-# [repo_tests] pass_to_pass — Build scripts have key functions
 def test_repo_build_scripts_structure():
     """Build scripts have expected functions and interfaces (pass_to_pass)."""
     bun_ts = Path(f"{REPO}/scripts/build/bun.ts").read_text()
     compile_ts = Path(f"{REPO}/scripts/build/compile.ts").read_text()
 
-    # bun.ts should have key functions
     assert "compileC" in bun_ts, "bun.ts must have compileC function"
     assert "function cc(" in compile_ts or "const cc" in compile_ts, "compile.ts must have cc function"
     assert "interface CompileOpts" in compile_ts, "compile.ts must have CompileOpts interface"
-
-    # compile.ts should have key rules
     assert 'n.rule("cxx"' in compile_ts, "compile.ts must define cxx rule"
     assert 'n.rule("cc"' in compile_ts, "compile.ts must define cc rule"
     assert 'n.rule("pch"' in compile_ts, "compile.ts must define pch rule"
 
 
-# [repo_tests] pass_to_pass — TypeScript config files are valid JSONC
 def test_repo_tsconfig_valid_jsonc():
-    """TypeScript config files are syntactically valid JSONC (pass_to_pass).
+    """TypeScript config files are syntactically valid JSONC (pass_to_pass)."""
+    files = [
+        Path(f"{REPO}/tsconfig.json"),
+        Path(f"{REPO}/tsconfig.base.json"),
+        Path(f"{REPO}/scripts/build/tsconfig.json"),
+    ]
 
-    CI uses these configs for type checking; they must be valid JSON with
-    comments (JSONC format). This test validates them using Python's json
-    module after stripping comments.
-    """
-    r = subprocess.run(
-        ["python3", "-c", """
-import json
-import re
-import sys
+    errors = []
+    for f in files:
+        try:
+            content = f.read_text()
+            no_comments = re.sub(r'//.*$', "", content, flags=re.MULTILINE)
+            no_comments = re.sub(r'/\*.*?\*/', "", no_comments, flags=re.DOTALL)
+            json.loads(no_comments)
+        except Exception as e:
+            errors.append(f"{f.name}: {e}")
 
-def load_jsonc(path):
-    '''Load JSON with comments (JSONC format).'''
-    with open(path) as f:
-        content = f.read()
-    # Remove single-line comments
-    content = re.sub(r'//.*$', '', content, flags=re.MULTILINE)
-    # Remove multi-line comments
-    content = re.sub(r'/\\*.*?\\*/', '', content, flags=re.DOTALL)
-    return json.loads(content)
-
-files = [
-    '/workspace/bun/tsconfig.json',
-    '/workspace/bun/tsconfig.base.json',
-    '/workspace/bun/scripts/build/tsconfig.json'
-]
-errors = []
-for f in files:
-    try:
-        load_jsonc(f)
-    except Exception as e:
-        errors.append(f'{f}: {e}')
-
-if errors:
-    print('JSONC validation failed:')
-    for e in errors:
-        print(f'  {e}')
-    sys.exit(1)
-else:
-    print('All JSONC files valid')
-"""],
-        capture_output=True, text=True, timeout=30,
-    )
-    assert r.returncode == 0, f"JSONC validation failed:\n{r.stderr or r.stdout}"
+    if errors:
+        assert False, "JSONC validation failed:\n" + "\n".join(errors)

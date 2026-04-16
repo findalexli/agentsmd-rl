@@ -118,6 +118,31 @@ distractors:
   source:
     path: AGENTS.md
     lines: 39-42
+- rule: Any PR that modifies configuration structures or usage patterns must update
+    CHANGELOG.md.
+  source:
+    path: .cursor/BUGBOT.md
+    lines: 5-11
+  source_text: 'Any PR that modifies configuration structures or usage patterns must
+    update `CHANGELOG.md`. This includes changes to config fields (added, removed,
+    renamed, moved, or default value changes) in:
+
+
+    - `src/prime_rl/*/config.py`
+
+    - `src/prime_rl/rl.py`
+
+    - `src/prime_rl/utils/config.py`
+
+
+    If such changes are detected without a corresponding `CHANGELOG.md` update, request
+    that the author add an entry.'
+  collision_type: rule_conflict
+  why_distracting: The diff edits `src/prime_rl/trainer/sft/train.py`, which heavily
+    relies on `config`. An agent might mistakenly believe this constitutes a usage
+    pattern change requiring a CHANGELOG update, ignoring the specific file allowlist
+    constraint.
+  severity: medium
 hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply pointing to `AGENTS.md`.
   The rules are generic repository guidelines rather than specific architectural constraints.
 rubric:
@@ -129,4 +154,19 @@ rubric:
   evidence: The gold solution moves the `setup_hybrid_cp` call without adding any
     comments explaining the bug fix or referring to the old code location.
   category: documentation
+  verification: llm_judge
+- rule: Avoid try/except blocks unless it's really necessary.
+  source:
+    path: AGENTS.md
+    lines: '5'
+  source_text: '- Avoid try/except blocks unless it''s really necessary.  It''s fine
+    that a program fails if something goes wrong as this helps us to catch non-obvious
+    bugs and unforeseen side-effects earlier. You can add try catch on code that explicitly
+    aims to be fault tolerant like adding retry mechanisms or explicit and intentional
+    robustness. '
+  evidence: Instead of wrapping the premature `setup_hybrid_cp(model, ...)` call in
+    a try/except block to catch the resulting NameError/UnboundLocalError, the diff
+    addresses the root cause by logically reordering the initialization flow, allowing
+    any unhandled issues to fail loudly.
+  category: error_handling
   verification: llm_judge

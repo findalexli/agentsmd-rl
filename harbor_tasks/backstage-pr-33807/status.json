@@ -1,0 +1,113 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T10:56:00.609505",
+  "total_time": 62.54,
+  "sandbox_id": "irry3ft6ifjw77qlw7z1y",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 763.67,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1171.66,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "partial - core checks pass, rubric architectural issue",
+      "docker_build": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 0.0,
+      "attempts": 2,
+      "notes": "Docker build passes. NOP test (base commit) correctly returns reward=0. Gold test (with fix applied via solve.sh) correctly returns reward=1. Rubric judge returns 0.0 because it evaluates /workspace/repo (base commit, no changes) rather than the gold Docker image - the judge architecture expects git diff but the gold solution commits to Docker. Removed changeset-related rubric rules as they conflict with no changesets instruction. Remaining style rules cannot be validated in this setup.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 700.27
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.51,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:58: test `test_pid_write_after_initialise` has 1 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:194: test `test_embedded_postgres_initialise_and_pid_sequence` has 1 a', 'A:[A] test_not_tautological @ tests/test_outputs.py:306: test `test_no_standalone_pid_write_before_embedded_postgres` has ', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:9: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 14.56,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":472,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.26
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 58.7,
+      "at": "2026-04-15T18:40:47.608072"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 64.36,
+      "at": "2026-04-15T19:08:58.629747"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2355.5,
+      "at": "2026-04-15T20:39:22.777741"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 870.85,
+      "at": "2026-04-15T21:52:02.958095"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 62.54,
+      "at": "2026-04-16T10:56:00.609505"
+    }
+  ]
+}

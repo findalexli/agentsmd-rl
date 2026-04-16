@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (app/config/collections/projects.php), both collection IDs ('functions' and 'sites'), the field name ('specification'), all properties (size 128, signed false, required false, default APP_COMPUTE_SPECIFICATION_DEFAULT, type Database::VAR_STRING), and the positioning requirement (before buildSpecification). All test assertions check these same elements."
+      "reason": "Instruction names the file context (collection schemas in projects config), both collections (functions, sites), position (before buildSpecification), and all field properties asserted by tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact field definition with all property values, the exact file to edit, and the exact insertion points (between startCommand and buildSpecification for functions, before buildSpecification for sites). This is essentially the complete solution \u2014 a developer doesn't need to reason about what to change, only copy the specification into the file."
+      "outcome": "pass",
+      "reason": "Instruction describes what field to add and its properties but doesn't give the exact code or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use regex matching for field structure and check ordering relative to buildSpecification. Alternative correct implementations (different whitespace, different formatting, slightly different array syntax) would still pass as long as the field properties and ordering are correct. The regex patterns are flexible enough to accommodate variations."
+      "reason": "Tests check field properties and ordering relative to buildSpecification, not exact line positions or formatting."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_functions_has_specification_field, test_sites_has_specification_field, test_specification_field_properties, etc.) all use regex on the file content via PROJECTS_PHP.read_text(). They never execute the PHP code, import the config, or test runtime behavior. The only execution-based tests are the p2p PHP syntax checks. Every f2p test is essentially 'assert pattern in open(path).read()'."
+      "outcome": "pass",
+      "reason": "Tests execute PHP subprocesses via _run_php_script and run `php -l` for syntax checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass. The tests check for specific regex patterns matching the specification field with correct properties in the actual projects.php file. Without actually adding the field blocks to the file, the regex matches would fail."
+      "reason": "Tests assert specific field existence, properties, and ordering that require actually adding the specification field."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: presence of specification field in both collections, correct field properties (size, signed, required, default, type), and correct positioning before buildSpecification."
+      "reason": "All behaviors in instruction (type, default, size, signed, required, array, format, position) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, and clear comments separating pass-to-pass tests from fail-to-pass tests. Each test function has a clear purpose indicated by its name and docstring."
+      "reason": "Tests are grouped with Pass-to-Pass and Fail-to-Pass section comments and clear names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema of the specification field to be added, including all property names and values (array, $id, type, format, size, signed, required, default, filters)."
+      "reason": "Schema for the field is fully documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or field names across instruction.md, tests, and solution files."
+      "reason": "No typos observed in paths, commands, or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file (app/config/collections/projects.php), exact insertion points ('between the startCommand field and the buildSpecification field'), and complete field definition. This goes well beyond describing what's broken and provides the exact localization and fix."
+      "outcome": "pass",
+      "reason": "Instruction refers to collection schemas generally without naming the exact file path or line."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized \u2014 it adds two small blocks (11 lines each) to specific locations in projects.php without rewriting the entire file, and doesn't contradict other files."
+      "reason": "Gold patch is two localized additions to projects.php (small diff, no full-file rewrite)."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 0
 }

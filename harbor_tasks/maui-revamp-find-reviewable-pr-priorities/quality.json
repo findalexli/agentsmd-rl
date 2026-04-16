@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all required file paths (.github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1, SKILL.md), function names (Write-PREntry, Get-ReadyToReviewPRNumbers, Invoke-GitHubWithRetry, Add-UniquePRs, etc.), parameter defaults ($Category='default', $Limit=100), ValidateSet values ('default', 'approved', 'ready-to-review', 'agent-reviewed'), field names (Assignees), label strings ('s/agent-reviewed', 's/agent-approved'), section headers ('## Priority Categories', '## Quick "
+      "reason": "All asserted file paths, function names (Write-PREntry, Get-ReadyToReviewPRNumbers), literal strings (s/agent-reviewed, s/agent-approved, Assignees, default, 100), category names, and required sections are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, specifying exact function names to create (Write-PREntry, Get-ReadyToReviewPRNumbers), exact variable names ($defaultPRs), exact parameter defaults ($Category='default', $Limit=100), exact ValidateSet values, exact label strings, exact section headers, and exact category names. This leaves very little reasoning for the agent \u2014 it's essentially a specification of the solution rather than a description of the problem."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and what must be present (functions, fields, defaults) without providing exact code/line changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names 'Write-PREntry' and 'Get-ReadyToReviewPRNumbers' (test_script_new_functions_and_fields), exact variable name '$defaultPRs' (test_script_default_category_logic), exact regex patterns for 'Assignees\\s*=' in PSCustomObject blocks. An alternative correct implementation using different function/variable names (e.g., 'Format-PROutput', '$combinedPRs') would fail these tests despite being functionally equivalent."
+      "reason": "Tests assert specific internal helper function names like Write-PREntry and Get-ReadyToReviewPRNumbers, and a specific variable $defaultPRs, which a correct alternative implementation might not use \u2014 though these are explicitly required by instruction.md, they are gold-specific implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads file content and uses regex/string matching: e.g., test_script_param_defaults uses regex on file text, test_script_validate_set_has_new_categories uses regex on file text, test_script_new_functions_and_fields checks string presence. No test actually executes the PowerShell script or calls any function. All tests are essentially 'assert pattern in open(path).read()' style checks."
+      "reason": "All visible tests in test_outputs.py use regex/string inspection of file contents (e.g., re.search on param block, 'in content' checks) rather than executing the PowerShell script or invoking behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific new content that doesn't exist in the base commit (e.g., 'Get-ReadyToReviewPRNumbers' function, 'Write-PREntry' function, '$defaultPRs' variable, 'default' in ValidateSet, Limit=100 default, 'Approved (Not Merged)' in SKILL.md). A stub/empty implementation would not contain these specific strings and patterns."
+      "reason": "Tests require specific defaults (Category='default', Limit=100), specific ValidateSet values, specific function definitions, and label references that a stub could not satisfy without implementing the required changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major requirements from the instruction: parameter defaults, ValidateSet categories, new functions, Assignees field, agent labels, default category logic with $defaultPRs and CHANGES_REQUESTED filtering, SKILL.md sections, category count (\u22659), parameter table defaults, and Assignees in output columns."
+      "reason": "Tests cover the instruction's required behaviors: param defaults, ValidateSet values, new functions, Assignees field, agent labels, and SKILL.md sections/columns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_script_param_defaults, test_script_validate_set_has_new_categories, etc.), grouped into sections with comments (Gates, Pass-to-pass, Fail-to-pass), and each has a docstring explaining what it checks."
+      "reason": "Tests are grouped with comment-header sections (Gates, Pass-to-pass, Fail-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing a PowerShell script and Markdown documentation, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task outputs PowerShell script + markdown documentation, not structured data requiring schema documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, parameter names, label strings, and section headers in instruction.md are consistent with those checked in tests \u2014 no typos detected."
+      "reason": "Filenames, function names, and labels in instruction.md match those referenced in tests and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: function names (Write-PREntry, Get-ReadyToReviewPRNumbers), variable names ($defaultPRs), exact ValidateSet values, exact parameter defaults, and the specific filtering logic (CHANGES_REQUESTED). This goes beyond describing the problem domain and prescribes the exact code structure."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify (which is part of the task domain) but doesn't pinpoint specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it involves editing a PowerShell script and Markdown documentation."
+      "reason": "This is a code/documentation edit task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

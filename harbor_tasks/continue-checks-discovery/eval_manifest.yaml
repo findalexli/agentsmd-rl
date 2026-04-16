@@ -1,0 +1,82 @@
+manifest_version: "1.0"
+
+source:
+  repo: continuedev/continue
+  pr_number: 11697
+  merge_commit: 641cca347b36fc1c009f4764fd12aa8226d2df25
+  base_commit: 173810bab405bb1c6e3740e90207ffdc17d1065b
+  task_name: continue-checks-discovery
+
+# Test checks - each maps to a def test_* function in test_outputs.py
+checks:
+  # Fail-to-pass tests (behavioral)
+  - id: test_resolveFromLocal_checks_directory
+    type: fail_to_pass
+    origin: behavioral
+    description: resolveFromLocal() must scan .continue/checks/ directory
+    weight: 2
+
+  - id: test_resolveFromLocal_deduplication
+    type: fail_to_pass
+    origin: behavioral
+    description: Implementation must deduplicate with agents/ taking precedence
+    weight: 2
+
+  - id: test_resolveFromLocal_error_handling
+    type: fail_to_pass
+    origin: behavioral
+    description: Implementation must handle directory read errors gracefully
+    weight: 1
+
+  - id: test_comments_updated
+    type: fail_to_pass
+    origin: behavioral
+    description: JSDoc comments must reference both .continue/agents/ and .continue/checks/
+    weight: 1
+
+  - id: test_agents_precedence_comment
+    type: fail_to_pass
+    origin: behavioral
+    description: Must document that agents/ takes precedence over checks/
+    weight: 1
+
+  # Pass-to-pass tests (repo CI checks)
+  - id: test_repo_review_linting
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on review directory
+    weight: 1
+
+  - id: test_repo_vitest_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vitest is available and functional
+    weight: 1
+
+  - id: test_repo_resolveReviews_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: resolveReviews.ts implementation file exists
+    weight: 1
+
+# Rubric for soft/subjective criteria from AGENTS.md
+rubric:
+  - criterion: "Tests run after changes"
+    description: "Whenever you create / update a test, you should run the test to be certain that it passes"
+    source: "extensions/cli/AGENTS.md"
+    applicable: true
+
+  - criterion: "Formatting and linting checked"
+    description: "If you ever create a PR, you should be sure to check the formatting and linting first with npm run format and npm run lint"
+    source: "extensions/cli/AGENTS.md"
+    applicable: true
+
+  - criterion: "Relative imports with extensions"
+    description: "Relative import paths require explicit file extensions, e.g. 'from ./test.js' instead of 'from ./test'"
+    source: "extensions/cli/AGENTS.md"
+    applicable: true
+
+  - criterion: "Test file naming"
+    description: "Tests should be written with .test.ts extension"
+    source: "extensions/cli/AGENTS.md"
+    applicable: true

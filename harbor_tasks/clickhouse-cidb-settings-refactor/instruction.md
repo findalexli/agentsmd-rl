@@ -13,7 +13,7 @@ The file `ci/jobs/collect_statistics.py` contains hardcoded secret names:
 - `clickhouse-test-stat-login`
 - `clickhouse-test-stat-password`
 
-These appear in calls that look like: `Secret.Config("clickhouse-test-stat-url").get_value()`
+These appear in calls similar to: `Secret.Config("clickhouse-test-stat-url").get_value()`
 
 ## Expected Behavior
 
@@ -24,15 +24,13 @@ The script should use the same secrets configured via `Settings.SECRET_CI_DB_*` 
 
 The `Info` class in `ci/praktika/info.py` provides a `get_secret()` method that retrieves these values.
 
-## Constraints
+## Requirements
 
-- The `CIDB` constructor accepts `url`, `user`, and `passwd` keyword arguments
-- The `Info` class must be imported from `ci.praktika.info`
-- `Settings` must be imported from `ci.praktika.settings`
-- The variable holding the `Info()` instance must be named `info` (lowercase) so the pattern `info.get_secret(` appears in the code
-- The old `Secret` import from `ci.praktika` must be removed
-- The hardcoded names above must not appear in the refactored code
-
-## How to Discover the Solution Pattern
-
-Look at other files in `ci/jobs/` that use `Info().get_secret(Settings.SECRET_CI_DB_*)` — for example, `runner.py` or `cidb_cluster.py` in the same directory. These files demonstrate the established pattern for accessing CIDB credentials in this codebase.
+The refactored code must:
+- Import `Settings` from `ci.praktika.settings`
+- Import `Info` from `ci.praktika.info`
+- Use `Settings.SECRET_CI_DB_URL`, `Settings.SECRET_CI_DB_USER`, and `Settings.SECRET_CI_DB_PASSWORD` instead of hardcoded strings
+- Use the `Info` class's `get_secret()` method to retrieve these values
+- Pass the retrieved values to the `CIDB` constructor using keyword arguments
+- Not import `Secret` from `ci.praktika`
+- Not contain the hardcoded secret names `clickhouse-test-stat-url`, `clickhouse-test-stat-login`, or `clickhouse-test-stat-password`

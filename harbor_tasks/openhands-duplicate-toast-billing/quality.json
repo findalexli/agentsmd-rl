@@ -2,32 +2,32 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the test case names ('should display success toast exactly once', 'should display error toast exactly once', 'track credits on checkout success', 'renders the payment form'), the file path (frontend/src/routes/billing.tsx), the test file (billing.test.tsx), and all verification commands. The hidden tests (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) check implementation details not mentioned in the instruction, but these are structural checks t"
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_useeffect_dependency_structure checks for exact strings like 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' before useEffect. test_no_searchparams_in_dependencies checks dependency array contents. test_frontend_lint, test_frontend_build, test_frontend_typecheck, test_frontend_translation_completeness, test_repo_toast_handlers, test_repo_billing_visibility, test_repo_plan_clic"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes only the symptom (duplicate toasts) and expected behavior (toasts appear exactly once). It does not specify extracting primitives from searchParams, changing useEffect dependencies, or any specific code changes."
+      "outcome": "fail",
+      "reason": "instruction.md's 'Code Structure Requirements' section explicitly states the fix: 'the component extracts the amount and session_id URL query parameters as local constants before the useEffect that handles checkout callbacks, and uses those extracted primitives (not the query parameter object) in the effect's dependency array.' This describes exactly WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_useeffect_dependency_structure asserts exact strings like 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' appearing before the useEffect. A valid alternative fix using useRef to track if the effect has run, or using a different variable naming convention (e.g., 'purchaseAmount' instead of 'amount'), would fail these tests despite correctly fixing the duplicate toast bug."
+      "reason": "test_useeffect_dependency_structure asserts exact strings 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' must appear before useEffect. An alternative correct fix using e.g. 'const amt = searchParams.get(\"amount\")' or using useMemo, or a useRef-based guard, would fail these tests despite being correct solutions to the duplicate toast problem."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_useeffect_dependency_structure and test_no_searchparams_in_dependencies are purely text-inspection tests that read the source file and assert on string patterns (e.g., 'const amount = searchParams.get(\"amount\");' in before_useeffect). They do not execute or call any code. While other tests do run subprocess commands, these two f2p tests are pure text matching."
+      "reason": "test_useeffect_dependency_structure and test_no_searchparams_in_dependencies are purely text-matching tests that read billing.tsx and assert on string contents (e.g., 'assert \"const amount = searchParams.get(\\\"amount\\\");\" in before_useeffect'). They do not execute the code or test behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) check for specific code patterns that wouldn't exist in the base commit, and the behavioral tests (test_checkout_success_toast_once, test_checkout_cancel_toast_once, test_track_credits_called_once) run actual test suites that fail on the unpatched code. A stub/no-op wouldn't pass these."
+      "reason": "The f2p tests (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) check for specific code patterns that don't exist in the base commit. A stub/no-op wouldn't pass since the base code has searchParams in the dependency array and doesn't extract primitives before useEffect. The behavioral f2p tests (toast once, track credits once) run actual test suites that would fail on the buggy base code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md (success toast once, error toast once, credits tracking once, renders payment form) are tested, plus lint/build/typecheck/translation and related test suites are all verified."
+      "reason": "All four behaviors explicitly listed in instruction.md (success toast once, error toast once, credits tracking once, renders payment form) are tested via test_checkout_success_toast_once, test_checkout_cancel_toast_once, test_track_credits_called_once, and test_billing_component_renders respectively."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with docstrings (e.g., 'Success toast displays exactly once on checkout success (regression test)'), organized by concern (behavioral tests, structural tests, pass_to_pass tests), and clearly structured."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Success toast displays exactly once on checkout success (regression test)') and logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,23 +35,27 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and test names are all consistent and correctly spelled across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names only the billing.tsx file which is the obvious file given the task domain. It does not mention specific lines, the searchParams dependency issue, or the primitive extraction pattern."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file ('frontend/src/routes/billing.tsx') and describes the exact code pattern to implement: 'extracts the amount and session_id URL query parameters as local constants before the useEffect' and 'uses those extracted primitives (not the query parameter object) in the effect's dependency array.' This gives away the localization and implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

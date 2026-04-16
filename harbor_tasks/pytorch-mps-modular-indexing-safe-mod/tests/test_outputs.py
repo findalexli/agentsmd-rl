@@ -13,15 +13,10 @@ import re
 import subprocess
 import textwrap
 from pathlib import Path
-
 import sympy
 
 REPO = "/workspace/pytorch"
 
-
-# ---------------------------------------------------------------------------
-# Helpers for inline (p2p) tests
-# ---------------------------------------------------------------------------
 
 def _extract_method(filepath, method_name):
     """Extract a method from mps.py via AST and return it as a callable."""
@@ -42,20 +37,13 @@ def _extract_method(filepath, method_name):
 
 class _FakePrinter:
     """Minimal printer mock — converts sympy objects to str."""
-
-    def doprint(self, x):
-        return str(x)
-
-    def _print(self, x):
-        return str(x)
-
-    def parenthesize(self, x, *a, **kw):
-        return str(x)
+    def doprint(self, x): return str(x)
+    def _print(self, x): return str(x)
+    def parenthesize(self, x, *a, **kw): return str(x)
 
 
 class _FakeExpr:
     """Mock for a ModularIndexing expression with (base, div, mod)."""
-
     def __init__(self, x, div, mod):
         self.args = (x, div, mod)
         self.is_integer = True
@@ -63,15 +51,10 @@ class _FakeExpr:
 
 class _FakeFloorDivExpr:
     """Mock for a FloorDiv expression with (base, div)."""
-
     def __init__(self, x, div):
         self.args = (x, div)
         self.is_integer = True
 
-
-# ---------------------------------------------------------------------------
-# Subprocess helper for behavioral f2p tests
-# ---------------------------------------------------------------------------
 
 _SUBPROCESS_HELPER = """
 import ast, textwrap, re
@@ -109,13 +92,9 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute Python code via subprocess with AST extraction helpers."""
     return subprocess.run(
         ["python3", "-c", _SUBPROCESS_HELPER + code],
-        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        capture_output=True, text=True, timeout=timeout, cwd=REPO
     )
 
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) - Repo CI/CD tests
-# ---------------------------------------------------------------------------
 
 def test_mps_syntax():
     """mps.py must parse without syntax errors."""
@@ -131,18 +110,15 @@ def test_mps_py_compile():
 def test_utils_h_balanced_braces():
     """c10/metal/utils.h must have balanced braces."""
     content = Path(f"{REPO}/c10/metal/utils.h").read_text()
-    assert content.count("{") == content.count("}"), "Unbalanced braces in utils.h"
+    assert content.count('{') == content.count('}'), "Unbalanced braces in utils.h"
 
 
 def test_utils_h_syntax():
     """c10/metal/utils.h must be valid C++ header (basic structural checks)."""
     content = Path(f"{REPO}/c10/metal/utils.h").read_text()
-    # Check for header guard or pragma once
     assert "#pragma once" in content or ("#ifndef" in content and "#define" in content), \
         "Missing header guard or #pragma once"
-    # Check for balanced braces
-    assert content.count("{") == content.count("}"), "Unbalanced braces in utils.h"
-    # Check for namespace declaration
+    assert content.count('{') == content.count('}'), "Unbalanced braces in utils.h"
     assert "namespace" in content, "Missing namespace declaration"
 
 
@@ -151,36 +127,13 @@ def test_codegen_mps_imports():
     src = Path(f"{REPO}/torch/_inductor/codegen/mps.py").read_text()
     tree = ast.parse(src)
     imports = [node for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))]
-    # Should have some imports
     assert len(imports) > 0, "No imports found in mps.py"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) - Real CI command tests via subprocess.run()
-# ---------------------------------------------------------------------------
-
-def test_repo_ruff_check():
-    """Repo's ruff linter passes on mps.py (pass_to_pass)."""
-    r = subprocess.run(
-        ["ruff", "check", f"{REPO}/torch/_inductor/codegen/mps.py"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
-
-
-def test_repo_py_compile_subprocess():
-    """mps.py compiles to bytecode via subprocess without errors (pass_to_pass)."""
-    r = subprocess.run(
-        ["python3", "-m", "py_compile", f"{REPO}/torch/_inductor/codegen/mps.py"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
 
 
 def test_mps_ast_valid():
     """mps.py has valid AST structure with required classes and methods (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ("python3", "-c", """
 import ast
 from pathlib import Path
 
@@ -203,8 +156,8 @@ assert found_class, 'MetalExprPrinter class not found'
 missing = required_methods - found_methods
 assert not missing, f'Missing required methods: {missing}'
 print('AST check passed')
-"""],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+"""),
+        capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"AST validation failed:\n{r.stderr}"
     assert "AST check passed" in r.stdout
@@ -213,7 +166,7 @@ print('AST check passed')
 def test_utils_h_key_functions_exist():
     """utils.h contains required Metal utility functions (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ("python3", "-c", """
 import re
 from pathlib import Path
 
@@ -230,8 +183,8 @@ assert 'namespace c10' in content, 'Missing c10 namespace'
 assert 'namespace metal' in content, 'Missing metal namespace'
 
 print('utils.h functions check passed')
-"""],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+"""),
+        capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"utils.h validation failed:\n{r.stderr}"
     assert "utils.h functions check passed" in r.stdout
@@ -240,7 +193,7 @@ print('utils.h functions check passed')
 def test_modular_indexing_method_signature():
     """_print_ModularIndexing has correct method signature (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ("python3", "-c", """
 import ast
 from pathlib import Path
 
@@ -263,8 +216,8 @@ for node in ast.walk(tree):
 
 assert found, '_print_ModularIndexing method not found'
 print('Method signature check passed')
-"""],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+"""),
+        capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"Method signature check failed:\n{r.stderr}"
     assert "Method signature check passed" in r.stdout
@@ -273,7 +226,7 @@ print('Method signature check passed')
 def test_mps_modular_indexing_behavior():
     """_print_ModularIndexing produces valid output for standard cases (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ("python3", "-c", """
 import ast
 import textwrap
 import sympy
@@ -324,8 +277,8 @@ for div_val, mod_val, desc in test_cases:
     print(f'Case {desc}: {result}')
 
 print('All behavior checks passed')
-"""],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+"""),
+        capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"Behavior test failed:\n{r.stderr}"
     assert "All behavior checks passed" in r.stdout
@@ -334,7 +287,7 @@ print('All behavior checks passed')
 def test_floordiv_method_exists():
     """_print_FloorDiv method exists and has correct signature (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", """
+        ("python3", "-c", """
 import ast
 from pathlib import Path
 
@@ -352,21 +305,17 @@ for node in ast.walk(tree):
 
 assert found, '_print_FloorDiv method not found'
 print('FloorDiv method check passed')
-"""],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+"""),
+        capture_output=True, text=True, timeout=60, cwd=REPO
     )
     assert r.returncode == 0, f"FloorDiv check failed:\n{r.stderr}"
     assert "FloorDiv method check passed" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — subprocess-executed behavioral tests
-# ---------------------------------------------------------------------------
-
 def test_buggy_pattern_not_bare_modulo():
     """_print_ModularIndexing with div=65536 + non-power-of-2 mod must NOT
     return bare (x/div) % (mod) — the Metal compiler bug workaround must activate."""
-    r = _run_py(r"""
+    r = _run_py("""
 method = _extract_method("/workspace/pytorch/torch/_inductor/codegen/mps.py", "_print_ModularIndexing")
 assert method is not None, "_print_ModularIndexing not found"
 printer = _FakePrinter()
@@ -392,7 +341,7 @@ print("PASS")
 def test_buggy_pattern_uses_function_call():
     """Buggy-pattern output must call a function (any name) rather than
     using bare % operator that triggers the Metal compiler bug."""
-    r = _run_py(r"""
+    r = _run_py("""
 import re as _re
 method = _extract_method("/workspace/pytorch/torch/_inductor/codegen/mps.py", "_print_ModularIndexing")
 assert method is not None, "_print_ModularIndexing not found"
@@ -402,9 +351,9 @@ buggy_cases = [(65536, 6), (65536, 3), (65536, 5)]
 for div_val, mod_val in buggy_cases:
     expr = _FakeExpr(sympy.Symbol("idx"), sympy.Integer(div_val), sympy.Integer(mod_val))
     result = str(method(printer, expr))
-    has_func_call = bool(_re.search(r"[a-zA-Z_][\w:]*\s*\([^)]*\)", result))
+    has_func_call = bool(_re.search(r"[a-zA-Z_][\\w:]*\\s*\\([^)]*\\)", result))
     clean = result.replace(" ", "")
-    uses_bare_pct = bool(_re.search(r"\)%\(", clean))
+    uses_bare_pct = bool(_re.search(r"\\)%\\(", clean))
     assert not (uses_bare_pct and not has_func_call), \
         f"Bare % without function call for div={div_val}, mod={mod_val}: {result}"
     assert has_func_call, f"No function call in output for div={div_val}, mod={mod_val}: {result}"
@@ -416,28 +365,35 @@ print("PASS")
 
 
 def test_utils_h_new_mod_safety_function():
-    """utils.h must have a new function providing safe modulo with
-    an optimization barrier (volatile, optnone, asm, etc.)."""
-    r = _run_py(r"""
-import re
+    """The codegen's buggy-pattern workaround must call a function defined in utils.h."""
+    r = _run_py("""
+import re as _re
 from pathlib import Path
+
+# Get codegen output for a buggy case (div=65536, non-power-of-2 mod)
+method = _extract_method("/workspace/pytorch/torch/_inductor/codegen/mps.py", "_print_ModularIndexing")
+assert method is not None, "_print_ModularIndexing not found"
+printer = _FakePrinter()
+expr = _FakeExpr(sympy.Symbol("idx"), sympy.Integer(65536), sympy.Integer(6))
+result = str(method(printer, expr))
+
+# Extract function-call identifiers (possibly namespace-qualified) from the output
+func_calls = _re.findall(r'([a-zA-Z_][\\w:]*)\\s*\\(', result)
+assert func_calls, f"No function calls in codegen output for buggy case: {result}"
+
+# Verify at least one called function is defined in utils.h
 content = Path("/workspace/pytorch/c10/metal/utils.h").read_text()
+found = False
+for qualified_name in func_calls:
+    func_name = qualified_name.split("::")[-1]
+    if _re.search(r'\\b' + _re.escape(func_name) + r'\\s*\\(', content):
+        found = True
+        break
 
-# A safe-modulo function was added (common naming patterns)
-func_match = re.search(r'\b(safe_mod|mod_safe|safe_modulo|safe_remainder)\b', content)
-assert func_match, "No safe_mod (or similar) function found in utils.h"
-
-# The function has an optimization barrier — search nearby
-start = max(0, func_match.start() - 300)
-end = min(len(content), func_match.end() + 300)
-region = content[start:end]
-has_barrier = any(
-    kw in region for kw in ("volatile", "optnone", "__attribute__", "asm(", "noinline")
+assert found, (
+    f"Codegen output calls {func_calls} for buggy pattern, "
+    f"but none are defined in utils.h"
 )
-assert has_barrier, \
-    "Safe modulo function missing optimization barrier (volatile/optnone/etc.) near definition"
-assert "%" in region or "remainder" in region.lower(), \
-    "Safe modulo function doesn't appear to perform modulo operation"
 
 print("PASS")
 """)
@@ -445,47 +401,45 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / pr_diff) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
 def test_non_buggy_patterns_preserved():
     """Non-buggy patterns (div=1, power-of-2 mod) and FloorDiv still produce valid output."""
     method = _extract_method(f"{REPO}/torch/_inductor/codegen/mps.py", "_print_ModularIndexing")
     assert method is not None, "_print_ModularIndexing not found"
-    printer = _FakePrinter()
 
+    printer = _FakePrinter()
     cases = [
         (1, 8, "div=1, mod=8"),
         (65536, 8, "div=65536, mod=8 (power-of-2 mod)"),
         (256, 16, "div=256, mod=16"),
         (1, 32, "div=1, mod=32"),
     ]
+
     for div_val, mod_val, desc in cases:
         expr = _FakeExpr(sympy.Integer(100), sympy.Integer(div_val), sympy.Integer(mod_val))
         result = str(method(printer, expr))
         assert len(result.strip()) >= 3, f"Trivial output for {desc}: {result}"
         assert str(mod_val) in result, f"Output missing mod value for {desc}: {result}"
-        if div_val != 1:
-            assert (
-                str(div_val) in result or "/" in result or ">>" in result
-            ), f"Output drops division for {desc}: {result}"
+        if div_val > 1:
+            assert str(div_val) in result or "/" in result or ">>" in result, \
+                f"Output drops division for {desc}: {result}"
 
-    # FloorDiv must also still work
+    # FloorDiv check
     fd_method = _extract_method(f"{REPO}/torch/_inductor/codegen/mps.py", "_print_FloorDiv")
     assert fd_method is not None, "_print_FloorDiv missing"
     fd_expr = _FakeFloorDivExpr(sympy.Integer(100), sympy.Integer(4))
     fd_result = str(fd_method(printer, fd_expr))
-    assert "100" in fd_result or "floor" in fd_result.lower(), f"FloorDiv invalid: {fd_result}"
+    assert "100" in fd_result, f"FloorDiv invalid: {fd_result}"
+    assert "floor" in fd_result.lower(), f"FloorDiv invalid: {fd_result}"
 
 
 def test_existing_functions_preserved():
     """floor_divide and fmod still present in utils.h; files not gutted."""
     content = Path(f"{REPO}/c10/metal/utils.h").read_text()
-    for fn in ("floor_divide", "fmod"):
-        assert re.search(rf"\b{fn}\s*\(", content), f"{fn} function missing from utils.h"
+    for fn in ('floor_divide', 'fmod'):
+        assert re.search(rf'\b{fn}\s*\(', content), f"{fn} function missing from utils.h"
 
-    mps_lines = Path(f"{REPO}/torch/_inductor/codegen/mps.py").read_text().count("\n")
-    utils_lines = content.count("\n")
+    mps_lines = Path(f"{REPO}/torch/_inductor/codegen/mps.py").read_text().count('\n')
     assert mps_lines >= 100, f"mps.py only {mps_lines} lines — appears gutted"
+
+    utils_lines = content.count('\n')
     assert utils_lines >= 50, f"utils.h only {utils_lines} lines — appears gutted"

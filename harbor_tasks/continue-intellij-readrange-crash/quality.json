@@ -2,61 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specifically for the string 'coerceIn' (e.g., test_source_contains_fix, test_coerceIn_in_readRangeInFile_context) and require content.count('coerceIn') >= 2. The instruction.md never mentions 'coerceIn' \u2014 it only says to 'safely clamp all indices to valid bounds'. A developer reading only instruction.md cannot discover that the specific Kotlin method 'coerceIn' is required."
+      "outcome": "pass",
+      "reason": "The instruction names the file path `extensions/intellij/src/main/kotlin/com/github/continuedev/continueintellijextension/continue/IntelliJIde.kt`, the function `readRangeInFile`, the requirement to use `coerceIn` at least twice, the gradle commands `./gradlew compileKotlin` and `./gradlew test`, and the `Range` type with `start(line, character)` and `end(line, character)`. All test assertions reference these same specifics."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (substring throws StringIndexOutOfBoundsException) and says to 'safely clamp all indices to valid bounds' but does not specify the exact code change, line numbers, or the specific method (coerceIn) to use."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states 'You must use Kotlin's coerceIn stdlib function' and 'The fix requires at least two coerceIn calls in this function.' This tells the agent exactly what API to use and how many times, rather than just describing what's broken. The tests directly check for the presence of `coerceIn` strings, so the instruction is essentially dictating the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert specifically for 'coerceIn' (test_source_contains_fix, test_coerceIn_in_readRangeInFile_context, test_fix_handles_char_beyond_line_length requires count >= 2). Alternative correct fixes using minOf/maxOf, Math.min/Math.max, if-else bounds checks, or kotlin's coerceAtMost/coerceAtLeast would all fail these tests despite being functionally correct."
+      "reason": "Tests like test_fix_handles_char_beyond_line_length assert `content.count('coerceIn') >= 2` and test_coerceIn_in_readRangeInFile_context asserts 'coerceIn' is in the function. A correct alternative fix using `minOf`/`maxOf`, `kotlin.math.min`, or manual if-checks to clamp indices would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_source_contains_fix, test_coerceIn_in_readRangeInFile_context, test_fix_handles_end_line_beyond_array, test_fix_handles_char_beyond_line_length) are all pure text matching \u2014 they read the source file and assert 'coerceIn' in content. No test actually calls readRangeInFile with an out-of-bounds range to verify the behavior is fixed."
+      "reason": "The fail-to-pass tests (test_source_contains_fix, test_coerceIn_in_readRangeInFile_context, test_fix_handles_end_line_beyond_array, test_fix_handles_char_beyond_line_length) are ALL string-presence checks: `assert 'coerceIn' in content`, `assert content.count('coerceIn') >= 2`. No test actually executes the Kotlin function with edge-case inputs to verify behavior. The compilation tests (pass_to_pass) do run builds, but the core f2p tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for the string 'coerceIn' in the source file. An agent could satisfy all f2p tests by adding a comment like '// coerceIn coerceIn' anywhere in readRangeInFile without actually fixing the bug."
+      "reason": "All fail-to-pass tests only check for the string 'coerceIn' in the source file. An agent could simply add a comment like `// coerceIn coerceIn` inside readRangeInFile without actually fixing any bug, and all f2p tests would pass. No test executes the function with problematic inputs."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md requires handling edge cases: 'empty files, single-char files, ranges requesting more lines/characters than exist'. No test actually verifies these behaviors \u2014 tests only check for the presence of 'coerceIn' text and that the code compiles."
+      "reason": "The instruction says 'The fix handles edge cases: empty files, single-char files, ranges requesting more lines/characters than exist' but no test actually verifies these edge cases behaviorally. Tests only check for string presence of 'coerceIn' and compilation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_kotlin_compiles, test_source_contains_fix, etc.) with docstrings explaining pass_to_pass vs fail_to_pass classification and what each test checks."
+      "reason": "Tests are well-named (test_kotlin_compiles, test_source_contains_fix, etc.), have docstrings explaining what they verify, and are grouped logically from compilation to fix verification to build validation."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing a Kotlin function, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names are all correct and consistent between instruction.md and the test/solution files."
+      "reason": "All file paths, commands, function names, and variable names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md quotes the exact buggy lines: 'val firstLine = lines.getOrNull(startLine)?.substring(startCharacter) ?: \"\"' and 'val lastLine = lines.getOrNull(endLine)?.substring(0, endCharacter) ?: \"\"', pinpointing exactly which lines to change."
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is reasonable for a bug-fix task. It doesn't specify exact line numbers or the precise code changes needed (though it does mandate `coerceIn`, which is scored under no_solution_leakage)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agent config/markdown edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

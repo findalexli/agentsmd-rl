@@ -1,69 +1,100 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "supabase/supabase"
+  repo: supabase/supabase
   pr: 44451
-  base_commit: "273102323d2959bf5e24678a3388409e91e2ccb4"
-  merge_commit: "6cca908e5b6a66725df6a0a8124a86aef0016051"
-
+  base_commit: 273102323d2959bf5e24678a3388409e91e2ccb4
+  merge_commit: 6cca908e5b6a66725df6a0a8124a86aef0016051
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must parse without syntax errors"
-
-  - id: sql_functions_still_present
-    type: pass_to_pass
-    origin: static
-    description: "All four queue SQL functions still exist with executeSql calls"
-
-  - id: literal_escapes_sql_injection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "literal() must correctly escape single quotes and all four files must import it"
-
-  - id: send_payload_escaped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Send mutation must use literal() for queueName, payload, and delay in SQL"
-
-  - id: query_timestamp_escaped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Infinite query must use literal() for afterTimestamp in WHERE clause"
-
-  - id: archive_params_escaped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Archive mutation must use literal() for queueName and messageId in SQL"
-
-  - id: delete_params_escaped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Delete mutation must use literal() for queueName and messageId in SQL"
-
-  - id: no_as_any_casts
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified TypeScript files must not use 'as any' type casts"
-    source:
-      path: ".claude/skills/studio-best-practices/SKILL.md"
-      lines: "36"
-      commit: "273102323d2959bf5e24678a3388409e91e2ccb4"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's lint checks pass"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must parse without syntax errors
+- id: sql_functions_still_present
+  type: pass_to_pass
+  origin: static
+  description: All four queue SQL functions still exist with executeSql calls
+- id: literal_escapes_sql_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: literal() must correctly escape single quotes and all four files must
+    import it
+- id: send_payload_escaped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Send mutation must use literal() for queueName, payload, and delay
+    in SQL
+- id: query_timestamp_escaped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Infinite query must use literal() for afterTimestamp in WHERE clause
+- id: archive_params_escaped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Archive mutation must use literal() for queueName and messageId in
+    SQL
+- id: delete_params_escaped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Delete mutation must use literal() for queueName and messageId in SQL
+- id: no_as_any_casts
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified TypeScript files must not use 'as any' type casts
+  source:
+    path: .claude/skills/studio-best-practices/SKILL.md
+    lines: '36'
+    commit: 273102323d2959bf5e24678a3388409e91e2ccb4
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lint checks pass
 rubric:
-  - rule: "Security vulnerabilities — SQL injection must be prevented by escaping or parameterizing all user-controlled values interpolated into SQL strings"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "27"
-      commit: "273102323d2959bf5e24678a3388409e91e2ccb4"
+- rule: Security vulnerabilities — SQL injection must be prevented by escaping or
+    parameterizing all user-controlled values interpolated into SQL strings
+  source:
+    path: .github/copilot-instructions.md
+    lines: '27'
+    commit: 273102323d2959bf5e24678a3388409e91e2ccb4
+distractors:
+- rule: Query Options (preferred pattern)
+  source:
+    path: .claude/skills/studio-queries/SKILL.md
+    lines: 29-44
+  source_text: "## Query Options (preferred pattern)\n\nUse `queryOptions` from `@tanstack/react-query`.\
+    \ This gives type safety and works with both `useQuery()` and `queryClient.fetchQuery()`.\n\
+    \nRules:\n\n- Export `XVariables`, `XData`, and `XError` types (prefixed with\
+    \ the domain name)\n- Implement a **private** `getX(variables, signal?)` function:\n\
+    \  - Throws if required variables are missing\n  - Passes `signal` for cancellation\n\
+    \  - Calls `handleError(error)` on failure (which throws); returns `data` on success\n\
+    \  - Not exported — use `queryClient.fetchQuery(xQueryOptions(...))` for imperative\
+    \ fetching\n- Export `xQueryOptions()` using `queryOptions`\n- Gate with `enabled`\
+    \ so the query doesn't run until required variables exist\n- Platform-only queries:\
+    \ include `IS_PLATFORM` from `lib/constants` in `enabled`\n- Don't add extra params\
+    \ to `xQueryOptions` — callers override by destructuring: `{ ...xQueryOptions(vars),\
+    \ enabled: true }`"
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to refactor the legacy `useInfiniteQuery`
+    pattern in `database-queue-messages-infinite-query.ts` to the modern `queryOptions`
+    pattern mandated by the config. However, this PR is exclusively for applying a
+    targeted security fix for SQL injections.
+  severity: medium
+- rule: Mutation Hook Pattern
+  source:
+    path: .claude/skills/studio-queries/SKILL.md
+    lines: 102-109
+  source_text: "## Mutation Hook\n\n- Export a `Variables` type with `projectRef`,\
+    \ identifiers, and `payload`\n- Implement a private `updateX(vars)` function with\
+    \ required variable validation and `handleError`\n- Wrap in `useXMutation()`:\n\
+    \  - Accepts `UseMutationOptions` (omit `mutationFn`)\n  - Invalidates `list()`\
+    \ + `detail()` keys in `onSuccess` with `await Promise.all([...])`\n  - Defaults\
+    \ to `toast.error(...)` when `onError` isn't provided"
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to refactor the exported mutation functions
+    (like `archiveDatabaseQueueMessage`) to be private or try to add `handleError`
+    and `onSuccess` cache invalidation to comply with the mandated mutation hook pattern,
+    significantly distracting from the focused security fix.
+  severity: medium

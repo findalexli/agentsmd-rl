@@ -2,52 +2,51 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact function names 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions'; exact string \"'rolldownVersion' in vite\"; exact expression \"build?.rolldownOptions\" and \"build?.rollupOptions\"; exact usage pattern \"getBundlerOptions(serverEnv?.build)\"; exact import path \"from './utils'\" and \"from '../utils'\". The instruction says to detect the bundler and use correct keys but never specifies these exact names or patter"
+      "outcome": "pass",
+      "reason": "The instruction explicitly names all function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact string literals ('rolldownVersion' in vite, 'rolldownOptions', 'rollupOptions'), file paths (utils, plugin.ts, preview-server-plugin/plugin.ts), import patterns (from './utils', from '../utils'), computed property access ([bundlerOptionsKey]), and the specific pattern getBundlerOptions(serverEnv?.build). All test assertions reference items discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact files to modify, describes the exact mechanism ('detect at runtime which bundler is in use', 'use the correct configuration key'), and the requirements section effectively describes the solution architecture (centralized detection logic, runtime detection, correct key selection). While it doesn't give line numbers, it strongly constrains the solution shape."
+      "reason": "The instruction explicitly states the exact implementation: 'isRolldown - detects if Rolldown is the active bundler', 'bundlerOptionsKey - returns rolldownOptions when using Rolldown', 'getBundlerOptions - reads bundler options from a build config using the pattern build?.rolldownOptions ?? build?.rollupOptions', 'Use computed property access [bundlerOptionsKey]', and 'preview plugin must use getBundlerOptions(serverEnv?.build)'. This is a complete specification of the fix, not just a descriptio"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names like 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions', exact detection string \"'rolldownVersion' in vite\", exact expressions like \"build?.rolldownOptions\" and \"build?.rollupOptions\", and exact usage patterns like \"[bundlerOptionsKey]\" and \"getBundlerOptions(serverEnv?.build)\". An alternative correct fix using different names (e.g., 'useRolldown', 'getBundlerKey', 'readBundlerConfig') or different detection logic (e.g., checking vite.version) would fail."
+      "reason": "Tests assert on exact function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact string patterns ('rolldownVersion' in vite), exact import paths (from './utils', from '../utils'), and exact code patterns (getBundlerOptions(serverEnv?.build), [bundlerOptionsKey]). An alternative correct fix using different names (e.g., detectBundler, getBuildOptions, bundlerKey) or different file organization would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, test_plugin_uses_bundlerOptionsKey, test_plugin_uses_getBundlerOptions, test_preview_plugin_imports_utils, test_preview_plugin_uses_getBundlerOptions) are ALL string-matching tests using patterns like `assert 'X' in content` on file reads. They never import, execute, or call the actual code. The few subprocess tests (test_repo_unit_tests_"
+      "reason": "The fail-to-pass tests (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, test_plugin_uses_bundlerOptionsKey, test_plugin_uses_getBundlerOptions, test_preview_plugin_imports_utils, test_preview_plugin_uses_getBundlerOptions) are ALL text-matching assertions using patterns like `assert 'X' in content` on file reads. While there are some subprocess tests (test_repo_unit_tests_import_protection, test_repo_unit_tes"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply writes the expected strings into the files (e.g., adding comments containing 'isRolldown', 'bundlerOptionsKey', \"'rolldownVersion' in vite\", etc.) without any actual functional implementation would pass all the fail-to-pass tests since they only do string matching on file contents."
+      "reason": "A stub implementation that simply creates utils.ts with the exact string literals checked (e.g., a file containing the right keywords like 'isRolldown', 'rolldownVersion' in vite, 'build?.rolldownOptions', etc.) without any actual working logic would pass most fail-to-pass tests since they only check for string presence in files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all three files mentioned in the requirements, detection logic, key selection logic, options reading logic, and integration with both plugin.ts and preview-server-plugin/plugin.ts, which maps to the instruction's requirements about runtime detection, correct key usage, and backward compatibility."
+      "reason": "All behaviors described in the instruction (detection logic, configuration keys, utility functions, integration requirements, import patterns) are tested. The tests cover utils exports, isRolldown logic, bundlerOptionsKey logic, getBundlerOptions logic, plugin imports, computed property usage, preview plugin integration, and build validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass nature, and organized logically by component (utils, plugin, preview plugin, structural validation)."
+      "reason": "Tests are well-named (test_utils_exports_exist, test_isRolldown_logic, etc.), have docstrings indicating fail-to-pass vs pass-to-pass classification, and are logically grouped by component (utils, plugin, preview plugin, structural validation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not structured data output."
+      "reason": "This task involves code modifications to TypeScript files, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "All filenames, paths, commands, variable names, and function names in the instruction are consistent and correct (utils.ts, plugin.ts, preview-server-plugin/plugin.ts, isRolldown, bundlerOptionsKey, getBundlerOptions, pnpm test:types, etc.)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the three exact files to modify and describes the specific mechanism (runtime detection of bundler, using correct configuration key). While it doesn't give line numbers, naming exact files when the task domain doesn't make them obvious narrows the solution space significantly."
+      "reason": "The instruction specifies exact function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact implementation patterns (build?.rolldownOptions ?? build?.rollupOptions), exact file locations, and exact usage patterns (getBundlerOptions(serverEnv?.build), [bundlerOptionsKey]). This goes well beyond identifying the buggy area and prescribes the complete solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving TypeScript source files, not configuration file edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -57,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

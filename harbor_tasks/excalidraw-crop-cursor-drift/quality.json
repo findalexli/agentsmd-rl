@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific strings like 'getUncroppedWidthAndHeight', 'image.naturalWidth / uncroppedSize.width', 'image.naturalHeight / uncroppedSize.height', 'getUncroppedWidthAndHeight(croppingElement)', variable name 'uncroppedSize', and removal of 'vectorScale'. While instruction.md hints at naturalWidth/naturalHeight and getUncroppedWidthAndHeight, it does not mention the exact variable name 'uncroppedSize', nor the exact expression 'image.naturalWidth / uncroppedSize.width'. The specific strin"
+      "reason": "Tests assert specific literal strings like 'image.naturalWidth / uncroppedSize.width', 'getUncroppedWidthAndHeight(croppingElement)', variable name 'uncroppedSize', and removal of 'vectorScale' entirely. The instruction mentions getUncroppedWidthAndHeight only vaguely ('You may need to import a helper function'), never names 'uncroppedSize' as a variable, and doesn't specify that vectorScale must be completely removed from the file (just that zoom-based scaling should be replaced). The exact exp"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'Use the image's natural dimensions (naturalWidth/naturalHeight) relative to the uncropped element size', 'Apply the correct scaling ratio to the drag offset vector', 'Remove any zoom-based scaling', and hints to import getUncroppedWidthAndHeight. This essentially describes the exact fix rather than just describing the bug."
+      "reason": "The instruction explicitly states: 'Use the image's natural dimensions (naturalWidth/naturalHeight) relative to the uncropped element size', 'Apply the correct scaling ratio to the drag offset vector', 'Remove any zoom-based scaling', and hints at importing getUncroppedWidthAndHeight. This essentially describes the exact fix rather than just the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable name 'uncroppedSize' (test_uncropped_size_variable_created), exact expressions 'image.naturalWidth / uncroppedSize.width' and 'image.naturalHeight / uncroppedSize.height' (test_natural_width_scaling_used), and that 'vectorScale' appears nowhere in the file (test_vector_function_used_directly). An alternative correct fix using different variable names (e.g., 'originalSize') or different expression formatting (e.g., using a helper r"
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'uncroppedSize' (test_uncropped_size_variable_created), exact expressions 'image.naturalWidth / uncroppedSize.width' (test_natural_width_scaling_used), complete absence of 'vectorScale' anywhere in file (test_vector_function_used_directly). An alternative correct fix using different variable names (e.g., 'originalDims') or a different but equivalent scaling approach would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_vectorScale_import_removed, test_getUncroppedWidthAndHeight_import_added, test_natural_width_scaling_used, test_uncropped_size_variable_created, test_zoom_scaling_removed, test_vector_function_used_directly) are ALL purely text-matching via `assert 'string' in open(file).read()`. While there are p2p tests that run TypeScript compilation and test suites, the core fix-verification tests are entirely string-based."
+      "reason": "The f2p tests (test_vectorScale_import_removed, test_getUncroppedWidthAndHeight_import_added, test_natural_width_scaling_used, test_uncropped_size_variable_created, test_zoom_scaling_removed, test_vector_function_used_directly) are ALL purely text-matching: they read App.tsx and check for string presence/absence. While p2p tests do run compilation and test suites, every f2p test is string-in-file checking with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All f2p tests are string-presence/absence checks on file content. A stub that simply edits the file text to include the expected strings (without understanding the bug) would pass. For example, adding a dead-code comment containing 'image.naturalWidth / uncroppedSize.width' would pass test_natural_width_scaling_used."
+      "reason": "The f2p tests only check for string patterns in the source file. A stub that simply adds the right import lines and string literals as comments (without implementing any real fix) could pass all f2p tests. For example, adding 'getUncroppedWidthAndHeight(croppingElement)' and 'image.naturalWidth / uncroppedSize.width' as dead code or comments would satisfy the text-matching assertions."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction says to fix cursor drift by using natural dimensions, removing zoom-based scaling, and importing getUncroppedWidthAndHeight. Tests check all of these aspects plus TypeScript compilation and existing test suites."
+      "outcome": "fail",
+      "reason": "The instruction says 'the image should follow the cursor precisely without drifting' but no test actually verifies this drag behavior. Tests only check source code text patterns and that existing test suites still pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_vectorScale_import_removed, test_natural_width_scaling_used, etc.), have docstrings with f2p/p2p labels, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, and are logically grouped into f2p (source checks) and p2p (compilation/test suite) categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a code bug, not producing structured data output."
+      "reason": "This task involves fixing a bug in UI code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, function names, variable names, and commands appear correct and consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (App.tsx), the exact function (vectorScale), the exact import to add (getUncroppedWidthAndHeight from @excalidraw/element), and specific properties (naturalWidth/naturalHeight). This goes well beyond identifying the buggy module and essentially specifies the exact code changes needed."
+      "reason": "The instruction names the exact file (App.tsx), the exact function to look for (vectorScale), the exact import to add (helper function from @excalidraw/element for uncropped dimensions), and the exact approach (use naturalWidth/naturalHeight relative to uncropped element size). This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -55,8 +55,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 2,
+  "fail_count": 7
 }

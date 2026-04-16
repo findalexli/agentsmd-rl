@@ -1,0 +1,58 @@
+source:
+  type: github_pr
+  owner: TanStack
+  repo: router
+  pr_number: 6911
+  base_commit: 49d7cbb7768c085be2ce31b36ef3da272b0ebbdd
+  merge_commit: 1a6c6cf83e0d4baf9232802f66e1a3b7ae760f3f
+  title: "fix(solid-router): restore MatchRoute reactivity"
+
+checks:
+  - id: test_usematchroute_reactive_opts
+    type: fail_to_pass
+    origin: behavioral
+    description: useMatchRoute reads opts inside createMemo for proper reactivity
+
+  - id: test_matchroute_uses_creatememo
+    type: fail_to_pass
+    origin: behavioral
+    description: MatchRoute wraps renderedChild in Solid.createMemo
+
+  - id: test_matchroute_child_inside_memo
+    type: fail_to_pass
+    origin: behavioral
+    description: MatchRoute reads props.children inside the memo callback
+
+  - id: test_matchroute_returns_fragment
+    type: fail_to_pass
+    origin: behavioral
+    description: MatchRoute returns renderedChild wrapped in a JSX fragment
+
+  - id: test_solid_router_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router type checking passes
+
+  - id: test_solid_router_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router package builds successfully
+
+  - id: test_solid_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router ESLint passes
+
+  - id: test_solid_router_unit_matches
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router Matches.test.tsx unit tests pass
+
+  - id: test_solid_router_test_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: solid-router build validation with publint passes
+
+# No rubric rules - this is a pure code fix without config/documentation file changes.
+# The rubric judge evaluates config file edits (CLAUDE.md, AGENTS.md, etc.) which are
+# not part of this task. The fail-to-pass tests verify the code correctness.

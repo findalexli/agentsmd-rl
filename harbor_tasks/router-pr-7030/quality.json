@@ -2,57 +2,53 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests import `createChunkCssAssetCollector` and `buildStartManifest` by name from '../src/start-manifest-plugin/manifestBuilder', and the instruction does mention these. However, tests assert specific internal behaviors like `chunk.viteMetadata.importedCss` being a Set, the exact shape of `RouterManagedTag` with `attrs.href`, and the exact structure of `makeChunk` with fields like `viteMetadata`. The test `test_route_manifest_dedupes_ancestor_css` asserts `manifest.routes['/child']?.assets` has "
+      "outcome": "pass",
+      "reason": "The instruction names the module path (`packages/start-plugin-core/src/start-manifest-plugin/manifestBuilder.ts`), the exported functions (`createChunkCssAssetCollector`, `buildStartManifest`, `getChunkCssAssets`), the data structures (`RouterManagedTag`, `OutputChunk`, route tree shape), and the deduplication semantics (diamond imports, ancestor-child, sibling/cousin). The test-specific values like `attrs.href`, route IDs (`'/child'`, `'__root__'`, `'/parent'`), and `basePath` (`'/assets'`) are"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (duplicate CSS assets) and expected behavior (deduplication using seen-set approach) but doesn't specify exact code changes, line numbers, or the specific implementation like `appendAsset` helper or `dedupeNestedRouteManifestEntries` function name."
+      "reason": "The instruction describes the buggy behavior (duplicated CSS assets) and the expected correct behavior, but does not prescribe a specific fix such as 'add a Set for deduplication' or 'modify dedupeNestedRoutePreloads'. The developer must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check behavioral outcomes (CSS count, deduplication across routes, sibling preservation) rather than specific implementation details. An agent could use a Set, Map, filter, or any deduplication strategy as long as the exported functions produce correct results. Tests don't assert on internal helper names or specific implementation patterns."
+      "reason": "The f2p tests check behavioral outcomes: they verify that `getChunkCssAssets` returns deduplicated hrefs (checking counts and set sizes), that child routes don't contain ancestor CSS, and that sibling routes each retain their own CSS. They don't assert on internal helper function names, variable names, or specific implementation patterns. An alternative fix (e.g., deduplicating at a different point, using a different data structure) would pass these tests as long as behavior is correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import and call `createChunkCssAssetCollector` and `buildStartManifest`, execute them with mock data, and assert on returned values. Pass_to_pass tests run actual build/lint/typecheck subprocesses. No tests merely grep source files for text patterns."
+      "reason": "Tests import and call the actual functions (`createChunkCssAssetCollector`, `buildStartManifest`) via dynamically written Vitest test files, execute them as subprocesses, and assert on the returned data structures. The pass_to_pass tests run eslint, typecheck, build, and existing unit tests as subprocesses. No test merely checks file text content."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests assert specific counts and values: `test_chunk_css_dedupes_shared_imports` checks `hrefs.length === 4` and `sharedCount === 1`; `test_route_manifest_dedupes_ancestor_css` checks `childAssets.length === 1` and specific href containment. A stub returning empty arrays would fail these assertions (e.g., expecting exactly 4 items or containing '/assets/child.css')."
+      "reason": "The f2p tests would fail with stub/default implementations: `test_chunk_css_dedupes_shared_imports` asserts exactly 4 unique hrefs with shared.css appearing once (a naive implementation that just pushes all CSS would produce duplicates); `test_route_manifest_dedupes_ancestor_css` asserts child has exactly 1 asset (without dedup it would have 3); `test_sibling_routes_preserve_shared_css` asserts cousins both have `deep.css` (ensuring over-aggressive dedup doesn't remove it). Empty collections or "
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: within-route deduplication (diamond pattern test), cross-ancestor deduplication (parent-child test), sibling routes preserving shared CSS (sibling test), and existing functionality preservation (pass_to_pass tests)."
+      "reason": "All three behavioral requirements from the instruction are tested: (1) diamond-import deduplication within a single route, (2) ancestor-child deduplication across parent-child routes, and (3) preservation of shared CSS in sibling/cousin routes. The pass_to_pass requirement (existing tests, lint, types continue to pass) is also covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining pass_to_pass vs fail_to_pass, grouped by concern (eslint, typecheck, unit tests, chunk dedup, route dedup, sibling routes), and include comments explaining expected behavior."
+      "reason": "Tests are well-named and grouped: `test_repo_eslint`, `test_repo_typecheck`, `test_repo_manifestbuilder_unit`, `test_chunk_css_dedupes_shared_imports`, `test_route_manifest_dedupes_ancestor_css`, `test_sibling_routes_preserve_shared_css`. Each has a docstring explaining what it verifies and whether it's pass_to_pass or fail_to_pass."
     },
     "structured_data_schema": {
-      "outcome": "fail",
-      "reason": "The task produces structured manifest data (routes with assets arrays containing RouterManagedTag objects). The instruction provides TypeScript signatures but doesn't fully define RouterManagedTag's schema - tests assume `attrs.href` and `tag: 'link'` structure which isn't documented in instruction.md."
+      "outcome": "pass",
+      "reason": "The instruction documents the exact TypeScript interfaces for `RouterManagedTag`, manifest structure, `OutputChunk`, and route tree structure with all relevant fields and their types."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, function names, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction points to the single file `manifestBuilder.ts` which is reasonable for the task domain. It names the two exported functions that need fixing but doesn't specify line numbers or exact code changes. Mentioning 'seen set approach' is a mild hint but describes expected behavior rather than exact implementation."
+      "reason": "The instruction names the module file path (`manifestBuilder.ts`) and the two key exported functions, which is appropriate for the task domain. It does not reference specific line numbers, internal helper functions like `dedupeNestedRoutePreloads`, or the exact code changes needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source, not a configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "structured_data_schema"
-  ],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

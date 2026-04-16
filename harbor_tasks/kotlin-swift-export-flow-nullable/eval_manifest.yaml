@@ -1,0 +1,128 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5760
+  merge_commit: ff5b404654967af3cacad508051312c08e92be12
+  base_commit: e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f
+
+task:
+  name: kotlin-swift-export-flow-nullable
+  title: "[Swift Export] Support Flow with nullable elements"
+  description: |
+    Fix Kotlin's Swift export to properly handle Flow<T?> with nullable elements.
+    The issue is that the SwiftFlowIterator cannot distinguish between a null value
+    in the flow and the end of the flow, because both were represented as null in
+    the callback type T?.
+
+    The fix introduces a Value wrapper class and changes the callback protocol to
+    use a boolean flag to indicate nullability.
+  time_limit: 1200
+  difficulty: medium
+  tags: [kotlin, swift, native, coroutines, flow, nullable]
+
+checks:
+  # Fail-to-pass tests (behavioral changes that fix the bug)
+  - id: test_value_wrapper_class_exists
+    type: fail_to_pass
+    origin: behavior
+    description: SwiftFlowIterator has inner Value wrapper class to distinguish null values
+
+  - id: test_next_function_returns_value_type
+    type: fail_to_pass
+    origin: behavior
+    description: next() returns Value? instead of T? to properly wrap nullable values
+
+  - id: test_emit_uses_value_wrapper
+    type: fail_to_pass
+    origin: behavior
+    description: emit() wraps values in Value class before resuming continuation
+
+  - id: test_handleactions_uses_value_type
+    type: fail_to_pass
+    origin: behavior
+    description: handleActions uses Value type for consumer await states
+
+  - id: test_c_header_bool_parameter
+    type: fail_to_pass
+    origin: behavior
+    description: C header callback takes bool parameter for nullability flag
+
+  - id: test_kotlin_bridge_two_args
+    type: fail_to_pass
+    origin: behavior
+    description: Kotlin bridge function passes two arguments (bool flag + value)
+
+  - id: test_swift_handles_bool_flag
+    type: fail_to_pass
+    origin: behavior
+    description: Swift code checks boolean flag before unwrapping value
+
+  - id: test_swift_callback_signature
+    type: fail_to_pass
+    origin: behavior
+    description: Swift callback closure accepts two arguments
+
+  - id: test_kotlin_function_signature
+    type: fail_to_pass
+    origin: behavior
+    description: Kotlin function type in bridge has boolean parameter
+
+  # Pass-to-pass tests (regression/sanity checks)
+  - id: test_swift_format_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: swift-format lint passes on KotlinCoroutineSupport.swift
+
+  - id: test_header_file_valid
+    type: pass_to_pass
+    origin: static
+    description: C header file exists and has valid structure
+
+  - id: test_repo_structure
+    type: pass_to_pass
+    origin: static
+    description: Required resource files exist in expected locations
+
+rubric:
+  # Agent config rules from .ai/guidelines.md
+  - rule: "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable"
+    source: ".ai/guidelines.md"
+    weight: 0.1
+
+  - rule: "Keep commit subject line under 72 characters, imperative mood"
+    source: ".ai/guidelines.md"
+    weight: 0.1
+
+  - rule: "Commit messages must explain not just WHAT but also WHY and HOW"
+    source: ".ai/guidelines.md"
+    weight: 0.2
+
+  - rule: "Commit tests together with corresponding code changes"
+    source: ".ai/guidelines.md"
+    weight: 0.2
+
+  # Agent config rules from compiler/AGENTS.md
+  - rule: "Use [Swift Export] prefix for Swift export changes"
+    source: "compiler/AGENTS.md"
+    weight: 0.1
+
+  - rule: "Include KT-XXXXX issue reference in commit"
+    source: "compiler/AGENTS.md"
+    weight: 0.1
+
+  - rule: "Test data changes should be committed before fix for visibility"
+    source: "compiler/AGENTS.md"
+    weight: 0.1
+
+  - rule: "Use ^KT-XXXXX Fixed format in commit body to auto-close issues"
+    source: ".ai/guidelines.md"
+    weight: 0.1
+
+target_files:
+  - native/swift/swift-export-standalone-integration-tests/coroutines/testData/execution/sequences/sequences.kt
+  - native/swift/swift-export-standalone-integration-tests/coroutines/testData/execution/sequences/sequences.swift
+  - native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.h
+  - native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.kt
+  - native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift
+
+distinctive_line: "inner class Value(val value: T)"

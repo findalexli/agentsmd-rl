@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the import statement, both UPDATE statements, and the root cause about PRAGMA being ignored in active transactions. All assert'd specifics in tests (file path, function name 'upgrade', UPDATE strings, disable_sqlite_fkeys name) are discoverable from the instruction."
+      "reason": "Migration file path, the two UPDATE statements, disable_sqlite_fkeys context manager, and import statement are all named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the root cause: 'UPDATE statements trigger SQLAlchemy's autobegin, starting a transaction before the PRAGMA foreign_keys=off can take effect.' This essentially tells the agent the fix is to move the UPDATE statements inside the disable_sqlite_fkeys context manager. While it doesn't say 'move line X to line Y', the diagnosis is so specific that the solution is trivially implied."
+      "outcome": "pass",
+      "reason": "Instruction describes the root cause (PRAGMA ignored in active transaction) and requirements but does not state explicitly to move UPDATEs inside the context manager; agent must reason about that."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "test_update_statements_inside_disable_sqlite_fkeys uses AST analysis to check that UPDATE statements are inside the disable_sqlite_fkeys context and not before it. Any correct fix that moves both UPDATEs inside the context manager (regardless of exact ordering, comments, whitespace) would pass. The tests don't assert on line positions or gold-specific details."
+      "reason": "Tests check that UPDATEs are inside the with-block via AST, which is the only correct fix given the requirements; alternative valid fixes would also need this structure."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute subprocess Python scripts that actually run SQLite operations (test_sqlite_foreign_key_pragma_behavior, test_migration_data_update_behavior) and use AST parsing (test_update_statements_inside_disable_sqlite_fkeys) rather than simple string matching on file contents."
+      "reason": "Tests execute subprocess SQLite scripts simulating the actual PRAGMA/UPDATE behavior and use AST analysis rather than string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_update_statements_inside_disable_sqlite_fkeys asserts that 0 UPDATE statements are before the context manager and >=2 are inside it - this fails on the original code which has both UPDATEs before the context manager. A stub/no-op would not pass. The SQLite behavior tests also verify actual database operations succeed."
+      "reason": "AST test asserts zero UPDATEs before the with-block and \u22652 inside; a stub cannot satisfy this without the actual code restructuring."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) disable_sqlite_fkeys usage - tested by AST check, (2) import statement present - tested implicitly by AST parsing the file, (3) both UPDATE statements present - tested by AST analysis counting >=2 UPDATEs, (4) migration completes without FK errors - tested by SQLite behavior tests."
+      "reason": "Tests cover both behavioral SQLite PRAGMA semantics and structural placement of UPDATE statements, matching the instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names (test_sqlite_foreign_key_pragma_behavior, test_update_statements_inside_disable_sqlite_fkeys, test_migration_data_update_behavior), clear docstrings explaining what each tests and why, and are tagged with (fail_to_pass) markers."
+      "reason": "Three clearly named test functions with docstrings explaining what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a migration file, not producing structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, PRAGMA statements, and variable names in the instruction are all correct and consistent with the actual codebase."
+      "reason": "File paths and names are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file path and explains the precise root cause mechanism (UPDATE statements trigger autobegin before PRAGMA can take effect), which strongly implies the fix is to reorder the statements. This goes beyond describing what's broken into describing where and why in a way that makes the fix obvious."
+      "outcome": "pass",
+      "reason": "Instruction names the migration file (the task scope) but does not point at exact line numbers or dictate the code rearrangement."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving a migration file fix, not a config edit task."
+      "reason": "Code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

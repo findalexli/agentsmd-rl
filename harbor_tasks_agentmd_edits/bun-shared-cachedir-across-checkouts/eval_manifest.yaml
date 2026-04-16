@@ -1,0 +1,157 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28846
+  base_commit: 485ec522a22b469b336aece8276b507a71665a87
+  merge_commit: 0d09afea645d2ecd0998fb8f5867536b264fed45
+checks:
+- id: claude_md_documents_shared_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must document that rm -rf build/ doesn't clear the machine-shared
+    cache
+- id: config_ts_uses_machine_shared_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts must use machine-shared cacheDir for non-CI builds (~/.bun/build-cache)
+- id: clean_ts_has_cache_preset
+  type: fail_to_pass
+  origin: pr_diff
+  description: clean.ts must have a 'cache' preset to clean the machine-shared cache
+- id: configure_ts_updated_ccache_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: configure.ts must have updated comment about ccache using cfg.cacheDir
+- id: download_ts_uses_process_unique_temp_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: download.ts must use process.pid in temp paths for concurrent safety
+- id: download_ts_has_concurrent_fetch_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: download.ts must handle concurrent fetch race conditions
+- id: typescript_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript files must have valid syntax
+- id: config_cache_resolution_logic
+  type: pass_to_pass
+  origin: static
+  description: Test the actual cacheDir resolution logic works as expected
+config_edits:
+- path: scripts/build/CLAUDE.md
+  tier: 1
+  gold_added: '**`rm -rf build/` doesn''t clear the cache locally.** `cfg.cacheDir`
+    is machine-shared at `$BUN_INSTALL/build-cache` for non-CI builds (ccache, zig,
+    tarballs, prebuilt WebKit). Everything there is content-addressed or version-stamped,
+    so a stale entry can''t be hit — don''t reach for `bun run clean cache` as a debugging
+    step. If a build misbehaves, the bug is in the inputs or the graph, not the cache;
+    nuking it just costs you a cold rebuild. CI keeps `<buildDir>/cache` so `rm -rf
+    build/` is still a full reset there.'
+  gold_removed: ''
+rubric:
+- rule: Code uses explicit `homedir` import from node:os rather than hardcoding paths
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  evidence: Gold imports homedir from 'node:os' for cross-platform home directory
+    resolution
+  category: code_quality
+  verification: programmatic
+  check_cmd: grep -r 'from "node:os"' /workspace/bun/scripts/build/*.ts | grep -q
+    'homedir'
+- rule: Build scripts handle concurrent access with process-unique identifiers
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 100-150
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  evidence: Gold uses process.pid and Date.now() for unique temp file names to avoid
+    race conditions
+  category: concurrency
+  verification: programmatic
+  check_cmd: grep -q 'process.pid' /workspace/bun/scripts/build/download.ts
+- rule: TypeScript files must be valid and type-check without errors
+  source:
+    path: CLAUDE.md
+    lines: 1-30
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  evidence: All modified .ts files should pass tsc --noEmit check
+  category: type_safety
+  verification: programmatic
+  check_cmd: cd /workspace/bun && npx tsc --noEmit --skipLibCheck scripts/build/config.ts
+    scripts/build/clean.ts scripts/build/configure.ts scripts/build/download.ts
+- rule: Documentation is updated alongside functional changes
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 200-250
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  evidence: CLAUDE.md updated to document new cache behavior when build system changes
+  category: documentation
+  verification: llm_judge
+- rule: Comments accurately reflect the current implementation
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 100-200
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  evidence: configure.ts comment updated to reference cfg.cacheDir instead of build
+    dir
+  category: documentation
+  verification: llm_judge
+- rule: One flat Config struct with derived booleans computed in resolveConfig()
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 16-16
+  source_text: '- **One flat `Config` struct.** All derived booleans computed once
+    in `resolveConfig()`. No `if(ENABLE_X)` depending on `if(CI)` depending on `if(RELEASE)`
+    — the chain resolves here, the result is a plain value.'
+  evidence: The gold diff strictly follows this by computing the `cacheDir` directly
+    within `resolveConfig()` based on the `ci` flag in `scripts/build/config.ts`.
+    It prevents scattered conditional checks for `ci` in other files like `download.ts`
+    and `clean.ts`.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Use tempDirWithFiles for temporary directories
+  source:
+    path: test/CLAUDE.md
+    lines: 128-128
+  source_text: Use `tempDirWithFiles` to create a temporary directory with files.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might attempt to use `tempDirWithFiles` or `tempDir` from
+    `harness` when creating the staging directories inside `scripts/build/download.ts`
+    (e.g. `const stagingDir = ${dest}${suffix}.staging`). However, `download.ts` is
+    a build script, not a test file, so the `harness` testing module is not applicable.
+  severity: high
+- rule: String literal require() only
+  source:
+    path: src/js/CLAUDE.md
+    lines: 15-18
+  source_text: 'Modules are NOT ES modules:
+
+
+    ```typescript
+
+    const EventEmitter = require("node:events"); // String literals only'
+  collision_type: architecture_boundary
+  why_distracting: An agent seeing `.ts` files being modified in `scripts/build/`
+    might try to rewrite the standard ES module `import` statements into string literal
+    `require()` calls as dictated by `src/js/CLAUDE.md`. However, `src/js/CLAUDE.md`
+    only applies to Bun's JS builtins; `scripts/build/` safely runs under Node with
+    ESM enabled.
+  severity: high
+- rule: No file existence checks in configure code
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 38-38
+  source_text: '**The smell:** if configure code calls `spawnSync` to compile something,
+    or compares mtimes with `statSync`, it''s doing ninja''s job. Make it a build
+    edge — `n.rule()` + `n.build()`. Size doesn''t matter; a 1-file compile is still
+    a build edge.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see the new `existsSync(stampPath)` added in `scripts/build/download.ts`
+    and mistakenly flag it as an anti-pattern that should be turned into a ninja build
+    edge. This is distracting because `download.ts` is executed *during* the build
+    phase by ninja, not during the configure phase (`scripts/build.ts`), making the
+    runtime check perfectly valid.
+  severity: medium

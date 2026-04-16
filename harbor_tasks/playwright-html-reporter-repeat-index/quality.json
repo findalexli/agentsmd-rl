@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all three files to modify, the `repeatEachIndex` field name and type, the `appendRepeatEachIndexAnnotation` function concept, the annotation type string `'repeatEachIndex'`, the truthy check for zero index, and the string conversion pattern. All asserted specifics in tests (file paths, field names, function names, string patterns) are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'repeatEachIndex: test.repeatEachIndex || undefined' in html.ts, 'function appendRepeatEachIndexAnnotation' as function name, 'annotations.push({ type: \\'repeatEachIndex\\'' exact syntax, 'if (repeatEachIndex)' exact conditional, and 'String(repeatEachIndex)' exact conversion. While instruction.md mentions repeatEachIndex and the general behavior, it does not specify these exact implementation details: the exact function name 'appendRepeatEachIndexAnnotation', the "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'a helper function that checks if the index is truthy before adding the annotation', 'annotation should have type repeatEachIndex', 'description should be the index converted to a string', and 'must be called for both test-level annotations and result-level annotations'. This leaves almost no reasoning for the developer \u2014 it prescribes exact implementation rather than describing behavior."
+      "reason": "instruction.md specifies exact implementation details: 'The annotation should have type \\'repeatEachIndex\\'', 'The annotation description should be the index converted to a string', 'The annotation should only be added when the index is non-zero', and 'The annotation should appear for both test-level and result-level annotations in the component'. It also specifies exactly which files to modify and what field to add ('repeatEachIndex?: number'). This describes the fix, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function name `appendRepeatEachIndexAnnotation`, exact string `repeatEachIndex: test.repeatEachIndex || undefined`, exact pattern `if (repeatEachIndex)`, exact pattern `String(repeatEachIndex)`, exact pattern `annotations.push({ type: 'repeatEachIndex'`. An alternative correct fix using inline logic, a differently-named helper, `repeatEachIndex.toString()`, or `!== 0` check would fail these tests despite being functionally equivalent."
+      "reason": "Tests assert gold-specific implementation details: exact function name 'appendRepeatEachIndexAnnotation' (test_append_function_in_view, test_annotation_calls_in_view, test_not_stub), exact string 'repeatEachIndex: test.repeatEachIndex || undefined' (test_repeat_index_in_html_reporter), exact conditional 'if (repeatEachIndex)' (test_not_stub, test_zero_index_not_shown), exact expression 'String(repeatEachIndex)' (test_not_stub). An alternative correct fix using different function names, inline lo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_repeat_index_in_types, test_repeat_index_in_html_reporter, test_append_function_in_view, test_annotation_calls_in_view, test_not_stub, test_zero_index_not_shown) all use `assert 'string' in content` pattern \u2014 they read source files and check for literal strings without ever importing, compiling the component, or executing any behavior. The build tests are pass-to-pass only."
+      "reason": "The fail-to-pass tests (test_repeat_index_in_types, test_repeat_index_in_html_reporter, test_append_function_in_view, test_annotation_calls_in_view, test_zero_index_not_shown, test_not_stub) all use pattern 'assert <string> in content' or regex on file text. No test actually executes the code, renders the component, or checks runtime behavior. The pass-to-pass tests do run builds/lints but those are regression checks, not behavioral verification of the feature."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are purely text-matching. A stub that simply appends the exact expected strings to the files (e.g., adding dead code with `function appendRepeatEachIndexAnnotation` containing `if (repeatEachIndex)` and `annotations.push({ type: 'repeatEachIndex'` and `String(repeatEachIndex)`) without any real integration would pass all f2p tests. No behavioral execution verifies the feature works."
+      "reason": "A stub implementation of appendRepeatEachIndexAnnotation that contains the exact strings 'if (repeatEachIndex)', 'annotations.push({ type: \\'repeatEachIndex\\'', and 'String(repeatEachIndex)' in its body would pass test_not_stub and all other text-matching tests without actually implementing correct behavior, since no test executes the code at runtime."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says the annotation should 'appear as a chip/badge in the test case details when the repetition index is non-zero', but no test verifies any UI rendering behavior \u2014 only source code string matching is tested."
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: the type definition (test_repeat_index_in_types), passing repeatEachIndex in html reporter (test_repeat_index_in_html_reporter), annotation display logic (test_append_function_in_view), both test and result level annotations (test_annotation_calls_in_view), and zero index not shown (test_zero_index_not_shown)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear comments (pass_to_pass, fail_to_pass, static sections), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (Pass-to-pass repo_tests, Gates static, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "The task produces UI changes and type definitions, not structured data output like JSON/CSV/API/DB schemas."
+      "outcome": "pass",
+      "reason": "The instruction specifies the exact type field to add: 'repeatEachIndex?: number' in TestCaseSummary, which documents the schema change."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact files to modify, specifies `appendRepeatEachIndexAnnotation` as a helper function concept, dictates the exact annotation type string, and prescribes that it 'must be called for both test-level annotations and result-level annotations in the component'. This is implementation-level guidance, not just problem description."
+      "reason": "instruction.md explicitly names the three exact files to modify (packages/playwright/src/reporters/html.ts, packages/html-reporter/src/types.d.ts, packages/html-reporter/src/testCaseView.tsx) under a 'Files to Modify' section, and specifies exact implementation details like the field name and type signature. This goes beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -54,9 +55,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
+  "pass_count": 4,
   "fail_count": 6
 }

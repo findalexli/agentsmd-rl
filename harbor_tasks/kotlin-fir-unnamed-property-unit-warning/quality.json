@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (e.g., TESTDATA_FILE, KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, scripting test paths), class names (UnnamedPropertyWithImplicitUnitTypeImpl), diagnostic name (UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE), literal strings ('underscore property is inferred to', 'Unit', 'KT-84618'), function names (testWithImplicit, testWithExplicit), and directives (RUN_PIPELINE_TILL: BACKEND, UnnamedLocalVariables). The checker file path and i"
+      "reason": "The instruction names all critical file paths (e.g., TESTDATA_FILE, KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, scripting test paths), exact diagnostic name UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE, class names like UnnamedPropertyWithImplicitUnitTypeImpl, literal strings like 'underscore property is inferred to', 'KT-84618', 'RUN_PIPELINE_TILL: BACKEND', 'UnnamedLocalVariables', function names testWithImplicit/testWithExplicit, and the warning marker format. All a"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies implementation details: exact diagnostic name 'UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE', exact class name 'UnnamedPropertyWithImplicitUnitTypeImpl', exact file paths for converters, exact error message text, exact test file structure with function names, and even the specific fix for the scripting file ('return Int instead of implicitly returning Unit'). This goes far beyond describing what's broken and essentially tells the agent exactly what to implement."
+      "reason": "The instruction specifies exact implementation details: the converter class name 'UnnamedPropertyWithImplicitUnitTypeImpl', exact file paths to modify, exact diagnostic marker format, exact function names for test data, the exact scripting fix ('return Int instead of Unit'). These go beyond describing what's broken and tell the agent exactly WHAT to change and HOW."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_checker_contains_unit_warning_logic asserts 'isUnitOrFlexibleUnit' and 'ImplicitTypeRef' must appear in the checker file - an alternative correct implementation could use different API calls (e.g., checking against StandardClassIds.Unit directly). test_analysis_api_converter_exists asserts the exact class name 'UnnamedPropertyWithImplicitUnitTypeImpl'. These are implementation-specific choices that correct alternatives might not share."
+      "reason": "Tests assert on gold-specific implementation details: exact class name 'UnnamedPropertyWithImplicitUnitTypeImpl' in test_analysis_api_converter_exists, exact method names 'isUnitOrFlexibleUnit' and 'ImplicitTypeRef' in test_checker_contains_unit_warning_logic, exact regex pattern 'UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE\\s+by\\s+warning' in test_new_diagnostic_in_diagnostics_list. An alternative correct implementation using different internal helper function names or different type-checking appro"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function reads file contents and checks for string patterns using assertions like `assert 'X' in content` or `re.search(pattern, content)`. No test compiles code, runs the compiler, executes subprocesses, or tests actual diagnostic behavior. This is purely text/grep-based verification."
+      "reason": "Every single test is a grep/regex check on file contents (e.g., `assert 'UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE' in content`, `assert re.search(pattern, content)`). No test compiles code, runs the compiler, or executes any behavior. All tests follow the pattern of reading files and checking for string presence."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific strings and patterns that don't exist in the base commit (e.g., UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE in various files, the test data file withUnitType.kt doesn't exist at all). A stub/no-op implementation would not create these files or add these strings, so the tests would fail."
+      "outcome": "fail",
+      "reason": "A stub that simply creates the test data file with the expected strings, adds the diagnostic name to the listed files, and writes the expected class names would pass all tests without implementing any actual compiler diagnostic logic. The tests only check file contents, not compiler behavior."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies behavioral requirements like 'warning should NOT be reported for nullable Unit' and 'warning should NOT be reported for lambda parameters', but the tests only check for the presence of warning markers in specific test file sections - they don't actually run the compiler to verify these behavioral properties."
+      "outcome": "pass",
+      "reason": "All behaviors specified in instruction.md are tested: diagnostic definition as warning, error message content, test data file structure with proper markers/directives/functions, Analysis API integration (converter, interface, implementation), and scripting compatibility update."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_new_diagnostic_in_diagnostics_list, test_checker_contains_unit_warning_logic), include docstrings explaining what each test verifies, and are logically grouped by the component being tested."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., test_new_diagnostic_in_diagnostics_list, test_checker_contains_unit_warning_logic, test_testdata_implicit_cases_have_warnings). The file has a clear section header for 'FAIL-TO-PASS TESTS'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,11 +35,11 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, diagnostic names, and commands in the instruction appear correct and consistent with the test expectations."
+      "reason": "All file paths, variable names, diagnostic names, and commands in the instruction appear correct and consistent with the test expectations."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact file paths like 'KaFirDataClassConverters.kt', 'KaFirDiagnostics.kt', 'KaFirDiagnosticsImpl.kt', exact class names like 'UnnamedPropertyWithImplicitUnitTypeImpl', and exact test file structure including function names and minimum warning counts. These are specific implementation details that leak the solution rather than describing the problem."
+      "reason": "The instruction names exact files to modify (FirUnnamedPropertyChecker.kt, KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, FirDiagnosticsList.kt), exact internal implementation class names (UnnamedPropertyWithImplicitUnitTypeImpl), and exact implementation patterns. This goes well beyond what's needed for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -49,11 +49,11 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

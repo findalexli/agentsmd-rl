@@ -3,60 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for specific variable name 'current_zookeeper', the exact comment string 'Renew the session on retry', method calls like 'retries_ctl.isRetry()' and 'zookeeper_getter.getZooKeeper()', and the requirement to use 'exception' not 'crash'. While most of these ARE mentioned in instruction.md's acceptance criteria, the instruction does not mention CLAUDE.md's actual content or the specific detail that 'zookeeper_getter.getZooKeeper()' returns a pair (requiring '.first'). The tests also che"
+      "reason": "Tests assert on specific variable name 'current_zookeeper', specific string 'Renew the session on retry', specific method calls like 'zookeeper_getter.getZooKeeper().first', and 'retries_ctl.isRetry()'. While the instruction does mention these identifiers in the Requirements section, the test for CLAUDE.md compliance (requirement 5, word 'exception' not 'crash') references CLAUDE.md which the agent supposedly has access to but isn't shown in instruction.md. Additionally, test_clang_format_check "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's acceptance criteria essentially dictate the exact implementation: declare 'current_zookeeper' variable, call 'retries_ctl.isRetry()' on retry, call 'zookeeper_getter.getZooKeeper()', move 'getObjectNamesAndSetWatch()' inside the retry loop, use 'current_zookeeper' everywhere, and include a specific comment string. This is a step-by-step recipe for the fix, not just a description of what's broken."
+      "reason": "The instruction explicitly states the exact fix: 'tracked in a variable named current_zookeeper', 'updated with a fresh session from zookeeper_getter.getZooKeeper().first', 'getObjectNamesAndSetWatch call must be inside the retry loop', 'must use current_zookeeper rather than the original zookeeper parameter'. This is essentially a line-by-line specification of what to change, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests (truncated but visible from test names and acceptance criteria) assert on the exact variable name 'current_zookeeper', the exact comment text 'Renew the session on retry', and specific method calls like 'retries_ctl.isRetry()'. An alternative correct fix could use a different variable name (e.g., 'fresh_zk'), a different comment, or a different retry detection mechanism, and would fail these tests despite being functionally correct."
+      "reason": "Tests (truncated but visible in test names) assert on gold-specific implementation details: the variable must be named exactly 'current_zookeeper' (requirement 1 and likely tested), the exact string 'Renew the session on retry' appears in the gold patch and is likely checked, and 'retries_ctl.isRetry()' must be used. An alternative correct fix could use a different variable name (e.g., 'active_zk'), a different comment, or a different retry detection mechanism, and would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (session renewal, getObjectNamesAndSetWatch inside loop, current_zookeeper usage) appear to be text-matching tests that grep for specific strings/patterns in the source file. The p2p tests do include compilation checks (clang syntax, libclang parsing) and style checks, but the core behavioral tests for the bug fix are text-based assertions, not behavioral execution tests."
+      "reason": "The f2p tests (session renewal, getObjectNamesAndSetWatch inside loop, current_zookeeper usage) appear to be text-matching tests that check for specific strings/patterns in the source file rather than executing the code. The tests check source code content (grep-style) rather than running the actual ZooKeeper retry logic. The p2p tests do execute clang and codespell, but the core behavioral f2p tests are text-based."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests check for specific text patterns in the source code (variable names, comment strings, function call patterns). An agent could satisfy them by inserting the required text patterns as dead code or comments without actually fixing the bug's behavior. No runtime test verifies that stale sessions are actually renewed."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific patterns that don't exist in the original code (e.g., 'current_zookeeper' variable, moved getObjectNamesAndSetWatch call, isRetry check). A stub or no-op implementation would not pass these since the original file lacks these constructs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six acceptance criteria from instruction.md appear to have corresponding test coverage: current_zookeeper declaration, isRetry() check, getObjectNamesAndSetWatch inside loop, current_zookeeper usage, the comment string, and the exception/crash wording convention."
+      "reason": "All five requirements from the instruction (current_zookeeper variable, retry session refresh, getObjectNamesAndSetWatch inside loop, using current_zookeeper for all ops, 'exception' not 'crash' in comments) appear to have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped by category (REPO_TESTS, STATIC sections), and the module docstring provides a numbered list mapping test purposes to categories (f2p, p2p, agent_config, repo_tests)."
+      "reason": "Tests are well-organized with clear docstrings, grouped by category (REPO_TESTS, STATIC sections), and the module docstring provides a numbered summary of all test categories (f2p, p2p, agent_config, repo_tests)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data output."
+      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file ('src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp'), exact variable names to use ('current_zookeeper'), exact methods to call ('retries_ctl.isRetry()', 'zookeeper_getter.getZooKeeper()'), and exact comment text ('Renew the session on retry'). This goes far beyond identifying the buggy area \u2014 it specifies the exact code to write."
+      "reason": "The instruction names the exact file ('src/Functions/UserDefined/'), the exact variable names to use ('current_zookeeper'), exact method calls ('zookeeper_getter.getZooKeeper().first', 'retries_ctl.isRetry()'), and exact placement requirements (inside vs outside retry loop). This goes well beyond identifying the buggy area and specifies the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a C++ source file, not a configuration edit task."
+      "reason": "This is a code-only task modifying a C++ source file, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

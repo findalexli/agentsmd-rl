@@ -1,0 +1,97 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39708
+  base_commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
+  merge_commit: "f78f716db22acaea3623017586fa3d56d0e48951"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files parse without syntax errors"
+
+  - id: playwright_locator_parsing_supported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tab.ts imports and uses locatorOrSelectorAsSelector for Playwright locator support"
+
+  - id: css_selector_still_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CSS selectors continue to work with new page.$() approach"
+
+  - id: getbytestid_locator_supported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getByTestId() locator is supported via testIdAttribute parameter"
+
+  - id: existing_locator_parser_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "locatorParser.ts dependency is available and exports required functions"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified resolveSelector method has real implementation logic"
+
+  - id: error_message_improved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Error message quotes the selector for better readability"
+
+# Config edits extracted from the PR (SKILL.md update)
+config_edits:
+  - path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+    tier: 1
+    gold_added: |
+      You can also use css selectors or Playwright locators.
+
+      ```bash
+      # css selector
+      playwright-cli click "#main > button.submit"
+
+      # role locator
+      playwright-cli click "getByRole('button', { name: 'Submit' })"
+
+      # test id
+      playwright-cli click "getByTestId('submit-button')"
+      ```
+    gold_removed: |
+      You can also use css or role selectors, for example when explicitly asked for it.
+
+      ```bash
+      # css selector
+      playwright-cli click "#main > button.submit"
+
+      # role selector
+      playwright-cli click "role=button[name=Submit]"
+
+      # chaining css and role selectors
+      playwright-cli click "#footer >> role=button[name=Submit]"
+      ```
+
+# Rubric rules for LLM judge evaluation (soft/convention-based rules)
+rubric:
+  - rule: "CLI documentation should accurately reflect the selector/locator capabilities of the implementation"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "225-235"
+      commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
+    evidence: "SKILL.md updated to show Playwright locator syntax (getByRole, getByTestId) instead of raw role= selectors"
+    category: "documentation_accuracy"
+    verification: llm_judge
+
+  - rule: "Documentation examples should match the actual CLI capabilities after the fix"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "225-235"
+      commit: "35f853d5c293c901ea66a9aa3f56f6879a94e66a"
+    evidence: "Examples changed from 'role=button[name=Submit]' to getByRole('button', { name: 'Submit' })"
+    category: "example_correctness"
+    verification: llm_judge
+
+# Distractors - conventions that might create collisions (none for this simple config update)
+distractors: []

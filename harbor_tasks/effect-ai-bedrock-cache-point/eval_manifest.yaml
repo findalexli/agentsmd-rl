@@ -1,0 +1,55 @@
+version: 1
+task:
+  name: effect-ai-bedrock-cache-point
+  description: Fix cache point support for user and tool messages in Amazon Bedrock language model
+  difficulty: medium
+  time_estimate: 15min
+
+pr:
+  number: 5891
+  owner: effect-ts
+  repo: effect
+  base_commit: 590dbfc942277fe2be68cf9a81b40335c6640821
+  merge_commit: b1ffd223ab4abc0be3f56bf4d16d99d0f5b4c4b8
+  title: "add cache point support for user and tool messages in bedrock"
+  description: |
+    The `prepareMessages` function was adding cache points for system and assistant messages,
+    but missing the same logic for user and tool messages. This meant that `cache_control`
+    markers on user/tool messages were being silently ignored, preventing Bedrock from
+    caching those message prefixes. The fix adds the same `getCachePoint` check that exists
+    for assistant messages to the user message group (which handles both user and tool role messages).
+
+checks:
+  - id: test_source_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Source file has correct structure for prepareMessages function.
+      Verifies BEDROCK_CACHE_POINT constant, getCachePoint function, and prepareMessages exist.
+
+  - id: test_user_message_has_cache_point_check
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      User message handling block contains getCachePoint check.
+      Before the fix: the user message block had no getCachePoint call.
+      After the fix: there is an if (getCachePoint(message)) check at the end
+      of the for loop inside the user case, pushing BEDROCK_CACHE_POINT when set.
+
+  - id: test_assistant_message_has_cache_point_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Assistant message block also has cache point check (baseline verification).
+      This was already working before the fix - we verify it still exists as a baseline.
+
+  - id: test_typescript_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      TypeScript typecheck passes for amazon-bedrock package.
+      Runs tsc --noEmit to verify the TypeScript code is valid and type-correct.
+
+rubric: []
+
+agent_config_files: []

@@ -2,52 +2,51 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_value_class_test_data_exists checks for 'inlineClassWithRef' in Swift file and 'val foo: Foo' in Kotlin file; test_golden_files_contain_inline_cast uses regex patterns like 'INLINE_CLASS_WITH_REF', 'VALUE_CLASS'; test_generated_test_class_has_valueclass checks for exact annotation format '@TestMetadata(\"valueClass\")' and method structure. While instruction.md gives general guidance, exact string literals like 'inlineC"
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (SirInitFromKtSymbol.kt location, golden files, valueClass test data paths, SwiftExportExecutionTestGenerated.java), required class/function names (Foo, Bar, inlineClassWithRef, testValueClass), annotations (@TestMetadata(\"valueClass\")), and string patterns (createUninitializedInstance, 'as Any?'). The test checks for 'containingDeclaration' import and 'isInline' in bridges section, which are implied by the instruction's description of using Analysis API "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'Add an import for containingDeclaration', 'Check if the containing class is an inline class (isInline property on KaNamedClassSymbol)', 'If it is an inline class, append \" as Any?\" to the generated code string'. It also specifies exact golden file paths and what to change in them. This is essentially a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly states the fix: 'append \" as Any?\" after the createUninitializedInstance<...>() call', 'use the Analysis API to check if the containing class is an inline class (value class)', and specifies exact file paths and patterns. It also tells exactly what golden file changes to make. This is a detailed solution description, not just a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_isInline_check_present asserts exact import path 'import org.jetbrains.kotlin.analysis.api.components.containingDeclaration', checks 'isInline' literal in source, checks '\" as Any?\"' literal, and verifies isInline appears in the bridges property section. An alternative correct fix (e.g., using a different API to detect inline classes, or using a different cast approach) would fail these tests."
+      "reason": "test_isInline_check_present asserts very specific implementation details: exact import 'import org.jetbrains.kotlin.analysis.api.components.containingDeclaration', the string 'isInline' must appear in a 'bridges' property section, and '\" as Any?\"' must be a literal string in the source. An alternative correct fix (e.g., using a different API to check value class status, or using a different casting approach) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests are text-matching: test_isInline_check_present does 'assert \"isInline\" in content' and string checks on file content; test_golden_files_contain_inline_cast uses regex on file text; test_value_class_test_data_exists reads files and checks string presence; test_generated_test_class_has_valueclass checks string presence. Only test_kotlin_compilation_sir_light_classes actually executes code (Gradle build), but it catches TimeoutExpired and skips. The majority are pure text pattern mat"
+      "reason": "Most fail-to-pass tests are text/pattern checks: test_isInline_check_present reads file and checks string patterns, test_golden_files_contain_inline_cast uses regex on file content, test_value_class_test_data_exists checks file content strings, test_generated_test_class_has_valueclass checks string patterns. test_kotlin_compilation_sir_light_classes attempts actual compilation but catches TimeoutExpired and skips. The dominant testing approach is 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_value_class_test_data_exists and test_generated_test_class_has_valueclass can be passed by simply creating files with the expected strings without any actual bug fix. test_golden_files_contain_inline_cast can be passed by sed-replacing strings in golden files without fixing the actual code logic. These tests verify file content, not runtime behavior."
+      "reason": "test_value_class_test_data_exists and test_generated_test_class_has_valueclass can be satisfied by simply creating files with the right content strings without any actual bug fix. test_golden_files_contain_inline_cast can be passed by just doing sed replacements on golden files without fixing the actual code generator. The compilation test (test_kotlin_compilation_sir_light_classes) skips on timeout, making it unreliable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four main requirements from instruction.md are tested: modifying SirInitFromKtSymbol.kt (test_isInline_check_present, test_kotlin_compilation_sir_light_classes), updating golden files (test_golden_files_contain_inline_cast), creating test data (test_value_class_test_data_exists), and updating generated test class (test_generated_test_class_has_valueclass)."
+      "reason": "All four required changes in instruction.md are tested: code generation fix (test_isInline_check_present, test_kotlin_compilation_sir_light_classes), golden file updates (test_golden_files_contain_inline_cast), test data creation (test_value_class_test_data_exists), and generated test class update (test_generated_test_class_has_valueclass)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, docstrings explaining purpose, and a module-level docstring. The structure is clear and informative."
+      "reason": "Tests are well-organized with clear section comments (FAIL-TO-PASS TESTS, PASS-TO-PASS TESTS), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md appear correct and consistent with the test expectations and solution."
+      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (SirInitFromKtSymbol.kt), the exact property to modify ('bridges' property of SirRegularInitFromKtSymbol), the exact import to add ('containingDeclaration'), and the exact code change ('append \" as Any?\" to the generated code string'). This is complete solution leakage, not just file/module identification."
+      "reason": "The instruction specifies the exact module ('native/swift/sir-light-classes'), the exact technique ('use the Analysis API to check if the containing class is an inline class'), and the exact code change ('append \" as Any?\" after the createUninitializedInstance<...>() call'). This goes well beyond naming the buggy component."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "This is a code-editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -57,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

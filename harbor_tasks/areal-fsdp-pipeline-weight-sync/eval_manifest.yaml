@@ -173,6 +173,22 @@ rubric:
     and `handle.wait()` to synchronize CUDA streams and distributed handles without
     pulling tensor data to the CPU.
   category: style
+- rule: Always pass `process_group` explicitly, don't rely on default
+  source:
+    path: .claude/rules/distributed.md
+    lines: 13-13
+  source_text: '- Always pass `process_group` explicitly, don''t rely on default'
+  evidence: The diff explicitly passes `group=self.weight_update_group` to `dist.broadcast`.
+  category: Process Group Management
+  verification: llm_judge
+- rule: 'Broadcast: Specify `src` rank explicitly'
+  source:
+    path: .claude/rules/distributed.md
+    lines: 27-27
+  source_text: '- **Broadcast**: Specify `src` rank explicitly'
+  evidence: The diff explicitly specifies `src=0` in the `dist.broadcast` call.
+  category: Communication Patterns
+  verification: llm_judge
 distractors:
 - rule: Add tests for new functionality.
   collision_type: rule_conflict
@@ -192,6 +208,24 @@ distractors:
   source:
     path: AGENTS.md
     lines: 67-68
+- rule: Dataclass Conventions
+  source:
+    path: .claude/rules/api-config.md
+    lines: 8-33
+  source_text: "## Dataclass Conventions\n\n```python\n@dataclass\nclass XxxConfig:\n\
+    \    \"\"\"One-line description.\n\n    Attributes:\n        field_name: Description\
+    \ with default explained.\n    \"\"\"\n    # Required fields first (no default)\n\
+    \    required_field: str\n\n    # Optional fields with defaults\n    optional_field:\
+    \ int = 32\n\n    # Internal fields last (underscore prefix)\n    _internal: str\
+    \ = field(default=\"\", repr=False)\n```\n\n## Field Ordering\n\n1. Required fields\
+    \ (no default)\n1. Common optional fields\n1. Advanced/rare optional fields\n\
+    1. Internal fields (`_prefix`)"
+  collision_type: scope_ambiguity
+  why_distracting: The AI might try to apply these dataclass conventions (like adding
+    a docstring with an Attributes section) to the newly added `_PendingWeightUpdateBucket`
+    dataclass. However, this rule is scoped to `areal/api/**` and is meant for public
+    configuration classes, whereas the new dataclass is an internal helper in `areal/engine/`.
+  severity: medium
 hierarchy_analysis: Both AGENTS.md and CLAUDE.md are root-level files that mandate
   adding tests for new functionality. However, the task's explicit constraint ('Only
   areal/engine/fsdp_engine.py should be modified') overrides this general repository

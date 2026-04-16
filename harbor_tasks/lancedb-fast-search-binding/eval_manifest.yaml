@@ -1,0 +1,64 @@
+checks:
+  # Pass-to-Pass: Repo CI Tests
+  # These verify the repo is in a working state before the fix
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on query.py"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on query.py"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax validation passes for query.py"
+
+  - id: test_repo_fts_tests_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax validation passes for test_fts.py"
+
+  - id: test_repo_query_tests_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax validation passes for test_query.py"
+
+  # Fail-to-Pass: Functional tests for the feature
+  # These verify the fast_search feature was added correctly
+  - id: test_fast_search_method_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: "LanceFtsQueryBuilder has fast_search method"
+
+  - id: test_fast_search_init_attribute
+    type: fail_to_pass
+    origin: agent_config
+    description: "__init__ initializes _fast_search to None"
+
+  - id: test_fast_search_sets_true
+    type: fail_to_pass
+    origin: agent_config
+    description: "fast_search method sets _fast_search to True"
+
+  - id: test_fast_search_returns_self
+    type: fail_to_pass
+    origin: agent_config
+    description: "fast_search method returns self for chaining"
+
+  - id: test_fast_search_to_query_object
+    type: fail_to_pass
+    origin: agent_config
+    description: "to_query_object passes fast_search to Query constructor"
+
+  - id: test_fast_search_docstring
+    type: fail_to_pass
+    origin: agent_config
+    description: "fast_search method has proper docstring"
+
+  - id: test_fast_search_return_annotation
+    type: fail_to_pass
+    origin: agent_config
+    description: "fast_search has correct return type annotation"

@@ -1,0 +1,179 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39734
+  base_commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+  merge_commit: "61afb37f4e6af73ae536c7d05ee1a926328b6d80"
+
+# Checks correspond to test_outputs.py test functions
+checks:
+  # PASS-TO-PASS: Static/syntax checks
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript files parse without errors"
+
+  # FAIL-TO-PASS: Core functionality - minimist module creation
+  - id: minimist_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist.ts file created in cli-client directory"
+
+  # FAIL-TO-PASS: Behavior tests - minimist functionality
+  - id: minimist_parses_boolean_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Vendored minimist correctly parses boolean arguments"
+
+  - id: minimist_parses_string_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Vendored minimist correctly parses string arguments"
+
+  - id: minimist_throws_on_boolean_with_value
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist throws error when boolean passed with =value"
+
+  - id: minimist_handles_positional_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist correctly handles positional arguments"
+
+  - id: minimist_handles_double_dash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist correctly handles -- separator for non-option args"
+
+  - id: minimist_handles_short_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist correctly handles short flag arguments"
+
+  # FAIL-TO-PASS: Integration tests
+  - id: program_ts_imports_minimist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts imports from local minimist module instead of external package"
+
+  - id: session_ts_imports_minimist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "session.ts imports MinimistArgs type from local minimist"
+
+  - id: deps_list_includes_minimist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DEPS.list includes minimist.ts in dependency declarations"
+
+  # FAIL-TO-PASS: Config update test (the agentmd-edit part)
+  - id: claude_md_has_commit_convention
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md updated with 'Never add Generated with in commit message' convention"
+
+  # PASS-TO-PASS: Existing conventions preserved
+  - id: claude_md_has_co_authored_by_rule
+    type: pass_to_pass
+    origin: agent_config
+    description: "CLAUDE.md still contains existing Co-Authored-By rule"
+    source:
+      path: "CLAUDE.md"
+      lines: "125"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+
+  - id: minimist_has_proper_types
+    type: pass_to_pass
+    origin: static
+    description: "minimist.ts exports proper TypeScript interfaces (MinimistOptions, MinimistArgs)"
+
+  - id: minimist_has_license_header
+    type: pass_to_pass
+    origin: static
+    description: "minimist.ts includes proper MIT license header with attribution"
+
+# Track 2: Gold config edits (extracted from solve.sh patch)
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: 'Never add "Generated with" in commit message.'
+    gold_removed: ""
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "Vendored dependencies should include proper MIT license headers with original author attribution"
+    source:
+      path: ".claude/skills/playwright-dev/vendor.md"
+      lines: "1-20"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    evidence: "Gold minimist.ts has full MIT license header with James Halliday attribution and Microsoft modifications note"
+    category: licensing
+    verification: llm_judge
+
+  - rule: "CLI client code must import from local modules, not external npm packages"
+    source:
+      path: ".claude/skills/playwright-dev/tools.md"
+      lines: "1-50"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    evidence: "Gold solution imports from './minimist' not 'minimist' package"
+    category: imports
+    verification: programmatic
+    check_cmd: "grep -r \"from './minimist'\" packages/playwright-core/src/tools/cli-client/"
+
+  - rule: "DEPS.list files must be updated when adding new files with imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "73-78"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    evidence: "Gold solution adds minimist.ts to DEPS.list with 'strict' marker"
+    category: dependencies
+    verification: llm_judge
+
+  - rule: "TypeScript should use explicit type imports (import type) for type-only imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-30"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    evidence: "Gold uses 'import type { MinimistArgs }' for type-only imports"
+    category: typescript
+    verification: programmatic
+    check_cmd: "grep 'import type' packages/playwright-core/src/tools/cli-client/*.ts"
+
+  - rule: "Commit conventions must be documented in CLAUDE.md and followed precisely"
+    source:
+      path: "CLAUDE.md"
+      lines: "120-130"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    evidence: "Gold adds 'Never add Generated with' to existing commit conventions section"
+    category: documentation
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that seem relevant but shouldn't be followed
+distractors:
+  - rule: "All vendored code should be placed in bundles/ directory with esbuild setup"
+    source:
+      path: ".claude/skills/playwright-dev/vendor.md"
+      lines: "10-30"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    collision_type: scope_ambiguity
+    why_distracting: "The general vendoring guide describes bundles/ directory for third-party deps, but this specific PR creates a minimal TypeScript port directly in the cli-client directory. The simpler approach is correct for this use case."
+    severity: medium
+
+  - rule: "External npm dependencies should be declared in package.json"
+    source:
+      path: "package.json"
+      lines: "1-10"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    collision_type: rule_conflict
+    why_distracting: "Normally dependencies should be in package.json, but this PR removes @types/minimist and creates a local implementation instead. Adding it back would be wrong."
+    severity: high
+
+  - rule: "All source files must be under src/ directory at package root"
+    source:
+      path: "CLAUDE.md"
+      lines: "10-20"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    collision_type: scope_ambiguity
+    why_distracting: "minimist.ts is created under src/tools/cli-client/ which is correct, but an agent might incorrectly think it needs to be moved to a different location."
+    severity: low

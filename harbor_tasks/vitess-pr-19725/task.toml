@@ -1,0 +1,22 @@
+[task]
+name = "vitess-versioned-comment-scanner"
+version = "1"
+description = "Fix the SQL parser's versioned comment scanner to match MySQL 8.4 behavior for /*!...*/ tokens"
+repository = "vitessio/vitess"
+base_commit = "9a3646f7f16d38cec2efabc13cef5da800a72280"
+merge_commit = "9e5141afd5c3488cb4a0aea8168b48bf198790db"
+pr_number = 19725
+
+[agent]
+config_file = "go/vt/sqlparser/AGENTS.md"
+lines = "9a3646f7f16d38cec2efabc13cef5da800a72280"
+commit = "9a3646f7f16d38cec2efabc13cef5da800a72280"
+
+[environment]
+image = "task-env"
+run = "docker run --rm -v /workspace/task/tests:/tests:ro -v /logs/verifier:/logs/verifier task-env bash /tests/test.sh"
+
+[metadata]
+difficulty = "medium"
+tags = ["sql-parser", "tokenizer", "mysql-compatibility"]
+estimated_time = "15m"

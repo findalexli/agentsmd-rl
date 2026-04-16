@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key elements tested: handleClose/handleAbort function signatures, closeAll function, streamManager.closeAll(), streamManager.cancelAll(reason), 'Stream closed before head was received' error message, close/abort hook wiring, headDeferred null assignment, catch block delegation to handleAbort, and the file path. All assert'd specifics are discoverable from the instruction."
+      "reason": "instruction.md names the file path, error message 'Stream closed before head was received', methods closeAll/cancelAll, handler names handleClose/handleAbort, and event hook keys close/abort."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies the exact implementation: 'const handleClose = () => {' calling 'streamManager.closeAll()', 'const handleAbort = (reason?: unknown) => {' calling 'streamManager.cancelAll(reason)', a 'closeAll()' method iterating controllers with 'controller.close()', hook wiring 'close: handleClose, abort: handleAbort', and catch block calling 'handleAbort(error)'. This is a complete solution specification, not a problem description."
+      "reason": "Instruction explicitly prescribes function names ('handleClose', 'handleAbort', 'closeAll()'), the exact error string, and that headDeferred must be set to null \u2014 these are the specific implementation details tests assert on."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'const handleClose = () => {', 'const handleAbort = (reason?: unknown) => {', 'function closeAll() {', 'streamManager.closeAll()', 'close: handleClose,', 'abort: handleAbort,', 'handleAbort(error)'. An alternative correct fix using different names (e.g., 'onClose', 'onAbort', 'closeAllControllers') or different structure (inline handlers, class methods) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on exact identifiers like 'const handleClose = () => {', 'function closeAll() {', 'streamManager.closeAll()', and 'close: handleClose,' \u2014 alternative correct fixes using different names (e.g., onClose, closeControllers) would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_gold_patch_applied, test_closeAll_closes_controllers, test_handleClose_vs_handleAbort_separation, test_handleAbort_cancels_all, test_stream_hooks_use_correct_handlers, test_headDeferred_null_after_reject, and test_catch_block_uses_handleAbort are ALL pure text-matching (assert 'X' in content). While tests 8-11 run subprocesses, the first 7 f2p tests are exclusively string-in-file checks with no behavioral execution."
+      "outcome": "pass",
+      "reason": "While several tests inspect source text, tests like test_repo_vitest_jsonl_unit_tests, test_repo_vitest_server_unit_tests, test_repo_vitest_streaming_integration_tests, and test_repo_server_typecheck execute the actual test suite."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since the f2p tests (test_gold_patch_applied through test_catch_block_uses_handleAbort) only check for specific strings in the file, an agent could simply append the exact expected strings as comments or dead code to the file without implementing any actual behavioral fix, and all string-matching tests would pass."
+      "outcome": "pass",
+      "reason": "The vitest subprocess tests exercise real behavior and would fail with a stub; text tests also require specific strings not present in the buggy version."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md (handleClose with closeAll, handleAbort with cancelAll, headDeferred rejection and nulling, hook wiring, catch block delegation, closeAll implementation) are tested, plus pass-to-pass tests verify existing functionality still works."
+      "reason": "Tests cover handleClose rejecting pending head, closeAll closing controllers, handleAbort using cancelAll, catch block using handleAbort, and stream hooks separation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_gold_patch_applied, test_closeAll_closes_controllers, etc.), have docstrings explaining what they verify, and are logically grouped by concern (patch verification, behavior separation, hook wiring, integration)."
+      "reason": "Tests are named descriptively (test_closeAll_closes_controllers, test_handleClose_vs_handleAbort_separation, etc.) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript streaming code, not structured data output like JSON/CSV/API schemas."
+      "reason": "Task is a code bugfix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in the instruction are consistent and correct (e.g., packages/server/src/unstable-core-do-not-import/stream/jsonl.ts, jsonlStreamConsumer, headDeferred, streamManager)."
+      "reason": "File paths, commands, and identifiers are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify AND provides the exact function signatures, variable names, method calls, and error messages that constitute the complete solution. This goes far beyond identifying the buggy file \u2014 it dictates exact implementation details like 'const handleClose = () => {' and 'streamManager.closeAll()'."
+      "reason": "Instruction names the exact file 'packages/server/src/unstable-core-do-not-import/stream/jsonl.ts' and dictates exact handler/method names ('handleClose', 'handleAbort', 'closeAll'), removing the need for localization or design."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a configuration edit task."
+      "reason": "Code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

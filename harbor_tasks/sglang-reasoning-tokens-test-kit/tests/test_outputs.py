@@ -8,29 +8,33 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import importlib.machinery
+import importlib.util
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/sglang"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 def test_reasoning_tokens_kit_syntax():
-    """New reasoning_tokens_kit.py must be valid Python."""
+    """reasoning_tokens_kit module must be valid Python with ReasoningTokenUsageMixin."""
     kit_path = Path(f"{REPO}/python/sglang/test/kits/reasoning_tokens_kit.py")
-    if not kit_path.exists():
-        # This is expected to fail on base commit (file doesn't exist)
-        assert False, "reasoning_tokens_kit.py does not exist"
-
+    assert kit_path.exists(), "reasoning_tokens_kit.py does not exist"
     src = kit_path.read_text()
-    try:
-        ast.parse(src)
-    except SyntaxError as e:
-        assert False, f"Syntax error in reasoning_tokens_kit.py: {e}"
+    tree = ast.parse(src)
+    # Find ReasoningTokenUsageMixin class
+    found = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "ReasoningTokenUsageMixin":
+            found = True
+            break
+    assert found, "ReasoningTokenUsageMixin class not found in kit"
 
 
 def test_modified_files_syntax():
@@ -50,12 +54,7 @@ def test_modified_files_syntax():
             assert False, f"Syntax error in {path.name}: {e}"
 
 
-# ---------------------------------------------------------------------------
-# Repo CI pass_to_pass checks — ensure repo's own CI passes on base and gold
-# ---------------------------------------------------------------------------
-
 def _run_precommit_hook(hook_id: str) -> subprocess.CompletedProcess:
-    """Helper to run a pre-commit hook with proper env setup."""
     env = os.environ.copy()
     env["SKIP"] = "no-commit-to-branch,lychee,clang-format,mirrors-clang-format,nbstripout"
     return subprocess.run(
@@ -65,251 +64,156 @@ def _run_precommit_hook(hook_id: str) -> subprocess.CompletedProcess:
 
 
 def test_repo_precommit_check_ast():
-    """Repo's Python AST check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-ast")
     assert r.returncode == 0, f"check-ast failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_yaml():
-    """Repo's YAML check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-yaml")
     assert r.returncode == 0, f"check-yaml failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_toml():
-    """Repo's TOML check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-toml")
     assert r.returncode == 0, f"check-toml failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_ruff():
-    """Repo's ruff linting passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("ruff")
     assert r.returncode == 0, f"ruff failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_isort():
-    """Repo's isort check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("isort")
     assert r.returncode == 0, f"isort failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_codespell():
-    """Repo's codespell check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("codespell")
     assert r.returncode == 0, f"codespell failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_black_jupyter():
-    """Repo's black-jupyter formatting check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("black-jupyter")
     assert r.returncode == 0, f"black-jupyter failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_workflow_jobs():
-    """Repo's workflow job names check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-workflow-job-names")
     assert r.returncode == 0, f"check-workflow-job-names failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_sort_ci_permissions():
-    """Repo's CI permissions sort check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("sort-ci-permissions")
     assert r.returncode == 0, f"sort-ci-permissions failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_symlinks():
-    """Repo's symlinks check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-symlinks")
     assert r.returncode == 0, f"check-symlinks failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_destroyed_symlinks():
-    """Repo's destroyed symlinks check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("destroyed-symlinks")
     assert r.returncode == 0, f"destroyed-symlinks failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_trailing_whitespace():
-    """Repo's trailing whitespace check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("trailing-whitespace")
     assert r.returncode == 0, f"trailing-whitespace failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_end_of_file_fixer():
-    """Repo's end-of-file fixer check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("end-of-file-fixer")
     assert r.returncode == 0, f"end-of-file-fixer failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_added_large_files():
-    """Repo's check for added large files passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-added-large-files")
     assert r.returncode == 0, f"check-added-large-files failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_merge_conflict():
-    """Repo's merge conflict check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-merge-conflict")
     assert r.returncode == 0, f"check-merge-conflict failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_check_shebang_scripts():
-    """Repo's shebang scripts executable check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("check-shebang-scripts-are-executable")
     assert r.returncode == 0, f"check-shebang-scripts-are-executable failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_detect_private_key():
-    """Repo's private key detection check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("detect-private-key")
     assert r.returncode == 0, f"detect-private-key failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 def test_repo_precommit_debug_statements():
-    """Repo's debug statements check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, text=True, timeout=120, cwd=REPO)
     assert r.returncode == 0, f"Failed to install pre-commit: {r.stderr[-500:]}"
-
     r = _run_precommit_hook("debug-statements")
     assert r.returncode == 0, f"debug-statements failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core structural tests
+# Fail-to-pass (pr_diff) - core structural tests
 # ---------------------------------------------------------------------------
 
 def test_reasoning_tokens_kit_exists():
-    """The reasoning_tokens_kit.py file must exist with ReasoningTokenUsageMixin."""
+    """reasoning_tokens_kit.py must exist with ReasoningTokenUsageMixin class."""
     kit_path = Path(f"{REPO}/python/sglang/test/kits/reasoning_tokens_kit.py")
     assert kit_path.exists(), "reasoning_tokens_kit.py does not exist"
-
     src = kit_path.read_text()
     tree = ast.parse(src)
-
-    # Find the ReasoningTokenUsageMixin class
-    mixin_found = False
+    found = False
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "ReasoningTokenUsageMixin":
-            mixin_found = True
+            found = True
             break
-
-    assert mixin_found, "ReasoningTokenUsageMixin class not found in kit"
+    assert found, "ReasoningTokenUsageMixin class not found in kit"
 
 
 def test_mixin_has_required_methods():
-    """ReasoningTokenUsageMixin must have the 5 test methods."""
+    """ReasoningTokenUsageMixin must have all 5 test methods."""
     kit_path = Path(f"{REPO}/python/sglang/test/kits/reasoning_tokens_kit.py")
     assert kit_path.exists(), "reasoning_tokens_kit.py does not exist"
-
     src = kit_path.read_text()
     tree = ast.parse(src)
-
+    
     required_methods = [
         "test_reasoning_tokens_thinking",
         "test_reasoning_tokens_non_thinking",
@@ -317,26 +221,25 @@ def test_mixin_has_required_methods():
         "test_reasoning_tokens_non_thinking_stream",
         "test_reasoning_tokens_generate_exact_count",
     ]
-
+    
     found_methods = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "ReasoningTokenUsageMixin":
             for item in node.body:
                 if isinstance(item, ast.FunctionDef) and item.name in required_methods:
                     found_methods.add(item.name)
-
+    
     missing = set(required_methods) - found_methods
     assert not missing, f"Missing methods in mixin: {missing}"
 
 
 def test_mixin_has_init_reasoning_token_verifier():
-    """Mixin must have init_reasoning_token_verifier classmethod."""
+    """Mixin must have init_reasoning_token_verifier as a classmethod."""
     kit_path = Path(f"{REPO}/python/sglang/test/kits/reasoning_tokens_kit.py")
     assert kit_path.exists(), "reasoning_tokens_kit.py does not exist"
-
     src = kit_path.read_text()
     tree = ast.parse(src)
-
+    
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "ReasoningTokenUsageMixin":
             for item in node.body:
@@ -347,103 +250,135 @@ def test_mixin_has_init_reasoning_token_verifier():
                             return
                         elif isinstance(d, ast.Attribute) and d.attr == "classmethod":
                             return
-
+    
     assert False, "init_reasoning_token_verifier classmethod not found in mixin"
 
 
+def _load_module_from_path(name, path):
+    """Load a Python module directly from a file path, bypassing package init."""
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    spec = importlib.util.spec_from_loader(name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    # Don't exec_module - just set the attribute so ast.parse works on the source
+    return mod
+
+
 def test_enable_thinking_imports_mixin():
-    """TestEnableThinking must import and use ReasoningTokenUsageMixin."""
+    """TestEnableThinking must inherit from ReasoningTokenUsageMixin."""
     test_path = Path(f"{REPO}/test/registered/openai_server/features/test_enable_thinking.py")
     assert test_path.exists(), "test_enable_thinking.py does not exist"
-
+    
     src = test_path.read_text()
-
-    # Check for import
-    assert "from sglang.test.kits.reasoning_tokens_kit import ReasoningTokenUsageMixin" in src, \
-        "ReasoningTokenUsageMixin import not found in test_enable_thinking.py"
-
-    # Check TestEnableThinking inherits from the mixin
     tree = ast.parse(src)
+    
+    # Find ReasoningTokenUsageMixin import
+    mixin_imported = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            if node.module and "reasoning_tokens_kit" in node.module:
+                for alias in node.names:
+                    if alias.name == "ReasoningTokenUsageMixin":
+                        mixin_imported = True
+                        break
+    
+    assert mixin_imported, "ReasoningTokenUsageMixin not imported in test_enable_thinking.py"
+    
+    # Find TestEnableThinking and check its bases
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "TestEnableThinking":
-            bases = [b.id for b in node.bases if isinstance(b, ast.Name)]
+            bases = []
+            for b in node.bases:
+                if isinstance(b, ast.Name):
+                    bases.append(b.id)
+                elif isinstance(b, ast.Attribute):
+                    # Handle something.something
+                    if isinstance(b.value, ast.Name):
+                        bases.append(f"{b.value.id}.{b.attr}")
+            
             assert "ReasoningTokenUsageMixin" in bases, \
                 "TestEnableThinking does not inherit from ReasoningTokenUsageMixin"
             return
-
+    
     assert False, "TestEnableThinking class not found"
 
 
 def test_enable_thinking_sets_reasoning_parser():
-    """TestEnableThinking must set reasoning_parser_name attribute."""
+    """TestEnableThinking must have reasoning_parser_name = 'qwen3'."""
     test_path = Path(f"{REPO}/test/registered/openai_server/features/test_enable_thinking.py")
     assert test_path.exists(), "test_enable_thinking.py does not exist"
-
+    
     src = test_path.read_text()
     tree = ast.parse(src)
-
+    
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "TestEnableThinking":
             for item in node.body:
                 if isinstance(item, ast.Assign):
                     for target in item.targets:
                         if isinstance(target, ast.Name) and target.id == "reasoning_parser_name":
-                            # Check it's set to "qwen3"
                             if isinstance(item.value, ast.Constant) and item.value.value == "qwen3":
                                 return
-
+    
     assert False, "reasoning_parser_name = 'qwen3' not found in TestEnableThinking"
 
 
 def test_qwen35_mtp_imports_mixin():
-    """TestQwen35FP4MTP must import and use ReasoningTokenUsageMixin."""
+    """TestQwen35FP4MTP must inherit from ReasoningTokenUsageMixin."""
     test_path = Path(f"{REPO}/test/registered/4-gpu-models/test_qwen35_models.py")
     assert test_path.exists(), "test_qwen35_models.py does not exist"
-
+    
     src = test_path.read_text()
-
-    # Check for import
-    assert "from sglang.test.kits.reasoning_tokens_kit import ReasoningTokenUsageMixin" in src, \
-        "ReasoningTokenUsageMixin import not found in test_qwen35_models.py"
-
-    # Check TestQwen35FP4MTP inherits from the mixin
     tree = ast.parse(src)
+    
+    # Find ReasoningTokenUsageMixin import
+    mixin_imported = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            if node.module and "reasoning_tokens_kit" in node.module:
+                for alias in node.names:
+                    if alias.name == "ReasoningTokenUsageMixin":
+                        mixin_imported = True
+                        break
+    
+    assert mixin_imported, "ReasoningTokenUsageMixin not imported in test_qwen35_models.py"
+    
+    # Find TestQwen35FP4MTP
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "TestQwen35FP4MTP":
             bases = [b.id for b in node.bases if isinstance(b, ast.Name)]
             assert "ReasoningTokenUsageMixin" in bases, \
                 "TestQwen35FP4MTP does not inherit from ReasoningTokenUsageMixin"
             return
-
+    
     assert False, "TestQwen35FP4MTP class not found"
 
 
 def test_qwen35_mtpv2_imports_mixin():
-    """TestQwen35FP4MTPV2 must import and use ReasoningTokenUsageMixin."""
+    """TestQwen35FP4MTPV2 must inherit from ReasoningTokenUsageMixin."""
     test_path = Path(f"{REPO}/test/registered/4-gpu-models/test_qwen35_models.py")
     assert test_path.exists(), "test_qwen35_models.py does not exist"
-
+    
     src = test_path.read_text()
     tree = ast.parse(src)
-
+    
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "TestQwen35FP4MTPV2":
             bases = [b.id for b in node.bases if isinstance(b, ast.Name)]
             assert "ReasoningTokenUsageMixin" in bases, \
                 "TestQwen35FP4MTPV2 does not inherit from ReasoningTokenUsageMixin"
             return
-
+    
     assert False, "TestQwen35FP4MTPV2 class not found"
 
 
 def test_qwen35_fp4_uses_custom_test_case():
-    """TestQwen35FP4 must use CustomTestCase instead of unittest.TestCase."""
+    """TestQwen35FP4 must use CustomTestCase, not unittest.TestCase."""
     test_path = Path(f"{REPO}/test/registered/4-gpu-models/test_qwen35_models.py")
     assert test_path.exists(), "test_qwen35_models.py does not exist"
-
+    
     src = test_path.read_text()
     tree = ast.parse(src)
-
+    
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "TestQwen35FP4":
             bases = []
@@ -451,45 +386,44 @@ def test_qwen35_fp4_uses_custom_test_case():
                 if isinstance(b, ast.Name):
                     bases.append(b.id)
                 elif isinstance(b, ast.Attribute):
-                    bases.append(f"{b.value.id}.{b.attr}")
-
+                    if isinstance(b.value, ast.Name):
+                        bases.append(f"{b.value.id}.{b.attr}")
+            
             assert "unittest.TestCase" not in bases, \
                 "TestQwen35FP4 still inherits from unittest.TestCase"
             assert "CustomTestCase" in bases, \
                 "TestQwen35FP4 does not inherit from CustomTestCase"
             return
-
+    
     assert False, "TestQwen35FP4 class not found"
 
 
 def test_old_reasoning_usage_tokens_deleted():
     """The old standalone test_reasoning_usage_tokens.py must be deleted."""
-    old_test_path = Path(
-        f"{REPO}/test/registered/openai_server/features/test_reasoning_usage_tokens.py"
-    )
+    old_test_path = Path(f"{REPO}/test/registered/openai_server/features/test_reasoning_usage_tokens.py")
     assert not old_test_path.exists(), \
         "Old test_reasoning_usage_tokens.py should be deleted but still exists"
 
 
 def test_enable_thinking_calls_init_verifier():
-    """TestEnableThinking setUpClass must call init_reasoning_token_verifier."""
+    """TestEnableThinking.setUpClass must call init_reasoning_token_verifier."""
     test_path = Path(f"{REPO}/test/registered/openai_server/features/test_enable_thinking.py")
     assert test_path.exists(), "test_enable_thinking.py does not exist"
-
+    
     src = test_path.read_text()
-
-    # Check for the call to init_reasoning_token_verifier in setUpClass
-    assert "cls.init_reasoning_token_verifier()" in src, \
+    
+    assert "cls.init_reasoning_token_verifier()" in src or \
+           "self.init_reasoning_token_verifier()" in src, \
         "init_reasoning_token_verifier() call not found in TestEnableThinking"
 
 
 def test_qwen35_mtp_calls_init_verifier():
-    """TestQwen35FP4MTP setUpClass must call init_reasoning_token_verifier."""
+    """TestQwen35FP4MTP.setUpClass must call init_reasoning_token_verifier."""
     test_path = Path(f"{REPO}/test/registered/4-gpu-models/test_qwen35_models.py")
     assert test_path.exists(), "test_qwen35_models.py does not exist"
-
+    
     src = test_path.read_text()
-
-    # Check that TestQwen35FP4MTP has the init call by looking for the pattern in source
-    assert "cls.init_reasoning_token_verifier()" in src, \
+    
+    assert "cls.init_reasoning_token_verifier()" in src or \
+           "self.init_reasoning_token_verifier()" in src, \
         "init_reasoning_token_verifier() not called in TestQwen35FP4MTP.setUpClass"

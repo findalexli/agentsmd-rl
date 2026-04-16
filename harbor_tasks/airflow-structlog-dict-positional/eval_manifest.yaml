@@ -1,0 +1,73 @@
+# Evaluation manifest for apache/airflow#64773
+# Fix structlog positional formatting for single-dict arguments
+
+source:
+  owner: apache
+  repo: airflow
+  pr_number: 64773
+  base_commit: 4e06847c2cdeb17be1c947b7a9dffbfb34418835
+  merge_commit: e137899474e81a5c12c26ee46f336aca4619431a
+
+checks:
+  # fail_to_pass: Must fail before fix, pass after
+  - id: test_dict_positional_with_percent_s_stdlib
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Dict with %s format should be stringified, not used for named substitution
+
+  - id: test_dict_positional_with_percent_s_multiple_values
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Dict positional formatting works with various dict values
+
+  - id: test_named_substitution_still_works
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Named substitution %(key)s with dict argument still works
+
+  - id: test_meth_wrapper_dict_positional
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The meth wrapper uses try/except pattern for formatting
+
+  - id: test_function_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The positional_arguments_formatter function must exist
+
+  - id: test_replaces_builtin_formatter
+    type: fail_to_pass
+    origin: pr_behavior
+    description: structlog_processors uses custom formatter instead of built-in
+
+  # pass_to_pass: Must pass both before and after fix
+  - id: test_simple_positional_args
+    type: pass_to_pass
+    origin: static
+    description: Source file is valid Python syntax
+
+  - id: test_no_args_logging
+    type: pass_to_pass
+    origin: static
+    description: Module imports with expected attributes
+
+  - id: test_structlog_import
+    type: pass_to_pass
+    origin: static
+    description: Structlog library is importable
+
+  # Real repo CI tests
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on the modified structlog.py
+
+  - id: test_repo_structlog_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's structlog unit tests pass (colorful, json, timestamp tests)
+
+rubric:
+  - id: code_only_fix
+    rule: This is a bug fix in internal implementation details - no documentation updates are required since no public APIs or user-facing behavior changed
+    description: Internal implementation fixes do not require CLAUDE.md or documentation updates

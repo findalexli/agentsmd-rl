@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_events_to_cancel_conditional requires a compound `ast.BoolOp` with `ast.And` containing 'example_select' and 'events_to_cancel'; test_submit_btn_false_in_example_chain requires a `.then()` call with `submit_btn=False` keyword. The instruction mentions these behaviors at a high level but doesn't specify the exact AST structures (compound boolean condition with And, .then() with submit_btn=False keyword argumen"
+      "reason": "Tests assert very specific AST structures: test_example_select_not_in_stop_triggers checks that 'example_select' is not in _setup_stop_events event_triggers, test_submit_btn_false_in_example_chain checks for a .then() with submit_btn=False, test_events_to_cancel_conditional checks for a compound 'and' condition with 'example_select' and 'events_to_cancel'. While the instruction mentions these concepts at a high level, it does not specify the exact implementation details like needing a compound B"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially describes the exact fix: 'should not be registered as an additional trigger in the stop-events setup', 'submit button should still be temporarily hidden via a .then() step within the example chain', 'collection of events eligible for cancellation should only include the example event when examples actually execute'. These three points map directly to the three code changes in the gold patch. This goes beyond describing what's broken and prescribes HOW to fix it."
+      "reason": "The instruction explicitly states 'it should not be registered as an additional trigger in the stop-events setup', 'submit button should still be temporarily hidden via a .then() step within the example chain', and 'The collection of events eligible for cancellation should only include the example event when examples actually execute.' These are essentially step-by-step implementation instructions describing exactly what code changes to make, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_events_to_cancel_conditional requires a compound `if` condition using `ast.BoolOp(ast.And)` containing both 'example_select' and 'events_to_cancel'. An alternative correct fix might use a separate if-statement, a ternary, or a different guard variable name instead of 'example_select'. test_submit_btn_false_in_example_chain requires a `.then()` call with submit_btn=False keyword \u2014 an alternative might use a different chaining method or set submit_btn in a different way. These tests are tight"
+      "reason": "test_events_to_cancel_conditional requires a compound 'and' condition (ast.BoolOp with ast.And) containing both 'example_select' and 'events_to_cancel'. An alternative correct fix might use two separate if statements, or use a different variable name, or use 'if example_select_event and self.run_examples_on_click' instead of a pattern with 'example_select' in the condition dump. test_submit_btn_false_in_example_chain requires submit_btn=False in a .then() call specifically, but an alternative fi"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_example_select_not_in_stop_triggers, test_submit_btn_false_in_example_chain, test_events_to_cancel_conditional) all use AST parsing to check structural properties of the source code rather than executing the code and verifying runtime behavior. They never instantiate ChatInterface or simulate clicking an example. While they use AST instead of raw text, they are still static analysis checks on code structure, not behavioral tests."
+      "reason": "The core f2p tests (test_example_select_not_in_stop_triggers, test_submit_btn_false_in_example_chain, test_events_to_cancel_conditional) all use AST parsing to check code structure rather than executing the code and verifying behavior. They are essentially sophisticated text/structure checks, not behavioral tests. They never instantiate ChatInterface or simulate clicking an example to verify the submit button is restored."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific AST structures that wouldn't exist in a stub implementation: removing example_select from stop triggers, adding a .then() with submit_btn=False, and using a compound condition for events_to_cancel. A stub or no-op _setup_events would fail all three."
+      "reason": "The f2p tests check for specific AST patterns that wouldn't exist in a stub or the original buggy code. A stub _setup_events would fail test_setup_events_not_stub (needs \u226510 statements), and the original code would fail test_example_select_not_in_stop_triggers since example_select is in the stop triggers by default."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four acceptance criteria from instruction.md are tested: submit button restoration (via AST checks on .then() and stop triggers), valid Python (test_syntax_valid), ruff format/check (test_ruff_formatting, test_repo_ruff_check), and existing unit tests passing (test_repo_chat_interface_init_unit_tests, etc.)."
+      "reason": "The instruction's three main requirements (remove example_select from stop-events setup, add .then() with submit_btn=False in example chain, conditional events_to_cancel) are all tested by the corresponding f2p tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, each has a docstring, and they are annotated with comments like '[static] pass_to_pass', '[pr_diff] fail_to_pass', '[repo_tests] pass_to_pass' indicating their category."
+      "reason": "Tests are well-named with descriptive docstrings, clearly grouped by concern (syntax, AST structure checks, formatting, repo tests), and each maps to a specific acceptance criterion."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Python source file, not producing structured data output."
+      "reason": "This task involves fixing Python source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the file (gradio/chat_interface.py), the class (ChatInterface), and describes the exact mechanism: 'should not be registered as an additional trigger in the stop-events setup' and 'via a .then() step within the example chain'. This goes beyond naming the buggy file and describes the specific code patterns that need to change."
+      "reason": "The instruction names the exact file (gradio/chat_interface.py), the exact class (ChatInterface), and gives very specific implementation guidance: 'should not be registered as an additional trigger in the stop-events setup', 'via a .then() step within the example chain', and 'collection of events eligible for cancellation should only include the example event when examples actually execute.' This goes well beyond identifying what's broken and into specifying the exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

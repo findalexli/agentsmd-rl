@@ -1,0 +1,70 @@
+# Evaluation manifest for electric-sql/electric#3961
+# fix(typescript-client): prevent handle -next suffix accumulation on repeated 409s
+
+pr_metadata:
+  owner: electric-sql
+  repo: electric
+  number: 3961
+  title: "fix(typescript-client): prevent handle -next suffix accumulation on repeated 409s"
+  base_commit: deb2a61614678fac029773a56b618382fe5b70f2
+  merge_commit: 0031e81777c0a93ab90161be5e6d0e9c999e00d2
+
+checks:
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compiles without errors
+
+  - id: test_client_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: The client package builds successfully
+
+  - id: test_no_next_suffix_in_client
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: The client.ts file does not contain the buggy -next suffix patterns
+
+  - id: test_createCacheBuster_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: The createCacheBuster helper function exists in client.ts
+
+  - id: test_refetchCacheBuster_property
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: The #refetchCacheBuster property exists in the ShapeStream class
+
+  - id: test_repo_stylecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ESLint style check passes
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's unit tests for the typescript-client pass
+
+rubric:
+  - source: AGENTS.md
+    origin: agent_config
+    rule: |
+      Before making changes to `packages/typescript-client`, always read
+      `packages/typescript-client/SPEC.md` first. It is the single source of
+      truth for the ShapeStream state machine — invariants, constraints, state
+      transitions, and how they are enforced. Design fixes and features around
+      the spec's invariants rather than patching symptoms ad-hoc.
+    description: Agent should read SPEC.md before modifying TypeScript client
+    weight: 1
+
+  - source: AGENTS.md
+    origin: agent_config
+    rule: |
+      The specification covers 7 states, 10 events, 70 transition
+      combinations, 12 invariants (I0-I12), and 8 constraints (C1-C8).
+      Tests are derived from these invariants and constraints.
+    description: Agent should understand ShapeStream state machine invariants
+    weight: 1

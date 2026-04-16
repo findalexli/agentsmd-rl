@@ -67,6 +67,38 @@ rubric:
   evidence: 'The gold solution adds `LLMPromptEditOperationSerializer` and updates
     `LLMPromptPublishSerializer` with detailed `help_text` for all new fields (`old`,
     `new`, `edits`, `prompt`) to ensure the OpenAPI '
+- rule: Every field has help_text
+  source:
+    path: .agents/skills/improving-drf-endpoints/SKILL.md
+    lines: '49'
+  source_text: 1. **Every field has `help_text`** — describes purpose, format, constraints,
+    valid values
+  evidence: 'The gold diff explicitly defines help_text for all new serializer fields:
+    ''old'' and ''new'' in LLMPromptEditOperationSerializer, as well as ''prompt''
+    and ''edits'' in LLMPromptPublishSerializer.'
+  category: A
+  verification: llm_judge
+- rule: Prefer explicit error handling with typed errors
+  source:
+    path: AGENTS.md
+    lines: '97'
+  source_text: '- Error handling: Prefer explicit error handling with typed errors'
+  evidence: The gold diff creates a new typed error class LLMPromptEditError (a dataclass
+    with message and edit_index fields) to handle validation failures, rather than
+    raising generic or untyped exceptions.
+  category: A
+  verification: llm_judge
+- rule: Prefer try-except blocks for handling exceptions in business logic and views
+  source:
+    path: .cursor/rules/django-python.mdc
+    lines: '24'
+  source_text: '- Prefer try-except blocks for handling exceptions in business logic
+    and views.'
+  evidence: The update_by_name view method uses a try-except block to catch LLMPromptEditError
+    (raised by the business logic in apply_prompt_edits) and transform it into an
+    HTTP 400 Bad Request response.
+  category: A
+  verification: llm_judge
 config_edits:
 - path: products/llm_analytics/skills/skills-store/SKILL.md
   tier: 1
@@ -99,6 +131,41 @@ distractors:
     in the serializers and service layer. It might be tempted to run `mypy` to verify
     these types, which would violate the rule and waste time/hang the session.
   severity: medium
+- rule: No bare JSONField
+  source:
+    path: .agents/skills/improving-drf-endpoints/SKILL.md
+    lines: '51'
+  source_text: 3. **No bare `JSONField()`** — create a custom field class with `@extend_schema_field(TypedSchema)`
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff modifies an existing bare JSONField in LLMPromptPublishSerializer
+    to add required=False. Following this rule would lead an agent to unnecessarily
+    refactor the existing field, expanding the scope of the change and potentially
+    breaking compatibility.
+  severity: medium
+- rule: Keep business logic in models and forms
+  source:
+    path: .cursor/rules/django-python.mdc
+    lines: '37'
+  source_text: '- Keep business logic in models and forms; keep views light and focused
+    on request handling.'
+  collision_type: architecture_boundary
+  why_distracting: The codebase strictly uses a service-layer pattern (e.g., apply_prompt_edits
+    in posthog/api/services/llm_prompt.py). This rule incorrectly advises that business
+    logic belongs in models or forms, which would conflict with the established architectural
+    boundary.
+  severity: high
+- rule: Error responses are typed
+  source:
+    path: .agents/skills/improving-drf-endpoints/SKILL.md
+    lines: '64'
+  source_text: 11. **Error responses are typed** — use `OpenApiResponse(response=ErrorSerializer)`,
+    not `OpenApiTypes.OBJECT`
+  collision_type: scope_ambiguity
+  why_distracting: The existing update_by_name view already returns untyped dictionary
+    error responses. Applying this rule to type the new LLMPromptEditError response
+    would require an out-of-scope refactoring of the entire view's error handling
+    to maintain consistency.
+  severity: low
 hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines
   (terse, no high-level explanations), while `AGENTS.md` provides specific architectural
   rules for PostHog, such as how to handle DRF serializers and OpenAPI schemas. The

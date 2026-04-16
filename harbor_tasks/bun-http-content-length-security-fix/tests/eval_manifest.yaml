@@ -1,0 +1,194 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 28838
+  base_commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+  merge_commit: "196ed8a1bd4d5c9915e71816ce64a6a281eee23e"
+  description: "http: reject conflicting duplicate Content-Length headers"
+
+# Track 1: Hard tests (binary pass/fail via test.sh)
+checks:
+  # Config edit checks (f2p) - These test the documentation/script additions
+  - id: claude_md_documents_pr_comments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must document the pr:comments script in a Reading PR Feedback section"
+
+  - id: package_json_has_pr_comments_script
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json must have the pr:comments script entry pointing to scripts/pr-comments.ts"
+
+  - id: pr_comments_script_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scripts/pr-comments.ts must exist with gh api, GraphQL, and thread state handling"
+
+  # Code fix checks (f2p) - These test the HTTP security fix
+  - id: httpparser_has_duplicate_content_length_fix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "HttpParser.h must implement RFC 9112 6.3 duplicate Content-Length validation"
+
+  - id: request_smuggling_test_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "request-smuggling.test.ts must have tests for duplicate Content-Length headers"
+
+  # Pass-to-pass checks (structural validation)
+  - id: http_parser_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "HttpParser.h should have valid C++ syntax (balanced braces, valid namespace)"
+
+  - id: claude_md_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "CLAUDE.md should be valid markdown"
+
+  - id: package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "package.json should be valid JSON with scripts section"
+
+  - id: pr_comments_script_typescript_valid
+    type: pass_to_pass
+    origin: static
+    description: "pr-comments.ts should have valid TypeScript syntax"
+
+# Track 2: Config edits (extracted from solve.sh patch)
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |
+      ## Reading PR Feedback
+
+      `gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.
+
+      When you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).
+
+      ```bash
+      bun run pr:comments                    # current branch's PR
+      bun run pr:comments 28838              # by PR number
+      bun run pr:comments '#28838'           # also works
+      bun run pr:comments https://github.com/oven-sh/bun/pull/28838
+
+      # Machine-readable output for jq pipelines — one object per entry with
+      # { when, user, kind, location?, body, url?, resolved?, outdated? }.
+      # resolved/outdated come from GraphQL reviewThreads and are present only
+      # on line comments / replies whose thread state was successfully fetched
+      # (omitted on issue comments, review verdicts, and on GraphQL fetch
+      # failure), so `resolved == false` unambiguously means "confirmed open
+      # thread". No header, no truncation. The PR is optional here too
+      # (defaults to the current branch's PR).
+      bun run pr:comments --json | jq '.[] | select(.user == "Jarred-Sumner")'
+      bun run pr:comments --json | jq '[.[] | select(.resolved == false)]'   # still open
+      ```
+    gold_removed: ""
+
+  - path: "package.json"
+    tier: 1
+    gold_added: '"pr:comments": "bun scripts/pr-comments.ts",'
+    gold_removed: ""
+
+  - path: "scripts/pr-comments.ts"
+    tier: 1
+    gold_added: "<new file: 413 lines of TypeScript for PR comment fetching>"
+    gold_removed: ""
+
+  - path: "packages/bun-uws/src/HttpParser.h"
+    tier: 2
+    gold_added: |
+      /* RFC 9110 8.6 + RFC 9112 6.3: locate the Content-Length header and, in the
+       * same pass, verify every Content-Length header carries the same non-empty
+       * value. A single empty value or multiple differing values are ambiguous and
+       * must be rejected to prevent request smuggling. The bloom filter short-circuits
+       * the common "no Content-Length" case. */
+      std::string_view contentLengthString;
+      if (req->bf.mightHave("content-length")) {
+          for (HttpRequest::Header *h = req->headers; (++h)->key.length(); ) {
+              if (h->key.length() == 14 && !strncmp(h->key.data(), "content-length", 14)) {
+                  if (contentLengthString.data() == nullptr) {
+                      if (h->value.length() == 0) {
+                          return HttpParserResult::error(HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH);
+                      }
+                      contentLengthString = h->value;
+                  } else if (h->value.length() != contentLengthString.length() ||
+                             strncmp(h->value.data(), contentLengthString.data(), contentLengthString.length())) {
+                      return HttpParserResult::error(HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH);
+                  }
+              }
+          }
+      }
+    gold_removed: |
+      const std::string_view contentLengthString = req->getHeader("content-length");
+
+  - path: "test/js/bun/http/request-smuggling.test.ts"
+    tier: 2
+    gold_added: "<3 new test cases for duplicate Content-Length handling>"
+    gold_removed: ""
+
+# Track 3: Positive rubric — conventions the gold solution FOLLOWS
+rubric:
+  - rule: "Follow existing C++ code style in HttpParser.h (spacing, naming, comments)"
+    source:
+      path: "packages/bun-uws/src/HttpParser.h"
+      lines: "1-50"
+      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+    evidence: "Gold fix uses same brace style, indentation, and comment format as surrounding code"
+    category: style
+    verification: llm_judge
+
+  - rule: "TypeScript scripts should use bun:$ template literal for shell commands"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+    evidence: "Gold uses Bun's $ template literal from 'bun' import for shell execution"
+    category: api_usage
+    verification: llm_judge
+
+  - rule: "New tests should be added to existing test files rather than creating new files"
+    source:
+      path: "AGENTS.md"
+      lines: "50-70"
+      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+    evidence: "Gold adds tests to existing request-smuggling.test.ts rather than creating new file"
+    category: test_organization
+    verification: llm_judge
+
+  - rule: "Scripts added to package.json should match existing script naming conventions"
+    source:
+      path: "package.json"
+      lines: "1-40"
+      commit: "5b3ca83b84f90ccc9c71005db0ab9bd87850bc70"
+    evidence: "Gold uses colon-separated naming (pr:comments) matching existing ci:errors, ci:logs pattern"
+    category: naming
+    verification: llm_judge
+
+# Track 4: Distractors — conventions that create COLLISIONS
+distractors:
+  - rule: "Prefer separate test files for each security vulnerability"
+    source:
+      path: "AGENTS.md"
+      lines: "1-10"
+    collision_type: rule_conflict
+    why_distracting: "Conflicts with test organization rule; gold adds to existing file, this distractor suggests creating new file"
+    severity: medium
+
+  - rule: "Use Python for build scripts instead of TypeScript"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+    collision_type: architecture_boundary
+    why_distracting: "Bun project uses TypeScript for scripts; Python suggestion is wrong for this codebase"
+    severity: high
+
+  - rule: "Document new scripts at the top of CLAUDE.md rather than the end"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+    collision_type: scope_ambiguity
+    why_distracting: "Gold places at end in 'Reading PR Feedback' section; premature placement distractor"
+    severity: low

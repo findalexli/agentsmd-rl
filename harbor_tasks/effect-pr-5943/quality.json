@@ -1,60 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions the package @effect/sql-pg, the file PgClient.ts (implicitly via the package), the reserveRaw function pattern, the specific error message 'Failed to acquire connection for transaction', the cause 'No client returned', the requirement for 'function' declaration of onError before pool.connect, and removal of client! assertions. All test-asserted specifics (literal strings, function names, structural requirements) are discoverable from instruction.md."
+      "reason": "instruction.md names the file (packages/sql-pg/src/PgClient.ts), function (reserveRaw), and exact literal strings 'Failed to acquire connection for transaction' and 'No client returned' that tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'The onError handler must be defined using a function declaration (not an arrow function or const assignment) and must appear in the source code before the pool.connect call', and specifies exact SqlError message/cause strings. This goes beyond describing what's broken and prescribes the exact fix structure, leaving little reasoning for the agent."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and required behavior (null check, early return, SqlError message) without dictating exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_onerror_defined_before_callback requires 'function onError' to appear before 'pool.connect' in source text; test_sql_error_with_no_client_cause requires the literal string 'No client returned'. A correct alternative fix using a const arrow function for onError, or a different error message like 'Client is null', would fail these tests despite being functionally correct."
+      "reason": "test_onerror_defined_before_callback requires onError to be defined BEFORE pool.connect, but a correct alternative fix could define onError inline inside the callback after the null check; this is an implementation detail not required by instruction.md."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_no_unsafe_client_assertion, test_early_return_error_handling, test_onerror_defined_before_callback, and test_sql_error_with_no_client_cause all exclusively use string/text matching on source code (reading file, checking substrings). Only test_typescript_check, test_build_package, test_repo_circular, and test_repo_codegen execute code. The fail_to_pass tests are all pure text inspection with no behavioral execution."
+      "reason": "Most fail_to_pass tests (test_no_unsafe_client_assertion, test_early_return_error_handling, test_onerror_defined_before_callback, test_sql_error_with_no_client_cause) are text inspections of source code via _get_reserve_raw_code; only build/typecheck are executed but those don't verify the behavior fix."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail_to_pass tests check for specific code changes (removal of 'client!', presence of '!client' check, 'function onError' before pool.connect, 'No client returned' string). A stub or no-op implementation would not pass these since they verify specific text changes in the source file that don't exist in the base commit."
+      "outcome": "fail",
+      "reason": "test_early_return_error_handling's 'return' check would pass trivially since most functions contain 'return'; test_sql_error_with_no_client_cause only greps for the literal string which is spelled out in the instruction, so an agent just inserting the string would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md (no non-null assertions, explicit null client check, specific SqlError message/cause, onError as function declaration before pool.connect) are tested by corresponding test functions."
+      "reason": "Tests cover the no-unsafe-assertion, null-client check, SqlError message, and 'No client returned' cause required by instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_no_unsafe_client_assertion, test_early_return_error_handling, etc.), have docstrings explaining the rationale and whether they are pass_to_pass or fail_to_pass, and are logically grouped."
+      "reason": "Tests are separate well-named functions with docstrings distinguishing pass_to_pass vs fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output involved."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths, package names, and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation requirements: 'onError handler must be defined using a function declaration', 'must appear in the source code before the pool.connect call', exact SqlError message and cause strings. This goes well beyond naming the buggy module and effectively dictates the exact code structure of the fix."
+      "outcome": "pass",
+      "reason": "Instruction names the file and function, which is appropriate given localization is not the point of this task; it does not name exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code fix task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

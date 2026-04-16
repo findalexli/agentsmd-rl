@@ -24,6 +24,5 @@ Accessing `server.url` when the URL is invalid should throw a proper JavaScript 
 
 When the fix is applied:
 1. Accessing `server.url` with an invalid URL must throw a JavaScript exception instead of crashing
-2. The git diff for the fix should show additions only (no deletions of existing code)
-3. The success path through the code must still reach `jsCast<JSDOMURL*>`, then `reportExtraMemoryAllocated`, then `RELEASE_AND_RETURN` — in that order after `toJSNewlyCreated`
-4. The file `src/bun.js/bindings/BunString.cpp` must continue to include `"root.h"` at the top
+2. The fix must be a pure insertion — no existing lines may be modified or removed
+3. The fix must be applied to the C++ binding function that converts BunString to a JS URL object. The function has a throw scope and performs a C-style cast after creating the JS object. A guard is needed to return early if an exception is pending, preventing the cast from executing on an invalid value.

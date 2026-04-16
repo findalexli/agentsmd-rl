@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md: test_config_command_declared checks for a regex pattern `// config[\\s\\S]{0,40}config,` requiring exact comment formatting; test_program_routes_config checks for exact string 'configure' as method name dispatched via handleSessionCommand; test_configure_method checks for exact property path `this._options.config`; test_session_list_returns_map checks that list() returns a Map (not mentioned in instructio"
+      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example: test_config_command_declared checks for the exact regex pattern `declareCommand({` with `name: 'config'` and a comment `// config` followed by `config,` in the array. test_program_routes_config checks for `handleSessionCommand` routing and the exact pattern `case 'config':`. test_session_manager_has_configure checks for a `configure()` method with specific steps (resolveSessionName, c"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation steps like 'Update this._options.config with the new config path', 'dispatch the config subcommand to a configure() method', and 'set default viewport dimensions... with contextOptions with a viewport of { width: 1280, height: 720 }'. These tell the agent exactly WHAT to change and HOW, not just what's broken."
+      "reason": "The instruction explicitly states exact implementation details: 'The Category type in command.ts includes a config member', 'A config command is declared in commands.ts with name: config and category: config', 'The commands array in commands.ts includes the config command (with a comment // config above it)', specific file paths, exact viewport dimensions {width: 1280, height: 720}, exact contextOptions key structure, and exact SKILL.md section content. This tells the developer exactly WHAT to c"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex patterns that enforce gold-specific implementation details: test_config_command_declared requires `// config` comment with specific proximity to `config,`; test_program_routes_config requires exact string matching for handleSessionCommand dispatch pattern; test_configure_method requires exact property names like `this._options.config` and specific method structure; test_session_list_returns_map enforces returning Map instead of array which is gold-specific refactoring not require"
+      "reason": "Tests use regex patterns that enforce gold-specific implementation details. test_config_command_declared requires the exact pattern `// config[\\s\\S]{0,40}config,` (comment format). test_help_text_updated asserts exact strings like 'create a session with custom config' and 'create a headed session' that are gold-patch-specific rewording not mentioned in instructions. test_session_list_returns_map enforces the internal refactor of list() returning Map instead of array, which is an implementation c"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are text/regex matching on source files (e.g., test_config_category_in_type reads source and regex-matches Category type, test_config_command_declared regex-matches declareCommand blocks, test_help_has_configuration_category regex-matches categories array). No test actually imports, compiles, or executes the code to verify runtime behavior."
+      "reason": "Nearly all fail-to-pass tests are text/pattern matching on source files: test_config_category_in_type reads command.ts and regex-matches the Category type string; test_config_command_declared regex-matches commands.ts source; test_help_has_configuration_category regex-matches helpGenerator.ts; test_program_routes_config regex-matches program.ts; test_session_manager_has_configure regex-matches program.ts. No test actually imports, compiles, or executes the TypeScript code to verify runtime behav"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings/patterns that don't exist in the base commit (e.g., 'config' in Category type, config command declaration, configure method). A stub/no-op wouldn't add these patterns to the source files."
+      "reason": "The fail-to-pass tests check for specific patterns that don't exist in the base commit (e.g., 'config' in Category type, config command declaration, Configuration category in helpGenerator). A stub or no-op wouldn't add these patterns to the source files, so the tests would fail."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "test_session_list_returns_map tests that list() returns a Map instead of an array, which is not mentioned anywhere in instruction.md. The instruction says nothing about changing the return type of the list method."
+      "outcome": "pass",
+      "reason": "The tests cover the main requirements from instruction.md: Category type includes config, config command declared, helpGenerator has Configuration category, program routes config command, session manager has configure method, browser config has viewport 1280x720, and SKILL.md has Configuration section."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates pass_to_pass static, Gates pass_to_pass repo_tests, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-named (test_config_category_in_type, test_config_command_declared, etc.), grouped with comments separating 'Gates (pass_to_pass, static)', 'Gates (pass_to_pass, repo_tests)', and 'Fail-to-pass (pr_diff)' sections, and each has a docstring explaining what it checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data output like JSON/CSV/API/DB; it's about modifying TypeScript source code and documentation."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it modifies TypeScript source files and markdown documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, and variable names in instruction.md appear correct and consistent with the test file references."
+      "reason": "File paths, command names, and variable names in instruction.md are consistent with those in the test file and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction specifies exact internal implementation details: 'Update this._options.config', 'route it through handleSessionCommand passing config as the subcommand', 'configure() method on the session manager', and exact viewport dimensions {width: 1280, height: 720}. These name specific internal properties and methods."
+      "reason": "instruction.md names exact files (command.ts, commands.ts, helpGenerator.ts, browser/config.ts, SKILL.md) and specifies exact code patterns like 'with a comment // config above it', exact key names like 'contextOptions' with 'viewport' of '{ width: 1280, height: 720 }', and exact section headers. This goes well beyond describing the task domain and reveals the precise localization of changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

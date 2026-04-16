@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests check specific details not mentioned in instruction.md: the exact ordering of setup_model() before setup_hybrid_cp() calls, the existence of `parallel_dims.cp_enabled` guard, ruff lint/format compliance, TOML config validity, and the specific file path `src/prime_rl/trainer/sft/train.py`. While the file path is mentioned, the instruction never mentions that setup_hybrid_cp must be moved AFTER setup_model (it only says it crashes with NameError), nor does it mention formatting/linting r"
+      "outcome": "pass",
+      "reason": "instruction.md names the file src/prime_rl/trainer/sft/train.py, the train() function, and the key calls (setup_model, setup_hybrid_cp, setup_ckpt_managers, substitute_ring_attn) that tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md states 'The setup_hybrid_cp() call must be guarded by if parallel_dims.cp_enabled: so it only runs when CP is active' \u2014 this directly describes the fix, including the exact guard condition to add. It also mentions setup_model() and setup_hybrid_cp() relationship, making the solution obvious."
+      "outcome": "pass",
+      "reason": "Instruction describes the crash symptom (NameError with cp>1) and constraints but doesn't state the fix (moving setup_hybrid_cp after setup_model)."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_model_assigned_before_hybrid_cp, test_hybrid_cp_after_model_init) check that setup_hybrid_cp appears after setup_model by line number. An alternative valid fix could inline the setup_hybrid_cp logic directly rather than calling the function, or rename it, or restructure differently \u2014 these would fail the tests that specifically look for a call named 'setup_hybrid_cp'. Additionally, tests check for `parallel_dims.cp_enabled` as a specific guard condition."
+      "outcome": "pass",
+      "reason": "Tests check ordering (model assigned before setup_hybrid_cp call) and preservation of named calls, allowing multiple valid reorderings; constraints (no try/except, \u226520 statements) are reasonable behavioral requirements."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute Python scripts via subprocess that parse the AST and perform dataflow analysis, run ruff lint/format checks, and compile the file. They go beyond simple text matching by actually parsing and analyzing code structure."
+      "reason": "Tests parse AST, run subprocesses (py_compile, ruff), and simulate execution order tracking assignments vs call sites."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_model_assigned_before_hybrid_cp, test_hybrid_cp_after_model_init) would fail on the base commit where setup_hybrid_cp is called before model is assigned. A stub/no-op change would not pass these tests since they check the actual ordering of function calls in the AST."
+      "reason": "Stub can't pass: f2p test_model_defined_before_hybrid_cp requires actual reordering of calls in train()."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction says the trainer crashes with NameError when CP is enabled due to ordering issues. The tests verify that setup_hybrid_cp is called after setup_model (the model variable is assigned before use), which directly tests the described behavior."
+      "reason": "Tests cover the NameError fix (ordering), retention of named calls, ruff lint/format, and the stated constraints."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear grouping comments (Gates pass_to_pass, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped under section comments (Gates pass_to_pass, Fail-to-pass pr_diff) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Python source file, not producing structured data output."
+      "reason": "Task is a code bug fix, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and symbol names in instruction.md match the repo and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact functions involved (setup_model, setup_hybrid_cp), their relationship, the exact guard condition ('if parallel_dims.cp_enabled:'), and the specific file. This goes beyond describing what's broken and essentially describes the fix implementation."
+      "outcome": "pass",
+      "reason": "File is named but exact buggy line isn't; localization within train() remains for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

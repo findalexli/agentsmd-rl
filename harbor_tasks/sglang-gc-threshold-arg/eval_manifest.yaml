@@ -1,76 +1,120 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21481
-  base_commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
-  merge_commit: "38ad2517384cf59d01be1f42ca9ce2f5a94d1b2a"
-
+  base_commit: 4e905febd2f9e96b4c114530a2379b084ad791af
+  merge_commit: 38ad2517384cf59d01be1f42ca9ce2f5a94d1b2a
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files (server_args.py, engine.py) parse without syntax errors"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files (server_args.py, engine.py) parse without syntax
+    errors
+- id: gc_function_sets_thresholds
+  type: fail_to_pass
+  origin: pr_diff
+  description: GC-setting function calls gc.set_threshold correctly for 1, 2, and
+    3 args plus None no-op
+- id: cli_parser_accepts_gc_threshold
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI parser accepts --gc-threshold with varying numbers of int arguments
+    and defaults to None
+- id: validation_rejects_invalid_gc_threshold
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_server_args rejects gc_threshold with 0 or 4+ values
+- id: server_args_structures_intact
+  type: pass_to_pass
+  origin: static
+  description: ServerArgs class and add_cli_args/check_server_args functions still
+    exist
+- id: launch_subprocesses_intact
+  type: pass_to_pass
+  origin: static
+  description: _launch_subprocesses function still exists in engine.py
+- id: gc_invoked_in_launch_subprocesses
+  type: fail_to_pass
+  origin: pr_diff
+  description: GC threshold logic is invoked within _launch_subprocesses
+- id: gc_threshold_in_class_and_cli
+  type: fail_to_pass
+  origin: agent_config
+  description: gc_threshold appears in both ServerArgs class body and add_cli_args
+    (ordering rule)
+  source:
+    path: python/sglang/srt/server_args.py
+    lines: 287-290
+    commit: 4e905febd2f9e96b4c114530a2379b084ad791af
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on modified files
+- id: test_repo_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files compile without syntax errors
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: isort import ordering passes on modified files
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Black formatting check passes on modified files
+rubric: []
+distractors:
+- rule: ServerArgs and config parameters should be edited in runtime/server_args.py
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: '43'
+  source_text: '├── server_args.py      # ServerArgs (all CLI/config params)'
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with adding a new CLI argument to ServerArgs might
+    incorrectly edit python/sglang/multimodal_gen/runtime/server_args.py based on
+    this rule, but the PR correctly edits python/sglang/srt/server_args.py which belongs
+    to the core LLM runtime.
+  severity: high
+- rule: The ServerArgs class is located at runtime/server_args.py
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: '60'
+  source_text: '| `ServerArgs` | `runtime/server_args.py` | All config params |'
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with modifying ServerArgs might incorrectly target
+    the multimodal diffusion subsystem instead of the srt engine where the actual
+    changes belong.
+  severity: high
+- rule: ServerArgs (all CLI/config params) is located in `runtime/server_args.py`,
+    and entrypoints are in `runtime/entrypoints/`.
+  source:
+    path: /workspace/repo/python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 36, 43, 60
+  source_text: '├── entrypoints/        # CLI (generate/serve), HTTP server, Python
+    API (DiffGenerator)
 
-  - id: gc_function_sets_thresholds
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GC-setting function calls gc.set_threshold correctly for 1, 2, and 3 args plus None no-op"
+    ...├── server_args.py      # ServerArgs (all CLI/config params)
 
-  - id: cli_parser_accepts_gc_threshold
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLI parser accepts --gc-threshold with varying numbers of int arguments and defaults to None"
-
-  - id: validation_rejects_invalid_gc_threshold
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check_server_args rejects gc_threshold with 0 or 4+ values"
-
-  - id: server_args_structures_intact
-    type: pass_to_pass
-    origin: static
-    description: "ServerArgs class and add_cli_args/check_server_args functions still exist"
-
-  - id: launch_subprocesses_intact
-    type: pass_to_pass
-    origin: static
-    description: "_launch_subprocesses function still exists in engine.py"
-
-  - id: gc_invoked_in_launch_subprocesses
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GC threshold logic is invoked within _launch_subprocesses"
-
-  - id: gc_threshold_in_class_and_cli
-    type: fail_to_pass
-    origin: agent_config
-    description: "gc_threshold appears in both ServerArgs class body and add_cli_args (ordering rule)"
-    source:
-      path: "python/sglang/srt/server_args.py"
-      lines: "287-290"
-      commit: "4e905febd2f9e96b4c114530a2379b084ad791af"
-
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on modified files"
-
-  - id: test_repo_compileall
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files compile without syntax errors"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "isort import ordering passes on modified files"
-
-  - id: test_repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Black formatting check passes on modified files"
-# Rubric rules removed - they were PR instructions extracted from source code comments,
-# but the judge is designed for config file edits, not source code style evaluation.
-# The key ordering constraint is already verified by test_gc_threshold_in_class_and_cli.
+    ...| `ServerArgs` | `runtime/server_args.py` | All config params |'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies `server_args.py` and `entrypoints/engine.py` in
+    the LLM runtime (`python/sglang/srt/`). An agent working on this task might mistakenly
+    apply the new argument changes to the multimodal generation subsystem (`python/sglang/multimodal_gen/runtime/server_args.py`)
+    because this config file maps identical file and folder names.
+  severity: high
+- rule: Write tests for argument parsing and config validation using unittest.mock.patch
+    / MagicMock in test/registered/unit/.
+  source:
+    path: /workspace/repo/.claude/skills/write-sglang-test/SKILL.md
+    lines: '16'
+  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't
+    need a server / engine launch (middleware, request routing, config validation,
+    argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in
+    `test/registered/unit/`.
+  collision_type: rule_conflict
+  why_distracting: The PR adds new argument parsing and config validation logic (`gc_threshold`)
+    to `server_args.py`. An agent following this rule would waste effort attempting
+    to write unit tests for the argument parsing in `test/registered/unit/`, but the
+    gold diff successfully completes the change by ignoring this rule and not adding
+    tests.
+  severity: medium

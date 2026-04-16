@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings like 'export default function virtualModulePlugin({ settings }' , 'const config = settings.config;', 'const clientConfigCode =', 'return { code: clientConfigCode };', 'applyToEnvironment(environment)', 'ASTRO_VITE_ENVIRONMENT_NAMES.astro', 'ASTRO_VITE_ENVIRONMENT_NAMES.ssr', 'astroVirtualManifestPlugin({ settings })', 'JSON.stringify(config.base)', 'JSON.stringify(config.site)'. While the instruction mentions many of these concepts, it does not specify exact va"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_client_config_inlines_values asserts 'const clientConfigCode =' and 'return { code: clientConfigCode };' as exact strings; test_virtual_module_accepts_settings asserts 'export default function virtualModulePlugin({ settings }' and 'const config = settings.config;' as exact strings; test_create_vite_passes_settings asserts 'astroVirtualManifestPlugin({ settings })' exactly. These exact variable names and"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'The plugin function must receive an object containing settings', 'The code for astro:config/client must be pre-computed and stored in a variable', 'The handler for astro:config/client must return an object containing a code property set to this pre-computed code', 'Config values like base, site, and other properties must be serialized using JSON.stringify', 'This function receives an environment object and checks if the environment name "
+      "reason": "Instruction.md explicitly states implementation details like 'The handler should obtain configuration values directly from settings instead of importing from the manifest module', 'implement applyToEnvironment(environment)', use specific utilities 'fromRoutingStrategy, toFallbackType, toRoutingStrategy' from '../core/app/common.js', and 'The plugin that creates the virtual modules needs access to the Astro settings object'. This goes well beyond describing what's broken and prescribes the exact "
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'const clientConfigCode =' (test_client_config_inlines_values), 'return { code: clientConfigCode };' (same test), 'export default function virtualModulePlugin({ settings }' (test_virtual_module_accepts_settings), 'const config = settings.config;' (same test), 'applyToEnvironment(environment)' (test_serialized_manifest_restricted_to_server). An alternative correct fix using different variable names (e.g., 'const precomputedClientCode') or different structure (e.g.,"
+      "reason": "Tests assert gold-specific implementation details: test_virtual_module_accepts_settings checks for exact string 'export default function virtualModulePlugin({ settings }' and 'const config = settings.config;'; test_client_config_inlines_values checks for 'const clientConfigCode =' and 'return { code: clientConfigCode };'; test_create_vite_passes_settings checks for exact string 'astroVirtualManifestPlugin({ settings })'. An alternative correct fix using different variable names (e.g., 'precomput"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_virtual_module_accepts_settings, test_client_config_inlines_values, test_serialized_manifest_restricted_to_server, test_create_vite_passes_settings, test_client_config_exports_correct_properties) are ALL string-matching tests that read file content and assert substrings. None of them import, call, or execute the code. They are purely 'assert X in open(path).read()' style tests."
+      "reason": "The fail-to-pass tests (test_virtual_module_accepts_settings, test_client_config_inlines_values, test_serialized_manifest_restricted_to_server, test_create_vite_passes_settings, test_client_config_exports_correct_properties) are all purely text-matching tests using 'assert X in file.read_text()'. None of them import, call, or execute the code. The pass-to-pass tests do execute subprocesses (build, lint, etc.), but all f2p tests are pure string matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in source files. An agent could simply add comments or dead code containing the expected strings (e.g., '// const clientConfigCode = ...') without implementing the actual fix, and the string-matching tests would pass. No behavioral execution is tested in the f2p tests."
+      "reason": "A stub implementation that simply writes the expected strings into the files (without actually implementing the fix logic) would pass all f2p tests, since they only check for string presence in source files. For example, test_virtual_module_accepts_settings just checks that certain strings appear in virtual-module.ts."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says 'Run astro build - it should complete successfully' and 'The client script should have access to the config values at runtime', but no f2p test actually runs an astro build with a component that imports astro:config/client, or verifies runtime access to config values."
+      "reason": "Instruction.md says 'Run astro build - it should complete successfully without failed to resolve import errors' and 'The client script should have access to the config values at runtime'. There is no test that actually builds an Astro project with a <script> importing astro:config/client and verifies the build succeeds or that runtime values are correct."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names, docstrings explaining fail-to-pass vs pass-to-pass, and clear assertion messages."
+      "reason": "Tests are well-structured with descriptive names, docstrings explaining each test's purpose, and clear separation between fail-to-pass and pass-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (virtual-module.ts, serialized.ts, create-vite.ts), exact function names (fromRoutingStrategy, toFallbackType, toRoutingStrategy), exact variable patterns ('const clientConfigCode'), and exact implementation approaches (pre-computed variable, JSON.stringify). This goes well beyond describing what's broken."
+      "reason": "Instruction.md names specific files and functions: 'applyToEnvironment(environment)', utilities 'fromRoutingStrategy, toFallbackType, toRoutingStrategy' from '../core/app/common.js', 'astroVirtualManifestPlugin must receive settings', and specific environment name constants. These are implementation-level details that leak the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

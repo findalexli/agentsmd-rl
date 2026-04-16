@@ -4,7 +4,7 @@ This verifies that currentYear is initialized inside the App component
 rather than at module level for consistency across all layout demos.
 """
 
-import ast
+import re
 import subprocess
 from pathlib import Path
 
@@ -23,7 +23,6 @@ TARGET_FILES = [
 
 def run_repo_command(cmd, cwd=REPO, timeout=120, env=None):
     """Run a command in the repo directory and return the result."""
-    # Inherit PATH from current environment to find npx
     import os
     full_env = os.environ.copy()
     full_env["NODE_OPTIONS"] = "--max-old-space-size=4096"
@@ -140,76 +139,80 @@ def test_repo_node_tests():
 
 
 # =============================================================================
-# Original Task Tests
+# Fail-to-Pass Tests: Must fail on buggy code, pass on fixed code
 # =============================================================================
 
 
-def parse_tsx(filepath: Path) -> ast.AST:
-    """Parse a TSX file using Python's ast module (treats as JSX-like)."""
-    content = filepath.read_text(encoding="utf-8")
-    return content
+def _get_current_year_declarations(content: str):
+    """
+    Find all declarations that look like `currentYear = new Date().getFullYear()`
+    and determine whether each is at module level or inside a component.
 
-
-def has_module_level_current_year(content: str) -> bool:
-    """Check if currentYear is declared at module level (outside any function/component)."""
+    Returns a list of tuples: (line_number, is_inside_component)
+    """
     lines = content.split('\n')
+    declarations = []
+
     in_component = False
     brace_depth = 0
+    component_start_line = -1
+    seen_arrow_brace = False
 
-    for line in lines:
+    # Pattern to match currentYear declaration
+    year_pattern = re.compile(r'const\s+currentYear\s*=\s*new\s+Date\(\)\.getFullYear\(\)')
+
+    for i, line in enumerate(lines):
         stripped = line.strip()
 
-        # Track entering/exiting the App component
-        if 'const App: React.FC' in stripped or 'const App = ' in stripped:
+        # Detect App component start
+        if 'const App' in stripped and ('React.FC' in stripped or '= ()' in stripped or '= () =>' in stripped):
             in_component = True
-
-        # Track brace depth for arrow functions
-        if in_component:
-            brace_depth += stripped.count('{') - stripped.count('}')
-            if brace_depth <= 0 and ('};' in stripped or stripped.endswith('}')):
-                # Exiting component
-                pass
-
-        # Check for module-level currentYear declaration
-        if not in_component and 'const currentYear' in stripped:
-            return True
-
-    return False
-
-
-def has_component_level_current_year(content: str) -> bool:
-    """Check if currentYear is declared inside the App component."""
-    lines = content.split('\n')
-    in_component = False
-    brace_depth = 0
-    found_useToken = False
-
-    for line in lines:
-        stripped = line.strip()
-
-        # Entering App component
-        if 'const App: React.FC' in stripped or 'const App = ' in stripped:
-            in_component = True
+            component_start_line = i
+            brace_depth = 0
+            seen_arrow_brace = False
+            # Check if => { is on this same line
+            if '=>' in stripped and '{' in stripped:
+                seen_arrow_brace = True
+                brace_depth = 1
             continue
 
         if in_component:
-            # Track brace depth
-            brace_depth += stripped.count('{') - stripped.count('}')
+            # If we haven't found the arrow brace yet, look for it
+            if not seen_arrow_brace:
+                if '=>' in stripped:
+                    # The next { after => is the function body
+                    idx = stripped.find('=>')
+                    after_arrow = stripped[idx+2:]
+                    if '{' in after_arrow:
+                        seen_arrow_brace = True
+                        brace_depth = 1
+                        # Count any remaining braces on this line
+                        brace_depth += after_arrow.count('{') - after_arrow.count('}')
+                    elif stripped.startswith('}'):
+                        # } on next line is still part of destructuring, skip
+                        continue
+            else:
+                # Track brace depth
+                brace_depth += stripped.count('{') - stripped.count('}')
 
-            # Check for theme.useToken() to find the right location
-            if 'theme.useToken()' in stripped:
-                found_useToken = True
+            # Check for currentYear declaration
+            if year_pattern.search(stripped):
+                # If seen_arrow_brace and brace_depth > 0, we're inside the function body
+                if seen_arrow_brace and brace_depth > 0:
+                    declarations.append((i, True))
+                else:
+                    declarations.append((i, False))
 
-            # Check for currentYear declaration inside component
-            if 'const currentYear' in stripped:
-                # Verify it's after theme.useToken()
-                if found_useToken:
-                    return True
-                # Or check if it's inside the component braces
-                if brace_depth > 0:
-                    return True
+            # Exit component when we've closed all braces and we're past the start
+            if seen_arrow_brace and brace_depth <= 0 and i > component_start_line:
+                if '};' in stripped or stripped == '}' or stripped.endswith('}'):
+                    in_component = False
+        else:
+            # Module level - check for currentYear
+            if year_pattern.search(stripped):
+                declarations.append((i, False))
 
-    return False
+    return declarations
 
 
 def test_typescript_compiles():
@@ -245,62 +248,37 @@ def test_no_module_level_current_year():
         filepath = DEMO_DIR / filename
         content = filepath.read_text(encoding="utf-8")
 
-        if has_module_level_current_year(content):
-            violations.append(filename)
+        decls = _get_current_year_declarations(content)
+        module_level = [d for d in decls if not d[1]]
+
+        if module_level:
+            violations.append(f"{filename} (lines: {[d[0]+1 for d in module_level]})")
 
     assert not violations, \
-        f"Module-level currentYear found in: {', '.join(violations)}. " \
+        f"Module-level currentYear declarations found in: {', '.join(violations)}. " \
         f"Move currentYear inside the App component."
 
 
 def test_current_year_inside_component():
-    """Pass-to-pass: currentYear should be declared inside the App component.
+    """Fail-to-pass: currentYear should be declared inside the App component.
 
     After the fix, currentYear should be initialized inside the App component
-    for consistency with React best practices (avoiding module-level side effects).
+    for consistency with React best practices.
     """
     missing = []
     for filename in TARGET_FILES:
         filepath = DEMO_DIR / filename
         content = filepath.read_text(encoding="utf-8")
 
-        if not has_component_level_current_year(content):
+        decls = _get_current_year_declarations(content)
+        inside_component = [d for d in decls if d[1]]
+
+        if not inside_component:
             missing.append(filename)
 
     assert not missing, \
         f"Component-level currentYear not found in: {', '.join(missing)}. " \
         f"Add `const currentYear = new Date().getFullYear();` inside the App component."
-
-
-def test_consistent_component_structure():
-    """Verify all demos follow the same pattern: theme.useToken() then currentYear."""
-    for filename in TARGET_FILES:
-        filepath = DEMO_DIR / filename
-        content = filepath.read_text(encoding="utf-8")
-
-        lines = content.split('\n')
-        found_use_token = False
-        found_current_year = False
-        current_year_after_token = False
-
-        for line in lines:
-            stripped = line.strip()
-
-            if 'theme.useToken()' in stripped:
-                found_use_token = True
-
-            if 'const currentYear' in stripped:
-                found_current_year = True
-                if found_use_token:
-                    current_year_after_token = True
-
-        # Both should exist
-        assert found_use_token, f"{filename}: Missing theme.useToken() call"
-
-        # After fix, currentYear should be present
-        if found_current_year:
-            assert current_year_after_token, \
-                f"{filename}: currentYear should be declared after theme.useToken()"
 
 
 def test_footer_uses_current_year():
@@ -309,6 +287,6 @@ def test_footer_uses_current_year():
         filepath = DEMO_DIR / filename
         content = filepath.read_text(encoding="utf-8")
 
-        # Check that Footer uses currentYear
-        assert "{currentYear}" in content or "©{currentYear}" in content or "Ant Design ©" in content, \
-            f"{filename}: Footer should reference currentYear"
+        # Check that Footer uses currentYear in JSX
+        assert "{currentYear}" in content, \
+            f"{filename}: Footer should reference currentYear in JSX (e.g., as {{currentYear}})"

@@ -2,57 +2,59 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific exports like 'export const scrollRestorationCache' and 'export const defaultGetScrollRestorationKey', specific event subscriptions like \"router.subscribe('onBeforeLoad'\", \"window.addEventListener('pagehide'\", and specific cache initialization patterns like 'cache.set((state) => { state[cacheKey] ||='. These literal strings are not mentioned in instruction.md, making them undiscoverable from the instruction alone."
+      "outcome": "pass",
+      "reason": "The instruction names the file path (packages/router-core/src/scroll-restoration.ts), the exported functions/constants (setupScrollRestoration, scrollRestorationCache, defaultGetScrollRestorationKey), the event subscriptions (onBeforeLoad, onRendered, scroll, pagehide), the cache initialization pattern (cache.set with state[cacheKey] ||=), and describes the buggy pattern (toIndex > fromIndex clearing cache). All assert'd specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (forward navigation doesn't restore scroll position) and gives hints about navigation direction and cache clearing, but does not specify the exact code to change or remove. A developer must still reason about what to modify."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'The scroll restoration cache should NOT be cleared when toIndex > fromIndex (forward navigation). The cache clearing logic that checks for forward navigation and deletes state[cacheKey] should be removed.' This directly tells the agent exactly what code to remove, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the absence of the specific variable name 'shouldClearCache' in the onRendered section (test_ignore_scroll_flag_handling). An alternative fix that renames the variable but keeps modified logic, or that changes the condition rather than removing the block entirely, would fail these tests even if it correctly fixes the bug."
+      "reason": "Tests assert on gold-specific implementation details: test_forward_navigation_does_not_clear_cache checks for the exact pattern 'const shouldClearCache' with 'toIndex > fromIndex', and test_ignore_scroll_flag_handling checks that 'shouldClearCache' string doesn't appear in the onRendered section. An alternative fix that renames the variable or changes the condition logic (e.g., keeping shouldClearCache but setting it to false for forward nav) would fail these regex-based tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_forward_navigation_does_not_clear_cache, test_scroll_restoration_preserves_cache_structure, test_ignore_scroll_flag_handling) are purely regex/string searches on source code files. They do not import, call, or execute the scroll restoration logic. While some pass-to-pass tests run builds/linting, the core behavioral verification is text-matching only."
+      "reason": "The fail-to-pass tests (test_forward_navigation_does_not_clear_cache, test_scroll_restoration_preserves_cache_structure, test_ignore_scroll_flag_handling, test_scroll_restoration_module_imports) are all purely text-matching via regex or string search on file contents. They never import, call, or execute the scroll restoration code. While pass-to-pass tests do run builds/linting, the core behavioral verification is entirely text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for the absence of specific buggy code patterns (shouldClearCache logic) and presence of cache initialization patterns. A stub or no-op implementation would not pass these tests since the original buggy code contains these patterns and must be actively removed."
+      "reason": "The f2p tests check for the absence of specific buggy code patterns (shouldClearCache with toIndex > fromIndex) and presence of required exports/patterns. A stub or no-op implementation would fail these tests because the buggy code exists in the repo at the checked-out commit and must be actively removed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes that forward navigation fails to restore scroll position, and the tests verify the removal of the cache-clearing logic on forward navigation and that the module structure remains intact, covering the described behavior."
+      "reason": "The instruction requires: (1) cache should not be cleared on forward navigation - tested by test_forward_navigation_does_not_clear_cache and test_ignore_scroll_flag_handling; (2) module exports preserved - tested by test_scroll_restoration_module_imports; (3) cache initialization preserved - tested by test_scroll_restoration_preserves_cache_structure. All described behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_forward_navigation_does_not_clear_cache, test_ignore_scroll_flag_handling), have docstrings explaining fail-to-pass vs pass-to-pass intent, and are logically grouped by concern."
+      "reason": "Tests are well-named (e.g., test_forward_navigation_does_not_clear_cache), have docstrings explaining fail-to-pass vs pass-to-pass, and are grouped logically by concern (bug fix verification, module structure, compilation, linting)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in scroll restoration logic, not producing structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task involves fixing a scroll restoration bug in TypeScript code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, variable names, function names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (scroll-restoration.ts) and function (setupScrollRestoration), which is appropriate for the task domain. It doesn't specify exact line numbers or the precise code to remove. The hints about navigation direction and cache clearing are conceptual, not line-level."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact buggy pattern: 'The cache clearing logic that checks for forward navigation and deletes state[cacheKey] should be removed' and 'The scroll restoration cache should NOT be cleared when toIndex > fromIndex'. This goes far beyond identifying the buggy file/module and specifies exactly what lines to remove."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving a TypeScript source file fix, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 4
 }

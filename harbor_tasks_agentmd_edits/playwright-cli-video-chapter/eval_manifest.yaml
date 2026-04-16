@@ -1,0 +1,206 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39891
+  base_commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  merge_commit: 9377dab3e620acaffc283122d2f061317d88da25
+checks:
+- id: video_chapter_command_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: videoChapter command must be defined in commands.ts with proper schema
+- id: video_chapter_tool_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_video_chapter MCP tool must be defined in video.ts
+- id: video_chapter_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: videoChapter must be exported from video.ts
+- id: video_tools_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Existing video tools renamed to videoStart/videoStop for consistency
+- id: skill_md_documents_video_chapter
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md must document the video-chapter command with examples
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-10
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+- id: video_recording_md_documents_chapters
+  type: fail_to_pass
+  origin: pr_diff
+  description: video-recording.md reference must document chapter markers with examples
+- id: cli_docs_lists_video_chapter
+  type: fail_to_pass
+  origin: pr_diff
+  description: getting-started-cli.md must list video-chapter in command summary
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must compile without errors
+config_edits:
+- path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli video-chapter "Chapter Title" --description="Details"
+    --duration=2000
+
+    '
+  gold_removed: ''
+- path: packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md
+  tier: 1
+  gold_added: '# Add a chapter marker for section transitions
+
+    playwright-cli video-chapter "Getting Started" --description="Opening the homepage"
+    --duration=2000
+
+
+    # Add another chapter
+
+    playwright-cli video-chapter "Filling Form" --description="Entering test data"
+    --duration=2000
+
+    '
+  gold_removed: ''
+- path: docs/src/getting-started-cli.md
+  tier: 2
+  gold_added: 'playwright-cli video-chapter <title>    # add chapter marker to video
+
+    '
+  gold_removed: ''
+rubric:
+- rule: CLI command names use kebab-case (video-chapter not videoChapter)
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-20
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  evidence: 'All commands in SKILL.md use kebab-case: tracing-start, tracing-stop,
+    video-start'
+  category: naming
+  verification: programmatic
+- rule: Tool definitions use consistent naming (videoStart, videoStop, videoChapter)
+  source:
+    path: CLAUDE.md
+    lines: 1-30
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  evidence: Gold renames startVideo/stopVideo to videoStart/videoStop for consistency
+    with videoChapter
+  category: naming
+  verification: programmatic
+  check_cmd: grep -q 'const videoStart = defineTool' /workspace/playwright/packages/playwright-core/src/tools/backend/video.ts
+- rule: Skill documentation includes working code examples
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 150-165
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  evidence: 'SKILL.md includes example with all options: title, description, duration'
+  category: documentation
+  verification: programmatic
+- rule: Reference docs show realistic usage patterns
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md
+    lines: 1-30
+    commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+  evidence: video-recording.md shows chapter markers at meaningful points in workflow
+  category: documentation
+  verification: llm_judge
+- rule: Declare CLI commands using declareCommand
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 201-201
+  source_text: 'In `packages/playwright-core/src/tools/cli-daemon/commands.ts`, use
+    `declareCommand()`:'
+  evidence: The diff adds the `videoChapter` command using `declareCommand(...)` in
+    `packages/playwright-core/src/tools/cli-daemon/commands.ts`.
+  category: architecture
+  verification: llm_judge
+- rule: Add declared CLI commands to commandsArray
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 239-242
+  source_text: 'Then add to the `commandsArray` at the bottom of the file, in the
+    correct category section:
+
+
+    ```typescript
+
+    const commandsArray: AnyCommandSchema[] = ['
+  evidence: The diff appends `videoChapter,` to the `commandsArray` in `packages/playwright-core/src/tools/cli-daemon/commands.ts`.
+  category: architecture
+  verification: llm_judge
+- rule: Use correct schema type values for MCP tools
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 61-65
+  source_text: '**Schema type values:**
+
+    - `''action''` — state-changing operations (navigate, click, fill)
+
+    - `''input''` — user input (typing, keyboard)
+
+    - `''readOnly''` — queries that don''t modify state (list cookies, get snapshot)
+
+    - `''assertion''` — testing/verification tools'
+  evidence: The `videoChapter` tool sets its type to `'readOnly'` in its schema definition.
+  category: schema_types
+  verification: llm_judge
+- rule: Use response API to add text results
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 67-68
+  source_text: '**Response API:**
+
+    - `response.addTextResult(text)` — add text to result section'
+  evidence: The `handle` function in `videoChapter` calls `response.addTextResult(`Chapter
+    '${params.title}' added.`);`.
+  category: api_usage
+  verification: llm_judge
+distractors:
+- rule: Define new APIs in docs/src/api/class-xxx.md
+  source:
+    path: .claude/skills/playwright-dev/api.md
+    lines: 5-7
+  source_text: '## Step 1: Define API in Documentation
+
+
+    Define (or update) API in `docs/src/api/class-xxx.md`. For the new methods, params
+    and options use the version from package.json (without `-next`).'
+  collision_type: architecture_boundary
+  why_distracting: The diff implements a CLI command and an MCP tool, not a core Playwright
+    class method. Following this rule would incorrectly prompt the agent to document
+    this feature as a new class method in the main API documentation.
+  severity: medium
+- rule: Use defineTabTool for most tools that need a Tab
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 16-18
+  source_text: '**Choose `defineTabTool` vs `defineTool`:**
+
+    - `defineTabTool` — most tools use this. Receives a `Tab` object, auto-handles
+    modal state (dialogs/file choosers).
+
+    - `defineTool` — receives the full `Context`. Use when you need `context.ensureBrowserContext()`
+    without a specific tab, or need custom tab management.'
+  collision_type: rule_conflict
+  why_distracting: Although the tool retrieves a Tab via `context.currentTabOrDie()`,
+    it correctly ignores `defineTabTool` to remain consistent with sibling video tools
+    (`videoStart`, `videoStop`) which use `defineTool`. Switching to `defineTabTool`
+    might cause bugs or break established patterns for video/devtools commands.
+  severity: medium
+- rule: Update skill files in packages/playwright/src/skill/
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 277-279
+  source_text: 'Update `packages/playwright/src/skill/SKILL.md` with the new command
+    documentation.
+
+    Add reference docs in `packages/playwright/src/skill/references/` if the feature
+    is complex.'
+  collision_type: scope_ambiguity
+  why_distracting: The documentation specifies incorrect file paths. The actual skill
+    files are located in `packages/playwright-core/src/tools/cli-client/skill/`. Trying
+    to update the path mentioned in the guide would create a new file in a non-existent
+    directory.
+  severity: high

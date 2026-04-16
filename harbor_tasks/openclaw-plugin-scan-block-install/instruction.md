@@ -8,10 +8,10 @@ fail outright. In both cases the install currently **continues anyway**, only
 logging a warning. This defeats the purpose of the scan — a plugin with
 `eval('danger')` in its source still gets installed.
 
-The expected behavior:
+## Expected Behavior
 
-1. If the builtin source scan finds **critical** patterns, the install should
-   be **blocked** and return an error describing what was detected.
+1. If the builtin source scan finds **critical** patterns, the install should be
+   **blocked** and return an error describing what was detected.
 2. If the builtin source scan **fails** (throws), the install should be
    **blocked** and return an error mentioning the scan failure.
 3. The `before_install` hook may still override the outcome — if a hook
@@ -61,23 +61,23 @@ these catch blocks must return a blocking result with `ok: false`, a descriptive
 ### install-security-scan.ts: type update
 
 The `InstallSecurityScanResult` type's `blocked` object must have a `code`
-field with the closed union type `"security_scan_blocked" | "security_scan_failed"
-| undefined`.
+field. When a scan is blocked, the `code` field should be present with a
+string literal value indicating the reason: either `"security_scan_blocked"`
+(for critical findings) or `"security_scan_failed"` (for scan failures).
 
-### install-security-scan.runtime.ts: block construction
+### install-security-scan.runtime.ts: scan result handling
 
-The runtime must produce blocked results with the appropriate code based on
-the builtin scan outcome:
+The runtime must properly block installs based on the builtin scan outcome:
 
-- When the builtin scan has `status === "error"` → blocked result code is
-  `"security_scan_failed"`
-- When the builtin scan has `critical > 0` → blocked result code is
-  `"security_scan_blocked"`
+- When the builtin scan throws or has status `"error"` → blocked result with
+  code `"security_scan_failed"`
+- When the builtin scan finds critical issues (critical count > 0) → blocked
+  result with code `"security_scan_blocked"`
 
-The scan functions must not directly return the hook result. Instead, they
-must capture the hook result and use the builtin block as a fallback when
-the hook does not block — applying `hookResult?.blocked ? hookResult : builtinBlocked`
-or equivalent logic.
+The scan functions must not directly return the hook result. Instead, the builtin
+scan result should be used as a fallback when the hook does not block — the
+hook's decision takes precedence only when it explicitly returns a blocked
+result.
 
 ## Scope
 

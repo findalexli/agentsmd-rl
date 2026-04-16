@@ -95,6 +95,85 @@ distractors:
     a PR diff as part of its workflow, but the task is actually to modify the source
     code of the `fetch-diff` skill itself.
   severity: medium
+- rule: Use pathlib Methods Instead of os Module Functions
+  source:
+    path: .claude/rules/python.md
+    lines: 96-98
+  source_text: '## Use `pathlib` Methods Instead of `os` Module Functions
+
+
+    When you have a `pathlib.Path` object, use its built-in methods instead of `os`
+    module functions. This is more readable, type-safe, and follows object-oriented
+    principles.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see the string `file_path` being pattern matched
+    and mistakenly convert it to a `pathlib.Path` to use its `.match()` method, misapplying
+    a rule that explicitly only applies 'When you have a pathlib.Path object' to a
+    raw git diff path string.
+  severity: medium
+- rule: Use Pattern Matching When Dispatching on Structure
+  source:
+    path: .claude/rules/python.md
+    lines: 149-151
+  source_text: '## Use Pattern Matching When Dispatching on Structure
+
+
+    Pattern matching is preferred for string splitting (replaces unsafe unpacking),
+    nested dict access (replaces chained `.get()` calls), and list length dispatch
+    (replaces verbose length checks).'
+  collision_type: rule_conflict
+  why_distracting: An agent might see the `full_diff.split("\n")` call and mistakenly
+    try to use a Python 3.10 `match` statement on the result, misinterpreting the
+    rule which only applies to "unsafe unpacking" of splits with a fixed structure,
+    rather than splitting an arbitrary text blob into an unknown number of lines.
+  severity: low
+- rule: When touching the SQLAlchemy tracking store, keep all workspace-aware paths
+    and validations intact
+  source:
+    path: CLAUDE.md
+    lines: '14'
+  source_text: '- When touching the SQLAlchemy tracking store, keep all workspace-aware
+    paths and validations intact; never drop workspace plumbing even if the change
+    focuses on single-tenant behavior'
+  collision_type: architecture_boundary
+  why_distracting: An agent might incorrectly believe the CLI tool being edited is
+    part of the 'tracking store' simply because it is in the same repository, or confuse
+    the `file_path` pattern matching logic with 'workspace-aware paths'.
+  severity: low
+- rule: Prefer `gh` CLI over `actions/github-script`
+  source:
+    path: .claude/rules/github-actions.md
+    lines: 21-25
+  source_text: '## Prefer `gh` CLI over `actions/github-script`
+
+
+    For simple GitHub API operations (commenting, labeling, cancelling runs, etc.),
+
+    use `gh` CLI instead of `actions/github-script`. It avoids the need for
+
+    `actions/checkout` and JavaScript boilerplate.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule is meant for GitHub Actions workflows, but the changed
+    file is a Python CLI script doing GitHub operations (`GitHubClient`). An agent
+    might mistakenly rewrite the Python code to use the `gh` CLI via `subprocess`
+    instead of the existing programmatic client.
+  severity: high
+- rule: Use next() to Find First Match Instead of Loop-and-Break
+  source:
+    path: .claude/rules/python.md
+    lines: 133-147
+  source_text: "## Use next() to Find First Match Instead of Loop-and-Break\n\nUse\
+    \ the `next()` builtin function with a generator expression to find the first\
+    \ item that matches a condition. This is more concise and functional than manually\
+    \ looping with break statements.\n\n```python\n# Bad\nresult = None\nfor item\
+    \ in items:\n    if item.name == \"target\":\n        result = item\n        break\n\
+    \n# Good\nresult = next((item for item in items if item.name == \"target\"), None)\n\
+    ```"
+  collision_type: rule_conflict
+  why_distracting: The diff needs to check if ANY file pattern matches using `any(...)`.
+    An agent might misapply this rule to use `next(...) is not None` which is less
+    idiomatic and unnecessarily complex for a simple boolean check.
+  severity: medium
 hierarchy_analysis: Only the root CLAUDE.md applies to this task. The rules in CLAUDE.md
   are primarily focused on the main MLflow repository (e.g., tracking store, Databricks
   backend), while this task modifies a local Claude skill script in the `.claude/skills`

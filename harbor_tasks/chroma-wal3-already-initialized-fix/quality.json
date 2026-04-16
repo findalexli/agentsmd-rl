@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (manifest_manager.rs, repl_02, repl_06), function names (test_k8s_mcmr_integration_repl_02_initialized_init_again, test_k8s_mcmr_integration_repl_06_parallel_open_or_initialize), error variants (Error::AlreadyInitialized, Error::LogContentionRetry), literal expressions (matches!(result, Err(Error::AlreadyInitialized)), num_writers = 32), and the Code::AlreadyExists pattern. All test-asserted specifics are discoverable from the instruction."
+      "reason": "All test-specific details are discoverable from instruction.md: file paths (manifest_manager.rs, repl_02, repl_06), function names (test_k8s_mcmr_integration_repl_06_parallel_open_or_initialize, test_k8s_mcmr_integration_repl_02_initialized_init_again), the exact matches! expression, Error::AlreadyInitialized, num_writers = 32, and the requirement to use open_or_initialize are all explicitly stated."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'Change it to return the correct variant that indicates the log was already initialized (not a retryable contention error)' and the detailed requirements section says to change the AlreadyExists block from returning one error variant to another specific one. It also gives the exact expression 'matches!(result, Err(Error::AlreadyInitialized))' to use. This is effectively 'change line X to Y' \u2014 no reasoning required."
+      "reason": "The instruction explicitly states 'Change it to return the correct variant that indicates the log was already initialized (not a retryable contention error)' and tells the agent to change the AlreadyExists block's return value. Combined with specifying Error::AlreadyInitialized in the test assertion and naming Error::LogContentionRetry implicitly as the wrong variant, the instruction effectively tells the agent exactly what to change (replace LogContentionRetry with AlreadyInitialized in the Alr"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_manifest_manager_returns_already_initialized checks for the exact string 'return Err(Error::AlreadyInitialized)' within 5 lines of the AlreadyExists check. An alternative correct fix (e.g., extracting to a helper function, using a different control flow, or mapping the error differently) would fail this text-matching test. test_repl_02_checks_already_initialized also checks for the exact string 'matches!(result, Err(Error::AlreadyInitialized))' and disallows 'result.is_err()'."
+      "reason": "test_manifest_manager_returns_already_initialized checks for the exact string 'return Err(Error::AlreadyInitialized)' within 5 lines of the AlreadyExists block. An alternative correct fix that restructures the code (e.g., extracting the error handling into a helper function, using a match arm differently, or using a variable assignment before return) could fix the bug correctly but fail this text-matching test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The F2P tests (test_manifest_manager_returns_already_initialized and test_repl_02_checks_already_initialized) are purely text-matching: they read file contents and check for exact strings like 'return Err(Error::AlreadyInitialized)' and 'matches!(result, Err(Error::AlreadyInitialized))'. test_repl_06_parallel_init_test_exists also just checks file content strings. No F2P test actually executes or imports the code."
+      "reason": "The F2P tests (test_manifest_manager_returns_already_initialized, test_repl_02_checks_already_initialized, test_repl_06_parallel_init_test_exists) are ALL pure text inspection tests using string matching on file contents (e.g., 'return Err(Error::AlreadyInitialized)' in content, 'matches!(result, Err(Error::AlreadyInitialized))' in content). None of them import, call, or execute the Rust code. The P2P tests do run cargo check/build/clippy, but every F2P test is purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The F2P tests only check for string presence in source files. An agent could write a file containing the exact expected strings without implementing any actual logic (e.g., a comment containing 'return Err(Error::AlreadyInitialized)' and 'matches!(result, Err(Error::AlreadyInitialized))') and pass the F2P tests. The P2P tests (cargo check/build/clippy) provide compilation verification, but the F2P tests themselves are satisfiable without a correct fix."
+      "reason": "test_repl_06_parallel_init_test_exists only checks that the file exists and contains certain strings like 'open_or_initialize' and 'num_writers = 32'. A stub file containing those strings as comments would pass. Similarly, test_repl_02_checks_already_initialized just checks for string presence without executing any code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: the error mapping fix (test_manifest_manager_returns_already_initialized), the repl_02 test update (test_repl_02_checks_already_initialized), the repl_06 test creation (test_repl_06_parallel_init_test_exists), and compilation (cargo check/build/clippy/fmt tests)."
+      "reason": "All three behaviors required by instruction.md (fix error mapping, update repl_02 test assertion, create repl_06 test) are tested, plus compilation/formatting checks ensure the code is valid."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped by concern (F2P behavior tests, P2P compilation tests), and annotated with comments explaining what each checks."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., 'F2P: The manifest manager must return AlreadyInitialized...'), and grouped logically by F2P vs P2P concerns."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Rust source code and tests, not producing structured data output."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in the instruction match those checked by the tests without typos."
+      "reason": "File paths, variable names, function names, and commands in instruction.md and test files are all correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (manifest_manager.rs), the exact code pattern ('status.code() == Code::AlreadyExists'), and the exact error variants to change between (LogContentionRetry \u2192 AlreadyInitialized). It even specifies the exact assertion expression to use in tests. This removes any need for the agent to localize or diagnose the bug."
+      "reason": "instruction.md names the exact file (manifest_manager.rs), the exact code pattern to find ('status.code() == Code::AlreadyExists'), and tells the agent to change the error variant from one that signals 'retry' to one that signals 'already initialized'. This leaves essentially no localization or reasoning work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/prisma
+
+# Idempotency check: skip if the fix is already applied
+if grep -q "prisma__value.type === 'DateTime' && typeof found === 'string'" \
+    packages/client-engine-runtime/src/interpreter/render-query.ts; then
+    echo "Fix already applied, skipping."
+    exit 0
+fi
+
+patch -p1 <<'PATCH'
+--- a/packages/client-engine-runtime/src/interpreter/render-query.ts
++++ b/packages/client-engine-runtime/src/interpreter/render-query.ts
+@@ -48,7 +48,17 @@ export function evaluateArg(arg: unknown, scope: ScopeBindings, generators: Gen
+       if (found === undefined) {
+         throw new Error(`Missing value for query variable ${arg.prisma__value.name}`)
+       }
+-      arg = found
++      if (arg.prisma__value.type === 'DateTime' && typeof found === 'string') {
++        // Convert input datetime strings to Date objects. This is done to prevent issues that
++        // arise when query input values end up being directly compared to values retrieved from
++        // the database. One example of this is a query containing a DateTime cursor value being
++        // used against a DATE MySQL column. The pagination logic doesn't have parameter type
++        // information, therefore it ends up comparing the two datetimes as strings and would yield
++        // false even if the two date datetime strings represent the same Date.
++        arg = new Date(found)
++      } else {
++        arg = found
++      }
+     } else if (isPrismaValueGenerator(arg)) {
+       const { name, args } = arg.prisma__value
+       const generator = generators[name]
+PATCH
+
+echo "Patch applied successfully."

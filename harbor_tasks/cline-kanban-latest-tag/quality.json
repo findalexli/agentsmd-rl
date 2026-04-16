@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction lists exact strings for spawn call, error message, command description, option description, and test file updates. It names the files (cli/src/index.ts, cli/src/index.test.ts), the function runKanbanAlias, and all literal strings that tests assert on. The test for 'runKanbanAlias' in content is a pass-to-pass check on pre-existing code. All asserted specifics are discoverable from the instruction."
+      "reason": "The instruction names the specific files (cli/src/index.ts, cli/src/index.test.ts), function (runKanbanAlias), and all the string literals that need changing (spawn call with 'kanban' vs 'kanban@latest', error message, command description, option description, test descriptions). All assert'd specifics in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement strings: e.g., 'The code that spawns the npx process must use the arguments [\"-y\", \"kanban@latest\", \"--agent\", \"cline\"]', 'error message must reference \"npx kanban@latest --agent cline\"', etc. This tells the agent exactly WHAT to change and TO WHAT, leaving no reasoning required."
+      "reason": "The instruction explicitly states the exact fix: 'must be updated to use \"kanban@latest\"', specifies every location (spawn call, error message, command description, option description, test file), and describes exactly what string to change to what. A developer doesn't need to reason about what to change \u2014 it's all spelled out."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact substring matching like 'spawn(getNpxCommand(), [\"-y\", \"kanban@latest\", \"--agent\", \"cline\"]' and '.description(\"Run npx kanban@latest --agent cline\")'. An alternative correct fix that uses different formatting (e.g., single quotes, different spacing, template literals) would fail despite being functionally correct."
+      "reason": "Tests assert exact string matches like 'spawn(getNpxCommand(), [\"-y\", \"kanban@latest\", \"--agent\", \"cline\"]' and '.description(\"Run npx kanban@latest --agent cline\")'. An alternative correct fix (e.g., using a variable, different quoting, or programmatic construction) would fail these exact-string-match tests even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated, test_kanban_command_description_updated, test_kanban_option_description_updated, test_test_file_consistent) all exclusively use 'assert ... in content' pattern reading file contents as text. No test actually executes the CLI or calls any function."
+      "reason": "The fail-to-pass tests (test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated, test_kanban_command_description_updated, test_kanban_option_description_updated, test_test_file_consistent) are all purely 'assert X in open(path).read()' string-matching tests. They never import, call, or execute the code to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific string changes (kanban@latest) and also assert the old strings (kanban without @latest) are NOT present. A stub or unchanged file would fail because the original file contains the old strings."
+      "reason": "The f2p tests check for the presence of 'kanban@latest' strings and absence of old 'kanban' strings. A stub or default file would not contain these strings \u2014 the original file contains 'kanban' without '@latest', so the tests require actual modification to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five required changes listed in instruction.md (spawn call, error message, command description, option description, test file consistency) are each covered by dedicated test functions."
+      "reason": "All five changes described in the instruction (spawn call, error message, command description, option description, test file) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_kanban_spawn_uses_latest_tag, test_kanban_error_message_updated, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by the aspect they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing source code string literals, not producing structured data output."
+      "reason": "This task involves modifying string literals in source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths (cli/src/index.ts, cli/src/index.test.ts), function names (runKanbanAlias, getNpxCommand), and string literals are all consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact strings to use including the precise spawn arguments, error message text, .description() and .option() call formats. This goes beyond naming the buggy file/module and essentially gives the exact code changes needed."
+      "reason": "The instruction names the exact function (runKanbanAlias), exact file (cli/src/index.ts), and exact locations (.command('kanban').description(), .option('--kanban', ...)) where changes are needed, plus the exact replacement strings. This is excessive localization for what should be a find-and-fix task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [

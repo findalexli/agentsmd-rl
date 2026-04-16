@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)' and check for absence of 'count - sync.spawned'. While instruction.md does mention these patterns under 'Required Implementation Patterns', many pass-to-pass tests check unrelated files (Mutex.zig, Condition.zig, Futex.zig, channel.zig, WaitGroup.zig, unbounded_queue.zig, bun.zig, cli.zig) that are not mentioned in instruction.md at all. Also test_warm_u"
+      "outcome": "pass",
+      "reason": "Instruction names ThreadPool.zig, warm(), notifySlow(), cmpxchgWeak, self.stack_size, default_thread_stack_size, and all tested files under src/threading/."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md under 'Required Implementation Patterns' gives the exact code to write: 'const target = @min(count, @as(u14, @truncate(self.max_threads)));', the exact while loop condition, the exact cmpxchgWeak failure handling pattern, and specifies replacing default_thread_stack_size with self.stack_size. This is essentially the complete solution, not just a description of what's broken."
+      "reason": "Instruction spells out the exact fixes: 'use a stable target computed once before the loop', 'must be handled by retrying (continue), not by breaking', 'must use self.stack_size', 'sync must be updated to new_sync after thread.detach()'\u2014these are prescriptive solutions, not descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_warm_uses_target_not_delta assert exact strings like 'const target = @min(count, @as(u14, @truncate(self.max_threads)))' and 'while (sync.spawned < target)'. An alternative correct fix using a different variable name (e.g., 'max_spawn') or a different but equivalent expression would fail. test_cmpxchg_correct_logic checks for '|current|' capture pattern. test_sync_update_after_detach checks for exact string 'sync = new_sync'. These are gold-specific implementation details."
+      "reason": "Tests like test_warm_loop_uses_stable_target check for absence of specific substring 'const to_spawn = count - sync.spawned', which is gold-specific; an alternative valid fix using e.g. 'const limit = ...' would pass, but a fix naming it 'to_spawn' would fail, binding tests to implementation naming."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The key fail-to-pass tests (test_warm_uses_target_not_delta, test_cmpxchg_correct_logic, test_warm_uses_stack_size, test_sync_update_after_detach, test_no_early_return_on_spawned) all use string pattern matching with 'assert X in content' or 'assert X not in content' on the source file. No test actually compiles, runs, or executes the ThreadPool code to verify behavioral correctness."
+      "reason": "Tests use zig fmt/ast-check (syntactic only) plus string-pattern inspection of function bodies (_get_warm_body, substring checks like 'cmpxchgWeak.*continue'); no test actually calls warm() or observes thread spawn behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that are NOT present in the original buggy code (e.g., 'const target = @min(count, ...' doesn't exist before the fix, 'count - sync.spawned' exists before and must be removed). A stub/no-op would not pass these."
+      "reason": "Each behavioral test asserts specific pattern presence/absence tied to the bug fix (continue on CAS failure, stack_size usage, no early return), so a stub cannot pass."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'When warm(8) is called on an empty pool with max_threads >= 8, all 8 threads should be spawned before the function returns.' No test actually verifies this runtime behavior - all tests are source-text pattern matching, not execution-based verification."
+      "outcome": "pass",
+      "reason": "All five bug manifestations listed in instruction.md have corresponding pattern tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., test_warm_uses_target_not_delta, test_cmpxchg_correct_logic) and logically grouped into pass-to-pass formatting checks and fail-to-pass behavioral checks."
+      "reason": "Tests are named by concern (syntax, ast-check, loop target, cmpxchg handling, stack_size) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in Zig source code, not producing structured data."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent with the actual repository structure."
+      "reason": "Paths and names look consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function (warm()), the exact file (src/threading/ThreadPool.zig), AND provides the exact replacement code patterns including variable declarations, loop conditions, and cmpxchgWeak handling. This goes far beyond identifying the buggy location."
+      "reason": "Instruction names exact functions and exact buggy constructs ('cmpxchgWeak(...) orelse break', 'if (sync.spawned >= count) return;', 'default_thread_stack_size'), removing any localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only bug fix task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

@@ -1,68 +1,39 @@
-# Task: Refactor domainVerification and cookieDomain from Global Config to Request-Scoped Resources
+# Refactor domainVerification and cookieDomain to Request-Scoped Resources
 
 ## Problem
-The codebase currently stores `domainVerification` and `cookieDomain` in global mutable state via `Config::setParam()` and `Config::getParam()`. These values are derived from request-specific data (hostname, origin, project context), so using global config forces mutation of global state on each request. This is an anti-pattern that should be refactored to use request-scoped dependency injection.
 
-## Background
-The application uses Utopia PHP's `Http::setResource()` system for defining request-scoped resources and the `->inject()` method for dependency injection into controller actions. You should familiarize yourself with how existing resources are defined in the initialization layer and how controllers receive injected dependencies.
+`domainVerification` and `cookieDomain` are currently stored in global mutable state via `Config::getParam()`. These values are derived from request-specific data (hostname, origin, project context). Using global config means global state is mutated on every request, which can cause request-scoped data to pollute global state and potentially leak between requests.
 
-## Required Changes
+## Required Outcome
 
-### New Resources to Define
+Move `domainVerification` and `cookieDomain` from global config to request-scoped resources. Controllers that currently read these values from `Config::getParam()` should receive them via dependency injection instead.
 
-You must define two request-scoped resources:
+## Technical Requirements
 
-1. **`domainVerification`** (resource name)
-   - Must return a `bool` indicating whether the request origin's registerable domain matches the request hostname's registerable domain
-   - Depends on the `Request` object
-   - Must use the `Utopia\Domains\Domain` class to parse and compare domains
-   - Logic: Compare `getRegisterable()` of hostname vs origin hostname; return true only if both match AND are non-empty
+### Request-scoped resources
 
-2. **`cookieDomain`** (resource name)
-   - Must return `?string` (nullable string) - the cookie domain or `null` for localhost/IP addresses
-   - Depends on both the `Request` object and the `project` document
-   - Must handle these specific cases:
-     - Return `null` when hostname is `localhost` or matches pattern `localhost:{port}`
-     - Return `null` when hostname is a valid IP address (detect using `FILTER_VALIDATE_IP`)
-     - Return `null` for migration hosts defined in `_APP_MIGRATION_HOST` environment variable
-     - Return `.` + registerable domain (via `Domain` class) when project ID is `console` AND `_APP_CONSOLE_ROOT_SESSION` env var equals `enabled`
-     - Return `.` + hostname for all other cases
+Define two new request-scoped resources in `app/init/resources.php`:
 
-### Code Patterns to Eliminate
+1. **`domainVerification`** — a `bool` resource with a closure that takes `Request $request` as dependency. The `Utopia\Domains\Domain` class must be imported in this file.
 
-The following patterns indicate the old global-state approach and must be eliminated:
-- `Config::setParam('domainVerification', ...)` - setting global config
-- `Config::setParam('cookieDomain', ...)` - setting global config
-- `Config::getParam('domainVerification')` - reading global config
-- `Config::getParam('cookieDomain')` - reading global config
+2. **`cookieDomain`** — a `?string` resource with a closure that takes `Request $request` and `Document $project` as dependencies.
 
-### Controllers Requiring Injection
+### Remove global config mutations
 
-Controller actions that need these values must:
-- Inject the resources using `->inject('domainVerification')` and `->inject('cookieDomain')` in the action chain
-- Accept `bool $domainVerification` and `?string $cookieDomain` as parameters in the action callback
-- Use the injected parameters instead of `Config::getParam()` calls
+`app/controllers/general.php` must not contain any `Config::setParam()` calls that set `domainVerification` or `cookieDomain`.
 
-### Closures Requiring Updates
+### Update controllers to use injection
 
-Any closures (such as `$createSession`) that use these values must be updated to accept them as parameters.
+Two controller files must be updated to receive `domainVerification` and `cookieDomain` via injection instead of `Config::getParam()`:
 
-## Files Likely Involved
+- `app/controllers/api/account.php` — action callbacks must declare `bool $domainVerification` and `?string $cookieDomain` parameters. The `$createSession` closure must also accept these parameters.
+- `src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php` — the action method must declare `bool $domainVerification` and `?string $cookieDomain` parameters.
 
-Based on the problem description, you should examine:
-- Resource initialization files (where `Http::setResource()` calls are defined)
-- General controller/router files (where global config mutations likely occur)
-- Account-related API controllers (where session/cookie handling occurs)
-- Team membership controllers (where invitation acceptance and session creation occurs)
+Both files must not contain `Config::getParam('domainVerification')` or `Config::getParam('cookieDomain')`.
 
-## Verification Criteria
+## Verification Requirements
 
 After implementation:
-- All modified PHP files must have valid syntax (`php -l` passes)
-- The code must pass linting (`vendor/bin/pint --test`)
-- The code must pass static analysis (`vendor/bin/phpstan analyse`)
-- The `domainVerification` and `cookieDomain` resources must be defined via `Http::setResource()`
-- The `Utopia\Domains\Domain` class must be imported where used
-- Controllers must use `->inject('domainVerification')` and `->inject('cookieDomain')`
-- Action signatures must declare `bool $domainVerification` and `?string $cookieDomain`
-- Global config patterns for these values must be eliminated
+- All modified PHP files must pass `php -l` (valid syntax)
+- Code must pass `vendor/bin/pint --test` (linting)
+- Code must pass `vendor/bin/phpstan analyse` (static analysis)

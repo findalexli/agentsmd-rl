@@ -1,0 +1,27 @@
+name = "containerd-klog-stderrthreshold-fix"
+title = "Honor stderrthreshold when logtostderr is enabled"
+description = "Fix a long-standing klog bug where setting -logtostderr=true causes -stderrthreshold to be silently ignored. The fix sets two klog flags to restore correct behavior."
+
+difficulty = "easy"
+type = "bug_fix"
+tags = ["go", "kubernetes", "logging", "klog", "cri", "containerd"]
+
+[time_estimates]
+  setup = "2m"
+  solve = "5m"
+  review = "2m"
+
+[source]
+  repo = "containerd/containerd"
+  pr_number = 13132
+  base_commit = "38dafd778ea487dc6972c7caf10e1dc91d610e91"
+  merge_commit = "78bcb44a342027c861b7695749d3f9813c2944c6"
+
+[environment]
+  base_image = "golang:1.23-bookworm"
+  language = "go"
+  working_directory = "/workspace/containerd"
+
+[solution]
+  target_file = "plugins/cri/runtime/plugin.go"
+  distinctive_line = "legacy_stderr_threshold_behavior"

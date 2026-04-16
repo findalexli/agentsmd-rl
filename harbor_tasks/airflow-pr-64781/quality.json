@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (dev/breeze/src/airflow_breeze/commands/ci_commands.py), the function name ('upgrade'), all command strings (autoupdate, update-chart-dependencies, upgrade-important-versions, breeze ci-image build, update-uv-lock), and the required ordering. Tests check these same elements \u2014 all are discoverable from instruction.md."
+      "reason": "The instruction lists all five commands (autoupdate, update-chart-dependencies, upgrade-important-versions, ci-image build, update-uv-lock) with their exact command strings, the required ordering (Dockerfile commands -> build -> uv-lock), and the file path. All test assertions check ordering of these named commands, which are fully discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (wrong ordering) and the expected behavior (correct ordering), but does not prescribe the exact code changes (e.g., splitting lists, renaming variables, specific line changes). A developer must still reason about how to restructure the code."
+      "reason": "The instruction describes the problem (incorrect ordering) and the expected behavior (correct ordering), but does not specify exact code changes like 'move line X' or 'rename variable to Y'. A developer must still figure out how to restructure the code."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests use AST analysis to extract run_command calls and check their relative ordering. They don't assert on specific variable names (pre_image_commands, post_image_commands), specific line numbers, or implementation details. Any correct reordering that places Dockerfile commands before build and uv-lock after build would pass."
+      "reason": "Tests verify behavioral ordering via mocked run_command calls, checking that autoupdate/chart-deps/upgrade-versions commands appear before the build command, and uv-lock appears after. They don't assert on variable names like 'pre_image_commands' or 'post_image_commands', specific line numbers, or internal helper functions. Alternative implementations (e.g., separate loops, inline calls, different variable names) would all pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The tests parse the AST of the source file and inspect the static ordering of run_command calls \u2014 they never actually import, call, or execute the upgrade function. This is effectively a sophisticated form of text/structure inspection rather than behavioral testing. No run_command is actually invoked, no mock is used to capture call order at runtime."
+      "outcome": "pass",
+      "reason": "The tests execute the upgrade function in a subprocess with mocked run_command, recording actual command invocations and checking their order. There are AST-based fallbacks, but the primary mechanism is behavioral execution, not simple text matching on source files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The original code has the CI image build before the Dockerfile-updating commands, so the tests checking that Dockerfile commands appear before build (test_dockerfile_commands_run_before_image_build) and uv-lock appears after build (test_update_uv_lock_runs_after_image_build) would fail on the original code. A stub/no-op implementation would also fail since the function must contain run_command calls in the correct order."
+      "reason": "A stub/no-op implementation of upgrade would produce no recorded commands, failing assertions like 'build_pos is not None' and 'assert dockerfile_positions'. The original buggy code would fail because build runs before Dockerfile commands. The tests require the specific correct ordering to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: Dockerfile commands before build, build before uv-lock, all five required commands present, and the complete three-phase ordering."
+      "reason": "The instruction specifies three behaviors: (1) Dockerfile commands before build, (2) build before uv-lock, (3) all five commands present. Tests cover all three: test_dockerfile_commands_run_before_image_build, test_update_uv_lock_runs_after_image_build, test_correct_execution_order_all_commands, and test_all_required_commands_are_called."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped in a class TestCommandOrderingBehavioral with descriptive method names and docstrings explaining what each test verifies, including which category of fail_to_pass they address."
+      "reason": "Tests are organized in a class TestCommandOrderingBehavioral with descriptive method names and docstrings explaining what each test verifies and why (e.g., 'fail_to_pass - original code had build first')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths (dev/breeze/src/airflow_breeze/commands/ci_commands.py), command names (prek, breeze ci-image build), and variable names are consistent and correct throughout the instruction."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function, which is appropriate for the task domain. It doesn't specify exact line numbers or the precise code changes needed (e.g., splitting into pre/post lists)."
+      "reason": "The instruction names the file (ci_commands.py) and function (upgrade), which is appropriate for the task domain. It describes what's wrong (ordering) and what the correct order should be, but doesn't specify exact line numbers or the precise code restructuring needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

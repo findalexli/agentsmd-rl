@@ -3,58 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_no_bare_putdirect_in_tojson checks for 'putDirectMayBeIndex|putDirectIndex|putByIndex|put|defineOwnProperty' as safe variants \u2014 instruction.md says 'Use a property insertion approach that works correctly' but doesn't name these specific functions. test_dedup_avoids_hasproperty checks that hasProperty is not used and accepts 'HashSet|std::set|std::unordered_set' \u2014 instruction.md says 'use a different approach' but "
+      "reason": "Tests check for specific method names like 'putDirectMayBeIndex' (in test_numeric_cookie_names_handled_safely), specific container types like 'HashSet/std::set/std::unordered_set/WTF::HashSet' with '.add()' and '.isNewEntry' patterns (in test_deduplication_uses_native_tracking), and the variable pattern 'constructEmptyObject' (in _get_js_object_variable). While instruction.md hints at some of these (e.g., mentions HashSet and .isNewEntry), it never explicitly names 'putDirectMayBeIndex' as the s"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix approach: 'Use a property insertion approach that works correctly for both string keys and numeric string keys' and 'The deduplication logic must use a different approach that does not query the target object for property existence.' While not giving exact line numbers, it directly tells the agent WHAT to change (the putDirect calls and the hasProperty dedup logic) and HOW (avoid querying the target object). This significantly narrows the solution space."
+      "reason": "instruction.md essentially describes the exact fix: use 'putDirectMayBeIndex' (implied by 'property insertion that handles numeric string keys'), use 'HashSet' with '.add()' and '.isNewEntry' for deduplication, and have two safe property insertions per loop. The Implementation Details section specifies the exact pattern the solution must follow, leaving very little reasoning for the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests accept multiple safe variants (putDirectMayBeIndex, putDirectIndex, putByIndex, put, defineOwnProperty) and multiple dedup approaches (HashSet, std::set, std::unordered_set, std::unordered_map, or simply not using hasProperty at all). The tests check patterns broadly enough that alternative correct fixes would pass."
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific implementation details: test_numeric_cookie_names_handled_safely checks for specific 'safe' method names (putDirectMayBeIndex, putDirectIndex, putByIndex), test_deduplication_uses_native_tracking checks for specific container type declarations (HashSet/std::set/etc.) with .add() and .isNewEntry patterns, and test_sufficient_implementation_complexity requires at least 8 non-blank lines. An alternative correct fix using different APIs (e.g., a different property inser"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_no_bare_putdirect_in_tojson, test_all_insertion_paths_safe, test_dedup_avoids_hasproperty) are pure text/regex analysis of source code via subprocess Python scripts. They read the file, regex-match function names, and assert on textual patterns. No compilation or execution of the C++ code occurs. Every test is essentially 'assert pattern in open(path).read()' with regex sophistication."
+      "reason": "Most tests (test_numeric_cookie_names_handled_safely, test_deduplication_uses_native_tracking, test_sufficient_implementation_complexity, test_two_property_insertions) are pure text/regex analysis of the source file with no execution. test_compile_cookie_map_api_usage does run a compiler but on a mock program, not the actual code, and explicitly doesn't fail if compilation fails. These are essentially 'assert pattern in source' tests."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "A stub implementation (e.g., empty toJSON body or just returning jsUndefined) would fail test_no_bare_putdirect_in_tojson because it requires finding safe variant calls, fail test_all_insertion_paths_safe because it needs >=2 safe calls or 1 in a loop, and fail test_not_stub which requires >=8 non-blank lines. The f2p tests require actual implementation changes."
+      "outcome": "fail",
+      "reason": "A stub implementation that simply contains the right textual patterns (e.g., comments or dead code containing 'putDirectMayBeIndex', 'HashSet<String> seenKeys', 'seenKeys.add(...).isNewEntry') would pass all the regex-based tests without actually fixing the bug. The tests never execute the toJSON method or verify runtime behavior."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "instruction.md requires: (1) fix property insertion crash \u2014 tested by test_no_bare_putdirect_in_tojson and test_all_insertion_paths_safe, (2) fix deduplication crash \u2014 tested by test_dedup_avoids_hasproperty, (3) construct JS object/handle exceptions/iterate \u2014 tested by test_tojson_preserves_functionality, (4) use proper JSC exception scope patterns \u2014 tested by test_exception_scope_in_tojson. All stated requirements are covered."
+      "outcome": "fail",
+      "reason": "instruction.md says 'toJSON() must complete without crashing regardless of cookie name format, and must return a valid JSON object containing all cookie name-value pairs.' No test actually verifies that toJSON() runs without crashing or returns correct output \u2014 all tests are static source analysis."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config-derived), descriptive function names (test_no_bare_putdirect_in_tojson, test_dedup_avoids_hasproperty), and docstrings explaining what each test verifies."
+      "reason": "Tests are well-structured with clear section comments (BEHAVIORAL TESTS, FAIL-TO-PASS TESTS), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a C++ crash bug, not producing structured data output."
+      "reason": "The task involves fixing a C++ method; it does not produce structured data like JSON/CSV/API/DB output as a deliverable."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (src/bun.js/bindings/CookieMap.cpp), function names (CookieMap::toJSON, putDirect, putDirectMayBeIndex), and variable names are all correctly spelled throughout instruction.md."
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file 'src/bun.js/bindings/CookieMap.cpp' and the exact method 'toJSON', references the specific crash location 'JSObjectInlines.h at line 451 in putDirectInternal', and describes the exact assertion 'parseIndex(propertyName)'. It also names the specific approach that fails (property insertion and hasProperty for dedup). This level of specificity goes beyond describing what's broken and into localizing the exact fix location."
+      "reason": "instruction.md explicitly names the exact files (CookieMap.cpp, CookieMap.h), specifies the exact method (toJSON), describes exact implementation patterns (putDirectMayBeIndex-style safe methods, HashSet with .add()/.isNewEntry), and even specifies the minimum line count (8 non-blank lines). This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 2,
+  "fail_count": 7
 }

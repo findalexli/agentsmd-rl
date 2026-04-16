@@ -1,0 +1,29 @@
+[task]
+name = "superset-jinja-adhoc-filter"
+title = "Fix Jinja template rendering in adhoc column filters"
+description = """
+Fix a bug where Jinja templates in virtual dataset SQL were not being rendered
+when used with cross-filters (adhoc filter columns). The adhoc_column_to_sqla
+method requires a template_processor parameter to render Jinja templates before
+SQLGlot parses the SQL.
+"""
+difficulty = "easy"
+time_estimate_minutes = 15
+tags = ["python", "flask", "jinja", "sql", "bug-fix"]
+
+[source]
+repo = "apache/superset"
+pr_number = 39207
+base_commit = "4c2dd634643e34f56ae698887dfc9d5bee8a6851"
+merge_commit = "2e80f2a473af00cda0cfefe030d6e3ed4f105fd6"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+workdir = "/workspace/superset"
+
+[solution]
+solve_script = "solution/solve.sh"
+
+[tests]
+test_script = "tests/test.sh"
+test_file = "tests/test_outputs.py"

@@ -192,32 +192,53 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_router_gate_linear_class_exists():
-    """RouterGateLinear class (nn.Linear subclass) must exist in router.py.
+    """router.gate must have router_dtype attribute (set by RouterGateLinear.__init__).
 
-    On base commit: only nn.Linear is used directly — no subclass.
-    On fix: RouterGateLinear(nn.Linear) is added to wrap router_gating_linear.
+    Requirement #4: the gate must be an nn.Linear subclass whose forward
+    delegates to router_gating_linear. RouterGateLinear stores router_dtype
+    in __init__, so we verify the attribute exists as behavioral proof
+    that RouterGateLinear (or equivalent) was instantiated.
     """
     router_mod = _load_router()
-    assert hasattr(router_mod, "RouterGateLinear"), (
-        "RouterGateLinear class not found in router.py — fix not applied"
-    )
-    import torch.nn as nn
+    router = _make_router(router_mod)
 
-    cls = router_mod.RouterGateLinear
-    assert issubclass(cls, nn.Linear), (
-        f"RouterGateLinear must inherit from nn.Linear, got bases: {cls.__bases__}"
+    # RouterGateLinear.__init__ sets self.router_dtype = router_dtype
+    # On base, router.gate is nn.Linear which has no router_dtype attribute
+    assert hasattr(router.gate, 'router_dtype'), (
+        "router.gate should have router_dtype attribute set by RouterGateLinear.__init__. "
+        "On base, router.gate is plain nn.Linear without this attribute."
+    )
+
+    # Verify router_dtype is a valid torch.dtype or None
+    router_dtype = router.gate.router_dtype
+    assert router_dtype is None or isinstance(router_dtype, torch.dtype), (
+        f"router_dtype should be None or torch.dtype, got {type(router_dtype)}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_gate_is_router_gate_linear():
-    """After the fix, router.gate must be an instance of RouterGateLinear, not plain nn.Linear."""
+    """router.gate must be an nn.Module with router_dtype attribute.
+
+    This verifies the gate is a RouterGateLinear (or equivalent nn.Linear subclass
+    with router_dtype), not a plain nn.Linear. The router_dtype attribute is
+    set in RouterGateLinear.__init__ and used in forward(), proving the class
+    implements the required interface.
+    """
+    import torch.nn as nn
+
     router_mod = _load_router()
     router = _make_router(router_mod)
-    cls = getattr(router_mod, "RouterGateLinear", None)
-    assert cls is not None, "RouterGateLinear class not found"
-    assert isinstance(router.gate, cls), (
-        f"router.gate is {type(router.gate).__name__}, expected RouterGateLinear"
+
+    # Verify gate is an nn.Module
+    assert isinstance(router.gate, nn.Module), (
+        f"router.gate is {type(router.gate).__name__}, expected nn.Module"
+    )
+
+    # The router_dtype attribute proves RouterGateLinear was instantiated
+    assert hasattr(router.gate, 'router_dtype'), (
+        "router.gate should have router_dtype attribute (set by RouterGateLinear.__init__). "
+        "Plain nn.Linear does not have this attribute."
     )
 
 
@@ -263,10 +284,12 @@ def test_router_forward_shapes():
 
 # [static] fail_to_pass
 def test_not_stub():
-    """RouterGateLinear.forward must have real logic (not just pass/return).
+    """Any nn.Linear subclass in router.py must have real forward logic.
 
-    AST-only because: we need to verify RouterGateLinear.forward has real logic,
-    and the class doesn't exist on the base commit — this naturally fails on base.
+    Verifies the nn.Linear subclass added by the fix has genuine logic.
+    On base: RouterGateLinear doesn't exist, so no nn.Linear subclass with
+    router_gating_linear call exists. On fix: RouterGateLinear.forward has
+    real computation (calls router_gating_linear).
     """
     import ast
 
@@ -328,38 +351,58 @@ def test_no_bare_print():
 
 # [agent_config] pass_to_pass -- AGENTS.md:99 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
 def test_explicit_type_hints():
-    """RouterGateLinear.__init__ and forward must have explicit type annotations (AGENTS.md rule).
+    """Any nn.Linear subclass in router.py must have explicit type annotations.
 
-    Checks that every parameter (except self) in __init__ and forward has an annotation,
-    and that forward declares a return annotation.
+    Checks that every parameter (except self) in __init__ and forward has an
+    annotation, and that forward declares a return annotation.
     """
     import ast
 
     src = open(TARGET).read()
     tree = ast.parse(src)
 
-    linear_class = None
     for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "RouterGateLinear":
-            linear_class = node
-            break
-
-    if linear_class is None:
-        return
-
-    for item in linear_class.body:
-        if not isinstance(item, ast.FunctionDef) or item.name not in ("__init__", "forward"):
+        if not isinstance(node, ast.ClassDef):
             continue
-        for arg in item.args.args:
-            if arg.arg == "self":
+        # Check if it's an nn.Linear subclass that has router_dtype
+        bases = node.bases
+        base_names = []
+        for b in bases:
+            if isinstance(b, ast.Name):
+                base_names.append(b.id)
+            elif isinstance(b, ast.Attribute):
+                base_names.append(b.attr)
+        if "Linear" not in base_names:
+            continue
+
+        # Check if this class has router_dtype attribute (RouterGateLinear)
+        has_router_dtype = False
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                for arg in item.args.args:
+                    if arg.arg == "router_dtype":
+                        has_router_dtype = True
+                        break
+                if has_router_dtype:
+                    break
+
+        if not has_router_dtype:
+            continue
+
+        # This is RouterGateLinear — check type hints
+        for item in node.body:
+            if not isinstance(item, ast.FunctionDef) or item.name not in ("__init__", "forward"):
                 continue
-            assert arg.annotation is not None, (
-                f"RouterGateLinear.{item.name}: parameter '{arg.arg}' missing type annotation"
-            )
-        if item.name == "forward":
-            assert item.returns is not None, (
-                "RouterGateLinear.forward: missing return type annotation"
-            )
+            for arg in item.args.args:
+                if arg.arg == "self":
+                    continue
+                assert arg.annotation is not None, (
+                    f"{node.name}.{item.name}: parameter '{arg.arg}' missing type annotation"
+                )
+            if item.name == "forward":
+                assert item.returns is not None, (
+                    f"{node.name}.forward: missing return type annotation"
+                )
 
 
 # [agent_config] pass_to_pass -- AGENTS.md:173 @ 8d84d9f933a83ec2130a8873e8fe74d2cee7a742

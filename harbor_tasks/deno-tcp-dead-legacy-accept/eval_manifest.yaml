@@ -21,7 +21,8 @@ checks:
 - id: test_repo_lint_expected_violations_count
   type: pass_to_pass
   origin: static
-  description: 'Repo CI: lint plugin EXPECTED_VIOLATIONS has tcp_wrap.ts entry at 3 (base commit)'
+  description: 'Repo CI: lint plugin EXPECTED_VIOLATIONS has tcp_wrap.ts entry at
+    3 (base commit)'
 - id: test_repo_deno_lint_plugin
   type: pass_to_pass
   origin: repo_tests
@@ -63,7 +64,7 @@ checks:
 - id: test_repo_listen_module_exports
   type: pass_to_pass
   origin: static
-  description: '_listen.ts exports ceilPowOf2 and backoff constants used by tcp_wrap.ts'
+  description: _listen.ts exports ceilPowOf2 and backoff constants used by tcp_wrap.ts
 - id: test_repo_lint_plugin_structure
   type: pass_to_pass
   origin: static
@@ -114,6 +115,22 @@ rubric:
   - dead_legacy_methods_removed
   - lint_violations_updated
   - unused_imports_cleaned
+- rule: Node.js compatibility code is in `ext/node/polyfills/`. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 322-325
+  source_text: "- Node.js compatibility code is in `ext/node/polyfills/`. When reviewing\
+    \ these\n  files, check behavior against Node.js docs, not just Deno conventions.\
+    \ Some\n  patterns (like synchronous `throw` in `spawn()` for EPERM but async\
+    \ error\n  event for ENOENT) are intentional Node.js compatibility."
+  evidence: The gold diff removes Deno-specific fallback implementations (`#listenLegacy()`,
+    `#acceptBackoff()`) and legacy usage of `Deno.listen` from `ext/node/polyfills/internal_binding/tcp_wrap.ts`.
+    This strictly aligns the Node.js polyfill with native Node.js behavior (using
+    libuv bindings) and eliminates Deno API dependencies, exactly following the rule
+    to match Node.js behavior over Deno conventions.
+  category: rubric
+  verification: llm_judge
 distractors:
 - rule: Keep your changes minimal, don't do drive-by changes in a PR.
   collision_type: scope_ambiguity
@@ -124,5 +141,22 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 28-31
+- rule: Internal symbols in JS (`ext/process/40_process.js`, `ext/node/polyfills/`)
+    use the `k` prefix convention.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 319-321
+  source_text: "- Internal symbols in JS (`ext/process/40_process.js`, `ext/node/polyfills/`)\n\
+    \  use the `k` prefix convention: `kIpc`, `kSerialization`, `kInputOption`. Flag\n\
+    \  deviations."
+  collision_type: meta_confusion
+  why_distracting: The diff removes and touches properties prefixed with `#` (e.g.,
+    `#listenLegacy`, `#acceptBackoffDelay`, `#listener`) within a file explicitly
+    mentioned in the rule's target path (`ext/node/polyfills/`). An agent might mistakenly
+    classify these standard JavaScript private class fields as "internal symbols"
+    and try to rename them to use the `k` prefix (e.g., `kListenLegacy`), which would
+    be syntactically invalid or incorrectly convert standard private fields into Symbol-based
+    properties.
+  severity: medium
 hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
   containing generic repository guidelines.

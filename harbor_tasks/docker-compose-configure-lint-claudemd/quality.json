@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific file paths like 'pkg/compose/publish.go' and 'pkg/e2e/compose_run_build_once_test.go', exact counts (>= 3 fmt.Fprintf calls), exact strings like 'make build', 'go test', 'golangci-lint', '.golangci.yml', 'fmt.Fprintf'. While the instruction mentions many of these concepts, it never names the specific files 'pkg/compose/publish.go' or 'pkg/e2e/compose_run_build_once_test.go'. The agent must discover these files on its own. Also, the test_publish_uses_fprintf asserts >= 3 fmt"
+      "reason": "Tests check specific paths like pkg/compose/publish.go and pkg/e2e/compose_run_build_once_test.go, but instruction.md never names these files; agent must discover them. Also tests require >=3 fmt.Fprintf calls, which is a specific count not stated."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (anti-pattern, unnecessary nolint directive, missing CLAUDE.md) but does not specify exact line numbers or the precise replacement code. The agent must find and fix the issues themselves."
+      "reason": "Instruction describes the anti-pattern and required documentation topics but doesn't point to specific lines or files for the fixes."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for absence of the anti-pattern (WriteString(fmt.Sprintf)), presence of fmt.Fprintf (>=3 calls), absence of //nolint:errcheck, and CLAUDE.md containing specific keywords. Any correct fix replacing the anti-pattern with fmt.Fprintf would pass. The CLAUDE.md content checks are for keywords, not exact text. Alternative correct fixes would generally pass."
+      "reason": "Tests check for absence of anti-pattern and presence of fmt.Fprintf/documentation keywords; multiple valid rewrites would satisfy these."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The test suite includes execution-based tests: test_go_syntax_valid runs gofmt, test_go_vet_compose runs go vet, test_unit_test_publish runs go test, test_go_build runs go build, test_unit_tests_compose runs go test. While some tests (test_publish_uses_fprintf, test_no_unnecessary_nolint, test_claude_md_*) do text-based checks, the majority of tests execute the code. Not every test is purely text-based."
+      "reason": "Tests run go vet, go build, and go test subprocesses in addition to grepping for the pattern."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_publish_uses_fprintf, test_no_unnecessary_nolint, test_claude_md_documents_build, test_claude_md_documents_lint_style) require actual changes: replacing WriteString(fmt.Sprintf with fmt.Fprintf, removing //nolint:errcheck, and creating CLAUDE.md with specific content. A stub or no-op would not pass these tests."
+      "reason": "f2p tests verify concrete code changes (no WriteString(fmt.Sprintf anti-pattern, >=3 fmt.Fprintf, no nolint directive, CLAUDE.md contents)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: elimination of WriteString(fmt.Sprintf) anti-pattern (test_publish_uses_fprintf), removal of //nolint:errcheck (test_no_unnecessary_nolint), CLAUDE.md creation with required content (test_claude_md_documents_build, test_claude_md_documents_lint_style), and existing tests passing (test_unit_tests_compose, test_go_build, etc.)."
+      "reason": "All three required behaviors (anti-pattern fix, nolint removal, CLAUDE.md creation with required content) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff) \u2014 core code style tests', 'Fail-to-pass (pr_diff) \u2014 config/documentation update tests'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass core, Fail-to-pass config/docs) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "No structured data output required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the anti-patterns and issues conceptually without naming specific files or line numbers. It says 'Find all instances' and 'One of the Go test files', requiring the agent to locate the relevant code."
+      "reason": "Instruction describes the problem categories without naming specific files or line numbers; localization is part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized: targeted line changes in publish.go (3 substitutions), one line removal in the test file, creation of a new CLAUDE.md, and a minor Dockerfile version bump. No full-file rewrites."
+      "reason": "Gold diff modifies only targeted lines in publish.go and the test file, plus adds a bounded CLAUDE.md."
     }
   },
   "tier_a_fails": [

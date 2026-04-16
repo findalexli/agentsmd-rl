@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes all key specifics tested: buildList, explicit coroutine imports (CancellationException, CoroutineScope, CoroutineStart, Dispatchers), FqName(\"kotlinx.coroutines.launch\"), it.safeImportName, .kotlinx_coroutines_launch(, private val FqName.safeImportName: String, pathSegments().joinToString, kotlinFqName.safeImportName delegation, and no wildcard kotlinx.coroutines.*. The target directory is named. All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction explicitly names all asserted strings: `buildList`, explicit coroutine imports (CancellationException, CoroutineScope, CoroutineStart, Dispatchers), `FqName(\"kotlinx.coroutines.launch\")`, `it.safeImportName`, `.kotlinx_coroutines_launch(`, `private val FqName.safeImportName: String`, `pathSegments().joinToString`, `get() = kotlinFqName.safeImportName`, and the absence of `kotlinx.coroutines.*`. The target file path is identified via the directory reference. All test-specific lite"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use 'buildList' instead of listOfNotNull, replace '.launch(' with '.kotlinx_coroutines_launch(', add specific FqName extension with exact signature 'private val FqName.safeImportName: String', delegate via 'get() = kotlinFqName.safeImportName', and use 'it.safeImportName'. This is a complete specification of WHAT to change and HOW, not just a description of what's broken."
+      "reason": "The instruction essentially gives the complete solution: it specifies exact code patterns like `private val FqName.safeImportName: String`, `get() = kotlinFqName.safeImportName`, use of `buildList`, `FqName(\"kotlinx.coroutines.launch\")` with `it.safeImportName`, and `.kotlinx_coroutines_launch(`. This is not just describing what's broken \u2014 it dictates the exact implementation details of the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'buildList' (test_additional_imports_uses_safe_import_name), exact signature 'private val FqName.safeImportName: String' (test_fqname_safe_import_name_extension), exact delegation 'get() = kotlinFqName.safeImportName' (test_bridge_function_uses_fqname_extension), and 'it.safeImportName' usage. An alternative correct fix could use a different helper name, inline the computation, use a regular function instead of extension property"
+      "reason": "Tests assert on very specific implementation details: `buildList` (an alternative could use mutableListOf), `it.safeImportName` (could be named differently or inlined), `private val FqName.safeImportName: String` (exact signature), `get() = kotlinFqName.safeImportName` (exact delegation pattern). A correct alternative fix that uses `mutableListOf` instead of `buildList`, or names the extension differently, or inlines the computation, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_additional_imports_uses_safe_import_name, test_coroutine_launch_uses_aliased_name, test_fqname_safe_import_name_extension, test_bridge_function_uses_fqname_extension, test_no_wildcard_coroutine_imports) exclusively use string-in-file checks like 'assert X in content'. No test compiles or executes the Kotlin code. The pass-to-pass tests do use subprocess (java --version, stat, head, grep) but these are environment sanity checks, not behavior verification of the fix."
+      "reason": "Every fail-to-pass test is purely text-matching: `assert 'buildList' in content`, `assert '.kotlinx_coroutines_launch(' in content`, `assert 'private val FqName.safeImportName: String' in content`, etc. No test compiles the Kotlin code, executes bridge generation, or verifies runtime behavior. The only subprocess tests are pass-to-pass sanity checks (java --version, stat, head, grep)."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The base file at the fetched commit contains 'kotlinx.coroutines.*', '.launch(', 'listOfNotNull', and lacks 'buildList', 'FqName.safeImportName', '.kotlinx_coroutines_launch('. A stub or no-op would not pass the fail-to-pass tests since the original file content would fail the assertions."
+      "outcome": "fail",
+      "reason": "A stub implementation that simply writes a file containing all the asserted string literals (like `buildList`, `kotlinx.coroutines.CancellationException`, `.kotlinx_coroutines_launch(`, `private val FqName.safeImportName: String`, etc.) with balanced braces/parens would pass all tests. The tests only check for string presence, not functional correctness."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: explicit imports, buildList usage, aliased launch call, FqName.safeImportName extension, delegation pattern, and no wildcard import."
+      "reason": "All behaviors described in instruction.md are tested: explicit imports replacing wildcard, aliased launch call, FqName.safeImportName extension, BridgeFunctionDescriptor delegation, and no wildcard import."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_additional_imports_uses_safe_import_name, test_coroutine_launch_uses_aliased_name, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings, categorized as FAIL-TO-PASS and PASS-TO-PASS, and each tests a distinct aspect of the fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing Kotlin source code, not producing structured data output."
+      "reason": "Task involves modifying Kotlin source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact directory 'native/swift/sir-providers/' and exact package 'org.jetbrains.kotlin.sir.providers.impl.BridgeProvider', exact function names ('additionalImports'), exact signatures ('private val FqName.safeImportName: String'), and exact implementation details ('get() = kotlinFqName.safeImportName'). This goes far beyond describing the bug domain and essentially specifies the exact location and implementation of the fix."
+      "reason": "The instruction names the exact directory (`native/swift/sir-providers/`), the exact package (`org.jetbrains.kotlin.sir.providers.impl.BridgeProvider`), and the exact function name (`additionalImports`) that needs modification. It further specifies exact code patterns to use, going well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

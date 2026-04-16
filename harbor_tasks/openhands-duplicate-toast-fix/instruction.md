@@ -12,18 +12,16 @@ The billing route component at `frontend/src/routes/billing.tsx` handles Stripe 
 /settings/billing?checkout=success&amount=25&session_id=xxx
 ```
 
-The component reads URL parameters using `useSearchParams()` from React Router. The parameter-to-variable naming convention used in this component is:
-
-- `checkout` parameter → variable `checkoutStatus`
-- `amount` parameter → variable `amount`
-- `session_id` parameter → variable `sessionId` (note: camelCase)
+The component reads URL parameters using `useSearchParams()` from React Router.
 
 ## Requirements
+
+After your fix:
 
 1. The success toast must display exactly **once** after a successful checkout redirect
 2. The error toast must display exactly **once** after a cancelled checkout redirect
 3. Analytics tracking (`trackCreditsPurchased`) must fire exactly once with the correct `amountUsd` and `stripeSessionId`
-4. The URL parameter variables must be named `checkoutStatus`, `amount`, and `sessionId` respectively
+4. The useEffect hook must use stable primitive dependencies. React Hook's dependency array must only contain primitive (string/number) values or functions that are defined outside the component render cycle — objects with unstable references (like the `searchParams` object returned by `useSearchParams()`) must NOT appear in the dependency array.
 
 ## Verification
 

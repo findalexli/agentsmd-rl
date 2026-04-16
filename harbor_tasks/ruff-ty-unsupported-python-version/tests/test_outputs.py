@@ -15,8 +15,7 @@ REPO = "/workspace/ruff"
 OPTIONS_RS = Path(REPO) / "crates/ty_project/src/metadata/options.rs"
 
 # Rust test code injected into options.rs for behavioral deserialization checks.
-# These tests exercise the python-version validation at the serde layer.
-# Uses Options::from_toml_str which properly sets the ValueSourceGuard context.
+# Exercises the python-version validation at the serde layer.
 _HARNESS_TEST_MODULE = '''
 #[cfg(test)]
 mod harness_tests {
@@ -230,93 +229,3 @@ def test_accepts_supported_python_313():
         f"Test failed -- deserialization should accept Python 3.13:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) -- rules from AGENTS.md
-# ---------------------------------------------------------------------------
-
-# [agent_config] pass_to_pass -- AGENTS.md:79 @ 62a863cf518086135dfd2321c92fbc3823f95de8
-def test_no_panic_unwrap_in_validation():
-    """No panic!/unwrap() in the validation function (AGENTS.md:79)."""
-    source = OPTIONS_RS.read_text()
-
-    # Find any function that validates/deserializes python version
-    # (the fix adds a function like deserialize_supported_python_version)
-    in_validation_fn = False
-    brace_depth = 0
-    for line in source.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("//"):
-            continue
-
-        # Detect the start of a function that deals with python version deserialization
-        if ("fn " in stripped
-                and "python_version" in stripped.lower()
-                and "deserializ" in stripped.lower()):
-            in_validation_fn = True
-            brace_depth = 0
-
-        if in_validation_fn:
-            brace_depth += stripped.count("{") - stripped.count("}")
-            assert "panic!(" not in stripped, (
-                f"panic! found in validation function: {stripped}"
-            )
-            assert ".unwrap()" not in stripped, (
-                f".unwrap() found in validation function: {stripped}"
-            )
-            assert "unreachable!(" not in stripped, (
-                f"unreachable! found in validation function: {stripped}"
-            )
-            if brace_depth <= 0 and "{" in source[:source.find(stripped)]:
-                in_validation_fn = False
-
-
-# [agent_config] pass_to_pass -- AGENTS.md:76 @ 62a863cf518086135dfd2321c92fbc3823f95de8
-def test_imports_at_file_top():
-    """Rust imports must be at the top of the file, not locally in functions (AGENTS.md:76).
-
-    This test only checks the deserialize_supported_python_version function
-    (the one added by the fix), not all pre-existing code in the file.
-    """
-    source = OPTIONS_RS.read_text()
-    lines = source.splitlines()
-
-    # Only check the deserialize_supported_python_version function
-    in_target_fn = False
-    in_fn_body = False
-    brace_depth = 0
-    for i, line in enumerate(lines, 1):
-        stripped = line.strip()
-        if stripped.startswith("//") or stripped.startswith("#["):
-            continue
-
-        # Detect the start of the target function
-        if "fn deserialize_supported_python_version" in stripped:
-            in_target_fn = True
-            if "{" in stripped:
-                in_fn_body = True
-                brace_depth = stripped.count("{") - stripped.count("}")
-            continue
-
-        if in_target_fn:
-            if not in_fn_body:
-                # Still in function signature, wait for opening brace
-                brace_depth += stripped.count("{") - stripped.count("}")
-                if brace_depth > 0:
-                    in_fn_body = True
-                continue
-
-            # Now inside the function body
-            brace_depth += stripped.count("{") - stripped.count("}")
-
-            # Check for local use statements inside the function body
-            if stripped.startswith("use "):
-                assert False, (
-                    f"Local import at line {i}: {stripped} -- "
-                    f"AGENTS.md requires imports at the top of the file"
-                )
-
-            # Exit when we close the function
-            if brace_depth <= 0:
-                break

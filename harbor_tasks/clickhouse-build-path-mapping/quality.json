@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'include_dir == \".\" ? std::string_view{} : include_dir' and 'const std::string_view include_dir = getIncludeDirectory' which are implementation-specific variable names and expressions not mentioned in instruction.md. The instruction describes behavior (treat '.' as empty) but never specifies the exact variable name 'include_dir' or the exact ternary expression. Similarly, the exact flag '-fdebug-compilation-dir=.' is mentioned in the instruction's Expected Behavio"
+      "reason": "Tests assert exact literal strings like 'include_dir == \".\" ? std::string_view{} : include_dir' and 'const std::string_view include_dir = getIncludeDirectory'. The instruction.md describes the behavior conceptually (treating '.' as empty) but never specifies these exact variable names or the exact ternary expression syntax. A developer reading only instruction.md cannot discover that the variable must be named 'include_dir' or that std::string_view{} must be used."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'DW_AT_comp_dir is set to . (current directory)' and 'treating a directory entry of . as equivalent to an empty directory'. The Expected Behavior section essentially prescribes the exact implementation: use -fdebug-compilation-dir=. and treat '.' directory as empty. This goes beyond describing what's broken and tells the agent WHAT to change."
+      "reason": "The instruction explicitly states: 'DW_AT_comp_dir is set to . (current directory)' and 'Source file paths are relative without any leading ./' and 'treating a directory entry of . as equivalent to an empty directory'. Combined with specifying exactly which files and functions to modify, and the Expected Behavior section describing the exact compiler flags needed (-fdebug-compilation-dir=. and trailing-slash prefix map), this effectively tells the developer exactly what to change rather than jus"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: test_dwarf_dot_directory_handling checks for the literal string 'include_dir == \".\" ? std::string_view{} : include_dir' and 'const std::string_view include_dir = getIncludeDirectory'. An alternative correct fix could use a different variable name (e.g., 'dir' or 'inc_dir'), use an if-statement instead of ternary, or call a helper function \u2014 all would fail these tests despite being correct."
+      "reason": "test_dwarf_dot_directory_handling asserts exact strings: 'include_dir == \".\" ? std::string_view{} : include_dir' and 'const std::string_view include_dir = getIncludeDirectory'. An equally correct alternative using e.g. 'dir == \".\"' as the variable name, or using an if-statement instead of a ternary, or using std::string_view(\"\") instead of std::string_view{}, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_cmake_compiler_flags, test_dwarf_dot_directory_handling, test_dwarf_no_raw_getIncludeDirectory_call) are all pure text-matching tests using string searches and regex on file contents. None compile or execute the code, run the DWARF parser, or verify actual stack trace output. Every f2p test is essentially 'assert X in open(path).read()'."
+      "reason": "The three fail-to-pass tests (test_cmake_compiler_flags, test_dwarf_dot_directory_handling, test_dwarf_no_raw_getIncludeDirectory_call) all exclusively read file contents and search for specific strings/patterns. None compile the code, execute it, or verify actual behavior. They are purely textual assertions like 'assert has_dot_conditional' where has_dot_conditional is set by an 'in content' check."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that are NOT present in the original code (e.g., '-fdebug-compilation-dir=.', 'include_dir == \".\"'). A stub or no-op implementation would not add these strings to the files, so the tests would fail."
+      "reason": "A stub/no-op implementation would leave the original code unchanged, which would still have the old flag pattern and lack the new flags/variable patterns, so the f2p tests would fail. The tests check for specific new content that doesn't exist in the base commit."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says to 'Test that paths are clean by checking that source files resolve to bare relative paths like src/Foo.cpp rather than ./src/Foo.cpp', but no test actually verifies this runtime behavior. Tests only check for specific code patterns in source files."
+      "outcome": "pass",
+      "reason": "The instruction requires changes to CMakeLists.txt (compiler flags) and Dwarf.cpp (dot directory handling), and both are tested. The instruction's requirements about clean paths and consistent behavior are covered by the flag checks and the dot-directory conditional check."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cmake_compiler_flags, test_dwarf_dot_directory_handling, etc.), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS classification, and include comments describing before/after states."
+      "reason": "Tests are well-named (test_cmake_compiler_flags, test_dwarf_dot_directory_handling, etc.), have detailed docstrings explaining before/after behavior, and are clearly organized into fail-to-pass and pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (CMakeLists.txt, src/Common/Dwarf.cpp), the exact function (getFullFileName in Dwarf::LineNumberVM), and describes the exact fix mechanism (set DW_AT_comp_dir to '.', treat '.' directory as empty). This goes well beyond identifying the bug domain."
+      "reason": "The instruction names the exact function 'getFullFileName' in 'src/Common/Dwarf.cpp' and the exact option 'ENABLE_BUILD_PATH_MAPPING' in 'CMakeLists.txt'. It also describes the exact fix mechanism: 'treating a directory entry of . as equivalent to an empty directory' and 'DW_AT_comp_dir is set to .' which are implementation-level hints, not just problem descriptions."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized: a few lines changed in CMakeLists.txt (within ENABLE_BUILD_PATH_MAPPING block) and a small change in Dwarf.cpp's getFullFileName function. Not a full-file rewrite."
+      "reason": "The gold patch is localized: a few lines changed in CMakeLists.txt (within the ENABLE_BUILD_PATH_MAPPING block) and 3 lines changed in Dwarf.cpp (within getFullFileName). No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

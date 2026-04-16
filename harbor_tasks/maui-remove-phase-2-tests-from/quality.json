@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (pr.md, PLAN-TEMPLATE.md, post-gate.md, README-AI.md, copilot-instructions.md, Review-PR.ps1, ai-summary-comment skills), and describes what needs to change (remove Tests phase, renumber to 4 phases, update PowerShell scripts). The specific variable names like $testsContent, $testsSection, phaseStatuses entries are implementation details that follow naturally from the task description of removing Tests phase handling from the PowerShell scripts. The instr"
+      "reason": "Instruction names all the relevant files (pr.md, PLAN-TEMPLATE.md, post-gate.md, README-AI.md, Review-PR.ps1, ai-summary-comment scripts) and the literal strings to remove ('5-phase', 'Phase 2: Tests')."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT is broken (redundant Tests phase) and WHAT the result should be (4-phase workflow), but doesn't specify exact line changes, variable names to remove, or specific code transformations. A developer must still reason about how to implement the removal across all files."
+      "reason": "Instruction describes the goal (remove Tests phase, renumber to 4 phases) without specifying line-level changes or variable names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: test_summary_script_no_tests_section_extraction checks for exact strings '$testsContent = Get-SectionByPattern', '$testsSection = New-PhaseSection', '$phaseSections += $testsSection'. An alternative correct fix might rename variables differently during refactoring, or restructure the code so these exact patterns don't appear but the Tests phase is still removed. However, more critically, these are negative assertions (must NOT contain), so any correc"
+      "reason": "Tests assert on specific gold variable names like `$testsContent = Get-SectionByPattern`, `$testsSection = New-PhaseSection`, `$phaseSections += $testsSection`, and `\"Tests\" = ` \u2014 an alternative correct refactor using different variable names or a different removal approach (e.g., commenting out, or restructuring the phaseStatuses hashtable differently) could fail these substring checks."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The tests are predominantly text-matching: e.g., test_summary_script_no_tests_phase_status does `assert '\"Tests\" = ' not in content`, test_review_script_describes_4_phase does `assert '4-phase' in content`. While some tests also run PowerShell syntax parsing (_parse_pwsh), the core fail-to-pass assertions are all string-in-file checks. No test actually executes the PowerShell scripts with inputs and checks outputs/behavior."
+      "outcome": "pass",
+      "reason": "Tests execute pwsh subprocess calls to parse and load PowerShell scripts (via _parse_pwsh and Get-Command), in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that specific strings are removed from existing files (e.g., '\"Tests\" = ' must not appear, '5-phase' must not appear, '$testsContent = Get-SectionByPattern' must not appear) and that new strings are present ('4-phase'). A stub/no-op implementation would leave the original files unchanged, which would fail these tests since the original files contain the old Tests phase references."
+      "reason": "F2p tests require actual removal of specific content and the 4-phase string in Review-PR.ps1; a stub implementation couldn't pass without real edits."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction mentions updating copilot-instructions.md and .github/README-AI.md, but no tests verify those files were updated. The instruction also mentions updating PLAN-TEMPLATE.md phase numbering and the ai-summary-comment SKILL.md/IMPROVEMENTS.md/NO-EXTERNAL-REFERENCES-RULE.md files, but tests only check PLAN-TEMPLATE.md has Gate/Fix/Report (pass-to-pass, not checking Tests removal) and don't check the other skill files at all."
+      "outcome": "pass",
+      "reason": "Tests cover the script changes, 4-phase numbering in Review-PR.ps1, and retention of core phases in templates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped by section headers (fail_to_pass, pass_to_pass, repo_tests) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing markdown and PowerShell config files, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is documentation/script refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths and filenames in instruction.md match the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to look at (which is appropriate for a multi-file refactoring task) but doesn't specify exact lines, variable names, or specific code patterns to change. The task domain makes the file list natural and necessary."
+      "reason": "Instruction names files to look at but localization across many files is part of the task; it does not specify exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized changes across multiple files (removing Tests phase references, renumbering), not full-file rewrites. Changes are consistent and don't contradict other tier-1 files."
+      "reason": "Gold diff makes localized edits (string replacements and removal of Tests-specific blocks) across many config/doc files, not full rewrites."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

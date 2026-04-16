@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every test assertion references file paths, string literals, property names, and structural elements that are explicitly named in instruction.md (e.g., BUN_WEBKIT_PATH, webkitSrcDir, homedir, worktree, kind: \"local\", path?:, hint?:, source.path, source.hint, build.ts, clean.ts, source.ts, deps/*.ts, WebKitBuild, vendor/WebKit, --target=WebKit, build-jsc.ts)."
+      "reason": "Every test assertion references file paths, string literals, and property names that are explicitly mentioned in instruction.md: 'BUN_WEBKIT_PATH', 'webkitSrcDir', 'homedir', 'worktree', 'kind: \"local\"', 'path:', 'hint:', 'source.path', 'source.hint', 'build.ts', 'clean.ts', 'source.ts', 'deps/*.ts', '--target=WebKit', 'WebKitBuild', 'vendor/WebKit', 'build-jsc.ts', 'path?:', 'hint?:' are all discoverable from the instruction's Acceptance Criteria and Required Changes sections."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to change: specific property names to add (path?:, hint?:), exact function name (webkitSrcDir), exact import (homedir from node:os), exact flag format (--target=WebKit --profile=...), exact kind value (kind: \"local\"), and exact references (source.path, source.hint). This is a detailed implementation specification, not a problem description."
+      "reason": "The instruction explicitly tells the agent WHAT to change in great detail: e.g., 'Must implement a function named webkitSrcDir', 'Must import homedir from node:os', 'Must return a local source with kind: \"local\", including path and hint properties', 'Update jsc:build scripts to use scripts/build.ts with --target=WebKit and appropriate --profile flags'. These are not descriptions of what's broken but precise implementation directives."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_webkit_ts_has_env_var checks for exact string 'webkitSrcDir' (function name), 'homedir' (specific import choice), and 'worktree' in content. test_webkit_ts_local_source_with_path checks for exact string 'kind: \"local\"' with specific quote style. test_source_ts_has_path_hint checks for exact strings 'source.path' and 'source.hint'. An alternative valid implementation using different variable names or approaches would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_webkit_ts_has_env_var requires the exact function name 'webkitSrcDir' and the exact import 'homedir'; test_webkit_ts_local_source_with_path requires 'kind: \"local\"' with exact quote style; test_source_ts_has_path_hint requires exact strings 'source.path' and 'source.hint'. Alternative correct implementations (e.g., using a different function name like 'getWebkitSourceDir', or using os.homedir() differently, or using single quotes for kin"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are pure text-matching assertions (e.g., 'assert \"BUN_WEBKIT_PATH\" in content', 'assert \"source.path\" in content', 'assert \"WebKitBuild\" not in content'). The syntax checks (test_clean_ts_syntax, test_webkit_ts_syntax, test_source_ts_syntax) do run tsc/bun but are pass-to-pass tests. No functional test actually imports or executes the modified code."
+      "reason": "Almost every fail-to-pass test is purely textual grep: test_webkit_ts_has_env_var checks 'BUN_WEBKIT_PATH' in content, test_source_ts_has_path_hint checks 'source.path' in content, test_claude_md_table_reformatted checks string presence. The only execution-like tests are the syntax checks (tsc/bun --check), which are pass-to-pass. No test actually imports, calls, or executes the modified code to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation could pass most tests. For example, test_webkit_ts_local_source_with_path just checks for substrings 'kind: \"local\"', 'path:', and 'hint:' in file content\u2014a file containing only comments with those strings would pass. Similarly, test_source_ts_has_path_hint just checks for 'path?:', 'hint?:', 'source.path', 'source.hint' as substrings."
+      "reason": "Most f2p tests can be satisfied by trivially inserting comment strings. For example, test_webkit_ts_has_env_var just checks for string presence of 'BUN_WEBKIT_PATH', 'webkitSrcDir', 'homedir', 'worktree' \u2014 adding these as comments would pass. test_source_ts_has_path_hint checks for 'path?:', 'hint?:', 'source.path', 'source.hint' as substrings \u2014 these could be in comments. No actual functionality is verified."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are covered by tests: deletion of build-jsc.ts, package.json script updates, clean.ts WebKitBuild removal, webkit.ts BUN_WEBKIT_PATH support, source.ts path/hint additions, and CLAUDE.md table reformatting."
+      "reason": "All requirements from instruction.md have corresponding tests: deletion of build-jsc.ts, package.json script updates, clean.ts reference removal, webkit.ts env var support, source.ts path/hint properties, and CLAUDE.md table reformatting."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into 'Pass-to-Pass' and 'Fail-to-Pass' sections with comments, and each test function has a descriptive name indicating what it validates."
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Pass-to-Pass Tests (syntax validation)' and 'Fail-to-Pass Tests (functional fixes)' sections, with descriptive function names like test_build_jsc_ts_deleted, test_package_json_uses_build_ts, etc."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task involves package.json (JSON) modifications, and the instruction specifies exact script names and values. The test validates the JSON schema via json.loads and checks specific keys."
+      "reason": "The task involves package.json (JSON schema), and the instruction documents the exact script names and values expected. The test validates the JSON structure appropriately."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "All file paths, variable names, and commands in instruction.md and tests match correctly with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Must implement a function named webkitSrcDir', 'Must import homedir from node:os', 'Optional path?: string property', 'Resolution logic that references source.path'. These are implementation-level hints, not just problem descriptions."
+      "reason": "The instruction specifies exact implementation details like 'Must implement a function named webkitSrcDir', 'Must import homedir from node:os for tilde expansion', 'Must return a local source with kind: \"local\", including path and hint properties'. These are implementation-level hints that go beyond describing the problem."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task involving TypeScript files, package.json, and markdown, not a config-only edit task."
+      "outcome": "pass",
+      "reason": "The package.json edit is localized to three specific script entries (jsc:build, jsc:build:debug, jsc:build:lto), not a full file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -56,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
+  "pass_count": 6,
   "fail_count": 5
 }

@@ -1,0 +1,125 @@
+source:
+  pr:
+    owner: gohugoio
+    repo: hugo
+    number: 14645
+    title: "Replace deprecated :filename with :contentbasename in the permalinks test"
+    base_commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+    merge_commit: eb11c3d0bc4642ed454521135810ed0ea7cf48b9
+
+checks:
+  # Fail-to-pass tests (validate the fix)
+  - id: test_page_path_disable_path_to_lower
+    type: fail_to_pass
+    origin: repo_tests
+    description: "TestPagePathDisablePathToLower passes with :contentbasename instead of deprecated :filename"
+
+  - id: test_page_bundler_slug_or_content_basename
+    type: fail_to_pass
+    origin: repo_tests
+    description: "TestHTMLFilesIsue11999 passes with :slugorcontentbasename instead of deprecated :slugorfilename"
+
+  - id: test_permalinks_integration_no_deprecation_errors
+    type: fail_to_pass
+    origin: repo_tests
+    description: "TestPermalinks passes without deprecation errors for :contentbasename token"
+
+  - id: test_permalinks_nested_sections_no_deprecation_errors
+    type: fail_to_pass
+    origin: repo_tests
+    description: "TestPermalinksNestedSections passes without deprecation errors for :contentbasename token"
+
+  - id: test_check_sh_failfast_flag
+    type: fail_to_pass
+    origin: agent_config
+    source: "AGENTS.md: Use ./check.sh when you're done"
+    description: "check.sh includes -failfast flag for faster test failure detection"
+
+  # Pass-to-pass tests (validate we didn't break anything)
+  - id: test_repo_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository builds successfully"
+
+  - id: test_repo_go_vet_hugolib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet on hugolib package passes"
+
+  - id: test_repo_go_vet_resources_page
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet on resources/page package passes"
+
+  - id: test_repo_gofmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go fmt check passes on modified packages"
+
+  - id: test_repo_multihost_related_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Related multihost tests pass"
+
+  - id: test_repo_permalinks_non_deprecated_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permalink tests with non-deprecated tokens pass"
+
+  - id: test_multi_host_permalinks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TestMultiHost passes (using :contentbasename)"
+
+  - id: test_repo_permalinks_contentbasename_adapter
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permalinks contentbasename content adapter test passes"
+
+  - id: test_repo_permalinks_nested_sections_slugs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permalinks nested sections with slugs test passes"
+
+  - id: test_repo_permalinks_escaped_colons
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permalinks with escaped colons test passes"
+
+  - id: test_repo_page_bundler_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Page bundler basic functionality tests pass"
+
+  - id: test_repo_hugo_info
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo info and version tests pass"
+
+  - id: test_repo_page_permalink
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Page permalink tests in hugolib pass"
+
+rubric:
+  - criterion: "Uses :contentbasename instead of deprecated :filename in permalink configs"
+    applies_to: "resources/page/permalinks_integration_test.go, hugolib/page_test.go, hugolib/hugo_sites_multihost_test.go"
+    weight: high
+
+  - criterion: "Uses :slugorcontentbasename instead of deprecated :slugorfilename"
+    applies_to: "hugolib/pagebundler_test.go"
+    weight: high
+
+  - criterion: "Updates test expectations to match new token behavior"
+    applies_to: "resources/page/permalinks_integration_test.go"
+    weight: medium
+
+  - criterion: "Uses brevity - short variable names when context is clear"
+    applies_to: "common/hugo/hugo.go"
+    source: "AGENTS.md: Use self-explanatory variable and function names. Use short variable names when the context is clear"
+    weight: low
+
+  - criterion: "Uses qt matchers in tests instead of raw if/t.Fatal checks"
+    applies_to: "test files"
+    source: "AGENTS.md: In tests, use qt matchers (e.g. b.Assert(err, qt.ErrorMatches, ...)) instead of raw if/t.Fatal checks"
+    weight: low

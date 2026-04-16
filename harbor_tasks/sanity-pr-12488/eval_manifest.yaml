@@ -1,0 +1,51 @@
+checks:
+  # Fail-to-pass tests (verify the fix is present)
+  - id: test_static_readonly_fields_skipped_during_document_paste
+    type: fail_to_pass
+    description: Static readOnly fields should be excluded when pasting at document level
+
+  - id: test_i18n_strings_exist
+    type: fail_to_pass
+    description: The i18n warning strings for read-only fields should exist
+
+  - id: test_readonly_context_type_defined
+    type: fail_to_pass
+    description: The ReadOnlyContext type should be defined
+
+  - id: test_collateObjectValue_accepts_readOnlyContext
+    type: fail_to_pass
+    description: The collateObjectValue function should accept readOnlyContext parameter
+
+  - id: test_skipped_field_names_tracking
+    type: fail_to_pass
+    description: Code should track and report skipped read-only field names
+
+  - id: test_readonly_field_warning_generation
+    type: fail_to_pass
+    description: Warning should be generated with proper i18n key for skipped fields
+
+  # Pass-to-pass tests (regression tests)
+  - id: test_transferValue_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The transferValue function source should exist
+
+  - id: test_transferValue_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: The existing transferValue test suite should pass
+
+  - id: test_repo_typecheck_sanity
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type check for sanity package passes (CI check)
+
+  - id: test_repo_copypaste_utils_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: copyPaste utils unit tests pass (CI check)
+
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: oxlint check passes (CI check)

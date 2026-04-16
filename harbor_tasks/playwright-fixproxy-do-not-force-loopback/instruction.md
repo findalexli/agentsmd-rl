@@ -4,25 +4,30 @@
 
 When a user sets `proxy.bypass` to `localhost`, `127.0.0.1`, or `::1` in their Chromium browser launch options, Playwright still force-adds `<-loopback>` to the `--proxy-bypass-list` Chrome argument. This causes loopback traffic to be proxied even though the user explicitly configured it to be bypassed.
 
-The current logic in `packages/playwright-core/src/server/chromium/chromium.ts` only checks whether `<-loopback>` itself is already present in the bypass rules via `proxyBypassRules.includes('<-loopback>')`, but doesn't recognize that `localhost`, `127.0.0.1`, and `::1` are semantically equivalent loopback addresses.
+The current logic in `packages/playwright-core/src/server/chromium/chromium.ts` only checks whether `<-loopback>` itself is already present in the bypass rules, but doesn't recognize that `localhost`, `127.0.0.1`, and `::1` are semantically equivalent loopback addresses.
 
 ## Required Behavior
 
-In `packages/playwright-core/src/server/chromium/chromium.ts`, modify the proxy bypass logic so that:
+In `packages/playwright-core/src/server/chromium/chromium.ts`, fix the proxy bypass logic so that:
 
-1. A new variable named `bypassesLoopback` must be defined to track whether loopback traffic is being bypassed
-2. The logic must check if any of the following are present in the bypass rules:
-   - `<-loopback>`
-   - `localhost`
-   - `127.0.0.1`
-   - `::1`
-3. The condition `!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback` must be used to decide whether to add `<-loopback>` to `proxyBypassRules`
-4. When the user includes any loopback address (`localhost`, `127.0.0.1`, or `::1`) in their `proxy.bypass` configuration, Playwright must not force-add `<-loopback>`
-5. The existing behavior for non-loopback bypass targets (like `example.com`) should remain unchanged — `<-loopback>` should still be force-added in those cases
+1. When the user includes `localhost` in their `proxy.bypass` configuration, Playwright must NOT force-add `<-loopback>` to `proxyBypassRules`
+2. When the user includes `127.0.0.1` in their `proxy.bypass` configuration, Playwright must NOT force-add `<-loopback>` to `proxyBypassRules`
+3. When the user includes `::1` in their `proxy.bypass` configuration, Playwright must NOT force-add `<-loopback>` to `proxyBypassRules`
+4. The existing behavior for non-loopback bypass targets (like `example.com`) should remain unchanged — `<-loopback>` should still be force-added in those cases when `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK` is not set
 
 ## Files to Look At
 
 - `packages/playwright-core/src/server/chromium/chromium.ts` — the Chromium browser launcher, specifically the proxy bypass argument construction logic
+
+## Quality Requirements
+
+Your changes must pass:
+
+1. **ESLint**: Run `npm run eslint -- --max-warnings=0 packages/playwright-core/src/server/chromium/chromium.ts`
+2. **TypeScript transpilation**: The file must transpile without errors
+3. **Channel generation**: Run `node utils/generate_channels.js` successfully
+4. **Package lint**: Run `npm run lint-packages` successfully
+5. **Syntax validation**: The file must have balanced braces and parentheses
 
 ## Additional Task
 

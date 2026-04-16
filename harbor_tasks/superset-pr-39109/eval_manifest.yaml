@@ -1,0 +1,137 @@
+source:
+  repo: apache/superset
+  pr_number: 39109
+  pr_url: https://github.com/apache/superset/pull/39109
+  title: "fix(mcp): fix form_data null, dataset URL, ASCII preview, and chart rename"
+  base_commit: e56f8cc4fb143cc470293471b5c290194b9a38db
+  merge_commit: 7380a59ab8a5e026d7cc07180001b0627ded2afd
+
+checks:
+  # Fail-to-pass tests for form_data serialization
+  - id: test_form_data_populated_from_json_params
+    type: fail_to_pass
+    origin: pr_behavior
+    description: form_data should be parsed from chart.params JSON string
+
+  - id: test_form_data_handles_dict_params
+    type: fail_to_pass
+    origin: pr_behavior
+    description: form_data should work when chart.params is already a dict
+
+  # Fail-to-pass tests for dataset URL
+  - id: test_dataset_url_is_absolute
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Dataset URL should be absolute, not relative
+
+  # Fail-to-pass tests for UpdateChartRequest config optional
+  - id: test_config_field_is_optional
+    type: fail_to_pass
+    origin: pr_behavior
+    description: UpdateChartRequest.config should be Optional (not required)
+
+  - id: test_config_has_default_none
+    type: fail_to_pass
+    origin: pr_behavior
+    description: UpdateChartRequest.config should default to None
+
+  # Fail-to-pass tests for _build_update_payload helper
+  - id: test_build_update_payload_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _build_update_payload helper function should exist
+
+  - id: test_build_update_payload_returns_name_only
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _build_update_payload should support name-only updates
+
+  - id: test_build_update_payload_handles_validation_error
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _build_update_payload should return error when neither config nor name
+
+  # Fail-to-pass tests for _find_chart helper
+  - id: test_find_chart_function_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _find_chart helper should exist after the fix
+
+  - id: test_find_chart_handles_numeric_id
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _find_chart should handle numeric IDs
+
+  - id: test_find_chart_handles_uuid
+    type: fail_to_pass
+    origin: pr_behavior
+    description: _find_chart should handle UUID strings
+
+  # Fail-to-pass tests for structured errors
+  - id: test_error_uses_structured_format
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Errors should use structured ChartGenerationError format
+
+  # Fail-to-pass tests for ASCII preview error handling
+  - id: test_unsupported_chart_error_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: get_chart_preview should return UnsupportedChart error for empty columns
+
+  - id: test_preview_error_message_is_helpful
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Preview error should explain why it failed
+
+  # Pass-to-pass tests for code quality
+  - id: test_ruff_check_mcp_service_schemas
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff check should pass on MCP service schema files
+
+  - id: test_ruff_check_update_chart
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff check should pass on update_chart.py
+
+  - id: test_chart_schemas_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: chart/schemas.py should have valid Python syntax
+
+  - id: test_dataset_schemas_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: dataset/schemas.py should have valid Python syntax
+
+  - id: test_update_chart_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: update_chart.py should have valid Python syntax
+
+  - id: test_ruff_check_get_chart_preview
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff check should pass on get_chart_preview.py
+
+  - id: test_ruff_format_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check should pass on all modified files
+
+  - id: test_get_chart_preview_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: get_chart_preview.py should have valid Python syntax
+
+rubric:
+  - id: code_quality
+    rule: This is a code-only task with no documentation changes required. The code changes follow Python best practices including type hints and docstrings as shown in the reference. Pass if this is acknowledged.
+    origin: task_design
+    reference: |
+      This task modifies only Python source files (schemas.py, update_chart.py, get_chart_preview.py).
+      No CLAUDE.md or other config file changes are expected.
+      The code changes include proper type hints (e.g., def _find_chart(identifier: int | str) -> Any | None)
+      and docstrings (e.g., """Find a chart by numeric ID or UUID string.""").
+      This rule should PASS as it describes the expected code quality which is satisfied.

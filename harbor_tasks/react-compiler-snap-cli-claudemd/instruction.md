@@ -4,60 +4,45 @@
 
 The React Compiler's `snap` fixture test runner (`compiler/packages/snap/`) currently relies on a `testfilter.txt` file for filtering which fixtures to run and toggling debug mode. This is clunky — developers have to manually edit a text file to filter tests, and the `@debug` pragma parsing is fragile. The watch mode reads this file via a file watcher, which adds complexity.
 
-The CLI interface should be modernized to use standard command-line flags instead:
-- A `--pattern` (`-p`) string flag to filter fixtures by glob pattern (e.g., `yarn snap -p 'error.*'`)
-- A `--debug` (`-d`) boolean flag to enable debug logging (print HIR for each compilation pass)
-- In watch mode, interactive keyboard shortcuts: press `p` to type a filter pattern, `d` to toggle debug, `a` to run all tests
-
-This means removing the `testfilter.txt` mechanism entirely: the `FILTER_FILENAME` and `FILTER_PATH` constants, the `readTestFilter()` function, the `subscribeFilterFile` function, and the file watcher subscription for the filter file.
+The CLI interface should be modernized to use standard command-line flags instead of the file-based mechanism.
 
 ## Expected Behavior
 
-### CLI Flags (yargs)
+### CLI Flags
 
-The CLI is built with yargs. Define the options using the yargs builder API:
-- `--debug` / `-d`: Register as `.boolean('debug')` with short alias via `.alias('d', 'debug')`.
-- `--pattern` / `-p`: A string option for glob-based fixture filtering.
-- `--update` / `-u`: Keep existing behavior.
+The CLI is built with yargs. It should support the following options:
+- `--debug` / `-d`: A boolean flag to enable debug logging (print HIR for each compilation pass)
+- `--pattern` / `-p`: A string flag to filter fixtures by glob pattern (e.g., `yarn snap -p 'error.*'`)
+- `--update` / `-u`: Keep existing behavior (existing flag)
 
-Remove the old `--filter` boolean option from runner.ts, along with any imports of `readTestFilter` and `FILTER_PATH`.
+Remove the old `--filter` boolean option and any imports related to the file-based filter mechanism.
 
 ### Watch Mode
 
-In `runner-watch.ts`, update the `makeWatchRunner` function signature to accept:
-- `debugMode: boolean` — whether debug output is enabled
-- `initialPattern` (optional string) — initial glob pattern from the CLI `-p` flag
+In watch mode (`yarn snap -w`), the runner should support interactive keyboard input:
+- Press `p` to enter pattern input mode and type a filter pattern
+- Press `d` to toggle debug mode
+- Press `a` to clear filter and run all tests
 
-Remove any usage of `readTestFilter` from this file.
+The watch runner needs internal state to track:
+- Whether the user is currently typing a pattern
+- The accumulated pattern characters being typed
 
-The watch mode needs an interactive state machine for keyboard input. The `RunnerState` type should include:
-- `inputMode` — tracks whether the user is currently typing a pattern
-- `inputBuffer` — accumulates the typed pattern characters
-
-Key handlers (via `key.name`):
-- `'p'` — enter pattern input mode
-- `'d'` — toggle debug mode
-- `'a'` — clear filter and run all tests
-
-Remove the `subscribeFilterFile` function entirely.
+Update the watch runner initialization to accept parameters for debug mode and initial pattern from the CLI flags. Remove all usage of the file-based filter reading mechanism.
 
 ### Expected Usage
 
 - `yarn snap -p 'use-memo'` runs only fixtures matching the pattern
 - `yarn snap -d -p 'simple.js'` runs a single fixture with full debug HIR output
 - `yarn snap -u` updates fixtures (existing behavior, keep working)
-- In watch mode (`yarn snap -w`), pressing `p` enters pattern input mode, `d` toggles debug, `a` clears the filter
+- In watch mode (`yarn snap -w`), press `p` to type a pattern, `d` to toggle debug, `a` to clear filter
 
 ### Cleanup
 
-Remove from `constants.ts`:
-- `FILTER_FILENAME` export
-- `FILTER_PATH` export
-- `testfilter.txt` reference
-
-Remove from `fixture-utils.ts`:
-- `readTestFilter` function
-- `TestFilter` type's `debug` property
+Remove the file-based filter mechanism:
+- Remove constants related to filter filename and path from `constants.ts`
+- Remove the function that reads filter from a file in `fixture-utils.ts`
+- Remove the file watcher subscription for filter file changes from watch mode
 
 ### CLAUDE.md Knowledge Base
 
@@ -72,6 +57,6 @@ The document should be substantive (at least 200 characters).
 ## Files to Look At
 
 - `compiler/packages/snap/src/constants.ts` — exported constants including filter file paths
-- `compiler/packages/snap/src/fixture-utils.ts` — `readTestFilter()` and `TestFilter` type
+- `compiler/packages/snap/src/fixture-utils.ts` — filter reading function and type
 - `compiler/packages/snap/src/runner.ts` — CLI option parsing and main entry point
 - `compiler/packages/snap/src/runner-watch.ts` — watch mode with keyboard handling and file watchers

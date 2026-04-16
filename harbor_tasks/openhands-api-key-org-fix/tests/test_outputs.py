@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import AsyncGenerator
 from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # Add enterprise code to path
 sys.path.insert(0, str(Path('/workspace/OpenHands')))
@@ -23,97 +24,39 @@ import pytest
 REPO = Path('/workspace/OpenHands')
 
 
-# Mock classes to simulate the database and context objects
-@dataclass
-class MockUser:
-    """Mock User model."""
-    id: UUID
-    current_org_id: UUID | None = None
+# ===== Behavioral Tests for the Fix =====
+
+@pytest.fixture
+def mock_db_session():
+    """Create a mock database session."""
+    session = MagicMock()
+    session.add = MagicMock()
+    session.commit = AsyncMock()
+    session.expire_all = MagicMock()
+    return session
 
 
-@dataclass
-class MockStoredConversationMetadata:
-    """Mock StoredConversationMetadata model."""
-    conversation_id: str
-    conversation_version: str = 'V1'
-    title: str = ''
-    sandbox_id: str = ''
-    created_at: str = ''
-    last_updated_at: str = ''
-    parent_conversation_id: str | None = None
+@pytest.fixture
+def mock_user():
+    """Create a mock user with current_org_id."""
+    user = MagicMock()
+    user.id = uuid4()
+    user.current_org_id = uuid4()  # User's current org (Organization B)
+    return user
 
 
-@dataclass
-class MockStoredConversationMetadataSaas:
-    """Mock StoredConversationMetadataSaas model."""
-    conversation_id: str
-    user_id: UUID
-    org_id: UUID | None = None
+@pytest.fixture
+def mock_conversation_info():
+    """Create mock AppConversationInfo."""
+    info = MagicMock()
+    info.id = uuid4()
+    info.created_by_user_id = str(uuid4())
+    info.conversation_version = 'V1'
+    info.title = 'Test Conversation'
+    info.sandbox_id = 'test-sandbox'
+    return info
 
 
-@dataclass
-class MockAppConversationInfo:
-    """Mock AppConversationInfo model."""
-    id: UUID
-    created_by_user_id: str
-    sandbox_id: str
-    title: str
-
-
-class MockScalarResult:
-    """Mock SQLAlchemy scalar result."""
-    def __init__(self, value):
-        self._value = value
-
-    def first(self):
-        return self._value
-
-    def scalar_one_or_none(self):
-        return self._value
-
-
-class MockResult:
-    """Mock SQLAlchemy result."""
-    def __init__(self, value=None, rows=None):
-        self._value = value
-        self._rows = rows or []
-
-    def scalar_one_or_none(self):
-        return self._value
-
-    def scalars(self):
-        return MockScalarResult(self._value)
-
-    def first(self):
-        if self._rows:
-            return self._rows[0]
-        return self._value
-
-    def all(self):
-        return self._rows
-
-
-class MockAsyncSession:
-    """Mock SQLAlchemy async session."""
-    def __init__(self):
-        self.committed = False
-        self.added = []
-
-    async def execute(self, query):
-        # This will be overridden in tests
-        return MockResult()
-
-    async def commit(self):
-        self.committed = True
-
-    def add(self, obj):
-        self.added.append(obj)
-
-    def expire_all(self):
-        pass
-
-
-# Mock UserAuth classes
 class MockUserAuthWithOrg:
     """Mock UserAuth that has API key with org_id."""
     def __init__(self, user_id: str, api_key_org_id: UUID | None):
@@ -139,322 +82,190 @@ class MockUserAuthLegacy:
         return None
 
 
-class MockUserAuthNoMethod:
-    """Mock UserAuth without get_api_key_org_id method (cookie auth)."""
-    def __init__(self, user_id: str):
-        self._user_id = user_id
-
-    async def get_user_id(self) -> str:
-        return self._user_id
-
-
-class MockUserContext:
-    """Base user context."""
-    def __init__(self, user_id: str):
-        self._user_id = user_id
-
-    async def get_user_id(self) -> str | None:
-        return self._user_id
-
-
-class MockUserContextWithAuth(MockUserContext):
+class MockUserContextWithAuth:
     """User context with user_auth attribute (API key auth)."""
-    def __init__(self, user_auth):
+    def __init__(self, user_id: str, user_auth):
+        self._user_id = user_id
         self.user_auth = user_auth
 
     async def get_user_id(self) -> str | None:
-        return await self.user_auth.get_user_id()
+        return self._user_id
 
 
-def load_source_file():
-    """Load and return the source file content as text."""
-    source_path = Path('/workspace/OpenHands/enterprise/server/utils/saas_app_conversation_info_injector.py')
-    if not source_path.exists():
-        raise FileNotFoundError(f"Source file not found: {source_path}")
-    return source_path.read_text()
+class MockUserContextNoAuth:
+    """User context without user_auth attribute (cookie auth)."""
+    def __init__(self, user_id: str):
+        self._user_id = user_id
+        # No user_auth attribute
 
-
-def check_api_key_org_logic(source_code: str) -> dict:
-    """Check if the source code has the API key org_id fix.
-
-    Returns a dict with findings about the fix implementation.
-    """
-    findings = {
-        'has_org_id_variable': False,
-        'has_user_context_check': False,
-        'has_user_auth_check': False,
-        'has_get_api_key_org_id_check': False,
-        'has_fallback_to_user_org': False,
-        'uses_org_id_in_metadata': False,
-    }
-
-    # Check for org_id variable definition
-    if 'org_id = user.current_org_id' in source_code or 'org_id = user.current_org_id  # Default fallback' in source_code:
-        findings['has_org_id_variable'] = True
-
-    # Check for hasattr(self.user_context, 'user_auth')
-    if "hasattr(self.user_context, 'user_auth')" in source_code:
-        findings['has_user_context_check'] = True
-
-    # Check for hasattr(user_auth, 'get_api_key_org_id')
-    if "hasattr(user_auth, 'get_api_key_org_id')" in source_code:
-        findings['has_user_auth_check'] = True
-
-    # Check for get_api_key_org_id() call
-    if 'get_api_key_org_id()' in source_code:
-        findings['has_get_api_key_org_id_check'] = True
-
-    # Check for fallback pattern (api_key_org_id is not None check)
-    if 'api_key_org_id is not None' in source_code:
-        findings['has_fallback_to_user_org'] = True
-
-    # Check that org_id is used in StoredConversationMetadataSaas
-    if 'org_id=org_id' in source_code or 'org_id = org_id' in source_code:
-        findings['uses_org_id_in_metadata'] = True
-
-    return findings
+    async def get_user_id(self) -> str | None:
+        return self._user_id
 
 
 # ===== Fail-to-Pass Tests (regression tests) =====
 
-def test_code_imports_and_syntax():
-    """Verify the modified code has valid Python syntax and can be parsed."""
-    source_code = load_source_file()
-
-    # Try to parse the Python code
-    import ast
-    try:
-        tree = ast.parse(source_code)
-    except SyntaxError as e:
-        pytest.fail(f"Source file has syntax error: {e}")
-
-    # Verify key classes exist
-    class_names = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-    assert 'SaasSQLAppConversationInfoService' in class_names, "Main class not found"
-
-    # Find save_app_conversation_info method
-    save_method_found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.AsyncFunctionDef) and node.name == 'save_app_conversation_info':
-            save_method_found = True
-            break
-
-    assert save_method_found, "save_app_conversation_info method not found"
-
-
-def test_api_key_org_id_used_when_available():
+@pytest.mark.asyncio
+async def test_api_key_org_id_used_when_available(mock_db_session, mock_user, mock_conversation_info):
     """Test that API key's org_id is used when saving conversation via API key auth.
 
-    This is the main bug fix test: when a user creates an API key in Organization A,
+    This is the main bug fix test: when a user creates an API key bound to Organization A,
     then switches to Organization B in browser, and uses the API key to create a
     conversation, the conversation should be saved under Organization A (API key's org),
     not Organization B (user's current org).
     """
-    source_code = load_source_file()
-    findings = check_api_key_org_logic(source_code)
+    # Setup: API key bound to Organization A
+    api_key_org_id = uuid4()  # Organization A (from API key)
+    user_current_org_id = uuid4()  # Organization B (user's current org)
 
-    # The fix must implement all these components
-    assert findings['has_org_id_variable'], (
-        "Missing org_id variable definition with fallback to user.current_org_id"
-    )
-    assert findings['has_user_context_check'], (
-        "Missing check for user_context.user_auth attribute"
-    )
-    assert findings['has_user_auth_check'], (
-        "Missing check for user_auth.get_api_key_org_id method"
-    )
-    assert findings['has_get_api_key_org_id_check'], (
-        "Missing call to get_api_key_org_id()"
-    )
-    assert findings['has_fallback_to_user_org'], (
-        "Missing fallback logic for when api_key_org_id is None"
-    )
-    assert findings['uses_org_id_in_metadata'], (
-        "Missing use of org_id in StoredConversationMetadataSaas creation"
-    )
+    mock_user.current_org_id = user_current_org_id
+    user_id = str(mock_user.id)
 
-    # Verify the correct logic flow exists
-    # The fix should check: hasattr(self.user_context, 'user_auth')
-    assert 'if hasattr(self.user_context, ' in source_code, (
-        "Missing hasattr check for user_auth on user_context"
+    # Create user context with API key auth that has org_id
+    user_auth = MockUserAuthWithOrg(user_id, api_key_org_id)
+    user_context = MockUserContextWithAuth(user_id, user_auth)
+
+    # Mock the database query results
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_user
+    mock_db_session.execute.return_value = mock_result
+
+    # Import and create the service
+    from enterprise.server.utils.saas_app_conversation_info_injector import SaasSQLAppConversationInfoService
+
+    service = SaasSQLAppConversationInfoService(
+        db_session=mock_db_session,
+        user_context=user_context
     )
 
-    # The fix should get the user_auth and check for get_api_key_org_id
-    assert 'user_auth = self.user_context.user_auth' in source_code or "user_auth = self.user_context.user_auth" in source_code, (
-        "Missing assignment of user_auth from user_context"
-    )
+    # Patch the parent class method to avoid actual DB operations
+    with patch('openhands.app_server.app_conversation.sql_app_conversation_info_service.SQLAppConversationInfoService.save_app_conversation_info', new_callable=AsyncMock) as mock_parent_save:
+        # Call the method under test
+        await service.save_app_conversation_info(mock_conversation_info)
 
-    # The fix should use the api_key_org_id when not None
-    assert 'if api_key_org_id is not None:' in source_code, (
-        "Missing check for api_key_org_id is not None"
-    )
+        # Verify that metadata was added with the API key's org_id, not user's current org
+        added_objects = mock_db_session.add.call_args_list
+        saas_metadata_calls = [call for call in added_objects if call and hasattr(call[0][0], 'org_id')]
 
-    # The fix should assign org_id = api_key_org_id
-    assert 'org_id = api_key_org_id' in source_code, (
-        "Missing assignment of org_id from api_key_org_id"
-    )
+        assert len(saas_metadata_calls) > 0, "No StoredConversationMetadataSaas was added"
+
+        # Check that the metadata was created with API key's org_id (Organization A)
+        metadata = saas_metadata_calls[0][0][0]
+        assert metadata.org_id == api_key_org_id, (
+            f"Expected org_id to be API key's org ({api_key_org_id}), "
+            f"but got {metadata.org_id}. The fix should prefer API key's org_id."
+        )
 
 
-def test_legacy_api_key_falls_back_to_user_org():
+@pytest.mark.asyncio
+async def test_legacy_api_key_falls_back_to_user_org(mock_db_session, mock_user, mock_conversation_info):
     """Test that legacy API keys (without org_id) fall back to user's current org.
 
     Legacy API keys created before the org_id feature was added will have
     api_key_org_id = None. In this case, we should fall back to the user's
     current_org_id.
     """
-    source_code = load_source_file()
+    # Setup: Legacy API key with no org_id
+    user_current_org_id = uuid4()  # Organization B (user's current org)
+    mock_user.current_org_id = user_current_org_id
+    user_id = str(mock_user.id)
 
-    # The fix should have the fallback pattern:
-    # 1. Default org_id to user.current_org_id
-    # 2. Only override if api_key_org_id is not None
+    # Create user context with legacy API key (returns None for get_api_key_org_id)
+    user_auth = MockUserAuthLegacy(user_id)
+    user_context = MockUserContextWithAuth(user_id, user_auth)
 
-    # Check for default fallback
-    assert 'org_id = user.current_org_id' in source_code, (
-        "Missing default org_id assignment from user.current_org_id"
+    # Mock the database query results
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_user
+    mock_db_session.execute.return_value = mock_result
+
+    # Import and create the service
+    from enterprise.server.utils.saas_app_conversation_info_injector import SaasSQLAppConversationInfoService
+
+    service = SaasSQLAppConversationInfoService(
+        db_session=mock_db_session,
+        user_context=user_context
     )
 
-    # Check that the None check is in place for proper fallback
-    lines = source_code.split('\n')
-    found_fallback_pattern = False
-    for i, line in enumerate(lines):
-        if 'api_key_org_id is not None' in line:
-            # Check previous lines for the org_id default assignment
-            for j in range(max(0, i-10), i):
-                if 'org_id = user.current_org_id' in lines[j]:
-                    found_fallback_pattern = True
-                    break
-            break
+    # Patch the parent class method
+    with patch('openhands.app_server.app_conversation.sql_app_conversation_info_service.SQLAppConversationInfoService.save_app_conversation_info', new_callable=AsyncMock):
+        # Call the method under test
+        await service.save_app_conversation_info(mock_conversation_info)
 
-    assert found_fallback_pattern, (
-        "Missing proper fallback pattern: org_id should default to user.current_org_id, "
-        "then only be overridden if api_key_org_id is not None"
-    )
+        # Verify that metadata was added with user's current org (fallback behavior)
+        added_objects = mock_db_session.add.call_args_list
+        saas_metadata_calls = [call for call in added_objects if call and hasattr(call[0][0], 'org_id')]
+
+        assert len(saas_metadata_calls) > 0, "No StoredConversationMetadataSaas was added"
+
+        # Check that the metadata was created with user's current org_id (fallback)
+        metadata = saas_metadata_calls[0][0][0]
+        assert metadata.org_id == user_current_org_id, (
+            f"Expected org_id to fall back to user's current org ({user_current_org_id}), "
+            f"but got {metadata.org_id}. Legacy API keys should use user's current org."
+        )
 
 
-def test_cookie_auth_uses_user_current_org():
+@pytest.mark.asyncio
+async def test_cookie_auth_uses_user_current_org(mock_db_session, mock_user, mock_conversation_info):
     """Test that cookie auth (no API key) uses user's current org.
 
     When authenticated via browser cookie (no API key), there's no
     get_api_key_org_id method, so we use user's current_org_id.
     This preserves existing behavior for non-API-key authentication.
     """
-    source_code = load_source_file()
+    # Setup: Cookie auth with no user_auth attribute
+    user_current_org_id = uuid4()
+    mock_user.current_org_id = user_current_org_id
+    user_id = str(mock_user.id)
 
-    # The fix should use hasattr to safely check for get_api_key_org_id
-    # This ensures cookie auth (without the method) doesn't crash
-    assert "hasattr(user_auth, 'get_api_key_org_id')" in source_code, (
-        "Missing hasattr check for get_api_key_org_id - needed for safe cookie auth handling"
+    # Create user context without user_auth (simulates cookie auth)
+    user_context = MockUserContextNoAuth(user_id)
+
+    # Mock the database query results
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_user
+    mock_db_session.execute.return_value = mock_result
+
+    # Import and create the service
+    from enterprise.server.utils.saas_app_conversation_info_injector import SaasSQLAppConversationInfoService
+
+    service = SaasSQLAppConversationInfoService(
+        db_session=mock_db_session,
+        user_context=user_context
     )
 
-    # The fix should check hasattr(self.user_context, 'user_auth') first
-    # to handle cases where user_context doesn't have user_auth attribute
-    assert "hasattr(self.user_context, 'user_auth')" in source_code, (
-        "Missing hasattr check for user_auth on user_context - needed for cookie auth"
-    )
+    # Patch the parent class method
+    with patch('openhands.app_server.app_conversation.sql_app_conversation_info_service.SQLAppConversationInfoService.save_app_conversation_info', new_callable=AsyncMock):
+        # Call the method under test - should NOT raise AttributeError
+        # due to hasattr() checks in the fix
+        await service.save_app_conversation_info(mock_conversation_info)
 
-    # Verify the structure: outer check for user_auth, inner check for get_api_key_org_id
-    lines = source_code.split('\n')
-    found_proper_nesting = False
-    user_context_check_line = -1
+        # Verify that metadata was added with user's current org
+        added_objects = mock_db_session.add.call_args_list
+        saas_metadata_calls = [call for call in added_objects if call and hasattr(call[0][0], 'org_id')]
 
-    for i, line in enumerate(lines):
-        if "hasattr(self.user_context, 'user_auth')" in line:
-            user_context_check_line = i
-            # Look for the get_api_key_org_id check within next few lines
-            for j in range(i+1, min(i+15, len(lines))):
-                if "hasattr(user_auth, 'get_api_key_org_id')" in lines[j]:
-                    found_proper_nesting = True
-                    break
-            break
+        assert len(saas_metadata_calls) > 0, "No StoredConversationMetadataSaas was added"
 
-    assert found_proper_nesting, (
-        "Missing proper nested structure: hasattr for user_context.user_auth "
-        "should wrap hasattr for get_api_key_org_id"
-    )
-
-
-def test_no_direct_user_current_org_in_metadata_creation():
-    """Verify that user.current_org_id is NOT directly used in metadata creation anymore.
-
-    After the fix, the code should use the computed org_id variable instead of
-    directly using user.current_org_id when creating StoredConversationMetadataSaas.
-    """
-    source_code = load_source_file()
-
-    # Find the StoredConversationMetadataSaas creation section
-    if 'StoredConversationMetadataSaas(' in source_code:
-        # Split and find the section where StoredConversationMetadataSaas is instantiated
-        parts = source_code.split('StoredConversationMetadataSaas(')
-        if len(parts) > 1:
-            for part in parts[1:]:  # Skip first part (before first occurrence)
-                # Find the closing parenthesis for this instantiation
-                paren_count = 1
-                end_idx = 0
-                for j, char in enumerate(part):
-                    if char == '(':
-                        paren_count += 1
-                    elif char == ')':
-                        paren_count -= 1
-                        if paren_count == 0:
-                            end_idx = j
-                            break
-
-                instantiation = part[:end_idx]
-
-                # Check that it uses org_id=org_id (the variable) not org_id=user.current_org_id
-                if 'org_id=user.current_org_id' in instantiation:
-                    pytest.fail(
-                        "Found direct use of user.current_org_id in StoredConversationMetadataSaas creation. "
-                        "Should use org_id variable instead."
-                    )
-
-                # The fix should use the org_id variable
-                assert 'org_id=org_id' in instantiation, (
-                    f"StoredConversationMetadataSaas should use org_id=org_id variable, "
-                    f"but found: {instantiation[:200]}"
-                )
-                break
-
-
-def test_distinctive_fix_lines_present():
-    """Test that distinctive lines from the gold patch are present.
-
-    This ensures the specific implementation from the fix is in place.
-    """
-    source_code = load_source_file()
-
-    # These are distinctive lines from the gold patch
-    distinctive_patterns = [
-        "# Determine org_id: prefer API key's org_id if authenticated via API key",
-        "# Default fallback",
-        "if hasattr(self.user_context, 'user_auth')",
-        "user_auth = self.user_context.user_auth",
-        "if hasattr(user_auth, 'get_api_key_org_id')",
-        "api_key_org_id = user_auth.get_api_key_org_id()",
-        "if api_key_org_id is not None:",
-        "org_id = api_key_org_id",
-        "# Create new SAAS metadata with the determined org_id",
-    ]
-
-    missing_patterns = []
-    for pattern in distinctive_patterns:
-        if pattern not in source_code:
-            missing_patterns.append(pattern)
-
-    # Most patterns should be present - allow for some variation in comments
-    # but the core logic patterns must be there
-    critical_patterns = [
-        "if hasattr(self.user_context, 'user_auth')",
-        "api_key_org_id = user_auth.get_api_key_org_id()",
-        "if api_key_org_id is not None:",
-        "org_id = api_key_org_id",
-    ]
-
-    for pattern in critical_patterns:
-        assert pattern in source_code, (
-            f"Critical fix pattern missing: '{pattern}'. "
-            f"The fix may not be properly implemented."
+        # Check that the metadata was created with user's current org_id
+        metadata = saas_metadata_calls[0][0][0]
+        assert metadata.org_id == user_current_org_id, (
+            f"Expected org_id to be user's current org ({user_current_org_id}) for cookie auth, "
+            f"but got {metadata.org_id}."
         )
+
+
+@pytest.mark.asyncio
+async def test_code_can_be_imported_and_executed():
+    """Verify the modified code can be imported and has expected structure."""
+    # This test verifies the code is syntactically valid and can be imported
+    from enterprise.server.utils.saas_app_conversation_info_injector import SaasSQLAppConversationInfoService
+
+    # Verify the class exists and has the expected method
+    assert hasattr(SaasSQLAppConversationInfoService, 'save_app_conversation_info')
+
+    # Verify the method is async
+    import inspect
+    assert inspect.iscoroutinefunction(SaasSQLAppConversationInfoService.save_app_conversation_info)
 
 
 # ===== Pass-to-Pass Tests (repo CI/CD checks) =====

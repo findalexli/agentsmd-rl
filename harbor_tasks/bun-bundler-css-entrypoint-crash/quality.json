@@ -3,59 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'entry_point_to_js_chunk_idx' (test_entry_point_to_chunk_mapping, test_mapping_populated_during_chunk_creation), the use of 'maxInt' sentinel values (test_css_entry_point_guard), the specific pattern of mapping writes near 'js_chunks.getOrPut(js_chunk_key)' (test_mapping_populated_during_chunk_creation), and the Handler struct's 'next' parameter not being used directly as chunks[] index. While inst"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_entry_point_to_chunk_mapping checks for alloc patterns with entry_points.len; test_mapping_populated_during_chunk_creation checks for 'entry_id' variable name in mapping write near getOrPut; test_css_entry_point_guard checks for maxInt/sentinel/orelse return patterns; test_handler_next_no_direct_param_as_index checks parameter name usage in chunks[] indexing. The instruction never mentions needing a mapping arr"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (mismatch between entry point ID space and JS chunk array size causing out-of-bounds) and points to the relevant code area, but does not prescribe the specific fix (e.g., adding a mapping array, using sentinel values, specific variable names). A developer must still reason about what to change."
+      "reason": "The instruction describes the bug (out-of-bounds when CSS entry points create gaps in JS chunk index space) and points to the Handler struct and next method, but does not prescribe the specific fix (e.g., creating a mapping array with sentinel values). A developer must still reason about the solution approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are highly specific to the gold solution's implementation. test_entry_point_to_chunk_mapping looks for 'alloc(u32/\\?u32, entry_points.len)' or 'Handler.*struct.*[]u32'. test_mapping_populated_during_chunk_creation requires '\\w+[entry_id\\w*] =' near js_chunks.getOrPut. test_css_entry_point_guard requires specific patterns like 'maxInt' or 'orelse return'. An alternative correct fix (e.g., using a HashMap, filtering CSS entry points before chunk creation, or using a different sentinel approa"
+      "reason": "Tests are tightly coupled to the gold solution's implementation: test_entry_point_to_chunk_mapping requires an alloc with entry_points.len or specific container types; test_mapping_populated_during_chunk_creation requires a write pattern 'variable[entry_id...] =' near getOrPut; test_css_entry_point_guard requires maxInt/sentinel/null checks. An alternative fix (e.g., filtering CSS entries before iteration, using a different data structure, or restructuring the loop) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail_to_pass tests (test_handler_next_no_direct_param_as_index, test_css_entry_point_guard, test_entry_point_to_chunk_mapping, test_mapping_populated_during_chunk_creation) use regex pattern matching on source code text via subprocess Python scripts. None execute the bundler or test actual behavior. They are purely textual assertions on source code patterns."
+      "reason": "Every test reads the source file and uses regex pattern matching on the text content. No test compiles the code, runs the bundler, or executes any behavioral check. All f2p tests are purely textual assertions like checking for 'maxInt' strings or regex patterns in source code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific non-trivial code patterns (mapping arrays, guard conditions, parameter usage changes) that wouldn't exist in the original buggy code or a stub. The original code uses the parameter directly as an index, which test_handler_next_no_direct_param_as_index would catch, and lacks the mapping/guard that other tests require."
+      "outcome": "fail",
+      "reason": "The tests check for textual patterns in source code rather than actual behavior. A solution that inserts comments or dead code containing the right keywords (e.g., 'maxInt', variable assignments matching patterns) could pass without actually fixing the bug. For instance, test_css_entry_point_guard just checks if words like 'maxInt' or 'orelse return' appear in the function body."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md describes a crash when bundling CSS + JS entry points together, but no test actually runs the bundler with mixed entry points to verify the crash is fixed. Tests only check source code patterns."
+      "reason": "The instruction describes a crash when bundling CSS+JS entry points together, but no test actually runs bun build with mixed entry points to verify the crash is fixed. Tests only check source code patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_css_entry_point_guard, test_entry_point_to_chunk_mapping, etc.), have docstrings explaining what they check, and are commented with categories like [pr_diff] fail_to_pass, [static] pass_to_pass, [agent_config] pass_to_pass."
+      "reason": "Tests are well-named with descriptive docstrings, categorized with comments like '[pr_diff] fail_to_pass', '[static] pass_to_pass', and '[agent_config] pass_to_pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in Zig source code, not producing structured data output."
+      "reason": "The task involves fixing a bug in a bundler's Zig source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the file 'src/bundler/linker_context/computeChunks.zig', the 'Handler' struct, its 'next' method, and how JS chunks are created for entry points. It even says 'Look at the Handler struct and its next method near the bottom of computeChunks.' This narrows the fix location to a very specific scope, making localization trivial."
+      "reason": "The instruction explicitly names the file 'src/bundler/linker_context/computeChunks.zig', the Handler struct, its next method, and describes the exact mechanism of the bug (mismatch between entry point ID space and JS chunk array size). This significantly narrows the solution space beyond what's needed for a bug report."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

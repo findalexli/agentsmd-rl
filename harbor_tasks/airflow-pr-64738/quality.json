@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md names the file path (airflow-core/src/airflow/models/dag.py), the method (dags_needing_dagruns), the variable names (ser_dag_ids, missing_from_serialized, adrq_by_dag, dag_statuses), the exact expressions (set(adrq_by_dag.keys()) - ser_dag_ids, sorted(missing_from_serialized)), and the literal string ('not found in the serialized_dag table'). All test-asserted specifics are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert on specific variable names like 'ser_dag_ids', 'missing_from_serialized', 'adrq_by_dag', 'dag_statuses', exact patterns like 'set(adrq_by_dag.keys()) - ser_dag_ids', 'sorted(missing_from_serialized)', 'del adrq_by_dag[dag_id]', 'del dag_statuses[dag_id]'. The instruction.md never names these specific variables (e.g., 'ser_dag_ids', 'missing_from_serialized', 'adrq_by_dag', 'dag_statuses'). It also doesn't specify the file path 'airflow-core/src/airflow/models/dag.py' or the class 'D"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md explicitly states the exact fix: build 'ser_dag_ids' set comprehension, use walrus operator with 'missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids', use 'del adrq_by_dag[dag_id]' and 'del dag_statuses[dag_id]', use 'sorted(missing_from_serialized)'. This is the complete solution, not just a description of what's broken."
+      "reason": "The instruction explicitly states the implementation approach: 'Compute this using set difference between the ADRQ grouping keys and the serialized dag IDs', 'Remove orphaned dag_ids from the in-memory grouping and status dicts', 'emit an INFO-level log message containing the phrase not found in the serialized_dag table', 'Log the affected dag_ids in sorted order'. This describes exactly WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact variable names ('ser_dag_ids', 'missing_from_serialized'), exact expressions ('set(adrq_by_dag.keys())' in test_fix_uses_set_difference), exact patterns ('for dag_id in missing_from_serialized', 'del adrq_by_dag[dag_id]', 'del dag_statuses[dag_id]'). An alternative correct fix using different variable names or a dict comprehension filter would fail these tests."
+      "reason": "Tests assert on gold-specific variable names: test_missing_serialized_dag_handling checks for 'ser_dag_ids' and 'missing_from_serialized' as string literals in code. test_fix_uses_set_difference checks for exact pattern 'set(adrq_by_dag.keys())' and '- ser_dag_ids'. test_fix_logs_sorted_dag_ids checks for 'sorted(missing_from_serialized)'. An alternative correct fix using different variable names (e.g., 'serialized_ids', 'orphaned_dags') would fail all these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail_to_pass test reads the source file as text and checks for string patterns (e.g., 'ser_dag_ids = ' in dag_code, 'missing_from_serialized' in dag_code, 'del adrq_by_dag[dag_id]' in section). No test actually imports or calls dags_needing_dagruns or exercises the runtime behavior."
+      "reason": "Every fail_to_pass test reads the source file as text and checks for string patterns (e.g., '\"ser_dag_ids = \" in dag_code', '\"missing_from_serialized\" in dag_code', '\"set(adrq_by_dag.keys())\" in dag_code'). No test actually imports or calls the code, creates test DAGs, or verifies runtime behavior. This is pure text/pattern matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check for string patterns in source code, an agent could simply insert a dead-code comment block containing all the required strings (ser_dag_ids, missing_from_serialized, del adrq_by_dag[dag_id], etc.) without actually implementing the fix, and all tests would pass."
+      "reason": "Since the tests only check for string patterns in source code, a developer could simply add a dead code comment block containing all the required strings (e.g., '# ser_dag_ids = ... missing_from_serialized ... set(adrq_by_dag.keys()) - ser_dag_ids ...') without implementing any actual fix, and all tests would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six explicit requirements from instruction.md are tested: ser_dag_ids variable (test 1), set difference with missing_from_serialized (test 5), logging with 'not found in the serialized_dag table' (test 3), deletion from both dicts (test 2), no database deletion (test 4), and sorted logging (test 6)."
+      "reason": "The tests cover all four requirements from instruction.md: detecting orphaned DAGs (set difference), logging skipped DAGs with the specific message and sorted order, cleaning up in-memory state only (no DB deletion), and preserving existing functionality (syntax validity, method existence)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_missing_serialized_dag_handling, test_fix_removes_orphan_dags_from_both_dicts, etc.), each has a docstring explaining what it tests, and they're clearly separated by concern."
+      "reason": "Tests are well-named (test_missing_serialized_dag_handling, test_fix_removes_orphan_dags_from_both_dicts, etc.), each has a descriptive docstring explaining what aspect of the fix it verifies, and they're logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Python source code; it does not produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task involves fixing a scheduler bug in Python code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md are consistent with the actual codebase and test expectations."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (airflow-core/src/airflow/models/dag.py), the exact method (dags_needing_dagruns), exact variable names to create (ser_dag_ids, missing_from_serialized), exact expressions to use, and even specifies using walrus operator. This goes far beyond describing the bug \u2014 it prescribes the implementation line by line."
+      "reason": "The instruction describes internal implementation details: 'A dict grouping ADRQ rows by dag_id', 'A dict tracking per-DAG scheduling status', 'iterates over results and accesses the status dict by dag_id'. While it doesn't name the exact file, it narrows the location to specific data structures and control flow patterns, significantly reducing the localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -56,6 +57,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

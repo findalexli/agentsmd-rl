@@ -1,0 +1,75 @@
+source:
+  repo: apache/airflow
+  pr_number: 64774
+  pr_title: "Allow newer packages when testing RC versions"
+  base_commit: b875c406e62fb7319f0a19f02435d0f54266a9d2
+  merge_commit: bcd559c933e101cb27add2e59009ba4cbfda8582
+  target_file: scripts/in_container/install_airflow_and_providers.py
+
+checks:
+  - id: test_prerelease_adds_exclude_newer_to_providers_install
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      Install command for providers includes --exclude-newer with ISO timestamp
+      when pre_release is True
+
+  - id: test_prerelease_adds_exclude_newer_to_airflow_install
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      Install command for airflow/core/task-sdk includes --exclude-newer with ISO timestamp
+      when pre_release is True
+
+  - id: test_no_prerelease_no_exclude_newer
+    type: pass_to_pass
+    origin: behavioral
+    description: >
+      Install command does NOT include --exclude-newer when pre_release is False
+
+  - id: test_datetime_import_present
+    type: fail_to_pass
+    origin: structural
+    description: >
+      The datetime module is imported for generating timestamps
+
+  - id: test_exclude_newer_appears_twice_in_source
+    type: fail_to_pass
+    origin: structural
+    description: >
+      The --exclude-newer flag appears in both installation functions
+
+  - id: test_script_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The modified script has valid Python syntax
+
+  - id: test_prerelease_message_updated
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      Console message mentions both airflow and providers when pre_release is True
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repo's ruff linter passes on the target file (CI check: ruff check --force-exclude)
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repo's ruff formatter passes on the target file (CI check: ruff format --check)
+
+  - id: test_repo_in_container_dir_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repo's ruff linter passes on the entire in_container directory
+
+# NOTE: This task only involves Python code changes, not documentation updates.
+# The rubric judge is designed for documentation/config file evaluation (CLAUDE.md, etc.)
+# Code quality compliance is verified by the pass_to_pass tests (ruff lint, ruff format).
+rubric: []

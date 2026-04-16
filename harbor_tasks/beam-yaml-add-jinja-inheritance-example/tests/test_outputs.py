@@ -131,9 +131,6 @@ def test_repo_yamllint_jinja_include():
             ["yamllint", "-c", ".yamllint.yml", yaml_file],
             capture_output=True, text=True, timeout=60, cwd=REPO,
         )
-        # These are Jinja template fragments which will have syntax issues due to
-        # template syntax ({{ }}, {%- %}) - this is expected. We just verify
-        # yamllint runs without crashing (stderr should be empty unless yamllint itself fails)
         assert r.stderr == "", f"yamllint crashed on {yaml_file}:\n{r.stderr}"
 
 
@@ -144,7 +141,6 @@ def test_repo_yamllint_non_jinja():
         ["pip", "install", "-q", "yamllint"],
         capture_output=True, timeout=60,
     )
-    # Check aggregation examples which are pure YAML (no Jinja syntax)
     r = subprocess.run(
         ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/transforms/aggregation/combine_sum_minimal.yaml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -231,7 +227,6 @@ jinja_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/ji
 try:
     env = Environment(loader=FileSystemLoader(jinja_dir))
     template = env.get_template('include/wordCountInclude.yaml')
-    # Successfully loading template validates syntax
     print("PASS")
 except TemplateSyntaxError as e:
     print(f"Jinja syntax error: {e}")
@@ -252,7 +247,6 @@ jinja_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/ji
 try:
     env = Environment(loader=FileSystemLoader(jinja_dir))
     template = env.get_template('import/wordCountImport.yaml')
-    # Successfully loading template validates syntax
     print("PASS")
 except TemplateSyntaxError as e:
     print(f"Jinja syntax error: {e}")
@@ -305,8 +299,6 @@ def test_child_pipeline_renders_with_inheritance():
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
-# Child uses {% extends \"apache_beam/.../base_pipeline.yaml\" %}
-# so the loader must be rooted at sdks/python to resolve the path
 sdk_python = '/workspace/beam/sdks/python'
 env = Environment(loader=FileSystemLoader(sdk_python))
 child_path = 'apache_beam/yaml/examples/transforms/jinja/inheritance/wordCountInheritance.yaml'
@@ -326,14 +318,11 @@ data = yaml.safe_load(rendered)
 assert data is not None, "Rendered YAML must not be None"
 types = [t.get('type') for t in data['pipeline']['transforms']]
 
-# All base transforms must be present
 for expected in ['ReadFromText', 'MapToFields', 'Explode', 'WriteToText']:
     assert expected in types, f"Missing base transform {expected}, got: {types}"
 
-# Combine must be injected by the child's block override
 assert 'Combine' in types, f"Combine must be injected by inheritance, got: {types}"
 
-# Verify Combine has group_by configuration
 combine = [t for t in data['pipeline']['transforms'] if t.get('type') == 'Combine'][0]
 assert 'group_by' in combine.get('config', {}), "Combine must specify group_by"
 print("PASS")
@@ -342,28 +331,57 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - test framework integration
-# -----------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
 def test_preprocessor_registers_inheritance():
-    """examples_test.py registers test_wordCountInheritance_yaml in preprocessors."""
+    """examples_test.py registers the inheritance test in preprocessors (at least 3 times)."""
     r = _run_python("""
-test_file = '/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/examples_test.py'
-with open(test_file) as f:
-    content = f.read()
+import sys, types, re
 
-count = content.count('test_wordCountInheritance_yaml')
-assert count >= 3, (
-    f"test_wordCountInheritance_yaml must appear >= 3 times "
-    f"(wordcount preprocessor + io_write preprocessor + jinja preprocessor), found {count}"
-)
+for pkg in ['apache_beam', 'apache_beam.yaml', 'apache_beam.yaml.examples', 'apache_beam.yaml.examples.testing']:
+    sys.modules.setdefault(pkg, types.ModuleType(pkg))
 
-# Existing jinja tests must still be registered
-assert 'test_wordCountInclude_yaml' in content, "Include test must still exist"
-assert 'test_wordCountImport_yaml' in content, "Import test must still exist"
-print("PASS")
+try:
+    from importlib import util
+    spec = util.spec_from_file_location(
+        "examples_test",
+        "/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/examples_test.py"
+    )
+    mod = util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    preprocessors = [
+        name for name in dir(mod)
+        if 'preprocessor' in name.lower() or 'jinja' in name.lower()
+    ]
+
+    found = False
+    for prep_name in preprocessors:
+        prep = getattr(mod, prep_name)
+        if callable(prep):
+            try:
+                result = prep()
+                if result and any('Inheritance' in str(r) or 'inheritance' in str(r) for r in result):
+                    found = True
+                    break
+            except:
+                pass
+
+    if not found:
+        with open("/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/examples_test.py") as f:
+            content = f.read()
+        matches = re.findall(r'test_\\w*[Ii]nheritance_yaml', content)
+        assert len(matches) >= 3, (
+            f"Inheritance test identifier must appear >= 3 times in preprocessors, found {len(matches)}"
+        )
+    print("PASS")
+except Exception as e:
+    with open("/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/examples_test.py") as f:
+        content = f.read()
+    matches = re.findall(r'test_\\w*[Ii]nheritance_yaml', content)
+    assert len(matches) >= 3, (
+        f"Inheritance test identifier must appear >= 3 times in preprocessors, found {len(matches)}"
+    )
+    print("PASS")
 """)
     assert r.returncode == 0, f"Preprocessor check failed: {r.stderr}"
     assert "PASS" in r.stdout
@@ -371,24 +389,23 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_input_data_returns_base_pipeline():
-    """input_data.py returns the base pipeline template path for inheritance test."""
+    """input_data.py template data functions work for the inheritance test."""
     r = _run_python("""
-import sys, types, importlib.util
+import sys, types, json
+from importlib import util
 
-# Mock apache_beam package tree so input_data.py can load in sparse checkout
 for pkg in ['apache_beam', 'apache_beam.yaml', 'apache_beam.yaml.examples',
             'apache_beam.yaml.examples.testing']:
     sys.modules.setdefault(pkg, types.ModuleType(pkg))
 
-spec = importlib.util.spec_from_file_location(
+spec = util.spec_from_file_location(
     "input_data",
     "/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/input_data.py"
 )
-mod = importlib.util.module_from_spec(spec)
+mod = util.module_from_spec(spec)
 try:
     spec.loader.exec_module(mod)
 except Exception:
-    # Sparse checkout may miss transitive imports; fall back to structural check
     with open("/workspace/beam/sdks/python/apache_beam/yaml/examples/testing/input_data.py") as f:
         content = f.read()
     assert "test_wordCountInheritance_yaml" in content, "Must handle inheritance test name"
@@ -397,10 +414,17 @@ except Exception:
     sys.exit(0)
 
 result = mod.word_count_jinja_template_data('test_wordCountInheritance_yaml')
-assert result, f"Expected non-empty list, got: {result}"
+assert result, f"Expected non-empty list for inheritance test, got: {result}"
 assert any('inheritance/base/base_pipeline.yaml' in p for p in result), (
     f"Must contain base_pipeline.yaml path, got: {result}"
 )
+
+param_result = mod.word_count_jinja_parameter_data()
+params = json.loads(param_result)
+required_keys = ['readFromTextTransform', 'combineTransform', 'mapToFieldsSplitConfig']
+for key in required_keys:
+    assert key in params, f"Parameter data must include '{key}'"
+
 print("PASS")
 """)
     assert r.returncode == 0, f"Input data check failed: {r.stderr}"

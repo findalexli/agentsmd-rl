@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T03:14:04.169651",
+  "total_time": 33.3,
+  "sandbox_id": "i2o9wc9bl90yjh3h6ey6a",
+  "backend": "fireworks",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 598.65,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 382.4,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "Docker build: pass. NOP test: reward=0 (8 f2p tests correctly fail). Gold test: reward=1 (all 16 tests pass). Rubric judge: returns 0.0 due to no git context in validation mode (task dir is not a git repo). Manual inspection confirms gold solution follows all 3 rubric rules: schema updates have descriptions, deprecation warning in NOTES.txt, values.yaml matches schema. Updated rubric rules from generic pytest rules to Helm-chart-specific rules.",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 261.02
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.68,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:273: test `test_deprecation_warning_in_notes_template` has 1 assert(s)', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:8: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.99,
+      "tier_a_fails": [
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 11,
+      "fail_count": 1
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 2111.63,
+      "at": "2026-04-13T20:15:52.774323"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 33.3,
+      "at": "2026-04-15T03:14:04.169651"
+    }
+  ]
+}

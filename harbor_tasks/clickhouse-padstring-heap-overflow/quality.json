@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for very specific strings like 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'chassert(column_pad_const)', 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', exact include lines like '<memory>' and '<DataTypes/IDataType.h>', and 'const ColumnsWithTypeAndName & arguments'. While some of these are mentioned in instruction.md, others like the exact insert call signature, chassert with specific argument, ColumnsWithTypeAndName signature change, and the exact private m"
+      "reason": "Tests assert very specific strings like 'PaddedPODArray<UInt8> pad_string', 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'insertFromItself', 'chassert(column_pad_const)', 'FunctionArgumentDescriptors mandatory_args', 'FunctionArgumentDescriptors optional_args', 'const ColumnsWithTypeAndName & arguments', exact include lines like '<memory>' and '<DataTypes/IDataType.h>'. While the instruction mentions many of these concepts (e.g., requirement 11 mentions insertFromItself, requirem"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: use PaddedPODArray<UInt8> for pad_string, use insertFromItself for expansion, use chassert(column_pad_const), use validateFunctionArguments with FunctionArgumentDescriptors, use explicit 'num_chars == 0', use digit separators '1'000'000', use size() not length(), include <memory> and <DataTypes/IDataType.h>, remove specific error codes. This is essentially a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly prescribes the exact fix: use PaddedPODArray<UInt8> for pad_string, use insertFromItself for expansion, use chassert after validation, use validateFunctionArguments with FunctionArgumentDescriptors, use explicit num_chars == 0, use digit separators 1'000'000, use size() not length(), remove specific error codes, add specific headers. This is not describing what's broken \u2014 it's a detailed implementation specification of the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'PaddedPODArray<UInt8> pad_string' in private section, exact string 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'insertFromItself', 'chassert(column_pad_const)', 'const ColumnsWithTypeAndName & arguments', digit separator '1'000'000'. An alternative correct fix using e.g. a different container with padding guarantee, different initialization method, or different variable naming would fail."
+      "reason": "Tests assert gold-specific implementation details: exact string 'PaddedPODArray<UInt8> pad_string' in private section, exact method call 'pad_string.insert(pad_string_.begin(), pad_string_.end())', 'insertFromItself', 'chassert(column_pad_const)', exact function signature 'const ColumnsWithTypeAndName & arguments'. An alternative correct fix (e.g., using a custom aligned buffer, or using resize+memcpy instead of insert) would fail these tests despite fixing the bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the source file and checks for literal strings using pattern matching (e.g., 'if \"PaddedPODArray<UInt8> pad_string\" not in content'). No test compiles code, runs the functions, or checks actual runtime behavior. All tests are pure text-matching on source code."
+      "reason": "Every single test reads the source file and checks for string patterns (e.g., 'if \"PaddedPODArray<UInt8> pad_string\" not in content'). No test compiles the code, runs the functions, or checks actual runtime behavior. All tests are pure text/grep checks on source code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "An agent could simply write the file with all the expected string patterns without understanding the bug. Since tests only check for text presence in the source file, copying the exact expected strings into the file would pass all tests without any functional correctness."
+      "reason": "A stub that simply writes the expected strings into padString.cpp (without any functional implementation) would pass all tests, since every test only checks for string presence in the file content. No compilation or execution is performed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 11 requirements listed in instruction.md are tested: PaddedPODArray usage, empty pad string handling, validateFunctionArguments, chassert, explicit comparison, digit separators, size() method, includes, brace style, error code removal, and insertFromItself."
+      "reason": "All 11 requirements from instruction.md have corresponding tests: PaddedPODArray usage, empty pad string handling, validateFunctionArguments, chassert, explicit comparison, digit separators, size() method, includes, Allman brace style, error code removal, insertFromItself."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_padded_pod_array_storage, test_empty_pad_string_handling, etc.), docstrings explaining each test's purpose, and clear PASS/FAIL messages."
+      "reason": "Tests are well-organized with descriptive function names, docstrings explaining the behavioral rationale, and clear grouping into fail-to-pass and pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces modified C++ source code, not structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names the exact file (src/Functions/padString.cpp), exact class (PaddingChars), exact member (pad_string), exact methods to use (insertFromItself, chassert, validateFunctionArguments), exact error codes to remove, and exact includes to add. This goes far beyond identifying the buggy area."
+      "reason": "The instruction explicitly names the exact file (src/Functions/padString.cpp), the exact class (PaddingChars), and prescribes exact implementation details like 'Use insertFromItself for container expansion', 'Use chassert (not exceptions) after validating column constness', specific container type PaddedPODArray<UInt8>. This goes far beyond naming the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

@@ -93,6 +93,16 @@ rubric:
   evidence: The gold solution correctly indents the `throw` statement with 4 spaces
     inside the `if` block, adhering to PSR-12 formatting standards.
   category: style
+- rule: Format code according to PSR-12 standards.
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  source_text: '- PHPUnit 12, Pint (PSR-12), PHPStan level 3'
+  evidence: The added null checks follow PSR-12 control structure formatting, with
+    a space after `if`, spaces around the strict equality operator `===`, and the
+    opening brace placed on the same line.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: Action pattern (HTTP endpoints) using dedicated classes extending Action
   collision_type: scope_ambiguity
@@ -105,6 +115,46 @@ distractors:
   source:
     path: AGENTS.md
     lines: 48-68
+- rule: HTTP directory structure and module organization
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-20
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers
+
+    - `Tasks` directory - Contains behavior for module-specific CLI tasks
+
+    - `Http` directory - Contains HTTP endpoints for the module
+
+    - `Services` directory - Contains register classes for all relevant types of services'
+  collision_type: architecture_boundary
+  why_distracting: The AI might attempt to refactor the `app/controllers/shared/api.php`
+    file into the new Module architecture (`src/Appwrite/Platform/Modules/*/Http`)
+    because it handles HTTP endpoints, but this PR is strictly a bug fix for a null
+    route in an existing shared controller.
+  severity: medium
+- rule: HTTP directory rules
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 29-33
+  source_text: '### HTTP directory structure
+
+
+    Inside module''s `Http` directory, there are multiple rules to follow:
+
+
+    1. Directly in `Http` directory, there should only be directories for services
+    (and hooks, check point number 2'
+  collision_type: scope_ambiguity
+  why_distracting: The AI might see rules about HTTP directories and try to apply
+    them to `app/controllers/shared/api.php`, but this file is outside the `src/Appwrite/Platform/Modules`
+    scope.
+  severity: low
 hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
   simply redirects to AGENTS.md.
 version: '2.0'

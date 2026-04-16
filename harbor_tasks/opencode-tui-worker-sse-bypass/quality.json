@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific identifiers not mentioned in instruction.md: WorkspaceID.make (test_instance_disposed_handling checks Bus.InstanceDisposed access pattern), the test_agent_config_no_any checks for 'any' type keyword absence, test_agent_config_const_over_let checks let count <=3, test_agent_config_no_else checks for no else statements, test_agent_config_no_try_catch checks for no try/catch \u2014 these AGENTS.md coding style constraints (lines 12, 13, 70, 84) are never mentioned in instruction"
+      "outcome": "pass",
+      "reason": "instruction.md names all required APIs (Bus.subscribe/subscribeAll, WorkspaceContext.provide, Instance.provide, Bus.InstanceDisposed, GlobalBus.on, AbortController.signal), module paths (@/bus, @/control-plane/workspace-context, @/control-plane/schema, @/project/instance), RPC methods (fetch, snapshot, server, checkUpgrade, reload, shutdown), and style constraints (no any, prefer const, no else, no try/catch) that tests assert."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'Use Bus.subscribeAll', 'Wrap in WorkspaceContext.provide', 'Wrap in Instance.provide', 'Handle Bus.InstanceDisposed events', 'Use AbortController with signal', 'Remove all calls to createOpencodeClient and sdk.event.subscribe'. This is a step-by-step implementation recipe, not just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and what APIs should be used but doesn't provide exact code or line-level replacement; the agent must still write the Bus subscription + context wrapping logic."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the variable must be named exactly 'startEventStream' (findVarDecl), must use Bus.subscribeAll (not an alternative subscription pattern), must use exactly WorkspaceContext.provide and Instance.provide call expressions, must reference Bus.InstanceDisposed as a property access. A correct alternative using e.g. Bus.subscribe with a filter callback, or a different event handling pattern, would fail."
+      "outcome": "pass",
+      "reason": "Tests check for API usage patterns (Bus.subscribe/subscribeAll either accepted, WorkspaceContext.provide, Instance.provide) and generic cleanup (AbortController + signal), not gold-specific variable names or structure."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests use TypeScript AST analysis (parsing the source file and checking for specific AST nodes like call expressions, property accesses, import declarations). While AST analysis is more sophisticated than simple string matching, it still inspects source code structure rather than executing the code or testing runtime behavior. No test actually runs the worker or verifies events are received."
+      "outcome": "pass",
+      "reason": "Tests execute a Node TypeScript AST analysis via subprocess, walking real AST nodes (CallExpression, NewExpression, PropertyAccessExpression) rather than string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific AST patterns (Bus.subscribeAll calls, WorkspaceContext.provide, Instance.provide, removal of createOpencodeClient) that would not be present in a stub implementation. The not_stub check requires >=15 meaningful AST nodes. A default/empty implementation would fail these checks."
+      "reason": "Tests include a 'not_stub' check requiring >=15 meaningful AST nodes, and require specific call expressions like Bus.subscribe, WorkspaceContext.provide, Instance.provide \u2014 a stub cannot pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 8 requirements listed in instruction.md are tested: Bus.subscribeAll (test_bus_subscribe_in_stream), WorkspaceContext.provide (test_workspace_context_wrapping), Instance.provide (test_instance_context_wrapping), InstanceDisposed handling (test_instance_disposed_handling), AbortController+signal (test_abort_controller_cleanup), GlobalBus.on (test_global_bus_forwarding), RPC methods (test_rpc_methods_intact), removal of SSE (test_sse_client_removed)."
+      "reason": "Tests cover Bus subscription, WorkspaceContext/Instance provide, SSE removal, InstanceDisposed handling, AbortController cleanup, RPC preservation, GlobalBus, and style constraints as described in instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped into gate/f2p/p2p/anti-stub/agent-config sections with comments, and named descriptively (e.g., test_bus_subscribe_in_stream, test_workspace_context_wrapping)."
+      "reason": "Tests are grouped with section comments ('Gate', 'Fail-to-pass') and each has a descriptive docstring and [pr_diff]/[static] tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code refactoring, not producing structured data output."
+      "reason": "Task is a code refactor, not a structured data producer."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, module names, or variable names across instruction.md and test files."
+      "reason": "File paths, module names, and API identifiers match the repo structure in Dockerfile and patch."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file (worker.ts), the exact function (startEventStream), and provides a detailed 8-point implementation checklist including specific API calls (Bus.subscribeAll, WorkspaceContext.provide, Instance.provide, Bus.InstanceDisposed). This goes well beyond identifying the buggy module."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify (worker.ts) which is necessary context, but doesn't cite specific line numbers of the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code edit task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

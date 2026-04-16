@@ -1,0 +1,93 @@
+checks:
+  # ============================================================================
+  # FAIL-TO-PASS TESTS: These validate the fix works (fail before, pass after)
+  # ============================================================================
+
+  - id: test_typescript_compiles
+    type: fail_to_pass
+    origin: agent_config
+    description: TypeScript compiles after fix
+
+  - id: test_distribute_imports_update_bound_elements
+    type: fail_to_pass
+    origin: static
+    description: distribute.ts imports updateBoundElements from binding module
+
+  - id: test_distribute_imports_scene_type
+    type: fail_to_pass
+    origin: static
+    description: distribute.ts imports Scene type
+
+  - id: test_distribute_elements_accepts_scene_param
+    type: fail_to_pass
+    origin: static
+    description: distributeElements function accepts scene parameter
+
+  - id: test_distribute_uses_mutate_element
+    type: fail_to_pass
+    origin: static
+    description: distributeElements uses scene.mutateElement instead of newElementWith
+
+  - id: test_distribute_calls_update_bound_elements
+    type: fail_to_pass
+    origin: static
+    description: distributeElements calls updateBoundElements after mutation
+
+  - id: test_distribute_calls_update_bound_elements_twice
+    type: fail_to_pass
+    origin: static
+    description: distributeElements calls updateBoundElements in both code paths
+
+  - id: test_action_distribute_passes_scene
+    type: fail_to_pass
+    origin: static
+    description: actionDistribute.tsx passes app.scene to distributeElements
+
+  - id: test_wysiwyg_imports_update_bound_elements
+    type: fail_to_pass
+    origin: static
+    description: textWysiwyg.tsx imports updateBoundElements
+
+  - id: test_wysiwyg_calls_update_bound_elements_on_overflow
+    type: fail_to_pass
+    origin: static
+    description: textWysiwyg calls updateBoundElements when text overflows container
+
+  - id: test_wysiwyg_calls_after_mutate_element
+    type: fail_to_pass
+    origin: static
+    description: updateBoundElements in textWysiwyg called after mutateElement
+
+  # ============================================================================
+  # PASS-TO-PASS TESTS: Repository CI tests that should pass at base commit
+  # ============================================================================
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository TypeScript typecheck passes
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository ESLint linting passes
+
+  - id: test_repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository Prettier formatting passes
+
+  - id: test_repo_distribute_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository distribute element tests pass
+
+  - id: test_repo_binding_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository binding tests pass
+
+  - id: test_repo_wysiwyg_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository textWysiwyg tests pass

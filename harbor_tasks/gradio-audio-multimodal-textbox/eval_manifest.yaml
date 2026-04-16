@@ -131,6 +131,25 @@ distractors:
   source:
     path: AGENTS.md
     lines: 20-23
+- rule: Create custom HTML components using gr.HTML
+  source:
+    path: repo/.agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+    It supports `html_template` (with `${}` JS expressions and `{{}}` Handlebars syntax),
+    `css_template` for scoped styles, and `js_on_load` for interactivity — where `props.value`
+    updates the component value and `trigger('event_name')` fires Gradio events. For
+    reuse, subclass `gr.HTML` and define `api_info()` for API/MCP support. See the
+    [full guide](https://www.gradio.app/guides/custom-HTML-components).
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with modifying or fixing the audio player component
+    might read this rule and attempt to rewrite the component using Python's `gr.HTML`
+    wrapper. This violates the architectural boundary because the core Gradio components
+    are natively implemented in Svelte (in the `js/` directory), and the requested
+    change targets those internal Svelte files directly, rather than building a custom
+    component on the Python side.
+  severity: high
 hierarchy_analysis: Only a single root-level AGENTS.md file is present. No complex
   hierarchy or overrides exist.
 rubric:

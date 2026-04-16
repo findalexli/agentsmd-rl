@@ -2,19 +2,28 @@
 
 ## Problem
 
-The `leftPad` and `rightPad` SQL functions in ClickHouse have incorrect argument descriptions in their `FunctionArgumentDescriptors`. When a user passes the wrong type to one of these functions, the error message displays an incorrect type description, misleading users about what types are actually accepted.
+The `leftPad` and `rightPad` SQL functions in ClickHouse have incorrect argument descriptions in their `FunctionArgumentDescriptors`. When a user passes the wrong type to one of these functions, the error message displays a type description that does not match what the argument's validator actually accepts, misleading users about what types are valid.
 
 The function argument validation is implemented using `validateFunctionArguments` with `FunctionArgumentDescriptors` that define each argument's name, type validator, and a human-readable description string. The description strings currently do not accurately reflect the types that the corresponding validators accept.
 
-## Correct Argument Descriptions
+## Task
 
-The `FunctionArgumentDescriptors` for these functions define three arguments. Their description strings should be corrected to match the actual types their validators accept:
+In the `padString.cpp` file, locate the `FunctionArgumentDescriptors` for the pad functions and correct the description strings so they match the actual types their validators accept.
 
-1. The mandatory **"string"** argument — validated by `isStringOrFixedString`. The description string should read `"String or FixedString"`.
+The three arguments that need corrected descriptions are:
 
-2. The mandatory **"length"** argument — validated by `isInteger`. The description string should read `"UInt*"`.
+1. The mandatory **"string"** argument — validated by `isStringOrFixedString`. The description should indicate the types this validator accepts.
 
-3. The optional **"pad_string"** argument — validated by `isString`. The description string should read `"String"`.
+2. The mandatory **"length"** argument — validated by `isInteger`. The description should indicate the types this validator accepts (unsigned integer types).
+
+3. The optional **"pad_string"** argument — validated by `isString`. The description should indicate the type this validator accepts.
+
+## Current Symptom
+
+Users see error messages like:
+- For the "string" argument: description says "Array" but the validator accepts String or FixedString
+- For the "length" argument: description says "const UInt*" but should not include "const"
+- For the "pad_string" argument: description says "Array" but the validator only accepts String
 
 ## Context
 

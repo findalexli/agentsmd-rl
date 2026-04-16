@@ -1,0 +1,160 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39734
+  base_commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+  merge_commit: "61afb37f4e6af73ae536c7d05ee1a926328b6d80"
+
+# Code behavior + Config edit checks
+checks:
+  # minimist.ts existence and functionality
+  - id: minimist_file_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist.ts must exist at the expected path"
+
+  - id: minimist_parses_boolean_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must correctly parse boolean flags"
+
+  - id: minimist_parses_string_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must correctly parse string arguments"
+
+  - id: minimist_throws_on_boolean_equals
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must throw error when boolean flag is passed with =value"
+
+  - id: minimist_parses_positional_args
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must correctly parse positional arguments"
+
+  - id: minimist_parses_negated_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must correctly parse --no-* boolean flags"
+
+  - id: minimist_parses_shorthand_flags
+    type: fail_to_pass
+    origin: pr_diff
+    description: "minimist must correctly parse shorthand flags like -abc"
+
+  # Integration checks (pass-to-pass - code was updated correctly)
+  - id: program_imports_minimist
+    type: pass_to_pass
+    origin: pr_diff
+    description: "program.ts must import from the vendored minimist module"
+
+  - id: session_imports_minimist_type
+    type: pass_to_pass
+    origin: pr_diff
+    description: "session.ts must import MinimistArgs type from vendored minimist"
+
+  - id: minimist_exports_correct_types
+    type: pass_to_pass
+    origin: pr_diff
+    description: "minimist.ts must export minimist function and MinimistArgs type"
+
+  - id: program_type_safety
+    type: pass_to_pass
+    origin: pr_diff
+    description: "program.ts must cast args.session to string and convert args.all to boolean"
+
+  - id: session_type_safety
+    type: pass_to_pass
+    origin: pr_diff
+    description: "session.ts must cast cliArgs.session to string"
+
+  # Config/documentation update checks (fail-to-pass - the main agentmd-edit aspect)
+  - id: claude_md_has_generated_with_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must include the new 'Never add Generated with' rule"
+
+  - id: deps_list_includes_minimist
+    type: fail_to_pass
+    origin: pr_diff
+    description: "DEPS.list must include minimist.ts as a dependency"
+
+  - id: package_json_no_minimist_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "package.json must not have @types/minimist dev dependency"
+
+# Rubric rules extracted from CLAUDE.md (soft/subjective rules)
+rubric:
+  - rule: "Use import statements instead of require() for module imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "80-85"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: code_style
+
+  - rule: "Update DEPS.list when creating or moving files to declare allowed imports"
+    source:
+      path: "CLAUDE.md"
+      lines: "95-105"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: architecture
+
+  - rule: "Files marked strict in DEPS.list can only import explicitly listed dependencies"
+    source:
+      path: "CLAUDE.md"
+      lines: "95-105"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: architecture
+
+  - rule: "Client code NEVER imports server code - communication only through protocol"
+    source:
+      path: "CLAUDE.md"
+      lines: "95-105"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: architecture
+
+  - rule: "Always run flint before committing - do not use tsc --noEmit separately"
+    source:
+      path: "CLAUDE.md"
+      lines: "60-70"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: workflow
+
+  - rule: "Semantic commit messages: label(scope): description"
+    source:
+      path: "CLAUDE.md"
+      lines: "115-130"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: workflow
+
+  - rule: "Never add Co-Authored-By agents in commit message"
+    source:
+      path: "CLAUDE.md"
+      lines: "125"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: workflow
+
+  - rule: "Branch naming for issue fixes: fix-<issue-number>"
+    source:
+      path: "CLAUDE.md"
+      lines: "128"
+      commit: "4df350b1c81b61ea471ff12767efd8e05f773377"
+    verification: llm_judge
+    category: workflow
+
+# Config edits extracted from solve.sh (Track 2: Gold config edits)
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: 'Never add "Generated with" in commit message.'
+    gold_removed: ""

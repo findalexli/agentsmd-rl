@@ -145,6 +145,15 @@ rubric:
     abstraction, following the project's established pattern for device-agnostic code
     as requested by the TODO comments.
   category: architecture
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 25-25
+  source_text: '- No wildcard imports (`from x import *`).'
+  evidence: The diff adds a specific, explicit import `from areal.infra.platforms
+    import current_platform` rather than using a wildcard import.
+  category: imports
+  verification: llm_judge
 distractors:
 - rule: Add tests for new functionality
   collision_type: scope_ambiguity
@@ -164,6 +173,21 @@ distractors:
   source:
     path: AGENTS.md
     lines: 66-66
+- rule: GPU Test Constraints
+  source:
+    path: .claude/rules/testing.md
+    lines: 38-48
+  source_text: "## GPU Test Constraints\n\n- **Always skip gracefully** when GPU unavailable:\n\
+    \  ```python\n  CUDA_AVAILABLE = torch.cuda.is_available()\n\n  @pytest.mark.skipif(not\
+    \ CUDA_AVAILABLE, reason=\"CUDA not available\")\n  def test_gpu_feature():\n\
+    \      ...\n  ```\n- Clean up GPU memory: `torch.cuda.empty_cache()` in fixtures"
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly instructs the use of `torch.cuda.empty_cache()`
+    and `torch.cuda.is_available()`. An AI might see this and assume CUDA-specific
+    calls are standard across the codebase, thus resisting the change to `current_platform.empty_cache()`.
+    However, this rule only applies to test files, whereas the gold diff is modifying
+    core engine code to be platform-agnostic.
+  severity: medium
 hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are at Level 0 and contain overlapping
   rules (e.g., no wildcard imports, add tests for new functionality). They reinforce
   each other without conflict, providing a consistent set of constraints for the agent.

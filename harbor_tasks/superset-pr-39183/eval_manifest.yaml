@@ -1,0 +1,83 @@
+source:
+  repo: apache/superset
+  pr_number: 39183
+  pr_title: "perf(webpack): reduce watch mode memory usage and fix docker-compose-light env"
+  base_commit: ed659958f312c89b7f6b6dd0acbb08c850bbd6c3
+  merge_commit: 62302ad8c3a1aa1a40ea6d93097e2ed6a87cb07c
+
+checks:
+  # Fail-to-pass tests
+  - id: test_disable_ts_checker_with_true
+    type: fail_to_pass
+    origin: pr_description
+    description: DISABLE_TS_CHECKER=true should disable the TypeScript checker plugin
+
+  - id: test_disable_ts_checker_with_one
+    type: fail_to_pass
+    origin: pr_description
+    description: DISABLE_TS_CHECKER=1 should disable the TypeScript checker plugin
+
+  - id: test_disable_ts_checker_case_insensitive
+    type: fail_to_pass
+    origin: pr_description
+    description: DISABLE_TS_CHECKER=TRUE (uppercase) should also disable the plugin
+
+  - id: test_css_sourcemap_disabled_in_dev_mode
+    type: fail_to_pass
+    origin: pr_description
+    description: CSS sourceMap should be disabled in development mode for memory optimization
+
+  - id: test_watch_ignored_includes_new_patterns
+    type: fail_to_pass
+    origin: pr_description
+    description: Watch ignored patterns should include new memory-saving exclusions
+
+  # Pass-to-pass tests
+  - id: test_ts_checker_enabled_when_not_disabled
+    type: pass_to_pass
+    origin: pr_description
+    description: TypeScript checker should be enabled when DISABLE_TS_CHECKER is not set
+
+  - id: test_ts_checker_enabled_with_false
+    type: pass_to_pass
+    origin: pr_description
+    description: TypeScript checker should be enabled when DISABLE_TS_CHECKER=false
+
+  - id: test_ts_checker_enabled_with_zero
+    type: pass_to_pass
+    origin: pr_description
+    description: TypeScript checker should be enabled when DISABLE_TS_CHECKER=0
+
+  - id: test_webpack_config_loads_successfully
+    type: pass_to_pass
+    origin: repo_tests
+    description: Webpack config should load without errors
+
+  - id: test_docker_bootstrap_excludes_frontend
+    type: fail_to_pass
+    origin: pr_description
+    description: docker-bootstrap.sh should exclude superset-frontend from flask reloader
+
+  # Pass-to-pass tests from repo CI
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's oxlint linter passes on frontend code
+
+  - id: test_repo_custom_rules
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's custom frontend rules check passes
+
+  - id: test_repo_ensure_oxc
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's oxlint tooling is available
+
+rubric:
+  - id: no_docs_update_required
+    rule: This is a code-only PR (webpack optimization). No documentation or agent config file updates are required. The changes should only affect webpack.config.js, docker-compose files, and shell scripts.
+    reference: "N/A - intentionally no documentation changes"
+    source:
+      path: AGENTS.md
+    weight: 1

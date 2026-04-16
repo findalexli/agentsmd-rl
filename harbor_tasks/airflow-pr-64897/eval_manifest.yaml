@@ -1,0 +1,73 @@
+source:
+  repo: apache/airflow
+  pr_number: 64897
+  base_commit: 40902de7e7d31225410db85e3707aaf494ab5e90
+  merge_commit: bdc2747cc41b18af1fb42ab80159556a93d79ff3
+
+checks:
+  # Fail-to-pass tests - verify the fix adds partition fields
+  - id: test_includes_has_partition_key
+    type: fail_to_pass
+    origin: pr_behavior
+    description: DagRunInfo.includes list contains partition_key
+
+  - id: test_includes_has_partition_date
+    type: fail_to_pass
+    origin: pr_behavior
+    description: DagRunInfo.includes list contains partition_date
+
+  - id: test_partition_key_varies_by_input
+    type: fail_to_pass
+    origin: pr_behavior
+    description: partition_key field can serialize various string values
+
+  - id: test_partition_date_varies_by_input
+    type: fail_to_pass
+    origin: pr_behavior
+    description: partition_date field can serialize various datetime values
+
+  # Pass-to-pass tests - static code quality checks (file reads)
+  - id: test_includes_list_exists
+    type: pass_to_pass
+    origin: static
+    description: DagRunInfo class has an includes list
+
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Target file has valid Python syntax
+
+  - id: test_file_can_be_parsed
+    type: pass_to_pass
+    origin: static
+    description: Target file can be parsed as valid Python AST
+
+  - id: test_dagruninfo_class_exists
+    type: pass_to_pass
+    origin: static
+    description: DagRunInfo class exists in the target file
+
+  - id: test_includes_has_expected_existing_fields
+    type: pass_to_pass
+    origin: static
+    description: DagRunInfo.includes has expected existing fields like run_id
+
+  # Pass-to-pass tests - actual repo CI commands (subprocess calls)
+  - id: test_ruff_check_openlineage_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes on openlineage utils module
+
+  - id: test_ruff_format_check_openlineage_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on openlineage utils module
+
+  - id: test_python_compile_openlineage_src
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python compilation succeeds on openlineage source files
+
+# No rubric rules - this task is a pure code change with no config file edits.
+# The judge evaluates config file edits (Track 3), which don't apply here.
+# Code quality (ruff formatting) is already verified by pass_to_pass tests.

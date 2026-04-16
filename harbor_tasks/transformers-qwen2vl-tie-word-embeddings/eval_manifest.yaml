@@ -86,10 +86,26 @@ checks:
 rubric:
 - rule: Code changes should be minimal and focused. The gold solution correctly removes
     only the problematic tie_word_embeddings field from Qwen2VLTextConfig and Qwen2_5_VLTextConfig,
-    removes the propagation hack from composite configs, adds type annotations
-    to ModernVBertForMaskedLM.__init__ in both modeling and modular files.
+    removes the propagation hack from composite configs, adds type annotations to
+    ModernVBertForMaskedLM.__init__ in both modeling and modular files.
   reference: Removed tie_word_embeddings from text configs; removed propagation hack;
     added type hint to both modeling_modernvbert.py and modular_modernvbert.py
+- rule: Edit the modular file instead of generated files for modular models
+  source:
+    path: .ai/AGENTS.md
+    lines: '67'
+  source_text: 2) The newer method is to add a file named `modular_<name>.py` in the
+    model directory. `modular` files **can** inherit from other models. `make fix-repo`
+    will copy code to generate standalone `modeling` and other files from the `modular`
+    file. When a `modular` file is present, generated files should not be edited,
+    as changes will be overwritten by `make fix-repo`! Instead, edit the `modular`
+    file.
+  evidence: 'The gold diff applies the missing `config: ModernVBertConfig` type annotation
+    directly to `src/transformers/models/modernvbert/modular_modernvbert.py`, following
+    the convention that truth resides in the modular file, and correctly pairs it
+    with the output update to `modeling_modernvbert.py`.'
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
   collision_type: meta_confusion
@@ -103,13 +119,44 @@ distractors:
 - rule: make fix-repo will generate the actual modeling file from the modular file.
   collision_type: architecture_boundary
   why_distracting: The rule implies that editing the modular file is sufficient because
-    `make fix-repo` will generate the modeling file. An agent might skip editing
-    `modeling_modernvbert.py`, which causes tests to fail if the generation script
-    isn't run during evaluation.
+    `make fix-repo` will generate the modeling file. An agent might skip editing `modeling_modernvbert.py`,
+    which causes tests to fail if the generation script isn't run during evaluation.
   severity: medium
   source:
     path: AGENTS.md
     lines: 69-70
+- rule: Use getattr()/setattr() for dynamic model/config attributes
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 162-168
+  source_text: "j. **Use `getattr()` / `setattr()` for dynamic model/config attributes**.\n\
+    \      For runtime-injected fields (for example config/model flags), use\n   \
+    \   `getattr(obj, \"field\", default)` for reads and `setattr(obj, \"field\",\
+    \ value)`\n      for writes. Also use `getattr()` for third-party packages missing\
+    \ type stubs\n      (for example `getattr(safetensors, \"__version__\", \"unknown\"\
+    )`)."
+  collision_type: would_cause_bug
+  why_distracting: The PR removes code related to `self.vlm_config.text_config.tie_word_embeddings`.
+    An agent dealing with type errors or undefined attribute errors regarding `tie_word_embeddings`
+    might incorrectly apply this rule to wrap the access in `getattr(self.vlm_config.text_config,
+    'tie_word_embeddings', False)`. This would preserve flawed, obsolete logic instead
+    of correctly deleting it entirely.
+  severity: high
+- rule: Annotate untyped attributes
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 86-89
+  source_text: "e. **Annotate untyped attributes**. Add type annotations to instance\
+    \ variables\n      set in `__init__` or elsewhere (for example `self.foo: list[int]\
+    \ = []`).\n      Declare class-level attributes that are set dynamically later\n\
+    \      (for example `_cache: Cache`, `_token_tensor: torch.Tensor | None`)."
+  collision_type: scope_ambiguity
+  why_distracting: 'The correct fix adds a type annotation to the `config` argument
+    in the `__init__` method signature (`def __init__(self, config: ModernVBertConfig):`).
+    An agent could easily misread this rule and attempt to annotate the class instance
+    attribute (e.g., adding `self.config: ModernVBertConfig`) instead, failing to
+    fix the actual method signature typing error.'
+  severity: medium
 hierarchy_analysis: The config hierarchy is flat, with identical AGENTS.md and CLAUDE.md
   files at the root. The primary challenge is navigating the repository's dual-file
   architecture for modular models and ignoring the strict human-in-the-loop coordination

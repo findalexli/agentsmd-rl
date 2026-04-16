@@ -108,8 +108,90 @@ distractors:
   source:
     path: AGENTS.md
     lines: 28-30
+- rule: Use `getattr()` / `setattr()` for dynamic model/config attributes.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 162-167
+  source_text: "    j. **Use `getattr()` / `setattr()` for dynamic model/config attributes**.\n\
+    \       For runtime-injected fields (for example config/model flags), use\n  \
+    \     `getattr(obj, \"field\", default)` for reads and `setattr(obj, \"field\"\
+    , value)`\n       for writes. Also use `getattr()` for third-party packages missing\
+    \ type stubs\n       (for example `getattr(safetensors, \"__version__\", \"unknown\"\
+    )`).\n       Avoid `getattr(torch, \"npu\")` style — use type guards instead (see\
+    \ above)."
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see `base_model._tp_plan` and assume `_tp_plan`
+    is a dynamic config/model flag, thereby introducing or keeping `getattr(self.base_model,
+    "_tp_plan", None)`. However, the gold diff explicitly removes the `getattr()`
+    call in favor of direct attribute access because `_tp_plan` and `_pp_plan` are
+    statically defined attributes on `PreTrainedModel`, not dynamic runtime-injected
+    fields.
+  severity: medium
+- rule: Avoid direct inheritance in `src/transformers/models/` and use `# Copied from`
+    or `modular_<name>.py`.
+  source:
+    path: AGENTS.md
+    lines: 62-67
+  source_text: '## Copies and Modular Models
+
+
+    We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+    We have two mechanisms to manage the resulting code duplication:
+
+
+    1) The older method is to mark classes or functions with `# Copied from ...`.
+    Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block,
+    as it will be reverted by `make fix-repo`. Ideally you should edit the code it''s
+    copying from and propagate the change, but you can break the `# Copied from` link
+    if needed.
+
+    2) The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files **can** inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files from the `modular` file. When
+    a `modular` file is present, generated files should not be edited, as changes
+    will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See
+    [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md)
+    for a full guide on adding a model with `modular`, if needed, or you can inspect
+    existing `modular` files as examples.'
+  collision_type: scope_ambiguity
+  why_distracting: The file being edited is `src/transformers/modeling_utils.py`.
+    An agent might see the word 'modeling' and mistakenly assume this file is part
+    of the `src/transformers/models/` generated code or subject to `# Copied from`
+    constraints, causing it to refuse to edit the file or incorrectly search for a
+    `modular_` equivalent.
+  severity: low
 hierarchy_analysis: The configuration is flat, consisting of a single `AGENTS.md`
   file referenced by `CLAUDE.md`. The primary challenge is navigating meta-instructions
   that instruct the agent to refuse work without human coordination, which conflicts
   with the benchmark's requirement to autonomously generate a patch.
-rubric: []
+rubric:
+- rule: Narrow unions with `isinstance()` / `if x is None` rather than `assert`
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 38-50
+  source_text: "    a. **Narrow unions with `isinstance()` / `if x is None` / `hasattr()`**.\n\
+    \       This is the primary tool for resolving union-type errors. `ty` narrows\n\
+    \       through all of these patterns, including the negative forms:\n       ```python\n\
+    \       # Narrow X | None — use `if ...: raise`, never `assert`\n       if x is\
+    \ None:\n           raise ValueError(\"x must not be None\")\n       x.method()\
+    \  # ty knows x is X here\n\n       # Narrow str | UploadFile\n       if isinstance(field,\
+    \ str):\n           raise TypeError(\"Expected file upload, got string\")\n  \
+    \     await field.read()  # ty knows field is UploadFile here"
+  evidence: 'In the `pp_plan` setter, the `plan` parameter is annotated as `dict[str,
+    tuple[str, str]] | None`. The gold diff narrows this type by explicitly checking
+    `if plan is None:` and `if not isinstance(plan, dict): raise ValueError(...)`
+    rather than using `assert`.'
+  category: error_handling
+  verification: llm_judge
+- rule: Never use `assert` for type narrowing
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 189-190
+  source_text: "   - **Never use `assert` for type narrowing.** Asserts are stripped\
+    \ by `python -O`\n     and must not be relied on for correctness. Use `if ...:\
+    \ raise` instead."
+  evidence: When narrowing the type of the `plan` argument in the `pp_plan` setter,
+    the gold diff raises a `ValueError` rather than using `assert isinstance(plan,
+    dict)`.
+  category: error_handling
+  verification: llm_judge

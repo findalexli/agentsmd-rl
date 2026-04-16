@@ -158,6 +158,36 @@ rubric:
     file to fix the DSN construction without renaming it or creating new files with
     non-standard
   category: naming
+- rule: Use PHP 8.3+ features and syntax.
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '- PHP 8.3+, Swoole 6.x (async runtime, replaces PHP-FPM)'
+  evidence: The diff utilizes the `match` expression (a modern PHP feature) to assign
+    `$dbTypeSharedTables` based on the value of `$databaseType`.
+  category: syntax
+  verification: llm_judge
+- rule: Follow PSR-12 coding standards for formatting.
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  source_text: '- PHPUnit 12, Pint (PSR-12), PHPStan level 3'
+  evidence: The diff adheres to PSR-12 formatting, such as using spaces around operators
+    (`!==`, `=>`) and proper indentation for the `match` expression and `if/else`
+    blocks.
+  category: style
+  verification: llm_judge
+- rule: Place resources, configs, constants, locales, models, registers, and database
+    filters/formats in the `app/init/` directory.
+  source:
+    path: AGENTS.md
+    lines: 34-34
+  source_text: '- **app/init/** -- configs, constants, locales, models, registers,
+    resources, span, database filters/formats'
+  evidence: The diff modifies `app/init/resources/request.php`, adhering to the project
+    layout that dictates resources belong in the `app/init/` directory.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Generally-speaking, each service is its own module... The goal is to always
     put related code that achieves a specific goal under one roof.
@@ -182,6 +212,23 @@ distractors:
   source:
     path: AGENTS.md
     lines: 55-58
+- rule: Module structure and Workers directory placement
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-16
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers'
+  collision_type: architecture_boundary
+  why_distracting: The AI might see the modification to `app/init/worker/message.php`
+    and attempt to refactor or move it into the `src/Appwrite/Platform/Modules/*/Workers`
+    directory structure, mistakenly applying the new module architecture rules to
+    core initialization scripts.
+  severity: medium
 hierarchy_analysis: The configuration hierarchy is moderate, with a base `AGENTS.md`
   defining the overall stack and project layout, and a module-specific `src/Appwrite/Platform/AGENTS.md`
   defining strict rules for module structure and HTTP endpoint naming. The rules are

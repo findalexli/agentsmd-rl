@@ -1,0 +1,76 @@
+version: 1.0
+task:
+  name: lancedb-empty-hybrid-search-fix
+  source_pr:
+    owner: lancedb
+    repo: lancedb
+    number: 3030
+    merge_commit: 715b81c86b0055789cd0f012f7bb26ed1899bc0f
+    base_commit: 2d60ea693870ccc89dfe5ac20ee7c1b8dedee835
+  target_files:
+    - python/python/lancedb/query.py
+
+checks:
+  # Fail-to-pass tests (the core bug fix)
+  - id: test_empty_results_early_return_exists
+    type: fail_to_pass
+    origin: behavior
+    description: Early return for empty results exists in _combine_hybrid_results
+
+  - id: test_relevance_score_column_added
+    type: fail_to_pass
+    origin: behavior
+    description: _relevance_score column is added to empty results
+
+  - id: test_pa_unify_schemas_usage
+    type: fail_to_pass
+    origin: behavior
+    description: pa.unify_schemas is used for schema merging
+
+  - id: test_no_index_error_on_empty_results
+    type: fail_to_pass
+    origin: behavior
+    description: Early return happens before reranker call to prevent IndexError
+
+  - id: test_combined_schema_includes_both
+    type: fail_to_pass
+    origin: behavior
+    description: Combined schema includes fields from both input tables
+
+  - id: test_with_row_ids_handling
+    type: fail_to_pass
+    origin: behavior
+    description: with_row_ids flag is respected in empty results (drops _rowid when False)
+
+  - id: test_patch_code_structure
+    type: fail_to_pass
+    origin: behavior
+    description: All key elements of the patch are present
+
+  # Pass-to-pass tests (repo quality)
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python code passes syntax check
+
+rubric:
+  # Soft/subjective rules from agent configs
+  - id: proper_early_return_pattern
+    description: Uses early return pattern for empty results rather than try/except
+    guidance: The fix should add an early return check before the reranking logic
+    weight: medium
+
+  - id: handles_with_row_ids_flag
+    description: Properly respects the with_row_ids flag in empty result handling
+    guidance: When with_row_ids=False, the _rowid column should be dropped from empty results
+    weight: medium
+
+  - id: preserves_schema_in_empty_results
+    description: Empty result table preserves the combined schema from both input tables
+    guidance: Use pa.unify_schemas to properly merge schemas before creating empty table
+    weight: medium
+
+  - id: bugfix_has_tests
+    description: Bugfix has corresponding tests
+    guidance: From AGENTS.md - all bugfixes must have tests. Ensure test coverage exists.
+    weight: high

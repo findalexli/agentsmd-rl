@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific details not in instruction.md: exact function names like 'expected_0_ty_args_got_1', 'expected_1_ty_arg_got_0', 'expected_1_ty_arg_got_2', 'expected_2_ty_args_got_1', 'expected_2_ty_args_got_3' (test_new_type_argument_tests_exist); exact string 'args.len() != function.to_ref().parameters.len()' and 'type_arguments.len() != function.to_ref().type_parameters().len()' (test_argument_count_validation_in_code, test_type_argument_count_validation_in_code); removal of 'ValueF"
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify, the error codes (NUMBER_OF_ARGUMENTS_MISMATCH, INTERNAL_TYPE_ERROR), the method name (execute_function_bypass_visibility), and the test file; the specific new test function names are not in instruction but tests check them as structural requirements."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact condition to check ('args.len() != function.to_ref().parameters.len()' and 'type_arguments.len() != function.to_ref().type_parameters().len()'), the exact error codes to return (NUMBER_OF_ARGUMENTS_MISMATCH, INTERNAL_TYPE_ERROR), and the exact method to modify (execute_function). This gives away the implementation rather than just describing the bug."
+      "reason": "Instruction explicitly states the exact condition to check: 'verify that args.len() != function.to_ref().parameters.len()' and 'type_arguments.len() != function.to_ref().type_parameters().len()', essentially giving the code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_argument_count_validation_in_code assert the exact string 'args.len() != function.to_ref().parameters.len()' via substring match. An alternative correct implementation using e.g. 'function.to_ref().parameters.len() != args.len()' (reversed operand order) would fail this test. Similarly test_unit_test_updated_to_direct_call checks for absence of 'ValueFrame' and 'MoveValue' as exact strings, and test_new_type_argument_tests_exist checks for exact function names like 'fn expected_0"
+      "reason": "test_argument_count_validation_in_code asserts the literal string 'args.len() != function.to_ref().parameters.len()' exists; an equivalent fix using e.g. `function.to_ref().parameters.len() != args.len()` would fail. Also test_new_type_argument_tests_exist requires specific test function names like 'expected_0_ty_args_got_1'."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Multiple fail-to-pass tests are pure text matching: test_argument_count_validation_in_code, test_type_argument_count_validation_in_code, test_unit_test_updated_to_direct_call, and test_new_type_argument_tests_exist all just read file contents and check for substrings without executing code. While some tests (test_argument_count_test_behavior, test_type_argument_count_test_behavior, test_function_arg_tests_suite) do run cargo test, the text-only tests dominate the fail-to-pass category."
+      "outcome": "pass",
+      "reason": "Tests include cargo test subprocess runs (test_argument_count_test_behavior, test_happy_path_u64_arg, test_function_arg_tests_suite) that execute the code, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (test_argument_count_test_behavior, test_type_argument_count_test_behavior, test_function_arg_tests_suite) run actual cargo tests that exercise the VM code. A stub implementation would not pass these because they verify actual runtime behavior including correct error codes for mismatched arguments."
+      "reason": "Behavior tests like test_argument_count_test_behavior run the actual cargo test and require it to pass; a stub wouldn't return the right StatusCode."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires value argument count check, type argument count check, and test updates. All three are tested: behavioral tests verify the checks work, text tests verify the code changes, and test_unit_test_updated_to_direct_call/test_new_type_argument_tests_exist verify test updates."
+      "reason": "Tests cover arg count mismatch, type arg count mismatch, happy paths, and test suite conversion as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_argument_count_validation_in_code, test_type_argument_count_test_behavior), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS categorization, and are logically grouped by what they verify."
+      "reason": "Tests have descriptive names and docstrings indicating FAIL-TO-PASS vs PASS-TO-PASS categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in instruction.md are consistent with the actual codebase and test files."
+      "reason": "Paths and function names appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact files to modify, the exact method names (execute_function), the exact comparison expressions ('args.len() != function.to_ref().parameters.len()'), and the exact error codes. This goes beyond describing the bug and prescribes the exact implementation."
+      "reason": "Instruction provides the exact code expressions 'args.len() != function.to_ref().parameters.len()' and 'type_arguments.len() != function.to_ref().type_parameters().len()', which is direct implementation-level hint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no agent config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (declaration.ts, translation.json, use-switch-organization.ts, org-selector.tsx, org-selector.test.tsx), all key names (ORG$SWITCHED_TO_ORGANIZATION, ORG$SWITCHED_TO_PERSONAL_WORKSPACE), literal strings ('You have switched to organization: {{name}}', 'You have switched to your personal workspace.', 'Acme Corp'), function names (displaySuccessToast, useTranslation), parameter names (orgId, orgName, isPersonal), test descriptions, mock typing (params?: Record<s"
+      "reason": "Instruction names all relevant files, the English translation strings, language codes, interpolation key {{name}}, and suggests key names matching what tests look for (ORG$SWITCHED substrings)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact parameter names (orgId, orgName, isPersonal), exact i18n key names, exact import statements ('import { useTranslation }'), exact lookup patterns ('organizations?.find'), exact mock typing ('params?: Record<string, string>'), and exact onSuccess callback logic. This leaves virtually no reasoning for the developer about WHAT to change; it dictates the implementation in detail."
+      "outcome": "pass",
+      "reason": "Instruction describes what to change (add toast, add i18n keys, modify hook/component) without giving exact code or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_use_switch_organization_imports_toast_handler assert exact import syntax ('import { useTranslation }' or 'import {useTranslation}'), test_org_selector_finds_org_by_id asserts 'organizations?.find' or 'organizations.find' as literal strings, and test_org_selector_test_accepts_params_in_translation asserts the exact string 'params?: Record<string, string>'. A correct alternative using different variable names, a different lookup pattern (e.g., using a Map or filter), or different T"
+      "outcome": "pass",
+      "reason": "Tests check for behavioral substrings like 'displaySuccessToast', 'useTranslation', 'SWITCHED' keys, and allow variable names to vary (orgName/name/isPersonal/is_personal all accepted)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most F2P tests (test_i18n_keys_exist, test_use_switch_organization_imports_toast_handler, test_use_switch_organization_uses_i18n_keys, test_use_switch_organization_mutation_params, test_org_selector_passes_org_details, test_org_selector_finds_org_by_id, test_org_selector_tests_include_toast_assertions, test_org_selector_tests_cover_team_org, test_org_selector_tests_cover_personal_workspace, test_org_selector_test_accepts_params_in_translation) are purely text-matching via 'assert X in file.read_"
+      "outcome": "pass",
+      "reason": "Tests run npm test via subprocess to execute unit tests, parse JSON translation file, and use node to evaluate files."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The F2P tests only check for string presence in source files. An agent could satisfy test_use_switch_organization_imports_toast_handler by adding a comment '// displaySuccessToast import { useTranslation }' without any actual implementation. Similarly, test_org_selector_finds_org_by_id could be passed by adding a comment containing 'organizations?.find'. The text-matching tests can be trivially satisfied without implementing actual functionality."
+      "outcome": "pass",
+      "reason": "Tests require actual translations in 15 languages, passing unit tests mentioning toast/personal, and behavioral checks that a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (i18n keys, translations for 15 languages, mutation hook changes, component changes, unit tests with specific descriptions and assertions) are tested either via F2P text-matching tests or P2P execution tests."
+      "reason": "Tests cover i18n keys, translations for 15 langs, hook behavior, component behavior, and unit tests for both team and personal cases."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_i18n_keys_exist, test_use_switch_organization_imports_toast_handler, etc.) and include docstrings with F2P/P2P markers indicating their category."
+      "reason": "Tests have descriptive names (test_i18n_keys_are_valid_typescript, test_use_switch_organization_hook_calls_toast_and_i18n) and section comments for F2P."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task involves translation.json which has a defined schema (key -> language_code -> string), and the instruction specifies exact keys, all 15 language codes, and required interpolation variables."
+      "reason": "Translation JSON structure with 15 language codes and {{name}} interpolation is explicitly specified in instruction."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, variable names, i18n keys, or commands throughout the instruction and test files."
+      "reason": "File paths and names appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like the lookup pattern 'organizations?.find(\u2026)', exact parameter names and types, exact import statements, and exact mock typing 'params?: Record<string, string>'. This goes well beyond naming the relevant files and describes the exact code to write."
+      "outcome": "pass",
+      "reason": "Instruction references files at appropriate granularity, no line numbers or exact code given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

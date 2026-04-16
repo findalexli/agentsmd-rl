@@ -1,49 +1,33 @@
-# Task: Fix Layout Demo Code Consistency
+# Fix Layout Demo Code Consistency
 
 ## Problem
 
-The Layout component demos in `components/layout/demo/` have inconsistent patterns for initializing the `currentYear` variable used in the Footer. Some demos declare `currentYear` at module level (outside the component), while it should be inside the App component for consistency with React best practices.
+The layout demo files in `components/layout/demo/` have inconsistent variable declaration patterns. Some demos declare the Footer year variable outside the App component while others declare it inside. This inconsistency makes the demos harder to maintain and contradicts React best practices.
 
-## Files to Fix
+## Expected Behavior
 
-The following demo files need to be updated:
-- `components/layout/demo/fixed-sider.tsx`
-- `components/layout/demo/fixed.tsx`
-- `components/layout/demo/responsive.tsx`
-- `components/layout/demo/side.tsx`
-- `components/layout/demo/top-side.tsx`
-- `components/layout/demo/top.tsx`
+The `currentYear` variable used in the Footer should be declared inside the `App` component for consistency with React best practices. The demos should follow a uniform structure.
 
-## Requirements
+## Files to Update
 
-1. Move the `currentYear` variable initialization from module level to inside the `App` component
-2. Place it after the `theme.useToken()` call within the component function body
-3. Ensure all 6 files follow the same consistent pattern
-4. The Footer should continue to reference `currentYear` correctly
+All six layout demo files in `components/layout/demo/`:
+- `fixed-sider.tsx`
+- `fixed.tsx`
+- `responsive.tsx`
+- `side.tsx`
+- `top-side.tsx`
+- `top.tsx`
 
-## Example of the Fix Pattern
+## Verification
 
-Before (module level):
-```tsx
-const currentYear = new Date().getFullYear();
-
-const App: React.FC = () => {
-  const { token } = theme.useToken();
-  // ...
-}
-```
-
-After (inside component):
-```tsx
-const App: React.FC = () => {
-  const { token } = theme.useToken();
-  const currentYear = new Date().getFullYear();
-  // ...
-}
-```
+After the fix:
+1. The demos should continue to compile and pass all tests (TypeScript, ESLint, Prettier, Jest)
+2. The Footer in each demo should still display the current year correctly
+3. The `currentYear` variable should be declared inside the App component (not at module level)
+4. All demos should follow the same consistent structure
 
 ## Notes
 
 - This is a code style/consistency improvement
-- The demos should follow React best practices by avoiding module-level side effects
-- All files should have the same structure for maintainability
+- The functional behavior (displaying the current year in the footer) must be preserved
+- Follow the pattern established by the majority of the demo files

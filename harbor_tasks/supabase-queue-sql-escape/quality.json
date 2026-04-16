@@ -2,57 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests require `import { literal }` from `@supabase/pg-meta/src/pg-format` (or similar path), and assert specific patterns like `literal(queueName)`, `literal(payload)`, `literal(delay)`, `literal(messageId)`, `literal(afterTimestamp)` on specific lines containing `pgmq.send`, `pgmq.archive`, `pgmq.delete`. The instruction.md never mentions the `literal()` function, the `pg-format` module, or the specific escaping mechanism to use. The `delay` parameter is also never mentioned in the instruction."
+      "outcome": "pass",
+      "reason": "The instruction names the four vulnerable files in `apps/studio/data/database-queues/`, the functions (send, query, archive, delete mutations), the `literal()` function from `@supabase/pg-meta/src/pg-format`, and the escaping behaviors for strings/objects/null/numbers. The test asserts on these same files, functions, and escaping behaviors. All test-specific details (file paths, function names, escaping rules) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (raw interpolation of user-controlled values into SQL) and says values must be 'properly escaped,' but does not specify the exact fix (e.g., does not say 'use literal() from pg-format'). A developer would still need to figure out the implementation."
+      "reason": "The instruction describes what's broken (raw template interpolation) and points to the available escaping function `literal()`, but does not specify exact line changes or the precise code to write. A developer must still reason about which interpolations to wrap and how to import the function."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert `import { literal }` must appear in all four files, and that specific lines must contain exact patterns like `literal(queueName)`, `literal(payload)`, `literal(delay)`, `literal(messageId)`, `literal(afterTimestamp)`. An alternative correct fix using parameterized queries, a different escaping function, or even the same `literal` function imported differently (e.g., `import { literal } from 'pg-format'` vs the expected path) would fail these text-matching assertions."
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: that SQL output properly escapes single quotes (doubled quotes appear), that `literal()` produces correct outputs for various types, and that exported function names exist. They don't assert on exact line positions, specific variable names, or import ordering. Alternative correct implementations (e.g., using a wrapper around `literal()`, different import paths that resolve the same module) would pass as long as the escaping behavior is correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "While `test_literal_escapes_sql_injection` does execute the `literal()` function via tsx and verify its behavioral output, the majority of f2p tests (test_send_payload_escaped, test_query_timestamp_escaped, test_archive_params_escaped, test_delete_params_escaped) are purely textual checks (`assert 'literal(queueName)' in line`, `assert \"'${queueName}'\" not in src`). They never execute the mutations or verify that SQL injection is actually prevented at runtime."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests actually execute the code via `tsx`, call functions like `sendDatabaseQueueMessage`, `getDatabaseQueue`, `archiveDatabaseQueueMessage`, `deleteDatabaseQueueMessage`, capture the generated SQL, and assert on the escaped output. The gate tests do include text checks (`executeSql in src`) but the critical behavioral tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The base commit has raw `'${queueName}'` interpolation and no `import { literal }` \u2014 these f2p tests would fail on the base commit. A stub or no-op implementation wouldn't add the required `literal()` calls and imports, so it would also fail."
+      "reason": "A stub implementation returning empty/default values would not produce SQL containing properly escaped single quotes like `O''Reilly`. The tests assert specific escaped patterns in the generated SQL, so a no-op or pass-through implementation would fail. The `_assert_value_escaped_in_sql` function checks that doubled quotes appear in the SQL output."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires escaping user-controlled values in four files for four operations, and the tests cover all four files and operations, plus the escaping behavior of the literal function itself."
+      "reason": "The instruction requires escaping user-controlled values in send, query, archive, and delete operations. The tests cover all four files with behavioral checks for SQL injection prevention. The constraint about no `as any` casts and TypeScript type checking are covered by `test_no_as_any_in_modified_files` (visible in the test file pattern)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, agent_config, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-structured with descriptive names (`test_literal_escapes_sql_injection`, `test_send_payload_escaped`, etc.), grouped into gates (pass_to_pass, static) and fail-to-pass (behavioral) sections with clear comments, and each has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to fix SQL injection, not producing structured data output."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas; it modifies TypeScript source files to fix SQL injection vulnerabilities."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction match those in the tests and solution without typos."
+      "reason": "File paths, function names, commands, and variable names in the instruction are consistent with the test file and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the four affected files, which is appropriate given the task domain (fixing SQL injection in specific queue operations). It does not name specific lines or the exact fix mechanism."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact directory (`apps/studio/data/database-queues/`) and describes the specific files (send, query/infinite/paginated, archive, delete mutation files) along with the exact function to use (`literal()` from `@supabase/pg-meta/src/pg-format`) and precise import syntax. While file-level identification may be acceptable for this domain, the instruction goes further by specifying the exact parameters that need escaping ('queue names, payloads, delays, message IDs"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config editing task."
+      "reason": "This is a code-only task, not an agentmd-edits task involving config files."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
 }

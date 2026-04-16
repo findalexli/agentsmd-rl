@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths, literal strings (e.g., 'components_to_document = [\"dataframe\", \"js-client\"]', 'components_to_document.includes(p)', 'urlExists', 'method: \"HEAD\"', 'import \"prism-svelte\"', language map entries like 'svelte: \"svelte\"', 'md: \"markdown\"', 'css: \"css\"'), section names ('Standalone Svelte component', 'Install', 'Usage', 'Props', 'Events'), prop names ('show_search'), package.json export paths ('./dist/Index.svelte', './dist/Example.svelte'), and all"
+      "reason": "Instruction explicitly names all tested strings (components_to_document = [\"dataframe\", \"js-client\"], urlExists, method: \"HEAD\", prism-svelte, svelte: \"svelte\", md: \"markdown\", css: \"css\", ./dist/Index.svelte, ./dist/Example.svelte) and the file paths."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md effectively dictates the exact implementation: it specifies the exact variable name 'components_to_document', the exact string 'components_to_document = [\"dataframe\", \"js-client\"]', the exact function name 'urlExists', the exact method 'HEAD', exact language map entries, and exact export values. This leaves virtually no reasoning for the developer \u2014 it's a transcription task, not a problem-solving task."
+      "reason": "Instruction dictates exact literal strings like 'components_to_document = [\"dataframe\", \"js-client\"]', 'components_to_document.includes(p)', function name 'urlExists', 'method: \"HEAD\"', and the exact langs map entries, effectively specifying the implementation verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_website_layout_has_components_filter checks for exact string 'components_to_document = [\"dataframe\", \"js-client\"]' and 'components_to_document.includes(p)'; test_website_js_page_dynamic_redirect checks for 'async function urlExists' and 'method: \"HEAD\"'. An alternative correct fix using a different variable name (e.g., 'documented_components') or a different checking approach (e.g., GET instead of HEAD, or a different function name) woul"
+      "reason": "Tests assert exact variable name 'components_to_document', helper function name 'urlExists', and literal string 'method: \"HEAD\"' \u2014 alternative correct implementations using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail-to-pass test is purely text-matching: test_dataframe_readme_has_comprehensive_docs checks 'in content', test_website_layout_has_components_filter checks exact strings in file content, test_website_js_page_dynamic_redirect checks strings in file content, test_prism_svelte_import_added checks 'import \"prism-svelte\"' in file content, test_language_map_extended checks string patterns. No test actually imports/executes the TypeScript code, runs the server, or tests runtime behavior."
+      "reason": "Most tests are substring checks on file contents (e.g., 'components_to_document.includes(p)' in content, 'async function urlExists' in content); the TypeScript 'syntax' tests only do fs.readFileSync without actual parsing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for content that doesn't exist in the base commit (e.g., 'components_to_document' string, deletion of standalone/README.md, 'urlExists' function, prism-svelte imports, package.json 'default' exports). A stub/empty implementation wouldn't pass these since the base files don't contain these strings."
+      "reason": "f2p tests check for specific new content (comprehensive README sections, deleted standalone file, package.json default fields) that a stub/no-op would not satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: documentation consolidation, standalone README deletion, layout server filtering, dynamic redirect, prism-svelte imports, language map extension, navigation link removal, and package.json exports."
+      "reason": "Each requirement in instruction.md (README consolidation, layout filter, urlExists redirect, prism-svelte, langs map, package.json exports, nav removal) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments: Gates, Fail-to-pass, Pass-to-pass consistency, repo_tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The package.json schema (exports with '.', './example', 'types', 'default' fields) is documented in instruction.md under 'Package.json Exports'."
+      "reason": "package.json export schema (default/types fields and their exact path values) is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match those in tests without typos."
+      "reason": "No typos observed in referenced paths or identifiers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like the variable name 'components_to_document', exact filter expression 'components_to_document.includes(p)', function name 'urlExists', and method 'HEAD'. These are implementation choices, not domain-obvious requirements."
+      "reason": "Instruction specifies exact implementation details like 'The exact string being tested is: components_to_document = [\"dataframe\", \"js-client\"]' and 'The helper function should be named urlExists', going beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to specific files (adding imports, modifying filter logic, updating exports) without full-file rewrites, and doesn't contradict other task files."
+      "reason": "package.json edits are localized to adding default fields in two export entries; not a full rewrite."
     }
   },
   "tier_a_fails": [

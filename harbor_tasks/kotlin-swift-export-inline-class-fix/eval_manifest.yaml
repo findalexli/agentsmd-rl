@@ -1,0 +1,124 @@
+source:
+  pr: "https://github.com/JetBrains/kotlin/pull/5758"
+  title: "[Swift Export] Fix inline class with ref type crash"
+  issue: "KT-85050"
+  base_commit: "e5bfbbbd7f9d48f9d6039cd7d9459719d02b9b30"
+  merge_commit: "fb2b00e2fc01b240126017ee8e6b3be17da59638"
+
+# Test checks - must match test_outputs.py functions
+checks:
+  # =============================================================================
+  # FAIL-TO-PASS TESTS (verify the actual fix)
+  # =============================================================================
+  - id: test_kotlin_compilation_sir_light_classes
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sir-light-classes module compiles with the isInline fix (behavioral test)"
+
+  - id: test_isInline_check_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isInline conditional and 'as Any?' cast are present in SirInitFromKtSymbol.kt"
+
+  - id: test_golden_files_contain_inline_cast
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Golden result files contain 'as Any?' cast for inline classes"
+
+  - id: test_value_class_test_data_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New value class execution test data files are created"
+
+  - id: test_generated_test_class_has_valueclass
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SwiftExportExecutionTestGenerated includes testValueClass() method"
+
+  # =============================================================================
+  # PASS-TO-PASS TESTS (regression checks)
+  # =============================================================================
+  - id: test_gradle_wrapper_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradle wrapper is present and functional (repo CI gate)"
+
+  - id: test_sir_light_classes_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "sir-light-classes module has valid structure for CI builds"
+
+  - id: test_golden_files_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Golden files have valid Kotlin syntax structure"
+
+  - id: test_non_inline_classes_not_affected
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Non-inline class code is not incorrectly modified by the fix"
+
+  - id: test_execution_test_data_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Execution test data directory structure is valid"
+
+  - id: test_swift_export_integration_tests_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: "swift-export integration tests module exists and is configured"
+
+  # =============================================================================
+  # AGENT CONFIG TESTS (reference validation)
+  # =============================================================================
+  - id: test_agent_config_target_file_exists
+    type: agent_config
+    origin: agent_config
+    description: "Target file exists at expected location from CLAUDE.md/AGENTS.md"
+
+  - id: test_agent_config_golden_files_listed
+    type: agent_config
+    origin: agent_config
+    description: "All referenced golden files from instruction.md exist"
+
+# Rubric - extracted from agent config files relevant to this PR
+rubric:
+  - rule: "When working with Analysis API symbols, validate lifetime ownership with withValidityAssertion"
+    source: "analysis/AGENTS.md - Key Conventions"
+    type: "soft"
+
+  - rule: "Use Ka prefix for Analysis API types, Kt for PSI types"
+    source: "analysis/AGENTS.md - Key Conventions"
+    type: "soft"
+
+  - rule: "All implementations must validate lifetime ownership with withValidityAssertion"
+    source: "analysis/AGENTS.md - Key Conventions"
+    type: "soft"
+
+  - rule: "Prefer interfaces to classes for better binary compatibility in Analysis API"
+    source: "analysis/AGENTS.md - Key Conventions"
+    type: "soft"
+
+  - rule: "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable"
+    source: ".ai/guidelines.md - Commit Guidelines"
+    type: "soft"
+
+  - rule: "Use ^KT-XXXXX Fixed in commit body to auto-close issues"
+    source: ".ai/guidelines.md - Commit Guidelines"
+    type: "soft"
+
+  - rule: "Commit messages must explain not just WHAT but also WHY and HOW"
+    source: ".ai/guidelines.md - Commit Guidelines"
+    type: "soft"
+
+  - rule: "Commit tests together with corresponding code changes"
+    source: ".ai/guidelines.md - Commit Guidelines"
+    type: "soft"
+
+  - rule: "When fixing an issue and adding a test, commit test data as separate commit before the fix"
+    source: "compiler/AGENTS.md - Commit Guidelines"
+    type: "soft"
+
+  - rule: "When modifying test data files or running generated tests (*Generated), use manageTestDataGlobally"
+    source: "analysis/AGENTS.md - Working with Test Data"
+    type: "soft"

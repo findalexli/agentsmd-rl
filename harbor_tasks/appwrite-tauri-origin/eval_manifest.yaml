@@ -116,6 +116,29 @@ distractors:
   source:
     path: AGENTS.md
     lines: 78-79
+- rule: Register new modules in Appwrite.php
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 27-27
+  source_text: '> After implementing a module, make sure to register it in src/Appwrite/Platform/Appwrite.php.'
+  collision_type: meta_confusion
+  why_distracting: The word 'Platform' is overloaded in this codebase. The PR modifies
+    `src/Appwrite/Network/Platform.php` to add a new client platform (Tauri). An AI
+    might read the `src/Appwrite/Platform/AGENTS.md` rules and mistakenly think it
+    needs to register this new 'platform' as a backend module in `Appwrite.php`.
+  severity: medium
+- rule: Place constants in app/init/
+  source:
+    path: AGENTS.md
+    lines: 34-34
+  source_text: '- **app/init/** -- configs, constants, locales, models, registers,
+    resources, span, database filters/formats'
+  collision_type: architecture_boundary
+  why_distracting: The PR adds a new constant (`SCHEME_TAURI`). An AI might read this
+    project layout rule and try to extract the new constant into the `app/init/` directory
+    instead of keeping it encapsulated within the `Platform` class where it actually
+    belongs.
+  severity: low
 hierarchy_analysis: The configuration is essentially a flat single file, as `CLAUDE.md`
   simply redirects to `AGENTS.md`.
 version: '2.0'

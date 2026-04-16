@@ -1,0 +1,64 @@
+source_pr: "TanStack/router#6910"
+source_commits:
+  base: "4ea461ec27defe24f6b70a4c6fc402d48561de9a"
+  merge: "9ce7f97ef29e1b1adad54c7e5803fee4e792ae28"
+repository: "TanStack/router"
+target_files:
+  - "packages/solid-router/src/useRouterState.tsx"
+
+checks:
+  # Fail-to-pass tests: These verify the fix works correctly
+  - id: test_deepequal_promise_to_nonpromise
+    type: fail_to_pass
+    origin: behavioral
+    description: deepEqual returns false when comparing a Promise to a non-Promise
+
+  - id: test_deepequal_different_promises
+    type: fail_to_pass
+    origin: behavioral
+    description: deepEqual returns false when comparing two different Promise objects
+
+  - id: test_deepequal_same_promise
+    type: fail_to_pass
+    origin: behavioral
+    description: deepEqual returns true when comparing the same Promise reference
+
+  - id: test_deepequal_nested_object_with_promise
+    type: fail_to_pass
+    origin: behavioral
+    description: deepEqual returns false for objects containing different Promises
+
+  - id: test_deepequal_thenable_object
+    type: fail_to_pass
+    origin: behavioral
+    description: deepEqual returns false when comparing a thenable to a plain object
+
+  # Pass-to-pass tests: These verify repo quality standards
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid-router unit tests pass
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package builds successfully
+
+  - id: test_router_core_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core unit tests pass (includes deepEqual tests)
+
+  - id: test_router_core_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core TypeScript type checking passes
+
+# Rules from AGENTS.md that apply to this change
+# These are guidelines verified by the test suite, not config edits
+rubric: []

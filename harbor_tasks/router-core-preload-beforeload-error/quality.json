@@ -2,52 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the exact test name 'skip child beforeLoad when parent beforeLoad throws during preload', the exact file paths (load-matches.ts, load.test.ts), the exact code patterns to verify ('inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'), and the test commands. All assert targets in test_outputs.py are discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "test_code_logic_fix asserts exact strings like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' and '? inner.firstBadMatchIndex' in the source code. These specific variable names and exact code patterns are not mentioned anywhere in instruction.md. The instruction mentions 'serialError' only in a 'Key Points' bullet but never mentions 'firstBadMatchIndex' at all, making these test specifics undiscoverable."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The 'Code Patterns to Verify' section in instruction.md explicitly states the exact code strings the fix must contain: 'inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', and '? inner.firstBadMatchIndex'. This tells the agent exactly what code to write, eliminating the need to reason about the fix."
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug behavior (child handlers called when parent beforeLoad throws during preload) and points to the file/function to fix, but does not specify the exact code change (e.g., checking firstBadMatchIndex). The Key Points hint at the direction but don't give the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_code_logic_fix() asserts exact string patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and '? inner.firstBadMatchIndex'. An alternative correct fix using different variable names, different conditional structures (e.g., a helper function, or checking match.error instead of firstBadMatchIndex) would fail these string-matching tests despite being functionally correct."
+      "reason": "test_code_logic_fix asserts exact string patterns like 'inner.serialError || inner.firstBadMatchIndex != null' and 'inner.firstBadMatchIndex !== undefined' and '? inner.firstBadMatchIndex'. An alternative correct fix (e.g., using a different variable name, a different control flow approach like early return, or a try-catch wrapper) would fail these literal string checks even if it correctly fixes the behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_code_logic_fix() is purely a text-matching test that reads load-matches.ts and checks for exact string patterns without executing any code. While other tests do execute the code (test_preload_parent_beforeload_error_skips_child_handlers runs unit tests), the rubric says FAIL if 'every test is assert foo in open(path).read()' \u2014 this specific test is exactly that pattern, and it's a critical part of the test suite."
+      "reason": "test_code_logic_fix is purely a text-matching test: it reads load-matches.ts and asserts specific substrings are present ('inner.serialError || inner.firstBadMatchIndex != null', etc.) without any code execution. While other tests do execute the code, this test is purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p test (test_preload_parent_beforeload_error_skips_child_handlers) runs the actual unit test suite which requires the agent to write a working regression test and apply a real fix. A stub/no-op implementation would fail the child handler assertions. The test verifies actual runtime behavior through subprocess execution of vitest."
+      "reason": "test_preload_parent_beforeload_error_skips_child_handlers runs the actual regression test which verifies child handlers are not called when parent beforeLoad throws. A stub/no-op implementation would still call child handlers, so the test would fail without a real fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) fixing the bug in load-matches.ts, (2) adding a regression test with exact name, (3) code patterns present. All three are tested: unit tests run, test name presence is checked, code patterns are verified, plus type checking, linting, formatting, and build validation."
+      "reason": "The instruction requires: (1) fix the bug so child handlers aren't called when parent beforeLoad throws during preload, (2) add a regression test with a specific name. Both are tested: test_preload_parent_beforeload_error_skips_child_handlers checks for the test name and runs it, and test_unit_tests_pass ensures all tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and grouped by concern: test_preload_parent_beforeload_error_skips_child_handlers, test_unit_tests_pass, test_typescript_types_pass, test_eslint_linter_passes, test_build_package_validation_passes, test_prettier_formatting_passes, test_code_logic_fix. Each has docstrings explaining purpose."
+      "reason": "Tests are well-named with descriptive function names (test_preload_parent_beforeload_error_skips_child_handlers, test_unit_tests_pass, test_typescript_types_pass, etc.) and each has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a bug in TypeScript code; it does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and test names are consistent across instruction.md and test_outputs.py with no typos detected."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact file to modify (load-matches.ts) which is reasonable, but also gives the exact code patterns that must appear in the fix: 'inner.serialError || inner.firstBadMatchIndex != null', 'inner.firstBadMatchIndex !== undefined', '? inner.firstBadMatchIndex'. This is direct solution leakage of internal implementation details."
+      "reason": "instruction.md explicitly names the exact function ('loadMatches') and file ('packages/router-core/src/load-matches.ts') to modify, and the Key Points section mentions 'serialError' and hints at 'both serial errors AND beforeLoad errors' as the fix direction, which significantly narrows the solution space beyond what's needed for task description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TypeScript source files and test files, not configuration edits."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],

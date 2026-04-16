@@ -2,56 +2,57 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check very specific implementation details not mentioned in instruction.md. For example: test_return_includes_topk_indices checks for 'return output, None' pattern; test_decoder_layer_threads_topk checks that lines start with 'hidden_states' or 'topk' and contain all three variables; test_skip_topk_init_unconditional uses a subprocess that checks indent level <= 8 for method-body level initialization. The instruction mentions these behaviors at a high level but doesn't specify the exact re"
+      "outcome": "pass",
+      "reason": "The instruction names the patch file path (docker/patch/latest/sglang.patch), the target file (deepseek_v2.py), the class (DeepseekV2AttentionMLA), the attributes (skip_topk, next_skip_topk), the methods (forward_absorb_prepare, __init__), the conditional blocks (if self.use_nsa, if is_nextn), the config attributes (index_topk_freq, index_topk_pattern, index_skip_topk_offset), prev_topk_indices, the 3-tuple return from DecoderLayer, and the model unpacking \u2014 all specifics tested are discoverable"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (attributes only initialized inside `if self.use_nsa:` branch) and the expected behavior (defaults to False, unconditional availability), but does not specify the exact code changes, line numbers, or implementation details of the fix."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'self.skip_topk and self.next_skip_topk should be assigned False at method-body level of __init__' and specifies they 'must not be nested inside if self.use_nsa: or if is_nextn: conditionals'. It also specifies the exact return tuple format ('return output, None' when skip_topk is True). This tells the agent exactly WHAT to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The UNCONDITIONAL_INIT_CHECK subprocess test requires indent <= 8 for the attribute initialization to pass. This enforces a specific structural approach (placing init at method-body level before the `if self.use_nsa:` block). An alternative valid fix like initializing with `self.skip_topk = False` in an `else` branch at indent 16, or using `getattr(self, 'skip_topk', False)` in the forward path, would fail despite being correct fixes."
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests use scope-aware analysis checking that self.skip_topk and self.next_skip_topk are initialized outside the use_nsa/is_nextn conditionals \u2014 any placement that achieves unconditional initialization would pass. The pass-to-pass tests check for substring presence of config names and structural patterns, which would be preserved by any correct fix. Alternative approaches (e.g., initializing at different positions in __init__, using different default values besides False) co"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_skip_topk_init_unconditional, test_next_skip_topk_init_unconditional) use subprocess execution with scope-aware analysis that parses patch hunks and traces control flow scope, not simple string matching. The pass-to-pass tests do use text inspection but are supplementary regression checks."
+      "reason": "The two critical fail-to-pass tests (test_skip_topk_init_unconditional, test_next_skip_topk_init_unconditional) run subprocess-based scope-aware analysis that parses control flow and traces indent-based scope rather than simple string matching. Some pass-to-pass tests do use substring checks, but the core behavioral tests execute code analysis logic."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that self.skip_topk and self.next_skip_topk are initialized at indent <= 8 (method-body level). In the base commit, they are at indent 16 inside conditional blocks, so these tests would fail without the actual fix. A stub/no-op change would not pass."
+      "reason": "The fail-to-pass tests run a scope-aware parser that verifies the attribute assignments exist AND are outside conditional blocks. A stub or no-op change would fail because the base patch has these attributes only inside conditional blocks, and the subprocess returns exit code 1 if they're not found outside those blocks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: unconditional init of skip_topk/next_skip_topk (f2p tests), NSA config attributes preserved, forward skip logic with prev_topk_indices, return tuple format, and decoder layer threading of topk_indices."
+      "reason": "The instruction requires: unconditional init of skip_topk/next_skip_topk (tested by f2p tests), NSA config attributes preserved (test_config_attrs_preserved), forward skip logic with prev_topk_indices (test_forward_skip_logic_preserved), forward_absorb_prepare return tuple (test_forward_absorb_prepare_return), decoder layer 3-tuple return (test_decoder_layer_return_topk), and model unpacking (test_model_forward_unpacks_topk). All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gate, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are clearly organized into sections with comments (Gate/pass_to_pass static, Fail-to-pass/pr_diff, Pass-to-pass/pr_diff) and have descriptive names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing a patch file, not producing structured data output."
+      "reason": "The task involves patching source code, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "File paths, variable names, class names, and method names in the instruction are consistent and correctly spelled throughout."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction identifies the file (sglang.patch / deepseek_v2.py) and the general location (attributes in __init__ inside `if self.use_nsa:` branch), but this is necessary context for the bug description, not excessive localization. It doesn't specify exact line numbers or the precise fix."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (docker/patch/latest/sglang.patch), exact class (DeepseekV2AttentionMLA), exact method (__init__), exact conditional blocks (if self.use_nsa, if is_nextn), and exact attributes (skip_topk, next_skip_topk). It even specifies exact return formats ('return output, None', 'return hidden_states, residual, topk_indices'). This goes well beyond describing what's broken and localizes the fix precisely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code patch editing task, not a config-edit task."
+      "reason": "This is a code patch task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 7,
   "fail_count": 2
 }

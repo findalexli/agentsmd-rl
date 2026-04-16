@@ -1,0 +1,120 @@
+---
+version: 1
+
+repo:
+  owner: appwrite
+  name: appwrite
+
+pr:
+  number: 11689
+  title: "Fix installer"
+  merge_commit: "ec20fb59e2883f47afce681614f40ad6d7a7d973"
+  base_commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+
+files:
+  - path: "src/Appwrite/Platform/Tasks/Install.php"
+  - path: "src/Appwrite/Platform/Installer/Server.php"
+  - path: "src/Appwrite/Platform/Installer/Http/Installer/Install.php"
+  - path: "app/views/install/installer/templates/steps/step-4.phtml"
+  - path: "app/views/install/installer/templates/steps/step-5.phtml"
+  - path: "app/views/install/installer/css/styles.css"
+  - path: "AGENTS.md"
+
+checks:
+  - id: test_install_task_php_syntax
+    type: fail_to_pass
+    description: "Install.php (CLI task) has valid PHP syntax after fix"
+    origin: agent_config
+    source:
+      config_file: "AGENTS.md"
+      commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+      rule: "Follow PSR-12 coding standard"
+
+  - id: test_installer_server_php_syntax
+    type: fail_to_pass
+    description: "Server.php (installer server) has valid PHP syntax after fix"
+    origin: agent_config
+    source:
+      config_file: "AGENTS.md"
+      commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+      rule: "Follow PSR-12 coding standard"
+
+  - id: test_http_installer_php_syntax
+    type: fail_to_pass
+    description: "Http/Installer/Install.php has valid PHP syntax after fix"
+    origin: agent_config
+    source:
+      config_file: "AGENTS.md"
+      commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+      rule: "Follow PSR-12 coding standard"
+
+  - id: test_has_explicit_cli_params_exists
+    type: fail_to_pass
+    description: "Install.php defines the hasExplicitCliParams() method"
+    origin: code_behavior
+
+  - id: test_runtime_enable_coroutine_exists
+    type: fail_to_pass
+    description: "Server.php calls Runtime::enableCoroutine()"
+    origin: code_behavior
+
+  - id: test_on_complete_callback_param
+    type: fail_to_pass
+    description: "performInstallation accepts an onComplete callback parameter"
+    origin: code_behavior
+
+  - id: test_upgrade_api_key_hidden
+    type: fail_to_pass
+    description: "step-4.phtml hides API key badge when !$isUpgrade"
+    origin: code_behavior
+
+  - id: test_copy_appwrite_not_app
+    type: fail_to_pass
+    description: "step-5.phtml says 'Updating Appwrite…' not 'Updating your app…'"
+    origin: code_behavior
+
+  - id: test_css_installer_page_upgrade
+    type: fail_to_pass
+    description: "styles.css adds min-height:0 for upgrade page"
+    origin: code_behavior
+
+  - id: test_agents_md_improved
+    type: pass_to_pass
+    description: "AGENTS.md has improved content (table-based commands)"
+    origin: agent_config
+    source:
+      config_file: "AGENTS.md"
+      commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+      rule: "Update documentation if adding features"
+
+  - id: test_p2p_install_php_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for Install.php"
+
+  - id: test_p2p_server_php_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for Server.php"
+
+  - id: test_p2p_http_installer_php_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for Http/Installer/Install.php"
+
+  - id: test_p2p_step4_phtml_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for step-4.phtml"
+
+  - id: test_p2p_step5_phtml_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for step-5.phtml"
+
+  - id: test_p2p_styles_css_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PHP syntax check passes for styles.css"
+
+rubric: []

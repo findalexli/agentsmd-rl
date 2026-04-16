@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names the required function signatures (parseTemplate, doParseTemplate, parseTemplates), the required code pattern ('if prototype.Lookup(name) != nil'), the file paths involved (layouts/tags/list.html), and the behavioral requirement (no panic on rebuild). All test-asserted specifics are discoverable from the instruction."
+      "reason": "Instruction names the exact function signatures required (parseTemplate, doParseTemplate, parseTemplates) and the exact pattern 'if prototype.Lookup(name) != nil'."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md under 'Required Function Signatures' and 'Required Code Pattern' sections explicitly states the exact fix: remove the 'replace bool' parameter from three functions and change 'if !replace && prototype.Lookup(name) != nil' to 'if prototype.Lookup(name) != nil'. This is not describing what's broken \u2014 it's prescribing exactly what to change."
+      "reason": "Instruction explicitly provides the exact required signatures ('func (s *TemplateStore) parseTemplate(ti *TemplInfo) error') and the exact code pattern ('if prototype.Lookup(name) != nil'), which essentially dictates the fix rather than describing only the symptom."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string signatures like 'func (s *TemplateStore) parseTemplate(ti *TemplInfo) error' and 'if prototype.Lookup(name) != nil' via text matching. An alternative correct fix (e.g., keeping the parameter but ignoring it, or using a different duplicate-detection mechanism) would fail these tests even if it correctly fixes the panic."
+      "reason": "Tests assert exact string signatures (e.g., 'func (s *TemplateStore) parseTemplate(ti *TemplInfo) error') and exact pattern 'if prototype.Lookup(name) != nil'; an alternative valid fix (e.g., renaming the parameter, restructuring the check using a helper) would fail these literal string checks."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests 1-5 (test_template_functions_parse_template_signature, test_template_functions_do_parse_template_signature, test_template_store_parse_templates_signature, test_template_parsing_calls_no_replace_arg, test_duplicate_template_name_check_always_runs) are purely text-matching assertions using 'assert X in content' on source files. Only test_regression_tags_list_edit actually executes behavior. The majority of fail-to-pass tests are text-only."
+      "outcome": "pass",
+      "reason": "test_regression_tags_list_edit actually runs Hugo subprocess and verifies no panic on rebuild, along with go build/vet/test execution tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., the base has 'replace bool' parameters). A stub or no-op couldn't satisfy these \u2014 the source files need actual modification. The regression test runs the hugo binary and checks for non-panic behavior."
+      "reason": "test_regression_tags_list_edit requires actual Hugo binary to rebuild without panic and produce correct output; a stub cannot satisfy this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: function signatures, the duplicate check pattern, no panic on rebuild, and successful template update."
+      "reason": "Both the behavioral requirement (no panic on rebuild) and the signature/pattern requirements from instruction are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_template_functions_parse_template_signature, test_regression_tags_list_edit), have clear docstrings explaining the purpose (including FAIL-TO-PASS vs PASS-TO-PASS labels), and are logically grouped."
+      "reason": "Tests have descriptive names, docstrings marking FAIL-TO-PASS vs PASS-TO-PASS, and grouped logically."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output."
+      "reason": "Task is a code bug fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names are consistent (tpl/tplimpl/templates.go, templatestore.go)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact function signatures ('func (s *TemplateStore) parseTemplate(ti *TemplInfo) error'), exact code patterns ('if prototype.Lookup(name) != nil'), and specifies 'should not be conditional on any boolean flag' \u2014 all of which directly reveal the fix rather than just describing the bug."
+      "reason": "Instruction provides exact required signatures and the literal code pattern 'if prototype.Lookup(name) != nil', which leaks the specific fix rather than letting the agent localize it."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

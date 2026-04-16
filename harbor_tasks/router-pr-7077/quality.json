@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names the specific file paths (Match.tsx in react-router, solid-router, vue-router; not-found.tsx in solid-router), the exact patterns (error.routeId ??= matchState.routeId, getNotFound helper function, .cause property, matchData.value?.routeId), and function signatures that the tests assert on. All test-checked specifics are discoverable from the instruction."
+      "reason": "The instruction names the specific files (Match.tsx in react-router, solid-router, vue-router; not-found.tsx in solid-router), the exact patterns to implement (error.routeId ??= matchState.routeId, getNotFound helper with exact signature, .cause property handling, matchData.value?.routeId), and the function/variable names that tests assert on. All test-asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix code: 'error.routeId ??= matchState.routeId as any', the exact function signature 'export function getNotFound(error: unknown)', the exact usage pattern 'const notFoundError = getNotFound(error)', and 'notFoundError.routeId ??= currentMatchState().routeId as any'. This IS the solution, not just a description of what's broken."
+      "reason": "instruction.md explicitly states the exact fix patterns: 'error.routeId ??= matchState.routeId as any', the exact function signature 'export function getNotFound(error: unknown)', 'const notFoundError = getNotFound(error)', and 'error.routeId ??= matchData.value?.routeId as any'. These are the literal code changes needed, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'error.routeId ??= matchState.routeId' in file content, 'export function getNotFound(' in not-found.tsx, 'const notFoundError = getNotFound(error)' in Match.tsx. An alternative correct fix (e.g., using 'if (error.routeId === undefined) error.routeId = ...' or naming the helper 'extractNotFound') would fail these text-matching tests."
+      "reason": "Tests assert exact string patterns like 'error.routeId ??= matchState.routeId' in file content, 'export function getNotFound(' in not-found.tsx, 'const notFoundError = getNotFound(error)' in Match.tsx, and 'routeId ??=' with 'matchData.value' in Vue Match.tsx. An alternative correct fix (e.g., using a different variable name, a different assignment pattern like 'if (!error.routeId) error.routeId = ...', or a differently named helper) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix) are ALL text-matching tests using patterns like 'assert \"error.routeId ??= matchState.routeId\" in content'. Only the pass-to-pass tests (TestPassToPass) execute subprocesses. The core behavioral tests are purely string-in-file checks."
+      "reason": "The fail-to-pass tests (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix) exclusively use 'assert ... in content' pattern reading file contents as strings. They never import, execute, or call any code. The pass-to-pass tests do run subprocesses (TypeScript compilation, ESLint, unit tests), but all f2p tests are purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since the f2p tests only check for string presence in files (e.g., 'assert \"error.routeId ??= matchState.routeId\" in content'), an agent could simply append the exact string as a comment to the file without implementing any actual fix, and all f2p tests would pass."
+      "reason": "A stub implementation that simply writes the expected string patterns into the files would pass all f2p tests. For example, adding a comment '// error.routeId ??= matchState.routeId' to Match.tsx would pass test_react_match_preserves_routeid_on_notfound_error since it just checks string containment."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires routeId preservation for React/Solid/Vue, getNotFound helper in Solid, TypeScript compilation, ESLint, and unit tests. All of these are covered by the test classes."
+      "reason": "The instruction requires: (1) React routeId preservation - tested, (2) Solid getNotFound helper with .cause handling - tested, (3) Vue routeId preservation with matchData.value - tested, (4) TypeScript compilation - tested, (5) existing tests pass - tested via unit test and eslint checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into separate classes per framework (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix, TestPassToPass) with descriptive method names and docstrings."
+      "reason": "Tests are well-organized into classes (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix, TestPassToPass) with descriptive method names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes, not structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact code snippets for the fix including 'error.routeId ??= matchState.routeId as any', the exact function signature for getNotFound, and 'matchData.value?.routeId'. This goes far beyond naming the buggy file/module and essentially provides the complete solution."
+      "reason": "instruction.md provides exact code snippets for the fix including 'error.routeId ??= matchState.routeId as any', the exact getNotFound function signature, and 'error.routeId ??= matchData.value?.routeId as any'. It also names specific files (Match.tsx, not-found.tsx) in specific packages. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

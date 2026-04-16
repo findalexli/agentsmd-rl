@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not fully discoverable from instruction.md: test_merge_step_combines_runners looks for a step with 'merge' in its name (case-insensitive) within a job containing 'process_new_failures', and checks the merge script isn't a simple 'cp' of '_1.json'. The instruction mentions a merge step but doesn't specify the step must have 'merge' in its name. Also, test_merge_step_combines_runners creates mock runner output files with a specific naming pattern (e.g., new_failures_w"
+      "reason": "Tests assert specific file paths like `/transformers/new_failures_with_bad_commit_{job}/new_failures_with_bad_commit_{job}_{i}.json` and the merge output path, and check for specific keys like 'single-gpu', 'test', 'line', 'bad_commit'. While the instruction does mention the output directory pattern and JSON schema, test_merge_step_combines_runners extracts and executes the actual shell code from the YAML merge step, requiring it to work with specific environment variables (e.g., `job` env var) "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change at a design level (read env vars, partition tests, add setup job, merge step) but does not give exact code, line numbers, or literal replacement text. A developer must still reason about implementation details."
+      "reason": "The instruction describes the required behavior (partitioning, dynamic matrix, merge step) without specifying exact code changes, line numbers, or specific implementation details like 'use defaultdict' or 'add these specific lines'. It describes what's broken and what the solution should do, not how to implement it."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral properties: partitioning produces correct coverage (12 tests, no duplicates), output is keyed by model name, merge combines runner outputs. They accept both 0-indexed and 1-indexed schemes, don't assert specific variable names or helper function names, and check structural properties rather than implementation details."
+      "reason": "Tests check behavioral properties: partitioning covers all 12 tests with no duplicates, output is keyed by model name, merge step combines results correctly. They don't assert specific variable names, helper function names, or implementation internals. Different partitioning algorithms (round-robin, chunk-based, etc.) would all pass. The workflow tests check for structural elements (job names containing certain strings, step names containing 'merge') but these are specified in the instruction an"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute the script via subprocess.run, parse JSON output, and verify behavioral properties. test_merge_step_combines_runners extracts and executes the merge shell script. Only test_yaml_syntax and test_python_syntax do static checks, but the f2p tests all involve actual execution."
+      "reason": "Tests actually execute the script via subprocess (_run_script), parse JSON output, and verify behavioral properties (correct partitioning, correct output schema). The merge test extracts shell code from YAML and executes it against mock data. test_python_syntax uses py_compile. These are execution-based tests, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation cannot pass: test_partition_across_runners requires 12 unique tests split across 3 runners with no runner getting all 12; test_output_keyed_by_model requires dict output with specific model keys and 12 tests; test_merge_step_combines_runners executes actual merge logic and checks combined output. The original code (no partitioning) would output all 12 tests for every runner, failing the partition test."
+      "reason": "A stub implementation cannot pass these tests. test_partition_across_runners requires exactly 12 unique tests distributed across 3 runners with none getting all 12. test_output_keyed_by_model requires specific JSON structure with model keys and single-gpu arrays containing 12 total tests. test_merge_step_combines_runners executes actual merge logic against mock data and verifies combined output. A no-op or empty-return implementation would fail all of these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from instruction.md are tested: partitioning via env vars (test_partition_across_runners, test_partition_with_different_runner_counts), backward compatibility implicit in single-runner test, output schema (test_output_keyed_by_model), merge step (test_merge_step_combines_runners), and syntax checks. The workflow's setup job and max_num_runners input are partially tested via YAML parsing but the dynamic matrix isn't directly verified \u2014 however the core behaviors are covered."
+      "reason": "The instruction's key requirements are tested: partitioning across runners (test_partition_across_runners), different runner counts (test_partition_with_different_runner_counts), output schema keyed by model (test_output_keyed_by_model), backward compatibility with single runner, merge step combining results (test_merge_step_combines_runners), YAML syntax, Python syntax. The workflow structural requirements (setup job, runner count input, dynamic matrix) are checked in test_merge_step_combines_r"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, helper functions (_create_fixtures, _run_script, _count_tests), and descriptive names. Comments indicate test categories (static/pass_to_pass vs pr_diff/fail_to_pass)."
+      "reason": "Tests are well-organized with clear docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with comments, descriptive function names like test_partition_across_runners, test_merge_step_combines_runners, and helper functions are separated."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the JSON output schema with an example showing the top-level model keys, 'single-gpu' arrays, and test entry objects with 'test'/'line' and 'bad_commit' fields."
+      "reason": "The instruction documents the exact JSON schema for output (model name keys, 'single-gpu' arrays, test entry objects with 'test'/'line' and 'bad_commit' fields) with a concrete example. The merge output schema is also specified."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md. File paths (utils/check_bad_commit.py, .github/workflows/check_failed_tests.yml), env var names (run_idx, n_runners), and CLI args are all consistent."
+      "reason": "File paths (utils/check_bad_commit.py, .github/workflows/check_failed_tests.yml), variable names (run_idx, n_runners, max_num_runners), and key names (single-gpu, bad_commit) are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two relevant files (which are obvious from the task domain) and describes what structural changes are needed, but doesn't specify exact line numbers, exact code to write, or specific internal implementation details like function signatures."
+      "reason": "The instruction names the files to modify (check_bad_commit.py, check_failed_tests.yml) which is appropriate since these are the obvious files for the task domain. It doesn't specify exact line numbers, specific code patterns to add/remove, or internal implementation details like 'use defaultdict' or 'add a for loop at line X'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code+workflow editing task, not a config-only edit task."
+      "reason": "This is a code+workflow editing task, not a config-only edit task in the agentmd-edits sense."
     }
   },
   "tier_a_fails": [

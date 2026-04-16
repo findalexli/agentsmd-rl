@@ -57,6 +57,43 @@ rubric:
     context
   reference: 'PR #26139: adds linkage_context import, creates identity linkage table,
     and uses from_module_for_testing_with_linkage'
+- rule: Avoid commenting obvious code, simple variable assignments, standard library
+    usage, and self-descriptive function calls.
+  source:
+    path: CLAUDE.md
+    lines: 118-130
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions
+
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The diff introduces simple variable assignments (`let linkage_table`,
+    `let linkage_context`) using standard library iterators (`map`, `collect`), and
+    makes self-descriptive function calls (`LinkageContext::new`, `from_module_for_testing_with_linkage`).
+    It demonstrably follows the rule by not adding any redundant comments to explain
+    these straightforward operations.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
   collision_type: scope_ambiguity
@@ -77,6 +114,31 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 33-34
+- rule: 'All unit tests must work properly - use #[tokio::test] for async tests, not
+    #[test]'
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '- **All unit tests must work properly** - use `#[tokio::test]` for
+    async tests, not `#[test]`'
+  collision_type: meta_confusion
+  why_distracting: The diff modifies `test_runner.rs` in the `move-unit-test` crate.
+    An agent might see the filename and the test-related domain and assume it is writing
+    or modifying an async test file, thereby attempting to apply `#[tokio::test]`.
+    However, this file implements the test runner framework itself, not an async unit
+    test suite.
+  severity: medium
+- rule: Framework changes require snapshot updates
+  source:
+    path: CLAUDE.md
+    lines: '107'
+  source_text: '- Framework changes require snapshot updates'
+  collision_type: scope_ambiguity
+  why_distracting: The diff changes a file in `external-crates/move`. An agent might
+    misinterpret this as a 'Framework change' (which refers to `sui-framework`) and
+    incorrectly attempt to generate or modify snapshot files, even though this change
+    is to a test runner and does not require snapshot updates.
+  severity: low
 hierarchy_analysis: The configuration consists of flat, root-level files (`CLAUDE.md`
   and `AGENTS.md`) containing generic repository guidelines. There are no crate-specific
   overrides provided in the context.

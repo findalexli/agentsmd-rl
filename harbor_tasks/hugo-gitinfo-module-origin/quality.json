@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes all key specifics tested: ModuleOrigin.IsZero() method, the .info file derivation via strings.TrimSuffix(m.GoMod, \".mod\") + \".info\", json.Unmarshal usage, !mod.Origin().IsZero() check in gitinfo.go, 'return err' replacing h.Log.Errorln in loadGitInfo(), and the struct fields URL/VCS/Hash/Ref. All file paths (modules/module.go, modules/client.go, hugolib/gitinfo.go, hugolib/hugo_sites.go) are discoverable from context. The test for gofmt/vet/build are standard CI checks "
+      "outcome": "fail",
+      "reason": "Tests assert specific patterns like 'strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"' in client.go, 'gi, err := newGitInfo(cfg)' in hugo_sites.go, and '!mod.Origin().IsZero()' in gitinfo.go. While instruction.md mentions these patterns, the exact file paths (modules/client.go, hugolib/hugo_sites.go, hugolib/gitinfo.go) are not all explicitly named in instruction.md \u2014 e.g., 'client.go' and 'hugo_sites.go' are never named. The test test_loadgitinfo_returns_error searches for 'gi, err := newGitInfo(c"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'derive the .info filename from the .mod filename as strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"', 'should have an IsZero() bool method', 'should include the check !mod.Origin().IsZero()', and 'should propagate errors from newGitInfo() using return err rather than the current pattern of h.Log.Errorln(...)'. These are implementation-level specifications, not just descriptions of what's broken."
+      "reason": "instruction.md explicitly states the exact fix: 'ModuleOrigin should have an IsZero() bool method', 'derive the .info filename from the .mod filename as strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"', 'include the check !mod.Origin().IsZero()', and 'should propagate errors using return err rather than h.Log.Errorln(...)'. These are precise implementation instructions, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details: test_client_handles_nil_origin checks for the literal string 'strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"' in source code; test_origin_check_with_iszero_in_gitinfo checks for exact string '!mod.Origin().IsZero()'; test_loadgitinfo_returns_error checks for exact pattern 'gi, err := newGitInfo(cfg)'. Alternative correct implementations (e.g., using path manipulation instead of strings.TrimSuffix, or naming the method Empty() instead of IsZero()) woul"
+      "reason": "test_client_handles_nil_origin asserts the exact string 'strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"' must appear in client.go. test_origin_check_with_iszero_in_gitinfo asserts the exact string '!mod.Origin().IsZero()' in gitinfo.go. test_loadgitinfo_returns_error searches for exact line 'gi, err := newGitInfo(cfg)'. An alternative correct fix using different variable names or code structure would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests are pure text matching: test_loadgitinfo_returns_error reads hugo_sites.go and checks for string 'return err'; test_origin_check_with_iszero_in_gitinfo checks for '!mod.Origin().IsZero()' in source; test_client_handles_nil_origin checks for literal strings in client.go. Only test_module_origin_iszero_true_when_empty actually compiles and runs Go code. The majority of tests are 'assert X in open(path).read()' pattern."
+      "reason": "test_loadgitinfo_returns_error, test_origin_check_with_iszero_in_gitinfo, and test_client_handles_nil_origin are purely text-matching tests (reading file content and asserting substrings). Only test_module_origin_iszero_true_when_empty actually executes code via 'go run'. The majority of f2p tests are 'assert X in open(path).read()' with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_module_origin_iszero_true_when_empty, test_loadgitinfo_returns_error, test_origin_check_with_iszero_in_gitinfo, test_client_handles_nil_origin) cannot be satisfied by stub implementations. The IsZero test actually compiles and runs code that would fail on an unmodified codebase. The text-matching tests check for specific code patterns that don't exist in the base commit."
+      "reason": "test_module_origin_iszero_true_when_empty compiles and runs Go code that exercises IsZero() \u2014 a stub returning default false would fail the empty origin check. The text-matching tests also can't be satisfied without actual code changes to the specific files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors specified in instruction.md are tested: IsZero() method (test_module_origin_iszero_true_when_empty), .info file loading (test_client_handles_nil_origin), !mod.Origin().IsZero() check (test_origin_check_with_iszero_in_gitinfo), and error propagation (test_loadgitinfo_returns_error). Compilation and formatting are also tested."
+      "reason": "All four behaviors described in instruction.md (IsZero method, .info file loading, IsZero check in gitinfo, error propagation) are tested by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_module_origin_iszero_true_when_empty), have docstrings explaining what they verify, and are logically grouped with comments separating 'Pass-to-Pass Tests: Repository CI/CD Gates' from functional tests."
+      "reason": "Tests are well-named (test_module_origin_iszero_true_when_empty, test_loadgitinfo_returns_error, etc.), have docstrings explaining what they verify, and are logically grouped into f2p and p2p sections with comments."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the JSON schema for .info files: {\"Version\":\"...\",\"Time\":\"...\",\"Origin\":{\"VCS\":\"git\",\"URL\":\"...\",\"Hash\":\"...\"}} which is the structured data format the code must parse."
+      "outcome": "not_applicable",
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact implementation details: 'strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"', 'IsZero() bool method', '!mod.Origin().IsZero()', 'return err', and references the specific logging pattern 'h.Log.Errorln(\"Failed to read Git log:\", err)'. This goes beyond naming files/functions and specifies exact code changes."
+      "reason": "instruction.md names exact implementation details: 'strings.TrimSuffix(m.GoMod, \".mod\") + \".info\"', 'h.Log.Errorln(\"Failed to read Git log:\", err)', '!mod.Origin().IsZero()', and 'return err'. It also specifies the exact current buggy code pattern and the exact replacement, making localization trivial."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -3,59 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_deepequal_import_in_scripts checks for exact string \"import { deepEqual } from '@tanstack/router-core'\", (2) test_scripts_ast_usestore_has_deepequal checks content.count('deepEqual,') >= 2, (3) test_headutils_ast_usestore_has_deepequal checks content.count('deepEqual,') >= 5. The instruction says 'Find an existing equality function in @tanstack/router-core' but never names 'deepEqual' specifically, nor specifies the exact im"
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_deepequal_import_in_scripts checks for exact string \"import { deepEqual } from '@tanstack/router-core'\", (2) test_scripts_ast_usestore_has_deepequal checks for at least 2 occurrences of 'deepEqual,' in Scripts.tsx, (3) test_headutils_ast_usestore_has_deepequal checks for at least 5 occurrences of 'deepEqual,' in headContentUtils.tsx. The instruction mentions 'Find an existing equality function in @tanstack/router-core' but n"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (unnecessary re-renders) and gives investigation steps but does not explicitly say 'add deepEqual as third argument to useStore' or specify exact code changes. The agent must reason about the fix."
+      "outcome": "fail",
+      "reason": "Step 4 says 'Find an existing equality function in @tanstack/router-core that can compare objects deeply' which strongly hints at deepEqual. Combined with step 3 ('store references change even if values are equal') and step 2 ('useStore from @tanstack/react-store'), the instruction essentially tells the agent to add a deep equality comparator as argument to useStore calls. This is the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_deepequal_import_in_scripts requires exact import string \"import { deepEqual } from '@tanstack/router-core'\", so an alternative like importing from a re-export or using a different deep comparison function would fail. test_scripts_ast_usestore_has_deepequal counts 'deepEqual,' occurrences requiring exactly this variable name pattern. An alternative using e.g. isEqual or a custom comparator would fail."
+      "reason": "Tests assert gold-specific implementation details: test_deepequal_import_in_scripts requires exact import string 'import { deepEqual } from \"@tanstack/router-core\"', test_scripts_ast_usestore_has_deepequal counts 'deepEqual,' occurrences (>=2), test_headutils_ast_usestore_has_deepequal counts 'deepEqual,' occurrences (>=5). An alternative correct fix using a different equality function (e.g., custom isEqual, lodash isEqual, or inline comparison) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_deepequal_import_in_scripts, test_deepequal_import_in_headutils, test_scripts_ast_usestore_has_deepequal, and test_headutils_ast_usestore_has_deepequal are purely text-based checks (reading file content and checking string presence/count). While there are also execution tests (TypeScript compile, unit tests, lint, build), the fail-to-pass tests are entirely text matching."
+      "reason": "Tests test_deepequal_import_in_scripts, test_deepequal_import_in_headutils, test_scripts_ast_usestore_has_deepequal, and test_headutils_ast_usestore_has_deepequal are purely text-based checks (reading file content and checking for string patterns). While there are also execution tests (TypeScript compilation, unit tests, lint, build), the fail-to-pass tests are entirely string matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The text-based f2p tests (test_deepequal_import_in_scripts, test_scripts_ast_usestore_has_deepequal, etc.) could be passed by simply adding the import statement and inserting 'deepEqual,' strings into comments or dead code without actually fixing the re-render bug. The pass-to-pass tests (type check, unit tests) would pass on the base commit without any changes."
+      "reason": "The f2p tests (test_deepequal_import_in_scripts, test_deepequal_import_in_headutils, test_scripts_ast_usestore_has_deepequal, test_headutils_ast_usestore_has_deepequal) only check for string presence in files. Simply adding the import line and inserting 'deepEqual,' strings in the right places (without any actual behavioral change) would pass these tests. The pass-to-pass tests (types, unit, lint, build) don't verify the re-render optimization behavior either."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction mentions preventing unnecessary re-renders as the core behavior, but no test actually verifies that re-renders are reduced. Tests only check for text patterns (deepEqual import/usage) and that existing pass-to-pass checks continue passing."
+      "reason": "The instruction describes 'unnecessary re-renders' as the core problem, but no test actually verifies that re-renders are reduced. Tests only check for textual presence of deepEqual in source files and that existing CI checks pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., 'AST-based verification that useStore calls in Scripts.tsx have deepEqual argument')."
+      "reason": "Tests are well-named with descriptive docstrings (e.g., 'AST-based verification that useStore calls in Scripts.tsx have deepEqual argument'), clearly separated into import checks, compilation checks, and AST-based verification."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modification, not structured data output."
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, variable names, and package names in instruction.md are all correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the affected files (Scripts.tsx, headContentUtils.tsx) which is appropriate since the task is about fixing specific components. It mentions 'Find an existing equality function' but doesn't name deepEqual or specify exact lines."
+      "outcome": "fail",
+      "reason": "The instruction names exact files (Scripts.tsx, headContentUtils.tsx) and provides detailed investigation steps that essentially guide to the solution: 'Identify the store subscription mechanism used (useStore from @tanstack/react-store)' and 'Find an existing equality function in @tanstack/router-core that can compare objects deeply'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 2,
+  "fail_count": 7
 }

@@ -1,0 +1,53 @@
+source_pr:
+  repo: containerd/containerd
+  number: 13115
+  merge_commit: "546ce38287edc9fb351747f8fd0866f9f1f22b03"
+  base_commit: "1abba0c96162254eb85b3350aec4dbe2684a94ef"
+  title: "Tweak mount info for overlayfs in case of parallel unpack"
+  description: "Fixes parallel unpack with overlayfs snapshotter by converting bind mounts to overlay mounts for correct whiteout processing"
+
+checks:
+  # Fail-to-pass tests for the core fix
+  - id: test_bind_to_overlay_single_bind
+    type: fail_to_pass
+    origin: functional_test
+    description: "bindToOverlay converts single bind mount to overlay mount with upperdir"
+
+  - id: test_bind_to_overlay_passthrough
+    type: fail_to_pass
+    origin: functional_test
+    description: "bindToOverlay passes through overlay mounts unchanged"
+
+  - id: test_bind_to_overlay_multiple
+    type: fail_to_pass
+    origin: functional_test
+    description: "bindToOverlay returns multiple mounts unchanged"
+
+  # Pass-to-pass tests from repo CI
+  - id: test_unit_unpacker
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go unit tests for unpacker package pass"
+
+  - id: test_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go build succeeds"
+
+  - id: test_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go vet passes"
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go modules are valid"
+
+  - id: test_go_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Go code is properly formatted"
+
+# No agent config files found in this repo
+rubric: []

@@ -1,53 +1,52 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example, test_collapsible_body_widget checks for exact class names '_CollapsibleBody' and '_CollapsibleBodyState' as string literals in source. test_scroll_uses_viewport_check asserts 'final isExpanding' as an exact string. test_no_duplicate_date_in_body asserts the absence of 'entry_datetime_widget.dart' import and 'datePadding' variable by exact name. While instruction.md does mention most o"
+      "outcome": "pass",
+      "reason": "All file paths, API names (RenderAbstractViewport.maybeOf, Scrollable.maybeOf, isExpanding, _CollapsibleBody, SizeTransition, FadeTransition, Alignment.topCenter, EntryDatetimeWidget) asserted by tests are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details: 'Import package:flutter/rendering.dart', 'storing this as a final isExpanding variable', 'Use RenderAbstractViewport.maybeOf', 'Guard the Scrollable.ensureVisible call inside an if (isExpanding) block', 'Replace with a private _CollapsibleBody StatefulWidget (and corresponding _CollapsibleBodyState)', 'Remove the datePadding variable', 'Remove the entry_datetime_widget.dart import'. These are exact code-level prescriptions, not descript"
+      "reason": "Instruction literally prescribes the implementation: names the variable `final isExpanding`, specifies `RenderAbstractViewport.maybeOf`, `Scrollable.maybeOf`, `_CollapsibleBody` StatefulWidget, `SizeTransition`/`FadeTransition` with `sizeFactor`/`axisAlignment`, `Alignment.topCenter`, and exact steps like 'Remove the datePadding variable'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_scroll_uses_viewport_check requires exact string 'final isExpanding' (an alternative could use 'var isExpanding' or 'bool isExpanding'), test_collapsible_body_widget requires exact class names '_CollapsibleBody' and '_CollapsibleBodyState', test_no_duplicate_date_in_body requires absence of exact string 'datePadding'. A correct alternative using different variable names, different class names, or different refactoring approaches would fail "
+      "reason": "Tests assert on gold-specific names like `final isExpanding`, `_CollapsibleBody`, `RenderAbstractViewport.maybeOf` \u2014 a correct alternative fix (e.g., using a different variable name or different viewport API) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_scroll_uses_viewport_check, test_header_shows_date_when_expanded, test_collapsible_body_widget, test_animated_size_top_alignment, test_no_duplicate_date_in_body) exclusively use 'assert ... in src' pattern on file contents. None import, instantiate, or execute the Dart code. They are purely text/grep-based checks."
+      "reason": "The f2p tests (test_scroll_uses_viewport_check, test_header_shows_date_when_expanded, etc.) are all grep-style string searches on source files rather than executing code or widget tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the base commit (e.g., 'RenderAbstractViewport.maybeOf', '_CollapsibleBody', 'Alignment.topCenter'). A stub or no-op implementation would not add these patterns to the source files, so the tests would fail."
+      "reason": "Tests require specific code constructs to be present; a stub returning defaults couldn't satisfy the string/structural checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction (conditional scroll, header date, SizeTransition animation, AnimatedSize alignment, no duplicate date) are each tested by dedicated test functions."
+      "reason": "Each of the 5 expected behaviors (conditional scroll, expanded header date, SizeTransition body, top alignment, no duplicate date) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two clear groups (pass_to_pass gates and fail-to-pass core changes) with descriptive function names and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments (Gates/pass_to_pass, Fail-to-pass) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI widget code changes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task is UI code, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, widget names, and Dart API references in instruction.md and tests appear correct and consistent with Flutter/Dart conventions."
+      "reason": "File paths and symbols in instruction.md match the repo structure and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact variable names ('datePadding', 'isExpanding'), exact class names ('_CollapsibleBody', '_CollapsibleBodyState'), exact imports to add/remove, and exact API calls to use. This goes well beyond describing the bug domain and prescribes the exact implementation."
+      "reason": "Instruction names exact variable names (`isExpanding`, `datePadding`), exact private class names (`_CollapsibleBody`/`_CollapsibleBodyState`), and exact APIs (`RenderAbstractViewport.maybeOf`, `Scrollable.maybeOf`, `SizeTransition`, `Alignment.topCenter`) \u2014 this is implementation dictation rather than problem description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "Not an agentmd-edits / config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -56,6 +55,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

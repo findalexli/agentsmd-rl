@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path `packages/react-devtools-extensions/src/contentScripts/reactBuildType.js`, the two required exports `reduceReactBuild` and `createReactRendererListener`, the `ReactBuildType` type with all five literal values, the file `packages/react-devtools-shared/src/backend/types.js`, `installHook.js`, and the `postMessage` payload structure with `type: 'react-renderer-attached'` and `reactBuildType`. All test assertions reference these same names and paths, which a"
+      "reason": "File paths (reactBuildType.js, installHook.js, types.js), function names (reduceReactBuild, createReactRendererListener), literal values ('production', 'development', etc.), payload keys (type: 'react-renderer-attached', reactBuildType), and the ReactBuildType type union are all specified in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly specifies the exact implementation logic: `reduceReactBuild(null, x)` returns `x`, `reduceReactBuild('production', x)` returns `x` for non-production, `reduceReactBuild(x, 'production')` returns `x` when x is non-production, and `reduceReactBuild(x, y)` returns the worse build type. It also specifies `createReactRendererListener(window)` must maintain internal state, call `window.postMessage` with specific payload structure. This goes beyond describing what's broken an"
+      "outcome": "pass",
+      "reason": "Instruction describes the priority rules and required API surface but does not give the actual implementation code; agent must still reason about the reduce logic."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact function names (`reduceReactBuild`, `createReactRendererListener`), exact file path, exact message payload structure (`m.payload.reactBuildType`), and specific function signatures. An alternative correct fix that used different function names (e.g., `mergeBuildType`, `makeRendererHandler`) or a different internal architecture (e.g., a class-based approach or a single exported function) would fail the tests even if it correctly solved the bug."
+      "outcome": "pass",
+      "reason": "Tests check behavior via function calls and postMessage payload contents, not internal variable names or line positions; alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests use `flow-remove-types` to strip Flow annotations then execute the code via `subprocess.run(['node', '-e', test_code])`, calling `reduceReactBuild` and `createReactRendererListener` with various inputs and checking return values. Tests verify behavioral execution, not just text patterns."
+      "reason": "Tests use flow-remove-types and execute the code via node subprocess, calling reduceReactBuild and createReactRendererListener with assertions on return values and postMessage behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check specific return values of `reduceReactBuild` (e.g., that `reduceReactBuild('production', 'development')` returns `'development'` not `'production'`), and that `createReactRendererListener` maintains state across calls (e.g., dev->prod->prod must all report 'development'). A stub returning a default value would fail these specific behavioral assertions."
+      "reason": "Tests assert specific correct outputs across many scenarios (e.g., reduceReactBuild('production','development')==='development' and reduceReactBuild('development','production')==='development'), which no stub returning a constant could satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All key behaviors from instruction.md are tested: reduceReactBuild priority logic (null case, production override, non-production preservation, non-production upgrade), createReactRendererListener state maintenance, independent listener state, installHook.js integration (importing createReactRendererListener, removing old inline handler), and ReactBuildType Flow type export."
+      "reason": "Tests cover reduce logic for all five build types, listener state persistence, independent listeners, and file/export existence matching the instruction's requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly named (`test_reduce_react_build_worst_build_wins`, `test_listener_maintains_state_across_renderers`, etc.), grouped into 'Gates (pass_to_pass)' and 'Fail-to-pass (pr_diff)' sections, and each has a docstring explaining what it checks."
+      "reason": "Tests are grouped with section comments (Gates/pass_to_pass, Fail-to-pass) and descriptive names like test_reduce_react_build_worst_build_wins."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact message payload schema (`type: 'react-renderer-attached'`, `reactBuildType`) and the `ReactBuildType` type union with all five literal values."
+      "reason": "The postMessage payload schema (source, payload.type, payload.reactBuildType) is documented in instruction.md and matched by tests."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and type names in the instruction match those used in the tests and solution without typos."
+      "reason": "Filenames and identifiers (reactBuildType.js, createReactRendererListener, ReactBuildType) are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact file paths to create (`packages/react-devtools-extensions/src/contentScripts/reactBuildType.js`), exact function signatures (`reduceReactBuild(current, next)`, `createReactRendererListener(window)`), and explicitly states 'The old inline `postMessage` with `react-renderer-attached` type in the renderer handler must be replaced by the factory.' This goes beyond task-domain-obvious hints and specifies the exact location and nature of changes."
+      "outcome": "pass",
+      "reason": "Instruction lists relevant files but doesn't pinpoint exact lines; localization of the inline callback is part of the task work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

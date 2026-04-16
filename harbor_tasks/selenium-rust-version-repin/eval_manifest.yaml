@@ -90,7 +90,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bazel can query all Rust targets (bazel query //rust/...)
-# Enrichment: Additional p2p tests using repo CI commands
 - id: test_ruby_syntax_bazel_rake
   type: pass_to_pass
   origin: repo_tests
@@ -111,10 +110,82 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bazel version command works (bazel version)
-rubric: []
+rubric:
+- rule: Comments should explain why, not what
+  source:
+    path: AGENTS.md
+    lines: '70'
+  source_text: '- Comments should explain *why*, not *what* - prefer well-named methods
+    over comments'
+  evidence: The gold diff adds detailed block comments in `rake_tasks/rust.rake` explicitly
+    explaining *why* cargo must be repinned immediately (to avoid a mid-evaluation
+    file-hash conflict in Bazel) and *why* `reenable` is needed (because `invoke`
+    is a no-op if the task has already run), focusing entirely on the reasoning behind
+    the code rather than merely describing what the methods do.
+  category: documentation
+  verification: llm_judge
 version: '2.0'
 source:
   repo: SeleniumHQ/selenium
   pr: 17320
   base_commit: 2fed1c09849431329f3e414479c627d652424f4e
   merge_commit: 8797d1650c771217e6a6b3edee5c0c862a6ddf52
+distractors:
+- rule: Use WebDriver.logger for logging
+  source:
+    path: rb/AGENTS.md
+    lines: 16-21
+  source_text: '### Logging
+
+    ```ruby
+
+    WebDriver.logger.warn("actionable: something needs attention", id: :warning_id)
+
+    WebDriver.logger.info("useful: driver started successfully")
+
+    WebDriver.logger.debug("diagnostic: request details for debugging")
+
+    ```'
+  collision_type: would_cause_bug
+  why_distracting: The modified file `rake_tasks/rust.rake` is written in Ruby, which
+    might lead an agent to try and apply Ruby conventions from `rb/AGENTS.md`. However,
+    Rake tasks are build infrastructure, not part of the Selenium Ruby Bindings library
+    (`rb/lib/selenium/webdriver`). Attempting to use `WebDriver.logger` in a Rakefile
+    would cause a NameError and crash the build.
+  severity: high
+- rule: Mark internal APIs with @api private in YARD comments
+  source:
+    path: rb/AGENTS.md
+    lines: 32-38
+  source_text: '### Internal APIs
+
+    Mark internal APIs with `@api private` in YARD comments:
+
+    ```ruby
+
+    # @api private
+
+    def internal_method
+
+    end
+
+    ```'
+  collision_type: scope_ambiguity
+  why_distracting: Because the modified file is in Ruby, an agent might assume all
+    Ruby code requires YARD documentation tags like `@api private` for internal methods.
+    However, this rule only applies to the Selenium Ruby Bindings library, not internal
+    build scripts like Rakefiles.
+  severity: medium
+- rule: Update corresponding .rbs files when changing public API
+  source:
+    path: rb/AGENTS.md
+    lines: 40-41
+  source_text: '### Type signatures (steep/rbs)
+
+    When changing public API, update corresponding `.rbs` files in `rb/sig/`'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying Ruby code in `rake_tasks/` might try to find
+    or create `.rbs` signature files to comply with this directive. This is incorrect
+    because Rake scripts do not use Steep/RBS signatures, which are exclusively managed
+    in the `rb/` bindings library.
+  severity: medium

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (FileCache.cpp, IFileCachePriority.h, LRUFileCachePriority.h, SLRUFileCachePriority.h/.cpp, SplitFileCachePriority.h/.cpp), struct names (SegmentToLoad), field names (offset, size, kind, cache_it), parameter names (best_effort, is_startup, is_initial_load), phase comments, vector declaration, failed_to_fit counter, and main_priority->check call are all explicitly mentioned in instruction.md."
+      "reason": "All tested specifics \u2014 file paths, struct name 'SegmentToLoad', field names, phase comment strings, parameter names 'is_initial_load'/'best_effort'/'is_startup', 'main_priority->check(cache_state_guard.lock())', 'std::vector<SegmentToLoad> segments', 'segments.push_back', '++failed_to_fit', Allman brace style \u2014 are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact solution: use a struct named 'SegmentToLoad' with specific fields, collect in 'std::vector<SegmentToLoad> segments', use 'segments.push_back', track with 'failed_to_fit' incremented with '++failed_to_fit', add exact phase comments, rename parameters to 'is_initial_load', and call 'main_priority->check(cache_state_guard.lock())'. This is not describing what's broken but prescribing exactly what to write."
+      "reason": "instruction.md specifies exact implementation details: the struct name 'SegmentToLoad' with exact field names, exact phase comment strings, exact variable names 'failed_to_fit' with exact increment syntax '++failed_to_fit', exact vector declaration 'std::vector<SegmentToLoad> segments', exact method call 'main_priority->check(cache_state_guard.lock())'. This is essentially dictating the solution rather than describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact struct name 'struct SegmentToLoad', exact variable 'std::vector<SegmentToLoad> segments', exact method 'segments.push_back', exact counter '++failed_to_fit', exact phase comment strings like 'Phase 1: scan and parse all segment files'. An alternative correct fix using different naming (e.g., 'SegmentData', 'pending_segments', 'load_failures') would fail all these tests."
+      "reason": "Tests assert on gold-specific implementation details: 'struct SegmentToLoad' (exact name), exact phase comment strings like 'Phase 1: scan and parse all segment files', 'std::vector<SegmentToLoad> segments' (exact declaration), 'segments.push_back', '++failed_to_fit', 'main_priority->check(cache_state_guard.lock())'. An alternative correct fix using different struct names, different comments, or different batching approaches would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is pure text matching: 'assert \"is_initial_load\" in content', 'assert \"struct SegmentToLoad\" in content', 'assert \"Phase 1: scan and parse all segment files\" in content', etc. No test compiles, executes, or calls any code. The only subprocess use is 'head -n1' to check #pragma once."
+      "reason": "Every test is purely text-matching: reading file contents and checking for string presence (e.g., 'assert \"struct SegmentToLoad\" in content', 'assert \"Phase 1: scan and parse all segment files\" in content'). No test compiles, executes, or tests runtime behavior of the code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply inserts the required string literals (phase comments, struct definition, variable declarations) into FileCache.cpp and does find-and-replace on the header files would pass all tests without actually fixing any performance issue. The tests only check for string presence, not functional correctness."
+      "reason": "A stub that simply inserts the required strings as comments into the files would pass all f2p tests. For example, adding '// struct SegmentToLoad { offset, size, kind, cache_it }' and the phase comments as dead code would satisfy the text-matching assertions without actually implementing any fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: three-phase comments, SegmentToLoad struct, parameter renaming across all files, failed_to_fit counter, main_priority->check call, and Allman brace style."
+      "reason": "All behaviors required by instruction.md are tested: three-phase comments, SegmentToLoad struct, parameter renaming across all listed files, main_priority->check call, vector usage, failed_to_fit counter, and Allman style check."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_best_effort_renamed_in_interface, test_three_phase_loading_structure, etc.), grouped logically, and have docstrings with fail_to_pass/pass_to_pass annotations."
+      "reason": "Tests are well-named (e.g., test_best_effort_renamed_in_interface, test_three_phase_loading_structure), have docstrings indicating pass_to_pass vs fail_to_pass, and are logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves C++ source code modifications, not structured data output."
+      "reason": "Task involves C++ code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match those checked in tests without typos."
+      "reason": "File paths, variable names, and commands in instruction.md match those referenced in tests without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact struct names, exact variable names, exact phase comment strings, exact function calls \u2014 essentially the complete implementation. This goes far beyond identifying the buggy area."
+      "reason": "instruction.md names exact files (FileCache.cpp, IFileCachePriority.h, etc.), exact struct names, exact variable names, exact comment strings, and exact method calls. This goes far beyond describing the bug \u2014 it prescribes the exact solution code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [

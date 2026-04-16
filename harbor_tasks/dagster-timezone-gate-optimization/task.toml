@@ -1,0 +1,18 @@
+name = "dagster-timezone-gate-optimization"
+title = "Add timezone gate to prevent unnecessary datetime conversion"
+difficulty = "medium"
+estimated_time = "15-25 minutes"
+tags = ["python", "performance", "timezone", "optimization"]
+
+[description]
+brief = "Add a performance optimization gate to skip expensive timezone conversions for timezones without minute-level offsets"
+details = """
+This task involves adding a `has_nonzero_minute_offset` function that checks if a timezone has a non-standard minute offset (like Asia/Kathmandu at UTC+5:45). For timezones with only hour-level offsets (like UTC, Europe/Berlin), the gate allows using a faster computation path instead of expensive datetime conversions.
+"""
+
+[source]
+repo = "dagster-io/dagster"
+pr_number = 33660
+base_commit = "8628a8c83b62f437bdbc6dfb0baab6698fa1f32d"
+merge_commit = "ae8b350bdee07fe78f18daa18f79ffd0a699492f"
+target_file = "python_modules/dagster/dagster/_utils/schedules.py"

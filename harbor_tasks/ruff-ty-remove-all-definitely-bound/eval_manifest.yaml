@@ -73,6 +73,20 @@ rubric:
   evidence: The gold solution strictly deletes the dead code and its usages without
     introducing any new logic, mechanisms, or workarounds.
   category: architecture
+- rule: Delete unused/dead code instead of allowing lints
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 82-82
+  source_text: '- If you *have* to suppress a Clippy lint, prefer to use `#[expect()]`
+    over `[allow()]`, where possible. But if a lint is complaining about unused/dead
+    code, it''s usually best to just delete the unused code.'
+  evidence: The gold diff systematically removes the `all_definitely_bound` field
+    from `ExpressionInferenceExtra` and `TypeInferenceBuilder` structs, as well as
+    all related logic and initialization that set it to `true` or `false`. This directly
+    applies the convention of deleting dead/unused code rather than bypassing it with
+    allow annotations.
+  category: 'Category A: Rubric Rules'
+  verification: llm_judge
 distractors:
 - rule: All changes must be tested. If you're not testing your changes, you're not
     done.
@@ -85,5 +99,32 @@ distractors:
   source:
     path: AGENTS.md
     lines: 58-59
+- rule: Avoid .unwrap() and similar unsafe calls
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 80-80
+  source_text: '- Try hard to avoid patterns that require `panic!`, `unreachable!`,
+    or `.unwrap()`. Instead, try to encode those constraints in the type system. Don''t
+    be afraid to write code that''s more verbose or requires largeish refactors if
+    it enables you to avoid these unsafe calls.'
+  collision_type: meta_confusion
+  why_distracting: The diff preserves the call `unwrap_with_diagnostic()`. An agent
+    might confuse this safe, domain-specific unwrapping helper with the forbidden
+    Rust standard `.unwrap()`, leading to wasted effort trying to refactor valid diagnostic-emitting
+    code.
+  severity: medium
+- rule: Salsa incrementality for methods accessing .node()
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 85-85
+  source_text: '- **Salsa incrementality (ty):** Any method that accesses `.node()`
+    must be `#[salsa::tracked]`, or it will break incrementality. Prefer higher-level
+    semantic APIs over raw AST access.'
+  collision_type: scope_ambiguity
+  why_distracting: Since the modifications happen inside the `ty_python_semantic`
+    crate, an agent might incorrectly assume that the modified `TypeInferenceBuilder`
+    methods or structs interact with Salsa tracking and require `#[salsa::tracked]`
+    annotations, even though they don't directly access raw `.node()` AST fields.
+  severity: low
 hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
   simply includes AGENTS.md. The rules are generic repository guidelines.

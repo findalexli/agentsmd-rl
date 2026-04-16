@@ -1,0 +1,34 @@
+name = "cline-cli-mcp-add-shortcuts"
+title = "Add MCP server shortcuts to CLI (stdio and HTTP)"
+description = """
+Implement the `cline mcp add` command to allow users to add MCP servers
+to cline_mcp_settings.json without hand-editing the file.
+
+The command should support:
+- STDIO servers: `cline mcp add <name> -- <command> [args...]`
+- HTTP servers: `cline mcp add <name> <url> --type http`
+- Proper transport type mapping (http -> streamableHttp)
+- Validation that URLs require --type http flag
+- Duplicate name protection
+- Schema validation using ServerConfigSchema
+"""
+difficulty = "medium"
+tags = ["cli", "mcp", "typescript", "commander", "config"]
+estimated_time = "30m"
+
+[repository]
+owner = "cline"
+repo = "cline"
+base_commit = "6d29bc6551ba9af46939c610172ad797743bd0db"
+merge_commit = "4ecccf51053ff435e26eee7c254d41bd3c307977"
+pr_number = 9773
+
+[paths]
+repo_short = "cline"
+target_files = [
+    "cli/src/index.ts",
+    "cli/src/utils/mcp.ts",
+    "cli/src/utils/mcp.test.ts",
+    "cli/src/index.test.ts"
+]
+distinctive_line = "addMcpServerShortcut"

@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert many specific details not in instruction.md: exact file paths like 'src/symbols/runner.rs', 'src/analyzer.rs', 'src/context.ts', 'src/activity_monitor.ts'; exact enum name 'SymbolicatorMessage' with exact variant signatures like 'Diagnostics(BTreeMap<PathBuf, Vec<Diagnostic>>)' and 'FatalError(anyhow::Error)'; exact constant 'const PROGRESS_TOKEN: &str = \"symbolication\"'; exact class name 'ServerActivityMonitor'; exact type definition 'type ServerState = \\'starting\\' | \\'idle\\' | \\'"
+      "reason": "Tests assert specific identifiers not named in instruction.md: 'SymbolicatorMessage' enum with variants 'Diagnostics', 'Error', 'FatalError', 'SymbolicationStart', 'SymbolicationEnd'; file path 'src/activity_monitor.ts'; class name 'ServerActivityMonitor'; method names like 'onClientStateChange', 'onCompilationStart', 'initActivityMonitor'; constant 'PROGRESS_TOKEN = \"symbolication\"'; file 'src/symbols/runner.rs'. None of these literals are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior to implement (activity indicator, state machine, progress notifications) but does not specify exact code changes like 'change line X to Y'. It describes requirements at a feature level."
+      "reason": "Instruction describes behavior and states but does not dictate specific identifiers, line numbers, or implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact enum variant names and signatures ('SymbolicatorMessage' with specific variants), exact method names ('onClientStateChange', 'onCompilationStart', 'transitionTo'), exact type string ('type ServerState = \\'starting\\' | \\'idle\\' | \\'busy\\' | \\'slow\\' | \\'stopped\\''), exact class name 'ServerActivityMonitor', exact field 'Sender<SymbolicatorMessage>'. An alternative correct implementation using different naming or structure would fail."
+      "reason": "Tests assert on gold-specific names like 'SymbolicatorMessage', exact variant names ('SymbolicationStart'/'SymbolicationEnd'), class 'ServerActivityMonitor', method 'initActivityMonitor', and literal token 'symbolication'. An alternative correct fix using different names (e.g., 'ProgressMessage', 'ActivityIndicator') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely textual grep: 'assert X in content' where content is read_text() from files. Only test_rust_code_compiles actually executes code (cargo check). No tests import/call TypeScript code, run the extension, or verify runtime behavior. The vast majority are string-matching tests."
+      "reason": "Most tests are string containment checks (`assert \"pub enum SymbolicatorMessage\" in content`, `assert \"SymbolicationStart\" in content`); only test_rust_code_compiles actually executes code via cargo check."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for content that does not exist in the base commit (e.g., SymbolicatorMessage enum, activity_monitor.ts file, progress notification handling). A stub/empty implementation would not contain these specific strings, so the tests cannot be trivially satisfied."
+      "reason": "Tests check for multiple specific symbols and an actual compilation, so stubs returning defaults would not satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction mentions animated indicator, tooltip with version/restart command, wrapped request latency tracking with timeouts (~10 seconds for slow promotion), and persistent output channel. Tests don't verify animation logic, tooltip content, the 10-second slow promotion timer, or output channel persistence."
+      "reason": "Instruction mentions ~10 second slow threshold, tooltip with extension/server version + restart command, persistent output channel, state-based rendering \u2014 these behaviors are not exercised; tests only grep for presence of tokens."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_symbolicator_message_enum_exists, test_activity_monitor_state_methods, etc.) and docstrings explaining what each test verifies and why it's f2p."
+      "reason": "Tests are individually named functions with docstrings grouping rust vs typescript concerns."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and identifiers in instruction appear consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the feature at a requirements level without naming exact buggy lines or specific internal implementation details like exact enum names or method signatures."
+      "reason": "Instruction refers broadly to client/server components without naming specific buggy lines or files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not primarily a config-edit task."
+      "reason": "This is a code task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

@@ -2,39 +2,25 @@
 
 ## Summary
 
-When loading Mixture-of-Experts (MoE) models on CPU and running inference, `torch.grouped_mm` (or `torch._grouped_mm`) crashes with a segfault or alignment error. This happens because tensors loaded via memory-mapped safetensors files are not guaranteed to be 16-byte aligned, and the CPU implementation of `grouped_mm` (before PyTorch 2.11) requires 16-byte alignment for TMA/SIMD operations.
-
-## Context
-
-The codebase currently attempts to solve alignment issues during weight loading by cloning misaligned tensors as a conversion operation (`Force16BytesAlignment` in `src/transformers/core_model_loading.py`). This approach is applied in `src/transformers/conversion_mapping.py` (via `_build_checkpoint_conversion_mapping`) for several MoE architectures (e.g., `qwen3_moe`, `mixtral`, `minimax_m2`).
-
-However, this weight-conversion approach has fundamental limitations:
-- It doesn't cover all loading paths (e.g., memory-mapped/lazy loading from safetensors)
-- It can't handle tensors created after dequantization
-- It adds unnecessary complexity to the weight conversion pipeline
+When running Mixture-of-Experts (MoE) models on CPU, `torch.grouped_mm` (or `torch._grouped_mm`) can crash with a segfault or alignment error. Tensors loaded via memory-mapped safetensors files are not guaranteed to be 16-byte aligned, and the CPU implementation of `grouped_mm` in PyTorch versions 2.10.0 and earlier requires 16-byte alignment for TMA/SIMD operations. PyTorch 2.11 and later fixed this upstream (see pytorch/pytorch#172440).
 
 ## Reproduction
 
-The crash occurs specifically when:
+The crash occurs when:
 1. A MoE model is loaded on CPU
-2. The loaded expert weight tensors happen to be misaligned (e.g., via safetensors mmap)
+2. Expert weight tensors happen to be misaligned (data pointer not divisible by 16), which commonly occurs with safetensors mmap loading
 3. The code path reaches `torch.grouped_mm` / `torch._grouped_mm`
 
-The relevant function that decides whether to use `grouped_mm` is `_can_use_grouped_mm` in `src/transformers/integrations/moe.py`. Currently, it only checks for `torch.compile` dtype limitations but does not check for CPU alignment issues.
+## Current behavior
+
+The function `_can_use_grouped_mm(input, weight, offs)` in `transformers.integrations.moe` decides whether to use `grouped_mm`. Currently it only checks for `torch.compile` dtype limitations but does not verify CPU tensor alignment, allowing misaligned tensors through to `grouped_mm` which then crashes.
+
+The codebase also includes a `Force16BytesAlignment` conversion operation that attempts to fix alignment at weight-loading time via the conversion mapping system. This approach is fragile — it doesn't cover all loading paths (e.g., lazy/memory-mapped safetensors loading) and can't handle tensors created after dequantization.
 
 ## Expected behavior
 
-The code should detect when CPU tensors are misaligned and fall back to the non-`grouped_mm` path instead of crashing. The fragile weight-conversion-time alignment enforcement should be replaced with a robust runtime check.
+1. **Runtime alignment check**: `_can_use_grouped_mm(input, weight, offs)` should return `False` when running on CPU with PyTorch <= 2.10.0 and either the `input` or `weight` tensor's data pointer is not 16-byte aligned (`data_ptr() % 16 != 0`). This causes a fallback to the safe non-`grouped_mm` path instead of crashing. For properly aligned tensors (when `grouped_mm` is available), it should continue to return `True`. When `grouped_mm` is not available at all, it should return `False` as before.
 
-Specifically:
-1. The version-gating function `is_torch_less_or_equal` (imported from `transformers.utils.import_utils`) should be used to check if PyTorch version is <= 2.10.0 before applying alignment checks
-2. The function `_build_checkpoint_conversion_mapping` in `src/transformers/conversion_mapping.py` should no longer use `Force16BytesAlignment` in any converter operations
-3. The class `Force16BytesAlignment` in `src/transformers/core_model_loading.py` should be completely removed
+2. **Remove `Force16BytesAlignment` from conversion mappings**: With a runtime alignment check in place, the `Force16BytesAlignment` workaround in the weight conversion pipeline is unnecessary. `_build_checkpoint_conversion_mapping()` in `transformers.conversion_mapping` should not include any `Force16BytesAlignment` operations in its converter entries. The mapping must still build successfully and include MoE model entries such as `mixtral` and `qwen3_moe`.
 
-## Relevant files
-
-- `src/transformers/integrations/moe.py` — contains the `_can_use_grouped_mm()` function
-- `src/transformers/core_model_loading.py` — contains the `Force16BytesAlignment` class
-- `src/transformers/conversion_mapping.py` — contains `_build_checkpoint_conversion_mapping()` which builds weight converters
-- `docs/source/en/weightconverter.md` — documentation for `Force16BytesAlignment`
-- `tests/vlm_tester.py` — test helper with `intermediate_size` that may trigger alignment issues
+3. **Code quality**: All modified files must pass `ruff check` and `ruff format --check`.

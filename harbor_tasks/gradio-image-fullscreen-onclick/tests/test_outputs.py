@@ -67,6 +67,14 @@ result.hasOnclick = true;
 const eqIdx = block.indexOf('=', onclickIdx);
 const braceStart = block.indexOf('{', eqIdx);
 if (braceStart === -1) {
+    // Handler is an expression reference (e.g., onclick={handleClick})
+    // Extract the expression between { and }
+    const closeBrace = block.indexOf('}', eqIdx);
+    if (closeBrace === -1) {
+        console.log(JSON.stringify(result));
+        process.exit(0);
+    }
+    result.handler = block.substring(eqIdx + 1, closeBrace).trim();
     console.log(JSON.stringify(result));
     process.exit(0);
 }
@@ -126,15 +134,42 @@ def test_onclick_updates_state(handler_info):
     handler_src = handler_info.get("handler")
     assert handler_src, "Could not extract onclick handler from FullscreenButton"
 
+    # Test the handler by evaluating it with a state object and dispatch stub.
+    # We use a 'state' object so assignments to 'fullscreen' via property access
+    # work regardless of the exact variable name used in the handler.
+    # We also set up fullscreen as a simple variable to support direct assignment.
     test_script = f"""\
 const handlerSrc = {json.dumps(handler_src)};
 const results = [];
 for (const val of [true, false, true, false]) {{
+    // Use an object to capture state updates via property assignment or direct var
+    const state = {{ fullscreen: !val }};
+    // Also define fullscreen as a simple variable for direct assignment patterns
     let fullscreen = !val;
     const dispatch = () => {{}};
-    const handler = eval('(' + handlerSrc + ')');
-    handler(val);
-    results.push({{ input: val, fullscreen }});
+    // Try to evaluate the handler - supports both direct body and expression refs
+    let handler;
+    try {{
+        // If handlerSrc is an expression (like handleClick), eval gives us the value
+        handler = eval(handlerSrc);
+        // If it's a simple identifier reference to an inline function, call it
+        if (typeof handler === 'function') {{
+            handler(val);
+        }}
+    }} catch (e) {{
+        // If eval fails, try wrapping as arrow function (for direct body extraction)
+        try {{
+            handler = eval('(' + handlerSrc + ')');
+            handler(val);
+        }} catch (e2) {{
+            // Handler cannot be evaluated - alternative implementation
+            results.push({{ input: val, fullscreen: state.fullscreen, error: true }});
+            continue;
+        }}
+    }}
+    // Accept update via direct variable assignment OR via state object property
+    const updated = fullscreen !== !val ? fullscreen : state.fullscreen;
+    results.push({{ input: val, fullscreen: updated }});
 }}
 console.log(JSON.stringify(results));
 """
@@ -143,6 +178,8 @@ console.log(JSON.stringify(results));
     assert r.returncode == 0, f"Handler evaluation failed:\n{r.stderr}"
     results = json.loads(r.stdout.strip())
     for state in results:
+        assert not state.get("error"), \
+            f"Handler could not be evaluated (alternative implementation not supported)"
         assert state["fullscreen"] == state["input"], \
             f"onclick({state['input']}) did not set fullscreen = {state['input']}"
 
@@ -161,8 +198,21 @@ const dispatched = [];
 for (const val of [true, false]) {{
     let fullscreen = !val;
     const dispatch = (event, detail) => dispatched.push({{ event, detail }});
-    const handler = eval('(' + handlerSrc + ')');
-    handler(val);
+    let handler;
+    try {{
+        handler = eval(handlerSrc);
+        if (typeof handler === 'function') {{
+            handler(val);
+        }}
+    }} catch (e) {{
+        try {{
+            handler = eval('(' + handlerSrc + ')');
+            handler(val);
+        }} catch (e2) {{
+            // Handler cannot be evaluated - alternative implementation
+            dispatched.push({{ error: true }});
+        }}
+    }}
 }}
 console.log(JSON.stringify(dispatched));
 """
@@ -170,6 +220,9 @@ console.log(JSON.stringify(dispatched));
     r = _run_node(test_script)
     assert r.returncode == 0, f"Handler evaluation failed:\n{r.stderr}"
     dispatched = json.loads(r.stdout.strip())
+    for call in dispatched:
+        assert "error" not in call, \
+            f"Handler could not be evaluated (alternative implementation not supported)"
     assert len(dispatched) >= 2, \
         f"Expected dispatch called for each input, got {len(dispatched)} calls"
     for call in dispatched:
@@ -266,6 +319,7 @@ def test_repo_client_build():
     )
     assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
+
 def test_repo_client_tests_node():
     """Repo's client library unit tests pass in node mode (pass_to_pass)."""
     _setup_pnpm()
@@ -281,4 +335,3 @@ def test_repo_client_tests_node():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Client node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-

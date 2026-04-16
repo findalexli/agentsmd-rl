@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (request.php, message.php, Create.php), env variable names (_APP_DATABASE_SHARED_TABLES, _APP_DATABASE_DOCUMENTSDB_SHARED_TABLES, etc.), patterns (array_filter, setTenant, $databaseHost, $dsn->getHost()), exception message, and constants (DOCUMENTSDB, VECTORSDB) that the tests assert on. All test-specific strings and identifiers are discoverable from the instruction."
+      "reason": "Instruction names all three files, the exact env var names, the literal patterns required (array_filter/explode), the exception code GENERAL_SERVER_ERROR, and the exact error message."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix patterns, e.g., 'The resulting code must contain the exact pattern: array_filter(\\explode(...))' and 'The method call pattern must be ->setTenant($project->getSequence()) or ->setTenant($projectDocument->getSequence()) exactly' and the exact exception message. This tells the agent exactly WHAT to change, not just what's broken."
+      "reason": "Instruction provides exact code patterns to use (e.g., 'array_filter(\\explode(...))', 'DOCUMENTSDB => \\array_filter(...)', exception message string), essentially dictating the implementation rather than describing the bug."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_request_php_uses_array_filter assert on exact text patterns (array_filter on same line as _APP_DATABASE_SHARED_TABLES), test_request_php_has_separate_pool_detection checks for exact variable name '$databaseHost', and test_create_php_has_pool_validation checks for exact error message string. An alternative correct fix using different variable names or multi-line formatting would fail these text-matching tests."
+      "outcome": "pass",
+      "reason": "Tests check for presence of array_filter, host comparison variables, and behavioral patterns rather than exact line positions; alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The majority of tests (test_request_php_uses_array_filter, test_request_php_no_int_cast_on_settenant, test_request_php_has_separate_pool_detection, test_worker_php_*, test_create_php_*) are purely text-matching with patterns like 'assert has_array_filter' and string-in-file checks. Only test_array_filter_removes_empty_strings_from_shared_tables and test_int_cast_truncates_uuid_sequence actually execute code, and those test PHP language behavior, not the actual modified code."
+      "reason": "Most tests like test_request_php_uses_array_filter, test_request_php_no_int_cast_on_settenant, test_create_php_uses_array_filter_for_documentsdb just grep file contents; only the first two PHP tests execute code, but they don't execute the actual modified files."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The first two tests (test_array_filter_removes_empty_strings and test_int_cast_truncates_uuid_sequence) test generic PHP behavior that passes without any code changes to the repo. They verify that array_filter removes empty strings and (int) truncates UUIDs - these are PHP language facts, not behavior of the agent's fix. A stub/no-op agent wouldn't pass the file-content tests, but these behavioral tests are tautological."
+      "outcome": "pass",
+      "reason": "Tests require specific patterns like array_filter near the env var name and host comparison logic; stub returns wouldn't satisfy file content checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four issues described in the instruction are covered by tests: Issue 1 (int cast) by test_*_no_int_cast_on_settenant, Issue 2 (array_filter) by test_*_uses_array_filter, Issue 3 (separate pools) by test_*_has_separate_pool_detection, Issue 4 (pool validation) by test_create_php_* tests."
+      "reason": "All four issues described in instruction.md have corresponding test functions covering array_filter, no int cast, separate pool detection, and Create.php validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped in a TestSharedModeFixes class, each test has a descriptive name and docstring explaining which issue it verifies."
+      "reason": "Tests grouped under TestSharedModeFixes class with descriptive names and docstrings referring to issue numbers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies PHP source code, not structured data output."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, env variable names, and commands appear consistent between instruction and tests with no apparent typos."
+      "reason": "File paths and env var names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact code patterns like 'array_filter(\\explode(..., System::getEnv(...)))' and exact variable patterns like '$databaseHost !== $dsn->getHost()' and exact exception messages. This goes beyond describing the bug to prescribing the exact implementation."
+      "reason": "Instruction explicitly names the exact files (app/init/resources/request.php, app/init/worker/message.php, src/.../Create.php) and provides exact code patterns including '$databaseHost !== $dsn->getHost()' and the exact exception message string."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

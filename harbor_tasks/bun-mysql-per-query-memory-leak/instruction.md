@@ -14,7 +14,6 @@ The `bun:sql` MySQL adapter leaks native (Zig) memory on every query execution. 
 ## Relevant Files
 
 The MySQL protocol implementation lives in:
-
 - `src/sql/mysql/protocol/ColumnDefinition41.zig` — Column definition decoding and cleanup
 - `src/sql/mysql/protocol/PreparedStatement.zig` — Prepared statement execution and parameter handling
 - `src/sql/mysql/MySQLStatement.zig` — Statement-level logic including duplicate field detection
@@ -22,16 +21,16 @@ The MySQL protocol implementation lives in:
 
 ## Required Behavior
 
-The fix should prevent RSS growth during repeated query execution. To achieve this:
+The fix should prevent RSS growth during repeated query execution.
 
-1. **ColumnDefinition41.zig**: The `ColumnDefinition41` struct contains several `Data` fields (`catalog`, `schema`, `table`, `org_table`, `name`, `org_name`) and a `name_or_index` field (of type `ColumnIdentifier`). All owned heap memory must be freed when `deinit()` is called. Additionally, when `decodeInternal()` assigns a new value to `name_or_index`, any previously owned memory must be freed first.
+**ColumnDefinition41.zig**: The `ColumnDefinition41` struct holds multiple owned string fields (`catalog`, `schema`, `table`, `org_table`, `name`, `org_name`) and a `name_or_index` field of type `ColumnIdentifier`. When the struct is reused or discarded, all owned heap memory must be explicitly released. Additionally, when `name_or_index` is reassigned during decoding, any previously held memory is leaked.
 
-2. **PreparedStatement.zig**: The `Execute` struct has a `deinit()` method and a `params` field (a slice). The `params` slice array itself must be freed (not just the individual items within it).
+**PreparedStatement.zig**: The `Execute` struct holds a params slice. Its cleanup method iterates over and releases each param element, but the slice allocation itself is never freed.
 
-3. **MySQLStatement.zig**: In `checkForDuplicateFields()`, when a column's `name_or_index` field is overwritten, any previously owned memory must be freed before the assignment.
+**MySQLStatement.zig**: In `checkForDuplicateFields()`, when a duplicate column is detected, the `name_or_index` field is overwritten with `.duplicate` without releasing the memory previously held by that field.
 
-4. **MySQLConnection.zig**: `ColumnDefinition41` arrays allocated with `bun.default_allocator.alloc()` must be properly initialized before use to prevent undefined behavior with partially-initialized structures.
+**MySQLConnection.zig**: `ColumnDefinition41` arrays are allocated but the array elements are not initialized to a defined state before use.
 
 ## Verification
 
-After 5,000 queries on a 50-column table, RSS should remain stable instead of growing by ~17 MB. All heap allocations should have corresponding deallocation during cleanup.
+After 5,000 queries on a 50-column table, RSS should remain stable instead of growing by ~17 MB. All heap allocations must have corresponding deallocation during cleanup.

@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_display_ordering_structure asserts that within the loop body 'for parameter in parameters', 'parameter.is_positional_only()' must appear at an earlier source offset than 'parameter.is_keyword_only()'. The instruction mentions this ordering requirement but test_slash_star_display relies on specific injected snapshot assertions with exact literal strings like '(a, /, *, x, y) -> None' and '(p, q, /, *, k) -> None' that are injected by the test harness, not discoverable from instruction.md. Ad"
+      "reason": "test_display_ordering_structure asserts that 'parameter.is_positional_only()' appears before 'parameter.is_keyword_only()' in the loop body and checks for the string 'for parameter in parameters'. While instruction.md mentions these method names and the loop concept, it doesn't mention the exact loop iteration variable pattern 'for parameter in parameters'. More critically, test_slash_star_display injects specific snapshot assertions with exact strings like '@\"(a, /, *, x, y) -> None\"' and '@\"(p"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' \u2014 this directly tells the agent the exact fix (reorder two code blocks in a specific loop). This is not just describing what's broken; it prescribes the implementation change."
+      "reason": "instruction.md explicitly states: 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' \u2014 this is effectively stating the exact fix (reorder two code blocks), not just describing what's broken. It tells the agent precisely WHAT to change in the source ordering."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_display_ordering_structure asserts the exact source-level ordering of 'parameter.is_positional_only()' before 'parameter.is_keyword_only()' within the loop. An alternative correct fix (e.g., using a different approach like buffering output, using a separate pass, or restructuring the logic with different method names or a state machine) would fail this test even if it produces correct output. The test checks implementation structure, not just behavior."
+      "reason": "test_display_ordering_structure explicitly checks that 'parameter.is_positional_only()' appears at an earlier character offset than 'parameter.is_keyword_only()' within the loop body. An alternative correct fix that uses different method names, restructures the logic differently (e.g., collecting separators into a list and sorting), or checks conditions in a different structural way would fail this test even if it produces correct output. The test enforces the gold patch's specific implementatio"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute cargo check, cargo test, cargo clippy, and cargo fmt as subprocesses, verifying compilation and runtime behavior. test_slash_star_display runs actual Rust snapshot tests. While test_display_ordering_structure does source inspection, the majority of tests exercise actual code behavior."
+      "reason": "Tests include cargo check compilation (test_compiles), cargo test execution (test_repo_display_tests, test_slash_star_display), cargo clippy (test_repo_clippy), and cargo fmt (test_repo_fmt). The key behavioral test test_slash_star_display actually runs the Rust test suite which executes snapshot assertions. While test_display_ordering_structure is text-based, it's supplementary to execution-based tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_slash_star_display injects snapshot assertions that will fail on the base commit because the bug produces '(a, *, /, x, y) -> None' instead of '(a, /, *, x, y) -> None'. A stub or no-op would not pass these snapshot tests since the underlying Rust code must produce the correct output."
+      "reason": "test_slash_star_display injects and runs Rust snapshot assertions that check the actual rendered output of callable types. A stub or no-op implementation would produce wrong output (e.g., '(a, *, /, x, y) -> None' instead of '(a, /, *, x, y) -> None') and fail the snapshot comparison. The bug fix is required to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that '/' appears before '*' in callable type display, and the tests verify this through snapshot assertions and source ordering checks. The AGENTS.md requirements (no panic/unwrap, no local imports, prefer expect over allow) are also tested."
+      "reason": "instruction.md requires '/' before '*' in callable display, gives examples like '(a, /, *, x, y) -> None' and '(p, q, /, *, k) -> None', and mentions AGENTS.md guidelines. All these are tested: snapshot tests for the display ordering, and dedicated tests for panic/unwrap, local imports, and allow vs expect."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Repo CI/CD, Fail-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with section headers (Gates, Repo CI/CD, Fail-to-pass, Config-derived), descriptive function names, docstrings, and comments indicating their category (static, repo_tests, pr_diff, agent_config)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the file 'crates/ty_python_semantic/src/types/display.rs', the specific impl block 'FmtDetailed implementation for DisplayParameters', and even prescribes that 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' within 'the loop body that iterates over parameters'. This goes well beyond naming the buggy component \u2014 it identifies the exact code structure and the exact reo"
+      "reason": "instruction.md names the exact file (display.rs), the exact impl block (FmtDetailed for DisplayParameters), and specifies 'within the loop body that iterates over parameters... the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()'. This is precise localization of the bug down to the specific code structure, going well beyond naming the relevant module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

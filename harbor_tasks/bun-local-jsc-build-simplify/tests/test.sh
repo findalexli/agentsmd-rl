@@ -13,6 +13,18 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Create minimal mock WebKit source tree so cmake can attempt configuration.
+# The mock has a CMakeLists.txt that cmake can "configure" without errors.
+# Tests verify that cmake at least ATTEMPTS to configure JSC (the behavioral
+# difference between NOP and GOLD).
+mkdir -p /tmp/vendor/WebKit
+cat > /tmp/vendor/WebKit/CMakeLists.txt << 'WEBMOCK'
+cmake_minimum_required(VERSION 3.20)
+project(WebKitMock NONE)
+message(STATUS "WebKitMock: cmake configuration reached")
+file(WRITE "${CMAKE_BINARY_DIR}/WebKitMockConfigured.txt" "configured")
+WEBMOCK
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

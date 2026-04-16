@@ -10,15 +10,23 @@ However, the **online evaluation** path (`src/prime_rl/orchestrator/eval_utils.p
 
 After an eval run completes, there is no way to inspect individual eval completions. Only summary statistics are recorded. This makes it difficult to debug evaluation failures or understand why certain examples score poorly.
 
-The monitor interface (`Monitor` base class) has methods for logging training samples (`log_samples`) and final samples (`log_final_samples`), but no equivalent for evaluation samples. The `evaluate_env` function calls `monitor.log()` for metrics but does not log the individual rollout outputs.
+The monitor interface (`Monitor` base class in `base.py`) has abstract methods for logging training samples (`log_samples`) and final samples (`log_final_samples`), but no equivalent for evaluation samples. The `evaluate_env` function in `eval_utils.py` calls `monitor.log()` for metrics but does not log the individual rollout outputs through the monitor interface.
 
-## What needs to change
+## Requirements
 
-1. The `Monitor` abstract base class needs a new abstract method for logging eval samples with the signature:
-   `log_eval_samples(self, rollouts: list[RolloutOutput], env_name: str, step: int) -> None`
-2. All concrete monitor implementations (`NoOpMonitor`, `MultiMonitor`, `WandbMonitor`, `PrimeMonitor`) need to implement this method
-3. The `WandbMonitor` implementation should log eval samples to a dedicated W&B table (separate from the training samples table) with columns: `step`, `env`, `task`, `example_id`, `completion`, `reward`. Rollouts with empty or missing `completion` fields should not be added to the table.
-4. The `evaluate_env` function should call `monitor.log_eval_samples(outputs, env_name=env_name, step=step)` after logging metrics
+The monitor interface needs to support logging evaluation samples, following the same pattern used for training samples (`log_samples`). Specifically:
+
+1. **Monitor ABC**: The `Monitor` base class needs a new abstract method `log_eval_samples` for logging eval rollouts. It should accept the rollout outputs, the environment name, and the current step.
+
+2. **All concrete implementations must implement the new method**:
+   - `NoOpMonitor` (in `base.py`) — should accept calls without error, as a no-op
+   - `MultiMonitor` (in `multi.py`) — should delegate to all sub-monitors, consistent with how it handles other logging methods
+   - `WandbMonitor` (in `wandb.py`) — should log eval samples to a W&B table (see below)
+   - `PrimeMonitor` (in `prime.py`) — should implement the method (a no-op stub is acceptable)
+
+3. **WandbMonitor table logging**: The `WandbMonitor` implementation should record eval samples into a dedicated W&B table (separate from the training samples table) with the following columns: `step`, `env`, `task`, `example_id`, `completion`, `reward`. Each rollout with a non-empty completion should become a row in the table. Rollouts where the `completion` field is empty or missing should be skipped (not added to the table). The table should be logged to W&B after processing the rollouts.
+
+4. **evaluate_env integration**: The `evaluate_env` function should invoke the new eval sample logging through the monitor after logging metrics, passing along the rollout outputs, environment name, and step.
 
 ## Relevant files
 

@@ -7,6 +7,7 @@ with correct HTTP/HTTPS protocol based on environment variables.
 import ast
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = Path('/workspace/openhands')
@@ -156,175 +157,148 @@ def test_repo_imports_clean():
     assert r.returncode == 0, f"Import check failed:\n{r.stderr[-500:]}"
 
 
-def _load_source():
-    """Load the source code of the target file."""
-    with open(SOURCE_PATH) as f:
-        return f.read()
-
-
-def _parse_ast():
-    """Parse the AST of the target file."""
-    source = _load_source()
-    return ast.parse(source)
-
-
-def _get_function_def(name):
-    """Get a function definition by name from the AST."""
-    tree = _parse_ast()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == name:
-            return node
-    return None
-
-
-def _get_class_def(name):
-    """Get a class definition by name from the AST."""
-    tree = _parse_ast()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == name:
-            return node
-    return None
-
-
 # ==================== Fail-to-pass Tests ====================
+# These verify the fix produces correct behavior
 
-def test_pydantic_field_import_present():
-    """F2P: Module imports pydantic Field."""
-    tree = _parse_ast()
+def _run_endpoint_url_test(endpoint_value, secure_value, expected):
+    """Helper to test endpoint URL computation via subprocess.
 
-    # Find pydantic import
-    pydantic_imports = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module == 'pydantic':
-            for alias in node.names:
-                pydantic_imports.append(alias.name)
+    Runs a Python script that:
+    1. Sets environment variables
+    2. Imports and calls _get_default_aws_endpoint_url
+    3. Prints the result
+    4. Exits with 0 if result matches expected, 1 otherwise
+    """
+    env = {
+        'AWS_S3_ENDPOINT': endpoint_value if endpoint_value is not None else '',
+        'AWS_S3_SECURE': secure_value,
+    }
+    # Remove env vars that are None
+    env = {k: v for k, v in env.items() if v is not None}
 
-    assert 'Field' in pydantic_imports, f"Should import Field from pydantic, found: {pydantic_imports}"
-
-
-def test_injector_uses_self_endpoint_url():
-    """F2P: Injector uses self.endpoint_url instead of os.getenv in inject method."""
-    source = _load_source()
-
-    # Check that self.endpoint_url is used in the boto3.client call
-    assert 'endpoint_url=self.endpoint_url' in source,         "Should use self.endpoint_url in boto3.client call"
-
-
-def test_get_default_aws_endpoint_url_function_exists():
-    """F2P: _get_default_aws_endpoint_url function exists."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-
-def test_get_default_aws_endpoint_url_function_structure():
-    """F2P: _get_default_aws_endpoint_url function handles secure and insecure properly."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-    # Get function source
-    func_source = ast.unparse(func_def)
-
-    # Check for key behaviors
-    assert 'AWS_S3_ENDPOINT' in func_source, "Should reference AWS_S3_ENDPOINT env var"
-    assert 'AWS_S3_SECURE' in func_source, "Should reference AWS_S3_SECURE env var"
-    assert 'https://' in func_source, "Should handle https:// protocol"
-    assert 'http://' in func_source, "Should handle http:// protocol"
-    assert 'secure' in func_source.lower() or 'true' in func_source, "Should handle secure setting"
+    code = f'''
+import os
+import sys
+sys.path.insert(0, '/workspace/openhands')
+from openhands.app_server.event.aws_event_service import _get_default_aws_endpoint_url
+result = _get_default_aws_endpoint_url()
+print(repr(result))
+'''
+    r = subprocess.run(
+        ['python', '-c', code],
+        capture_output=True, text=True, timeout=30,
+        env={**os.environ, **env},
+    )
+    return r
 
 
-def test_get_default_aws_endpoint_url_returns_none_when_no_env():
-    """F2P: Function returns None when AWS_S3_ENDPOINT not set."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-    func_source = ast.unparse(func_def)
-
-    # Check the function handles the case where env var is not set
-    # Should check for endpoint_url being falsy and return None
-    assert 'if not endpoint_url' in func_source or 'if endpoint_url' in func_source,         "Should check if endpoint_url is set"
-    assert 'return None' in func_source, "Should return None when endpoint not set"
+def test_endpoint_url_https_when_secure_true_no_protocol():
+    """F2P: https:// prefix added when AWS_S3_SECURE=true and no protocol in endpoint."""
+    r = _run_endpoint_url_test('minio.example.com:9000', 'true', 'https://minio.example.com:9000')
+    assert r.returncode == 0, f"Expected https:// URL, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'https://minio.example.com:9000' in r.stdout, f"Expected https:// in output, got: {r.stdout}"
 
 
-def test_get_default_aws_endpoint_url_handles_https_secure():
-    """F2P: Function handles https:// with secure=true."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-    func_source = ast.unparse(func_def)
-
-    # Check for https:// handling
-    assert 'https://' in func_source, "Should handle https:// protocol"
-    assert 'startswith' in func_source, "Should use startswith to check protocol"
+def test_endpoint_url_converts_http_to_https_when_secure():
+    """F2P: http:// converted to https:// when AWS_S3_SECURE=true."""
+    r = _run_endpoint_url_test('http://minio.example.com:9000', 'true', 'https://minio.example.com:9000')
+    assert r.returncode == 0, f"Expected https:// URL, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'https://minio.example.com:9000' in r.stdout, f"Expected https:// in output, got: {r.stdout}"
 
 
-def test_get_default_aws_endpoint_url_handles_http_insecure():
-    """F2P: Function handles http:// with secure=false."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-    func_source = ast.unparse(func_def)
-
-    # Check for http:// handling
-    assert 'http://' in func_source, "Should handle http:// protocol"
+def test_endpoint_url_http_when_secure_false_no_protocol():
+    """F2P: http:// prefix added when AWS_S3_SECURE=false and no protocol in endpoint."""
+    r = _run_endpoint_url_test('minio.example.com:9000', 'false', 'http://minio.example.com:9000')
+    assert r.returncode == 0, f"Expected http:// URL, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'http://minio.example.com:9000' in r.stdout, f"Expected http:// in output, got: {r.stdout}"
 
 
-def test_get_default_aws_endpoint_url_converts_protocol():
-    """F2P: Function converts protocol based on secure setting."""
-    func_def = _get_function_def('_get_default_aws_endpoint_url')
-    assert func_def is not None, "Should have _get_default_aws_endpoint_url function"
-
-    func_source = ast.unparse(func_def)
-
-    # Check that http:// can be converted to https:// and vice versa
-    assert 'removeprefix' in func_source, "Should use removeprefix to convert protocols"
+def test_endpoint_url_converts_https_to_http_when_insecure():
+    """F2P: https:// converted to http:// when AWS_S3_SECURE=false."""
+    r = _run_endpoint_url_test('https://minio.example.com:9000', 'false', 'http://minio.example.com:9000')
+    assert r.returncode == 0, f"Expected http:// URL, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'http://minio.example.com:9000' in r.stdout, f"Expected http:// in output, got: {r.stdout}"
 
 
-def test_injector_has_endpoint_url_field():
-    """F2P: Injector class has endpoint_url field."""
-    cls_def = _get_class_def('AwsEventServiceInjector')
-    assert cls_def is not None, "Should have AwsEventServiceInjector class"
-
-    # Get class source
-    cls_source = ast.unparse(cls_def)
-
-    # Check that endpoint_url field exists
-    assert 'endpoint_url' in cls_source, "Should have endpoint_url field"
+def test_endpoint_url_none_when_env_not_set():
+    """F2P: Returns None when AWS_S3_ENDPOINT is not set."""
+    r = _run_endpoint_url_test('', 'true', None)
+    assert r.returncode == 0, f"Expected None, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'None' in r.stdout, f"Expected None in output, got: {r.stdout}"
 
 
-def test_injector_endpoint_url_type():
-    """F2P: endpoint_url field has correct type annotation str | None."""
-    cls_def = _get_class_def('AwsEventServiceInjector')
-    assert cls_def is not None, "Should have AwsEventServiceInjector class"
+def test_injector_passes_correct_endpoint_to_boto3():
+    """F2P: AwsEventServiceInjector makes boto3 client receive correct endpoint URL."""
+    # This test verifies that the fix correctly wires self.endpoint_url to boto3.client
+    # by checking that AwsEventServiceInjector has an endpoint_url attribute that is used
+    # in the inject method's boto3.client call.
+    #
+    # We test behaviorally by checking that when the injector is instantiated,
+    # its endpoint_url is correctly computed from env vars.
 
-    # Check annotations
-    for node in ast.walk(cls_def):
-        if isinstance(node, ast.AnnAssign) and hasattr(node.target, 'id'):
-            if node.target.id == 'endpoint_url':
-                # Check the annotation contains str and None
-                annotation_str = ast.unparse(node.annotation)
-                assert 'str' in annotation_str and 'None' in annotation_str,                     f"endpoint_url should be annotated as str | None, got: {annotation_str}"
-                return
+    code = '''
+import os
+import sys
+sys.path.insert(0, '/workspace/openhands')
 
-    assert False, "Should find endpoint_url annotated field"
+os.environ['AWS_S3_ENDPOINT'] = 'minio.example.com:9000'
+os.environ['AWS_S3_SECURE'] = 'true'
 
+from openhands.app_server.event.aws_event_service import AwsEventServiceInjector
 
-def test_injector_endpoint_url_has_default_factory():
-    """F2P: endpoint_url field has default_factory using _get_default_aws_endpoint_url."""
-    cls_def = _get_class_def('AwsEventServiceInjector')
-    assert cls_def is not None, "Should have AwsEventServiceInjector class"
-
-    cls_source = ast.unparse(cls_def)
-
-    # Check for Field with default_factory
-    assert 'Field' in cls_source, "Should use pydantic Field"
-    assert 'default_factory' in cls_source, "Should use default_factory parameter"
-    assert '_get_default_aws_endpoint_url' in cls_source,         "Should use _get_default_aws_endpoint_url as default_factory"
+injector = AwsEventServiceInjector(bucket_name='test-bucket')
+print(f"endpoint_url={injector.endpoint_url}")
+'''
+    r = subprocess.run(
+        ['python', '-c', code],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Expected success, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'https://minio.example.com:9000' in r.stdout, f"Expected https:// URL in injector.endpoint_url, got: {r.stdout}"
 
 
-def test_injector_endpoint_url_not_required():
-    """F2P: endpoint_url field is not required (has default)."""
-    source = _load_source()
+def test_injector_endpoint_url_computed_from_env_vars():
+    """F2P: AwsEventServiceInjector.endpoint_url reflects AWS_S3_SECURE env var."""
+    code = '''
+import os
+import sys
+sys.path.insert(0, '/workspace/openhands')
 
-    # The field should have a default value (via Field(default_factory=...))
-    assert 'endpoint_url:' in source or 'endpoint_url =' in source,         "endpoint_url should be defined as a field"
-    assert 'Field' in source and 'default_factory' in source,         "endpoint_url should have a default factory"
+os.environ['AWS_S3_ENDPOINT'] = 'minio.example.com:9000'
+os.environ['AWS_S3_SECURE'] = 'false'
+
+from openhands.app_server.event.aws_event_service import AwsEventServiceInjector
+
+injector = AwsEventServiceInjector(bucket_name='test-bucket')
+print(f"endpoint_url={injector.endpoint_url}")
+'''
+    r = subprocess.run(
+        ['python', '-c', code],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Expected success, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'http://minio.example.com:9000' in r.stdout, f"Expected http:// URL in injector.endpoint_url, got: {r.stdout}"
+
+
+def test_injector_endpoint_url_none_when_env_empty():
+    """F2P: AwsEventServiceInjector.endpoint_url is None when AWS_S3_ENDPOINT empty."""
+    code = '''
+import os
+import sys
+sys.path.insert(0, '/workspace/openhands')
+
+# Clear the env vars
+os.environ.pop('AWS_S3_ENDPOINT', None)
+os.environ.pop('AWS_S3_SECURE', None)
+
+from openhands.app_server.event.aws_event_service import AwsEventServiceInjector
+
+injector = AwsEventServiceInjector(bucket_name='test-bucket')
+print(f"endpoint_url={injector.endpoint_url}")
+'''
+    r = subprocess.run(
+        ['python', '-c', code],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Expected success, got returncode={r.returncode}\nstdout={r.stdout}\nstderr={r.stderr}"
+    assert 'None' in r.stdout, f"Expected None in injector.endpoint_url, got: {r.stdout}"

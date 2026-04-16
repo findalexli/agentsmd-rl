@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (packages/opencode/src/cli/cmd/tui/context/theme.tsx), the createMemo block, the kv object from useKV(), the 'theme' key, 'opencode' default, and the fallback chain logic. All test-specific details (file path, function/variable names like resolveTheme, store.themes, kv.get('theme'), store.active, opencode) are discoverable from the instruction. The tests on exports (resolveTheme, useTheme, ThemeProvider, DEFAULT_THEMES) and coding style constraints (no any, no try/"
+      "reason": "Instruction names the file path, the createMemo values block, the KV key 'theme', and the fallback chain \u2014 all test specifics are discoverable."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (fallback skips KV store) and the expected behavior (check KV first, then fall back to opencode), plus hints about kv and the 'theme' key. It does NOT specify exact code changes, line numbers to modify, or the specific implementation (e.g., doesn't say 'add const saved = kv.get(\"theme\")' or 'use typeof check'). A developer still must reason about how to implement the fix."
+      "reason": "Instruction describes expected behavior (check KV, validate, fallback) without prescribing exact code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_buggy_direct_fallback_removed uses a regex to assert the absence of a specific pattern 'store.themes[store.active] ?? store.themes.opencode'. An alternative correct fix could use a ternary like `store.themes[store.active] ?? (store.themes[kv.get('theme')] ?? store.themes.opencode)` which still contains the pattern `store.themes[...] ?? store.themes.opencode` and would fail the regex test despite being a valid fix. The regex is overly specific to the gold solution's structure."
+      "outcome": "pass",
+      "reason": "Tests only check the returned theme value via resolveTheme mock; alternative implementations (ternary, if/else, nullish chaining) all pass as long as behavior matches."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core behavioral tests (test_kv_fallback_when_active_missing, test_active_theme_used_when_present, test_opencode_fallback_when_kv_invalid, etc.) extract the memo body and execute it in Node.js with mocks, checking actual return values. While some tests do text inspection (test_buggy_direct_fallback_removed, export checks), the majority execute code behavior."
+      "reason": "Tests extract the memo body and execute it in Node.js with mocked store/kv, verifying actual return values."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_kv_fallback_when_active_missing, test_kv_fallback_varied_themes) assert that when active theme is missing, the KV-saved theme is returned (e.g., 'T:dracula' not 'T:opencode'). A stub returning a default/None would fail these. The original buggy code returns 'T:opencode' via the ?? fallback, so these tests genuinely require the fix."
+      "reason": "test_kv_fallback_when_active_missing requires returning 'T:dracula' when active is missing \u2014 a stub returning opencode default fails."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors from the instruction's 'Expected Behavior' section are tested: (1) check KV store when active missing (test_kv_fallback_when_active_missing), (2) use saved theme if valid (test_kv_fallback_varied_themes), (3) fall back to opencode as last resort (test_opencode_fallback_when_kv_invalid, test_opencode_fallback_when_kv_not_string). Active theme used when present is also tested."
+      "reason": "Tests cover KV fallback, active-theme priority, invalid-KV fallback to opencode, and non-string KV values \u2014 matching all three expected behaviors."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comment headers (Gates/static, Fail-to-pass, Pass-to-pass behavioral, Pass-to-pass repo_tests, Config-derived agent_config) and have descriptive names and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a theme fallback logic bug, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a code behavior fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction are all correct and consistent with the codebase."
+      "reason": "File paths and identifiers appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly says 'Look at the createMemo that computes the resolved values' and describes the exact buggy pattern 'store.themes[store.active] ?? store.themes.opencode'. This pinpoints the exact location and current buggy code, leaving minimal localization work for the agent."
+      "outcome": "pass",
+      "reason": "Naming the file and createMemo block is appropriate scoping, not line-level leakage; the fix logic is not given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

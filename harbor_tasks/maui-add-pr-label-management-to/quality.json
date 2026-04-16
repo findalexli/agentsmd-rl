@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The solution/gold patch uses label names with 's/' prefix (e.g., 's/ai-reproduction-confirmed', 's/ai-reproduction-failed') while instruction.md specifies them without the prefix ('ai-reproduction-confirmed', 'ai-reproduction-failed'). The tests check for 'ai-reproduction-confirmed' and 'ai-reproduction-failed' as substrings, which would match both. However, the SKILL.md test checks for 'ai-reproduction-confirmed' and 'ai-reproduction-failed' which the gold solution satisfies because the 's/' pr"
+      "reason": "The instruction says label constants should be 'ai-reproduction-confirmed' and 'ai-reproduction-failed', but the solution/tests for SKILL.md check for these exact strings while the gold patch actually uses 's/ai-reproduction-confirmed' and 's/ai-reproduction-failed' (with 's/' prefix). The tests in test_skill_md_labels_section check for 'ai-reproduction-confirmed' (without prefix) which matches both. However, more critically, the instruction says nothing about the script needing to start with '#"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies exact variable names ($labelToAdd, $labelToRemove, $foundPR, $LabelConfirmed, $LabelFailed), exact function name (Update-VerificationLabels), exact parameter name (-ReproductionConfirmed), exact HTTP methods (DELETE for removal, POST for addition), exact error handling mechanism ($LASTEXITCODE), and exact number of call sites (4 paths). This is essentially a complete implementation specification, not a problem description."
+      "reason": "The instruction explicitly specifies exact variable names ($labelToAdd, $labelToRemove, $foundPR, $LabelConfirmed, $LabelFailed), exact function name (Update-VerificationLabels), exact parameter name (-ReproductionConfirmed), exact API methods (DELETE/POST), exact error handling mechanism ($LASTEXITCODE), and exact number of call paths (4). This is essentially a detailed implementation specification, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names '$labelToAdd' and '$labelToRemove' (test_update_labels_function_logic), exact variable '$foundPR' (test_pr_detection_fallback), exact function name 'Update-VerificationLabels' with exact parameter '-ReproductionConfirmed' (test_labels_called_on_all_paths). A correct alternative using different variable names (e.g., $addLabel/$removeLabel) or a different function signature would fail."
+      "reason": "Tests assert on gold-specific implementation details: exact variable names '$labelToAdd' and '$labelToRemove' (test_update_labels_function_logic), exact function name 'Update-VerificationLabels', exact variable '$foundPR' (test_pr_detection_fallback), exact parameter name '-ReproductionConfirmed' (test_labels_called_on_all_paths). An alternative correct implementation using different variable names (e.g., $addLabel/$removeLabel) or a different function name would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test reads file content as text and checks for string patterns (e.g., '$labelToAdd' in body, 'DELETE' in body, 'gh pr list' in content). No test actually executes the PowerShell script, imports the function, or verifies runtime behavior. All tests are pure text/regex matching on file contents."
+      "reason": "Every fail-to-pass test is purely text/pattern matching via regex on file contents (e.g., checking for string 'DELETE' in body, checking '$labelToAdd' in body, checking 'gh pr list' in content). No test actually executes the PowerShell script, calls any function, or verifies runtime behavior. All tests are variations of 'assert string in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific function definitions, variable assignments, API method keywords, and multiple call sites that wouldn't be present in stub/empty implementations. A default or empty file would fail all f2p tests."
+      "reason": "While tests are text-based, they do check for non-trivial content that wouldn't exist in a stub: a function body with specific variables, REST API methods, multiple call sites with specific parameters. A stub/empty file would not pass these checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's main requirements (label function with toggle logic, label constants, function calls on all 4 paths, PR detection fallback, SKILL.md updates) are all tested by corresponding test functions."
+      "reason": "The tests cover all major requirements from the instruction: label management function with toggle logic, label constants, function calls on all paths, PR detection fallback, and SKILL.md updates. The instruction's requirements are well-represented in tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, grouped into sections (Gates, Fail-to-pass, Pass-to-pass) with clear comments and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names (test_update_labels_function_logic, test_label_names_and_constants, etc.), grouped by category (Gates, Fail-to-pass, Pass-to-pass) with comments, and each has a docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces PowerShell scripts and Markdown documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "The instruction specifies label values as 'ai-reproduction-confirmed' and 'ai-reproduction-failed', but the gold solution uses 's/ai-reproduction-confirmed' and 's/ai-reproduction-failed' (with 's/' prefix). This discrepancy could mislead the agent \u2014 though tests happen to pass either way due to substring matching."
+      "reason": "The instruction specifies label values as 'ai-reproduction-confirmed' and 'ai-reproduction-failed' but the gold solution uses 's/ai-reproduction-confirmed' and 's/ai-reproduction-failed' (with 's/' prefix). This is a discrepancy between instruction and solution that would mislead agents."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names ($labelToAdd, $labelToRemove, $foundPR), exact function name (Update-VerificationLabels), exact parameter name (-ReproductionConfirmed), exact HTTP methods per operation, and exact number of code paths (4). This goes far beyond describing what's broken and essentially dictates the implementation."
+      "reason": "The instruction specifies exact implementation details: exact variable names ($labelToAdd, $labelToRemove, $foundPR), exact function signature, exact API methods (DELETE/POST), exact error handling ($LASTEXITCODE), and exact number of code paths (4). This goes far beyond describing the problem and prescribes the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation editing task, not a config-edit task."
+      "reason": "This is primarily a code/documentation editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [

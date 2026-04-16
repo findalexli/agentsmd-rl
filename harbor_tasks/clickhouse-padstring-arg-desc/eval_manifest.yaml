@@ -115,6 +115,34 @@ distractors:
   source:
     path: AGENTS.md
     lines: 5-5
+- rule: Wrap literal names from ClickHouse SQL language in inline code blocks
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies C++ string literals that represent ClickHouse SQL
+    types ('String', 'FixedString', 'Array'). An agent might mistakenly apply this
+    documentation formatting rule to the C++ strings and wrap them in markdown backticks
+    (e.g., '`String` or `FixedString`'), which would cause incorrect type names to
+    be displayed in application error messages.
+  severity: high
+- rule: Always use Allman-style braces when writing C++ code
+  source:
+    path: .claude/CLAUDE.md
+    lines: '145'
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies elements within a C++ uniform initialization block
+    `FunctionArgumentDescriptors mandatory_args{ ... };`. An agent might see this
+    rule and mistakenly try to reformat the `{` onto a new line. However, the rule
+    generally applies to control structures and function bodies, not necessarily uniform
+    initialization, and reformatting untouched lines falls outside the scope of the
+    fix.
+  severity: medium
 hierarchy_analysis: The single AGENTS.md file contains documentation and commit message
   guidelines that do not apply to the C++ string literals being modified.
 version: '2.0'

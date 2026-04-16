@@ -1,0 +1,483 @@
+diff --git a/apps/oxlint/src-js/generated/deserialize.js b/apps/oxlint/src-js/generated/deserialize.js
+index d7def457b7059..afcf3759de4c8 100644
+--- a/apps/oxlint/src-js/generated/deserialize.js
++++ b/apps/oxlint/src-js/generated/deserialize.js
+@@ -14,10 +14,8 @@ let uint8,
+   parent = null,
+   getLoc;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5892,22 +5890,22 @@ function deserializeStr(pos) {
+     isInSourceRegion = pos >= sourceStartPos;
+   if (isInSourceRegion && end <= firstNonAsciiPos)
+     return sourceTextLatin.substr(pos - sourceStartPos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   // If string is in source region, use slice of `sourceTextLatin` if all ASCII
+   if (isInSourceRegion) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos - sourceStartPos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/apps/oxlint/src-js/plugins/source_code.ts b/apps/oxlint/src-js/plugins/source_code.ts
+index 137e8b208e254..60f0a96919461 100644
+--- a/apps/oxlint/src-js/plugins/source_code.ts
++++ b/apps/oxlint/src-js/plugins/source_code.ts
+@@ -30,8 +30,7 @@ import type { ScopeManager } from "./scope.ts";
+ import type { Token } from "./tokens.ts";
+ import type { BufferWithArrays, Node } from "./types.ts";
+ 
+-// Text decoder, for decoding source text from buffer
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
++const { utf8Slice } = Buffer.prototype;
+ 
+ // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
+ export let buffer: BufferWithArrays | null = null;
+@@ -65,7 +64,7 @@ export function initSourceText(): void {
+     programPos = uint32[DATA_POINTER_POS_32];
+   sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
+   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+-  sourceText = textDecoder.decode(buffer.subarray(sourceStartPos, sourceStartPos + sourceByteLen));
++  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
+ }
+ 
+ /**
+diff --git a/napi/parser/src-js/generated/deserialize/js.js b/napi/parser/src-js/generated/deserialize/js.js
+index fe652b4b4cdf7..aaf513ea78b9e 100644
+--- a/napi/parser/src-js/generated/deserialize/js.js
++++ b/napi/parser/src-js/generated/deserialize/js.js
+@@ -9,10 +9,8 @@ let uint8,
+   sourceEndPos = 0,
+   firstNonAsciiPos = 0;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -4557,21 +4555,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/js_parent.js b/napi/parser/src-js/generated/deserialize/js_parent.js
+index 7f9298492f290..c5a309250cbdf 100644
+--- a/napi/parser/src-js/generated/deserialize/js_parent.js
++++ b/napi/parser/src-js/generated/deserialize/js_parent.js
+@@ -10,10 +10,8 @@ let uint8,
+   firstNonAsciiPos = 0,
+   parent = null;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5088,21 +5086,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/js_range.js b/napi/parser/src-js/generated/deserialize/js_range.js
+index fe74dc7d4bcd3..d0e3c9ac90973 100644
+--- a/napi/parser/src-js/generated/deserialize/js_range.js
++++ b/napi/parser/src-js/generated/deserialize/js_range.js
+@@ -9,10 +9,8 @@ let uint8,
+   sourceEndPos = 0,
+   firstNonAsciiPos = 0;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5099,21 +5097,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/js_range_parent.js b/napi/parser/src-js/generated/deserialize/js_range_parent.js
+index 932221b0a50ef..669f325738cb5 100644
+--- a/napi/parser/src-js/generated/deserialize/js_range_parent.js
++++ b/napi/parser/src-js/generated/deserialize/js_range_parent.js
+@@ -10,10 +10,8 @@ let uint8,
+   firstNonAsciiPos = 0,
+   parent = null;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5633,21 +5631,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/ts.js b/napi/parser/src-js/generated/deserialize/ts.js
+index 2616fb217a603..a43ab9f7789a4 100644
+--- a/napi/parser/src-js/generated/deserialize/ts.js
++++ b/napi/parser/src-js/generated/deserialize/ts.js
+@@ -9,10 +9,8 @@ let uint8,
+   sourceEndPos = 0,
+   firstNonAsciiPos = 0;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -4866,21 +4864,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/ts_parent.js b/napi/parser/src-js/generated/deserialize/ts_parent.js
+index f8583be6b64bf..c338a7361c09b 100644
+--- a/napi/parser/src-js/generated/deserialize/ts_parent.js
++++ b/napi/parser/src-js/generated/deserialize/ts_parent.js
+@@ -10,10 +10,8 @@ let uint8,
+   firstNonAsciiPos = 0,
+   parent = null;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5424,21 +5422,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/ts_range.js b/napi/parser/src-js/generated/deserialize/ts_range.js
+index c40d72dabb786..431718d2a6f4d 100644
+--- a/napi/parser/src-js/generated/deserialize/ts_range.js
++++ b/napi/parser/src-js/generated/deserialize/ts_range.js
+@@ -9,10 +9,8 @@ let uint8,
+   sourceEndPos = 0,
+   firstNonAsciiPos = 0;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5439,21 +5437,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/napi/parser/src-js/generated/deserialize/ts_range_parent.js b/napi/parser/src-js/generated/deserialize/ts_range_parent.js
+index 33da28813e615..27f50db7d3632 100644
+--- a/napi/parser/src-js/generated/deserialize/ts_range_parent.js
++++ b/napi/parser/src-js/generated/deserialize/ts_range_parent.js
+@@ -10,10 +10,8 @@ let uint8,
+   firstNonAsciiPos = 0,
+   parent = null;
+ 
+-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
+-  decodeStr = textDecoder.decode.bind(textDecoder),
+-  { fromCharCode } = String,
+-  { latin1Slice } = Buffer.prototype,
++const { fromCharCode } = String,
++  { utf8Slice, latin1Slice } = Buffer.prototype,
+   stringDecodeArrays = Array(65).fill(null);
+ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
+ 
+@@ -5997,21 +5995,21 @@ function deserializeStr(pos) {
+   pos = uint32[pos32];
+   let end = pos + len;
+   if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+-  // Use `TextDecoder` for strings longer than 64 bytes
+-  if (len > 64) return decodeStr(uint8.subarray(pos, end));
++  // Use `utf8Slice` for strings longer than 64 bytes
++  if (len > 64) return utf8Slice.call(uint8, pos, end);
+   if (pos < sourceEndPos) {
+-    // Check if all bytes are ASCII, use `TextDecoder` if not
+-    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++    // Check if all bytes are ASCII, use `utf8Slice` if not
++    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+     // String is all ASCII, so slice from `sourceTextLatin`
+     return sourceTextLatin.substr(pos, len);
+   }
+   // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+   // Copy bytes into temp array.
+-  // If any byte is non-ASCII, use `TextDecoder`.
++  // If any byte is non-ASCII, use `utf8Slice`.
+   let arr = stringDecodeArrays[len];
+   for (let i = 0; i < len; i++) {
+     let b = uint8[pos + i];
+-    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++    if (b >= 128) return utf8Slice.call(uint8, pos, end);
+     arr[i] = b;
+   }
+   // Call `fromCharCode` with temp array
+diff --git a/tasks/ast_tools/src/generators/raw_transfer.rs b/tasks/ast_tools/src/generators/raw_transfer.rs
+index 94658a3dbbb5a..6858c12657eb3 100644
+--- a/tasks/ast_tools/src/generators/raw_transfer.rs
++++ b/tasks/ast_tools/src/generators/raw_transfer.rs
+@@ -149,11 +149,8 @@ fn generate_deserializers(
+         let parent = null;
+         let getLoc;
+ 
+-        const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
+-            decodeStr = textDecoder.decode.bind(textDecoder);
+-
+         const {{ fromCharCode }} = String,
+-            {{ latin1Slice }} = Buffer.prototype;
++            {{ utf8Slice, latin1Slice }} = Buffer.prototype;
+ 
+         const STRING_DECODE_CROSSOVER = 64;
+ 
+@@ -984,8 +981,8 @@ static STR_DESERIALIZER_BODY: &str = "
+     }
+     /* END_IF */
+ 
+-    // Use `TextDecoder` for strings longer than 64 bytes
+-    if (len > STRING_DECODE_CROSSOVER) return decodeStr(uint8.subarray(pos, end));
++    // Use `utf8Slice` for strings longer than 64 bytes
++    if (len > STRING_DECODE_CROSSOVER) return utf8Slice.call(uint8, pos, end);
+ 
+     // If string is in source region, use slice of `sourceTextLatin` if all ASCII
+     /* IF !LINTER */
+@@ -993,9 +990,9 @@ static STR_DESERIALIZER_BODY: &str = "
+     /* END_IF */
+ 
+     if (isInSourceRegion) {
+-        // Check if all bytes are ASCII, use `TextDecoder` if not
++        // Check if all bytes are ASCII, use `utf8Slice` if not
+         for (let i = pos; i < end; i++) {
+-            if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
++            if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
+         }
+ 
+         // String is all ASCII, so slice from `sourceTextLatin`
+@@ -1004,11 +1001,11 @@ static STR_DESERIALIZER_BODY: &str = "
+ 
+     // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+     // Copy bytes into temp array.
+-    // If any byte is non-ASCII, use `TextDecoder`.
++    // If any byte is non-ASCII, use `utf8Slice`.
+     const arr = stringDecodeArrays[len];
+     for (let i = 0; i < len; i++) {
+         const b = uint8[pos + i];
+-        if (b >= 128) return decodeStr(uint8.subarray(pos, end));
++        if (b >= 128) return utf8Slice.call(uint8, pos, end);
+         arr[i] = b;
+     }
+ 

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (v143/V143Domains.cs, v144/V144Domains.cs, v145/V145Domains.cs), field names (network, javaScript, target, log), type names (Lazy<V143Network>, etc.), property names (Network, JavaScript, Target, Log), and the exact patterns tested are explicitly documented in instruction.md's Required Implementation Details section."
+      "reason": "All file paths (v143/V143Domains.cs, v144/V144Domains.cs, v145/V145Domains.cs), field names (network, javaScript, target, log), type names (Lazy<V143Network>, etc.), property names (Network, JavaScript, Target, Log), and the exact patterns tested (e.g., 'this.network.Value') are explicitly documented in instruction.md's Required Implementation Details section."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md provides the exact code for private fields, constructor initialization with factory lambdas, and property accessors. Section 'Required Implementation Details' literally gives 'private readonly Lazy<V143Network> network;', the constructor code 'this.network = new Lazy<V143Network>(() => new V143Network(domains.Network, domains.Fetch));', and property code 'public override DevTools.Network Network => this.network.Value;'. This is the complete solution, not just a description of what"
+      "reason": "instruction.md provides the complete solution: exact field declarations ('private readonly Lazy<V143Network> network;'), exact constructor initialization code with factory lambdas, and exact property accessor implementations ('this.network.Value'). This is a verbatim copy-paste solution, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert exact variable names like 'network', 'javaScript', 'target', 'log', exact type patterns like 'Lazy<V143Network>', and exact expressions like 'this.network.Value'. An alternative correct fix using simple caching with null-coalescing (e.g., '_network ??= new V143Network(...)') or different field names would fail these tests despite correctly fixing the bug."
+      "reason": "Tests assert on gold-specific implementation details: exact field names like 'network', 'javaScript', 'target', 'log' with exact types like 'Lazy<V143Network>', exact patterns like 'this.network.Value'. Alternative correct fixes (e.g., using simple backing fields with null-check, using field name '_network', or using Lazy without 'this.' prefix in constructor) would fail these regex-based tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the .cs file as text and uses regex matching (re.search on file content). No test compiles the code, runs it, or verifies actual runtime behavior like object identity. E.g., test_v143_has_lazy_network_field does `re.search(pattern, content)` on the file text."
+      "reason": "Every single test reads file content and uses regex matching (e.g., re.search(pattern, content)). No test compiles the code, executes it, or verifies behavioral properties like reference equality. This is pure text/pattern matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check text patterns in source files, an agent could simply insert the exact text strings the regexes look for as comments or dead code without implementing any actual fix. For example, adding '// private readonly Lazy<V143Network> network;' wouldn't fix the bug but a slightly adjusted regex might match. More practically, an agent can just paste the exact code from instruction.md verbatim since the solution is fully leaked."
+      "reason": "Since tests only check text patterns via regex (e.g., 'private readonly Lazy<V143Network> network;'), a stub that simply adds the required text lines without any functional implementation would pass. The tests don't verify that the Lazy fields are actually used at runtime."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: lazy fields (requirement 1), constructor initialization (requirement 2), property accessors (requirement 3), all three version files (requirement 4), API compatibility via property signature checks (requirement 5)."
+      "reason": "All behaviors described in instruction.md are tested: lazy field declarations, constructor initialization with factory lambdas, property accessors returning .Value, consistency across v143/v144/v145, and absence of 'new' in property getters."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, and docstrings indicating which category each test belongs to."
+      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive function names, docstrings indicating test category, and logical grouping by version and property."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces C# source code modifications, not structured data like JSON/CSV/API/DB."
+      "reason": "Task involves C# code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, class names, and commands are all consistent and correct across instruction.md and test files."
+      "reason": "File paths, variable names, type names, and patterns are consistent between instruction.md, tests, and solution with no typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files (V143Domains.cs, V144Domains.cs, V145Domains.cs), provides exact field declarations, exact constructor code, and exact property accessor code. This goes far beyond naming the buggy module\u2014it provides the complete line-by-line fix."
+      "reason": "instruction.md names the exact files, exact field declarations, exact constructor code, and exact property implementations. The 'Required Implementation Details' section is essentially the complete solution with code snippets that can be directly copied."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying C# source files, not a configuration edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

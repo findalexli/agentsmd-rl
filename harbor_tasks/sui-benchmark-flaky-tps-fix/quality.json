@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the exact files (crates/sui-benchmark/src/drivers/mod.rs, .github/workflows/rust.yml), mentions TPS display with 2 decimal places, fractional TPS without truncation, --min-tps 0.01 threshold, and all the lint/compile commands. The test assertions for specific strings like 'as_secs_f64()', 'as f64 / duration_secs', '{:.2}', '--min-tps 0.01' are all discoverable from the instruction's description of what needs to change (floating-point division, 2 decimal places, 0.01 thresho"
+      "outcome": "fail",
+      "reason": "The tests assert very specific literal strings like 'as f64 / duration_secs' and 'as_secs_f64()' and '{:.2}' in test_tps_calculation_uses_float_division. The instruction.md mentions 'fractional values' and '2 decimal places' but never specifies the exact variable name 'duration_secs' or the exact expression 'as f64 / duration_secs'. An agent cannot discover 'duration_secs' as the required variable name from instruction.md alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: use as_secs_f64() for fractional values, display with 2 decimal places, change --min-tps to 0.01. It even explains the root cause (truncating fractional values to 0) and the exact solution approach. A competent developer wouldn't need to reason about what to change - the instruction tells them precisely."
+      "reason": "The instruction explicitly states 'The TPS calculation needs to properly handle fractional values and display them with appropriate precision' and 'The CI workflow's benchmark smoke test should accept TPS values as low as 0.01' and 'TPS values should display with 2 decimal places'. These are very specific implementation directives (exact threshold value 0.01, exact decimal places 2) rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_tps_calculation_uses_float_division asserts exact strings 'as f64 / duration_secs' - a correct alternative using e.g. 'as f64 / elapsed' or 'as f64 / secs' would fail. The test checks for a specific variable name 'duration_secs' that is an implementation choice in the gold solution, not the only correct approach."
+      "reason": "test_tps_calculation_uses_float_division asserts the exact string 'as f64 / duration_secs' must appear in the file. An equally correct alternative could use a different variable name (e.g., 'elapsed_secs', 'secs', 'dur') or compute TPS differently (e.g., 'as f64 / self.duration.as_secs_f64().max(1.0)' inline without a local variable). These correct alternatives would fail the test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_tps_calculation_uses_float_division, test_min_tps_threshold_lowered, test_no_integer_division_in_tps) are purely text-matching with 'assert X in open(path).read()'. They never compile or execute the code. The pass-to-pass tests do run subprocesses (cargo fmt, cargo check, etc.), but the core behavioral tests are all string matching."
+      "reason": "The three fail-to-pass tests (test_tps_calculation_uses_float_division, test_min_tps_threshold_lowered, test_no_integer_division_in_tps) are purely text-matching: they open files and assert specific string patterns exist or don't exist. They never execute the code, call functions, or check runtime behavior. While pass-to-pass tests do run cargo commands, the core f2p tests are all 'assert X in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass the f2p tests because test_tps_calculation_uses_float_division checks for 'as_secs_f64()' and 'as f64 / duration_secs' which don't exist in the original file, test_min_tps_threshold_lowered checks for '--min-tps 0.01' which doesn't exist originally, and test_no_integer_division_in_tps verifies the old integer division pattern is removed."
+      "reason": "A stub/no-op implementation would leave the original integer division patterns in place, failing test_no_integer_division_in_tps (which checks those patterns are removed) and test_tps_calculation_uses_float_division (which checks for as_secs_f64() and 'as f64 / duration_secs'). The f2p tests require actual code changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are tested: 2 decimal places ('{:.2}' check), fractional TPS without truncation (as_secs_f64 and f64 division checks), --min-tps 0.01 threshold, compilation (cargo check), and lint checks (cargo xclippy, cargo xlint, cargo fmt)."
+      "reason": "All four success criteria from instruction.md are tested: 2 decimal places ('{:.2}' check), fractional TPS without truncation (float division check), min-tps 0.01 (workflow check), and compilation/lint (cargo check, fmt, clippy tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names, grouped into fail-to-pass, pass-to-pass (static), and pass-to-pass (repo_tests) categories. Each has a detailed docstring explaining what it validates and why."
+      "reason": "Tests are well-organized with descriptive names, detailed docstrings explaining the bug and expected fix, and a clear separation between fail-to-pass and pass-to-pass categories documented in the module docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, variable names, and other identifiers in the instruction and tests are correctly spelled and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names both exact files to modify and describes the exact nature of the fix (use as_secs_f64, 2 decimal places, change --min-tps to 0.01). While naming the files is acceptable for this task, the instruction also describes implementation details like 'truncating fractional values to 0' and 'display them with appropriate precision' which significantly reduce the reasoning required."
+      "reason": "instruction.md explicitly names both exact files to modify ('crates/sui-benchmark/src/drivers/mod.rs' and '.github/workflows/rust.yml') and describes the exact nature of the fix (use floating-point division, change --min-tps to 0.01, display with 2 decimal places). This goes beyond describing what's broken and into specifying the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch changes only a single line in rust.yml (--min-tps 1 to --min-tps 0.01) and a small block in mod.rs. Both are localized edits that don't contradict other files."
+      "reason": "The gold patch changes a single line in rust.yml (min-tps 1 to 0.01) and a small block in mod.rs. The diff is localized and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

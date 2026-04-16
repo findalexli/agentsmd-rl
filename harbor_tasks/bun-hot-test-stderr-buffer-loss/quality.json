@@ -2,60 +2,57 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_repo_format requires prettier@3.6.2, test_repo_oxlint requires oxlint, and test_trailing_partial_lines_preserved checks for specific patterns like `lines.pop()`, `lines.at(-1)`, etc. The instruction mentions Prettier@3.6.2 and oxlint, but test_trailing_partial_lines_preserved asserts that `str = ''` must not appear in sourcemap blocks and checks for specific preservation mechanisms (p"
+      "outcome": "pass",
+      "reason": "The instruction names the target file (test/cli/hot/hot.test.ts), the repo and commit, the three test names, the toBe(50)/toEqual(50) assertions, the 10 non-comment line minimum, Prettier/oxlint/TypeScript checks, and the four specific bugs to fix. All assert'd paths, test names, and literals in the test suite are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the fix in detail: 'remaining unprocessed lines from the current split must be preserved (e.g., by saving the trailing partial line with pop(), at(-1), or similar array operations)', 'Bundler subprocesses must not use stdout:\"inherit\" or stderr:\"inherit\"', and 'must implement early-exit detection (e.g., via Promise.race, monitoring bundler.exited, or AbortController)'. These are specific implementation prescriptions, not just descriptions of what's broken."
+      "reason": "Instruction.md describes very specific implementation details of the fix: 'remaining unprocessed lines must not be discarded \u2014 they must be carried forward into the next chunk', 'Bundler subprocesses must not cause pipe buffer backpressure', 'use Buffer.alloc(count, fill).toString() instead of .repeat()'. These go beyond describing what's broken and prescribe HOW to fix it, especially the Buffer.alloc replacement which is the exact gold-patch technique."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_data_loss_pattern_fixed uses regex to check for specific patterns like `lines.slice(`, `lines.splice(`, `remaining =`, `.join('\\n'`, etc. An alternative correct fix that restructures the loop entirely (e.g., using a different buffering strategy without these specific method calls, or using a named variable other than 'remaining' or 'lines') could fail the test. Similarly, test_trailing_partial_lines_preserved checks for `lines.pop()`, `lines.at(-1)`, or a helper function matching `function."
+      "outcome": "pass",
+      "reason": "The behavioral tests run the actual sourcemap tests via 'bun test --grep' and check exit code 0 plus completion within timeout. They don't assert specific helper function names (like driveErrorReloadCycle), variable names, or line positions. Alternative correct fixes that solve the hang differently would also pass these tests."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_data_loss_pattern_fixed, test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection) are purely text/regex-based inspection of source code. They never execute the code, run the tests, or verify runtime behavior. Every assertion is of the form 'assert pattern in source code' or 'assert not pattern in source code'."
+      "outcome": "pass",
+      "reason": "The core fail-to-pass tests (test_data_loss_pattern_fixed, test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection, test_all_sourcemap_tests_complete) actually execute 'bun test' as subprocesses and verify the tests complete successfully. While test_sourcemap_tests_preserved and test_not_stub do text inspection, the primary behavioral tests execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty file or no changes) would fail test_not_stub (requires >=10 non-comment lines changed), test_data_loss_pattern_fixed (buggy pattern would still be present), and test_sourcemap_tests_preserved (tests must still exist with 50-reload assertions). The tests do require meaningful changes."
+      "reason": "The fail-to-pass tests run the actual hot-reload sourcemap tests that hang on the buggy code. A stub or no-op change would still hang and timeout, failing these tests. The test_not_stub check also requires >=10 non-comment line changes in the diff."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three symptoms described in instruction.md (data loss on duplicate errors, pipe backpressure, early-exit detection) have corresponding tests (test_data_loss_pattern_fixed/test_trailing_partial_lines_preserved, test_bundler_no_inherit_pipes, test_early_bundler_exit_detection). The constraints about 10+ line changes, formatting, and preserved tests are also tested."
+      "reason": "All four required fixes (data loss on continue outer, pipe backpressure, early exit detection, .repeat() performance) map to behavioral tests that run the relevant sourcemap tests. The instruction's verification requirements (test names preserved, toBe(50) assertions, 10+ lines modified, Prettier, oxlint, TypeScript) are tested by test_sourcemap_tests_preserved, test_not_stub, and (truncated) formatting/linting tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a test file, not producing structured data output."
+      "reason": "This task involves fixing test code, not producing structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, test names, commands, and variable names in instruction.md and test files are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (test/cli/hot/hot.test.ts), describes the exact buggy code pattern ('sets str = \"\" inside the inner loop before doing continue outer'), and specifies exact fix approaches (pop(), at(-1), Promise.race, bundler.exited, AbortController). This goes well beyond describing the bug \u2014 it localizes the exact lines and prescribes specific fixes."
+      "reason": "The instruction explicitly names the exact pattern to use: 'use Buffer.alloc(count, fill).toString() instead' and describes the exact code flow fix ('remaining unprocessed lines must be carried forward into the next chunk'). It also references test/CLAUDE.md:147 convention by line number, which is very specific implementation guidance beyond just describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a test file, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

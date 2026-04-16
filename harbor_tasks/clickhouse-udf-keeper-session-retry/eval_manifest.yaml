@@ -1,0 +1,115 @@
+task_name: clickhouse-udf-keeper-session-retry
+source_pr: "ClickHouse/ClickHouse#102035"
+base_commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
+merge_commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
+
+# Rubric based on agent config files (copilot-instructions.md)
+# These are soft/subjective rules relevant to the PR's domain
+rubric:
+  - id: exception_handling_correctness
+    description: "Proper exception handling - distinguish between hardware and non-hardware errors"
+    guidance: "Code should specifically catch zkutil::KeeperException and check isHardwareError()"
+
+  - id: retry_mechanism
+    description: "Use ZooKeeperRetriesControl for transient error handling"
+    guidance: "The fix should use the existing ZooKeeperRetriesControl infrastructure with proper backoff parameters"
+
+  - id: error_observability
+    description: "Proper logging for serious failure modes"
+    guidance: "Hardware errors should be logged with appropriate severity (WARNING) and context"
+
+  - id: comments_clarity
+    description: "Complex logic should have explanatory comments"
+    guidance: "The retry mechanism should be documented explaining why it exists"
+
+  - id: constants_settings
+    description: "Important thresholds should be configurable or well-defined constants"
+    guidance: "Retry parameters should be defined as named constants, not magic numbers"
+
+checks:
+  # Fail-to-pass tests (verify the fix is applied)
+  - id: test_hardware_error_include
+    type: fail_to_pass
+    origin: code_structure
+    description: "ZooKeeperCommon.h is included for isHardwareError function"
+
+  - id: test_retries_include
+    type: fail_to_pass
+    origin: code_structure
+    description: "ZooKeeperRetries.h is included for ZooKeeperRetriesControl"
+
+  - id: test_keeper_exception_handler
+    type: fail_to_pass
+    origin: code_structure
+    description: "Specific catch block for KeeperException with hardware error check"
+
+  - id: test_zookeeper_retries_control_usage
+    type: fail_to_pass
+    origin: code_structure
+    description: "ZooKeeperRetriesControl is instantiated with proper parameters"
+
+  - id: test_retry_loop_pattern
+    type: fail_to_pass
+    origin: code_structure
+    description: "retryLoop pattern wraps object loading with clear() on retry"
+
+  - id: test_error_logging
+    type: fail_to_pass
+    origin: code_structure
+    description: "Hardware errors are logged with proper context"
+
+  - id: test_comment_documentation
+    type: fail_to_pass
+    origin: code_structure
+    description: "Comments explain the retry mechanism purpose"
+
+  - id: test_constants_defined
+    type: fail_to_pass
+    origin: code_structure
+    description: "Retry constants are defined as static constexpr with names"
+
+  # Pass-to-pass tests (verify code quality - repo CI based)
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: code_structure
+    description: "Target file exists"
+
+  - id: test_repo_no_tabs_in_source
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No tabs in source files - ClickHouse style check"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace - ClickHouse style check"
+
+  - id: test_repo_no_merge_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No merge conflict markers - ClickHouse style check"
+
+  - id: test_repo_no_bom_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No UTF-8 BOM markers - ClickHouse style check"
+
+  - id: test_repo_no_duplicate_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No duplicate #include statements - ClickHouse style check"
+
+  - id: test_repo_file_not_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file is not empty - basic sanity check"
+
+  - id: test_repo_git_file_tracked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file is tracked by git - ClickHouse CI check"
+
+  - id: test_repo_no_forbidden_std_stringstream
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No forbidden std::stringstream pattern - ClickHouse style check"

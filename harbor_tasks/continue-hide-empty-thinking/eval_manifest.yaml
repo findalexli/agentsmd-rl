@@ -1,0 +1,61 @@
+source:
+  pr:
+    owner: continuedev
+    repo: continue
+    number: 11874
+    title: "fix: hide thinking indicator for empty thinking content"
+    merge_commit: af4563b7b1b61aff0e84be50f36ed4b174998a75
+    base_commit: e8c88f416fe0be8f9fc9e92c2f2adab82fb023d4
+
+checks:
+  # Fail-to-pass tests
+  - id: test_stepcontainer_has_trim_check
+    type: fail_to_pass
+    origin: behavioral
+    description: "StepContainer.tsx uses .trim() to check for empty reasoning text"
+
+  - id: test_chat_has_empty_content_check
+    type: fail_to_pass
+    origin: behavioral
+    description: "Chat.tsx checks for empty/whitespace thinking content before rendering"
+
+  - id: test_chat_uses_extracted_variable
+    type: fail_to_pass
+    origin: behavioral
+    description: "Chat.tsx uses extracted thinkingContent variable in ThinkingBlockPeek"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint checks pass on gui package"
+
+  - id: test_prettier_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting passes for modified files (StepContainer.tsx, Chat.tsx)"
+
+  - id: test_unit_tests_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core unit tests pass (284+ tests in redux/util/components)"
+
+# Rubric based on agent config rules from .claude/skills/docs-style/SKILL.md
+# NOTE: These rules apply to documentation/config tasks. For code fix tasks,
+# the rubric is evaluated but may be informational only.
+rubric:
+  - id: concise_fix
+    description: "Fix is concise with no filler - opens with the code change, not explanations"
+    source: ".claude/skills/docs-style/SKILL.md"
+
+  - id: copy_pasteable
+    description: "Solution is copy-pasteable with no placeholder values that silently break"
+    source: ".claude/skills/docs-style/SKILL.md"
+
+  - id: real_example
+    description: "Solution uses real code example matching the target files, not abstract explanation"
+    source: ".claude/skills/docs-style/SKILL.md"
+
+  - id: direct_approach
+    description: "Solution is direct, not patronizing - respects the reader's time"
+    source: ".claude/skills/docs-style/SKILL.md"

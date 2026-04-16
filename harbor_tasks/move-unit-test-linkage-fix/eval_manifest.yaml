@@ -110,6 +110,26 @@ rubric:
     aligning with the architectural definition that the Move compiler and VM reside
     in `external-crates/`.
   category: architecture
+- rule: 'Do not comment the obvious: simple variable assignments, standard library
+    usage, or self-descriptive function calls.'
+  source:
+    path: CLAUDE.md
+    lines: 118, 126-129
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls'
+  evidence: The diff adds un-commented standard library iterations (`.copied().map(...).collect()`)
+    and simple variable assignments (`linkage_table`, `linkage_context`) which are
+    self-descriptive, adhering to the standard by avoiding redundant comments.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: All new files must start with the following license in comments at the top
     of the file
@@ -129,6 +149,32 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 6-8
+- rule: All unit tests must work properly - use `#[tokio::test]` for async tests,
+    not `#[test]`
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '**All unit tests must work properly** - use `#[tokio::test]` for async
+    tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: The modified file is `move-unit-test/src/test_runner.rs`. Its path
+    and naming could cause an agent to erroneously interpret the task as editing a
+    unit test and thus mistakenly apply `#[tokio::test]` to regular functions or test
+    runner components.
+  severity: medium
+- rule: Never make functional changes to the code. Only add logging statements.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: '38'
+  source_text: While executing the skill, never make functional changes to the code.  Only
+    add logging statements as described below.  The goal is to find the root cause,
+    not fix the issue.
+  collision_type: meta_confusion
+  why_distracting: An agent reading skill configurations might think it's operating
+    under a debugging mandate because it is modifying files in a test directory (`move-unit-test`),
+    mistakenly restricting itself from making the necessary functional logic updates
+    (linkage functionality).
+  severity: medium
 hierarchy_analysis: The hierarchy consists of root-level AGENTS.md and CLAUDE.md files
   with generic repository guidelines. No sub-crate specific config files are provided.
 version: '2.0'

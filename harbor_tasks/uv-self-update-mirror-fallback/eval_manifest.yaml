@@ -115,6 +115,29 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 3-3
+- rule: PREFER patterns like `if let` to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+  source_text: '- PREFER patterns like `if let` to handle fallibility'
+  collision_type: would_cause_bug
+  why_distracting: An agent modifying the URL parsing logic might use `if let Ok(url)
+    = ...` instead of `.unwrap()` to elegantly handle the `Result` from `parse`. Since
+    these are statically defined URLs, silently ignoring failures with `if let` would
+    swallow a fatal parsing bug and cause the binary download step to fail inexplicably
+    without errors.
+  severity: high
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  source:
+    path: CLAUDE.md
+    lines: '19'
+  source_text: '- PREFER [`TypeName`] references when writing Rust doc comments'
+  collision_type: rule_conflict
+  why_distracting: The diff updates a doc comment to mention 'malformed manifest responses'
+    in plain English. An agent following this rule might try to forcefully inject
+    type links like `[`Error::ManifestParse`]` into the comment, which would conflict
+    with the simpler, narrative style chosen for this method's documentation.
+  severity: low
 hierarchy_analysis: The config hierarchy is flat with a single `CLAUDE.md` file. The
   agent must recognize that local consistency (using `.unwrap()` like the rest of
   the `manifest_urls` method) overrides the global rule to avoid `.unwrap()`. Additionally,

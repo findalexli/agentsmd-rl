@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction lists all the fields that should be in the serialized output (including partition_key and partition_date), the exact file path, the class name DagRunInfo, and the behavior expectations. All assert'd keys and values in the tests (partition_key, partition_date, dag_id, etc.) are named in instruction.md."
+      "reason": "instruction.md names the file path, the DagRunInfo class, the includes list mechanism, and the field names partition_key and partition_date with expected serialization behavior."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (partition fields missing from output) and the expected behavior, but does not specify the exact code change (e.g., 'add these strings to the includes list'). A developer must reason about how DagRunInfo/InfoJsonEncodable works and what to modify."
+      "reason": "Instruction describes what's broken and expected output but doesn't specify the exact code change; developer must reason about modifying the includes list."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The test get_dagruninfo_includes() (used in TestDagRunInfoStaticAnalysis) parses the AST to find the 'includes' list on DagRunInfo and asserts partition_key/partition_date are literal string elements in that specific list. An alternative correct fix\u2014e.g., using 'renames', 'excludes' manipulation, overriding __iter__, or a custom property\u2014would pass the behavioral serialization tests but FAIL the static analysis test. The tests are overly specific to the gold solution's implementation approach."
+      "outcome": "pass",
+      "reason": "Tests only check serialized output keys/values, not specific implementation; alternative correct fixes (e.g., overriding _fields, custom serialization) would also pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The tests use serialize_dagrun_with_ast() which runs a subprocess that loads and executes the DagRunInfo class, creates mock objects, and calls dict(DagRunInfo(mock)) to verify actual serialization behavior. This is genuine behavioral testing, not just text matching."
+      "reason": "Tests execute the DagRunInfo class via subprocess and inspect the serialized dict output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/default implementation would not include partition_key and partition_date in the serialized output. The existing DagRunInfo class without modification excludes these fields, so the tests correctly fail before the fix and pass after."
+      "reason": "Tests assert specific values like 'daily_partition' and ISO datetime strings that require actual serialization working correctly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires partition_key and partition_date to appear in serialized output with correct values (string, ISO datetime, None). All these behaviors are tested across multiple test cases including edge cases."
+      "reason": "Tests cover partition_key, partition_date, None cases, and various values as described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into two classes (TestDagRunInfoSerialization and TestDagRunInfoStaticAnalysis) with descriptive method names and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped under TestDagRunInfoSerialization class with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema of the JSON-compatible dictionary output, listing all expected fields including the new partition_key and partition_date fields with their expected types."
+      "reason": "Instruction lists all expected fields in serialized output explicitly."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or field names across instruction.md and test files."
+      "reason": "Paths and names appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (providers/openlineage/src/airflow/providers/openlineage/utils/utils.py), the exact class (DagRunInfo), and the exact mechanism ('uses a class-level includes list to determine which fields are serialized'). This tells the agent precisely where and what to change, reducing the task to trivially adding two strings to a list."
+      "outcome": "pass",
+      "reason": "Instruction names the file and class (appropriate domain localization) but does not name the exact line or show the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config edit."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

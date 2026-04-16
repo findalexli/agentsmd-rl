@@ -1,0 +1,82 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17204
+  base_commit: 85bc60cdb48682563d7dbdc1f175bffc91fb1231
+  merge_commit: 1dc4a61843346508c0464bab596b867e7e389966
+  title: "[py] Do not close externally provided log_output streams"
+
+checks:
+  - id: test_external_stringio_not_closed_after_stop
+    type: fail_to_pass
+    origin: pr_tests
+    description: External StringIO stream should not be closed by Service.stop()
+
+  - id: test_external_bytesio_not_closed_after_stop
+    type: fail_to_pass
+    origin: pr_tests
+    description: External BytesIO stream should not be closed by Service.stop()
+
+  - id: test_sequential_services_with_shared_stream
+    type: fail_to_pass
+    origin: pr_tests
+    description: Multiple sequential services should be able to share the same stream
+
+  - id: test_owns_log_output_false_for_external_stream
+    type: fail_to_pass
+    origin: pr_tests
+    description: Service should NOT own externally-provided streams
+
+  - id: test_owns_log_output_true_for_file_path
+    type: fail_to_pass
+    origin: pr_tests
+    description: Service should own streams it creates from file paths
+
+  - id: test_file_path_stream_properly_closed
+    type: pass_to_pass
+    origin: pr_tests
+    description: When log_output is a file path, the opened file should be closed by stop()
+
+  - id: test_devnull_log_output_no_error
+    type: pass_to_pass
+    origin: pr_tests
+    description: Using subprocess.DEVNULL for log_output should not cause errors
+
+  - id: test_none_log_output_defaults_to_devnull
+    type: pass_to_pass
+    origin: pr_tests
+    description: None log_output should default to subprocess.DEVNULL
+
+  - id: test_service_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify the Service class can be imported correctly
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes on service.py
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff format check passes on service.py
+
+  - id: test_repo_mypy_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: Mypy type check passes on service.py
+
+  - id: test_repo_unit_firefox_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: Firefox service unit tests pass
+
+  - id: test_repo_unit_common_options
+    type: pass_to_pass
+    origin: repo_tests
+    description: Common options unit tests pass
+
+rubric:
+  - id: code_only_fix
+    rule: "This is a pure code fix - no config/documentation file changes are required. The fix only modifies service.py to add _owns_log_output tracking."
+    applies_when: "Fixing the log_output stream closure bug - no CLAUDE.md/AGENTS.md/README.md edits needed"

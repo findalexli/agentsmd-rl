@@ -63,4 +63,49 @@ checks:
   origin: repo_tests
   description: pyproject.toml is valid TOML and parseable
 rubric: []
-distractors: []
+distractors:
+- rule: For sample removal, prefer sample.remove_sample=True over deleting objects.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '70'
+  source_text: '- For sample removal, prefer `sample.remove_sample=True` over deleting
+    objects.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the 'del' keyword being used in the gold diff
+    to free GPU tensors (long_lived_tensors, hf_named_tensors) and incorrectly apply
+    this rule to avoid deleting objects. This rule strictly applies to domain 'Sample'
+    objects during filtering, not Python memory management for tensors.
+  severity: high
+- rule: Avoid dropping samples by deletion
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '92'
+  source_text: '- Dropping samples by deletion instead of mask flagging'
+  collision_type: scope_ambiguity
+  why_distracting: Listed as a common mistake, this might further convince an agent
+    that the 'del long_lived_tensors, hf_named_tensors' modification in the gold diff
+    is bad practice, confusing sample dropping logic with explicit garbage collection.
+  severity: medium
+- rule: Avoid blocking-heavy logic in high-frequency paths
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: '99'
+  source_text: '- Using blocking-heavy logic in high-frequency rollout paths without
+    batching/concurrency control'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff adds 'torch.cuda.ipc_collect()', which forces synchronization/cleanup.
+    An agent might think this violates the rule against blocking-heavy logic. However,
+    the update_weight_from_tensor.py path is executed during discrete model weight
+    synchronization steps, not within the high-frequency asynchronous rollout generation
+    loop.
+  severity: medium
+- rule: Dropping samples by deletion instead of mask flagging
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '92'
+  source_text: '- Dropping samples by deletion instead of mask flagging'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to the rollout sample processing pipeline, but
+    an agent focused on memory cleanup might misapply this 'Common Mistake' to avoid
+    using the `del` keyword for tensor memory management.
+  severity: low

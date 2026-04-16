@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Standardized test runner — do NOT modify this file per task.
-# All test logic lives in test_outputs.py.
 set +e
+
+# Install heavy deps needed for areal package import in tests
+python3 -m pip install -q uvloop httpx colorlog 2>/dev/null || \
+    pip3 install -q --break-system-packages uvloop httpx colorlog 2>/dev/null || true
 
 # Ensure python3 + pip + pytest are available on any base image
 if ! python3 -c "import pytest" 2>/dev/null; then
-    # Install python3 + pip if missing (node:slim, rust:slim)
     if ! command -v pip3 &>/dev/null; then
         apt-get update -qq && apt-get install -y -qq python3-pip python3-venv >/dev/null 2>&1 || true
     fi

@@ -3,59 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', and require at least 2 occurrences of 'match._nonReactive.loadPromise = undefined'. The instruction mentions 'match._nonReactive.loadPromise' and 'this.commitLocationPromise' but never names the local variables 'prevLoadPromise' or 'previousCommitPromise', nor specifies 'let' vs 'const' change, nor specifies the exact clearing pattern '"
+      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', 'match._nonReactive.loadPromise = undefined' (with count >= 2), and 'let previousCommitPromise = this.commitLocationPromise'. The instruction mentions releasing references generically but never names 'prevLoadPromise' or 'previousCommitPromise' as variables, nor specifies the exact clearing pattern (set to undefined). An agent cannot di"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (promise references retained after resolution) without specifying exact code changes like 'change const to let' or 'add prevLoadPromise = undefined'. It describes what's broken, not the fix."
+      "reason": "The instruction describes what's broken (promise references retained) and which functions/files to look at, but does not specify the exact fix (e.g., changing const to let, setting variables to undefined). It describes symptoms, not the patch."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined'. An alternative correct fix could use different variable names (e.g., 'oldLoadPromise') or clear the reference differently (e.g., setting match._nonReactive.loadPromise directly in a different pattern) and would fail these exact string checks."
+      "reason": "Tests assert gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined'. An alternative correct fix that uses different variable names (e.g., 'let oldLoadPromise') or a different clearing strategy (e.g., deleting the property, using a WeakRef, or restructuring the closure) would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are purely text-matching: they read file contents and check for string patterns like 'let prevLoadPromise' and 'prevLoadPromise = undefined' without executing the code or testing actual memory behavior. The p2p tests do execute builds/tests, but the core f2p tests are purely textual."
+      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are purely text-matching assertions like 'assert \"let prevLoadPromise = match._nonReactive.loadPromise\" in content'. They never import, call, or execute the code to verify the memory leak is actually fixed. The p2p tests do run builds/tests but the f2p tests are all text-based."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined', at least 2 occurrences of loadPromise = undefined) that don't exist in the original codebase. A stub or no-op implementation would fail these checks since the original code uses 'const' not 'let' and doesn't have the clearing assignments."
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string patterns in source files. A developer could satisfy them by adding dead code comments containing the required strings (e.g., '// let prevLoadPromise = match._nonReactive.loadPromise') without actually fixing the bug. No behavioral verification exists for the memory leak fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in the instruction (clearing loadPromise in executeBeforeLoad, clearing loadPromise in loadRouteMatch, clearing commitLocationPromise in commitLocation) are tested, plus build/type/unit/lint checks."
+      "reason": "The instruction describes three changes (clearing prevLoadPromise in executeBeforeLoad, clearing loadPromise in loadRouteMatch, clearing previousCommitPromise in commitLocation), and all three are tested in the f2p tests, plus build/type/unit/lint checks are included as p2p tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_load_matches_prev_promise_cleared, test_router_commit_promise_cleared, etc.), grouped by concern, and have docstrings explaining what each verifies."
+      "reason": "Tests are well-organized with descriptive function names (test_load_matches_prev_promise_cleared, test_router_commit_promise_cleared, etc.), docstrings explaining each test's purpose, and a module-level docstring summarizing the PR."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes, not structured data output."
+      "reason": "This task involves source code modifications, not structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'execute_before_load' (Python snake_case) instead of 'executeBeforeLoad' (the actual function name). Minor but technically a typo in the assertion message."
+      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'in execute_before_load' (Python snake_case) instead of 'in executeBeforeLoad' (the actual function name). Minor but technically a naming inconsistency."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact functions (executeBeforeLoad, loadRouteMatch, commitLocation), the exact files, and the exact field paths (match._nonReactive.loadPromise, this.commitLocationPromise) where changes should be made. This significantly narrows the search space beyond what's needed for task description."
+      "reason": "The instruction explicitly names exact functions (executeBeforeLoad, loadRouteMatch, commitLocation), exact files, and specific properties (match._nonReactive.loadPromise, this.commitLocationPromise). While the files are somewhat domain-obvious, naming the exact internal property paths and function names significantly narrows the search space beyond what's needed for a task description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "no_typos",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

@@ -76,7 +76,8 @@ checks:
 - id: not_stub_install_skills
   type: pass_to_pass
   origin: static
-  description: The installSkills function must have real implementation, not just a stub
+  description: The installSkills function must have real implementation, not just
+    a stub
 - id: skill_file_updated_when_adding_commands
   type: pass_to_pass
   origin: agent_config
@@ -94,18 +95,82 @@ checks:
     lines: '39'
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
 rubric:
-- rule: The skill file is located at packages/playwright/src/skill/SKILL.md. Update it whenever you add new commands or tools.
+- rule: The skill file is located at packages/playwright/src/skill/SKILL.md. Update
+    it whenever you add new commands or tools.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: 41-43
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
-- rule: At any point in time you can run npm run playwright-cli -- --help to see the latest available commands and use them to update the skill file.
+- rule: At any point in time you can run npm run playwright-cli -- --help to see the
+    latest available commands and use them to update the skill file.
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '43'
     commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+- rule: Add ToolCapability in config.d.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '11'
+  source_text: '- Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  evidence: The diff adds the 'network' string literal to the ToolCapability type
+    union in packages/playwright/src/mcp/config.d.ts when changing the capabilities
+    of the route tools.
+  category: architecture
+  verification: llm_judge
+- rule: Register command in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '28'
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The diff defines the new `installSkills` command using `declareCommand`
+    and registers it by pushing it to the `commandsArray` in packages/playwright/src/mcp/terminal/commands.ts.
+  category: architecture
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/playwright-mcp-dev/SKILL.md
   tier: 1
-  gold_added: "# SKILL File\n\nThe skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.\n\nAt any point in time you can run \"npm run playwright-cli -- --help\" to see the latest available commands and use them to update the skill file."
+  gold_added: '# SKILL File
+
+
+    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains
+    documentation for all available CLI commands and MCP tools. Update it whenever
+    you add new commands or tools.
+
+
+    At any point in time you can run "npm run playwright-cli -- --help" to see the
+    latest available commands and use them to update the skill file.'
   gold_removed: ''
+distractors:
+- rule: Implement corresponding MCP tool for new CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '24'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: The new install-skills command is a local workspace configuration
+    tool, not a browser feature. Creating a browser MCP tool for it would inappropriately
+    expose local file system operations to the browser context.
+  severity: high
+- rule: Update the playwright-cli SKILL.md file
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  collision_type: meta_confusion
+  why_distracting: The install-skills command is an internal meta-command for installing
+    skills locally. Documenting it in the main browser automation SKILL.md would pollute
+    the context of the browser agent with irrelevant setup commands.
+  severity: medium
+- rule: Add new CLI category for tool if needed
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 25-27
+  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n\
+    \  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`"
+  collision_type: scope_ambiguity
+  why_distracting: The new install-skills command fits logically into the existing
+    'install' category. Attempting to follow this rule by creating a new category
+    would result in unnecessary category proliferation and code changes.
+  severity: low

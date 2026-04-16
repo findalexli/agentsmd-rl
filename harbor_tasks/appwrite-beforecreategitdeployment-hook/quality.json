@@ -1,58 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert the exact method name 'beforeCreateGitDeployment', exact parameter names ($project, $repository, $dbForPlatform, $authorization), exact parameter types (Document, Database, Authorization), exact return type (void), and exact call syntax '$this->beforeCreateGitDeployment($project, $repository, $dbForPlatform, $authorization)'. The instruction.md never specifies the method name 'beforeCreateGitDeployment', nor the exact parameter names like '$dbForPlatform' or '$authorization'. It onl"
+      "outcome": "pass",
+      "reason": "Instruction names the file, method name, exact signature, placement, and call syntax, which covers all test assertions."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what to do (add a hook method between validation and database operations) but does not specify the exact method name, exact line numbers, or exact code to write. A developer must reason about naming, placement, and implementation."
+      "outcome": "fail",
+      "reason": "Instruction provides the exact method signature, exact call syntax `$this->beforeCreateGitDeployment($project, $repository, $dbForPlatform, $authorization)`, empty body requirement, and placement \u2014 essentially the full solution."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert the exact method name 'beforeCreateGitDeployment' via regex and string matching. A correct alternative using a different name like 'onBeforeDeployment' or 'validateBeforeDeployment' would fail. Tests also assert exact parameter order and names (e.g., '$dbForPlatform' not '$database'), and the exact call string. These are gold-specific implementation details."
+      "outcome": "pass",
+      "reason": "Tests check for the documented signature/call pattern which matches the instruction's explicit requirements; alternative correct fixes following the spec would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core tests (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, test_method_has_noop_implementation, test_method_is_protected) all use regex/string matching on file contents with open(TARGET_FILE).read(). Only test_php_syntax_valid actually executes the code via 'php -l'. No test imports, instantiates, or calls the PHP class to verify behavior."
+      "reason": "Tests primarily do regex/string matching on file content (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, test_method_has_noop_implementation, test_method_is_protected); only PHP lint and composer checks execute code, none invoke the hook."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, test_method_has_noop_implementation) check for the presence of new code that doesn't exist in the base commit. A stub/no-change implementation would fail these tests since the method doesn't exist at baseline."
+      "reason": "Tests verify specific signature, placement between PROJECT_NOT_FOUND and DSN, and empty body \u2014 a stub can't trivially pass without adding the method."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: the hook accepts the right parameters (test_method_exists_with_correct_signature), is protected (test_method_is_protected), has empty body (test_method_has_noop_implementation), and is placed between validation and database operations (test_method_is_called_in_createGitDeployments)."
+      "reason": "All stated requirements (signature, visibility, placement, no-op body, call syntax) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_method_exists_with_correct_signature, test_method_is_called_in_createGitDeployments, etc.) and have docstrings explaining their purpose. Pass-to-pass tests are clearly separated from feature tests."
+      "reason": "Each test has a descriptive name and docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces PHP code changes, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, and variable names in instruction.md are consistent and correctly spelled, matching the actual repository structure."
+      "reason": "Filenames, method names, and parameters are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the target file (src/Appwrite/Platform/Modules/VCS/Http/GitHub/Deployment.php) which is reasonable given the task domain, and mentions createGitDeployments method name, but doesn't specify exact line numbers or the exact hook method name."
+      "outcome": "fail",
+      "reason": "Instruction specifies exact placement ('after the PROJECT_NOT_FOUND exception check, before the DSN creation line') and exact call syntax, removing localization/design effort."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a PHP source file, not a configuration edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
+    "no_solution_leakage",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 6,
   "fail_count": 3
 }

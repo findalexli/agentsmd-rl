@@ -1,0 +1,132 @@
+source:
+  repo: ClickHouse/ClickHouse
+  pr_number: 102073
+  base_commit: cafce4334d43cfade5382a9bde6910e787d69437
+  merge_commit: 0ac8d1fb82e45ca6c903f5549d564e867fb422dd
+  target_file: src/DataTypes/Serializations/SerializationObject.cpp
+
+# Checks map 1:1 to test_outputs.py functions
+# id format: test_<function_name>
+checks:
+  # Fail-to-Pass Tests: These verify the bugfix is present
+  - id: test_scope_exit_present
+    type: fail_to_pass
+    origin: agent_config
+    description: "SCOPE_EXIT macro must be present to drain tasks on exception paths"
+    source:
+      file: .github/copilot-instructions.md
+      section: "Memory & lifetime"
+      excerpt: "Missing delete / free / unmap / close on early returns or exceptions"
+
+  - id: test_task_cleanup_order
+    type: fail_to_pass
+    origin: agent_config
+    description: "SCOPE_EXIT must be declared BEFORE the task scheduling loop"
+    source:
+      file: .github/copilot-instructions.md
+      section: "Resource management"
+      excerpt: "Opened file descriptors or sockets not closed on all paths (including error paths)"
+
+  - id: test_comment_explains_fix
+    type: fail_to_pass
+    origin: agent_config
+    description: "Explanatory comment must describe why task draining is needed"
+    source:
+      file: .github/copilot-instructions.md
+      section: "Error handling & observability"
+      excerpt: "Missing logs for serious failure modes (data loss risk, query aborts, background task failures)"
+
+  - id: test_uses_tasks_vector_reference
+    type: fail_to_pass
+    origin: agent_config
+    description: "SCOPE_EXIT should iterate over tasks vector to drain them"
+    source:
+      file: .github/copilot-instructions.md
+      section: "Concurrency & threading"
+      excerpt: "Using non-thread-safe data structures from multiple threads"
+
+  # Pass-to-Pass Tests: These verify code quality and conventions
+
+  # Repo CI checks (actual CI commands)
+  - id: test_repo_no_tabs_in_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No tab characters in target file (ClickHouse style)"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in target file (ClickHouse style)"
+
+  - id: test_repo_git_submodules_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git submodules properly configured (ClickHouse CI check)"
+
+  # Agent config checks (static file analysis)
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: agent_config
+    description: "Modified file has balanced braces in SCOPE_EXIT block"
+
+  - id: test_no_raw_pointers_for_ownership
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code uses RAII types (unique_ptr), not raw pointers for ownership"
+    source:
+      file: .github/copilot-instructions.md
+      section: "Memory & lifetime"
+      excerpt: "Manual new/delete instead of RAII where the surrounding code uses RAII types"
+
+  - id: test_allman_brace_style_in_fix
+    type: pass_to_pass
+    origin: agent_config
+    description: "SCOPE_EXIT block uses Allman-style braces (opening brace on new line)"
+    source:
+      file: .claude/CLAUDE.md
+      excerpt: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+
+  - id: test_no_sleep_for_race_conditions
+    type: pass_to_pass
+    origin: agent_config
+    description: "No sleep calls used for synchronization"
+    source:
+      file: .claude/CLAUDE.md
+      excerpt: "Never use sleep in C++ code to fix race conditions - this is stupid and not accepted!"
+
+# Rubric items from agent config files - soft/subjective rules
+rubric:
+  - id: exception_safety_with_scope_exit
+    description: "Use SCOPE_EXIT for exception-safe cleanup of resources"
+    weight: high
+    source:
+      file: .github/copilot-instructions.md
+      section: "Memory & lifetime"
+
+  - id: drain_thread_pool_tasks
+    description: "Thread pool tasks must be properly drained/waited for on all exit paths"
+    weight: high
+    source:
+      file: .github/copilot-instructions.md
+      section: "Concurrency & threading"
+
+  - id: avoid_dangling_references
+    description: "Ensure no dangling references to stack locals when using thread pools"
+    weight: high
+    source:
+      file: .github/copilot-instructions.md
+      section: "Memory & lifetime"
+      excerpt: "Use of std::string_view, spans, or references to buffers whose lifetime is not guaranteed"
+
+  - id: explain_safety_mechanisms
+    description: "Safety mechanisms like SCOPE_EXIT should have explanatory comments"
+    weight: medium
+    source:
+      file: .github/copilot-instructions.md
+      section: "Maintainability & simplicity"
+
+  - id: allman_brace_consistency
+    description: "Follow Allman brace style consistently"
+    weight: low
+    source:
+      file: .claude/CLAUDE.md

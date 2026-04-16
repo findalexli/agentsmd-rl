@@ -29,6 +29,10 @@ model.post_init()
 # BUG: LM head weights are now random!
 ```
 
+## Root Cause
+
+The `post_init()` method iterates over a model's modules and checks each module's `_is_hf_initialized` attribute. If this flag is `False` (or missing), `post_init()` treats the module as uninitialized and reinitializes its weights. When `_get_resized_lm_head()` creates a new `nn.Linear` for the resized LM head, the newly created module does not carry the `_is_hf_initialized` flag, so a subsequent `post_init()` call reinitializes its weights — overwriting the values that were carefully copied during the resize.
+
 ## Expected Behavior
 
 After `resize_token_embeddings()` is called, subsequent calls to `post_init()` must preserve the LM head weights exactly as they were after the resize operation. The weights should not be reinitialized to random values.

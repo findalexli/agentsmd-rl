@@ -1,59 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: file paths (cli/src/utils/task-history.ts, cli/src/utils/task-history.test.ts, cli/src/index.ts), function names (findMostRecentTaskForWorkspace, continueTask), flag name (--continue), test descriptions ('newest matching task', 'returns null when no match'), matchers (toBeNull), timestamp sorting (b.ts - a.ts), and the async function signature. All assert'd literals in tests are discoverable from the instruction."
+      "reason": "Instruction names the file paths (cli/src/utils/task-history.ts, cli/src/utils/task-history.test.ts, cli/src/index.ts), function names (findMostRecentTaskForWorkspace, continueTask), flag (--continue), and test string patterns ('newest matching task', 'returns null when there is no match' via 'toBeNull')."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to implement (a --continue flag, a utility function, tests) but does not give line-by-line code changes. A developer still needs to reason about the implementation details, state manager integration, and path normalization logic."
+      "reason": "Instruction describes what to implement (behavior, function names, sort order) but does not provide the actual implementation code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_continue_task_function_exists grep for 'async\\s+function\\s+continueTask' in cli/src/index.ts, requiring the exact function name and async keyword pattern. A valid alternative using a const arrow function (e.g., 'const continueTask = async (...)') or a different function name would fail. Similarly, test_continue_flag_defined_in_cli greps for exact string patterns. However, since the instruction explicitly requires these names, there is some justification. More critically, test_fin"
+      "outcome": "pass",
+      "reason": "Tests check structural presence (grep for flag/function) and behavior via vitest; they don't pin specific internal variables or line numbers beyond what the instruction already requires."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_continue_flag_defined_in_cli and test_continue_task_function_exists use grep on source code to check for string patterns, not execution. They are pure text-matching tests that verify presence of strings in source files, not behavior. Other tests (vitest runs) do execute code, but these two are purely textual."
+      "outcome": "pass",
+      "reason": "Tests execute vitest and tsc, plus grep for structural presence; they run real code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The vitest tests require actual implementation: findMostRecentTaskForWorkspace must correctly sort by timestamp and return null for no matches. A stub returning null would fail the 'newest matching task' test. A stub returning a fixed value would fail the null test. The grep-based tests require specific code structures to exist."
+      "outcome": "fail",
+      "reason": "Tests like test_find_most_recent_task_for_workspace_exists only check that vitest output contains 'findMostRecentTaskForWorkspace' and returncode==0; a stub function returning null with trivially-named tests could pass, and the grep-based tests for --continue and continueTask only verify textual presence, not behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires mutual exclusivity with --taskId, not accepting a prompt argument, not working with piped stdin, cross-platform path normalization, and documentation updates. None of these are tested. Only the utility function tests, source grep checks, lint, and compilation are verified."
+      "reason": "Instruction requires mutual exclusivity with --taskId, no prompt argument, no piped stdin, exit code 1 on no task, documentation updates (man page/reference docs) \u2014 none of these are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, grouped logically (function existence, export, behavior, CLI flag, compilation, lint/CI pass-to-pass tests)."
+      "reason": "Tests have descriptive names and docstrings indicating fail_to_pass vs pass_to_pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces CLI functionality and utility functions, not structured data output like JSON/CSV/API/DB."
+      "reason": "No structured data output format."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths (cli/src/utils/task-history.ts, cli/src/index.ts), function names (findMostRecentTaskForWorkspace, continueTask), and commands are correctly spelled and consistent between instruction and tests."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies file paths and function names that are part of the feature specification, not localization hints. Naming cli/src/index.ts and cli/src/utils/task-history.ts is appropriate since these are the files being created/modified as part of the feature design."
+      "reason": "Instruction names the files that must be created/modified, which is appropriate since creating them is part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving new file creation and code modification, not config editing."
+      "reason": "Code task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 7,
+  "fail_count": 2
 }

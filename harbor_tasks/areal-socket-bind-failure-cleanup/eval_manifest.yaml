@@ -95,6 +95,38 @@ rubric:
     dependencies, wildcard imports, or deviating from the existing module structure.
   category: style
   verification: llm_judge
+- rule: Avoid improper context manager usage (e.g., manually re-raising exceptions
+    in __exit__)
+  source:
+    path: .claude/data/review-pr-templates.md
+    lines: '167'
+  source_text: '- Improper context manager usage'
+  evidence: In `areal/trainer/rl_trainer.py` and `sft_trainer.py`, the `__exit__`
+    method is fixed to `return False` instead of doing `raise exc_value`, which properly
+    aligns with Python's native exception propagation for context managers.
+  category: error_handling
+  verification: llm_judge
+- rule: Prevent resource leaks (unclosed network connections)
+  source:
+    path: .claude/agents/simple-code-reviewer.md
+    lines: '46'
+  source_text: '- **Resource leaks**: Unclosed files, connections, GPU memory'
+  evidence: In `areal/utils/network.py`, `sock.close()` is relocated to a `finally:`
+    block, preventing a socket leak when `sock.bind()` raises an `OSError`.
+  category: resource_management
+  verification: llm_judge
+- rule: Proper exception handling (no return in finally)
+  source:
+    path: .claude/data/review-pr-templates.md
+    lines: '150'
+  source_text: '- Improper exception handling (swallowing exceptions, wrong exception
+    type, return in finally)'
+  evidence: When adding the `finally:` block in `areal/utils/network.py`, the gold
+    diff carefully leaves the `return False` in the `except OSError:` block and only
+    uses `finally:` for `sock.close()`, directly adhering to the warning against returning
+    in finally blocks.
+  category: error_handling
+  verification: llm_judge
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
@@ -116,6 +148,30 @@ distractors:
   source:
     path: AGENTS.md
     lines: 68-70
+- rule: 'Handle exceptions: Return 0.0 on error, don''t raise'
+  source:
+    path: .claude/skills/add-reward/SKILL.md
+    lines: '175'
+  source_text: '1. **Handle exceptions**: Return 0.0 on error, don''t raise'
+  collision_type: scope_ambiguity
+  why_distracting: This rule is specific to reward functions. An agent might mistakenly
+    apply this to the context manager's `__exit__` in `rl_trainer.py` and `sft_trainer.py`
+    by returning `0.0` instead of `False`, violating Python conventions for context
+    managers.
+  severity: high
+- rule: Use find_free_ports() for port allocation
+  source:
+    path: .claude/agents/launcher-scheduler-expert.md
+    lines: '109'
+  source_text: '- Use `areal.utils.network.find_free_ports()` for port allocation
+    -> not static port'
+  collision_type: architecture_boundary
+  why_distracting: 'This rule instructs consumers (e.g., launchers/schedulers) on
+    how to dynamically get ports. The gold diff edits `areal/utils/network.py` itself,
+    which is the infrastructure providing these utilities. An agent might incorrectly
+    try to alter `is_port_free(port: int)` to use `find_free_ports()`, breaking the
+    boundary.'
+  severity: medium
 hierarchy_analysis: The repository uses two root-level configuration files (`AGENTS.md`
   and `CLAUDE.md`) that contain overlapping general guidelines. There is no deep hierarchy
   or overriding behavior required.

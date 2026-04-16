@@ -138,6 +138,25 @@ rubric:
     various modules (e.g., Databases, Teams) to composer.json passes schema validation
     with composer validate --strict
   category: naming
+- rule: Write code compatible with PHP 8.3+, utilizing modern PHP features where appropriate.
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '- PHP 8.3+, Swoole 6.x (async runtime, replaces PHP-FPM)'
+  evidence: The diff utilizes the modern PHP `match` expression to assign the 'type'
+    attribute based on the result of `$apiKey->getType()`.
+  category: syntax
+  verification: llm_judge
+- rule: Use the Utopia PHP framework for dependency injection (DI) in HTTP routing
+    and actions.
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  source_text: '- Utopia PHP framework (HTTP routing, CLI, DI, queue)'
+  evidence: The diff uses the Utopia framework's DI system by adding `->inject('mode')`
+    to provide the mode dependency to the action closure.
+  category: architecture
+  verification: llm_judge
 hierarchy_analysis: The base `AGENTS.md` provides the general module structure, while
   `src/Appwrite/Platform/AGENTS.md` provides the specific `XList.php` naming convention.
   The agent must combine the instruction 'Update log response builders' with the `XList.php`
@@ -169,4 +188,25 @@ distractors:
     be put under one roof (a module). An agent might try to refactor all log-related
     endpoints into a single new `Logs` module, rather than updating the existing log
     endpoints scattered across different modules (Databases, Teams, etc.).
+  severity: medium
+- rule: HTTP endpoints belong in a module's Http directory
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-18
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers
+
+    - `Tasks` directory - Contains behavior for module-specific CLI tasks
+
+    - `Http` directory - Contains HTTP endpoints for the module'
+  collision_type: architecture_boundary
+  why_distracting: The AI might think it needs to move the modified controllers (`app/controllers/api/messaging.php`,
+    `app/controllers/api/users.php`) into the new `src/Appwrite/Platform/Modules/*/Http`
+    structure. However, the gold diff correctly modifies the existing legacy controllers
+    in place without migrating them.
   severity: medium

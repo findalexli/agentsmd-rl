@@ -1,0 +1,80 @@
+source_pr:
+  owner: mantinedev
+  repo: mantine
+  pr_number: 8591
+  merge_commit: 62a99c0b7b36ff0530335d37eacf8536a8df410e
+  base_commit: 50526dd9df22b8d51f9890d92604a7b53ee85dc1
+
+task:
+  name: mantine-scrollarea-overscroll-behavior
+  title: Fix ScrollArea overscroll-behavior for single-axis scrollbars
+  description: |
+    When ScrollArea has scrollbars="x" or scrollbars="y", the overscroll-behavior
+    CSS property should only apply to that axis. Without this fix, a horizontal
+    ScrollArea consumes vertical scroll events, preventing parent containers from
+    scrolling.
+
+environment:
+  type: docker
+  image: task-env
+  workdir: /workspace/mantine
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_varsResolver_x_scrollbar_sets_y_to_auto
+    type: fail_to_pass
+    origin: task_spec
+    description: When scrollbars='x', overscroll-behavior is set to '${overscrollBehavior} auto'
+
+  - id: test_varsResolver_y_scrollbar_sets_x_to_auto
+    type: fail_to_pass
+    origin: task_spec
+    description: When scrollbars='y', overscroll-behavior is set to 'auto ${overscrollBehavior}'
+
+  - id: test_varsResolver_has_scrollbars_param
+    type: fail_to_pass
+    origin: task_spec
+    description: varsResolver destructures scrollbars from props
+
+  - id: test_overrideOverscrollBehavior_variable
+    type: fail_to_pass
+    origin: task_spec
+    description: Uses overrideOverscrollBehavior variable to compute the value
+
+  - id: test_varsResolver_is_function_not_arrow_in_body
+    type: fail_to_pass
+    origin: task_spec
+    description: varsResolver uses function body with curly braces instead of arrow expression
+
+  - id: test_scrollbar_check_conditional_logic
+    type: fail_to_pass
+    origin: task_spec
+    description: Has conditional logic to check scrollbars value for 'x' and 'y'
+
+  - id: test_overscrollBehavior_and_scrollbars_check
+    type: fail_to_pass
+    origin: task_spec
+    description: Checks that both overscrollBehavior and scrollbars are defined before applying fix
+
+  # Pass-to-pass tests (repo CI tests that should pass on base commit)
+  - id: test_repo_scrollarea_jest
+    type: pass_to_pass
+    origin: repo_tests
+    description: ScrollArea unit tests pass (jest)
+
+  - id: test_repo_scrollarea_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: ScrollArea source file is formatted correctly (prettier --check)
+
+  - id: test_repo_scrollarea_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ScrollArea source file passes eslint
+
+  - id: test_repo_scrollarea_stylelint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ScrollArea CSS passes stylelint
+
+rubric: []

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (InstanceCoercer.java in java/src/org/openqa/selenium/json/), the exact error message string ('Duplicate JSON field name detected while collecting field writers'), the exact parameter names '(existing, replacement) ->', the class name InstanceCoercer, the method context (getFieldWriters using Collectors.toMap), the build commands, and the test commands. All assert targets in tests are discoverable from the instruction."
+      "reason": "The instruction names the exact file (InstanceCoercer.java in java/src/org/openqa/selenium/json/), the exact error message string ('Duplicate JSON field name detected while collecting field writers'), the exact parameter names ('(existing, replacement) ->'), the class name (InstanceCoercer), the method pattern (Collectors.toMap), and the build/test commands. All assert'd specifics in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'the code that detects this condition must use a merge function with parameters named exactly (existing, replacement) ->' and 'needs a third merge-function argument to handle duplicate keys gracefully' and specifies the exact error message string. This tells the agent exactly what to change (add a third argument to Collectors.toMap with specific parameter names and a specific exception message), leaving virtually no reasoning required."
+      "reason": "The instruction explicitly states: 'it currently takes two arguments but needs a third merge-function argument', specifies the exact parameter names '(existing, replacement) ->', the exact exception type (JsonException), and the exact error message string. This tells the developer exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_getfieldwriters_has_merge_function asserts the exact string '(existing, replacement) ->' must appear in the source. An equally correct fix using parameter names like '(a, b) ->' or '(first, second) ->' would fail this test. test_merge_function_throws_json_exception uses a regex requiring the exact phrase 'Duplicate JSON field name detected' immediately after 'throw new JsonException'. These are implementation-specific details that reject valid alternative fixes."
+      "reason": "test_getfieldwriters_has_merge_function asserts the exact string '(existing, replacement) ->' must appear in the source. An equally correct fix using parameter names like '(first, second) ->' or '(old, new) ->' or '(a, b) ->' would fail this test. This is a gold-specific implementation detail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_fix_applied_in_source, test_merge_function_throws_json_exception, test_getfieldwriters_has_merge_function) are purely text-matching: they read the source file and assert on string/regex content. While test_fix_applied_in_source also runs a build, the core behavioral assertion is text-based. No test actually deserializes JSON with duplicate fields to verify the JsonException is thrown at runtime."
+      "reason": "The three fail_to_pass tests (test_fix_applied_in_source, test_merge_function_throws_json_exception, test_getfieldwriters_has_merge_function) are primarily text-matching assertions: they read the source file and check for exact strings/regex patterns. While test_fix_applied_in_source also runs a build, it doesn't test runtime behavior of duplicate field deserialization. No test actually deserializes JSON with duplicate fields to verify JsonException is thrown."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A 'stub' fix that simply inserts a comment containing the exact strings 'Duplicate JSON field name detected while collecting field writers', '(existing, replacement) ->', and 'throw new JsonException(\"Duplicate JSON field name detected' into the source file (without actually changing behavior) would pass all three f2p tests as long as the file still compiles. The tests check text presence, not runtime behavior."
+      "reason": "A developer could pass all three f2p tests by simply adding a comment containing the exact strings '(existing, replacement) ->' and 'throw new JsonException(\"Duplicate JSON field name detected while collecting field writers' anywhere in the file, without actually fixing the bug. The tests only check for string presence in source code, not runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says the library should 'throw a JsonException with a descriptive message' when duplicate field names are detected during deserialization, but no test actually performs JSON deserialization of a class with duplicate field names to verify the JsonException is thrown. The behavioral requirement is only checked via source text matching."
+      "reason": "The instruction says deserializing '{\"value\": \"test\"}' into Child.class should throw JsonException with the specified message. No test actually performs this deserialization to verify the runtime behavior. The tests only check source code text."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped logically (fix verification tests, build tests, regression tests), and each has a docstring explaining its purpose and whether it's fail_to_pass or pass_to_pass."
+      "reason": "Tests are well-named, have docstrings explaining what they verify, and are logically grouped into fail_to_pass and pass_to_pass categories with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a code bug in a JSON library, not producing structured data output with a schema."
+      "reason": "The task involves fixing error handling in a JSON library, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, class names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact class (InstanceCoercer), the exact directory, the exact method context (getFieldWriters using Collectors.toMap), states it 'currently takes two arguments but needs a third', and specifies exact parameter names '(existing, replacement) ->'. This goes well beyond describing what's broken and prescribes the exact location and form of the fix."
+      "reason": "The instruction names the exact class (InstanceCoercer), the exact method pattern (Collectors.toMap), states it 'currently takes two arguments but needs a third', and specifies exact parameter names '(existing, replacement) ->'. This goes well beyond identifying the buggy module \u2014 it specifies the exact code change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

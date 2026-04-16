@@ -1,9 +1,9 @@
-# MPS Codegen: Fused integer division-modulo produces wrong results
+# MPS Codegen: Fused integer division-modulo produces wrong results on Metal
 
 ## Bug Description
 
-The Metal (MPS) inductor codegen emits expressions like `(x / A) % B` for
-`ModularIndexing` nodes. On Apple's Metal compiler, when `A` is a power of two
+The Metal (MPS) inductor codegen in PyTorch emits expressions like `(x / A) % B`
+for `ModularIndexing` nodes. On Apple's Metal compiler, when `A` is a power of two
 (e.g., 65536) and `B` is **not** a power of two, the compiler's optimizer fuses
 the division and modulo and produces incorrect results. This manifests as
 corrupted tensor reads from non-contiguous memory layouts — for example,
@@ -14,45 +14,76 @@ The root cause is a Metal compiler optimization bug: the fused
 `(uint / power_of_2) % non_power_of_2` pattern silently computes wrong
 values for integral types.
 
-## Affected Files
+## Repository
 
-- `torch/_inductor/codegen/mps.py` — `MetalExprPrinter._print_ModularIndexing`
-  currently emits a bare `(x) % (mod)` expression for all cases.
-- `c10/metal/utils.h` — the Metal utility header has helper functions like
-  `floor_divide` and `fmod`, but lacks a workaround for this compiler bug.
+PyTorch repository at commit `483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc`.
 
-## Reproduction
+The MPS codegen is in `torch/_inductor/codegen/mps.py`. The Metal utility
+header is `c10/metal/utils.h`.
 
-Any inductor-compiled MPS kernel that uses `ModularIndexing` with
-`div = 65536` and a non-power-of-two `mod` will produce incorrect results.
-A concrete example: run SDPA with `n_head = 6` and `n_embd = 384` through
-`torch.compile` on MPS — the output will contain NaN values.
+## Observed Symptom
 
-## Required Solution Components
+When `_print_ModularIndexing` in the `MetalExprPrinter` class receives an
+expression with `div=65536` and a non-power-of-two `mod` value (e.g., 3, 5, 6),
+it currently emits bare arithmetic like `((idx) / (65536)) % (6)`. The Metal
+compiler applies a buggy optimization to this fused pattern, producing incorrect
+results at runtime.
 
-The fix has two parts:
+Cases where `div=1`, or where both `div` and `mod` are powers of two (e.g.,
+`div=256, mod=16` or `div=65536, mod=8`), are unaffected and produce correct
+results.
 
-### 1. Codegen change (`torch/_inductor/codegen/mps.py`)
+## Acceptance Criteria
 
-The `_print_ModularIndexing` method must detect when the fused
-division-modulo pattern is problematic (div is a power of two such as 65536
-AND mod is not a power of two) and emit a function call instead of bare `%`
-to prevent the Metal compiler from applying its buggy optimization.
+### 1. Buggy-pattern workaround
 
-For all other cases (e.g., div is 1, or mod is a power of two, or div is not
-a power of two), the existing behavior should be preserved.
+For `_print_ModularIndexing` cases where `div=65536` and `mod` is not a
+power of two (specifically tested with `mod` values 3, 5, and 6):
 
-### 2. Utility header change (`c10/metal/utils.h`)
+- The output must **not** be the bare pattern `((idx)/(65536))%(mod)` that
+  triggers the Metal compiler bug.
+- The output must include a **function call** (i.e., an identifier followed
+  by parenthesized arguments) rather than relying solely on the `%` operator.
+- The output must still reference both the base variable and the mod value.
 
-A new safe-modulo function must be added to the `c10::metal` namespace. This
-function must:
+### 2. Non-buggy patterns preserved
 
-- Perform the modulo/remainder operation correctly on integral types
-- Use an optimization barrier (e.g., `volatile`, `optnone`,
-  `__attribute__((noinline))`, inline `asm`, or similar) to prevent the Metal
-  compiler from fusing the division and modulo operations
-- Be usable from MPS device code
+The following cases must continue to produce valid output (containing the mod
+value in the output, and containing the division when `div > 1`):
 
-The function name is flexible (examples: `safe_mod`, `mod_safe`, `safe_modulo`,
-`safe_remainder`), but it must appear in `c10/metal/utils.h` and contain an
-optimization barrier near its definition.
+- `div=1, mod=8`
+- `div=65536, mod=8` (power-of-two mod — unaffected by the bug)
+- `div=256, mod=16`
+- `div=1, mod=32`
+
+The `_print_FloorDiv` method must also continue working correctly (e.g.,
+producing output containing `floor` for `FloorDiv(100, 4)`).
+
+### 3. Safe modulo utility function in the Metal header
+
+`c10/metal/utils.h` must contain a new function that prevents the Metal
+compiler from applying the buggy fusion. This function must satisfy:
+
+- Its name must be one of: `safe_mod`, `mod_safe`, `safe_modulo`, or
+  `safe_remainder`.
+- It must perform a modulo/remainder operation (its definition must contain
+  `%` or `remainder`).
+- It must include an optimization barrier near its definition (within 300
+  characters). Acceptable barrier mechanisms include: `volatile`, `optnone`,
+  `__attribute__`, `asm(`, or `noinline`.
+
+### 4. Existing code integrity
+
+- `floor_divide` and `fmod` functions must remain in `c10/metal/utils.h`.
+- `c10/metal/utils.h` must remain a valid C++ header with a header guard
+  (`#pragma once` or `#ifndef`/`#define`) and namespace declarations for
+  `c10` and `metal`.
+- `torch/_inductor/codegen/mps.py` must remain syntactically valid Python
+  with its existing import statements intact.
+- The `MetalExprPrinter` class must retain its existing methods:
+  `_print_ModularIndexing`, `_print_FloorDiv`, `_print_Min`, `_print_Max`.
+- `_print_ModularIndexing` must accept `self` and `expr` parameters and
+  unpack `expr.args` as `x, div, mod`.
+- `_print_FloorDiv` must accept `self` and `expr` parameters.
+- `mps.py` must be at least 100 lines; `utils.h` must be at least 50 lines
+  (no gutting the files).

@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the exact function name 'ensureModulesLoaded', the exact call signature 'ensureModulesLoaded(env, mod)', the constant 'PROPAGATED_ASSET_QUERY_PARAM', and the use of 'env.fetchModule'. While instruction.md hints at fetchModule and transformResult, it never names the function 'ensureModulesLoaded' or 'PROPAGATED_ASSET_QUERY_PARAM'."
+      "outcome": "pass",
+      "reason": "The instruction.md explicitly names all tested specifics: the file path `packages/astro/src/vite-plugin-css/index.ts`, the function name `ensureModulesLoaded`, its signature with `DevEnvironment`, `transformResult`, `env.fetchModule`, `PROPAGATED_ASSET_QUERY_PARAM`, the recursive call pattern `ensureModulesLoaded(env, imp, seen)`, the call site `ensureModulesLoaded(env, mod)` before `collectCSSWithOrder(componentPageId, mod)`, and the CI commands (tsc, unit tests, knip, biome lint). All asserted"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the bug (CSS not injected on first request due to untransformed modules) and gives investigation hints, but does not specify exact code changes, line numbers, or the specific function to add."
+      "outcome": "fail",
+      "reason": "The instruction explicitly dictates the exact function name, signature (`async function ensureModulesLoaded(env: DevEnvironment, mod: any, seen = new Set<string>()): Promise<void>`), exact implementation details (check `transformResult`, call `env.fetchModule`, reference `PROPAGATED_ASSET_QUERY_PARAM`, recursive call pattern), and exact call site. This is not describing what's broken \u2014 it's prescribing the exact fix with implementation-level specificity."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the exact function name 'async function ensureModulesLoaded' (test_ensure_modules_loaded_function_exists), exact call pattern 'ensureModulesLoaded(env, mod)' (test_ensure_modules_loaded_called_before_collect), and recursive self-call pattern 'ensureModulesLoaded(env, imp' (test_ensure_modules_loaded_recursion). A correct alternative fix using a different function name (e.g., 'preloadModules') or different approach (e.g., inline logic) would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: exact function name `ensureModulesLoaded`, exact signature pattern `async function ensureModulesLoaded\\s*\\(\\s*env:\\s*DevEnvironment`, exact string `ensureModulesLoaded(env, mod)` before `collectCSSWithOrder`, exact string `ensureModulesLoaded(env, imp`, exact string `env.fetchModule`, exact string `transformResult`. An alternative correct fix (e.g., using a different function name, inlining the logic, using a different traversal approach) wou"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "TestEnsureModulesLoadedFunction and TestCodeQuality tests are almost entirely text-matching: they read the file and assert string patterns like 'async function ensureModulesLoaded' in content, 'env.fetchModule' in content, etc. While TestRepoTests runs subprocess commands (tsc, knip, unit tests, biome), the core f2p tests (TestEnsureModulesLoadedFunction) are purely text-based assertions."
+      "reason": "The f2p tests (TestEnsureModulesLoadedFunction and TestCodeQuality) are almost entirely string-matching: `assert 'async function ensureModulesLoaded' in content`, `assert 'transformResult' in content`, `assert 'env.fetchModule' in content`, regex searches on file content. While TestRepoTests runs subprocesses (tsc, unit tests, knip, biome), those are pass-to-pass tests that would pass without any change. The fail-to-pass tests are purely text-based assertions."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The pass-to-pass tests (test_repo_knip, test_repo_tsc_noEmit, test_repo_unit_tests, test_repo_biome_lint) would pass on the unmodified base commit without any fix. The f2p tests in TestEnsureModulesLoadedFunction check for string presence, which means a stub that simply appends the text 'async function ensureModulesLoaded' etc. to the file could pass them without actually fixing the bug."
+      "reason": "The pass-to-pass tests (test_repo_knip, test_repo_tsc_noEmit, test_repo_unit_tests, test_repo_biome_lint) would pass on the unmodified base commit without any fix. The f2p tests check for string presence, but a stub that simply appends the expected strings as comments to the file could pass all text-matching tests without actually fixing the bug."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md describes the core behavior: CSS styles from dynamically imported components should be injected on the first request in dev mode. No test actually verifies this behavior (e.g., by starting a dev server and checking HTML output). Tests only check for the presence of specific code patterns."
+      "outcome": "pass",
+      "reason": "All behaviors listed in instruction.md's 'Tested Specifics' and 'Validation' sections are covered by the tests: the function definition, its signature, the call ordering, transformResult check, fetchModule call, PROPAGATED_ASSET_QUERY_PARAM reference, recursive calls, and the CI validation commands."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into classes (TestEnsureModulesLoadedFunction, TestRepoTests, TestCodeQuality) with descriptive names and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into descriptive classes (TestEnsureModulesLoadedFunction, TestRepoTests, TestCodeQuality) with clear docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests. The test even explicitly checks for the correct spelling of PROPAGATED_ASSET_QUERY_PARAM."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names the affected file (packages/astro/src/vite-plugin-css/index.ts) and the function collectCSSWithOrder, but these are appropriate domain-level hints. It doesn't name the exact solution function or specific lines to change."
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file (`packages/astro/src/vite-plugin-css/index.ts`), the exact function signature, exact variable names, and exact call patterns. The 'Tested Specifics' section essentially provides the complete implementation specification, far beyond what's needed to understand the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,14 +47,14 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
   "pass_count": 4,
   "fail_count": 5

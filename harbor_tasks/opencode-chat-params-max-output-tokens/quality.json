@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific file paths (packages/opencode/src/session/llm.ts, packages/plugin/src/index.ts), specific patterns like 'return streamText(', 'const maxOutputTokens', 'Plugin.trigger(\"chat.params\"', 'params.maxOutputTokens', and specific field names in specific sections. The instruction.md does not mention the file paths, does not mention 'streamText', does not mention 'Plugin.trigger', and does not specify that 'const maxOutputTokens' must appear before the trigger call. An agent would ne"
+      "outcome": "pass",
+      "reason": "Instruction names both files (packages/opencode/src/session/llm.ts, packages/plugin/src/index.ts), the hook name 'chat.params', the streamText function, and the field name maxOutputTokens with its type 'number | undefined'."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix in detail: (1) add maxOutputTokens to the hook output type, (2) compute maxOutputTokens BEFORE Plugin.trigger call, (3) include it in the output object, (4) use params.maxOutputTokens in streamText. It even provides the exact output type signature. This is a step-by-step implementation guide, not just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (maxOutputTokens computed after hook, local variable used) and expected behavior but doesn't provide the exact code diff; the developer must reorder and wire params.maxOutputTokens themselves."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_stream_text_uses_params_max_output_tokens checks for literal string 'params.maxOutputTokens'; test_max_output_tokens_computed_before_hook checks for 'const maxOutputTokens' variable name and its position relative to Plugin.trigger. An alternative fix that uses a different variable name (e.g., 'maxTokens') or a different code structure (e.g., inline computation) would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check for presence of 'params.maxOutputTokens' in streamText call and 'maxOutputTokens' in hook output, which any correct fix must contain; ordering test only requires definition before hook trigger, which is inherent to the fix."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_max_output_tokens_in_hook_params, test_stream_text_uses_params_max_output_tokens, test_hook_type_includes_max_output_tokens, test_max_output_tokens_computed_before_hook) are all text-matching tests that search for string patterns in source files. They do not execute the code or test runtime behavior. The typecheck and test runner tests do execute code but are pass_to_pass regression tests."
+      "outcome": "pass",
+      "reason": "test_repo_typecheck_plugin, test_repo_typecheck_opencode, and test_repo_llm_tests execute bun typecheck and bun test subprocesses, verifying actual behavior beyond text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific source code changes (maxOutputTokens in hook output object, params.maxOutputTokens in streamText, correct ordering, type definition) that are not present in the base commit. A stub or no-op implementation would not pass these checks."
+      "reason": "F2P tests require specific strings ('params.maxOutputTokens', 'maxOutputTokens' in hook output, type 'number | undefined'), plus typecheck and LLM test suite runs, which cannot be satisfied by a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md (type includes maxOutputTokens, computed before hook, included in output object, streamText uses params.maxOutputTokens) are tested by corresponding test functions."
+      "reason": "Tests cover hook output containing maxOutputTokens, streamText using params.maxOutputTokens, type annotation, and ordering \u2014 all behaviors specified in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are grouped by comment headers (Gates, Fail-to-pass, Pass-to-pass) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "Task modifies TypeScript types, not structured data output; the hook output shape is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, function names (streamText, Plugin.trigger), and field names (maxOutputTokens) appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction describes exact implementation steps including where maxOutputTokens should be computed (before Plugin.trigger), how it should be passed (in the output object), and how it should be consumed (params.maxOutputTokens in streamText). It also provides the exact TypeScript type signature for the output object."
+      "outcome": "pass",
+      "reason": "Instruction names files (which are necessary given the scope of the task) but does not cite specific line numbers or exact code to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task; no agentmd config edit scope to evaluate (though solve.sh appends to AGENTS.md, that's outside the rubric)."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

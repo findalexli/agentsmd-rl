@@ -1,0 +1,90 @@
+source_pr:
+  repo: "OpenHands/OpenHands"
+  number: 13608
+  title: "feat(enterprise): acquire pg_advisory_lock before running database migrations"
+  merge_commit: "98c61e1ee47f7a8fc48c25e3e21e71470a8b7475"
+  base_commit: "3268c299459b690337c89f858671329fd99f9b48"
+
+# Checks that agent must pass
+checks:
+  # Fail-to-pass tests (core behavioral changes)
+  - id: test_text_import_from_sqlalchemy
+    type: fail_to_pass
+    origin: behavior
+    description: "text is imported from sqlalchemy (required for raw SQL execution)"
+
+  - id: test_pg_advisory_lock_call_present
+    type: fail_to_pass
+    origin: behavior
+    description: "pg_advisory_lock is called with the correct lock ID (3617572382373537863)"
+
+  - id: test_advisory_lock_before_migrations
+    type: fail_to_pass
+    origin: behavior
+    description: "Advisory lock is acquired BEFORE context.run_migrations() is called"
+
+  - id: test_advisory_lock_uses_text_wrapper
+    type: fail_to_pass
+    origin: behavior
+    description: "The advisory lock SQL is wrapped with sqlalchemy.text()"
+
+  # Pass-to-pass tests (code quality and correctness)
+  - id: test_lock_comment_present
+    type: pass_to_pass
+    origin: code_quality
+    description: "Explanatory comments are present for the lock number and release behavior"
+
+  - id: test_lock_in_run_migrations_online
+    type: pass_to_pass
+    origin: code_quality
+    description: "Lock is in run_migrations_online() only (not offline mode)"
+
+  # Pass-to-pass tests (repo CI checks)
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on the migrations file"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on the migrations file"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check passes on the migrations file"
+
+  - id: test_repo_enterprise_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Enterprise ruff config passes on the migrations file"
+
+# Rubric for soft/subjective rules from agent config files
+# Note: The gold solution only modifies enterprise/migrations/env.py to add the advisory lock.
+# Documentation rules are satisfied by comments in the code itself, not separate docs.
+rubric:
+  - id: no_unnecessary_changes
+    description: "Only necessary changes should be made - imports text and adds advisory lock only"
+    source: "AGENTS.md: Prefer specific git add instead of git add ."
+    criteria: "The fix only adds the advisory lock without unnecessary refactoring"
+    reference: |
+      from sqlalchemy import create_engine, text  # noqa: E402
+      connection.execute(text('SELECT pg_advisory_lock(3617572382373537863)'))
+
+  - id: documentation
+    description: "Code should be properly documented with comments explaining the lock"
+    source: "AGENTS.md: Enterprise code requires clear documentation"
+    criteria: "The advisory lock includes comments explaining its purpose and behavior"
+    reference: |
+      # Lock number must be unique — md5 hash of 'openhands_enterprise_migrations'
+      # Lock is released when the connection context manager exits
+
+  - id: db_migration_pattern
+    description: "Follow established database migration patterns with advisory lock before migrations"
+    source: "AGENTS.md: Database changes require careful migration planning"
+    criteria: "The fix follows the established pattern of using advisory locks for concurrent migration prevention"
+    reference: |
+      connection.execute(text('SELECT pg_advisory_lock(3617572382373537863)'))
+      with context.begin_transaction():
+          context.run_migrations()

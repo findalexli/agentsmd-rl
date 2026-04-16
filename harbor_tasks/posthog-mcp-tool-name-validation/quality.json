@@ -3,57 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (yaml-config-schema.ts, lint-tool-names.ts, tool-name-validation.test.ts, SKILL.md, implementing-mcp-tools.md), all constant names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), schema names (CategoryConfigSchema), function names (validateToolName), imports (TOOL_MAP, GENERATED_TOOL_MAP), and JSON filenames (tool-definitions.json, tool-definitions-v2.json, generated-tool-definitions.json) that the tests assert on."
+      "reason": "The instruction names all file paths (yaml-config-schema.ts, lint-tool-names.ts, tool-name-validation.test.ts, SKILL.md, implementing-mcp-tools.md), constant names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), function/variable references (TOOL_MAP, GENERATED_TOOL_MAP, CategoryConfigSchema, validateToolName), literal strings (tool-definitions.json, tool-definitions-v2.json, generated-tool-definitions.json), the value 52, and the specific valid/invalid examples tested. All asse"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the precise regex character classes ('[a-z0-9-]' for TOOL_NAME_PATTERN, '[a-z0-9_]' for FEATURE_NAME_PATTERN), exact constant values (MAX_TOOL_NAME_LENGTH = 52), exact method calls (.regex() with TOOL_NAME_PATTERN), and exact import paths. This leaves very little reasoning for the agent about WHAT to change \u2014 the instruction essentially dictates the solution."
+      "reason": "The instruction specifies exact implementation details: the value 52 for MAX_TOOL_NAME_LENGTH, that CategoryConfigSchema must use .regex() with TOOL_NAME_PATTERN and FEATURE_NAME_PATTERN, the exact regex semantics (lowercase kebab-case, no leading/trailing hyphens), exact constant names, and exact file locations. This goes beyond describing 'what's broken' and tells the agent precisely WHAT to change and HOW."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_zod_schema_validates_tool_name_keys assert specific string presence like '.regex(' and 'TOOL_NAME_PATTERN' in the schema section. test_lint_uses_pattern_validation asserts either 'validateToolName' or 'TOOL_NAME_PATTERN.test' \u2014 an alternative using e.g. 'TOOL_NAME_PATTERN.exec' or 'match(TOOL_NAME_PATTERN)' would fail. test_tool_name_pattern_validation extracts the regex by looking for '= /' syntax, so a regex defined differently (e.g., via new RegExp()) would fail."
+      "reason": "Tests like test_zod_schema_validates_tool_name_keys assert the exact string '.regex(' must appear in CategoryConfigSchema section, and test_lint_uses_pattern_validation asserts either 'validateToolName' or 'TOOL_NAME_PATTERN.test' must appear. An alternative correct implementation using e.g. .refine() with TOOL_NAME_PATTERN or a different validation approach would fail these string-matching tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Several tests execute actual behavior: test_tool_name_pattern_validation and test_feature_name_pattern_validation run Node.js to extract and test regex patterns against actual inputs. test_repo_typecheck, test_repo_lint_tool_names, test_repo_unit_tests, test_repo_build, test_repo_format all run subprocess commands. While some tests (test_zod_schema_validates_tool_name_keys, test_lint_validates_json_definitions, etc.) do text-matching, the majority verify behavior through execution."
+      "outcome": "fail",
+      "reason": "Multiple fail-to-pass tests are purely text-matching: test_zod_schema_validates_tool_name_keys checks 'assert \".regex(\" in schema_section', test_zod_schema_validates_feature_field checks 'assert \"FEATURE_NAME_PATTERN\" in schema_section', test_lint_validates_json_definitions checks string presence, test_lint_uses_pattern_validation checks string presence, test_vitest_file_created checks string presence. While test_tool_name_pattern_validation and test_feature_name_pattern_validation do execute No"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require substantive implementation: test_tool_name_pattern_validation requires a working regex that accepts/rejects specific names; test_vitest_file_created requires a new file with specific imports; test_repo_unit_tests/test_repo_build require the code to actually compile and pass. A stub implementation would not satisfy these."
+      "reason": "The regex behavioral tests (test_tool_name_pattern_validation, test_feature_name_pattern_validation) actually extract and run the regex against valid/invalid inputs, so a stub wouldn't pass. The text-matching tests require specific strings to exist in files that don't currently have them, so empty/default files wouldn't pass either."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: pattern constants export, Zod schema validation, lint script JSON coverage, lint pattern usage, vitest file creation, SKILL.md documentation, and handbook documentation updates."
+      "outcome": "fail",
+      "reason": "The instruction requires documentation updates to SKILL.md (tool naming constraints section, kebab-case requirements, 52-char limit, snake_case for features) and implementing-mcp-tools.md (feature identifier naming, character pattern validation). The test file is truncated but the visible tests don't fully verify all documentation content requirements from the instruction, particularly the handbook documentation updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) \u2014 core behavioral tests' and 'documentation updates' sections with clear docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass/core behavioral, Fail-to-pass/documentation), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves adding validation constants, regex patterns, and documentation \u2014 not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in instruction.md are consistent with the test expectations and solution."
+      "reason": "All file paths, variable names, commands, and constant names in the instruction match those referenced in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact regex patterns ('[a-z0-9-]', '[a-z0-9_]'), exact constant values (52), exact method names (.regex()), exact variable names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), and exact schema modification approaches. This goes beyond describing what's broken and into specifying the exact fix."
+      "reason": "The instruction specifies exact file paths, exact constant names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH), exact values (52), exact schema names (CategoryConfigSchema), and exactly where to add .regex() validation. This level of specificity removes the need for the agent to localize the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task, not an agent config-edit task."
+      "reason": "This is not an agentmd-edits task; it involves code and documentation changes across multiple files."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 4,
+  "fail_count": 5
 }

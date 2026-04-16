@@ -2,28 +2,28 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path (src/bun.js/webcore/fetch/FetchTasklet.zig), the key identifiers (scheduled_response_buffer.list.items.len, has_more, isSuccess(), is_waiting_body, onBodyReceived(), stale-task race, onStartStreamingHTTPResponseBodyCallback), and the struct (FetchTasklet). All asserted strings in tests are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_empty_chunk_guard_present checks for `.list.items.len == 0`, `result.has_more`, and `result.isSuccess()` patterns; test_guard_placement_correct checks for `this.is_waiting_body` and `try this.onBodyReceived()` patterns; test_terminal_zero_length_chunk_not_affected checks for 'and' keyword in guard. The instruction mentions 'has_more' and 'onBodyReceived()' but never mentions `.list.items.len`, `isSuccess()`, or"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies the exact guard logic: check scheduled_response_buffer.list.items.len == 0, this.result.has_more, this.result.isSuccess(), place it before onBodyReceived() inside is_waiting_body, and include a comment with 'stale-task race' referencing onStartStreamingHTTPResponseBodyCallback. This is effectively dictating the exact code to write, not just describing what's broken."
+      "reason": "instruction.md explicitly states the fix: 'When onProgressUpdate runs and the buffer has been drained by the streaming callback while the response indicates more data is coming, the code should skip processing that empty chunk and return early, rather than calling onBodyReceived() with empty data.' This describes exactly WHAT to change (add an early return guard before onBodyReceived when buffer is empty and has_more is true), not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'scheduled_response_buffer.list.items.len == 0', 'this.result.has_more', 'this.result.isSuccess()', 'stale-task race', and 'onStartStreamingHTTPResponseBodyCallback'. An alternative correct fix (e.g., checking buffer length differently, using a different field name in the comment, or naming the race condition differently) would fail these string-matching tests."
+      "reason": "Tests use rigid regex patterns like `r'if\\s*\\([^)]*\\.list\\.items\\.len\\s*==\\s*0[^}]*return\\s*;'` which require the exact field access pattern `.list.items.len == 0`. An alternative correct fix could check `scheduled_response_buffer.len() == 0` or use a different buffer emptiness check, or restructure the logic differently (e.g., checking in onBodyReceived itself), and would fail these regex-based tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_empty_chunk_guard_present, test_guard_placement_correct) are purely text-matching with 'assert component in src' patterns. While some pass-to-pass tests do execute code (test_stream_api_not_broken, test_repo_fetch_body_stream, etc.), the critical f2p tests that verify the bug fix only grep for literal strings in the source file."
+      "reason": "The core f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct, test_terminal_zero_length_chunk_not_affected) are purely text-matching via regex on source code. They do `Path(TARGET_FILE).read_text()` and run regex searches \u2014 no execution or behavioral verification of the actual fix. test_stream_api_not_broken and test_zig_compiles do execute code, but these are p2p tests. The f2p tests are all textual assertions."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct) only check for the presence of specific strings in the source file. An agent could satisfy these by inserting a dead-code comment block containing all the required strings (e.g., 'stale-task race', 'onStartStreamingHTTPResponseBodyCallback', 'scheduled_response_buffer.list.items.len == 0') without actually implementing a functional guard."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific guard conditions (buffer empty check, has_more check, success check, early return, correct placement before onBodyReceived) that wouldn't be present in the original unmodified file. A stub or no-op wouldn't have the `.list.items.len == 0` guard pattern."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: the guard checks (buffer length, has_more, isSuccess), placement before onBodyReceived inside is_waiting_body, the stale-task race comment, and the reference to onStartStreamingHTTPResponseBodyCallback."
+      "reason": "The instruction requires: (1) skip empty non-terminal chunks with early return \u2014 tested by test_empty_chunk_guard_present; (2) terminal branch unaffected \u2014 tested by test_terminal_zero_length_chunk_not_affected; (3) comment explaining race \u2014 tested implicitly by test_not_stub checking comments count. All key behaviors from instruction.md are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,31 +31,29 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code patch to a Zig source file, not structured data output."
+      "reason": "Task involves fixing a race condition in Zig source code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file, the exact block (is_waiting_body), the exact placement (before onBodyReceived()), exact field names to check (scheduled_response_buffer.list.items.len, result.has_more, result.isSuccess()), and exact comment text to include ('stale-task race' referencing 'onStartStreamingHTTPResponseBodyCallback'). This goes far beyond naming the buggy module."
+      "outcome": "pass",
+      "reason": "The instruction names only `FetchTasklet.zig` which is the single relevant file for the task domain. It describes the bug mechanism but the file is already obvious from the task context. It doesn't specify exact line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task modifying a Zig source file, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 4
 }

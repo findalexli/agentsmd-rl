@@ -133,6 +133,22 @@ rubric:
     match the implicit interface expected by the engines, following existing patterns.
   category: architecture
   verification: llm_judge
+- rule: Engine classes should follow the `XxxEngine` naming pattern.
+  source:
+    path: .claude/rules/code-style.md
+    lines: 50-53
+  source_text: '| Type             | Pattern       | Example                             |
+
+    | ---------------- | ------------- | ----------------------------------- |
+
+    | Config dataclass | `XxxConfig`   | `GRPOConfig`, `FSDPConfig`          |
+
+    | Engine class     | `XxxEngine`   | `FSDPEngine`, `ArchonEngine`        |'
+  evidence: The diff modifies engine implementations in files named `fsdp_engine.py`
+    and `archon_engine.py`, which correspond to the `FSDPEngine` and `ArchonEngine`
+    classes specified in the naming conventions.
+  category: naming
+  verification: llm_judge
 distractors:
 - rule: 'Ask first before: Changing launcher or scheduler logic.'
   collision_type: rule_conflict
@@ -153,6 +169,44 @@ distractors:
   source:
     path: AGENTS.md
     lines: 35-35
+- rule: Always skip gracefully when GPU unavailable
+  source:
+    path: .claude/rules/testing.md
+    lines: 40-47
+  source_text: "- **Always skip gracefully** when GPU unavailable:\n  ```python\n\
+    \  CUDA_AVAILABLE = torch.cuda.is_available()\n\n  @pytest.mark.skipif(not CUDA_AVAILABLE,\
+    \ reason=\"CUDA not available\")\n  def test_gpu_feature():\n      ...\n  ```"
+  collision_type: scope_ambiguity
+  why_distracting: The PR is explicitly adding CPU support to the engine and platform
+    layers so that the system can run without a GPU. An AI might mistakenly apply
+    this testing rule to the engine code and add `if not torch.cuda.is_available():`
+    checks or raise an error, which defeats the entire purpose of adding native CPU
+    support.
+  severity: high
+- rule: Use dist.get_rank(group) not dist.get_rank() when group matters
+  source:
+    path: .claude/rules/distributed.md
+    lines: 14-14
+  source_text: '- Use `dist.get_rank(group)` not `dist.get_rank()` when group matters'
+  collision_type: would_cause_bug
+  why_distracting: The code uses `int(os.environ["LOCAL_RANK"])` to determine the
+    device index. An AI reading distributed rules might try to "clean up" this environment
+    variable access by replacing it with a PyTorch distributed call like `dist.get_rank()`.
+    This would cause a bug because global rank is not the same as local rank (the
+    device index on the current node).
+  severity: high
+- rule: 'Clean up GPU memory: torch.cuda.empty_cache() in fixtures'
+  source:
+    path: .claude/rules/testing.md
+    lines: 48-48
+  source_text: '- Clean up GPU memory: `torch.cuda.empty_cache()` in fixtures'
+  collision_type: scope_ambiguity
+  why_distracting: The diff adds an `empty_cache()` method to `cpu.py` which just
+    executes `pass`. An AI might read this rule and think it should call `torch.cuda.empty_cache()`
+    or that `empty_cache` is only relevant for test fixtures. However, here it's being
+    added to the platform abstraction to provide a unified interface across CPU and
+    GPU platforms.
+  severity: medium
 hierarchy_analysis: 'Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
   overlapping rules (e.g., ''Ask first before changing launcher or scheduler logic'').
   The agent must synthesize these rules but ultimately recognize that the user''s

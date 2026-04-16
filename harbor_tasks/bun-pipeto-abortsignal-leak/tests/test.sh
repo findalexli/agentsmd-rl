@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
-# Standardized test runner — do NOT modify this file per task.
-# All test logic lives in test_outputs.py.
 set +e
+
+# Install unzip (required for bun) and curl if not present
+if ! command -v unzip &>/dev/null || ! command -v curl &>/dev/null; then
+    apt-get update -qq && apt-get install -y -qq unzip curl >/dev/null 2>&1 || true
+fi
+
+# Install bun if not present
+if ! command -v bun &>/dev/null; then
+    curl -fsSL https://bun.sh/install | bash
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$PATH"
+fi
 
 # Ensure python3 + pip + pytest are available on any base image
 if ! python3 -c "import pytest" 2>/dev/null; then
-    # Install python3 + pip if missing (node:slim, rust:slim)
     if ! command -v pip3 &>/dev/null; then
         apt-get update -qq && apt-get install -y -qq python3-pip python3-venv >/dev/null 2>&1 || true
     fi

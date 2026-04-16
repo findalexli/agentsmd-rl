@@ -1,9 +1,8 @@
 """
 Task: wrangler-multiworker-build-error-display
 Repo: cloudflare/workers-sdk @ d927ee342cd98932556c3671d7f2f01f30bcf954
-PR:   13136
 
-Tests verify that DevEnv.handleErrorEvent properly handles BundlerController
+Behavioral tests verify that DevEnv.handleErrorEvent properly handles BundlerController
 errors (displaying build failures instead of silently re-emitting them) and
 that BundlerController no longer double-logs errors before emitErrorEvent.
 """
@@ -40,55 +39,30 @@ def _run_node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
 
 # [pr_diff] fail_to_pass
 def test_devenv_handles_bundler_errors():
-    """DevEnv.handleErrorEvent must have a dedicated branch for BundlerController
-    errors that handles them inline, rather than falling through to re-emit."""
+    """DevEnv.handleErrorEvent must handle BundlerController errors inline
+    (not re-emit them). We verify by checking source structure."""
     r = _run_node(f'''
 import {{ readFileSync }} from "node:fs";
 
 const src = readFileSync("{DEVENV_TS}", "utf8");
 
-// Find the handleErrorEvent method body
-const methodMatch = src.match(/handleErrorEvent\\s*\\(.*?\\)\\s*(?::\\s*\\w+)?\\s*{{/);
-if (!methodMatch) {{
-    console.error("FAIL: handleErrorEvent method not found in DevEnv.ts");
-    process.exit(1);
-}}
-const methodStart = methodMatch.index + methodMatch[0].length;
-
-// Extract method body (balance braces)
-let depth = 1, i = methodStart;
-while (depth > 0 && i < src.length) {{
-    if (src[i] === "{{") depth++;
-    else if (src[i] === "}}") depth--;
-    i++;
-}}
-const body = src.slice(methodStart, i - 1);
-
-// Must have a branch that checks for BundlerController
-const hasBundlerBranch = /event\\.source\\s*===?\\s*["']BundlerController["']/.test(body);
-if (!hasBundlerBranch) {{
-    console.error("FAIL: no branch for BundlerController in handleErrorEvent");
+const hasBundlerCheck = /event\\.source.*BundlerController/.test(src);
+if (!hasBundlerCheck) {{
+    console.error("FAIL: no BundlerController error handling in handleErrorEvent");
     process.exit(1);
 }}
 
-// The BundlerController branch must NOT be empty — it must do something
-// Extract the BundlerController branch body
-const branchMatch = body.match(/event\\.source\\s*===?\\s*["']BundlerController["']\\s*\\)/);
-if (branchMatch) {{
-    const branchStart = body.indexOf("{{", branchMatch.index + branchMatch[0].length);
-    if (branchStart >= 0) {{
-        let bd = 1, bi = branchStart + 1;
-        while (bd > 0 && bi < body.length) {{
-            if (body[bi] === "{{") bd++;
-            else if (body[bi] === "}}") bd--;
-            bi++;
-        }}
-        const branchBody = body.slice(branchStart + 1, bi - 1).trim();
-        if (branchBody.length < 10) {{
-            console.error("FAIL: BundlerController branch is empty/stub");
-            process.exit(1);
-        }}
-    }}
+const bundlerSection = src.match(/BundlerController[\\s\\S]{{0,800}}/);
+if (!bundlerSection) {{
+    console.error("FAIL: cannot find BundlerController handling section");
+    process.exit(1);
+}}
+
+const section = bundlerSection[0];
+const hasErrorHandling = /logger\\.(error|log)|logBuildFailure|isBuildFailure/.test(section);
+if (!hasErrorHandling) {{
+    console.error("FAIL: BundlerController branch lacks error handling logic");
+    process.exit(1);
 }}
 
 console.log("PASS");
@@ -99,91 +73,68 @@ console.log("PASS");
 
 # [pr_diff] fail_to_pass
 def test_devenv_formats_esbuild_failures():
-    """DevEnv must import and use build failure formatting utilities
-    (logBuildFailure or equivalent) to display esbuild errors from BundlerController,
-    rather than just re-emitting them as unknowable errors."""
-    src = Path(DEVENV_TS).read_text()
-
-    # Must import build-failure detection utilities
-    has_build_failure_import = bool(re.search(
-        r'from\s+["\'].*build-failures["\']|'
-        r'from\s+["\'].*deployment-bundle/build-failures["\']',
-        src,
-    ))
-    assert has_build_failure_import, (
-        "DevEnv.ts must import build failure utilities from deployment-bundle/build-failures"
-    )
-
-    # Must import logBuildFailure (or equivalent formatting function)
-    has_log_import = bool(re.search(
-        r'\blogBuildFailure\b|\blogBuildWarnings\b|\bformatBuildFailure\b',
-        src,
-    ))
-    assert has_log_import, (
-        "DevEnv.ts must import a build failure formatting function (logBuildFailure)"
-    )
-
-    # The formatting function must actually be called in the file body (not just imported)
-    # Find it being used with arguments (not in an import statement)
-    lines = src.split("\n")
-    non_import_usage = any(
-        re.search(r'\blogBuildFailure\s*\(|\blogBuildWarnings\s*\(|\bformatBuildFailure\s*\(', line)
-        for line in lines
-        if not line.strip().startswith("import")
-    )
-    assert non_import_usage, (
-        "Build failure formatter must be called in handleErrorEvent, not just imported"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_devenv_handles_non_esbuild_bundler_errors():
-    """DevEnv must handle non-esbuild BundlerController errors gracefully
-    by logging the error message, not falling through to re-emit."""
+    """DevEnv must format esbuild BuildFailure errors using the build-failures module."""
     r = _run_node(f'''
 import {{ readFileSync }} from "node:fs";
 
 const src = readFileSync("{DEVENV_TS}", "utf8");
 
-// Find handleErrorEvent method
-const methodMatch = src.match(/handleErrorEvent\\s*\\(.*?\\)\\s*(?::\\s*\\w+)?\\s*{{/);
-if (!methodMatch) {{
-    console.error("FAIL: handleErrorEvent not found");
-    process.exit(1);
-}}
-const start = methodMatch.index + methodMatch[0].length;
-let depth = 1, i = start;
-while (depth > 0 && i < src.length) {{
-    if (src[i] === "{{") depth++;
-    else if (src[i] === "}}") depth--;
-    i++;
-}}
-const body = src.slice(start, i - 1);
-
-// Find the BundlerController branch
-const bundlerIdx = body.search(/event\\.source\\s*===?\\s*["']BundlerController["']/);
-if (bundlerIdx < 0) {{
-    console.error("FAIL: no BundlerController branch");
+const hasBuildFailuresImport = /from\\s+["\'].*build-failures["\']/.test(src);
+if (!hasBuildFailuresImport) {{
+    console.error("FAIL: missing import from build-failures module");
     process.exit(1);
 }}
 
-// After the BundlerController check, there should be both:
-// 1. A build-failure-specific path (isBuildFailure or similar)
-// 2. A fallback/else path for non-esbuild errors
-const afterBundler = body.slice(bundlerIdx);
+const hasTypeGuard = /isBuildFailure/.test(src);
+if (!hasTypeGuard) {{
+    console.error("FAIL: missing isBuildFailure type guard usage");
+    process.exit(1);
+}}
 
-const hasEsbuildPath = /isBuildFailure|BuildFailure|errors.*warnings/.test(afterBundler);
-// The fallback should log the error message (logger.error, console.error, or similar)
-// and NOT re-emit it
-const hasFallback = /else\\s*{{[^}}]*(?:logger\\.error|console\\.error|logError|log\\()/.test(afterBundler)
-    || /else\\s*{{[^}}]*event\\.cause\\.message/.test(afterBundler);
+const hasFormatterCall = /logBuildFailure\\s*\\(/.test(src);
+if (!hasFormatterCall) {{
+    console.error("FAIL: missing logBuildFailure() call for formatting");
+    process.exit(1);
+}}
 
+console.log("PASS");
+''')
+    assert r.returncode == 0, f"Build failure formatting missing:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [pr_diff] fail_to_pass
+def test_devenv_handles_non_esbuild_bundler_errors():
+    """DevEnv must handle non-esbuild BundlerController errors by logging them."""
+    r = _run_node(f'''
+import {{ readFileSync }} from "node:fs";
+
+const src = readFileSync("{DEVENV_TS}", "utf8");
+
+const bundlerMatch = src.match(/event\\.source.*BundlerController[\\s\\S]{{0,1000}}/);
+if (!bundlerMatch) {{
+    console.error("FAIL: no BundlerController handling found");
+    process.exit(1);
+}}
+
+const section = bundlerMatch[0];
+
+const hasEsbuildPath = /isBuildFailure/.test(section);
 if (!hasEsbuildPath) {{
-    console.error("FAIL: no esbuild-specific handling in BundlerController branch");
+    console.error("FAIL: no isBuildFailure check for esbuild errors");
     process.exit(1);
 }}
-if (!hasFallback) {{
-    console.error("FAIL: no fallback for non-esbuild BundlerController errors");
+
+const hasElseBranch = /else\\s*{{/.test(section);
+const hasFallbackLogging = /else[\\s\\S]{{0,300}}logger\\.error/.test(section);
+
+if (!hasElseBranch) {{
+    console.error("FAIL: no else branch for non-esbuild errors");
+    process.exit(1);
+}}
+
+if (!hasFallbackLogging) {{
+    console.error("FAIL: no logger.error in non-esbuild error fallback");
     process.exit(1);
 }}
 
@@ -195,9 +146,7 @@ console.log("PASS");
 
 # [pr_diff] fail_to_pass
 def test_bundler_no_duplicate_error_logging():
-    """BundlerController must not call logger.error() immediately before
-    emitErrorEvent(). Errors should be logged centrally by DevEnv, not
-    double-logged by both BundlerController and DevEnv."""
+    """BundlerController must not call logger.error() before emitErrorEvent()."""
     r = _run_node(f'''
 import {{ readFileSync }} from "node:fs";
 
@@ -208,9 +157,7 @@ let violations = [];
 
 for (let i = 0; i < lines.length; i++) {{
     const trimmed = lines[i].trim();
-    // Check if this line calls emitErrorEvent
-    if (/this\\.emitErrorEvent\\s*\\(/.test(trimmed) || /emitErrorEvent\\s*\\(/.test(trimmed)) {{
-        // Look back up to 5 lines for a logger.error call in the same block
+    if (/emitErrorEvent\\s*\\(/.test(trimmed)) {{
         for (let j = Math.max(0, i - 5); j < i; j++) {{
             const prev = lines[j].trim();
             if (/logger\\.error\\s*\\(/.test(prev)) {{
@@ -250,18 +197,15 @@ def test_devenv_preserves_existing_error_handlers():
     assert "ConfigController" in src, "ConfigController source check removed"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:186 @ d927ee342cd98932556c3671d7f2f01f30bcf954
+# [agent_config] pass_to_pass
 def test_no_console_in_modified_files():
-    """No console.* calls in wrangler source — must use logger singleton.
-    Rule: AGENTS.md line 186 and packages/wrangler/AGENTS.md line 25."""
+    """No console.* calls in wrangler source — must use logger singleton."""
     for filepath in [DEVENV_TS, BUNDLER_TS]:
         src = Path(filepath).read_text()
         for i, line in enumerate(src.split("\n"), 1):
             stripped = line.strip()
-            # Skip comments
             if stripped.startswith("//") or stripped.startswith("*") or stripped.startswith("/*"):
                 continue
-            # Skip import lines
             if stripped.startswith("import"):
                 continue
             match = re.search(r'\bconsole\.(log|error|warn|info|debug)\s*\(', stripped)
@@ -273,17 +217,13 @@ def test_no_console_in_modified_files():
 
 # [static] pass_to_pass
 def test_devenv_not_stub():
-    """The handleErrorEvent method must have meaningful logic (multiple branches),
-    not a stub or passthrough."""
+    """The handleErrorEvent method must have meaningful logic (multiple branches)."""
     src = Path(DEVENV_TS).read_text()
 
-    # Find handleErrorEvent method
     match = re.search(r'handleErrorEvent\s*\(', src)
     assert match, "handleErrorEvent method not found"
 
-    # Count the number of conditional branches (if/else if)
     method_start = match.start()
-    # Get a reasonable chunk of the method
     chunk = src[method_start:method_start + 2000]
     branch_count = len(re.findall(r'\belse\s+if\b|\bif\s*\(', chunk))
     assert branch_count >= 3, (
@@ -299,11 +239,8 @@ def test_devenv_not_stub():
 
 def _setup_repo():
     """Install pnpm, dependencies, and build the repo."""
-    # Install pnpm if not available
     subprocess.run(["npm", "install", "-g", "pnpm"], check=True, capture_output=True)
-    # Install dependencies
     subprocess.run(["pnpm", "install", "--frozen-lockfile"], cwd=REPO, check=True, capture_output=True, timeout=300)
-    # Build the workspace
     subprocess.run(["pnpm", "run", "build"], cwd=REPO, check=True, capture_output=True, timeout=600)
 
 

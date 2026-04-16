@@ -1,0 +1,66 @@
+repo: effect-ts/effect
+pr_number: 5943
+base_commit: e88f289c1d9fd4ec584ee793c264597aa84c9352
+merge_commit: c5a1e33
+
+source:
+  description: "Fix crash when pool.connect returns no client by ensuring client exists before attaching error handler"
+  pr_url: "https://github.com/effect-ts/effect/pull/5943"
+  files_changed:
+    - "packages/sql-pg/src/PgClient.ts"
+    - ".changeset/crazy-walls-wait.md"
+
+checks:
+  - id: test_typescript_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type-checks without errors
+
+  - id: test_build_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: The sql-pg package builds successfully
+
+  - id: test_repo_circular
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo has no circular dependencies
+
+  - id: test_repo_codegen
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo code generation is up-to-date
+
+  - id: test_no_unsafe_client_assertion
+    type: fail_to_pass
+    origin: agent_config
+    description: No unsafe client! non-null assertions in pool.connect callback
+    source:
+      file: packages/sql-pg/src/PgClient.ts
+      rule: Remove unsafe client! non-null assertion in reserveRaw
+
+  - id: test_early_return_error_handling
+    type: fail_to_pass
+    origin: agent_config
+    description: Explicit null-client check added to pool.connect error handling
+    source:
+      file: packages/sql-pg/src/PgClient.ts
+      rule: Handle pool.connect returning null client even when err is falsy
+
+  - id: test_onerror_defined_before_callback
+    type: fail_to_pass
+    origin: agent_config
+    description: onError handler defined before pool.connect callback
+    source:
+      file: packages/sql-pg/src/PgClient.ts
+      rule: Define onError before pool.connect for proper closure semantics
+
+  - id: test_sql_error_with_no_client_cause
+    type: fail_to_pass
+    origin: agent_config
+    description: Specific SqlError for no-client case with descriptive message
+    source:
+      file: packages/sql-pg/src/PgClient.ts
+      rule: Add specific error cause for no-client returned by pool.connect
+
+rubric: []

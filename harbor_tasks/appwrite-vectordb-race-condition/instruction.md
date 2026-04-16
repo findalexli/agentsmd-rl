@@ -2,37 +2,29 @@
 
 ## Problem
 
-The VectorDB collection creation endpoint has a race condition when handling concurrent requests that initialize metadata. When two parallel requests both check if the metadata collection exists and find it doesn't, they both attempt to create it, causing one to fail with a `DuplicateException`.
-
-## Location
-
-The issue is in `src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/Create.php` in the `action` method.
+Under concurrent load, the VectorDB collection creation endpoint intermittently throws `DuplicateException` errors during metadata initialization. This is a classic TOCTOU (time-of-check-time-of-use) race condition.
 
 ## Symptoms
 
-- Flaky tests during parallel test runs involving CSV export migration
-- Intermittent `DuplicateException` errors when creating VectorDB collections
-- Race condition between checking `exists()` and calling `create()` on the metadata collection
-- The code checks `if (!$dbForDatabases->exists(null, Database::METADATA))` then calls `$dbForDatabases->create()` without handling concurrent creates
-- The exception being raised is `Appwrite\Extend\Exception\DuplicateException`
+- When multiple requests simultaneously attempt to create collections in a fresh VectorDB database, some requests fail with duplicate key errors
+- The race occurs between checking if metadata storage exists and actually creating it
+- One request succeeds in creating the metadata structure while another fails mid-operation
+- The failing request encounters an exception indicating that the metadata collection already exists, even though the prior existence check returned false
 
 ## Required Behavior
 
-The metadata bootstrap should be idempotent under concurrency. When multiple requests race to create the metadata:
+The metadata bootstrap process must be idempotent under concurrent execution. When multiple requests race to initialize the same metadata:
 
-1. Both requests check if metadata exists and get `false`
-2. Both attempt to create the metadata
-3. One succeeds, the other gets a `DuplicateException`
-4. The duplicate exception is benign - the metadata is now present
-5. Both requests can proceed to create their actual collections
+1. One request should successfully create the metadata storage
+2. Other concurrent requests should recognize that the metadata is now available and continue normally rather than failing
+3. All requests should proceed to create their actual collections successfully
 
-## Technical Context
+Duplicate errors for actual collection creation must continue to be propagated as errors - only the one-time metadata initialization should handle duplicate scenarios gracefully.
 
-- Keep duplicate handling scoped only to the one-time metadata bootstrap
-- Do NOT suppress duplicate errors for actual collection creation in `createCollection()`
-- The exception class is `Appwrite\Extend\Exception\DuplicateException`
-- The file contains the comment: `// passing null in creates only creates the metadata collection`
+## Context
 
-## Module Conventions
+The VectorDB module follows the standard Appwrite Action pattern with HTTP endpoints under `Http/VectorsDB/Collections/`. Look for the collection creation endpoint implementation.
 
-Refer to the module structure and HTTP endpoint conventions documented in the repository's AGENTS.md files. This file follows the standard Action pattern with HTTP endpoints under `Http/VectorsDB/Collections/`.
+The issue involves database initialization code that checks for metadata storage existence before attempting creation. The Appwrite database layer uses Utopia Database, which throws specific exception types when duplicate resources are created.
+
+Refer to the module structure and HTTP endpoint conventions documented in the repository's AGENTS.md files.

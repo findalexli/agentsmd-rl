@@ -19,14 +19,18 @@ interface Env {
 
 Both the simple (top-level) config mode and per-environment config mode must be handled.
 
-## Files to Look At
+## Required Mappings
 
-- `packages/wrangler/src/type-generation/index.ts` — The type generation logic. The file contains two main functions:
-  - `collectCoreBindings` — registers each binding using an `addBinding` helper function. For example, `vpc_services` bindings call `addBinding(binding, "Fetcher", "vpc_services", envName)` to map the binding to its TypeScript type.
-  - `collectCoreBindingsPerEnvironment` — registers each binding by pushing objects to a `bindings` array with `{ bindingCategory, name, type }` properties. For example, `vpc_services` calls `bindings.push({ bindingCategory: "vpc_services", name: binding, type: "Fetcher" })`.
+The type generation logic must map these config keys to TypeScript types:
+- `ai_search_namespaces` → `AiSearchNamespace`
+- `ai_search` → `AiSearchInstance`
 
-  Both functions currently lack handling for AI Search config keys. They need to handle:
-  - `ai_search_namespaces` config → type `"AiSearchNamespace"`
-  - `ai_search` config → type `"AiSearchInstance"`
+## Files to Modify
 
-- `packages/wrangler/src/__tests__/type-generation.test.ts` — The test file already has mock data for `ai_search_namespaces` and `ai_search` bindings but the expected output doesn't include them.
+- `packages/wrangler/src/type-generation/index.ts` — The type generation logic. This file contains two main functions that need to be updated:
+  - `collectCoreBindings` — handles top-level binding type generation
+  - `collectCoreBindingsPerEnvironment` — handles per-environment binding type generation
+
+Both functions currently handle other binding types (like `vpc_services`, `ai`, `vectorize`, etc.) but are missing the AI Search binding types.
+
+- `packages/wrangler/src/__tests__/type-generation.test.ts` — The test file already has mock data for `ai_search_namespaces` and `ai_search` bindings but the expected output assertions don't include the corresponding type declarations.

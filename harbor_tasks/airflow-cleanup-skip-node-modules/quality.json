@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_uses_os_walk_instead_of_rglob asserts 'os.walk' must appear in the file, test_dirnames_pruning_in_os_walk asserts 'dirnames[:]' must be in the code. The instruction says to skip directories but never mandates os.walk or dirnames[:] as the mechanism. An agent using a custom recursive walk or pathlib with filtering would fail these tests despite correct behavior."
+      "outcome": "pass",
+      "reason": "The instruction names the target file (dev/breeze/src/airflow_breeze/utils/path_utils.py), the function (cleanup_python_generated_files), the required use of os.walk, dirnames[:] in-place modification, node_modules and dot-directory pruning, .pyc/.pycache cleanup, FileNotFoundError/PermissionError handling, and the specific string checks (d != 'node_modules', d.startswith('.')). All test assertions reference specifics discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (slow rglob traversal) and the desired behavior (skip node_modules, hidden dirs) but does not specify exact code changes, line numbers, or the specific implementation approach (os.walk with dirnames pruning)."
+      "outcome": "fail",
+      "reason": "The instruction explicitly describes the exact implementation: use os.walk, modify dirnames[:] in-place, use the specific check 'd != \"node_modules\"' and 'd.startswith(\".\")'. It also specifies checking __pycache__ directories and clearing dirnames. This is essentially giving the complete solution, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_os_walk_instead_of_rglob asserts 'os.walk' must be in the code. test_dirnames_pruning_in_os_walk asserts 'dirnames[:]' must be present. A correct alternative using a recursive function with os.listdir/os.scandir, or pathlib-based traversal with manual pruning, would fail these structural tests despite correctly implementing the required behavior."
+      "reason": "test_dirnames_pruning_in_os_walk asserts 'dirnames[:]' appears in the source and 'startswith' with '\".' or \"'.'\". test_uses_os_walk_instead_of_rglob asserts 'os.walk' is literally in the file. An alternative correct fix using e.g. os.scandir recursion, or using dirnames.clear()/dirnames.remove() without dirnames[:], or checking names differently, would fail these text-based structural tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_uses_os_walk_instead_of_rglob and test_dirnames_pruning_in_os_walk are purely textual checks (reading file content with TARGET_FILE.read_text() and asserting string presence). The behavioral tests (test_skips_node_modules, test_skips_hidden_directories, etc.) test a local cleanup_python_generated_files_fixed function defined in the test file itself, NOT the actual patched code. They never import or call the function from the target module."
+      "reason": "test_uses_os_walk_instead_of_rglob and test_dirnames_pruning_in_os_walk are purely text-based checks (reading file content and asserting string presence). While some tests do test behavioral outcomes (test_cleans_pyc_files, test_cleans_pycache_directories), the behavioral tests only test the local reference implementation (cleanup_python_generated_files_fixed), not the actual patched code. The tests that inspect the actual patched file are all text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The behavioral tests (test_skips_node_modules, test_cleans_pyc_files_in_regular_directories, etc.) call cleanup_python_generated_files_fixed which is defined locally in the test file, not imported from the patched code. These tests always pass regardless of any changes to path_utils.py. Only the structural text-search tests (test_uses_os_walk_instead_of_rglob, test_dirnames_pruning_in_os_walk) actually verify the patched file."
+      "reason": "The behavioral tests (test_skips_node_modules, test_cleans_pyc_files_in_regular_directories, etc.) test cleanup_python_generated_files_fixed which is a local reference implementation defined in the test file itself, not the agent's code. These tests always pass regardless of what the agent does. The only tests that check the agent's actual code are text-based structural assertions."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that FileNotFoundError is silently ignored and PermissionError is caught with paths appended to permission_errors. While test_handles_permission_errors exists (truncated), the behavioral tests only test a locally-defined function, not the actual patched code, so the actual patched function's error handling is never verified."
+      "reason": "The instruction requires that PermissionError appends to permission_errors list and FileNotFoundError is silently ignored. While test_handles_permission_errors exists (truncated), the behavioral tests only exercise a local reference implementation, not the actual patched code. The actual patched function is never imported or called."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_uses_os_walk_instead_of_rglob, test_skips_node_modules, etc.), have docstrings explaining purpose, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_uses_os_walk_instead_of_rglob, test_skips_node_modules, etc.), each has a docstring explaining its purpose, and they are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file and function, which is appropriate since the task is about optimizing a specific known function. It doesn't specify exact line numbers or the implementation technique."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (dev/breeze/src/airflow_breeze/utils/path_utils.py), the exact function, and specifies the exact implementation details including 'd != \"node_modules\"' and 'd.startswith(\".\")' checks. This goes well beyond identifying what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,15 +47,16 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

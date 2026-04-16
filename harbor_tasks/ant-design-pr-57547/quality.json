@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md names the file path (components/table/hooks/useSelection.tsx), the variable names (mergedSelectedKeyList, mergedSelectedKeys, EMPTY_LIST), the functions (updatePreserveRecordsCache, conductCheck), the nullish coalescing pattern, and the dependency array changes. All test assertions reference specifics that are discoverable from instruction.md's 'Validation Criteria' section."
+      "outcome": "fail",
+      "reason": "Tests assert on the specific variable name 'mergedSelectedKeyList' (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list). The instruction.md never mentions this variable name. It mentions 'EMPTY_LIST' and 'mergedSelectedKeys' but not 'mergedSelectedKeyList'. An agent reading only instruction.md cannot discover this specific variable name."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md's 'Validation Criteria' section explicitly states the exact fix: 'A variable named mergedSelectedKeyList defined using the pattern mergedSelectedKeys ?? EMPTY_LIST', 'mergedSelectedKeyList being passed to updatePreserveRecordsCache() and conductCheck()', 'mergedSelectedKeyList being returned from the derivedSelectedKeys useMemo when checkStrictly is true', and 'Dependency arrays for the affected hooks using mergedSelectedKeyList instead of mergedSelectedKeys'. This is a comple"
+      "reason": "instruction.md explicitly states: 'The EMPTY_LIST constant should be used as a fallback when mergedSelectedKeys is undefined', 'Both updatePreserveRecordsCache() and conductCheck() must receive valid arrays', 'The derivedSelectedKeys calculation must return a valid array even when checkStrictly is true', and 'All dependency arrays must reference the safe array reference'. This describes the exact fix implementation details, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the exact variable name 'mergedSelectedKeyList', exact string patterns like 'updatePreserveRecordsCache(mergedSelectedKeyList)', 'return [mergedSelectedKeyList,', 'mergedSelectedKeyList, checkStrictly, keyEntities, isCheckboxDisabled', and 'mergedSelectedKeyList, updatePreserveRecordsCache'. An alternative correct fix using a different variable name (e.g., 'safeSelectedKeys') or a different approach (e.g., inline null checks) would fail all f2p tests."
+      "reason": "Tests assert on the exact variable name 'mergedSelectedKeyList' (e.g., test_safe_list_variable_exists asserts 'mergedSelectedKeyList' in content), exact string patterns like 'return [mergedSelectedKeyList,' and 'mergedSelectedKeyList, checkStrictly, keyEntities, isCheckboxDisabled'. A correct alternative fix using a different variable name (e.g., 'safeSelectedKeys') or different implementation approach would fail all fail_to_pass tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list, and test_no_direct_mergedselectedkeys_in_effect all use `assert 'string' in open(path).read()` pattern with no execution of the actual component or behavior verification. The compilation/lint tests (test_typescript_compiles, test_useselection_syntax_valid, test_lint_passes, test_repo_biome_lint, test_repo_"
+      "reason": "The fail_to_pass tests (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list, test_no_direct_mergedselectedkeys_in_effect) are ALL string-matching tests using patterns like `assert 'mergedSelectedKeyList' in content`. None of them actually render a Table component or test the runtime behavior of the fix."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail_to_pass tests (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list, test_no_direct_mergedselectedkeys_in_effect) are pure string-matching tests. An agent could simply add a comment block containing all the required strings (e.g., '// mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST; updatePreserveRecordsCache(mergedSelectedKeyList); return [merged"
+      "reason": "A trivial implementation that simply adds `const mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST;` and does text substitutions of 'mergedSelectedKeys' to 'mergedSelectedKeyList' in the right places would pass all fail_to_pass tests without actually fixing any runtime crash, since the tests only check for string patterns in the source file, not actual behavior."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All validation criteria from instruction.md (mergedSelectedKeyList variable, nullish coalescing pattern, usage in updatePreserveRecordsCache/conductCheck, return value, dependency arrays) are covered by the test suite."
+      "outcome": "fail",
+      "reason": "instruction.md describes a runtime crash scenario (rendering Table, re-rendering with different selectedRowKeys, clicking checkbox), but no test actually verifies this runtime behavior. The tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating whether they are pass_to_pass or fail_to_pass, and each test function has a clear purpose."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into pass_to_pass and fail_to_pass categories, and each test focuses on a specific aspect of the fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in a React component, not producing structured data."
+      "reason": "This task involves fixing a UI component bug, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md specifies the exact file (components/table/hooks/useSelection.tsx), exact variable names to create (mergedSelectedKeyList), exact pattern to use (mergedSelectedKeys ?? EMPTY_LIST), and exact locations where changes must be made (updatePreserveRecordsCache call, conductCheck call, derivedSelectedKeys useMemo, dependency arrays). This goes far beyond identifying the buggy file."
+      "reason": "instruction.md names the exact file ('components/table/hooks/useSelection.tsx'), the exact constant ('EMPTY_LIST'), the exact variable ('mergedSelectedKeys'), and the exact functions ('updatePreserveRecordsCache()', 'conductCheck()', 'derivedSelectedKeys'). It also specifies exactly what must change in dependency arrays. This goes far beyond identifying the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -54,8 +55,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 2,
+  "fail_count": 7
 }

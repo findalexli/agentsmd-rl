@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (package.json, packages/next-swc/package.json, packages/next-swc/turbo.json -> turbo.jsonc, AGENTS.md), exact script names (build, build-all, build-native-auto), and the rename from turbo.json to turbo.jsonc. The tests check for these exact artifacts and the instruction provides sufficient information to discover them."
+      "reason": "All tested artifacts (build-all script, build-native-auto, turbo.jsonc, AGENTS.md mentions of pnpm build vs build-all) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'add a build-all script', 'rename build to build-native-auto', 'rename turbo.json to turbo.jsonc', and specifies exact script names and file changes. This is a complete specification of WHAT to change, not just a description of what's broken. A developer doesn't need to reason about the solution at all."
+      "outcome": "pass",
+      "reason": "Instruction describes what to rename/add but doesn't give exact line-level diffs; agent must still construct the correct JSON/config structure."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for the existence of specific script names (build-all, build-native-auto), file existence (turbo.jsonc), and content patterns (AGENTS.md containing 'build-all'). These are all required by the instruction as exact names, so any correct implementation meeting the spec would pass. The tests don't assert on implementation-specific internals beyond what's required."
+      "reason": "Tests check for script names and file existence, not exact text; alternative wording for AGENTS.md still passes as long as it mentions the required phrases."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Many tests are purely text-matching: test_build_all_script_added checks 'build-all' in package.json text, test_agents_md_build_all_documented checks 'build-all' in AGENTS.md text, test_turbo_jsonc_task_renamed reads turbo.jsonc and checks 'build-native-auto' string presence, test_agents_md_build_vs_build_all checks string 'pnpm build' in file content. These are essentially `assert 'foo' in open(path).read()` patterns with no execution of the build system."
+      "outcome": "pass",
+      "reason": "Tests execute node and prettier subprocesses, parse JSON, and inspect script contents \u2014 not pure text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (e.g., test_build_all_script_added, test_next_swc_build_renamed, test_turbo_jsonc_task_renamed, test_agents_md_build_all_documented) all check for content that doesn't exist in the base commit. A stub or no-op implementation would not add 'build-all' to package.json or create turbo.jsonc, so these tests would fail without actual changes."
+      "reason": "Tests require specific script names (build-all, build-native-auto), specific file rename (turbo.jsonc), and content checks; stubs would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four major requirements from the instruction are tested: build-all in root package.json, build-native-auto rename in next-swc package.json, turbo.jsonc creation with renamed task, and AGENTS.md documentation updates including build vs build-all distinction and branch switching guidance."
+      "reason": "Tests cover root build-all script, next-swc script rename, turbo.jsonc existence, and AGENTS.md content."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, comments indicating pass_to_pass vs fail_to_pass categories, and descriptive function names like test_build_all_script_added, test_turbo_jsonc_task_renamed, etc."
+      "reason": "Tests are named descriptively with docstrings and grouped with header comments (pass_to_pass section)."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The task involves JSON files (package.json, turbo.jsonc) and the instruction specifies the exact script names and task names to add/rename, which constitutes schema documentation for the structured data changes."
+      "outcome": "not_applicable",
+      "reason": "No structured data output beyond standard package.json scripts, which are described."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and script names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent to rename 'build' to 'build-native-auto' in packages/next-swc/package.json, add 'build-all' script to root package.json, and rename turbo.json to turbo.jsonc. These are exact file-level changes with exact values, not high-level requirements. The instruction essentially IS the solution."
+      "outcome": "pass",
+      "reason": "Instruction names files but these are intrinsic to the task domain; doesn't give line-level fixes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff shows localized changes: adding one line to root package.json scripts, renaming one script in next-swc/package.json, renaming turbo.json to turbo.jsonc with a task rename and comment addition, and targeted AGENTS.md text changes. No full-file rewrites."
+      "reason": "AGENTS.md diff is localized to a few lines around build commands, not a rewrite."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

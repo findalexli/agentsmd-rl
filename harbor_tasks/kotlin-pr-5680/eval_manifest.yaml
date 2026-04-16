@@ -94,3 +94,37 @@ source:
   pr: 0
   base_commit: 3657c00274a9252a8b71e6434cd6c63cf3770803
   merge_commit: ''
+distractors:
+- rule: Use `Ka` prefix for Analysis API types, `Kt` for PSI types
+  source:
+    path: analysis/AGENTS.md
+    lines: '30'
+  source_text: '- `Ka` prefix for Analysis API types, `Kt` for PSI types'
+  collision_type: scope_ambiguity
+  why_distracting: The changed file is in a package named 'analysis' (androidx.compose.compiler.plugins.kotlin.analysis).
+    An agent might mistakenly think the file is part of the Analysis API and try to
+    prefix new types or variables with 'Ka'.
+  severity: medium
+- rule: Validate lifetime ownership with `withValidityAssertion`
+  source:
+    path: analysis/AGENTS.md
+    lines: '34'
+  source_text: '- All implementations must validate lifetime ownership with `withValidityAssertion`'
+  collision_type: scope_ambiguity
+  why_distracting: Because the changed file has 'analysis' in its package path, an
+    agent might incorrectly apply this Analysis API rule and wrap the new cache logic
+    or stability inference in 'withValidityAssertion', which would cause a compilation
+    error in the Compose compiler plugin.
+  severity: high
+- rule: Mark experimental APIs with `@KaExperimentalApi`, implementation details with
+    `@KaImplementationDetail`
+  source:
+    path: analysis/AGENTS.md
+    lines: '35'
+  source_text: '- Mark experimental APIs with `@KaExperimentalApi`, implementation
+    details with `@KaImplementationDetail`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see that it is adding a private cache (an implementation
+    detail) inside an 'analysis' package and annotate it with @KaImplementationDetail.
+    This annotation belongs to the Analysis API, not the Compose compiler plugin.
+  severity: high

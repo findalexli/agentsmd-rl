@@ -1,0 +1,134 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39729
+  base_commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+  merge_commit: "7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a"
+
+checks:
+  # Config edit checks (at least one required for agentmd-edit tasks)
+  - id: claude_md_has_flint_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md updated to include 'npm run flint' pre-commit rule"
+
+  - id: api_docs_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "API documentation documents the Disposable return type"
+
+  # Code behavior checks
+  - id: tracing_ts_imports_disposable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "tracing.ts imports DisposableStub from disposable module"
+
+  - id: tracing_group_returns_disposable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Tracing.group() returns Disposable that calls groupEnd() on dispose"
+
+  - id: types_d_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Type definitions show group() returns Promise<Disposable>"
+
+  # Pass-to-pass checks (CI/CD)
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files compile without errors"
+
+  - id: flint_linting
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code passes eslint as required by CLAUDE.md commit convention"
+    source:
+      path: "CLAUDE.md"
+      lines: "98-99"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+
+# Config edits extracted from the gold patch
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: "Before committing, run `npm run flint` and fix errors."
+    gold_removed: ""
+
+# Rubric rules from applicable agent configs (CLAUDE.md and SKILL.md)
+rubric:
+  # From CLAUDE.md
+  - rule: "Always run `npm run flint` before committing"
+    source:
+      path: "CLAUDE.md"
+      lines: "98-99"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold patch adds this rule to CLAUDE.md; agent must follow it"
+    category: process
+    verification: programmatic
+
+  - rule: "Semantic commit messages: label(scope): description with labels fix/feat/chore/docs/test/devops"
+    source:
+      path: "CLAUDE.md"
+      lines: "102-104"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold PR uses 'fix(api): make Tracing.group return Disposable'"
+    category: process
+    verification: llm_judge
+
+  - rule: "Client code NEVER imports server code; use protocol layer for communication"
+    source:
+      path: "CLAUDE.md"
+      lines: "83-86"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold imports DisposableStub from client module, not server"
+    category: architecture
+    verification: programmatic
+
+  - rule: "When adding/modifying APIs, update docs/src/api/ documentation"
+    source:
+      path: "CLAUDE.md"
+      lines: "68-70"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold updates class-tracing.md with return type documentation"
+    category: documentation
+    verification: programmatic
+
+  - rule: "API changes require updating both packages/playwright-client and packages/playwright-core types"
+    source:
+      path: "CLAUDE.md"
+      lines: "60-64"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    evidence: "Gold updates types.d.ts in both client and core packages"
+    category: architecture
+    verification: programmatic
+
+# Distractor rules (irrelevant conventions that might cause collision)
+distractors:
+  - rule: "Use test.step instead of Tracing.group when available"
+    source:
+      path: "docs/src/api/class-tracing.md"
+      lines: "305-308"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: scope_ambiguity
+    why_distracting: "The caution note in docs warns against using group(), but the task is to improve group() API - this creates confusion about whether to use group() or not"
+    severity: medium
+
+  - rule: "Branch naming for issue fixes: fix-<issue-number>"
+    source:
+      path: "CLAUDE.md"
+      lines: "115"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: meta_confusion
+    why_distracting: "Branch naming convention is for creating PRs, not for fixing the bug itself - agent might waste time on this irrelevant process rule"
+    severity: low
+
+  - rule: "Never add Co-Authored-By agents in commit message"
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    collision_type: meta_confusion
+    why_distracting: "Commit message convention is for final submission, not for the code fix - irrelevant during development"
+    severity: low

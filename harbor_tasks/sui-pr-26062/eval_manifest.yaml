@@ -91,6 +91,48 @@ distractors:
   why_distracting: The agent might think changing how values are displayed requires
     a protocol config update, but this is purely a client-side/display change.
   severity: low
+- rule: Never make functional changes to the code; only add logging statements to
+    debug tests.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 38-40
+  source_text: 'While executing the skill, never make functional changes to the code.  Only
+    add logging statements as described below.  The goal is to find the root cause,
+    not fix the issue.
+
+    If at any point the reproduction command stops failing, or fails in a different
+    way, this indicates that functional changes have been made. The test is deterministic
+    and cannot
+
+    be affected by emitting logs, doing expensive computations, etc.'
+  collision_type: meta_confusion
+  why_distracting: An agent tasked with fixing a bug might read this rule and incorrectly
+    conclude they are strictly forbidden from modifying source files functionally,
+    failing to realize this constraint applies exclusively to the simtest-debug debugging
+    workflow.
+  severity: high
+- rule: Add a new constant (which is None in prior versions) and add the field to
+    the ProtocolConfig struct with type Option<T>.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 99-103
+  source_text: '**Add a new constant (which is None in prior versions):**
+
+    ```rust
+
+    cfg.new_constant = Some(new_value);
+
+    ```
+
+    Note: You must also add the field to the `ProtocolConfig` struct with type `Option<T>`.
+    The `ProtocolConfigAccessors` derive macro automatically generates accessor methods
+    (`new_constant()` and `new_constant_as_option()`).'
+  collision_type: scope_ambiguity
+  why_distracting: 'The diff refactors `transform: Transform` to `transform: Option<Transform>`.
+    An agent might wrongly associate this local change in `sui-display` with the ProtocolConfig
+    rule, assuming that the use of `Option<T>` must be linked to protocol backward
+    compatibility or attempting to modify the core `ProtocolConfig` struct instead.'
+  severity: medium
 hierarchy_analysis: The hierarchy consists of two root-level files (`AGENTS.md` and
   `CLAUDE.md`). `AGENTS.md` simply points to `CLAUDE.md` and suggests looking for
   crate-specific files, but none exist for `sui-display` in this context. The guidance
@@ -101,4 +143,36 @@ source:
   pr: 0
   base_commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
   merge_commit: ''
-rubric: []
+rubric:
+- rule: 'Use #[tokio::test] for async tests (not #[test]) and avoid using linting
+    suppressions.'
+  source:
+    path: CLAUDE.md
+    lines: 113-114
+  source_text: "   - **NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any\
+    \ other linting suppressions** - fix the underlying issues instead\n   - **All\
+    \ unit tests must work properly** - use `#[tokio::test]` for async tests, not\
+    \ `#[test]`"
+  evidence: 'The gold diff correctly defines a new async test function test_format_single_bare_expression_falls_back_to_json
+    using the #[tokio::test] attribute without adding any linting suppressions.'
+  category: testing
+  verification: llm_judge
+- rule: Do not comment obvious constructs such as simple variable assignments, standard
+    library usage, self-descriptive function calls, and basic control flow.
+  source:
+    path: CLAUDE.md
+    lines: 126-130
+  source_text: '**When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The gold diff refactors parsing and formatting logic in `crates/sui-display/src/v2/writer.rs`
+    using basic control flow (`if matches!`) and self-descriptive function calls without
+    adding any redundant comments.
+  category: documentation
+  verification: llm_judge

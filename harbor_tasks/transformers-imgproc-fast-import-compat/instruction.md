@@ -18,13 +18,20 @@ Additionally, the existing module aliasing mechanism has a subtle issue: when Py
 
 ## Expected Behavior
 
-1. **`BaseImageProcessorFast` import**: `from transformers.image_processing_utils_fast import BaseImageProcessorFast` should resolve successfully. The imported class must be identical (`is`) to `TorchvisionBackend` from `transformers.image_processing_backends`.
+1. **`BaseImageProcessorFast` import**: `from transformers.image_processing_utils_fast import BaseImageProcessorFast` should resolve successfully. The imported class must be identical (`is`) to `TorchvisionBackend` from `transformers.image_processing_backends`. It must be a real class (i.e., `inspect.isclass(BaseImageProcessorFast)` returns `True`), not a stub or proxy.
 
-2. **`divide_to_patches` import and function**: `from transformers.image_processing_utils_fast import divide_to_patches` should work and return the same function (`is`) as `from transformers.image_transforms import divide_to_patches`. The function accepts numpy arrays in CHW format (channels, height, width) and a patch size integer, returning a list of patches.
+2. **`divide_to_patches` import and function**: `from transformers.image_processing_utils_fast import divide_to_patches` should work and return the same function object (`is`) as `from transformers.image_transforms import divide_to_patches`. It must be a real function (i.e., `inspect.isfunction(divide_to_patches)` returns `True`), not a stub. The function accepts numpy arrays in CHW format (channels, height, width) and a patch size integer, returning a list of numpy array patches. The patching logic divides the image into a grid of non-overlapping patches: for an image of shape `(C, H, W)` with a given `patch_size`, it produces `(H // patch_size) * (W // patch_size)` patches. For example:
+   - A `(3, 100, 100)` image with `patch_size=50` yields 4 patches (2×2 grid)
+   - A `(3, 60, 80)` image with `patch_size=20` yields 12 patches (3×4 grid)
+   - A `(1, 64, 64)` image with `patch_size=32` yields 4 patches (2×2 grid)
 
-3. **Module `__file__` attribute**: After `import transformers`, the module `transformers.image_processing_utils_fast` must be registered in `sys.modules` with `__file__` present directly in `mod.__dict__` (not via `__getattr__`). This prevents `inspect` operations from triggering circular imports.
+3. **Alias module registration**: After `import transformers`, the module `transformers.image_processing_utils_fast` must be:
+   - Registered in `sys.modules` under the key `"transformers.image_processing_utils_fast"`.
+   - Accessible as an attribute on the `transformers` package, i.e., `transformers.image_processing_utils_fast` must return the same object as `sys.modules["transformers.image_processing_utils_fast"]`.
 
-4. **Tokenization aliases preserved**: Existing tokenization module aliases (`tokenization_utils_fast`, `tokenization_utils`) must continue to work.
+4. **Module `__file__` attribute and `inspect` safety**: The alias module must have `__file__` present directly in `mod.__dict__` (not resolved via `__getattr__`), so that `hasattr(mod, '__file__')` returns `True` without triggering any import. Calling `inspect.getfile()` on the alias module must not raise `ImportError` from a circular import; a `TypeError` (as raised for built-in modules with `__file__` set to `None`) is acceptable.
+
+5. **Tokenization aliases preserved**: Existing tokenization module aliases must continue to work — specifically, both `transformers.tokenization_utils_fast` and `transformers.tokenization_utils` must remain registered in `sys.modules` after `import transformers`.
 
 ## Reproduction
 

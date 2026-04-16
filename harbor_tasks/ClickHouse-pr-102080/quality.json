@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all key identifiers tested: 'Large files checked into git' comment, MAX_FILE_SIZE expression, LARGE_FILE_WHITELIST array, STAT_FMT_FLAG/STAT_FMT variables, 'git ls-files' command, stat -c probe, all whitelist patterns, the warning message text, and the 'download them at test time or build from source' suggestion. The file path (various_checks.sh) and all assert'd strings are discoverable from instruction.md."
+      "reason": "The instruction explicitly names all key identifiers tested: 'Large files checked into git' comment, MAX_FILE_SIZE expression, LARGE_FILE_WHITELIST array, STAT_FMT_FLAG/STAT_FMT variables, git ls-files command, stat -c probe, all whitelist patterns, the warning message text, and the download suggestion. The file path (various_checks.sh) is specified. Pass-to-pass tests check existing scripts whose paths are derivable from the repo structure."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (STAT_FMT_FLAG, STAT_FMT, MAX_FILE_SIZE, LARGE_FILE_WHITELIST), exact expressions ('MAX_FILE_SIZE=$((5 * 1024 * 1024))'), exact stat probe syntax ('stat -c \\'%s %n\\' /dev/null'), and exact string literals. This goes beyond describing what's broken and essentially dictates the implementation details, leaving very little reasoning for the developer."
+      "reason": "The instruction specifies exact variable names (STAT_FMT_FLAG, STAT_FMT, LARGE_FILE_WHITELIST, MAX_FILE_SIZE), exact expressions (MAX_FILE_SIZE=$((5 * 1024 * 1024))), exact stat probe syntax (stat -c '%s %n' /dev/null), and exact warning message text. This is effectively dictating the implementation rather than describing what's broken. A developer doesn't need to reason about WHAT to write\u2014the instruction tells them the exact code artifacts to produce."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names STAT_FMT_FLAG and STAT_FMT (test_stat_format_detection), exact expression 'MAX_FILE_SIZE=$((5 * 1024 * 1024))' (test_large_file_check_exists), exact array name LARGE_FILE_WHITELIST. An alternative correct implementation using different variable names (e.g., STAT_FLAG, SIZE_FMT, FILE_SIZE_LIMIT, EXCLUDED_PATTERNS) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: exact variable names STAT_FMT_FLAG and STAT_FMT (test_stat_format_detection), exact string 'MAX_FILE_SIZE=$((5 * 1024 * 1024))' (test_large_file_check_exists), exact array name LARGE_FILE_WHITELIST. An alternative correct implementation using different variable names (e.g., STAT_FLAG, SIZE_LIMIT, WHITELIST) or a different threshold expression (e.g., MAX_SIZE=5242880) would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, test_large_file_warning_message) are purely text-matching with 'assert X in content' pattern. test_large_file_check_logic reimplements the logic in Python rather than executing the shell script. Only pass-to-pass tests (test_script_syntax_valid, test_various_checks_runs) actually execute the script."
+      "reason": "The fail-to-pass tests are predominantly text-matching: test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, and test_large_file_warning_message all just do 'assert X in content' on the script file. test_large_file_check_logic reimplements the logic in Python rather than executing the shell script. Only test_various_checks_runs and test_script_syntax_valid actually execute the script, but those are pass-to-pass tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply appends the right string literals to the script file (e.g., a comment block containing all the required strings without any actual logic) would pass test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, and test_large_file_warning_message since they only check for substring presence. test_large_file_check_logic doesn't even run the shell script\u2014it reimplements the logic in Python."
+      "reason": "A stub that simply appends the right string literals to the script (e.g., a comment block containing all the required strings without any functional logic) would pass test_large_file_check_exists, test_whitelist_comprehensive, test_stat_format_detection, and test_large_file_warning_message since they only check for substring presence. test_large_file_check_logic tests Python logic, not the shell script's behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires the check to 'Work correctly on both GNU (Linux) and BSD (macOS) systems' and to 'Print a warning for each violation', but no test actually executes the shell logic against real files to verify runtime behavior. The behavioral test (test_large_file_check_logic) reimplements the logic in Python rather than testing the actual shell code."
+      "reason": "Requirement 5 ('Work correctly on both GNU and BSD systems') is only tested by checking for string presence of '-c' and '-f' flags, not by actual behavioral verification. The actual large-file detection behavior is tested in Python reimplementation (test_large_file_check_logic) rather than by running the shell script against test data."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_large_file_check_exists, test_large_file_check_logic, etc.), docstrings explaining purpose, and annotations like '(fail-to-pass)' and '(pass-to-pass)' indicating test categories."
+      "reason": "Tests are well-named (test_large_file_check_exists, test_large_file_check_logic, etc.), have docstrings explaining purpose, and are organized by concern (existence checks, logic, whitelist, syntax validation, pass-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces a shell script, not structured data like JSON/CSV/API/DB."
+      "reason": "The task produces a shell script, not structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (STAT_FMT_FLAG, STAT_FMT), exact expressions (MAX_FILE_SIZE=$((5 * 1024 * 1024))), exact stat probe command ('stat -c \\'%s %n\\' /dev/null'), and specifies that both -c and -f flag variants must be referenced. These are implementation-level details that go far beyond describing the task requirements."
+      "reason": "The instruction specifies exact variable names (STAT_FMT_FLAG, STAT_FMT), exact expressions (MAX_FILE_SIZE=$((5 * 1024 * 1024))), and exact probe syntax (stat -c '%s %n' /dev/null). Under 'CI Test Suite Identifiers', it essentially reveals the implementation structure rather than just describing the desired behavior."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",

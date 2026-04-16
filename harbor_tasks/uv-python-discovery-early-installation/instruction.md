@@ -2,24 +2,20 @@
 
 ## Problem
 
-The Python discovery pipeline in `crates/uv-python/src/discovery.rs` passes around raw `(PythonSource, Interpreter)` tuples through several internal functions, only converting them to the `PythonInstallation` struct at the very end of `find_python_installations`. This creates unnecessary complexity:
+The Python discovery pipeline passes around raw `(PythonSource, Interpreter)` tuples through several internal functions, only converting them to the `PythonInstallation` struct at the very end. This creates unnecessary complexity:
 
 1. Internal helper functions return iterators over `(PythonSource, Interpreter)` tuples.
-2. Each call site in `find_python_installations` has to destructure tuples to access `source` and `interpreter` fields, then wrap the result in `PythonInstallation::from_tuple(tuple)` at the boundary.
-3. The `from_tuple` conversion method on `PythonInstallation` (in `crates/uv-python/src/installation.rs`) exists solely to bridge this gap.
+2. Each call site at the end of the discovery pipeline has to destructure tuples to access `source` and `interpreter` fields, then wrap the result using a conversion helper method.
+3. A `from_tuple` conversion method on `PythonInstallation` exists solely to bridge this gap, adding boilerplate that could be eliminated.
 
-## What to do
+## Task
 
-Refactor the internal discovery functions so that `PythonInstallation` is constructed **before** the final call site, eliminating the tuple-then-convert pattern. Concretely:
+Refactor the internal discovery functions so that `PythonInstallation` is constructed **before** the final call site, eliminating the tuple-then-convert pattern. Specifically:
 
-- Rename and retype three internal helpers so they return `impl Iterator<Item = Result<PythonInstallation, Error>>` directly:
-  - `python_interpreters` → `python_installations`
-  - `python_interpreters_from_executables` → `python_installations_from_executables`
-  - `python_interpreters_with_executable_name` → `python_installations_with_executable_name`
-- Update closures inside these helpers to use `.source` and `.interpreter` field access on `PythonInstallation` instead of tuple destructuring (`|(source, interpreter)|`)
-- Inside `python_installations_from_executables`, construct a `PythonInstallation { source, interpreter }` struct literal instead of returning a tuple
-- Remove the `from_tuple` conversion method from `PythonInstallation` in `crates/uv-python/src/installation.rs`
-- Update closures in `find_python_installations` that call the renamed helpers to use `.source` and `.interpreter` field access instead of `PythonInstallation::from_tuple(tuple)`
-- `find_python_installations` must remain public and continue to return `Result<PythonInstallation, Error>`
+- Three internal helper functions that currently return `impl Iterator<Item = Result<(PythonSource, Interpreter), Error>>` should be changed to return `impl Iterator<Item = Result<PythonInstallation, Error>>` instead
+- The helper that lazily converts executables into interpreters should construct `PythonInstallation` struct literals directly rather than returning `(PythonSource, Interpreter)` tuples
+- The `from_tuple` conversion method on `PythonInstallation` should be removed entirely
+- Any closures that currently use tuple destructuring patterns like `|(source, interpreter)|` to access fields should be updated to use `.source` and `.interpreter` field access on `PythonInstallation` instead
+- The public entry point for finding Python installations must remain public and continue to return `Result<PythonInstallation, Error>`
 
-The relevant source file is `crates/uv-python/src/discovery.rs` and the `PythonInstallation` struct is defined in `crates/uv-python/src/installation.rs`.
+The relevant code is in the Python discovery pipeline. The `PythonInstallation` struct has `source` and `interpreter` fields that should be populated directly rather than via tuple conversion.

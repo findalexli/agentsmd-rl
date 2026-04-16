@@ -1,0 +1,14 @@
+[
+  {
+    "sha": "7f2625a0bcca9bafc04de49afdba911ac22e9ca8",
+    "filename": "dev/breeze/src/airflow_breeze/utils/path_utils.py",
+    "status": "modified",
+    "additions": 20,
+    "deletions": 16,
+    "changes": 36,
+    "blob_url": "https://github.com/apache/airflow/blob/87cef1b6258560fba7bbaa31b7f18d13bc506610/dev%2Fbreeze%2Fsrc%2Fairflow_breeze%2Futils%2Fpath_utils.py",
+    "raw_url": "https://github.com/apache/airflow/raw/87cef1b6258560fba7bbaa31b7f18d13bc506610/dev%2Fbreeze%2Fsrc%2Fairflow_breeze%2Futils%2Fpath_utils.py",
+    "contents_url": "https://api.github.com/repos/apache/airflow/contents/dev%2Fbreeze%2Fsrc%2Fairflow_breeze%2Futils%2Fpath_utils.py?ref=87cef1b6258560fba7bbaa31b7f18d13bc506610",
+    "patch": "@@ -418,22 +418,26 @@ def cleanup_python_generated_files():\n     if get_verbose():\n         console_print(\"[info]Cleaning .pyc and __pycache__\")\n     permission_errors = []\n-    for path in AIRFLOW_ROOT_PATH.rglob(\"*.pyc\"):\n-        try:\n-            path.unlink()\n-        except FileNotFoundError:\n-            # File has been removed in the meantime.\n-            pass\n-        except PermissionError:\n-            permission_errors.append(path)\n-    for path in AIRFLOW_ROOT_PATH.rglob(\"__pycache__\"):\n-        try:\n-            shutil.rmtree(path)\n-        except FileNotFoundError:\n-            # File has been removed in the meantime.\n-            pass\n-        except PermissionError:\n-            permission_errors.append(path)\n+    for dirpath, dirnames, filenames in os.walk(AIRFLOW_ROOT_PATH):\n+        # Skip node_modules and hidden directories (.*) — modify in place to prune os.walk\n+        dirnames[:] = [d for d in dirnames if d != \"node_modules\" and not d.startswith(\".\")]\n+        for filename in filenames:\n+            if filename.endswith(\".pyc\"):\n+                path = Path(dirpath) / filename\n+                try:\n+                    path.unlink()\n+                except FileNotFoundError:\n+                    pass\n+                except PermissionError:\n+                    permission_errors.append(path)\n+        if Path(dirpath).name == \"__pycache__\":\n+            try:\n+                shutil.rmtree(dirpath)\n+            except FileNotFoundError:\n+                pass\n+            except PermissionError:\n+                permission_errors.append(Path(dirpath))\n+            dirnames.clear()\n     if permission_errors:\n         if platform.uname().system.lower() == \"linux\":\n             console_print(\"[warning]There were files that you could not clean-up:\\n\")"
+  }
+]

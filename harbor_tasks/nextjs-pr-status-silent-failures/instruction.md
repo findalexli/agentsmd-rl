@@ -18,15 +18,29 @@ When running `node scripts/pr-status.js <PR_NUMBER>`, the script sometimes repor
 
 The script at `scripts/pr-status.js` must maintain the following structural elements:
 
+**Data-fetching functions** that must be present:
+- `getAllJobs` — fetches all jobs for a run with pagination
+- `getFailedJobs` — returns failed jobs with their conclusion field included
+- `categorizeJobs` — classifies jobs into failed/succeeded/inProgress/queued
+- `getFlakyTests` — detects flaky tests across recent workflow runs
+- `generateReport` — produces markdown report output
+
 **Helper functions** that must be present:
-- `function exec(` — shell command executor
-- `function execAsync(` — async shell command executor
-- `function execJson(` — JSON-parsing command executor
+- `exec` — shell command executor
+- `execAsync` — async shell command executor
+- `execJson` — JSON-parsing command executor
 - `formatDuration`, `formatElapsedTime`, `sanitizeFilename`, `escapeMarkdownTableCell`, `stripTimestamps`
 
 **Main entry point**:
-- `async function main(` — the main async function
+- `async function main` — the main async function
 - `module.exports` — the script must export functions for use by other modules
+
+**Failure type detection**:
+The script must detect GitHub Actions jobs with conclusion values of `failure`, `timed_out`, and `startup_failure`. This applies to:
+- Job filtering in `getFailedJobs`
+- Job categorization in `categorizeJobs`
+- Report generation in `generateReport` (must annotate non-standard conclusions)
+- Flaky test detection in `getFlakyTests`
 
 **Code quality**:
 - The script must pass `prettier --check scripts/pr-status.js` formatting
@@ -35,4 +49,4 @@ The script at `scripts/pr-status.js` must maintain the following structural elem
 
 ## Files to Look At
 
-- `scripts/pr-status.js` — The CI analysis script. Key areas: job fetching/pagination, job filtering, job categorization, report generation, and flaky test detection.
+- `scripts/pr-status.js` — The CI analysis script. Key areas: job fetching/pagination with retry logic, job filtering, job categorization, report generation, and flaky test detection.

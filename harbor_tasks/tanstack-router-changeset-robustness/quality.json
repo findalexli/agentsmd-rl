@@ -2,59 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes all key specifics tested: split('\\n'), filter(Boolean), releaseLogs[0]/[1], previousRelease fallback, currentRelease usage, parts = line.split(' '), parts.slice(2).join(' '), removal of rest.slice(spaceIdx2+1), const latestFlag, isPrerelease ternary, ${latestFlag}, comments about HEAD being release commit and non-conventional commits. All asserted strings/patterns are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert very specific literal strings like 'parts = line.split(' ')' (test_non_conventional_commit_parsing), 'const latestFlag' (test_prerelease_vs_latest_flag), 'releaseLogs[0]' and 'releaseLogs[1]' (test_release_logs_parsing), and '.filter(Boolean)' (test_release_logs_parsing). While the instruction mentions most of these concepts, some exact forms like '.filter(Boolean)' and the exact variable name 'releaseLogs' are not explicitly stated in instruction.md \u2014 the instruction says 'parse th"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details like 'Split each non-conventional commit line on spaces to get individual parts', 'The first part is the hash, the second is the email, and the remaining parts re-joined with spaces form the subject', 'Define a variable for the latest flag', 'using a ternary based on the existing isPrerelease variable', 'Parse the output into an array of commit hashes by splitting on newlines and filtering out falsy/empty values', 'Use the first array el"
+      "reason": "The instruction explicitly tells the agent exactly what to implement: 'Split each non-conventional commit line on spaces to get individual parts', 'The first part is the hash, the second is the email, and the remaining parts re-joined with spaces form the subject', 'Define a variable for the latest flag, set to --latest for regular releases and empty for prereleases, using a ternary based on the existing isPrerelease variable', 'Use the first array element as the current release commit and the s"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'releaseLogs[0]', 'releaseLogs[1]', 'const latestFlag', exact patterns like 'parts = line.split(\\' \\')', 'parts.slice(2).join(\\' \\')', '.filter(Boolean)'. An alternative correct fix using destructuring, regex, or different variable names (e.g., 'releaseCommits', 'latestArg') would fail these tests despite being functionally correct."
+      "reason": "Tests assert gold-specific variable names and exact implementation details: test_release_logs_parsing requires 'releaseLogs[0]' and 'releaseLogs[1]' and '.filter(Boolean)'; test_non_conventional_commit_parsing requires exactly 'parts = line.split(' ')' and 'parts.slice(2).join(' ')'; test_prerelease_vs_latest_flag requires 'const latestFlag' and the exact ternary 'isPrerelease ? '' : ' --latest''. An alternative correct fix using different variable names (e.g., 'releaseCommits' instead of 'relea"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_release_logs_parsing, test_commit_range_calculation, test_non_conventional_commit_parsing, test_prerelease_vs_latest_flag, and test_comments_added all exclusively use string-matching (assert '...' in content) with no execution of the script logic. Only test_node_syntax_valid, test_repo_prettier_check, and test_repo_eslint actually execute subprocesses, but they only check syntax/formatting, not behavior."
+      "reason": "The core f2p tests (test_release_logs_parsing, test_commit_range_calculation, test_non_conventional_commit_parsing, test_prerelease_vs_latest_flag, test_comments_added) ALL use only 'assert X in content' pattern \u2014 reading the file as text and checking for string presence. They never import, call, or execute the script's logic. The p2p tests (node --check, prettier, eslint) do execute subprocesses but only verify syntax/formatting, not behavioral correctness."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests (string-matching ones) check for specific code patterns that don't exist in the original file. A stub or no-op would not pass since the original file contains 'HEAD~1 --format=%H', 'rest.slice(spaceIdx2 + 1)', and lacks 'releaseLogs[0]', 'const latestFlag', etc. The agent must actually modify the file to pass."
+      "outcome": "fail",
+      "reason": "The f2p tests only check for string presence in the file content. A developer could satisfy all f2p tests by simply adding comments containing the required strings (e.g., '// releaseLogs[0] releaseLogs[1] .filter(Boolean) parts = line.split(' ') parts.slice(2).join(' ') const latestFlag isPrerelease ? '' : ' --latest' ${latestFlag} non-conventional commits so HEAD is the release commit') without actually implementing any bug fix. The code could remain completely broken."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three fixes described in instruction.md are tested: git range calculation (test_release_logs_parsing, test_commit_range_calculation), non-conventional commit parsing (test_non_conventional_commit_parsing), and prerelease flags (test_prerelease_vs_latest_flag). Comments are also tested (test_comments_added). Validation checks (node --check, prettier, eslint) are all tested."
+      "reason": "All three fixes described in instruction.md (git range calculation, non-conventional commit parsing, prerelease flags) are tested, along with the required comments and validation checks (node --check, prettier, eslint)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_release_logs_parsing, test_commit_range_calculation, etc.), each has a docstring explaining what it tests and the before/after context, and they are logically grouped by the three issues being fixed."
+      "reason": "Tests are well-named (test_release_logs_parsing, test_commit_range_calculation, etc.), grouped logically, and have descriptive docstrings explaining the before/after behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a script file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task modifies a JavaScript script; it does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation patterns: 'splitting on newlines and filtering out falsy/empty values', 'Use the first array element as the current release commit and the second as the previous release commit', 'Split each non-conventional commit line on spaces', 'Define a variable for the latest flag...using a ternary based on the existing isPrerelease variable'. This goes well beyond naming the buggy file."
+      "reason": "The instruction specifies exactly which file to modify ('scripts/create-github-release.mjs') and gives step-by-step implementation details like 'Define a variable for the latest flag', 'Split each non-conventional commit line on spaces', 'Use the first array element as the current release commit'. This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a JavaScript script, not a configuration edit task."
+      "reason": "This is a code-only task modifying a JavaScript script, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

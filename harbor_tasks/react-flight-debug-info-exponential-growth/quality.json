@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all key file paths (ReactFlightClient.js, ReactFlightAsyncDebugInfo-test.js), function names (initializeDebugChunk, resolveIOInfo, getOutlinedModel, transferReferencedDebugInfo), variable names (isInitializingDebugInfo, prevIsInitializingDebugInfo), the test name ('should not exponentially accumulate debug info on outlined debug chunks'), and the required patterns (let declaration, Flow boolean type, finally blocks). All asserted specifics in the tests are discoverable from "
+      "reason": "instruction.md names ReactFlightClient.js, the functions initializeDebugChunk/resolveIOInfo/getOutlinedModel, the flag name isInitializingDebugInfo, the prev variable name prevIsInitializingDebugInfo, the test file ReactFlightAsyncDebugInfo-test.js, and the exact test name."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact implementation: 'A module-level boolean flag (isInitializingDebugInfo) controls whether transferReferencedDebugInfo is invoked', 'The flag must be declared as let isInitializingDebugInfo with Flow type annotation boolean', 'Both initializeDebugChunk and resolveIOInfo must save the previous flag value with prevIsInitializingDebugInfo and use a finally block to restore it after setting it to true', 'getOutlinedModel must check isInitializingDebugInfo befo"
+      "reason": "Instruction dictates exact identifiers and structure: 'let isInitializingDebugInfo' with Flow type 'boolean', 'prevIsInitializingDebugInfo', 'finally' block, and which functions must set it \u2014 effectively prescribing the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_is_initializing_debug_info_flag_declared checks for exact string 'let isInitializingDebugInfo', test_flag_set_in_initialize_debug_chunk checks for exact strings 'isInitializingDebugInfo = true' and 'prevIsInitializingDebugInfo' and 'finally', test_flag_set_in_resolve_io_info does the same, test_transfer_debug_info_guarded_during_debug_init checks for 'isInitializingDebugInfo' in getOutlinedModel. An alternative correct fix (e.g., using a"
+      "reason": "Tests assert on gold-specific literals like 'let isInitializingDebugInfo', 'prevIsInitializingDebugInfo', and 'isInitializingDebugInfo = true'; an alternative correct fix using different names (e.g., a stack, a parameter, or a different flag name) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_is_initializing_debug_info_flag_declared, test_flag_set_in_initialize_debug_chunk, test_flag_set_in_resolve_io_info, and test_transfer_debug_info_guarded_during_debug_init are pure text-matching (reading file content and asserting substrings). Only test_no_exponential_debug_accumulation and the pass_to_pass tests actually execute the code. The majority of fail_to_pass tests are text-only."
+      "outcome": "pass",
+      "reason": "Several tests invoke yarn test, lint, flow, version-check via subprocess and run the Jest regression test, not purely text assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral test test_no_exponential_debug_accumulation runs a 20-level deep async component tree that would hang/fail without the fix. A stub or no-op wouldn't pass this. The AST tests require specific code patterns that wouldn't exist without implementation. However, this is borderline since the AST tests could be satisfied by just adding the text without proper logic, but combined with the behavioral test, a truly empty stub would fail."
+      "reason": "test_no_exponential_debug_accumulation runs the actual 20-level Jest test which would fail without the behavioral fix, so a stub can't satisfy it."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: the flag declaration, its use in initializeDebugChunk and resolveIOInfo with save/restore/finally, the guard in getOutlinedModel, and the regression test for 20-level deep component trees."
+      "reason": "Tests cover flag declaration, both functions setting/restoring it, the getOutlinedModel guard, the regression Jest test, and pass-to-pass lint/flow/existing tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass structural, Fail-to-pass behavioral, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to React's Flight client, not structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, function names, and commands in instruction.md match those referenced in the tests and solution."
+      "reason": "Paths (packages/react-client/src/ReactFlightClient.js, ReactFlightAsyncDebugInfo-test.js) and identifiers are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact variable names ('isInitializingDebugInfo', 'prevIsInitializingDebugInfo'), exact declaration syntax ('let isInitializingDebugInfo' with Flow type annotation 'boolean'), exact functions to modify (initializeDebugChunk, resolveIOInfo, getOutlinedModel), and exact control flow patterns (save previous value, set to true, finally block). This goes far beyond naming the buggy file/module \u2014 it's a complete implementation recipe."
+      "reason": "Instruction names exact function sites (initializeDebugChunk, resolveIOInfo, getOutlinedModel) and the exact variable names/keywords to use ('let isInitializingDebugInfo', 'prevIsInitializingDebugInfo', 'finally'), removing the localization/design task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

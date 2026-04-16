@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_tryrequestpermissionasync_extracted checks for 'async Task<PermissionStatus> TryRequestPermissionAsync()' method signature and 'MediaCaptureInitializationSettings'; test_requestasync_conditional_ensuredeclared checks for exact string 'var status = CheckStatus()'; test_checkstatusasync_conditional_ensuredeclared checks for exact 'if (AppInfoUtils.IsPackagedApp)' syntax; test_copilot_instructions_pr_note_removed che"
+      "reason": "Tests assert specific implementation details not discoverable from instruction.md alone: test_tryrequestpermissionasync_extracted checks for exact method signature 'async Task<PermissionStatus> TryRequestPermissionAsync()'; test_requestasync_conditional_ensuredeclared checks for exact string 'var status = CheckStatus()'; test_copilot_instructions_pr_note_removed checks for exact strings like 'Are you waiting for the changes in this PR to be merged?' and 'Testing-PR-Builds' and '### Opening PRs' "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly describes the exact fix: 'CheckStatusAsync() method should check permission status first, then only validate manifest declarations for packaged apps', 'RequestAsync() should also check current status first and extract the permission-requesting logic into a separate helper method (TryRequestPermissionAsync)', and names the exact API 'AppInfoUtils.IsPackagedApp'. This goes well beyond describing what's broken and prescribes the exact implementation."
+      "reason": "instruction.md explicitly states the fix: 'CheckStatusAsync() method should check permission status first, then only validate manifest declarations for packaged apps', 'RequestAsync() should also check current status first and extract the permission-requesting logic into a separate helper method (TryRequestPermissionAsync)', and 'use AppInfoUtils.IsPackagedApp'. This tells the agent exactly WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_tryrequestpermissionasync_extracted requires a method named exactly 'async Task<PermissionStatus> TryRequestPermissionAsync()', test_requestasync_conditional_ensuredeclared requires exactly 'var status = CheckStatus()', test_checkstatusasync_conditional_ensuredeclared requires exact string 'if (AppInfoUtils.IsPackagedApp)'. An alternative correct fix using a different helper name, different variable name, or different conditional structure "
+      "reason": "Tests assert gold-specific implementation details: test_tryrequestpermissionasync_extracted requires exact method name 'TryRequestPermissionAsync'; test_requestasync_conditional_ensuredeclared requires exact string 'var status = CheckStatus()' (an alternative could use 'var currentStatus = CheckStatus()'); test_checkstatusasync_conditional_ensuredeclared requires exact string 'if (AppInfoUtils.IsPackagedApp)' (alternative could use 'if (!AppInfoUtils.IsPackagedApp) return ...' pattern). A correc"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test (test_microphone_uses_packaged_check, test_checkstatusasync_conditional_ensuredeclared, test_requestasync_conditional_ensuredeclared, test_tryrequestpermissionasync_extracted, test_copilot_instructions_pr_note_removed, test_skill_md_pr_note_removed, test_example_md_root_cause_preserved) exclusively uses string matching on file contents (e.g., 'if X not in content: sys.exit(1)'). No test compiles, runs, or executes the actual code to verify behavior."
+      "reason": "Every fail-to-pass test (test_microphone_uses_packaged_check, test_checkstatusasync_conditional_ensuredeclared, test_requestasync_conditional_ensuredeclared, test_tryrequestpermissionasync_extracted, test_copilot_instructions_pr_note_removed, test_skill_md_opening_prs_removed, test_example_md_root_cause_retained) reads file content and checks for string presence/absence. No test compiles, runs, or executes the code to verify behavior. Even test_permissions_file_compiles only counts braces and ch"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings like 'AppInfoUtils.IsPackagedApp', 'TryRequestPermissionAsync', and removal of stale notes that don't exist in the base commit. A stub or no-op would not pass since the base file lacks these patterns."
+      "reason": "The base repo does not contain 'AppInfoUtils.IsPackagedApp' in the Permissions file or have TryRequestPermissionAsync extracted, so a stub/no-change would fail these tests. The config file tests check for removal of specific strings that exist in the base, so doing nothing would also fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: conditional EnsureDeclared for packaged apps in both CheckStatusAsync and RequestAsync, TryRequestPermissionAsync extraction, removal of stale PR notes from config files, and preservation of Root Cause section."
+      "reason": "All behaviors described in instruction.md are tested: conditional EnsureDeclared in CheckStatusAsync and RequestAsync, TryRequestPermissionAsync extraction, IsPackagedApp usage, removal of stale PR notes from config files, and retention of Root Cause section in complete-example.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with descriptive function names and docstrings explaining each test's purpose."
+      "reason": "Tests are well-structured with descriptive names, docstrings, and clear grouping into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and config file changes, not structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and method names in instruction.md and tests are consistent and correct."
+      "reason": "File paths, variable names, method names, and commands in the instruction and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file ('Permissions.windows.cs'), exact method names to modify ('CheckStatusAsync', 'RequestAsync'), exact helper to create ('TryRequestPermissionAsync'), and exact API to use ('AppInfoUtils.IsPackagedApp'). It also specifies the exact order of operations (check status first, then validate for packaged apps). This is implementation-level guidance, not just bug description."
+      "reason": "instruction.md names exact method names to create (TryRequestPermissionAsync), exact API to use (AppInfoUtils.IsPackagedApp), exact methods to modify (CheckStatusAsync, RequestAsync), and describes the exact code structure changes. This goes well beyond identifying the buggy file/area."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config changes are localized removals of specific sections/notes from copilot instruction files, not full-file rewrites, and don't contradict other files."
+      "reason": "The config file changes (copilot-instructions.md, SKILL.md, complete-example.md) are localized removals of specific sections/notes, not full-file rewrites, and are consistent with the gold patch."
     }
   },
   "tier_a_fails": [

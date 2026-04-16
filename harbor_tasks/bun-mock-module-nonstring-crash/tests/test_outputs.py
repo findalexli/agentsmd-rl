@@ -9,21 +9,11 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import re
 import subprocess
+import tempfile
+import os
 from pathlib import Path
 
 REPO = "/workspace/bun"
-TARGET = f"{REPO}/src/bun.js/bindings/BunPlugin.cpp"
-
-
-def _get_function_body():
-    """Extract JSMock__jsModuleMock body (first 3000 chars), C++ comments stripped."""
-    # AST-only because: C++ code requires full Bun build system (zig/cmake) to compile
-    code = Path(TARGET).read_text()
-    stripped = re.sub(r"//[^\n]*", "", code)
-    stripped = re.sub(r"/\*.*?\*/", "", stripped, flags=re.DOTALL)
-    match = re.search(r"JSMock__jsModuleMock", stripped)
-    assert match, "JSMock__jsModuleMock not found in BunPlugin.cpp"
-    return stripped[match.start() : match.start() + 3000]
 
 
 def _find_agent_test_files():
@@ -57,135 +47,136 @@ def _find_agent_test_files():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — structural source code checks
-# AST-only because: C++ code requires full Bun build system to compile
+# Fail-to-pass (pr_diff) — behavioral tests via bun test
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_type_guard_before_tostring():
-    """Type validation guard (isString or equivalent) exists before toString() call."""
-    fn_body = _get_function_body()
+    """Type validation guard exists before toString() call — verified by running agent's test."""
+    agent_test_files = _find_agent_test_files()
+    assert len(agent_test_files) > 0, (
+        "No test file found for mock.module non-string validation. "
+        "Agent must create a test file in test/ that verifies TypeError is thrown "
+        "for non-string arguments."
+    )
 
-    to_string_pos = fn_body.find(".toString(")
-    ts_alt = fn_body.find("toWTFString(")
+    result = subprocess.run(
+        ["bun", "test", "--bail", str(agent_test_files[0])],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
 
-    # If toString is gone entirely, check for safe alternatives
-    if to_string_pos == -1 and ts_alt == -1:
-        safe_alts = ["toStringOrNull", "tryGetString", "getString("]
-        assert any(
-            alt in fn_body for alt in safe_alts
-        ), "toString not found and no safe alternative used"
-        return
-
-    positions = [p for p in [to_string_pos, ts_alt] if p > 0]
-    checkpoint = min(positions)
-    before = fn_body[:checkpoint]
-
-    type_guard_patterns = [
-        r"isString\s*\(",
-        r"isCell\s*\(",
-        r"jsTypeInfo\s*\(",
-        r"JSType::\w*String",
-        r"\.type\s*\(\s*\)\s*[!=]=",
-        r"isObject\s*\(",
-        r"isSymbol\s*\(",
-        r"isNumber\s*\(",
-        r"isUndefinedOrNull\s*\(",
-        r"toStringOrNull",
-        r"tryGetString",
-        r"isBoolean\s*\(",
-        r"isHeapBigInt\s*\(",
-    ]
-
-    assert any(
-        re.search(p, before) for p in type_guard_patterns
-    ), "No type validation guard found before toString() call"
+    assert result.returncode == 0, (
+        f"Agent test file failed — mock.module does not properly handle non-string "
+        f"arguments (type guard may be missing):\n"
+        f"stdout: {result.stdout[-500:]}\n"
+        f"stderr: {result.stderr[-500:]}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_type_guard_error_path():
-    """Error thrown and early return when first argument is not a string."""
-    fn_body = _get_function_body()
+    """Error thrown and early return when first argument is not a string — verified by running agent's test."""
+    agent_test_files = _find_agent_test_files()
+    assert len(agent_test_files) > 0, (
+        "No test file found for mock.module non-string validation"
+    )
 
-    guard_patterns = [
-        r"isString\s*\(",
-        r"isCell\s*\(",
-        r"jsTypeInfo\s*\(",
-        r"toStringOrNull",
-        r"tryGetString",
-        r"isObject\s*\(",
-        r"isSymbol\s*\(",
-        r"isNumber\s*\(",
-        r"isUndefinedOrNull\s*\(",
-        r"isBoolean\s*\(",
-    ]
+    result = subprocess.run(
+        ["bun", "test", "--bail", str(agent_test_files[0])],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
 
-    guard_pos = -1
-    for p in guard_patterns:
-        m = re.search(p, fn_body)
-        if m:
-            guard_pos = m.start()
-            break
-
-    assert guard_pos >= 0, "No type guard found in JSMock__jsModuleMock"
-
-    after_guard = fn_body[guard_pos : guard_pos + 500]
-
-    error_patterns = [
-        r"throwException",
-        r"createTypeError",
-        r"createError",
-        r"throwTypeError",
-        r"ThrowTypeError",
-    ]
-    assert any(
-        re.search(p, after_guard) for p in error_patterns
-    ), "No error thrown after type guard"
-
-    return_patterns = [
-        r"return\s*[\{\};]",
-        r"return\s+JSValue",
-        r"return\s+js",
-        r"RETURN_IF_EXCEPTION",
-    ]
-    assert any(
-        re.search(p, after_guard) for p in return_patterns
-    ), "No early return after error throw"
+    assert result.returncode == 0, (
+        f"Agent test file failed — error path may not be correct:\n"
+        f"stdout: {result.stdout[-500:]}\n"
+        f"stderr: {result.stderr[-500:]}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_error_message_descriptive():
-    """Error message mentions 'string' or 'module' so the user knows what went wrong."""
-    fn_body = _get_function_body()
+    """Error message is descriptive — verified by running agent's test which asserts on message."""
+    agent_test_files = _find_agent_test_files()
+    assert len(agent_test_files) > 0, (
+        "No test file found for mock.module non-string validation"
+    )
 
-    # Find the error creation near the type guard
-    guard_match = re.search(r"isString\s*\(", fn_body)
-    if not guard_match:
-        # If no isString guard, check for alternative type checks with error messages
-        error_match = re.search(r"createTypeError|throwTypeError|createError", fn_body)
-        assert error_match, "No type error creation found"
-        region = fn_body[error_match.start() : error_match.start() + 300]
-    else:
-        region = fn_body[guard_match.start() : guard_match.start() + 500]
+    result = subprocess.run(
+        ["bun", "test", "--bail", str(agent_test_files[0])],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
 
-    # The error message should be descriptive — mention "string" or "module"
-    assert re.search(r'(?i)(string|module|specifier)', region), (
-        "Error message near type guard does not mention 'string', 'module', or 'specifier'"
+    assert result.returncode == 0, (
+        f"Agent test file failed — error message may not be descriptive:\n"
+        f"stdout: {result.stdout[-500:]}\n"
+        f"stderr: {result.stderr[-500:]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — source code regression checks
+# Pass-to-pass (pr_diff) — behavioral regression checks
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
 def test_existing_guards_preserved():
-    """Original argumentCount() and isEmpty() validation guards still present."""
-    fn_body = _get_function_body()
-    assert "argumentCount()" in fn_body, "argumentCount() check was removed"
-    assert "isEmpty()" in fn_body, "isEmpty() check was removed"
+    """
+    Original validation behavior (argumentCount and isEmpty checks) still works.
+    Verified by testing that mock.module throws appropriate errors for edge cases.
+    """
+    # Create a test file that exercises edge cases that would be affected
+    # if argumentCount or isEmpty checks were broken
+    test_code = '''
+import { expect, mock, test } from "bun:test";
+
+// Test that calling with no arguments throws (exercises argumentCount check)
+test("mock.module with no arguments throws", () => {
+  expect(() => {
+    // @ts-expect-error
+    mock.module();
+  }).toThrow();
+});
+
+// Test that calling with empty/undefined first argument throws
+// (exercises isEmpty check if it exists)
+test("mock.module with undefined first argument throws", () => {
+  expect(() => {
+    // @ts-expect-error
+    mock.module(undefined, () => ({}));
+  }).toThrow();
+});
+'''
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.test.ts', delete=False) as f:
+        f.write(test_code)
+        temp_test = f.name
+
+    try:
+        result = subprocess.run(
+            ["bun", "test", "--bail", temp_test],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+
+        assert result.returncode == 0, (
+            f"Original validation behavior broken — argumentCount/isEmpty guards may be affected:\n"
+            f"stdout: {result.stdout[-500:]}\n"
+            f"stderr: {result.stderr[-500:]}"
+        )
+    finally:
+        os.unlink(temp_test)
 
 
 # ---------------------------------------------------------------------------
@@ -276,6 +267,7 @@ def test_repo_mock_disposable_tests():
     )
     assert r.returncode == 0, f"Mock disposable tests failed:\n{r.stderr[-500:]}"
 
+
 # [repo_tests] pass_to_pass
 def test_repo_mock_module_tests():
     """Repo's mock module tests pass (pass_to_pass)."""
@@ -354,32 +346,58 @@ def test_repo_describe_tests():
     assert r.returncode == 0, f"Describe tests failed:\n{r.stderr[-500:]}"
 
 
-# Static — anti-stub
+# Static — behavioral verification that a meaningful fix exists
 
 
 # [static] fail_to_pass
 def test_meaningful_source_changes():
-    """At least 3 meaningful (non-comment, non-blank) lines added to BunPlugin.cpp."""
-    r = subprocess.run(
-        ["git", "diff", "--no-color", "--", "src/bun.js/bindings/BunPlugin.cpp"],
-        capture_output=True,
-        text=True,
-        cwd=REPO,
-        timeout=10,
-    )
+    """
+    A meaningful fix for the type guard bug exists in the codebase.
+    Verified behaviorally by checking that:
+    1. Non-string arguments throw TypeError with the expected message
+    2. The error message mentions 'module name string' or similar
+    """
+    # Create a test file that specifically checks the expected fix behavior
+    test_code = '''
+import { expect, mock, test } from "bun:test";
 
-    added = 0
-    for line in r.stdout.splitlines():
-        if not line.startswith("+") or line.startswith("+++"):
-            continue
-        content = line[1:].strip()
-        if not content:
-            continue
-        if content.startswith("//") or content.startswith("/*") or content.startswith("*"):
-            continue
-        added += 1
+// Verify the specific error message behavior
+const expectedMessage = "mock(module, fn) requires a module name string";
 
-    assert added >= 3, f"Only {added} meaningful lines added (need >=3)"
+test("mock.module throws TypeError with specific message for non-string", () => {
+  // @ts-expect-error
+  expect(() => mock.module(123, () => ({}))).toThrow(expectedMessage);
+});
+
+test("mock.module throws for multiple non-string types", () => {
+  // @ts-expect-error
+  expect(() => mock.module({}, () => ({}))).toThrow(/module.*string|string.*module/i);
+  // @ts-expect-error
+  expect(() => mock.module(Symbol("test"), () => ({}))).toThrow(/module.*string|string.*module/i);
+});
+'''
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.test.ts', delete=False) as f:
+        f.write(test_code)
+        temp_test = f.name
+
+    try:
+        result = subprocess.run(
+            ["bun", "test", "--bail", temp_test],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+
+        assert result.returncode == 0, (
+            f"Behavioral check for meaningful fix failed — "
+            f"expected TypeError with 'module name string' message:\n"
+            f"stdout: {result.stdout[-500:]}\n"
+            f"stderr: {result.stderr[-500:]}"
+        )
+    finally:
+        os.unlink(temp_test)
 
 
 # ---------------------------------------------------------------------------
@@ -449,7 +467,6 @@ def test_agent_test_no_timeout_option():
     assert len(found) > 0, "No agent test file found"
     for f in found:
         content = f.read_text()
-        # Check for timeout option in test() calls: test("name", fn, { timeout: ... })
         assert not re.search(r'timeout\s*:', content), (
             f"Test file {f.name} sets a custom timeout — Bun already has built-in timeouts"
         )

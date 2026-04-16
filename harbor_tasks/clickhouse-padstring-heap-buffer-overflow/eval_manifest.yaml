@@ -1,0 +1,165 @@
+source_pr: "ClickHouse/ClickHouse#102086"
+source_original_pr: "ClickHouse/ClickHouse#101951"
+title: "Fix heap-buffer-overflow in leftPad/rightPad functions"
+type: "security_fix"
+language: "cpp"
+
+repository:
+  owner: "ClickHouse"
+  name: "ClickHouse"
+  base_commit: "37d84eba23c7b04f5b8e48b5b1742e7027cff555"
+  merge_commit: "d17f0940dc7aba89d01ed0110e04fc54e4f24ace"
+
+changes:
+  primary_file: "src/Functions/padString.cpp"
+  test_files:
+    - "tests/queries/0_stateless/04070_pad_string_asan_overflow.sql"
+    - "tests/queries/0_stateless/04070_pad_string_asan_overflow.reference"
+
+# Rubric from agent config analysis
+rubric:
+  - rule: "Use PaddedPODArray for strings that will be read with memcpySmallAllowReadWriteOverflow15"
+    weight: 0.3
+    description: "Critical memory safety requirement - PaddedPODArray provides 15 extra bytes of read padding required by ClickHouse's optimized memcpy functions"
+
+  - rule: "Prefer validateFunctionArguments() over manual argument checking"
+    weight: 0.2
+    description: "Code quality - use the helper function for consistent argument validation"
+
+  - rule: "Use chassert() for debug assertions on conditions already validated"
+    weight: 0.1
+    description: "Use chassert instead of throwing for conditions guaranteed by prior validation"
+
+  - rule: "Use C++14 digit separators for large numeric literals"
+    weight: 0.05
+    description: "Style - use 1'000'000 instead of 1000000 for readability"
+
+  - rule: "Remove unused ErrorCodes from namespace when switching to helpers"
+    weight: 0.1
+    description: "Clean up ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH when using validateFunctionArguments"
+
+  - rule: "Error messages should accurately reflect validation logic"
+    weight: 0.1
+    description: "Update error message to match actual validation (String or FixedString)"
+
+  - rule: "Explain security-critical code with comments"
+    weight: 0.15
+    description: "Document why PaddedPODArray is needed (memcpySmallAllowReadWriteOverflow15 requirement)"
+
+# Verification checks
+# Note: For C++ projects, we check the source code structure since full compilation is impractical
+checks:
+  # Fail-to-pass checks (must fail on base, pass on fix)
+  - id: test_pad_string_uses_padded_pod_array
+    type: fail_to_pass
+    origin: behavior
+    description: "Pad string storage uses PaddedPODArray<UInt8> instead of std::String"
+
+  - id: test_pad_string_initialized_with_insert
+    type: fail_to_pass
+    origin: behavior
+    description: "PaddedPODArray initialized with insert() not String assignment"
+
+  - id: test_empty_pad_string_default_space
+    type: fail_to_pass
+    origin: behavior
+    description: "Empty pad string default moved to executeImpl from PaddingChars init"
+
+  - id: test_utf8_offsets_use_size_not_length
+    type: fail_to_pass
+    origin: behavior
+    description: "UTF8 offsets use .size() not .length() for PaddedPODArray compatibility"
+
+  - id: test_append_to_uses_data_not_c_str
+    type: fail_to_pass
+    origin: behavior
+    description: "appendTo uses pad_string.data() directly without reinterpret_cast"
+
+  - id: test_insert_from_itself_for_expansion
+    type: fail_to_pass
+    origin: behavior
+    description: "Uses insertFromItself instead of String concatenation for expansion"
+
+  - id: test_argument_validation_updated
+    type: fail_to_pass
+    origin: agent_config
+    source: "code_style.md validateFunctionArguments rule"
+    description: "Uses validateFunctionArguments helper instead of manual checks"
+
+  - id: test_remove_illegal_type_error_codes
+    type: fail_to_pass
+    origin: behavior
+    description: "Removes ILLEGAL_TYPE_OF_ARGUMENT from ErrorCodes when using helper"
+
+  - id: test_use_chassert_for_column_pad_const
+    type: fail_to_pass
+    origin: agent_config
+    source: "debugging.md chassert usage"
+    description: "Uses chassert instead of throwing for validated conditions"
+
+  - id: test_error_message_updated
+    type: fail_to_pass
+    origin: behavior
+    description: "Error message mentions both String and FixedString"
+
+  - id: test_regression_test_files_created
+    type: fail_to_pass
+    origin: behavior
+    description: "Regression test prerequisites are met with the fix"
+
+  # Pass-to-pass checks (should pass on both base and fix)
+  - id: test_max_new_length_digit_separator
+    type: pass_to_pass
+    origin: style
+    description: "Uses digit separator for readability"
+
+  - id: test_num_chars_check_style
+    type: pass_to_pass
+    origin: style
+    description: "Uses explicit == 0 comparison for clarity"
+
+  - id: test_comment_about_read_padding
+    type: pass_to_pass
+    origin: documentation
+    description: "Has explanatory comment about 15 bytes of read padding"
+
+  - id: test_consistent_list_initialization
+    type: pass_to_pass
+    origin: style
+    description: "Uses consistent C++ list initialization style"
+
+  - id: test_padded_pod_array_include
+    type: pass_to_pass
+    origin: dependencies
+    description: "Includes necessary headers (<memory>, <DataTypes/IDataType.h>)"
+
+  # Repo CI tests (pass_to_pass with origin: repo_tests)
+  - id: test_no_broken_symlinks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no broken symlinks (CI style check)"
+
+  - id: test_clickhouse_test_script_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Main test script has valid Python syntax"
+
+  - id: test_pad_string_sql_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "01940_pad_string SQL test files exist"
+
+  - id: test_leftpad_fixedstring_sql_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "02986_leftpad_fixedstring SQL test files exist"
+
+  - id: test_pad_string_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "padString.cpp has valid include/namespace structure"
+
+scoring:
+  max_score: 1.0
+  threshold: 1.0  # All checks must pass
+  partial_credit: false

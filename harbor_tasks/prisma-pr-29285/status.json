@@ -1,0 +1,101 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T02:06:06.403777",
+  "total_time": 4815.72,
+  "sandbox_id": "i521bbx71o27239apozbd",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1281.46,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 816.59,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 2,
+      "notes": "Docker build passes, NOP test reward=0 (correct), Gold test reward=1 (correct). Rubric judge fails (ICR=0/2=0.00). The rubric rules from AGENTS.md (avoid barrel files, use kebab-case) are genuinely unreasonable for this task - they describe coding conventions, but the rubric judge uses extract_config_hunks() which ONLY extracts config file changes. The gold solution modifies only code files (mariadb.ts) and test files - no config files. Therefore the rubric can never pass.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2250.5
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.39,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] no_network_during_tests @ tests/test.sh:3: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 16.11,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 4,
+      "fail_count": 5
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 8438.89,
+      "at": "2026-04-14T22:19:12.995591"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1309.4,
+      "at": "2026-04-15T05:26:31.584981"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 703.54,
+      "at": "2026-04-15T13:14:50.310633"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4815.72,
+      "at": "2026-04-16T02:06:06.403777"
+    }
+  ]
+}

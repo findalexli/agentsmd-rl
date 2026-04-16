@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names both files (tcp_wrap.ts and no_deno_api_in_polyfills.ts), the TCP class export, the listen() method, EXPECTED_VIOLATIONS, the bind()/bind6() methods, and the general structure. The tests check for patterns like 'export class TCP', 'listen(backlog', 'EXPECTED_VIOLATIONS', specific file paths, and the base commit SHA \u2014 all of which are either named in or directly derivable from the instruction. The commit SHA is checked by test_repo_git_base_commit but that's a precondition ch"
+      "reason": "Instruction names both files (tcp_wrap.ts, no_deno_api_in_polyfills.ts) and the TCP class, listen() method, and EXPECTED_VIOLATIONS key that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (dead legacy server accept code path) and what should be done (remove dead code, clean up imports, update EXPECTED_VIOLATIONS) but does not specify exact lines, exact code changes, or specific implementation details of the fix."
+      "reason": "Instruction describes what is dead (legacy server accept path) and that listen()/connect should remain, without stating specific line edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests mostly check structural properties (TCP class exists, listen method exists, EXPECTED_VIOLATIONS exists, lint passes, files are tracked in git) and use flexible assertions (many grep tests accept both returncode 0 and 1). Alternative correct fixes that remove the dead code differently would still pass, as tests don't assert on specific line numbers, exact import lists, or specific internal helper function names."
+      "reason": "Tests check structural invariants (class export, listen method, EXPECTED_VIOLATIONS presence) and lint passing, which any correct dead-code removal would satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are text-based pattern matching: test_syntax_check uses 'assert \"export class TCP\" in tcp', test_repo_lint_expected_violations_count uses regex on file content, and many grep tests just check for string presence. While some tests do execute subprocesses (deno lint, tools/lint.js), many critical f2p tests like test_repo_grep_deno_listen, test_repo_grep_deno_usage_count, and test_repo_grep_expected_violations accept BOTH returncode 0 and 1, meaning they pass regardless of whether the fi"
+      "outcome": "pass",
+      "reason": "Tests execute deno lint and tools/lint.js subprocess commands, not just grepping."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Many f2p tests pass on the unmodified base commit with no changes at all. For example: test_repo_grep_deno_listen accepts both returncode 0 and 1, test_repo_grep_deno_usage_count accepts both, test_repo_grep_expected_violations accepts both, test_repo_lint_expected_violations_count accepts the entry being present or absent, test_repo_lint_with_plugin accepts returncode 0 or 1, test_repo_git_status_clean says 'Any state is valid'. The only test that truly validates the fix is test_repo_lint_js wh"
+      "outcome": "pass",
+      "reason": "deno lint with the custom plugin and tools/lint.js --js require the lint violations to be consistent with EXPECTED_VIOLATIONS, so a no-op stub would fail."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly requires: (1) dead legacy accept code removed, (2) unused imports cleaned up, (3) EXPECTED_VIOLATIONS updated to reflect tcp_wrap.ts no longer has violations, (4) client-side connect path preserved. None of these are strictly tested \u2014 no test verifies that the dead code was actually removed (grep tests accept both states), no test checks that imports were cleaned up, no test verifies EXPECTED_VIOLATIONS was updated (accepts both states), and test_repo_lint_js is pass_t"
+      "outcome": "pass",
+      "reason": "Removal of dead code and lint plugin update are both covered by tests (lint checks and EXPECTED_VIOLATIONS inspection)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, docstrings, section comments (Gates: pass_to_pass, static/repo_tests), and each test function has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are organized with section comments (Gates pass_to_pass, static vs repo_tests) and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring/cleanup, not structured data production."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in the instruction and tests appear correct with no typos."
+      "reason": "Paths and identifiers appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to modify and describes the conceptual problem (dead code in bind/bind6/listen path), but doesn't specify exact line numbers or exact code to change. Naming the files is appropriate since the task is scoped to those files."
+      "reason": "Instruction references the files by name which is necessary for the task scope and doesn't call out specific lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-editing task."
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

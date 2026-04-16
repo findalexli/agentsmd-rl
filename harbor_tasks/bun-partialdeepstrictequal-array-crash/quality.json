@@ -3,58 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file `src/js/node/assert.ts`, the function `compareBranch`, the variable `expectedCounts`, the `SafeMap.prototype.set`/`.delete` pattern, the `.$call`/`.$apply` intrinsics, and the required minimum of 3 prototype-based calls \u2014 all of which are checked by the tests. The tests also check for `SafeMap` or `Map` prototype patterns, which the instruction explicitly describes."
+      "reason": "The instruction names the file (src/js/node/assert.ts), the function (compareBranch), the SafeMap issue, the $set/$delete methods, and the prototype-based fix pattern. The tests check assert.ts existence, compareBranch function, and Map prototype call patterns \u2014 all discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly prescribes the exact fix pattern: 'Extract SafeMap.prototype.set and .delete references', 'Invoke using .$call syntax: SafeMap.prototype.set.$call(expectedCounts, key, value)', and 'You need at least 3 such prototype-based calls'. It even gives CORRECT vs WRONG examples with exact code. This tells the agent precisely WHAT to change rather than just describing the bug."
+      "reason": "The instruction's 'Root Cause' section explicitly states the fix: 'The fix requires using prototype-based method calls on SafeMap.prototype.set and SafeMap.prototype.delete... invoked with the expectedCounts instance as the receiver. Bun's JavaScript runtime uses special intrinsic syntax for these prototype calls.' This tells the agent exactly what to change and how."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific patterns: test_prototype_calls_added requires exactly `$call` or `$apply` with `expectedCounts` (>=3 occurrences); test_prototype_extraction_available requires either extracted variables or inline `SafeMap.prototype.set.$call(expectedCounts...)` patterns. An alternative correct fix that, e.g., avoided null-prototype maps entirely, or used a different variable name, or used a wrapper function, would fail these regex-based checks."
+      "reason": "test_all_four_map_patterns_present (truncated but visible in structure) and test_source_uses_prototype_calls_not_direct likely grep for specific patterns in the source code. The gold solution uses SafeMapPrototypeSet.$call and SafeMapPrototypeDelete.$call. Alternative correct fixes (e.g., using a regular Map instead of SafeMap, or wrapping SafeMap with helper functions) would likely fail these source-inspection tests."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The three core fail-to-pass tests (test_direct_buggy_calls_removed, test_prototype_calls_added, test_prototype_extraction_available) are purely source-text regex inspections \u2014 they read assert.ts and grep for patterns without executing any code. While test_null_proto_map_set_delete and test_null_proto_map_counting_pattern do execute Node subprocesses, these test a generic pattern, not the actual fixed code. The f2p tests are all text-matching."
+      "outcome": "pass",
+      "reason": "The visible f2p tests (test_null_proto_map_operations_work, test_direct_calls_fail_prototype_calls_succeed) run actual Node.js subprocesses that execute code and verify runtime behavior, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would fail: test_direct_buggy_calls_removed checks that the original buggy `expectedCounts.$set`/`.$delete` patterns are removed, and test_prototype_calls_added requires >=3 `$call/$apply(expectedCounts...)` calls to exist. A default/empty file wouldn't pass these checks."
+      "reason": "The behavioral tests execute real Map operations on null-prototype Maps and verify correctness of the algorithm. A stub or no-op implementation would not pass test_null_proto_map_operations_work which checks actual array subset matching results, or test_syntax_check which verifies the file parses correctly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) removing direct .$set/.$delete calls on expectedCounts, (2) using prototype-based .$call invocations, (3) at least 3 such calls, (4) extracting or inlining SafeMap.prototype.set/.delete. All four are tested."
+      "reason": "The instruction says partialDeepStrictEqual should work with array inputs without throwing TypeError. The tests verify the underlying fix mechanism (prototype-based Map calls on null-proto Maps) and the source code changes needed to fix this behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_syntax_check, test_direct_buggy_calls_removed, etc.), grouped by category (gates, fail-to-pass, behavioral simulation), and each has a docstring explaining its purpose."
+      "reason": "Tests are well-named (test_syntax_check, test_null_proto_map_operations_work, etc.), grouped into gates (pass_to_pass) and fix verification (fail_to_pass), and have detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a bug fix in source code, not producing structured data output."
+      "reason": "This task involves fixing a bug in a TypeScript assertion module, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames (src/js/node/assert.ts), function names (compareBranch, SafeMap), or method names ($set, $delete, $call) in the instruction."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function `compareBranch`, the exact variable `expectedCounts`, the exact file `src/js/node/assert.ts`, and gives the exact fix pattern with code examples like `SafeMap.prototype.set.$call(expectedCounts, key, value)`. This goes far beyond describing what's broken and essentially provides the solution."
+      "reason": "The instruction explicitly names the file (src/js/node/assert.ts), the function (compareBranch), the exact buggy pattern (expectedCounts.$set and expectedCounts.$delete), and the exact fix approach (SafeMap.prototype.set/delete with prototype-based calls). This goes far beyond describing the bug \u2014 it localizes and prescribes the solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

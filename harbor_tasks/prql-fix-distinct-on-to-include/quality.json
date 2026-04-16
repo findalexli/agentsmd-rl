@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific behaviors not discoverable from instruction.md: test_distinct_on_aggregate_wildcard uses query 'from t1\\ngroup {id, name} (take 1)\\naggregate {c = count this}' which is not mentioned in the instruction. The instruction only gives one example with 'from tab1\\ngroup col1 (take 1)\\nderive {x = col1 + 1}'. The CLAUDE.md update requirements are vague ('update the project's CLAUDE.md to document the preferred testing approach') but tests may check for specific content. Also, the "
+      "outcome": "pass",
+      "reason": "The instruction provides the exact PRQL queries and describes expected behavior (no NULL, full column projection) that the tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'The SQL generator should emit `*` (wildcard) instead of `NULL` in the `SELECT` list when the projection for a `DISTINCT ON` subquery is empty or contains only a `NULL` placeholder.' This tells the agent exactly what to change (replace NULL with *) and under what condition (empty projection or NULL placeholder in DISTINCT ON context)."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug symptom (NULL instead of columns) without naming the file gen_query.rs or the exact fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check behavioral output (DISTINCT ON projection should be *, not NULL) via the compiled SQL output. They don't assert on specific variable names, line positions, or internal helper functions. Alternative correct fixes (e.g., fixing the projection earlier in the pipeline, or using a different approach to detect and replace NULL) would all produce the same SQL output and pass."
+      "reason": "Behavioral f2p tests check that projection is '*' and not 'NULL', which any correct fix producing wildcard projection would satisfy; repo tests are pre-existing."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_distinct_on_wildcard, test_distinct_on_aggregate_wildcard) actually compile PRQL queries using the built prqlc binary and inspect the SQL output. The pass-to-pass tests run cargo build/check/test/clippy/fmt. All tests execute code rather than just reading file contents."
+      "reason": "Tests build prqlc, execute it as a subprocess with PRQL input, and inspect the produced SQL."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests compile actual PRQL queries and assert that the output contains '* ' after DISTINCT ON and does not contain NULL. A stub or default implementation would produce the buggy 'NULL' output and fail these assertions."
+      "reason": "test_distinct_on_wildcard and test_distinct_on_aggregate_wildcard require actual compilation producing '*' in DISTINCT ON output \u2014 a stub cannot satisfy this."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly requires updating CLAUDE.md to 'document the preferred testing approach for this kind of bug fix', but the test file has empty/commented-out config_edit tests (the two '[config_edit] fail_to_pass' sections have no test functions). This required behavior is not actually tested."
+      "outcome": "pass",
+      "reason": "Both query patterns from instruction.md are covered by separate f2p tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass, Fail-to-pass/pr_diff, Config-edit), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are separated into Gates, Fail-to-pass, and Config-edit sections with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces SQL output, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task produces SQL text, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in paths or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify: 'prqlc/prqlc/src/sql/gen_query.rs \u2014 the SQL code generation pipeline where DISTINCT ON and projections are assembled'. While pointing to the right file area, it also describes the exact fix (replace NULL with *), which combined makes the localization trivial."
+      "outcome": "pass",
+      "reason": "Instruction doesn't name specific files or lines; only describes the domain ('PRQL compiler', 'DISTINCT ON SQL generation')."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold CLAUDE.md diff is a localized addition of a 'Test Strategy' section (~30 lines) inserted at a logical point in the existing file, not a full-file rewrite, and doesn't contradict other files."
+      "outcome": "not_applicable",
+      "reason": "No active config-edit tests; the two config_edit test slots are empty."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

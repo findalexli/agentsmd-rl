@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: `resolveAuthorForPR` function, `prAuthorCache` cache, `prMatch` variable name, `commitMatch` variable name, PR regex pattern `[#(\\d+)]`, the GitHub API endpoint `api.github.com/repos/TanStack/router/pulls/{prNumber}`, `by @${username}` format, `startsWith('- ')` check, the script path `scripts/create-github-release.mjs`, and ESLint/Prettier constraints."
+      "reason": "The instruction mentions the script path (scripts/create-github-release.mjs), the function appendAuthors, the GitHub API endpoint for pulls, the PR pattern format ([#6891](url)), caching of PR lookups, PR resolution before commit hash resolution, the 'by @username' format, the '- ' prefix check, and ESLint/Prettier constraints. All specific strings and concepts tested (resolveAuthorForPR, prAuthorCache, prMatch before commitMatch, api.github.com/pulls endpoint, PR regex pattern, startsWith('- ')"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details: exact function name `resolveAuthorForPR`, exact cache name `prAuthorCache`, exact variable name `prMatch`, exact regex pattern `[#(\\d+)]`, exact resolution order (PR before commit), and the exact API endpoint. This leaves virtually no reasoning for the developer about WHAT to change \u2014 it's a specification of the exact solution."
+      "reason": "The instruction explicitly specifies implementation details: use a function to resolve PR authors, cache with a PR author cache, match PR patterns with regex like ([#6891](url)), attempt PR resolution before commit hash resolution, and use the specific GitHub API endpoint. It essentially prescribes the exact solution architecture rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_resolve_author_for_pr_function_exists checks for literal string 'resolveAuthorForPR', test_pr_author_cache_exists checks for 'prAuthorCache', test_pr_resolution_before_commit checks for 'prMatch' appearing before 'commitMatch' by string position. An alternative correct fix using different variable/function names (e.g., `getPRAuthor`, `prCache`, `pullRequestMatch`) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific variable names: 'resolveAuthorForPR' (test_resolve_author_for_pr_function_exists), 'prAuthorCache' (test_pr_author_cache_exists), 'prMatch' before 'commitMatch' (test_pr_resolution_before_commit). An alternative correct fix using different names like 'fetchPRAuthor', 'prCache', or 'pullRequestMatch' would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail-to-pass test is purely text-matching: `assert 'resolveAuthorForPR' in content`, `assert 'prAuthorCache' in content`, string position checks for 'prMatch' vs 'commitMatch', regex pattern matching in file content. Only test_script_syntax_valid and the ESLint/Prettier tests actually execute the code. No test calls the functions or verifies actual changelog transformation behavior."
+      "reason": "The fail-to-pass tests (test_resolve_author_for_pr_function_exists, test_pr_pattern_matching, test_pr_author_cache_exists, test_pr_resolution_before_commit, test_github_api_pr_endpoint, test_pr_match_regex_correctness) are ALL string-matching tests using 'assert X in content' on the file contents. None of them import, call, or execute the JavaScript code to verify actual behavior. Only the pass-to-pass tests (syntax check, eslint, prettier) execute the code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the required strings as comments (e.g., `// resolveAuthorForPR prAuthorCache prMatch` with the regex pattern and API URL) without any functional implementation would pass all fail-to-pass tests since they only check for string presence and ordering in the file content."
+      "reason": "A stub implementation that simply adds the strings 'resolveAuthorForPR', 'prAuthorCache', 'prMatch', 'commitMatch', 'api.github.com', 'pulls', and the regex pattern as comments in the file would pass all fail-to-pass tests without implementing any actual functionality, since every f2p test only checks for string presence in the file content."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that PR entries get author attribution and dependency updates continue to work, but no test actually verifies changelog transformation behavior \u2014 e.g., no test checks that a line like '- Fixed navigation ([#6891](url))' gets ' by @username' appended after the fix."
+      "outcome": "pass",
+      "reason": "All five implementation requirements from the instruction (resolve PR authors, cache PR lookups, match PR patterns, PR before commit resolution, consistent author format) are tested, along with the constraints (ESLint, Prettier, non-list-item passthrough)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_resolve_author_for_pr_function_exists, test_pr_resolution_before_commit), have docstrings explaining purpose, and include a module-level docstring explaining the bug context."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, including fail_to_pass/pass_to_pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (`scripts/create-github-release.mjs`), exact function names to create (`resolveAuthorForPR`), exact variable names (`prMatch`, `commitMatch`, `prAuthorCache`), exact regex pattern, and exact API endpoint \u2014 this goes well beyond identifying the buggy file and constitutes detailed solution specification."
+      "reason": "The instruction names the exact function (appendAuthors), specifies the exact file (scripts/create-github-release.mjs), describes the exact pattern formats to match, the exact API endpoint URL, and the exact resolution order (PR before commit). This goes well beyond identifying what's broken and essentially provides a detailed implementation specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

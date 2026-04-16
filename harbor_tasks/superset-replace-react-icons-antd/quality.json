@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all file paths (package.json, TableChart.tsx, TableRenderers.tsx), specific icon names (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined), import sources (@ant-design/icons, react-icons/fa), and the dependency key (react-icons). The 'What the Tests Check' section explicitly lists each assertion target. The one specific string `sortingOrder[key] === 'asc' ? CaretUpOutlined : CaretDownOutlined` asserted in test_pivot_table_uses_correct_icons is not explicitly stated i"
+      "outcome": "fail",
+      "reason": "The test test_pivot_table_uses_correct_icons asserts the exact string \"sortingOrder[key] === 'asc' ? CaretUpOutlined : CaretDownOutlined\" must appear in the file. This specific code pattern/expression is not mentioned anywhere in instruction.md, making it undiscoverable from the instruction alone."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement icons (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined from @ant-design/icons), the exact files to change, and exactly what imports to add/remove. This is essentially telling the agent the complete fix rather than just describing what's broken."
+      "reason": "instruction.md explicitly states the exact replacement icons (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined from @ant-design/icons), the exact files to change, and that JSX like <ColumnHeightOutlined /> must be present. This is essentially the complete solution specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_pivot_table_uses_correct_icons asserts the exact string `sortingOrder[key] === 'asc' ? CaretUpOutlined : CaretDownOutlined` which is an implementation detail. An alternative correct fix could use a different variable name, a switch statement, an if/else block, or React.createElement syntax, all of which would be functionally correct but fail this test. Similarly, tests check for exact JSX patterns like `<ColumnHeightOutlined />` with specific whitespace."
+      "reason": "test_pivot_table_uses_correct_icons asserts the exact string \"sortingOrder[key] === 'asc' ? CaretUpOutlined : CaretDownOutlined\" must be in the file. An alternative correct implementation using e.g. an if/else block, a mapping object, or different variable naming would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_table_package_no_react_icons through test_pivot_table_uses_correct_icons) are almost entirely text-matching: `assert 'string' in open(path).read()`. While there are 3 pass-to-pass tests that run subprocess builds and unit tests, the 8 f2p tests are pure string-in-file checks with no code execution or import."
+      "reason": "The f2p tests (test_table_chart_no_react_icons_import, test_table_chart_imports_antd_icons, test_table_chart_uses_correct_icons, etc.) are purely text-matching via read_text() and string 'in' checks. While there are pass-to-pass tests that run npm test/build, the core f2p tests are entirely text-based assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for the absence of react-icons references AND presence of @ant-design/icons imports. A stub/no-op implementation (leaving files unchanged) would fail because the original files contain react-icons imports. The tests require actual modifications to the source files."
+      "reason": "The f2p tests check for removal of react-icons references AND presence of new @ant-design/icons imports. A stub/no-op implementation (leaving files unchanged) would fail because the original files contain react-icons imports. The tests require actual modification of the source files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (removing react-icons from both package.json files, replacing imports, using correct antd icons, passing build and unit tests) are tested."
+      "reason": "All behaviors described in instruction.md (removing react-icons from package.json, removing react-icons/fa imports, adding @ant-design/icons imports, using the three specific icon components) are tested. The pass-to-pass tests verify builds and unit tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_table_package_no_react_icons, test_pivot_table_imports_antd_icons, etc.), docstrings, clear comments separating f2p from pass-to-pass tests, and logical grouping by plugin."
+      "reason": "Tests are well-named (test_table_package_no_react_icons, test_pivot_table_imports_antd_icons, etc.), have docstrings with (f2p) and (pass_to_pass) annotations, and are logically grouped by plugin and concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output; it modifies source code and package.json files."
+      "reason": "The task involves modifying source code and package.json files, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, icon names, package names, and commands in the instruction match those in the tests and solution without typos."
+      "reason": "File paths, icon names, package names, and commands in instruction.md are all correct and consistent with the test files and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files (src/TableChart.tsx, src/react-pivottable/TableRenderers.tsx), exact import replacements (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined from @ant-design/icons), and exact symbols to remove (FaSort from react-icons/fa). This goes well beyond describing the problem and essentially specifies the complete solution."
+      "reason": "instruction.md names exact files (src/TableChart.tsx, src/react-pivottable/TableRenderers.tsx), exact icon component names to use (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined), and specifies the exact JSX patterns expected. This goes beyond identifying the buggy area and essentially provides the complete solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes: removing one dependency line from each package.json and replacing import statements in two source files. No full-file rewrites."
+      "reason": "The gold patch makes localized changes: removing single lines from package.json dependencies and replacing import blocks in two source files. No full-file rewrites or contradictions with other files."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

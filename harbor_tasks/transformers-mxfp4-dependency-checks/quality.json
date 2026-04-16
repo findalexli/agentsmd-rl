@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_validate_environment_not_stub checks for >= 80 AST nodes in validate_environment; test_repo_mxfp4_config_unittest/test_repo_mxfp4_quantizer_test/test_repo_mxfp4_integration_test run specific test classes like Mxfp4ConfigTest (instruction only mentions Mxfp4QuantizerTest and Mxfp4IntegrationTest); test_ruff_lint checks ruff linting rules not mentioned in instruction; test_repo_imports checks that is_triton_availabl"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_validate_environment_not_stub checks for >= 80 AST nodes (instruction mentions this), but test_repo_imports checks that is_triton_available and is_kernels_available are importable from the module (instruction mentions this). However, test_repo_mxfp4_quantizer_test and test_repo_mxfp4_integration_test run repo tests whose specific assertions are not described in instruction.md. Also, the test patches mod"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (combined boolean, combined error messages) and what behavior is needed (separate checks, specific messages), but does not specify exact code changes, line numbers, or variable names to use."
+      "reason": "The instruction describes the problem (combined boolean, generic error messages) and desired behavior (separate checks, specific messages) but does not prescribe exact code changes, variable names, or line numbers. A developer must reason about how to split the logic."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_validate_environment_not_stub asserts node_count >= 80 AST nodes, which is calibrated to the gold solution's structure. An alternative correct implementation that is more concise (e.g., using a helper function or a loop over dependencies) could have fewer AST nodes and fail this test. Additionally, test_repo_imports asserts that is_triton_available and is_kernels_available are importable directly from the module, constraining import structure."
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: warning text contains 'triton' or 'kernel', doesn't contain 'triton and kernels', ValueError is raised with correct content, AST node count >= 80. Alternative implementations using different variable names (e.g., 'triton_ok' instead of 'triton_available'), different message wording, or different control flow would all pass. The tests patch module-level is_triton_available/is_kernels_available which are required to exist anyway."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Core fail-to-pass tests (test_warning_triton_missing_mentions_triton, test_error_kernels_missing_raises_for_kernels, etc.) instantiate the quantizer, call validate_environment(), and inspect runtime behavior (warnings collected via logging handler, ValueError exceptions raised). Tests also run subprocess commands for imports and unittest execution."
+      "reason": "Tests actually instantiate Mxfp4HfQuantizer, call validate_environment(), capture warnings via logging handlers, check for raised ValueError exceptions, run subprocess imports, and execute repo unit tests. The AST check (test_validate_environment_not_stub) does inspect source text but also parses and walks the AST. The majority of tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub validate_environment (pass/return None) would not raise ValueError in the non-pre_quantized tests, and would not produce warning messages in the pre_quantized tests. The f2p tests require specific behaviors that cannot be satisfied by default/empty implementations."
+      "reason": "The fail-to-pass tests (test_warning_triton_missing_mentions_triton, test_warning_kernels_missing_mentions_kernels, test_error_triton_missing_raises_for_triton, test_error_kernels_missing_raises_for_kernels) mock one dependency as available and one as missing, then assert specific behavior. A stub that does nothing would not produce the required warnings or raise ValueError. A stub returning None would not set dequantize=True or produce warning messages containing 'triton' or 'kernel'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: specific warnings for each missing dependency (triton/kernels), no combined 'triton and kernels' phrase, dequantize set to True for pre_quantized, ValueError raised for non-pre_quantized, and installation instructions (implicitly through message content checks)."
+      "reason": "All requirements from instruction.md are tested: separate warnings for triton/kernels when pre_quantized=True, separate ValueErrors when pre_quantized=False, no combined 'triton and kernels' message, dequantize set to True, installation instructions (implicitly via message content checks), AST node count >= 80, module-level imports, ruff linting, and repo test suites."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python code behavior, not producing structured data output."
+      "reason": "This task modifies Python source code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file to modify (quantizer_mxfp4.py) and the method (validate_environment), which is appropriate since it's a single-file task. It references quantizer_higgs.py as a pattern example but doesn't give exact line numbers or code to write."
+      "reason": "The instruction names the file to modify (quantizer_mxfp4.py) which is obvious from the task domain, and mentions the method name (validate_environment) and the pattern to follow (quantizer_higgs.py), but doesn't specify exact line numbers or exact code to write. The file and method are naturally scoped to the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,11 +47,10 @@
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
+    "behavior_in_task_description"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

@@ -122,6 +122,48 @@ distractors:
   source:
     path: AGENTS.md
     lines: 24-35
+- rule: Always prefer createStore over multiple createSignal calls
+  source:
+    path: /workspace/repo/packages/app/AGENTS.md
+    lines: 13-15
+  source_text: '## SolidJS
+
+
+    - Always prefer `createStore` over multiple `createSignal` calls'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies specifically to the SolidJS web application in
+    packages/app. The gold diff modifies a terminal UI (TUI) inside packages/opencode
+    which happens to also use SolidJS, but where complex state management like createStore
+    may be overkill or structurally inappropriate. Applying it would unnecessarily
+    refactor valid CLI code.
+  severity: medium
+- rule: opencode Effect rules
+  source:
+    path: /workspace/repo/packages/opencode/AGENTS.md
+    lines: 12-21
+  source_text: '# opencode Effect rules
+
+
+    Use these rules when writing or migrating Effect code.
+
+
+    See `specs/effect-migration.md` for the compact pattern reference and examples.
+
+
+    ## Core
+
+
+    - Use `Effect.gen(function* () { ... })` for composition.
+
+    - Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.'
+  collision_type: architecture_boundary
+  why_distracting: These rules govern the backend/core logic of packages/opencode
+    which is built on the Effect framework. The gold diff is modifying SolidJS frontend
+    TUI components within the same package. Attempting to mix Effect patterns (like
+    Effect.gen or Effect services) into synchronous UI components would break the
+    UI architecture.
+  severity: high
 hierarchy_analysis: The task relies on the root `AGENTS.md` for general TypeScript/SolidJS
   style guidelines. The deeper `packages/opencode/AGENTS.md` contains Effect and Database
   rules which are irrelevant to this UI/TUI task, requiring the agent to filter out
@@ -135,4 +177,64 @@ rubric:
     replaces it with an early return (`return` inside the `if` block, followed by
     `dialog.clear()` outside), directly following the 'Control Flow' style guide.
   category: style
+  verification: llm_judge
+- rule: Prefer single word variable names where possible
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 27-28
+  source_text: '- Use single word names by default for new locals, params, and helper
+    functions.
+
+    - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
+  evidence: 'The new file subagent-footer.tsx uses single word locals extensively:
+    route, sync, messages, usage, msg, last, tokens, model, pct, cost, money, hover.'
+  category: Naming
+  verification: llm_judge
+- rule: Prefer functional array methods over for loops
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 17-17
+  source_text: '- Prefer functional array methods (flatMap, filter, map) over for
+    loops; use type guards on filter to maintain type inference downstream'
+  evidence: The new code utilizes findLast(), find(), reduce(), and filter(Boolean)
+    on arrays rather than using manual for loops.
+  category: Style
+  verification: llm_judge
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 55-57
+  source_text: '### Destructuring
+
+
+    Avoid unnecessary destructuring. Use dot notation to preserve context.'
+  evidence: Object properties are accessed via dot notation (e.g., last.tokens.input,
+    model.limit.context, sync.data.provider) instead of destructuring them into local
+    variables.
+  category: Style
+  verification: llm_judge
+- rule: Prefer const over let. Use ternaries or early returns instead of reassignment.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 68-70
+  source_text: '### Variables
+
+
+    Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.'
+  evidence: All local variables are declared with const. Conditional assignments (like
+    pct) are done via ternaries, and conditional state exits use early returns (if
+    (!last) return).
+  category: Variables
+  verification: llm_judge
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 82-84
+  source_text: '### Control Flow
+
+
+    Avoid `else` statements. Prefer early returns.'
+  evidence: An explicit else block was removed in dialog-model.tsx and refactored
+    into a return within the preceding if block.
+  category: Control Flow
   verification: llm_judge

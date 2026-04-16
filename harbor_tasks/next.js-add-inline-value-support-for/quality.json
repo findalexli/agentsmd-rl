@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: MAX_INLINE_VALUE_SIZE=8 in constants.rs, EntryValue::Inline variant in static_sorted_file_builder.rs, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN=8 in static_sorted_file.rs, handle_key_match returning LookupValue::Slice with slice_from_subslice, entry_val_size function, put_inline method with extend_from_slice/copy_from_slice, slice_from_subslice in arc_slice.rs, and README update. All file paths, constant names, method names, and values are "
+      "reason": "All test-asserted specifics \u2014 file paths (constants.rs, static_sorted_file.rs, static_sorted_file_builder.rs, arc_slice.rs), constant names (MAX_INLINE_VALUE_SIZE, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN), function names (entry_val_size, handle_key_match, put_inline, slice_from_subslice), enum variant (EntryValue::Inline), values (8), and method behaviors (extend_from_slice/copy_from_slice, LookupValue::Slice) \u2014 are all explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides extremely specific implementation details: exact constant names and values (MAX_INLINE_VALUE_SIZE=8, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN=8), exact method names (put_inline, slice_from_subslice, entry_val_size), exact encoding formula (type = 8 + value_length), exact method calls to use (extend_from_slice or copy_from_slice), and exact return types (LookupValue::Slice). This goes far beyond describing what's broken and essentially dictates the solution."
+      "reason": "The instruction explicitly specifies exact constant names and values (MAX_INLINE_VALUE_SIZE = 8, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN = 8), exact method names (put_inline, slice_from_subslice, entry_val_size), exact enum variant names (EntryValue::Inline), exact return types (LookupValue::Slice), and even implementation details (type = 8 + value_length, use extend_from_slice or copy_from_slice). This tells the agent exactly WHAT to write rather than describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact constant names (MAX_INLINE_VALUE_SIZE, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN), exact method names (put_inline, entry_val_size, slice_from_subslice), and specific string patterns like 'extend_from_slice' or 'copy_from_slice' in put_inline body. An alternative correct implementation using different names (e.g., INLINE_THRESHOLD, write_inline, inline_value_size) would fail these regex-based tests."
+      "reason": "Tests use regex to assert exact constant names (MAX_INLINE_VALUE_SIZE, KEY_BLOCK_ENTRY_TYPE_INLINE_MIN), exact method names (put_inline, slice_from_subslice, entry_val_size), exact enum variant name (Inline in EntryValue), and specific string patterns (extend_from_slice/copy_from_slice, INLINE_MIN). An alternative correct implementation using different naming conventions (e.g., INLINE_VALUE_MAX_SIZE, write_inline, create_subslice) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_inline_value_size_constant, test_entry_value_has_inline_variant, test_inline_entry_type_constant, test_handle_key_match_returns_slice_for_inline, test_entry_val_size_function, test_put_inline_method, test_slice_from_subslice_method) are ALL text-matching via regex on source files. They use patterns like re.search on file content, not importing/calling/executing the code. Only the pass-to-pass tests (cargo check/clippy/test) actually execute code."
+      "reason": "The fail-to-pass tests (test_inline_value_size_constant, test_entry_value_has_inline_variant, test_inline_entry_type_constant, test_handle_key_match_returns_slice_for_inline, test_entry_val_size_function, test_put_inline_method, test_slice_from_subslice_method) are ALL regex-based text searches on source files \u2014 none of them import, call, or execute the code. They check for string patterns like 'slice_from_subslice' and 'extend_from_slice' in source text. The pass-to-pass tests do compile/test t"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Several f2p tests can be passed by adding stub/empty implementations. For example, test_slice_from_subslice_method only checks that a function signature 'fn slice_from_subslice' exists - a stub `fn slice_from_subslice(&self, _: &[T]) -> ArcSlice<T> { todo!() }` would pass the regex. Similarly test_entry_val_size_function only checks the function exists and contains 'INLINE_MIN' or '>= 8' - a function body with just a comment containing those strings would pass."
+      "reason": "All fail-to-pass tests are text/regex checks on source files. A developer could satisfy them by adding stub functions and constants that match the regex patterns without implementing any actual inline value behavior. For example, adding 'pub const MAX_INLINE_VALUE_SIZE: usize = 8;' to constants.rs, an empty 'Inline' variant to EntryValue, and stub functions with the right names containing the searched keywords would pass all f2p tests without functional implementation \u2014 as long as cargo check/te"
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires updating the README to document inline value format, but there is no test checking the README content. The test file has commented-out stubs for config_edit fail_to_pass tests but no actual assertions about README changes."
+      "reason": "The instruction requires updating the README (documented in point 7 of Expected Behavior), but there are no tests verifying the README update \u2014 the config_edit test section is empty. Also, no behavioral test verifies that inline values are actually written and read correctly end-to-end."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Rust source code and documentation, not structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, constant names, and variable names in instruction.md and tests match correctly with no apparent typos."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact function names (handle_key_match, entry_val_size, put_inline, slice_from_subslice), exact constant names and values, and exact implementation approaches (type = 8 + value_length, use extend_from_slice). This is far beyond naming the domain area and essentially provides the complete solution design."
+      "reason": "The instruction specifies exact file locations, exact constant names and values, exact method names, exact enum variant names, and implementation details (e.g., 'type = 8 + value_length', 'using extend_from_slice or copy_from_slice'). This goes far beyond describing what's broken \u2014 it prescribes the exact solution structure down to individual method signatures."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The README edit is localized to the types 8..255 section documentation, changing two lines from 'future' placeholder to actual inline storage description. It does not contradict other files."
+      "reason": "The gold README diff is a small localized change (two lines in the existing entry type documentation section), not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [

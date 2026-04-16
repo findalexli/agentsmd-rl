@@ -83,15 +83,20 @@ def test_divide_to_patches_callable_via_alias():
 
 # [pr_diff] fail_to_pass
 def test_alias_registered_in_sys_modules():
-    """Alias module registered in sys.modules after import transformers, with __file__ set."""
+    """Alias module registered in sys.modules and accessible as a package attribute."""
     import transformers  # noqa: F401
 
     assert "transformers.image_processing_utils_fast" in sys.modules, (
         "image_processing_utils_fast not in sys.modules after import transformers"
     )
+    # The alias module must be reachable as an attribute on the transformers package
+    assert hasattr(transformers, "image_processing_utils_fast"), (
+        "image_processing_utils_fast not accessible as attribute on transformers package"
+    )
     mod = sys.modules["transformers.image_processing_utils_fast"]
-    # __file__ must be in __dict__ (not via __getattr__) to prevent circular import
-    assert "__file__" in mod.__dict__, "__file__ not directly set in module __dict__"
+    assert transformers.image_processing_utils_fast is mod, (
+        "transformers.image_processing_utils_fast attr and sys.modules entry must be the same object"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -104,8 +109,6 @@ def test_inspect_no_circular_import():
     mod = sys.modules["transformers.image_processing_utils_fast"]
     # hasattr(mod, '__file__') must not fall through to __getattr__
     # which would trigger a premature (possibly circular) import.
-    # The fix sets __file__ = None directly in __dict__, so hasattr returns True
-    # without invoking __getattr__.
     assert hasattr(mod, "__file__"), "hasattr(__file__) should be True"
     # inspect.getfile raises TypeError for __file__=None (like built-in modules) —
     # the key is that it does NOT raise ImportError from circular import.
@@ -224,26 +227,34 @@ def test_no_bare_type_ignore():
 
 
 # ---------------------------------------------------------------------------
-# Anti-stub (static)
+# Anti-stub — behavioral verification in a fresh subprocess
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_not_stub():
-    """__init__.py contains alias setup code with 'image_processing_utils_fast' as a string literal."""
-    # AST-only because: __init__.py has complex lazy loading that requires full transformers import
-    import ast
-
-    src = Path(f"{REPO}/src/transformers/__init__.py").read_text()
-    tree = ast.parse(src)
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if "image_processing_utils_fast" in node.value:
-                found = True
-                break
-    assert found, (
-        "image_processing_utils_fast not found as string literal in __init__.py AST"
+    """The image_processing_utils_fast alias provides real functionality in a fresh process."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import inspect; "
+            "from transformers.image_processing_utils_fast import BaseImageProcessorFast, divide_to_patches; "
+            "from transformers.image_processing_backends import TorchvisionBackend; "
+            # BaseImageProcessorFast must be a real class (not a dummy/stub)
+            "assert inspect.isclass(BaseImageProcessorFast); "
+            "assert BaseImageProcessorFast is TorchvisionBackend; "
+            # divide_to_patches must be a real callable function
+            "assert callable(divide_to_patches); "
+            "assert inspect.isfunction(divide_to_patches); "
+            "print('OK')"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
+    assert r.returncode == 0, f"Anti-stub behavioral check failed:\n{r.stderr}"
+
+
 # [repo_tests] pass_to_pass — CI-derived checks
 def test_repo_check_dummies():
     """Repo's check_dummies.py utility passes (pass_to_pass)."""

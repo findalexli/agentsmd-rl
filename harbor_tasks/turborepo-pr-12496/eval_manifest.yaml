@@ -1,0 +1,98 @@
+manifest_version: "1.0"
+owner: "vercel"
+repo: "turborepo"
+pr_number: 12496
+task_name: "turborepo-catalog-migration"
+task_title: "Handle Package Manager Catalogs in Migration Codemod"
+
+source:
+  base_commit: "a7c6dd92e7be2618c5377bdf6921b4a58e497fb2"
+  merge_commit: "079366b9aa12b74b3ace26f9438dd76c2698baed"
+  diff: "https://patch-diff.githubusercontent.com/raw/vercel/turborepo/pull/12496.patch"
+
+agent_config:
+  config_files:
+    - "AGENTS.md (root-level, always applies)"
+    - "skills/turborepo/SKILL.md (root-level skill for turborepo)"
+
+checks:
+  - id: "test_source_files_contain_new_functions"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "Source files contain new catalog-related functions (detectCatalog, updateCatalogVersion, CatalogInfo)"
+
+  - id: "test_update_catalog_ts_imports_yaml"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "update-catalog.ts imports yaml library for parsing catalog files"
+
+  - id: "test_get_turbo_upgrade_command_handles_catalog_info"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "get-turbo-upgrade-command.ts accepts catalogInfo parameter"
+
+  - id: "test_get_latest_version_resolves_dist_tags"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "get-latest-version.ts resolves dist-tags like latest to concrete versions"
+
+  - id: "test_migrate_index_calls_detect_catalog"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "migrate/index.ts calls detectCatalog and updateCatalogVersion"
+
+  - id: "test_yaml_dependency_added"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "yaml dependency is added to package.json"
+
+  - id: "test_npm_pkg_has_update_catalog_test"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "update-catalog.test.ts test file exists"
+
+  - id: "test_pnpm_catalog_default_fixture_exists"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "pnpm-catalog-default test fixture exists with correct catalog reference"
+
+  - id: "test_yarn_catalog_default_fixture_exists"
+    type: "fail_to_pass"
+    origin: "test_outputs"
+    description: "yarn-catalog-default test fixture exists with .yarnrc.yml"
+
+  - id: "test_repo_typescript_builds"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "TypeScript compilation succeeds after fix is applied"
+
+  - id: "test_repo_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's linter passes on the codemod package"
+
+  - id: "test_repo_format"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's formatter check passes on the codemod package"
+
+rubric:
+  - source: "AGENTS.md"
+    description: "PR titles must follow Conventional Commits format"
+    reference: "No changes to AGENTS.md were needed for this bug fix"
+
+  - source: "skills/turborepo/SKILL.md"
+    description: "Always use turbo run in package.json scripts, not shorthand turbo"
+    reference: "No changes to SKILL.md were needed for this bug fix"
+
+  - source: "packages/turbo-codemod/src/commands/migrate/steps/update-catalog.ts"
+    description: "The new update-catalog.ts file is created with catalog detection and update logic"
+    reference: "N/A - source code file not evaluated by rubric judge (only config files are checked)"
+
+  - source: "packages/turbo-codemod/package.json"
+    description: "The yaml dependency is added to package.json for parsing catalog files"
+    reference: "N/A - source code file not evaluated by rubric judge (only config files are checked)"
+
+  - source: "packages/turbo-codemod/__tests__/update-catalog.test.ts"
+    description: "A test file update-catalog.test.ts is added for the new catalog functionality"
+    reference: "N/A - source code file not evaluated by rubric judge (only config files are checked)"

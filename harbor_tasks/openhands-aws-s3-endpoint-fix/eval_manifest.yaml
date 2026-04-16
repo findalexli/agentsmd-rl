@@ -99,6 +99,23 @@ distractors:
     task is purely about modifying the backend code to support these configurations,
     not actually running cross-repo tests.
   severity: low
+- rule: Use relative imports without `enterprise.` prefix in enterprise code
+  source:
+    path: AGENTS.md
+    lines: 202-205
+  source_text: '**Import Patterns:**
+
+    - Use relative imports without `enterprise.` prefix in enterprise code
+
+    - Example: `from storage.database import a_session_maker` not `from enterprise.storage.database
+    import a_session_maker`
+
+    - This ensures code works in both OpenHands and enterprise contexts'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying core Python files in `openhands/` might misapply
+    this enterprise-specific pattern, erroneously converting valid absolute imports
+    into relative ones and breaking module resolution.
+  severity: high
 hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
   at the root level containing generic repository guidelines. There is no complex
   hierarchy or overriding rules.

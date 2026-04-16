@@ -2,59 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the two files (MountCustomComponent.svelte, MountComponents.svelte), the specific issues (onDestroy vs $effect cleanup, umount typo, $inspect debug call, !comp guard pattern), and the expected behaviors. All test assertions check for things derivable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: 'return () =>' cleanup pattern, absence of 'onDestroy', absence of module-level 'let comp', absence of '&& !comp' guard, '$inspect' removal from MountComponents.svelte, and the 'umount' -> 'unmount' typo fix. The instruction mentions 'correct spelling' and 'no debug logging' vaguely but never names '$inspect', 'onDestroy', 'umount', 'let comp', or the cleanup return pattern."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix details: 'cleanup is handled via onDestroy instead of returning a cleanup function from $effect', 'typo where the runtime type uses umount instead of unmount', 'stale $inspect(node) debug call exists in MountComponents.svelte that should be removed', and 'guarded by a module-level variable that prevents it from re-triggering'. These tell the agent exactly WHAT to change (replace onDestroy with $effect return, rename umount to unmount, remove $inspect, re"
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (custom components don't update on reload, cleanup issues, debug logging, typo) but doesn't specify exact code changes like 'replace onDestroy with $effect return' or 'remove $inspect(node)'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation patterns: 'return () =>' must be in the $effect, 'onDestroy' must not appear, '.unmount(' must be present, 'let comp' must not exist, '&& !comp' must not exist. An alternative correct fix (e.g., using a different cleanup variable name pattern, using onDestroy with proper reactive tracking, or structuring the return differently like 'return function() {') would fail these text-matching tests."
+      "reason": "Tests assert gold-specific implementation details: test_effect_returns_cleanup requires 'return () =>' pattern and '.unmount(' call; test_effect_remounts_on_rerun forbids 'let comp' variable and '&& !comp' guard. An alternative correct fix (e.g., using onDestroy with a different re-mount strategy, or using a variable named 'instance' with different guard logic) would fail these tests even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All four fail-to-pass tests (test_effect_returns_cleanup, test_effect_remounts_on_rerun, test_no_inspect_debug, test_unmount_spelling) exclusively use string/regex matching on file contents (e.g., 'assert \"onDestroy\" not in content', 'assert \"return () =>\" in content'). None import, compile, or execute the Svelte components to verify actual behavior."
+      "reason": "All fail-to-pass tests (test_effect_returns_cleanup, test_effect_remounts_on_rerun, test_no_inspect_debug, test_unmount_spelling) are purely text-based checks using regex/string matching on file contents. None import, compile, or execute the Svelte components. Every test is essentially 'assert X in open(path).read()' pattern."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific code patterns that don't exist in the original broken file. A stub or no-op would not pass because the original file contains 'onDestroy', 'umount', '$inspect', and 'let comp' which the tests assert must be absent, plus requiring 'return () =>' and '.unmount(' which don't exist in the original."
+      "outcome": "fail",
+      "reason": "A developer could write a file containing the expected strings ('return () =>', '.unmount(', 'unmount', '$effect', 'target', 'mount') without implementing correct Svelte component behavior. The tests only check for presence/absence of text patterns, not actual runtime behavior. A stub with the right keywords would pass test_not_stub and all f2p tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four explicitly required behaviors from instruction.md are tested: re-mounting on reload (test_effect_remounts_on_rerun), proper unmount cleanup (test_effect_returns_cleanup), unmount spelling fix (test_unmount_spelling), and $inspect removal (test_no_inspect_debug)."
+      "reason": "All four behaviors mentioned in instruction.md are tested: re-mounting on reload (test_effect_remounts_on_rerun), cleanup before remounting (test_effect_returns_cleanup), no debug logging (test_no_inspect_debug), and correct spelling (test_unmount_spelling)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass static, repo_tests), descriptive function names, and docstrings explaining what each test validates."
+      "reason": "Tests are well-organized with clear grouping comments (fail_to_pass, pass_to_pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Svelte component code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves fixing Svelte component code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (js/core/src/MountCustomComponent.svelte, js/core/src/MountComponents.svelte), variable names, and commands are all spelled correctly in the instruction and tests."
+      "reason": "File paths, variable names, and commands in instruction.md and tests are correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files AND describes the exact code patterns to change: 'module-level variable', 'onDestroy instead of returning a cleanup function from $effect', 'umount instead of unmount', '$inspect(node) debug call'. This goes well beyond describing what's broken and tells the agent exactly where and what to fix."
+      "reason": "instruction.md explicitly names the two exact files to investigate: 'js/core/src/MountCustomComponent.svelte' and 'js/core/src/MountComponents.svelte'. Combined with hints about 'no debug logging calls' and 'correct spelling', this significantly narrows the search space beyond what the task domain alone would suggest."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Svelte component files, not configuration edits."
+      "reason": "This is a code-only task involving Svelte component fixes, not configuration file edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

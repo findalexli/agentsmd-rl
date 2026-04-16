@@ -1,0 +1,175 @@
+task_name: "oxc-simplify-deserialize-branch-condition"
+source_pr: "oxc-project/oxc#21019"
+description: "Simplify branch condition in deserializeStr for OXC parser/linter raw transfer deserializer"
+
+# List of all checks evaluated by test_outputs.py
+checks:
+  - id: test_napi_parser_simplified_condition
+    type: fail_to_pass
+    origin: gold_patch
+    description: "NAPI parser deserializers have simplified branch condition (removed sourceIsAscii/sourceEndPos, uses end <= firstNonAsciiPos)"
+    file_paths:
+      - "napi/parser/src-js/generated/deserialize/js.js"
+      - "napi/parser/src-js/generated/deserialize/js_parent.js"
+      - "napi/parser/src-js/generated/deserialize/js_range.js"
+      - "napi/parser/src-js/generated/deserialize/js_range_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts.js"
+      - "napi/parser/src-js/generated/deserialize/ts_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range_parent.js"
+
+  - id: test_oxlint_simplified_condition
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Oxlint deserializer has simplified branch condition with sourceStartPos check"
+    file_paths:
+      - "apps/oxlint/src-js/generated/deserialize.js"
+
+  - id: test_napi_parser_first_non_ascii_calculation
+    type: pass_to_pass
+    origin: gold_patch
+    description: "NAPI parser calculates firstNonAsciiPos correctly with new pattern"
+    file_paths:
+      - "napi/parser/src-js/generated/deserialize/js.js"
+      - "napi/parser/src-js/generated/deserialize/js_parent.js"
+      - "napi/parser/src-js/generated/deserialize/js_range.js"
+      - "napi/parser/src-js/generated/deserialize/js_range_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts.js"
+      - "napi/parser/src-js/generated/deserialize/ts_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range_parent.js"
+
+  - id: test_oxlint_first_non_ascii_calculation
+    type: pass_to_pass
+    origin: gold_patch
+    description: "Oxlint calculates firstNonAsciiPos correctly with sourceStartPos offset"
+    file_paths:
+      - "apps/oxlint/src-js/generated/deserialize.js"
+
+  - id: test_raw_transfer_generator_updated
+    type: pass_to_pass
+    origin: gold_patch
+    description: "The Rust code generator in raw_transfer.rs produces simplified code"
+    file_paths:
+      - "tasks/ast_tools/src/generators/raw_transfer.rs"
+
+  - id: test_js_syntax_valid
+    type: pass_to_pass
+    origin: gold_patch
+    description: "All modified JS files have valid syntax with proper exports and functions"
+    file_paths:
+      - "napi/parser/src-js/generated/deserialize/js.js"
+      - "napi/parser/src-js/generated/deserialize/js_parent.js"
+      - "napi/parser/src-js/generated/deserialize/js_range.js"
+      - "napi/parser/src-js/generated/deserialize/js_range_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts.js"
+      - "napi/parser/src-js/generated/deserialize/ts_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range_parent.js"
+      - "apps/oxlint/src-js/generated/deserialize.js"
+
+  - id: test_napi_parser_no_sourceIsAscii_variable
+    type: fail_to_pass
+    origin: gold_patch
+    description: "NAPI parser files removed sourceIsAscii and sourceEndPos variable declarations"
+    file_paths:
+      - "napi/parser/src-js/generated/deserialize/js.js"
+      - "napi/parser/src-js/generated/deserialize/js_parent.js"
+      - "napi/parser/src-js/generated/deserialize/js_range.js"
+      - "napi/parser/src-js/generated/deserialize/js_range_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts.js"
+      - "napi/parser/src-js/generated/deserialize/ts_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range_parent.js"
+
+  - id: test_oxlint_no_sourceIsAscii_variable
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Oxlint file removed sourceIsAscii variable declaration"
+    file_paths:
+      - "apps/oxlint/src-js/generated/deserialize.js"
+
+  # ==================== CI/CD PASS-TO-PASS TESTS ====================
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust code formatting passes (cargo fmt --check)"
+    file_paths: []
+
+  - id: test_repo_cargo_check_ast_tools
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust ast_tools crate compiles (cargo check -p oxc_ast_tools)"
+    file_paths:
+      - "tasks/ast_tools/src/generators/raw_transfer.rs"
+
+  - id: test_repo_cargo_test_ast_tools
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust ast_tools tests pass (cargo test -p oxc_ast_tools)"
+    file_paths:
+      - "tasks/ast_tools/src/generators/raw_transfer.rs"
+
+  - id: test_repo_cargo_shear
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No unused Rust dependencies (cargo shear)"
+    file_paths: []
+
+  - id: test_repo_js_syntax_napi_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NAPI parser generated JS files have valid syntax"
+    file_paths:
+      - "napi/parser/src-js/generated/deserialize/js.js"
+      - "napi/parser/src-js/generated/deserialize/js_parent.js"
+      - "napi/parser/src-js/generated/deserialize/js_range.js"
+      - "napi/parser/src-js/generated/deserialize/js_range_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts.js"
+      - "napi/parser/src-js/generated/deserialize/ts_parent.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range.js"
+      - "napi/parser/src-js/generated/deserialize/ts_range_parent.js"
+
+  - id: test_repo_js_syntax_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Oxlint generated JS file has valid syntax"
+    file_paths:
+      - "apps/oxlint/src-js/generated/deserialize.js"
+
+# Agent config rules from AGENTS.md that are relevant to this task
+rubric:
+  - rule: "Avoid editing `generated` subdirectories directly - edit the generator instead"
+    weight: 1
+    type: soft
+    source:
+      file: "AGENTS.md"
+      lines: "Repository Structure section"
+
+  - rule: "When working on generated files, edit the source generator"
+    weight: 1
+    type: soft
+    source:
+      file: "AGENTS.md"
+      lines: "Repository Structure section"
+
+  - rule: "Run `just fmt` after modifications to format code"
+    weight: 1
+    type: soft
+    source:
+      file: "AGENTS.md"
+      lines: "Development Commands section"
+
+  - rule: "Run `just ready` after commits for final checks"
+    weight: 1
+    type: soft
+    source:
+      file: "AGENTS.md"
+      lines: "Development Commands section"
+
+  - rule: "Performance-critical: avoid unnecessary allocations"
+    weight: 1
+    type: soft
+    source:
+      file: "AGENTS.md"
+      lines: "Code Navigation > Conventions section"

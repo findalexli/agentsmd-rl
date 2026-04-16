@@ -1,0 +1,83 @@
+version: "1.0"
+
+source:
+  repo: apache/superset
+  pr_number: 38960
+  base_commit: 4fae5758d5ca210615686e9252a39c88f635c9fb
+  merge_commit: d4d22909cb412c3b38d5f5077b3cf8bfe96df4ff
+
+checks:
+  # Fail-to-pass tests for new functionality
+  - id: test_original_css_ref_exists
+    type: fail_to_pass
+    origin: problem_spec
+    description: originalCss ref must exist with proper TypeScript type
+
+  - id: test_handle_custom_css_change_exists
+    type: fail_to_pass
+    origin: problem_spec
+    description: handleCustomCssChange callback must exist with debounce logic and 500ms timeout
+
+  - id: test_cancel_handler_restores_css
+    type: fail_to_pass
+    origin: problem_spec
+    description: handleOnCancel must clear timers and dispatch original CSS restoration
+
+  - id: test_unmount_cleanup_exists
+    type: fail_to_pass
+    origin: problem_spec
+    description: useEffect cleanup must clear debounce timer on component unmount
+
+  - id: test_original_css_capture_on_open
+    type: fail_to_pass
+    origin: problem_spec
+    description: Original CSS must be captured when modal opens (with null check)
+
+  - id: test_dashboard_info_changed_imported
+    type: fail_to_pass
+    origin: problem_spec
+    description: dashboardInfoChanged action must be imported from dashboardInfo
+
+  - id: test_no_explicit_any_types
+    type: fail_to_pass
+    origin: agent_config
+    source: "CLAUDE.md line 32, AGENTS.md line 31"
+    description: New code must not use explicit 'any' types per TypeScript standards
+
+  - id: test_props_use_handler_not_setter
+    type: fail_to_pass
+    origin: problem_spec
+    description: onCustomCssChange prop must use debounced handler instead of direct setter
+
+  # Pass-to-pass tests for existing functionality
+  - id: test_repo_jest_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing PropertiesModal Jest tests continue to pass
+
+  - id: test_repo_dashboard_actions_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dashboard actions tests pass (covering dashboardInfoChanged)
+
+  - id: test_repo_lint_full_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full lint (oxlint + custom rules) passes on the repo
+
+  - id: test_repo_custom_rules_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Superset custom rules check passes
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation succeeds without errors
+
+  - id: test_eslint_no_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on the modified file
+
+rubric: []

@@ -1,0 +1,100 @@
+source:
+  repo: dagster-io/dagster
+  pr_number: 33362
+  base_commit: bff96c1a777298c1bf027e7eb1cedb556ddbe2ee
+  merge_commit: d70d900d13b97702997ad6af7429ad7d0d1c8321
+  owner: dagster-io
+  repo_name: dagster
+
+# Rubric rules extracted from CLAUDE.md (agent config)
+rubric:
+  - id: run_ruff_after_changes
+    description: After ANY Python code changes, run `make ruff` to format and lint code
+    source: CLAUDE.md (root-level, lines 7, 35)
+    type: soft
+
+  - id: use_uv_not_pip
+    description: Always use uv instead of pip for package management
+    source: CLAUDE.md (root-level, line 52)
+    type: soft
+
+  - id: dagster_dev_workflow
+    description: Follow the Dagster development workflow conventions
+    source: CLAUDE.md (root-level, dev_workflow.md reference)
+    type: soft
+
+checks:
+  # Fail-to-pass tests for the UTF-8 decoding fix
+  - id: test_utf8_char_split_across_two_chunks
+    type: fail_to_pass
+    origin: agent_solution
+    description: UTF-8 ellipsis character split across two chunks is correctly decoded
+
+  - id: test_utf8_char_split_across_three_chunks
+    type: fail_to_pass
+    origin: agent_solution
+    description: UTF-8 character split across three chunks is correctly decoded
+
+  - id: test_multiple_utf8_chars_split_differently
+    type: fail_to_pass
+    origin: agent_solution
+    description: Multiple UTF-8 characters with different split patterns handled correctly
+
+  - id: test_cjk_char_split_across_chunks
+    type: fail_to_pass
+    origin: agent_solution
+    description: CJK (3-byte UTF-8) characters split across chunks are correctly decoded
+
+  - id: test_incomplete_utf8_at_end_replaced
+    type: fail_to_pass
+    origin: agent_solution
+    description: Incomplete UTF-8 at stream end uses replacement character
+
+  - id: test_multiple_lines_with_split_chars
+    type: fail_to_pass
+    origin: agent_solution
+    description: Multiple log lines with split UTF-8 characters handled correctly
+
+  - id: test_continuation_line_across_chunks
+    type: fail_to_pass
+    origin: agent_solution
+    description: Line continuation without timestamp works with split UTF-8
+
+  # Pass-to-pass tests (regression checks)
+  - id: test_existing_single_chunk_behavior_unchanged
+    type: pass_to_pass
+    origin: agent_solution
+    description: Existing single-chunk log processing behavior is preserved
+
+  - id: test_repo_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing dagster-k8s unit tests for pipe log reader pass
+
+  - id: test_repo_pipe_log_reader_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: dagster-k8s pipe log reader unit tests pass
+
+  - id: test_repo_pipes_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: dagster-k8s pipes module unit tests pass
+
+  - id: test_repo_all_k8s_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All dagster-k8s unit tests pass
+
+  # Structural checks (agent config compliance)
+  - id: test_codecs_import_present
+    type: fail_to_pass
+    origin: agent_config
+    source: dagster-k8s/pipes.py lines 1-5
+    description: codecs module is imported at the top of pipes.py
+
+  - id: test_incremental_decoder_usage
+    type: fail_to_pass
+    origin: agent_config
+    source: dagster-k8s/pipes.py function _process_log_stream
+    description: codecs.getincrementaldecoder is used with proper final=False/final=True calls

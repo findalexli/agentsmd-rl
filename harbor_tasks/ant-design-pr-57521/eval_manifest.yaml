@@ -1,0 +1,115 @@
+source:
+  repo: ant-design/ant-design
+  pr_number: 57521
+  base_commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+  merge_commit: 611be598bdba1665aebd09bfedebb7001926a5c1
+
+checks:
+  # Fail-to-pass tests
+  - id: test_anchor_link_props_has_target_offset
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AnchorLinkBaseProps interface includes targetOffset prop
+
+  - id: test_anchor_link_destructures_target_offset
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AnchorLink component destructures targetOffset from props
+
+  - id: test_anchor_link_passes_target_offset_to_register
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AnchorLink passes targetOffset to registerLink
+
+  - id: test_anchor_link_passes_target_offset_to_scroll
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AnchorLink passes targetOffset to scrollTo
+
+  - id: test_ant_anchor_register_link_signature
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AntAnchor registerLink signature accepts targetOffset
+
+  - id: test_ant_anchor_scroll_to_signature
+    type: fail_to_pass
+    origin: pr_behavior
+    description: AntAnchor scrollTo signature accepts targetOffset
+
+  - id: test_anchor_has_link_target_offset_ref
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Anchor has linkTargetOffsetRef to store per-link offsets
+
+  - id: test_register_link_stores_target_offset
+    type: fail_to_pass
+    origin: pr_behavior
+    description: registerLink stores targetOffset in ref
+
+  - id: test_unregister_link_cleans_target_offset
+    type: fail_to_pass
+    origin: pr_behavior
+    description: unregisterLink cleans up targetOffset
+
+  - id: test_handle_scroll_to_uses_target_offset_param
+    type: fail_to_pass
+    origin: pr_behavior
+    description: handleScrollTo uses per-link targetOffset parameter
+
+  - id: test_get_internal_anchor_accepts_link_offsets
+    type: fail_to_pass
+    origin: pr_behavior
+    description: getInternalCurrentAnchor accepts link offset map parameter
+
+  - id: test_get_internal_anchor_uses_link_offset
+    type: fail_to_pass
+    origin: pr_behavior
+    description: getInternalCurrentAnchor uses per-link offset in comparison
+
+  # Pass-to-pass tests - static file checks
+  - id: test_anchor_exports_anchor_link
+    type: pass_to_pass
+    origin: static
+    description: Anchor module exports AnchorLink
+
+  - id: test_anchor_link_has_href_prop
+    type: pass_to_pass
+    origin: static
+    description: AnchorLinkBaseProps has href property
+
+  - id: test_anchor_link_has_title_prop
+    type: pass_to_pass
+    origin: static
+    description: AnchorLinkBaseProps has title property
+
+  - id: test_anchor_props_has_target_offset
+    type: pass_to_pass
+    origin: static
+    description: AnchorProps has global targetOffset property
+
+  # Pass-to-pass tests - repo CI commands
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on Anchor component files
+
+  - id: test_biome_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes on Anchor component files
+
+  - id: test_anchor_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Anchor component jest unit tests pass
+
+  - id: test_anchor_demo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Anchor demo snapshot tests pass
+
+rubric:
+  - id: no_config_changes_needed
+    rule: "This is a pure TypeScript code change adding targetOffset prop to AnchorLink. No configuration file updates are required since the change is internal implementation only."
+    source:
+      path: components/anchor/Anchor.tsx

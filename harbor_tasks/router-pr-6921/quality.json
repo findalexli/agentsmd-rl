@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: LoaderStaleReloadMode type, RouteLoaderObject type (implied by object-form loader syntax), defaultStaleReloadMode router option, the files to modify (route.ts, router.ts, load-matches.ts, index.ts), export requirements, and the 'background'/'blocking' mode values. The test for 'routeLoader?.handler' and 'shouldReloadInBackground' variable names are implementation details not mentioned, but these are discoverable from the described requirements (ext"
+      "reason": "The instruction names all key identifiers tested: LoaderStaleReloadMode type, RouteLoaderObject type (implied by 'object-form loader syntax'), defaultStaleReloadMode option, the four files to modify (route.ts, router.ts, load-matches.ts, index.ts), and the concepts of 'background' and 'blocking' modes. The specific variable name 'shouldReloadInBackground' and 'routeLoader?.handler' are internal implementation details not mentioned, but these are covered under solution_uniqueness_guard."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the feature to implement (staleReloadMode with background/blocking modes) and which files to modify, but does not specify exact code changes, line numbers, or specific implementation patterns. A developer must still reason about how to implement the feature."
+      "reason": "The instruction describes WHAT to implement (a new configurable option with two modes) and WHERE (listing files to modify), but does not specify exact code changes, line numbers, or specific implementation patterns like variable names or control flow."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. A correct alternative implementation could use different variable names (e.g., 'reloadInBackground', 'isBackgroundReload') or different property access patterns (e.g., 'routeLoader.handler') and would fail these tests despite being functi"
+      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', and test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. An alternative correct implementation could use different variable names (e.g., 'reloadInBg', 'isBackgroundReload') or different object access patterns (e.g., 'loader.handler' instead of 'routeLoader?.handler') and would fail these te"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely grep-based text searches (test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep). Only the pass-to-pass tests (build, type-check, unit tests) actually execute code. The f2p tests never import, call, or execute the implemented "
+      "reason": "The fail-to-pass tests are almost entirely text-matching (grep for strings in source files): test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep. Only the pass-to-pass tests (build, type-check, unit tests) execute code, but those test existing behavior, not the new f"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests can be satisfied by simply adding the right strings to files without implementing any actual logic. For example, adding a comment '// LoaderStaleReloadMode' to index.ts passes test_loader_stale_reload_mode_type_exported, adding '// routeLoader?.handler' to load-matches.ts passes test_load_matches_extracts_handler_from_object_loader, etc. No behavioral verification is performed."
+      "reason": "All fail-to-pass tests can be satisfied by simply adding the grepped strings as comments or dead code. For example, adding '// LoaderStaleReloadMode' to index.ts, '// RouteLoaderObject' to route.ts, '// defaultStaleReloadMode' to router.ts, and comments containing 'routeLoader?.handler', 'shouldReloadInBackground', and 'blocking' to load-matches.ts would pass all f2p tests without implementing any actual functionality."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that 'blocking' mode makes navigation wait for stale loader reloads to complete before resolving, and that 'background' mode shows stale data immediately. No test actually verifies this runtime behavior - only text patterns are checked. The actual blocking vs background behavioral difference is never tested."
+      "reason": "The instruction explicitly requires that 'Navigation waits for stale loader reloads to complete before resolving' in blocking mode, and that background mode 'shows stale data immediately while reloading happens asynchronously'. No test actually verifies this runtime behavior - tests only check for string presence in source files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Fail-to-Pass and Pass-to-Pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections with clear comments, descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding TypeScript type definitions and logic to a router library, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,7 +39,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify which is appropriate for a feature implementation task. It doesn't specify exact line numbers or specific code patterns to use, only the feature requirements and which files are involved."
+      "reason": "The instruction lists files to modify which is reasonable for a feature implementation task, but doesn't specify exact line numbers or implementation patterns. The files listed are the natural places one would need to modify."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

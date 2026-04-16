@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact function signatures like 'def deploy_group(\\n    organization: Optional[str],\\n    deployment: Optional[str],\\n    build_strategy: str,' and 'def build_and_push_command(\\n    agent_type_str: str,\\n    build_strategy: str,' including exact parameter ordering and newline formatting. The instruction never specifies these exact signatures or parameter orderings. Tests also assert exact variable names like 'build_strategy_enum' and 'build_strategy_option_group = make_option_group' "
+      "reason": "Tests assert exact function signature formatting (e.g., 'def deploy_group(\\n    organization: Optional[str],\\n    deployment: Optional[str],\\n    build_strategy: str,'), exact variable names like 'build_strategy_enum', exact internal function names like '_build_artifact_for_project', and exact source patterns like 'build_strategy_option_group = make_option_group'. While the instruction mentions some of these concepts, it does not specify the exact parameter ordering in signatures, the exact vari"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'using make_option_group', 'Import BuildStrategy lazily inside functions rather than at module level', 'The deploy session module uses a TYPE_CHECKING block for type hints \u2014 add BuildStrategy there', and specifies the exact variable name pattern 'BuildStrategy enum' and the exact import path 'from dagster_cloud_cli.commands.ci'. These are not descriptions of what's broken but rather specific implementation instructions."
+      "reason": "The instruction specifies exact implementation details: 'build_strategy_option_group = make_option_group' pattern, lazy import of BuildStrategy inside functions, TYPE_CHECKING block for type hints, converting CLI string to BuildStrategy enum then threading through build_artifact and build_impl. It also specifies the exact enum mapping ('python-executable' maps to 'pex' value on BuildStrategy enum). This is essentially a step-by-step implementation guide, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'build_strategy_option_group' (test_build_strategy_option_exists), exact variable 'build_strategy_enum' (test_build_strategy_enum_import, test_build_strategy_passed_from_commands), exact function parameter ordering in signatures (test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push), and exact string matching like 'build_strategy_enum = BuildStrategy(build_strategy)'. An alternative correct implementa"
+      "reason": "Tests assert on exact source code patterns like 'build_strategy_option_group = make_option_group', exact function signature formatting with specific parameter ordering ('def deploy_group(\\n    organization: Optional[str],\\n    deployment: Optional[str],\\n    build_strategy: str,'), exact variable name 'build_strategy_enum = BuildStrategy(build_strategy)', and decorator count '@build_strategy_option_group' >= 2. An alternative correct implementation using different variable names, parameter order"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests (test_build_strategy_option_exists, test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push, test_build_strategy_enum_import, test_build_artifact_signature_updated, test_build_strategy_passed_to_build_impl, test_hybrid_pex_validation, test_build_strategy_passed_to_inner_functions, test_build_strategy_type_hint_updated, test_build_strategy_passed_from_commands, test_hardcoded_docker_removed) are pure source code text matching using 'assert X in source"
+      "reason": "The vast majority of tests (test_build_strategy_option_exists, test_build_strategy_on_deploy_group, test_build_strategy_on_build_and_push, test_build_strategy_enum_import, test_build_artifact_signature_updated, test_build_strategy_passed_to_build_impl, test_hybrid_pex_validation, test_build_strategy_passed_to_inner_functions, test_build_strategy_type_hint_updated, test_build_strategy_passed_from_commands, test_hardcoded_docker_removed) are purely source-text-matching tests using patterns like `a"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings and patterns that would not be present in stub implementations. A stub returning None or empty values would not cause 'build_strategy_option_group = make_option_group' to appear in source code. The CLI help tests also require actual working CLI integration."
+      "reason": "The tests check for specific code patterns and CLI help output that wouldn't exist without actual implementation. A stub/empty implementation would not contain the required source patterns or produce CLI help with --build-strategy."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies that selecting python-executable with a Hybrid agent must raise a click.UsageError with a specific message, but test_hybrid_pex_validation only checks that the validation string exists in source code text \u2014 it never actually invokes the code to verify the error is raised at runtime."
+      "reason": "The instruction says 'When a user selects python-executable build strategy with a Hybrid agent, the code must raise a click.UsageError'. No test actually executes the command with these parameters to verify the UsageError is raised at runtime; test_hybrid_pex_validation only checks source text for the string pattern."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped logically (option existence, parameter passing, validation, CLI help), and the module docstring explains the overall test coverage."
+      "reason": "Tests are well-named, grouped logically, and have clear docstrings explaining what each test verifies. The module docstring also provides a good overview."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves CLI option additions, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'using make_option_group', lazy import pattern, TYPE_CHECKING block modification, exact variable naming like 'BuildStrategy enum', and the exact import path. This goes beyond describing the desired behavior and into prescribing the exact implementation."
+      "reason": "The instruction explicitly names specific implementation details: 'make_option_group' pattern, lazy imports inside functions, TYPE_CHECKING block for BuildStrategy, and the exact function names build_artifact and build_impl where changes must be made. It also specifies 'replacing the currently hardcoded BuildStrategy.docker'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [

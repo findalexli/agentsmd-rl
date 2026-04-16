@@ -3,61 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceEndPos = 0', 'sourceEndPos = sourceByteLen', 'if (pos < sourceEndPos)', 'fromCharCode.apply(null, arr)', 'sourceTextLatin,' (with comma), 'sourceTextLatin.substr(', 'latin1Slice.call(uint8', '{ latin1Slice } = Buffer.prototype', 'if (len > 64)', and 'STRING_DECODE_CROSSOVER = 64'. The instruction mentions c"
+      "reason": "Tests assert very specific strings like 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceEndPos = 0', 'sourceEndPos = sourceByteLen', 'if (pos < sourceEndPos)', 'fromCharCode.apply(null, arr)', 'sourceTextLatin.substr(', 'sourceTextLatin = void 0', 'latin1Slice.call(uint8', '{ latin1Slice } = Buffer.prototype', 'if (len > 64)', and 'STRING_DECODE_CROSSOVER = 64'. The instruction mentions concepts like pre-allocated arrays, latin1 optimization, thres"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation approach: 'Buffer prototype provides an efficient method for extracting latin1-encoded substrings', 'Pre-allocated reusable arrays would eliminate allocation overhead', 'threshold should be increased substantially' (tests check for exactly 64), 'batch the character code generation using pre-allocated arrays', and 'sourceTextLatin' variable naming is effectively leaked through the detailed description of what to implement."
+      "reason": "The instruction explicitly describes the exact implementation approach: use 'latin1Slice from Buffer.prototype', 'pre-allocated reusable arrays', increase threshold to a 'significantly higher' value, 'batch the character code generation using pre-allocated arrays', and 'sourceTextLatin' style variable clearing in resetBuffer. It also names the specific optimization techniques (latin1Slice, fromCharCode with arrays, etc.) rather than just describing the performance problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names like 'sourceTextLatin', 'stringDecodeArrays', 'sourceEndPos', exact array size 'Array(65).fill(null)', exact threshold 'if (len > 64)', exact method call 'fromCharCode.apply(null, arr)', exact destructuring '{ latin1Slice } = Buffer.prototype'. An alternative correct fix using different variable names (e.g., 'latinSourceText'), different array sizes (e.g., 128), or different thresholds (e.g., 48 or 128) would fail despite being functionally correct."
+      "reason": "Tests assert exact implementation-specific strings: 'stringDecodeArrays = Array(65).fill(null)', 'stringDecodeArrays[i] = Array(i).fill(0)', 'sourceTextLatin,', 'sourceTextLatin.substr(', 'latin1Slice.call(uint8', 'fromCharCode.apply(null, arr)', 'if (len > 64)', 'sourceEndPos = 0', 'STRING_DECODE_CROSSOVER = 64'. An alternative correct implementation using different variable names (e.g., 'charCodeArrays' instead of 'stringDecodeArrays'), different array sizes, or different API patterns (e.g., B"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_latin1slice_usage, test_source_text_latin_variable, test_string_decode_arrays, test_64_byte_threshold, test_from_char_code_apply, test_source_end_pos, test_raw_transfer_generator_updated) are ALL text-matching assertions using 'assert \"...\" in content'. Only the pass-to-pass tests (test_napi_parser_tests, test_napi_parser_esm, test_napi_parser_visit) execute actual code."
+      "reason": "The fail-to-pass tests (test_latin1slice_usage, test_source_text_latin_variable, test_string_decode_arrays, test_64_byte_threshold, test_from_char_code_apply, test_source_end_pos, test_raw_transfer_generator_updated) are ALL pure text-matching assertions using 'assert \"string\" in content' pattern with no execution or behavioral verification. The pass-to-pass tests do run subprocess tests, but all f2p tests are text-only."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in files. An agent could simply insert comments or dead code containing the required strings (e.g., '// stringDecodeArrays = Array(65).fill(null)') into the generated files without implementing any actual optimization, and all f2p tests would pass."
+      "outcome": "pass",
+      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'latin1Slice', 'stringDecodeArrays', 'sourceTextLatin', threshold of 64 instead of 9). A stub or no-op implementation would not produce these strings in the generated files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction mentions 'Source files with non-ASCII characters (UTF-8)', 'Empty strings', 'Very long strings', 'Short strings in various positions' as testing requirements, but no f2p tests verify these behaviors - only text pattern matching is done."
+      "reason": "The instruction mentions testing 'All-ASCII source files', 'Source files with non-ASCII characters (UTF-8)', 'Empty strings', 'Very long strings', 'Short strings in various positions' \u2014 none of these behavioral requirements are directly tested in the f2p tests (which only check text patterns). The p2p tests run existing test suites but don't specifically verify these edge cases."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS'), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive names, clear docstrings, and grouped into '== FAIL-TO-PASS ==' and '== PASS-TO-PASS ==' sections with comments explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and commands in the instruction and tests appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives very specific implementation hints: 'Buffer prototype provides an efficient method for extracting latin1-encoded substrings from byte buffers', 'Pre-allocated reusable arrays would eliminate allocation overhead', 'current threshold of 9 bytes should be increased substantially', 'batch the character code generation using pre-allocated arrays'. These effectively describe the exact solution approach."
+      "reason": "The instruction names specific implementation details like 'Buffer prototype provides an efficient method for extracting latin1-encoded substrings', 'Pre-allocated reusable arrays', the exact current threshold '9 bytes' and its replacement, and 'auxiliary variables holding source text derivatives should be cleared'. These are solution hints beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-generation task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 3,
+  "fail_count": 6
 }

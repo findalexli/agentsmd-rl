@@ -1,26 +1,38 @@
-# CookieMap.toJSON() crashes with numeric cookie names
+# CookieMap.toJSON() crashes on numeric cookie names
 
 ## Bug Description
 
-`Bun.CookieMap.toJSON()` crashes with an assertion failure when cookies have numeric names (e.g., `"0"`, `"1"`, `"42"`). The crash occurs in `JSObjectInlines.h` at line 451 in `putDirectInternal`, which asserts `!parseIndex(propertyName)`.
+When a `CookieMap` contains cookies with numeric names (e.g., `"0"`, `"1"`, `"42"`), calling `toJSON()` crashes. The crash does not occur with alphabetic cookie names.
 
-## Reproduction
+## Expected Behavior
 
-```js
-const map = new Bun.CookieMap("0=first; 1=second; 42=answer");
-map.toJSON(); // CRASH: ASSERTION FAILED
-```
+`toJSON()` must complete without crashing regardless of cookie name format, and must return a valid JSON object containing all cookie name-value pairs.
 
-## Required Fix
+## Requirements
 
-The `toJSON` method in `src/bun.js/bindings/CookieMap.cpp` must be modified to:
+The implementation must:
 
-1. **Fix the property insertion crash**: The method creates a plain JS object and sets properties from cookie names. When a cookie name is a numeric string (like `"0"`, `"1"`, `"42"`), the property insertion path must not trigger the array index assertion. Use a property insertion approach that works correctly for both string keys and numeric string keys.
+1. Construct a JavaScript object to hold cookie key-value pairs
+2. Iterate over the modified cookies list and insert properties into the JS object
+3. Iterate over the original cookies list and insert properties into the JS object, skipping duplicates
+4. Use proper JSC exception handling patterns
+5. Have at least 8 non-blank lines of actual logic (not be a stub or empty method)
 
-2. **Fix the deduplication crash**: The method currently checks for existing properties using an approach that also crashes on numeric keys. The deduplication logic must use a different approach that does not query the target object for property existence.
+## Implementation Details
 
-## Constraints
+The tests verify specific implementation patterns:
 
-- The fix must still construct a JS object, handle exceptions, and iterate over cookies
-- The fix must use proper JSC exception scope patterns (`DECLARE_THROW_SCOPE` or `RELEASE_AND_RETURN`)
-- The fix must avoid banned C++ anti-patterns (see the repository's ban-words tests)
+- **Property insertion**: The method must use property insertion that handles numeric string keys without crashing. Tests look for method calls on the result object variable and classify them as safe or unsafe based on method name.
+
+- **Key deduplication**: Deduplication must use a native C++ container (such as `HashSet`, `std::set`, `std::unordered_set`, or `WTF::HashSet`) to track seen cookie names, rather than querying the JSObject for property existence. Tests look for declarations of these container types and their `.add()` and `.isNewEntry` usage patterns.
+
+- **Two insertions**: At least two safe property insertions must occur, one per loop.
+
+## Files
+
+- `src/bun.js/bindings/CookieMap.cpp`
+- `src/bun.js/bindings/CookieMap.h`
+
+## What to preserve
+
+The fix must not remove or stub out: object construction, exception handling, cookie iteration, or other `CookieMap` methods.

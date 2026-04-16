@@ -1,3 +1,4 @@
+
 """
 Task: bun-install-scanner-silent-exit
 Repo: oven-sh/bun @ 1d50d640f8fec6ce2d144f0cfd204e30da373c64
@@ -18,6 +19,14 @@ SS = f"{REPO}/src/install/PackageManager/security_scanner.zig"
 REGRESSION_TEST = f"{REPO}/test/regression/issue/28193.test.ts"
 
 
+def _read_file(path):
+    """Read file content as text."""
+    try:
+        return Path(path).read_text()
+    except FileNotFoundError:
+        return None
+
+
 def _node(script, timeout=30):
     """Execute JavaScript via node subprocess."""
     return subprocess.run(
@@ -34,184 +43,348 @@ def _parse_json(r):
     return json.loads(lines[-1])
 
 
-# Shared: extract the security scanner error switch block from install_with_manager.zig
-_IWM_BLOCK = (
-    r"const fs = require('fs');"
-    "\n"
-    r"const text = fs.readFileSync('" + IWM + r"', 'utf8');"
-    "\n"
-    r"const m = text.match(/performSecurityScanAfterResolution[\s\S]*?catch\s*\|\w+\|\s*\{([\s\S]*?)\n\s*Global\.exit/);"
-    "\n"
-    r"if (!m) { console.log(JSON.stringify({error: 'block_not_found'})); process.exit(0); }"
-    "\n"
-    r"const block = m[1];"
-    "\n"
-)
-
-
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — subprocess-executed tests
+# Fail-to-pass (pr_diff) — behavioral tests that verify error handling flow
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_catch_all_produces_output():
-    """Empty else => {} catch-all replaced with Output.* error messages."""
-    r = _node(_IWM_BLOCK + r"""
-    if (/else\s*=\>\s*\{\s*\}/.test(block)) {
-        console.log(JSON.stringify({error: 'empty_else'})); process.exit(0);
-    }
-    const em = block.match(/else\s*=\>\s*\|?\w*\|?\s*\{([\s\S]*?)\}/);
-    if (em) {
-        const body = em[1].trim();
-        if (!body || !/Output\.\w+\s*\(/.test(body)) {
-            console.log(JSON.stringify({error: 'else_no_output'})); process.exit(0);
-        }
-    }
-    const branches = block.match(/=\>\s*(?:\|[^|]*\|)?\s*\{[^}]*Output\.\w+\s*\(/g) || [];
-    if (branches.length < 2) {
-        console.log(JSON.stringify({error: 'few_branches', count: branches.length})); process.exit(0);
-    }
-    console.log(JSON.stringify({ok: true, branches: branches.length}));
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Check failed: {data}"
+    """
+    The else branch in the error handling switch must pass the error to
+    an output function, not silently return or have an empty body.
+
+    Behavior verified: Errors not explicitly named still produce output.
+    """
+    text = _read_file(IWM)
+    assert text is not None, f"Could not read {IWM}"
+
+    # Find the catch block for performSecurityScanAfterResolution
+    # Look for: performSecurityScanAfterResolution(...) catch |err| {
+    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
+    catch_match = re.search(catch_pattern, text)
+    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
+
+    # Extract the switch block within the catch
+    # Find the switch (err) and get its body
+    start_pos = catch_match.end()
+    # Look for switch(err) or switch (err)
+    switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
+    assert switch_match, "Could not find switch(err) statement"
+
+    switch_start = start_pos + switch_match.end()
+    # Find matching closing brace by counting
+    brace_count = 1
+    switch_end = switch_start
+    for i, char in enumerate(text[switch_start:]):
+        if char == "{":
+            brace_count += 1
+        elif char == "}":
+            brace_count -= 1
+            if brace_count == 0:
+                switch_end = switch_start + i
+                break
+
+    switch_body = text[switch_start:switch_end]
+
+    # Check that empty else => {} is NOT present (this was the bug)
+    if re.search(r"else\s*=>\s*\{\s*\}", switch_body):
+        raise AssertionError("Bug found: empty else => {} present - errors would exit silently")
+
+    # Check that else branch exists and captures the error value
+    # Looking for: else => |e| or inline else => |e|
+    has_capturing_else = re.search(r"(?:inline\s+)?else\s*=>\s*\|\w+\|", switch_body)
+    assert has_capturing_else, "No error-capturing else branch found (else => |e| pattern missing)"
+
+    # Verify the else branch produces output (has Output.* call)
+    # Split by branches and check the else branch specifically
+    branches = re.split(r"\n\s*(?:error\.\w+|else)\s*=>", switch_body)
+    # Check the last branch (should be else)
+    if branches:
+        # Find which branch is the else branch
+        else_pos = -1
+        for i, branch in enumerate(branches):
+            # Check if this is the else branch by looking at the original text
+            branch_start = switch_body.find(branch) if branch else -1
+            if branch_start >= 0:
+                # Look backwards for 'else'
+                before = switch_body[max(0, branch_start-50):branch_start]
+                if re.search(r"else\s*=>", before):
+                    else_pos = i
+                    break
+
+        # The else branch must have an Output call
+        if else_pos >= 0:
+            else_branch = branches[else_pos]
+            has_output = re.search(r"Output\.\w+\s*\(", else_branch)
+            assert has_output, "Else branch exists but does not produce output (no Output.* call)"
+
+    # Count total branches that produce output - need at least 2 for meaningful coverage
+    output_branches = len(re.findall(r"Output\.\w+\s*\(", switch_body))
+    assert output_branches >= 2, f"Insufficient output branches: {output_branches} (need at least 2)"
 
 
 # [pr_diff] fail_to_pass
 def test_error_variant_coverage():
-    """3+ named error variants or dynamic catch-all produce diagnostic output."""
-    r = _node(_IWM_BLOCK + r"""
-    const named = block.match(/error\.\w+\s*=>/g) || [];
-    const outputCalls = block.match(/Output\.\w+\(/g) || [];
-    const hasDynamic = /else\s*=\>\s*\|(\w+)\|[\s\S]*?@errorName\(\1\)/.test(block);
-    if (named.length >= 3 && outputCalls.length >= 3) {
-        console.log(JSON.stringify({ok: true, strategy: 'named', named: named.length}));
-    } else if (hasDynamic) {
-        console.log(JSON.stringify({ok: true, strategy: 'dynamic'}));
-    } else {
-        console.log(JSON.stringify({error: 'insufficient', named: named.length, calls: outputCalls.length}));
-    }
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Insufficient coverage: {data}"
+    """
+    Error handling must cover multiple error variants, either through
+    explicit named branches OR through a dynamic catch-all that extracts
+    error names at runtime.
+
+    Behavior verified: At least 3 named variants OR dynamic @errorName handling.
+    """
+    text = _read_file(IWM)
+    assert text is not None, f"Could not read {IWM}"
+
+    # Find the catch block
+    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
+    catch_match = re.search(catch_pattern, text)
+    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
+
+    # Extract the switch body
+    start_pos = catch_match.end()
+    switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
+    assert switch_match, "Could not find switch(err) statement"
+
+    switch_start = start_pos + switch_match.end()
+    brace_count = 1
+    switch_end = switch_start
+    for i, char in enumerate(text[switch_start:]):
+        if char == "{":
+            brace_count += 1
+        elif char == "}":
+            brace_count -= 1
+            if brace_count == 0:
+                switch_end = switch_start + i
+                break
+
+    switch_body = text[switch_start:switch_end]
+
+    # Count explicit error variant branches (error.Foo =>)
+    named_variants = len(re.findall(r"error\.\w+\s*=>", switch_body))
+
+    # Count Output calls in switch branches
+    output_calls = len(re.findall(r"Output\.\w+\s*\(", switch_body))
+
+    # Check for dynamic error name extraction via @errorName - this allows
+    # ANY error variant to produce meaningful output, not just named ones
+    has_dynamic_error = re.search(r"@errorName\s*\(\s*\w+\s*\)", switch_body)
+
+    # Verify: either we have 3+ named variants with output, OR we have dynamic handling
+    if named_variants >= 3 and output_calls >= 3:
+        pass  # OK - explicit coverage
+    elif has_dynamic_error and output_calls >= 1:
+        pass  # OK - dynamic coverage via @errorName
+    else:
+        raise AssertionError(
+            f"Insufficient error coverage: {named_variants} named variants, "
+            f"{output_calls} output calls, dynamic={bool(has_dynamic_error)}. "
+            "Need either 3+ named variants OR @errorName in else branch."
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_error_printing_centralized():
-    """Error printing removed from security_scanner.zig, centralized in install_with_manager.zig."""
-    r = _node(r"""
-    const fs = require('fs');
-    const text = fs.readFileSync('""" + SS + r"""', 'utf8');
-    const errors = ['InvalidPackageID', 'PartialInstallFailed', 'NoPackagesInstalled', 'SecurityScannerInWorkspace'];
-    const violations = [];
-    for (const err of errors) {
-        const pat = new RegExp('Output\\\\.(?:errGeneric|pretty)\\\\([^)]*\\\\)[\\\\s\\\\S]*?return error\\\\.' + err);
-        if (pat.test(text)) violations.push(err);
-    }
-    if (violations.length > 0) {
-        console.log(JSON.stringify({error: 'duplicates', violations}));
-    } else {
-        console.log(JSON.stringify({ok: true}));
-    }
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Duplication found: {data}"
+    """
+    Error printing for security scanner errors must be centralized in
+    install_with_manager.zig, NOT duplicated in security_scanner.zig.
+
+    Behavior verified: security_scanner.zig returns errors WITHOUT printing them
+    for the variants that should be centralized.
+    """
+    ss_text = _read_file(SS)
+    assert ss_text is not None, f"Could not read {SS}"
+
+    # These error variants should be returned, not printed, in security_scanner.zig
+    centralized_errors = [
+        "InvalidPackageID",
+        "PartialInstallFailed",
+        "NoPackagesInstalled",
+        "SecurityScannerInWorkspace"
+    ]
+
+    violations = []
+    for err in centralized_errors:
+        # Look for pattern: Output.err* followed by return error.X
+        # This indicates the error is being printed in security_scanner.zig
+        # instead of being centralized in install_with_manager.zig
+        # Match Output.err* call followed by return error.X (with possible whitespace/newlines)
+        pattern = r"Output\.(?:errGeneric|err|pretty)[^;]*;\s*\n?\s*return\s+error\." + err
+        if re.search(pattern, ss_text):
+            violations.append(err)
+
+    if violations:
+        raise AssertionError(
+            f"Duplicated error printing in security_scanner.zig for: {violations}. "
+            "These should only be printed in install_with_manager.zig"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_error_variant_propagated():
-    """The .error variant propagated instead of collapsed into SecurityScannerRetryFailed."""
-    r = _node(r"""
-    const fs = require('fs');
-    const text = fs.readFileSync('""" + SS + r"""', 'utf8');
-    const m = text.match(/fn performSecurityScanAfterResolution\b([\s\S]*?)(?:\nfn |\npub fn |$)/);
-    if (!m) { console.log(JSON.stringify({error: 'func_not_found'})); process.exit(0); }
-    const func = m[1];
-    const hasCollapse = /else\s*=\>\s*return\s+error\.SecurityScannerRetryFailed/.test(func);
-    const hasProp = /\.@"error"\s*=\>\s*\|/.test(func) || /\.error\s*=\>\s*\|/.test(func) || /inline\s+else\s*=\>\s*\|/.test(func);
-    if (hasCollapse) {
-        console.log(JSON.stringify({error: 'collapsed'}));
-    } else if (hasProp) {
-        console.log(JSON.stringify({ok: true}));
-    } else {
-        console.log(JSON.stringify({error: 'no_propagation'}));
-    }
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Propagation issue: {data}"
+    """
+    The .error variant from ScanAttemptResult must be propagated as-is,
+    not collapsed into SecurityScannerRetryFailed.
+
+    Behavior verified: The retry result handling explicitly matches .error
+    and returns the contained error, rather than using else => return error.SecurityScannerRetryFailed.
+    """
+    ss_text = _read_file(SS)
+    assert ss_text is not None, f"Could not read {SS}"
+
+    # Find performSecurityScanAfterResolution function body
+    # Account for 'pub fn' or just 'fn'
+    func_match = re.search(
+        r"(?:pub\s+)?fn\s+performSecurityScanAfterResolution\b([^;]*?)(?:\nfn|\n(?:pub\s+)?fn|\nconst|\n\n\n|$)",
+        ss_text, re.DOTALL
+    )
+    assert func_match, "Could not find performSecurityScanAfterResolution function"
+
+    func_body = func_match.group(1)
+
+    # Check for the OLD buggy pattern: else => return error.SecurityScannerRetryFailed
+    # This would collapse ALL non-success results into one error
+    has_collapse_pattern = re.search(
+        r"else\s*=>\s*return\s+error\.SecurityScannerRetryFailed",
+        func_body
+    )
+    if has_collapse_pattern:
+        raise AssertionError(
+            "Bug found: Using 'else => return error.SecurityScannerRetryFailed' "
+            "which collapses all non-success errors into one generic error"
+        )
+
+    # Check for proper propagation: .error => |e| return e OR inline else => |e| return e
+    # This ensures the original error is preserved, not lost
+    has_error_propagation = (
+        re.search(r"\.@\"error\"\s*=>\s*\|\w+\|", func_body) or
+        re.search(r"\.error\s*=>\s*\|\w+\|", func_body) or
+        re.search(r"inline\s+else\s*=>\s*\|\w+\|", func_body)
+    )
+
+    assert has_error_propagation, (
+        "No error propagation pattern found. Need either '.error => |e|' "
+        "or 'inline else => |e|' to preserve the original error"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_uses_err_generic():
-    """Error messages use Output.errGeneric, not Output.pretty with <red>."""
-    r = _node(_IWM_BLOCK + r"""
-    const hasPrettyErrors = /Output\.pretty\s*\(\s*"<red>/.test(block);
-    const hasErrOutput = /Output\.err/.test(block);
-    if (!hasErrOutput) { console.log(JSON.stringify({error: 'no_err_output'})); process.exit(0); }
-    if (hasPrettyErrors) { console.log(JSON.stringify({error: 'uses_pretty_red'})); process.exit(0); }
-    console.log(JSON.stringify({ok: true}));
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Formatting check failed: {data}"
+    """
+    Error messages in the catch block must use Output.errGeneric or similar
+    error output functions, NOT Output.pretty with <red> styling.
+
+    Behavior verified: Output.errGeneric is used, Output.pretty with <red> is NOT used.
+    """
+    text = _read_file(IWM)
+    assert text is not None, f"Could not read {IWM}"
+
+    # Find the catch block for security scanner errors
+    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
+    catch_match = re.search(catch_pattern, text)
+    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
+
+    # Extract the switch body (same as other tests)
+    start_pos = catch_match.end()
+    switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
+    assert switch_match, "Could not find switch(err) statement"
+
+    switch_start = start_pos + switch_match.end()
+    brace_count = 1
+    switch_end = switch_start
+    for i, char in enumerate(text[switch_start:]):
+        if char == "{":
+            brace_count += 1
+        elif char == "}":
+            brace_count -= 1
+            if brace_count == 0:
+                switch_end = switch_start + i
+                break
+
+    switch_body = text[switch_start:switch_end]
+
+    # Check for deprecated pattern: Output.pretty with <red>
+    has_pretty_red = re.search(r"Output\.pretty\s*\(\s*\"<red>", switch_body)
+    if has_pretty_red:
+        raise AssertionError(
+            "Using deprecated Output.pretty with <red> styling. "
+            "Should use Output.errGeneric instead."
+        )
+
+    # Verify error output functions are used (Output.err*, Output.errGeneric)
+    has_err_output = re.search(r"Output\.(?:err|errGeneric)\s*\(", switch_body)
+    assert has_err_output, (
+        "No error output functions found (Output.err, Output.errGeneric). "
+        "Error messages should use these functions."
+    )
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (agent_config) — regression test validation via node
+# Fail-to-pass (agent_config) — regression test validation via file checks
+# These check for file existence/structure - inherently file-based
 # ---------------------------------------------------------------------------
 
 
 # [agent_config] fail_to_pass
 def test_regression_test_location():
     """Regression test at test/regression/issue/28193.test.ts with valid test structure."""
-    r = _node(r"""
-    const fs = require('fs');
-    const p = '""" + REGRESSION_TEST + r"""';
-    if (!fs.existsSync(p)) { console.log(JSON.stringify({error: 'not_found'})); process.exit(0); }
-    const content = fs.readFileSync(p, 'utf8');
-    const lines = content.split('\n');
-    if (lines.length <= 5) { console.log(JSON.stringify({error: 'too_short', lines: lines.length})); process.exit(0); }
-    const tests = (content.match(/\btest\(/g) || []).length;
-    const expects = (content.match(/\bexpect\(/g) || []).length;
-    if (tests === 0) { console.log(JSON.stringify({error: 'no_tests'})); process.exit(0); }
-    console.log(JSON.stringify({ok: true, tests, expects, lines: lines.length}));
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Regression test check failed: {data}"
+    test_file = Path(REGRESSION_TEST)
+    if not test_file.exists():
+        raise AssertionError(f"Regression test file not found at {REGRESSION_TEST}")
+
+    content = test_file.read_text()
+    lines = content.split("\n")
+    if len(lines) <= 5:
+        raise AssertionError(f"Test file too short: {len(lines)} lines (need > 5)")
+
+    tests = len(re.findall(r"\btest\(", content))
+    expects = len(re.findall(r"\bexpect\(", content))
+
+    if tests == 0:
+        raise AssertionError("No test definitions found (test() calls)")
+
+    # Verify the test imports from harness
+    if not re.search(r'from\s+["\']harness["\']', content):
+        raise AssertionError("Regression test must import from 'harness'")
 
 
 # [agent_config] fail_to_pass
 def test_regression_test_uses_harness():
     """Regression test imports bunExe and bunEnv from 'harness'."""
-    r = _node(r"""
-    const fs = require('fs');
-    const p = '""" + REGRESSION_TEST + r"""';
-    if (!fs.existsSync(p)) { console.log(JSON.stringify({error: 'not_found'})); process.exit(0); }
-    const content = fs.readFileSync(p, 'utf8');
-    if (!/from\s+"harness"/.test(content)) { console.log(JSON.stringify({error: 'no_harness_import'})); process.exit(0); }
-    if (!content.includes('bunExe')) { console.log(JSON.stringify({error: 'no_bunExe'})); process.exit(0); }
-    if (!content.includes('bunEnv')) { console.log(JSON.stringify({error: 'no_bunEnv'})); process.exit(0); }
-    console.log(JSON.stringify({ok: true}));
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"Harness check failed: {data}"
+    test_file = Path(REGRESSION_TEST)
+    if not test_file.exists():
+        raise AssertionError(f"Regression test file not found at {REGRESSION_TEST}")
+
+    content = test_file.read_text()
+
+    # Check harness import
+    if not re.search(r'from\s+["\']harness["\']', content):
+        raise AssertionError("Must import from 'harness'")
+
+    if "bunExe" not in content:
+        raise AssertionError("Must use bunExe from harness")
+
+    if "bunEnv" not in content:
+        raise AssertionError("Must use bunEnv from harness")
 
 
 # [agent_config] fail_to_pass
 def test_regression_test_uses_tempdir():
     """Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync."""
-    r = _node(r"""
-    const fs = require('fs');
-    const p = '""" + REGRESSION_TEST + r"""';
-    if (!fs.existsSync(p)) { console.log(JSON.stringify({error: 'not_found'})); process.exit(0); }
-    const content = fs.readFileSync(p, 'utf8');
-    if (!content.includes('tempDir')) { console.log(JSON.stringify({error: 'no_tempDir'})); process.exit(0); }
-    if (content.includes('tmpdirSync')) { console.log(JSON.stringify({error: 'uses_tmpdirSync'})); process.exit(0); }
-    if (content.includes('mkdtempSync')) { console.log(JSON.stringify({error: 'uses_mkdtempSync'})); process.exit(0); }
-    console.log(JSON.stringify({ok: true}));
-    """)
-    data = _parse_json(r)
-    assert "ok" in data, f"tempDir check failed: {data}"
+    test_file = Path(REGRESSION_TEST)
+    if not test_file.exists():
+        raise AssertionError(f"Regression test file not found at {REGRESSION_TEST}")
+
+    content = test_file.read_text()
+
+    if "tempDir" not in content:
+        raise AssertionError("Must use tempDir from harness")
+
+    if "tmpdirSync" in content:
+        raise AssertionError("Must NOT use tmpdirSync from node:fs")
+
+    if "mkdtempSync" in content:
+        raise AssertionError("Must NOT use mkdtempSync from node:fs")
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +396,7 @@ def test_regression_test_uses_tempdir():
 def test_workspace_error_preserved():
     """SecurityScannerInWorkspace error handling still present in install_with_manager.zig."""
     text = Path(IWM).read_text()
-    assert "SecurityScannerInWorkspace" in text
+    assert "SecurityScannerInWorkspace" in text, "SecurityScannerInWorkspace error type missing"
 
 
 # [pr_diff] pass_to_pass
@@ -238,8 +411,8 @@ def test_error_types_preserved():
 # [static] pass_to_pass
 def test_anti_stub():
     """Both Zig source files have substantial content."""
-    assert len(Path(IWM).read_text().splitlines()) > 200
-    assert len(Path(SS).read_text().splitlines()) > 50
+    assert len(Path(IWM).read_text().splitlines()) > 200, "install_with_manager.zig too short"
+    assert len(Path(SS).read_text().splitlines()) > 50, "security_scanner.zig too short"
 
 
 # [agent_config] pass_to_pass
@@ -253,7 +426,7 @@ def test_exit_code_assertion_last():
     assert exit_lines, "No exit code assertions found"
     assert content_lines, "No content assertions found"
     for ec in exit_lines:
-        assert any(ca < ec for ca in content_lines), "exit code before content assertion"
+        assert any(ca < ec for ca in content_lines), "exit code assertion comes before content assertion"
 
 
 # ---------------------------------------------------------------------------

@@ -1,59 +1,55 @@
 # Align account module with Effect patterns
 
-## Overview
+## Problem
 
-The account module at `packages/opencode/src/account/` does not follow the Effect patterns established in this codebase. The tests will verify that the module meets these requirements by checking for specific string patterns in the source files.
+The account module at `packages/opencode/src/account/` currently uses legacy patterns that are inconsistent with the Effect-TS architectural standards used throughout this codebase. This misalignment causes maintainability issues and fails to leverage type-safe abstractions for security-sensitive authentication data.
 
-## Requirements
+## Current Symptoms
 
 ### Schema definitions (`src/account/schema.ts`)
 
-The file MUST contain:
-- `export const RefreshToken` with `Schema.brand("RefreshToken")` for the token type
-- `export const DeviceCode` with `Schema.brand("DeviceCode")` for the device code type
-- `export const UserCode` with `Schema.brand("UserCode")` for the user code type
-- `Schema.Duration` for time-related fields (e.g., in the `Login` type)
-- `Schema.Class` for data types with multiple fields (e.g., `Login` class with `expiry` and `interval` fields)
+The current implementation lacks proper type branding for security tokens and uses incorrect patterns for time-based fields. The following specific patterns should be present after refactoring:
+- Branded types: `RefreshToken`, `DeviceCode`, and `UserCode` with corresponding brand literals `"RefreshToken"`, `"DeviceCode"`, and `"UserCode"`
+- Duration types using `Schema.Duration` for time-related fields
+- Data classes using `Schema.Class` pattern
 
 ### Repository layer (`src/account/repo.ts`)
 
-The file MUST contain:
-- `Layer.effect(` for constructing the AccountRepo layer
-- `Effect.gen(function* ()` for Effect composition
-- `AccountRepo.of({` for returning the implementation object
-- Type signatures using the branded token types (`RefreshToken`, `DeviceCode`, `UserCode`)
+The repository is not constructed using the standard service layer patterns. After the fix, it should use:
+- Layer construction via `Layer.effect(` pattern
+- Effect composition via `Effect.gen(function* ()` pattern
+- Implementation return via `AccountRepo.of({` pattern
+- Type signatures referencing the branded types (`RefreshToken`, `DeviceCode`, `UserCode`)
 
 ### Service layer (`src/account/service.ts`)
 
-The file MUST contain:
-- `export namespace AccountService` with `export interface Service` inside it
-- `Layer.effect(` for constructing the service layer
-- `Effect.gen(function* ()` for Effect composition
-- `HttpClient.filterStatusOk` for HTTP response filtering
-- `Effect.fnUntraced` for internal helper functions
-- `Effect.fn(` for named public methods
-- Return type annotations `readonly Org[]` for `orgs` method
-- Return type annotations `readonly AccountOrgs[]` for `orgsByAccount` method
+The service layer is missing namespace organization and proper Effect patterns. After the fix, it should contain:
+- A namespace export pattern with `export namespace AccountService` containing `export interface Service`
+- Layer construction using `Layer.effect(`
+- Effect composition using `Effect.gen(function* ()`
+- HTTP filtering using `HttpClient.filterStatusOk`
+- Helper function patterns: `Effect.fnUntraced` for internals
+- Public method patterns: `Effect.fn(`
+- Return type annotations: `readonly Org[]` and `readonly AccountOrgs[]`
 
 ### SQL definitions (`src/account/account.sql.ts`)
 
-The file MUST contain:
-- `.$type<` applied to Drizzle column definitions to enforce branded type safety (e.g., `.$type<RefreshToken>()`)
+Database columns for token fields lack branded type enforcement. After the fix, Drizzle column definitions should use `.$type<` annotations with the branded types (e.g., `.$type<RefreshToken>()`).
 
 ### CLI commands (`src/cli/cmd/account.ts`)
 
-The file MUST contain:
-- `Duration.Duration` types for polling interval values (instead of raw numbers)
-- `Duration.sum` for combining duration values in polling logic
+The polling logic uses raw numeric values instead of type-safe Duration types. After the fix, it should use:
+- `Duration.Duration` type annotations for interval values
+- `Duration.sum` for combining duration values
 
 ### Documentation (`AGENTS.md`)
 
-The file MUST contain a new section with:
+The codebase lacks a reference guide for the Effect patterns being introduced. After the fix, the documentation should contain a new section with:
 - Header: `# opencode Effect guide`
-- Subsection: `## Schemas` documenting `Schema.Class` for data types and `Schema.brand` for single-value types
-- Subsection: `## Services` documenting `Layer.effect` and `ServiceName.of` patterns
-- Subsection: `## Effects` documenting `Effect.gen` and `Effect.fn` patterns
-- Subsection documenting error handling with `yield* new MyError` preferred over `yield* Effect.fail`
+- Subsection: `## Schemas`
+- Subsection: `## Services`
+- Subsection: `## Effects`
+- Error handling guidance mentioning both `yield* new MyError` and `Effect.fail`
 
 ## Files to Modify
 

@@ -1,0 +1,61 @@
+source:
+  repo: OpenHands/OpenHands
+  pr: 13776
+  base_commit: a458c9b785a1b016e9f8c4e190a0fd9960c6e58e
+  merge_commit: ce6d5b77c40514e914fa3b6a4c77e8b6a007fb7c
+
+# Fail-to-pass tests: verify the fix works
+checks:
+  - id: test_microagents_endpoint_deprecated_flag
+    type: fail_to_pass
+    origin: task_requirement
+    description: "Microagents endpoint has deprecated=True flag"
+    points: 15
+
+  - id: test_microagents_content_endpoint_deprecated_flag
+    type: fail_to_pass
+    origin: task_requirement
+    description: "Microagents content endpoint has deprecated=True flag"
+    points: 15
+
+  - id: test_microagents_endpoint_docstring_deprecated
+    type: fail_to_pass
+    origin: task_requirement
+    description: "Microagents endpoint docstring contains deprecation notice"
+    points: 15
+
+  - id: test_microagents_content_endpoint_docstring_deprecated
+    type: fail_to_pass
+    origin: task_requirement
+    description: "Microagents content endpoint docstring contains deprecation notice"
+    points: 15
+
+  # Pass-to-pass tests: existing functionality not broken
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified file has valid Python syntax via AST"
+    points: 5
+
+  - id: test_functions_exist
+    type: pass_to_pass
+    origin: static
+    description: "Both endpoint functions exist in the file"
+    points: 5
+
+  # CI-based pass-to-pass tests: actual repo CI commands
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on the modified file"
+    points: 10
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file passes Python py_compile check"
+    points: 10
+
+# Note: Rubric rules for agent conventions (pre-commit, git practices) are not included
+# because they test agent behavior, not the code fix itself. The code fix is validated
+# through the checks section above.

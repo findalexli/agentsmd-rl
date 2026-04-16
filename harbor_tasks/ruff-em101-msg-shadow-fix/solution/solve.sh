@@ -1,25 +1,34 @@
 #!/bin/bash
 # Gold solution - adds get_interface_ip function with a docstring to gradio/utils.py
+# This implementation actually returns a valid IP address using socket
 
 cd /workspace/gradio
 
-# Create the function at the beginning of utils.py after any imports
-# Find a good place to add it - after the module docstring and imports
+# Create the function with a proper implementation that returns an IP address
+cat > /tmp/new_function.py << 'FUNCODE'
+import socket
 
-# Use sed to add the function after the module docstring line
-cat > /tmp/new_function.py << 'EOF'
+
 def get_interface_ip():
     """Get the IP address of the interface.
 
     Returns the IP address as a string.
     """
-    pass
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Connect to a public address to determine the interface IP
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
 
 
-EOF
+FUNCODE
 
-# Insert the function near the top of utils.py, after the module docstring
-# First, find the line number of the first def or class
+# Find the line number of the first def or class
 FIRST_DEF=$(grep -n "^def \|^class " gradio/utils.py | head -1 | cut -d: -f1)
 
 # Insert the new function before the first def/class

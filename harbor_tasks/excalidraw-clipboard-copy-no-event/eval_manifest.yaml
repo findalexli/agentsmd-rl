@@ -70,8 +70,8 @@ checks:
   type: pass_to_pass
   origin: repo_tests
 - id: repo-charts-test-syntax
-  description: 'The charts.test.ts file must have valid TypeScript syntax that
-    can be parsed.
+  description: 'The charts.test.ts file must have valid TypeScript syntax that can
+    be parsed.
 
     Uses prettier --parser typescript to validate without requiring full type check.
 
@@ -81,8 +81,8 @@ checks:
   type: pass_to_pass
   origin: repo_tests
 - id: repo-utils-test-syntax
-  description: 'The utils.test.ts file must have valid TypeScript syntax that
-    can be parsed.
+  description: 'The utils.test.ts file must have valid TypeScript syntax that can
+    be parsed.
 
     Uses prettier --parser typescript to validate without requiring full type check.
 
@@ -125,16 +125,18 @@ checks:
   description: 'The FilledButton.scss file must have correct structure for loading/success
     states with background-color: var(--color-success).
 
-    Uses Node.js to verify the SCSS structure. This is a pass_to_pass check from the repo CI pipeline.
+    Uses Node.js to verify the SCSS structure. This is a pass_to_pass check from the
+    repo CI pipeline.
 
     '
   type: pass_to_pass
   origin: repo_tests
 - id: repo-clipboard-no-redundant-undefined
-  description: 'The clipboard.ts file must not contain the redundant plainTextEntry = undefined
-    assignment after writeText.
+  description: 'The clipboard.ts file must not contain the redundant plainTextEntry
+    = undefined assignment after writeText.
 
-    Uses Node.js to verify the code pattern. This is a pass_to_pass check from the repo CI pipeline.
+    Uses Node.js to verify the code pattern. This is a pass_to_pass check from the
+    repo CI pipeline.
 
     '
   type: pass_to_pass
@@ -142,9 +144,23 @@ checks:
 rubric:
 - source:
     path: CLAUDE.md
-  reference: "### Clipboard\n- Clipboard operations must have fallbacks (event.clipboardData -> navigator.clipboard -> execCommand)"
+  reference: '### Clipboard
+
+    - Clipboard operations must have fallbacks (event.clipboardData -> navigator.clipboard
+    -> execCommand)'
   rule: Document clipboard fallback architecture in CLAUDE.md
   category: documentation
+- rule: Prefer immutable data
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: '16'
+  source_text: '- Prefer immutable data (const, readonly)'
+  evidence: The gold diff converts `let plainTextEntry` to `const plainTextEntry`
+    by removing the subsequent `plainTextEntry = undefined;` reassignment, strictly
+    following the rule to prefer immutable `const` declarations when variables are
+    no longer re-assigned.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: 'App Development: Work in `excalidraw-app/` for app-specific features'
   collision_type: architecture_boundary
@@ -165,6 +181,18 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 16-23
+- rule: Use CSS modules for component styling
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: '24'
+  source_text: '- Use CSS modules for component styling'
+  collision_type: rule_conflict
+  why_distracting: The diff involves styling changes to a standard SCSS file (`FilledButton.scss`)
+    that uses BEM conventions (`.ExcButton--status-success`). An agent might mistakenly
+    attempt to rewrite this styling into a CSS module (`.module.css`) to obey this
+    rule, which would break the established architecture and component styles for
+    this specific package.
+  severity: high
 hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
   The primary challenge is distinguishing between editor features (`packages/excalidraw/`)
   and app-specific features (`excalidraw-app/`), as clipboard interaction could conceptually

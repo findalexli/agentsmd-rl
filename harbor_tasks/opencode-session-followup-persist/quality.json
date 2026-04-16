@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file path 'packages/app/src/pages/session.tsx', specific function names like 'persisted', 'createStore', 'Persist.workspace', specific store fields 'items/failed/paused/edit', and SolidJS primitives. The instruction.md never mentions the file path 'packages/app/src/pages/session.tsx', never mentions the 'persisted' function name, never mentions 'Persist.workspace()' API specifically (only '.workspace() API or equivalent'), and never names the specific file to edit. An ag"
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_followup_store_wrapped_with_persistence requires imports from a module with 'persist' in the name and checks for persist function calls near createStore+followup; test_persistence_workspace_scoped checks for '.workspace(' API or 'sdk.directory'; test_no_any_type_in_followup_block and test_no_trycatch_else_forloop_in_followup_block check specific code patterns. While instruction.md does mention some of these (persi"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md requirement #3 specifies 'any import from a module whose name contains persist that is applied to the store', requirement #4 specifies 'using .workspace() API or equivalent workspace/directory-based scoping'. These are very specific implementation directives that describe HOW to fix the bug (wrap store with persistence from a persist module, use .workspace() API), not just WHAT is broken."
+      "reason": "Instruction.md specifies very precise implementation details: use createStore (not createSignal), wrap with persistence from a 'persist' module, use .workspace() API with sdk.directory scoping, retain specific fields (items, failed, paused, edit). These collectively describe exactly WHAT to change and HOW, leaving very little reasoning for the developer. The instruction essentially describes the gold patch structure."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_followup_store_wrapped_with_persistence requires imports from a module containing 'persist' and a persist function call near 'createStore' and 'followup'. test_persistence_workspace_scoped requires '.workspace(' pattern or specific keywords. An alternative correct fix using e.g. localStorage directly, or a custom serialization approach not involving a module named with 'persist', or using a different persistence API that doesn't use '.workspace()', would fail these tests despite correctly f"
+      "reason": "test_followup_store_wrapped_with_persistence requires imports from a module with 'persist' in the name AND checks that a persist function is called near createStore+followup. An alternative fix using localStorage directly, or a custom persistence mechanism not imported from a 'persist'-named module, would fail. test_persistence_workspace_scoped specifically looks for '.workspace(' or 'sdk.dir' patterns, rejecting alternatives that scope persistence differently (e.g., using project ID as a key pr"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the file as text and uses regex/string matching (e.g., 'assert \"as any\" not in block', regex for '.workspace(', checking for 'createStore' in text context). No test actually imports, executes, or calls the code. The test_file_parses_as_tsx only validates syntax parsing, not behavior. This is purely text inspection."
+      "reason": "All tests use text/regex analysis of the source file (e.g., re.search on file contents). No test actually executes the component, renders it, or verifies runtime behavior. The file explicitly states 'SolidJS components cannot execute without a browser DOM. All tests use file/AST analysis.' Every test is essentially 'assert pattern in open(path).read()' with regex variations."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_followup_store_wrapped_with_persistence, test_persistence_workspace_scoped) check for persistence wrapping and workspace scoping that don't exist in the base commit. A stub or no-op wouldn't add persist imports or .workspace() calls, so these tests would fail on the unmodified file."
+      "reason": "The f2p tests (test_followup_store_wrapped_with_persistence and test_persistence_workspace_scoped) check for persistence wrapping and workspace scoping that don't exist in the base commit. A stub or no-op change would not add persist imports or .workspace() calls, so these tests would fail on the unmodified file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: store fields (test_followup_store_core_fields), createStore usage (test_followup_uses_create_store_not_signal), persistence layer (test_followup_store_wrapped_with_persistence), workspace scoping (test_persistence_workspace_scoped), no 'any' type (test_no_any_type_in_followup_block), and no try/catch/else/for (test_no_trycatch_else_for_in_followup_block)."
+      "reason": "All behaviors mentioned in instruction.md are tested: persistence wrapping (test 2), workspace scoping (test 3), store fields (test 5), createStore usage (test 8), no any type (test 7), no try/catch/else/for (truncated test), default export (test 4)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings, and comments indicating test categories like [static], [pr_diff], [agent_config]."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying a UI component file, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task modifies a UI component file, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
       "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md does not name the specific file (session.tsx) or exact line numbers. It describes requirements at a conceptual level (followup store, persistence, workspace scoping) without pinpointing the exact location in the codebase."
+      "outcome": "fail",
+      "reason": "Instruction.md specifies the exact file (packages/app/src/pages/session.tsx), the exact API to use (.workspace() with sdk.directory), the exact module pattern (persist), and the exact store fields. This goes well beyond describing what's broken \u2014 it prescribes the implementation approach in detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -53,7 +53,9 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

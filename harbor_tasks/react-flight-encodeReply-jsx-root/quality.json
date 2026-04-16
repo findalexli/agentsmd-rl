@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific symbols like 'serializeTemporaryReferenceMarker', 'moveDebugInfoFromChunkToInnerValue', 'addAsyncInfo', 'Object.isFrozen', 'Object.defineProperty', 'temporary reference set', and 'processReply'. The instruction.md does not mention 'addAsyncInfo', 'moveDebugInfoFromChunkToInnerValue', 'serializeTemporaryReferenceMarker', or 'Object.isFrozen'. The test_frozen_guard_in_add_async_info specifically checks for 'Object.isFrozen' in the 'addAsyncInfo' function, which is not mention"
+      "reason": "Tests assert specific symbols like 'serializeTemporaryReferenceMarker', 'moveDebugInfoFromChunkToInnerValue', 'addAsyncInfo', 'Object.isFrozen', 'Object.defineProperty', 'temporary reference set' literal string, and 'modelRoot' logic. The instruction.md does not mention 'addAsyncInfo', 'moveDebugInfoFromChunkToInnerValue', 'serializeTemporaryReferenceMarker', 'modelRoot', or 'Object.isFrozen'. These are undiscoverable from the instruction alone. test_frozen_guard_in_add_async_info specifically c"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes symptoms (crash on frozen elements, root JSX not recognized as temporary reference) and affected files, but does not specify the exact fix (e.g., adding Object.isFrozen guards or the modelRoot check). A developer must reason about what to change."
+      "reason": "instruction.md describes the symptoms (crash with JSX root, TypeError on frozen elements) and names the files to look at, but does not prescribe the specific fix (e.g., adding Object.isFrozen guards or the modelRoot check). The developer must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_frozen_guard_in_add_async_info asserts 'Object.isFrozen' appears within 40 lines of 'function addAsyncInfo'. An alternative correct fix might use try/catch around Object.defineProperty, or check Object.isExtensible instead of Object.isFrozen, or clone the element before defining the property. These valid alternatives would fail the test."
+      "reason": "test_frozen_guard_in_add_async_info asserts 'Object.isFrozen' appears within 40 lines of 'function addAsyncInfo', which is a gold-specific implementation detail. An alternative correct fix could use try/catch around Object.defineProperty, or check Object.isExtensible instead, and would fail this test despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_frozen_guard_in_add_async_info is purely textual (searches for 'Object.isFrozen' string in source). test_error_preserved_for_non_temp_ref_jsx is purely textual (checks for error message strings in source). test_js_syntax_reply_client and test_js_syntax_flight_client are purely textual marker checks. While test_encodereply_jsx_root_behavior and test_frozen_client_ref_behavior do execute code, a significant portion of the f2p tests are text-only."
+      "reason": "Several tests are text-only checks: test_js_syntax_reply_client, test_js_syntax_flight_client, test_error_preserved_for_non_temp_ref_jsx, test_frozen_guard_in_add_async_info, and test_not_stub all only read file text and assert string presence. However, the fail-to-pass tests (test_encodereply_jsx_root_behavior, test_frozen_client_ref_behavior) do execute code via Jest. Since the question asks if 'every test' is text-only, and some do execute, this is borderline. But test_frozen_guard_in_add_asy"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral f2p tests (test_encodereply_jsx_root_behavior, test_frozen_client_ref_behavior) actually run Jest tests that execute the code and would fail on the base commit. A stub implementation would not pass these tests since they exercise real React Flight functionality."
+      "reason": "The behavioral f2p tests (test_encodereply_jsx_root_behavior, test_frozen_client_ref_behavior) inject real Jest tests that exercise the actual React Flight code paths. A stub implementation would not pass these since they call encodeReply with JSX and render frozen client references. test_frozen_guard_in_add_async_info is text-based but checks for a specific guard that wouldn't exist without a real fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Both behaviors described in instruction.md are tested: (1) encodeReply with JSX root + TemporaryReferenceSet (test_encodereply_jsx_root_behavior), and (2) frozen elements not crashing when debug info is attached (test_frozen_client_ref_behavior, test_frozen_guard_in_add_async_info)."
+      "reason": "The instruction describes two behaviors: (1) encodeReply with JSX root should work with TemporaryReferenceSet, tested by test_encodereply_jsx_root_behavior; (2) debug info attachment should handle frozen elements, tested by test_frozen_client_ref_behavior and test_frozen_guard_in_add_async_info."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clear sections (Gates/static, Fail-to-pass/behavioral, Pass-to-pass/regression, Repo tests) with descriptive names, docstrings, and comments explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Repo tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves bug fixes in source code files, not structured data output."
+      "reason": "This task involves bug fixes in React source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the two files to look at, which is reasonable for a bug report. It does not specify exact line numbers, function names like 'addAsyncInfo', or the specific fix approach (Object.isFrozen)."
+      "reason": "instruction.md names two files to look at which is reasonable for a bug report. It doesn't name specific lines, functions like addAsyncInfo/moveDebugInfoFromChunkToInnerValue, or the Object.isFrozen fix approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

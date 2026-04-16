@@ -1,0 +1,89 @@
+source_pr:
+  owner: expo
+  repo: expo
+  number: 44599
+  merge_commit: db5b146bf3fdc86c534a59f7af3b909c4b1cf8a7
+  base_commit: 25749d7dec5676f2f23d0454030598487d79a6c7
+
+checks:
+  # Fail-to-pass tests (behavioral tests that fail before fix, pass after)
+  - id: test_toRealDirname_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: toRealDirname function must exist in load.ts
+    points: 1
+
+  - id: test_compileModule_uses_basePath
+    type: fail_to_pass
+    origin: behavioral
+    description: compileModule must use basePath for _nodeModulePaths
+    points: 1
+
+  - id: test_nodeModulePaths_uses_resolved_path
+    type: fail_to_pass
+    origin: behavioral
+    description: Code should use realpath resolution
+    points: 1
+
+  - id: test_realpath_called_before_nodeModulePaths
+    type: fail_to_pass
+    origin: behavioral
+    description: The logic should resolve realpath before _nodeModulePaths
+    points: 1
+
+  - id: test_enoent_error_handling
+    type: fail_to_pass
+    origin: behavioral
+    description: The fix should handle ENOENT errors for fake paths
+    points: 1
+
+  - id: test_package_exports
+    type: fail_to_pass
+    origin: behavioral
+    description: Package exports should be importable and work correctly
+    points: 1
+
+  - id: test_realpath_in_build_output
+    type: fail_to_pass
+    origin: behavioral
+    description: The build output should reflect the fix (or source should have it)
+    points: 1
+
+  # Pass-to-pass tests (repo quality tests that should always pass)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: TypeScript should have valid syntax (bracket/parentheses balance)
+    points: 0
+
+  - id: test_compileModule_signature_unchanged
+    type: pass_to_pass
+    origin: static
+    description: Public API should remain unchanged for backwards compatibility
+    points: 0
+
+  - id: test_repo_typescript_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript source files have valid syntax (tsc --ignoreConfig)
+    points: 0
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package.json is valid JSON with required fields
+    points: 0
+
+  - id: test_repo_source_files_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: All expected source files are present and non-empty
+    points: 0
+
+  - id: test_repo_build_outputs_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: Build outputs exist for main entry points
+    points: 0
+
+max_points: 7

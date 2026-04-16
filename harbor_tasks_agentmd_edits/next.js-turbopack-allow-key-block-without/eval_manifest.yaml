@@ -64,6 +64,18 @@ rubric:
     path: turbopack/crates/turbo-persistence/README.md
     lines: 1-10
     commit: d5a88ba4eb50fa9fcc2c06a68da54783d615b017
+- rule: cargo fmt uses ASCII order (uppercase before lowercase)
+  source:
+    path: CLAUDE.md
+    lines: 262-262
+  source_text: '- cargo fmt uses ASCII order (uppercase before lowercase) - just run
+    `cargo fmt`'
+  evidence: In `turbopack/crates/turbo-persistence/src/static_sorted_file.rs`, the
+    new imports `BLOCK_TYPE_KEY_NO_HASH` and `BLOCK_TYPE_KEY_WITH_HASH` are placed
+    alphabetically between `BLOCK_TYPE_INDEX` and `KEY_BLOCK_ENTRY_TYPE_BLOB`, correctly
+    adhering to ASCII order (B before K, and N before W).
+  category: style
+  verification: llm_judge
 config_edits:
 - path: turbopack/crates/turbo-persistence/README.md
   tier: 2
@@ -97,6 +109,69 @@ distractors:
     builds the entire Next.js project and wastes significant time, instead of just
     using `cargo test` or `cargo check` in the `turbopack` directory.
   severity: medium
+- rule: Use retry() from next-test-utils instead of setTimeout for waiting
+  source:
+    path: CLAUDE.md
+    lines: 132-132
+  source_text: '- **Use `retry()` from `next-test-utils` instead of `setTimeout` for
+    waiting**'
+  collision_type: architecture_boundary
+  why_distracting: The PR modifies the turbopack `turbo-persistence` Rust crate. An
+    agent might mistakenly attempt to write integration tests for this Rust change
+    using the Next.js `next-test-utils` TypeScript testing package, which would break
+    architectural boundaries.
+  severity: high
+- rule: Do NOT use check() - it is deprecated. Use retry() + expect() instead
+  source:
+    path: CLAUDE.md
+    lines: 146-146
+  source_text: '- **Do NOT use `check()` - it is deprecated. Use `retry()` + `expect()`
+    instead**'
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to the Next.js TS test suites. Applying this
+    testing convention to a Turbopack Rust crate would be irrelevant and confuse the
+    agent's testing approach.
+  severity: high
+- rule: Prefer real fixture directories over inline files objects
+  source:
+    path: CLAUDE.md
+    lines: 159-159
+  source_text: '- **Prefer real fixture directories over inline `files` objects**'
+  collision_type: architecture_boundary
+  why_distracting: This is a Next.js `nextTestSetup` fixture setup pattern. An agent
+    testing changes inside a core Rust crate might mistakenly try to create JS/TS
+    fixtures, which is out of scope.
+  severity: medium
+- rule: All MDX files must start with YAML frontmatter enclosed in `---` delimiters.
+  source:
+    path: .claude/skills/update-docs/references/DOC-CONVENTIONS.md
+    lines: 7-7
+  source_text: All MDX files must start with YAML frontmatter enclosed in `---` delimiters.
+  collision_type: scope_ambiguity
+  why_distracting: The PR edits the `README.md` file for the `turbo-persistence` crate.
+    An agent might confuse this standard markdown file with a Next.js `.mdx` framework
+    documentation page and incorrectly add YAML frontmatter to the crate's README.
+  severity: high
+- rule: 'Always provide TypeScript first, then JavaScript:'
+  source:
+    path: .claude/skills/update-docs/references/DOC-CONVENTIONS.md
+    lines: 67-67
+  source_text: 'Always provide TypeScript first, then JavaScript:'
+  collision_type: scope_ambiguity
+  why_distracting: If the agent decides to add an example code block to the turbopack
+    crate's `README.md`, it might erroneously apply this convention (adding TS/JS
+    switchers) instead of providing standard Rust code blocks.
+  severity: medium
+- rule: Edit the App Router source, not the Pages Router file.
+  source:
+    path: .claude/skills/update-docs/SKILL.md
+    lines: 90-90
+  source_text: Edit the App Router source, not the Pages Router file.
+  collision_type: scope_ambiguity
+  why_distracting: An agent trying to sync documentation for the `turbo-persistence`
+    changes might get confused by Next.js specific framework documentation rules and
+    search for an App Router source doc that does not exist.
+  severity: low
 hierarchy_analysis: Both CLAUDE.md and AGENTS.md are identical and focus entirely
   on the Next.js TypeScript/JavaScript ecosystem. They provide no specific guidance
   for the Rust `turbopack` subtree, meaning the agent must rely on general Rust knowledge

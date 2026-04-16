@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key files (setup-installable-branch.ts, nightly.yml, preview.yml, README.md, CONTRIBUTING.md), the branch names (nightly, preview, preview/{number}), the requirement for positional argument instead of --branch flag, removal of overwrite protection, and documentation updates. Test-specific strings like 'must provide', 'remix-run/remix#preview', 'remix-run/remix#nightly', 'allowedOverwrites', 'remoteBranches', 'PR Preview', 'Nightly Builds' are all discoverable from the i"
+      "reason": "All asserted paths (scripts/setup-installable-branch.ts, .github/workflows/nightly.yml, preview.yml, README.md, CONTRIBUTING.md) and behavioral requirements (preview branch, push/pull_request/workflow_dispatch triggers, positional arg, remove Nightly Builds section) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (positional argument, remove nightly.yml, extend preview.yml for push events, update docs) but does not specify exact code changes, line numbers, or specific implementation details like which parseArgs options to use."
+      "reason": "Instruction describes what's broken and expected behavior without giving exact code or line-level fixes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific strings that constrain implementation unnecessarily. For example, test_preview_workflow_continuous_build asserts 'PR Preview' not in preview_yml (the workflow name must not contain 'PR Preview'), but alternative valid names like 'PR & Main Preview' would fail. test_contributing_documents_preview_builds asserts '## Nightly Builds' not in contributing, but an agent might reasonably keep a renamed section like '## Nightly Builds (now Preview Builds)' as a redirect. test_s"
+      "outcome": "pass",
+      "reason": "Tests check high-level outcomes (file removed, triggers present, substring 'remix-run/remix#preview'), allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests are pure text/file checks: test_nightly_workflow_removed checks file existence, test_preview_workflow_continuous_build does string-in-file checks, test_readme_documents_preview_install and test_contributing_documents_preview_builds do string-in-file checks, test_setup_script_no_overwrite_protection does string-in-file checks. Only test_setup_script_requires_positional_arg actually executes the script. The repo lint/typecheck/format tests execute behavior but are pass-to-p"
+      "outcome": "pass",
+      "reason": "test_setup_script_requires_positional_arg executes the script via node subprocess; repo tests run pnpm lint/typecheck/format/changes:validate."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests cannot be satisfied by stub implementations. The base repo has nightly.yml present (test_nightly_workflow_removed would fail), preview.yml lacks push trigger (test_preview_workflow_continuous_build would fail), README references nightly (test_readme_documents_preview_install would fail), setup script defaults to nightly (test_setup_script_requires_positional_arg would fail), and script contains allowedOverwrites (test_setup_script_no_overwrite_protection would fail). Real "
+      "reason": "Tests require actual file deletion, script behavior change, and README/CONTRIBUTING edits; stubs cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: nightly.yml removal, preview.yml push trigger extension, script positional arg requirement, script overwrite protection removal, README update, CONTRIBUTING.md update, and pass-to-pass gates for lint/typecheck/format."
+      "reason": "Each expected behavior bullet (preview branch install docs, workflow triggers, nightly removal, positional arg, no overwrite protection) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clearly labeled sections (Gates, Pass-to-pass, Fail-to-pass, Anti-regression) with descriptive function names and docstrings explaining each check."
+      "reason": "Tests grouped with section comments for Gates, pass_to_pass, fail_to_pass, and anti-regression."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves workflow files, scripts, and documentation \u2014 no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "Task does not produce structured data outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and commands are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify (which is appropriate for this task domain) but doesn't specify exact lines, variable names to remove (like 'allowedOverwrites'), or specific code patterns to change."
+      "reason": "Instruction names the files in scope (appropriate given task is about modifying specific workflows/scripts) without citing line numbers or exact code changes."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch shows localized changes to specific files (delete nightly.yml, modify preview.yml, modify script, update docs) \u2014 not full-file rewrites. Changes are consistent with the instruction."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

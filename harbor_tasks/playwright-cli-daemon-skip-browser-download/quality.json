@@ -2,28 +2,28 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction mentions getAsBooleanFromENV, the import path '../../server/utils/env', PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD, resolveBrowsers() with { shell: 'no' }, browserRegistry.install(), the helper function concept, ffmpeg dependency, removal of fs.existsSync pattern, and the target file path. All specifics asserted in tests (function names, string literals, import paths) are discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like `async function resolveAndInstall(nameOrChannel: string)`, `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })`, `browserRegistry.install(executables)`, and `import { getAsBooleanFromENV } from '../../server/utils/env'`. While instruction.md mentions getAsBooleanFromENV, resolveBrowsers, and the import path, it does not specify the exact helper function signature `resolveAndInstall(nameOrChannel: string)`, the exact variable name `executables`, or t"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'The utility function getAsBooleanFromENV (importable from ../../server/utils/env) should be used', 'The { shell: \"no\" } option should be passed to resolveBrowsers()', and 'should be factored into a shared async helper function that accepts a name or channel string parameter'. This tells the agent exactly WHAT to change and HOW, not just what's broken."
+      "reason": "Instruction.md essentially dictates the exact fix: use getAsBooleanFromENV at the start of ensureConfiguredBrowserInstalled, remove fs.existsSync checks, create a shared helper using resolveBrowsers({shell:'no'}) and install(), add ffmpeg resolution. It describes precisely WHAT to change and HOW, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: test_resolve_and_install_helper_exists checks for 'async function resolveAndInstall(nameOrChannel: string)' \u2014 the exact function signature including parameter name. A correct alternative using a different helper name (e.g., 'ensureInstalled') or different parameter name (e.g., 'browser') would fail. Similarly, 'browserRegistry.resolveBrowsers([nameOrChannel], { shell: \"no\" })' is checked as an exact string match."
+      "reason": "Tests assert exact implementation details: `async function resolveAndInstall(nameOrChannel: string)` (exact function name and parameter name), `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })` (exact call syntax), `browserRegistry.install(executables)` (exact variable name 'executables'). An alternative correct fix using different helper names (e.g., `installBrowser`), different parameter names, or slightly different call patterns would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_env_var_check_exists, test_resolve_and_install_helper_exists, test_ffmpeg_dependency_installation, test_chromium_uses_resolve_and_install, test_not_stub) are ALL pure string-in-source checks using 'assert X in src'. None import or call the code, none execute the daemon, none test actual behavior. The build/lint tests are pass-to-pass gates, not behavioral tests of the fix."
+      "reason": "The core fail-to-pass tests (test_env_var_check_exists, test_resolve_and_install_helper_exists, test_ffmpeg_dependency_installation, test_chromium_uses_resolve_and_install, test_not_stub) are ALL string-matching tests using `assert '...' in src`. They never import, call, or execute the code being tested. The build/lint tests do run subprocesses but only verify compilation, not behavioral correctness."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are string matching against source code, an agent could simply insert the exact expected strings as comments or dead code (e.g., add '// async function resolveAndInstall(nameOrChannel: string)' and similar lines) and pass all f2p tests without actually implementing the fix correctly. The build test provides some guard but wouldn't catch dead code additions."
+      "reason": "Since all f2p tests are pure string-matching (`assert 'X' in src`), a stub that simply contains the expected strings as comments or dead code would pass. For example, adding `// async function resolveAndInstall(nameOrChannel: string)` and similar comment lines could satisfy the assertions without implementing any actual fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: env var check (test_env_var_check_exists), shared helper with resolveBrowsers (test_resolve_and_install_helper_exists), ffmpeg dependency (test_ffmpeg_dependency_installation), chromium path refactoring (test_chromium_uses_resolve_and_install), and build/lint constraints."
+      "reason": "All five behavioral requirements from instruction.md are covered: env var check (test_env_var_check_exists), shared helper with resolveBrowsers (test_resolve_and_install_helper_exists), ffmpeg dependency (test_ffmpeg_dependency_installation), chromium consolidated approach (test_chromium_uses_resolve_and_install), and removal of old patterns (test_chromium_uses_resolve_and_install checks old_pattern not in src)."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -39,7 +39,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file and specifies exact function names (ensureConfiguredBrowserInstalled, findOrInstallDefaultBrowser), exact import paths, exact API calls (resolveBrowsers with { shell: 'no' }), and even the exact old pattern to remove ('!fs.existsSync(chromiumExecutable?.executablePath()!)'). This goes well beyond describing what's broken."
+      "reason": "Instruction.md names the exact file, exact functions (ensureConfiguredBrowserInstalled, findOrInstallDefaultBrowser), exact import path ('../../server/utils/env'), exact method calls (resolveBrowsers with {shell:'no'}), and exact old code pattern to remove (`!fs.existsSync(chromiumExecutable?.executablePath()!)`). This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -56,6 +57,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

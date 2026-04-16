@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific patterns like function/method names containing 'slot_mapping' (test_slot_mappings_computed), exact method names {'propose','generate_draft','capture_model','run_model','load_model','set_attn'} (test_core_class_structure), minimum statement counts (15 stmts, 3 ifs, 8 calls in test_propose_not_stub), and AST patterns matching attention metadata build calls (is_attn_build checking for 'attn'/'attention' combined with 'build'/'metadata'/'prepare'/'create'). While the instruc"
+      "outcome": "pass",
+      "reason": "The instruction names the file path (vllm/v1/worker/gpu/spec_decode/eagle/speculator.py), class (EagleSpeculator), method (propose), all six required methods, key attributes (self.input_buffers, self.block_tables, self.draft_tokens), the concept of slot_mapping computation, CUDAGraphMode.FULL, and the need to rebuild attention metadata. The tests check these same elements. The only potentially undiscoverable detail is 'build_attn_metadata' as a function name, but the instruction says 'attention "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (FULL cudagraph path skips rebuilding attention metadata via an early return) but does not specify the exact code change, line numbers, or specific fix implementation. A developer still needs to reason about how to restructure the code."
+      "reason": "The instruction describes what is broken (FULL cudagraph path skips rebuilding attention metadata, early return bypasses metadata construction) but does not prescribe the exact code change. A developer must still figure out how to restructure the code \u2014 e.g., whether to extract a helper method, reorder statements, or remove the early return."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests use AST analysis with specific heuristics: is_attn_build() requires function names containing ('attn'|'attention') AND ('build'|'metadata'|'prepare'|'create'). An alternative fix that calls a helper named e.g. 'rebuild_draft_meta()' or 'update_kv_metadata()' without 'attn' in the name would fail both test_no_fullgraph_early_return and test_attn_metadata_before_fullgraph_execution. The tests are coupled to gold-specific naming conventions."
+      "reason": "The tests in SCRIPT_ATTN_BEFORE_FULL specifically look for calls to 'build_attn_metadata' by exact name (either directly or via helper methods that themselves call 'build_attn_metadata'). An alternative correct fix that, say, inlines the metadata building logic without calling a function named 'build_attn_metadata' would fail the test. Additionally, test_slot_mappings_computed checks for calls containing 'slot_mapping' in the name. The tests also look for specific AST patterns (if-blocks with 'F"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing (structural code analysis) and subprocess execution rather than simple string matching. They parse the Python AST to check control flow, method presence, and call patterns \u2014 this is behavioral/structural verification, not plain text search."
+      "reason": "Tests use AST parsing to analyze the code structure (control flow, method presence, call graphs) via subprocess execution, not simple string matching. They parse the Python AST, walk the tree, and check structural properties like whether returns exist before metadata build calls. This is behavioral/structural verification, not raw text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_no_fullgraph_early_return, test_attn_metadata_before_fullgraph_execution) check that there is no early return in the FULL cudagraph branch before attention metadata building. The original buggy code has this early return, so a stub or no-op would fail. test_propose_not_stub explicitly checks for minimum complexity (15+ statements, 3+ ifs, 8+ calls)."
+      "reason": "A stub propose() method (e.g., just 'pass' or 'return None') would fail test_no_fullgraph_early_return (no metadata build lines found), test_attn_metadata_before_fullgraph_execution (no FULL path or metadata build found), test_slot_mappings_computed (no slot mapping calls), and test_propose_method_complexity (fewer than 10 statements). These tests cannot be satisfied without substantive implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: no early return in FULL path (test_no_fullgraph_early_return), attn metadata built before FULL path (test_attn_metadata_before_fullgraph_execution), slot mappings computed (test_slot_mappings_computed), all six methods present (test_core_class_structure), propose not stubbed (test_propose_not_stub)."
+      "reason": "The instruction requires: (1) attention metadata rebuilt before FULL cudagraph \u2014 tested by test_attn_metadata_before_fullgraph_execution; (2) no early return bypassing metadata \u2014 tested by test_no_fullgraph_early_return; (3) slot mappings computed \u2014 tested by test_slot_mappings_computed; (4) all six methods present \u2014 tested by test_core_class_structure; (5) propose not stubbed \u2014 tested by test_propose_method_complexity."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, descriptive function names, and comments separating fail_to_pass from pass_to_pass sections. Each test has a clear purpose documented in its docstring."
+      "reason": "Tests are well-organized with descriptive function names (test_no_fullgraph_early_return, test_attn_metadata_before_fullgraph_execution, etc.), clear docstrings explaining what each test verifies, and logical grouping into 'fail_to_pass' (core behavioral) and 'pass_to_pass' (gates/regression) sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Python source file, not producing structured data output."
+      "reason": "This task involves fixing a bug in Python code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or method names across all task files."
+      "reason": "File paths, class names, method names, and variable names in the instruction match those in the tests and solution without typographical errors."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file (speculator.py) and method (propose()) which is appropriate given the task domain. It describes the bug conceptually (early return bypassing attention metadata construction in FULL cudagraph path) without specifying exact line numbers or the precise fix."
+      "reason": "The instruction names the file and method (propose() in EagleSpeculator), which is appropriate given the task domain. It describes the bug conceptually (early return in FULL cudagraph branch bypasses metadata construction) without specifying exact line numbers or the precise code fix. The file is already narrowed by the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a configuration edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific function names like 'get_all_compilation_issues_inner_operation' and 'whole_app_module_graphs' which are not mentioned in instruction.md. The instruction says 'the async function responsible for collecting all compilation issues' and 'whole_app_module_graphs' but never names 'get_all_compilation_issues_inner_operation'. Also, specific file paths like 'crates/next-api/src/project.rs' and 'crates/next-napi-bindings/src/next_api/project.rs' are not explicitly stated \u2014 instr"
+      "reason": "Tests assert on specific function names like 'get_all_compilation_issues_inner_operation' and 'whole_app_module_graphs' and specific file paths like 'crates/next-api/src/project.rs' and 'crates/next-napi-bindings/src/next_api/project.rs'. While the instruction mentions the crate names ('next-api' and 'next-napi-bindings') and that each contains a 'project.rs', the exact full relative paths are not explicitly stated. More critically, the function name 'get_all_compilation_issues_inner_operation' "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially prescribes the exact fix: add a new method with specific attributes (#[turbo_tasks::function]), calling specific functions (whole_app_module_graph_operation, .connect()), NOT calling drop_issues, extract scale-down logic to a free function, and modify the compilation issues function to call .whole_app_module_graph instead of iterating endpoint groups. This is a detailed implementation specification, not just a description of what's broken."
+      "reason": "The instruction is extremely prescriptive about the exact solution: it specifies to add a new method with #[turbo_tasks::function], call whole_app_module_graph_operation, call .connect(), NOT call drop_issues, extract scale-down logic to a free async function handling both scale_down and scale_zero, and make the compilation issues function call .whole_app_module_graph. This is essentially a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are fairly permissive on naming (any method with 'whole_app' in the name that isn't 'whole_app_module_graphs' passes), but test_scale_down_logic_deduplicated specifically requires a free async function (not in impl block) containing both 'scale_down' and 'scale_zero'. An alternative correct fix might keep the scale-down logic inline in both methods, or extract it as a method on Project rather than a free function, and would fail. The tests enforce a specific refactoring pattern rather than"
+      "reason": "Tests assert on specific implementation details: test_scale_down_logic_deduplicated requires a free async function (not in impl block) containing both 'scale_down' and 'scale_zero'. test_non_dropping_whole_app_method requires the new method to contain 'whole_app_module_graph_operation' and '.connect()'. An alternative correct fix could use a different approach (e.g., a parameter flag on the existing method, or a wrapper trait) and would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests are pure text/pattern matching: reading source files and checking for string patterns like 'whole_app_module_graph_operation', '.connect()', 'drop_issues', 'get_all_endpoint_groups', 'scale_down', 'scale_zero'. No test compiles the Rust code, runs it, or verifies behavioral correctness. Every core test is essentially `assert 'foo' in open(path).read()` with regex variations."
+      "reason": "All fail-to-pass tests are purely text-based: they read source files and check for string patterns (e.g., 'whole_app_module_graph_operation' in body, '.connect()' in body, 'drop_issues' not in body, regex for 'endpoint_group.*module_graphs'). No test compiles the Rust code, runs it, or checks any behavioral output. Every test is essentially 'assert pattern in open(path).read()'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass because the tests check for specific patterns in the actual source files (e.g., a new method containing 'whole_app_module_graph_operation' and '.connect()' but not 'drop_issues', a free function with 'scale_down' and 'scale_zero', removal of 'get_all_endpoint_groups' from the compilation issues function). These require actual code changes to the existing files."
+      "reason": "The fail-to-pass tests check for structural code changes that don't exist in the base commit: a new whole_app method on Project, extraction of scale-down logic to a free function, and removal of endpoint group iteration from the compilation issues function. A stub/no-op would not pass these since they check for specific code patterns that must be added."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md are tested: (1) new whole-app method without issue suppression (test_non_dropping_whole_app_method, test_new_method_is_turbo_tasks_function), (2) compilation issues uses whole-app graph (test_compilation_issues_uses_whole_app_graph, test_no_endpoint_group_iteration), (3) extracted scale-down helper (test_scale_down_logic_deduplicated), (4) preserved original method (test_original_whole_app_module_graphs_preserved)."
+      "reason": "All four requirements from the instruction are tested: (1) new whole-app method without issue suppression (test_non_dropping_whole_app_method, test_new_method_is_turbo_tasks_function), (2) compilation issues uses whole-app graph (test_compilation_issues_uses_whole_app_graph), (3) scale-down extraction (test_scale_down_logic_deduplicated), (4) original method preserved (test_original_whole_app_module_graphs_preserved)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, and comments categorizing them as '[pr_diff] fail_to_pass', '[pr_diff] pass_to_pass', '[static] pass_to_pass', and '[repo_tests] pass_to_pass'."
+      "reason": "Tests are well-organized with clear naming (test_non_dropping_whole_app_method, test_scale_down_logic_deduplicated, etc.), docstrings explaining each test's purpose, and comments categorizing them as '[pr_diff] fail_to_pass', '[pr_diff] pass_to_pass', '[static] pass_to_pass', and '[repo_tests] pass_to_pass'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves Rust source code modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves Rust source code modifications, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, function names, or variable names in instruction.md. Note: there's an 'AssertionError' typo in the test file (should be 'AssertionError' -> 'AssertionError' is actually wrong, should be 'AssertionError'), but that's a bare except clause that doesn't affect functionality."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the method must 'Use the existing whole_app_module_graph_operation', 'Call .connect() on the result', 'NOT call drop_issues', and the compilation issues function 'must NOT call get_all_endpoint_groups' and 'must NOT contain the pattern endpoint_group followed by module_graphs'. These are extremely specific implementation directives that map directly to test assertions."
+      "reason": "The instruction names specific methods (whole_app_module_graphs, whole_app_module_graph_operation), specific patterns (.connect(), drop_issues), specific crates and file names (project.rs in next-api and next-napi-bindings), and gives exact implementation steps. This goes well beyond describing what's broken and effectively locates the exact code to change and how to change it."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Rust source file modifications, not configuration edits."
+      "reason": "This is a code-only task involving Rust source files, not configuration edits."
     }
   },
   "tier_a_fails": [

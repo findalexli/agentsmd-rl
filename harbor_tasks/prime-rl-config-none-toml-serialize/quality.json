@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests assert the function must be named exactly `none_to_none_str` and be importable from `prime_rl.utils.config`. While instruction.md does mention this function name and location, test_entrypoints_no_exclude_none uses AST inspection to check that `exclude_none=True` is removed from `model_dump` calls in all three entrypoints \u2014 this specific behavioral requirement (remove exclude_none=True from model_dump) is stated in instruction.md. However, test_non_none_passthrough (truncated) tests spe"
+      "outcome": "pass",
+      "reason": "Instruction names the helper function `none_to_none_str`, its location `src/prime_rl/utils/config.py`, the entrypoints to modify, and behavior specifics (recursive, no mutation, edge cases, removing exclude_none=True)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'Implement a helper function named `none_to_none_str` in `src/prime_rl/utils/config.py`', describes exactly what it should do (recursively convert None to 'None' strings), specifies it should not mutate input, and says entrypoints 'should not use `exclude_none=True`'. This is the complete solution specification, not just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and required helper signature/behavior but does not provide the implementation code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests hard-code the function name `none_to_none_str` and require it to be importable from `prime_rl.utils.config`. An alternative correct fix could use a different function name (e.g., `convert_nones`, `prepare_for_toml`) or implement the conversion inline in each entrypoint, or use a decorator pattern \u2014 all would fix the bug but fail the tests."
+      "outcome": "pass",
+      "reason": "Tests check behavior (conversion, round-trip, non-mutation, no exclude_none=True) not implementation details; multiple valid implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests actually import and call `none_to_none_str`, perform TOML round-trip serialization/deserialization, and use AST parsing to verify code structure. They execute code via subprocess and check behavioral results, not just text patterns."
+      "reason": "Tests import and call `none_to_none_str`, run subprocesses, and perform TOML round-trips."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_flat_none_conversion asserts specific output like {\"a\": \"None\", \"b\": 42, ...} which cannot be satisfied by returning empty dict or None. test_edge_cases checks non-mutation. A stub returning {} or None would fail these assertions."
+      "reason": "Tests verify concrete dict conversions (e.g., {'a': None} -> {'a': 'None'}) which a stub returning the input or empty dict cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: recursive None conversion, non-mutation, edge cases (empty dicts, all-None, no-None), preservation of non-None values, TOML round-trip, and removal of exclude_none=True from entrypoints."
+      "reason": "All behaviors in instruction (flat/nested conversion, non-mutation, edge cases, entrypoints not using exclude_none=True) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass vs Fail-to-pass/pr_diff), descriptive function names, docstrings, and comments explaining each test's purpose."
+      "reason": "Tests are commented/grouped with `# Gates`, `# Fail-to-pass` sections and clear test names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves TOML config serialization but doesn't produce a structured data API/schema that needs documentation beyond what's described."
+      "reason": "No structured data API schema produced beyond TOML serialization which is described."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "Paths and function names in instruction match those in tests and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact function name `none_to_none_str`, exact file `src/prime_rl/utils/config.py`, exact lines to change (e.g., 'calls `config.model_dump(exclude_none=True, mode=\"json\")`'), and exact fix approach. This goes beyond identifying the bug domain into specifying the exact solution."
+      "outcome": "pass",
+      "reason": "Instruction names the files but this is appropriate context; no specific line numbers are disclosed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

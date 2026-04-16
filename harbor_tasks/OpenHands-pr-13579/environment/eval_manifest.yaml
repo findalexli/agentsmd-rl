@@ -1,0 +1,83 @@
+task:
+  name: openhands-aws-endpoint-url-fix
+  description: Fix AWS S3 (Minio) endpoint URL handling for feature branches
+  source_pr: "https://github.com/OpenHands/OpenHands/pull/13579"
+  base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+  merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
+
+checks:
+  # Fail-to-pass tests for the core functionality
+  - id: test_function_exists_in_source
+    type: fail_to_pass
+    origin: structural
+    description: _get_default_aws_endpoint_url function exists in source code
+
+  - id: test_function_logic
+    type: fail_to_pass
+    origin: structural
+    description: _get_default_aws_endpoint_url handles AWS_S3_ENDPOINT and AWS_S3_SECURE correctly
+
+  - id: test_injector_has_endpoint_url_field
+    type: fail_to_pass
+    origin: structural
+    description: AwsEventServiceInjector class has endpoint_url field
+
+  - id: test_injector_uses_pydantic_field
+    type: fail_to_pass
+    origin: structural
+    description: AwsEventServiceInjector.endpoint_url uses Field with default_factory
+
+  - id: test_s3_client_uses_self_endpoint_url
+    type: fail_to_pass
+    origin: functional
+    description: boto3 client uses self.endpoint_url instead of os.getenv directly
+
+  - id: test_function_executes_correctly
+    type: fail_to_pass
+    origin: functional
+    description: _get_default_aws_endpoint_url executes correctly with various env var combinations
+
+  - id: test_pydantic_model_uses_field
+    type: fail_to_pass
+    origin: structural
+    description: Pydantic Field is imported and used for endpoint_url
+
+  # Pass-to-pass tests
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: structural
+    description: Python file has valid syntax
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - ruff linter passes on modified file
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Python syntax validation passes
+
+  - id: test_repo_imports_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Python AST parsing succeeds
+
+# Rules extracted from agent config files
+# Note: This is a code-only fix task with no config file changes.
+# The rubric rules below are evaluated against code changes since there are no config changes.
+rubric:
+  - rule: "Code changes follow the repository's coding standards and style guidelines"
+    source: "ruff.toml"
+    type: style
+    description: "Code should pass ruff linting and follow the established Python style"
+
+  - rule: "New code includes appropriate type annotations"
+    source: "mypy.ini"
+    type: style
+    description: "Functions and class attributes should have proper type hints"
+
+  - rule: "New code includes tests for the added functionality"
+    source: "AGENTS.md"
+    type: pattern
+    description: "Changes to backend code should include corresponding unit tests"

@@ -1,119 +1,149 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "THUDM/slime"
+  repo: THUDM/slime
   pr: 1768
-  base_commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
-  merge_commit: "b82193f89cdaaa9cf6ceddb3490c5cde5991bbfe"
-
+  base_commit: d4c4d3fb24d45c3cd12f47b64b30fc3301286778
+  merge_commit: b82193f89cdaaa9cf6ceddb3490c5cde5991bbfe
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified Python files parse without errors"
-
-  - id: router_addr_removed_from_secondary
-    type: fail_to_pass
-    origin: pr_diff
-    description: "router_addr parameter removed from init_wandb_secondary"
-
-  - id: reinit_function_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reinit_wandb_primary_with_open_metrics function added with args + router_addr params"
-
-  - id: reinit_calls_wandb_finish_and_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reinit function calls wandb.finish() then wandb.init() in correct order"
-
-  - id: reinit_configures_metrics_endpoints
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reinit function configures sgl_engine metrics endpoints with resume mode for multiple router addresses"
-
-  - id: reinit_noop_when_no_router
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reinit returns early without touching wandb when router_addr is None"
-
-  - id: update_tracking_bridge_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "logging_utils exposes update_tracking_open_metrics bridging to wandb_utils"
-
-  - id: public_get_metrics_router_addr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Rollout manager exposes public get_metrics_router_addr method"
-
-  - id: train_calls_update_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "train.py imports and calls update_tracking_open_metrics after rollout manager"
-
-  - id: train_async_calls_update_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "train_async.py imports and calls update_tracking_open_metrics after rollout manager"
-
-  - id: reinit_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "reinit_wandb_primary_with_open_metrics has substantial implementation (not stub)"
-
-  - id: secondary_still_functional
-    type: pass_to_pass
-    origin: static
-    description: "init_wandb_secondary still exists with non-trivial body"
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on modified files"
-
-  - id: test_repo_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Black formatting check passes on modified files"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "isort formatting check passes on modified files"
-
-  - id: test_repo_precommit_yaml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "YAML syntax check passes via pre-commit"
-
-  - id: test_repo_precommit_private_key
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Private key detection check passes via pre-commit"
-
-  - id: test_repo_precommit_large_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Large files check passes via pre-commit"
-
-  - id: test_repo_precommit_case_conflict
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Case conflict check passes via pre-commit"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified Python files parse without errors
+- id: router_addr_removed_from_secondary
+  type: fail_to_pass
+  origin: pr_diff
+  description: router_addr parameter removed from init_wandb_secondary
+- id: reinit_function_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: reinit_wandb_primary_with_open_metrics function added with args + router_addr
+    params
+- id: reinit_calls_wandb_finish_and_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: reinit function calls wandb.finish() then wandb.init() in correct order
+- id: reinit_configures_metrics_endpoints
+  type: fail_to_pass
+  origin: pr_diff
+  description: reinit function configures sgl_engine metrics endpoints with resume
+    mode for multiple router addresses
+- id: reinit_noop_when_no_router
+  type: fail_to_pass
+  origin: pr_diff
+  description: reinit returns early without touching wandb when router_addr is None
+- id: update_tracking_bridge_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: logging_utils exposes update_tracking_open_metrics bridging to wandb_utils
+- id: public_get_metrics_router_addr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rollout manager exposes public get_metrics_router_addr method
+- id: train_calls_update_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: train.py imports and calls update_tracking_open_metrics after rollout
+    manager
+- id: train_async_calls_update_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: train_async.py imports and calls update_tracking_open_metrics after
+    rollout manager
+- id: reinit_not_stub
+  type: pass_to_pass
+  origin: static
+  description: reinit_wandb_primary_with_open_metrics has substantial implementation
+    (not stub)
+- id: secondary_still_functional
+  type: pass_to_pass
+  origin: static
+  description: init_wandb_secondary still exists with non-trivial body
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on modified files
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Black formatting check passes on modified files
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: isort formatting check passes on modified files
+- id: test_repo_precommit_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML syntax check passes via pre-commit
+- id: test_repo_precommit_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Private key detection check passes via pre-commit
+- id: test_repo_precommit_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Large files check passes via pre-commit
+- id: test_repo_precommit_case_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Case conflict check passes via pre-commit
 rubric:
-  # Note: This is a pure code-change task (no config file modifications).
-  # The rubric rules below are enforced through the test assertions in test_outputs.py
-  # rather than LLM-based config file evaluation.
-  - rule: "Follow existing naming patterns when adding public methods - use get_* naming for accessors"
-    reference: "test_public_get_metrics_router_addr validates get_metrics_router_addr naming"
+- rule: Follow existing naming patterns when adding public methods - use get_* naming
+    for accessors
+  reference: test_public_get_metrics_router_addr validates get_metrics_router_addr
+    naming
+- rule: Public wrappers should delegate cleanly to private implementations without
+    changing semantics
+  reference: test_public_get_metrics_router_addr validates wrapper calls _get_metrics_router_addr
+- rule: Bridge functions should delegate cleanly without unnecessary indirection
+  reference: test_update_tracking_bridge_exists validates direct delegation to reinit_wandb_primary_with_open_metrics
+- rule: 'WandB integration code must handle lifecycle correctly: finish before init,
+    resume mode, early returns'
+  reference: test_reinit_calls_wandb_finish_and_init, test_reinit_noop_when_no_router
+    validate lifecycle handling
+distractors:
+- rule: If the task needs engine-based async generation and rewards, use the sglang
+    path as base. If the task is file/buffer-driven and simple, use sft path as base.
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 27-28
+  source_text: 'If the task needs engine-based async generation and rewards, use the
+    sglang path as base.
 
-  - rule: "Public wrappers should delegate cleanly to private implementations without changing semantics"
-    reference: "test_public_get_metrics_router_addr validates wrapper calls _get_metrics_router_addr"
+    If the task is file/buffer-driven and simple, use sft path as base.'
+  collision_type: architecture_boundary
+  why_distracting: The issue involves SGLang Prometheus metrics and modifies `slime/ray/rollout.py`.
+    An agent might mistakenly think it should modify the rollout generation logic
+    (e.g. `sglang_rollout.py`) to extract metrics from the generation loop. However,
+    SGLang metrics are exposed via the router's separate open metrics endpoint, so
+    modifying the rollout generation path would be the wrong architectural approach.
+  severity: high
+- rule: Customize reward normalization/shaping using post_process_rewards in rollout.py
+  source:
+    path: .claude/skills/add-reward-function/SKILL.md
+    lines: 58-69
+  source_text: "def post_process_rewards(args, samples):\n    # return (raw_rewards,\
+    \ processed_rewards)\n    ...\n```\n\nWire with:\n\n```bash\n--custom-reward-post-process-path\
+    \ <module>.post_process_rewards\n```\n\nThis hook is consumed in `slime/ray/rollout.py`."
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies `slime/ray/rollout.py`. An agent scanning for
+    rules related to this file might think it needs to use the reward post-processing
+    hook to expose or manipulate metrics. However, this rule is strictly for RL reward
+    shaping, whereas the task is to fix W&B logging for SGLang's engine metrics, which
+    is completely unrelated to rewards.
+  severity: medium
+- rule: Add tests for new behavior following existing naming conventions
+  source:
+    path: .claude/skills/add-tests-and-ci/SKILL.md
+    lines: 23-25
+  source_text: '- Follow existing naming: `tests/test_<feature>.py`
 
-  - rule: "Bridge functions should delegate cleanly without unnecessary indirection"
-    reference: "test_update_tracking_bridge_exists validates direct delegation to reinit_wandb_primary_with_open_metrics"
+    - Start from nearest existing test file for your model/path
 
-  - rule: "WandB integration code must handle lifecycle correctly: finish before init, resume mode, early returns"
-    reference: "test_reinit_calls_wandb_finish_and_init, test_reinit_noop_when_no_router validate lifecycle handling"
+    - Keep test scope small and behavior-focused'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is fixing a bug related to metrics tracking. It might
+    proactively try to write a test for this change. However, testing WandB initialization
+    and Ray remote actor metric scraping in a distributed multi-process environment
+    is highly complex and not requested by the user. The skill is intended for when
+    the user explicitly asks for tests.
+  severity: low

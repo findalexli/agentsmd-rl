@@ -102,6 +102,30 @@ distractors:
   source:
     path: AGENTS.md
     lines: 18-21
+- rule: Use gr.HTML to create custom HTML components.
+  source:
+    path: repo/.agents/skills/gradio/SKILL.md
+    lines: 112-112
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to building user-facing Gradio applications,
+    but the PR modifies the underlying core Gradio framework (gradio/utils.py). Attempting
+    to use `gr.HTML` inside the framework's module-reloading logic would cause an
+    architectural bug.
+  severity: high
+- rule: Use Blocks for low-level layout and event wiring.
+  source:
+    path: repo/.agents/skills/gradio/SKILL.md
+    lines: 40-40
+  source_text: '**Blocks** (low-level): flexible layout with explicit event wiring.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule directs an agent to use `gr.Blocks` to build an app layout.
+    However, the PR directly manipulates the internal IDs and dictionaries of the
+    `Blocks` class within the framework context reloading utility. Following this
+    rule would lead an agent to incorrectly build app-level components instead of
+    modifying the framework's internal handling of blocks.
+  severity: high
 hierarchy_analysis: The repository uses a single, flat configuration file (`AGENTS.md`)
   at the root level. There are no conflicting rules within the file, but the agent
   must distinguish between instructions meant for the code itself versus instructions

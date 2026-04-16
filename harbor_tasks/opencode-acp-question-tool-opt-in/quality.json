@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific file paths like 'packages/opencode/src/acp/README.md', 'packages/opencode/src/flag/flag.ts', and '.opencode/agent/translator.md'. The instruction never mentions 'translator.md' by name or its path; it only says 'environment variable glossary in the project documentation'. The instruction also doesn't mention the Flag namespace, the 'src/flag/flag.ts' file, or that the flag should use a 'truthy()' helper. The test test_translator_md_includes_env_var checks a specific file pa"
+      "reason": "Tests assert on specific file paths like 'packages/opencode/src/acp/README.md', 'packages/opencode/src/flag/flag.ts', and '.opencode/agent/translator.md'. The instruction mentions updating 'the ACP README' and 'the project documentation' but never specifies these exact paths. The test also imports from './src/flag/flag' with the exact namespace 'Flag.OPENCODE_ENABLE_QUESTION_TOOL' and checks for 'translator.md' specifically \u2014 none of these paths are discoverable from instruction.md alone."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes requirements (add env var, update gating logic, update docs) without specifying exact code changes, line numbers, or specific implementation details like 'use truthy()' or 'modify registry.ts line 97'."
+      "reason": "The instruction describes requirements (add env var flag, update gating logic, update docs) but does not specify exact lines to change or the precise code to write. A developer must still figure out where the Flag namespace is, how the tool registry works, and where documentation files live."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_question_tool_gated_by_env_var and test_cli_client_has_question_tool_by_default construct the gating logic inline as `[\"app\", \"cli\", \"desktop\"].includes(Flag.OPENCODE_CLIENT) || Flag.OPENCODE_ENABLE_QUESTION_TOOL` rather than testing the actual tool registry behavior. An alternative correct fix that implements the gating differently in registry.ts (e.g., using a different variable name or a helper function) would still need Flag.OPENCODE_ENABLE_QUESTION_TOOL to exist as a boolean on the Fla"
+      "reason": "Tests assert the exact namespace path 'Flag.OPENCODE_ENABLE_QUESTION_TOOL' via import from './src/flag/flag'. An alternative correct implementation that defines the flag differently (e.g., as a standalone function, a different export name, or reads the env var directly in registry.ts) would fail. The test_question_tool_gated_by_env_var test reimplements the gating logic itself rather than testing the actual tool registry behavior, so it's tightly coupled to the gold solution's structure."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_acp_readme_documents_question_tool_opt_in and test_translator_md_includes_env_var are pure text-matching tests (assert string in file.read_text()). test_question_tool_gated_by_env_var doesn't actually import/call the tool registry; it reimplements the gating logic inline and only checks Flag values. The behavioral tests (f2p) mostly check Flag existence and do string matching on docs, not actual tool registry behavior."
+      "reason": "test_acp_readme_documents_question_tool_opt_in and test_translator_md_includes_env_var are purely text-matching tests (assert 'string' in file.read_text()). While some tests do execute TypeScript via _run_ts, 2 out of 5 fail-to-pass tests are pure text checks with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation wouldn't pass: test_flag_opencode_enable_question_tool_defined requires Flag.OPENCODE_ENABLE_QUESTION_TOOL to actually exist in flag.ts, test_question_tool_gated_by_env_var requires the flag to return false when env var is unset and true when set to '1', and the doc tests require actual content in specific files. These require real implementation."
+      "reason": "The f2p tests check that Flag.OPENCODE_ENABLE_QUESTION_TOOL exists and returns a boolean/truthy value based on env var, and that documentation files contain specific strings. A stub/empty implementation would not pass these \u2014 the flag must actually be defined and the truthy() function called, and docs must be created/modified."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requirement 2 says 'Update the tool registry gating logic' so QuestionTool is disabled for ACP by default. But no test actually imports and calls the tool registry to verify that QuestionTool is excluded/included. The f2p tests only verify the Flag exists and do inline logic simulation, not actual registry behavior."
+      "reason": "The instruction requires updating the tool registry gating logic so QuestionTool is excluded for ACP by default but included when the env var is set. However, no test actually imports and checks the ToolRegistry.all() function's output. The behavioral tests only check the Flag value and reimplement the gating logic in test code, not the actual registry behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Config/documentation), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Config/documentation), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the feature requirements without naming specific source files, line numbers, or internal implementation details. It mentions the env var name OPENCODE_ENABLE_QUESTION_TOOL which is the feature being added, not a localization hint."
+      "reason": "The instruction does not name specific files, line numbers, or exact code to change. It describes requirements at a feature level, leaving the agent to discover the relevant source files."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized: single-line additions to flag.ts, registry.ts, translator.md, and a small section added to README.md. No full-file rewrites or contradictions."
+      "reason": "The gold patch makes localized changes to 4 files (adding a few lines each), none of which contradict other tier-1 files. Changes are minimal and scoped."
     }
   },
   "tier_a_fails": [

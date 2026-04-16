@@ -1,58 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the two key files (js/image/shared/ImagePreview.svelte and js/atoms/src/FullscreenButton.svelte), mentions the FullscreenButton component, the onclick callback pattern, the on:fullscreen event directive issue, and that DownloadLink/ShareButton should remain. All test-asserted specifics (file paths, component names, the onclick vs on:fullscreen distinction, dispatch pattern) are discoverable from the instruction."
+      "reason": "instruction.md names ImagePreview.svelte and FullscreenButton.svelte, references the onclick prop, and describes the fullscreen event dispatching behavior that the tests verify."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (event-based pattern vs callback prop) and references a similar Gallery fix, but does not specify exact code changes like 'change line X to Y' or 'replace on:fullscreen with onclick={...}'. A developer still needs to reason about the implementation."
+      "reason": "Instruction says the callback prop pattern is expected but doesn't provide the exact code; agent still needs to figure out the handler body."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are highly specific to the gold solution's implementation. test_onclick_updates_state extracts the handler body and evals it expecting a function that takes a value and sets 'fullscreen = value'. test_onclick_dispatches_event expects dispatch() to be called with specific arguments. An alternative correct fix\u2014e.g., using a different variable name, using a wrapper function, or dispatching differently\u2014would fail these tests. The handler extraction via regex and eval is brittle to any formatti"
+      "reason": "test_onclick_dispatches_event requires `dispatch` to be called with event name containing 'fullscreen' \u2014 a valid fix could update state and let a reactive statement or parent handler manage the event, or use createEventDispatcher with a different name; also test_onclick_updates_state requires assignment to a variable literally named `fullscreen` (the test uses `let fullscreen` and checks that variable)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Several tests (test_onclick_updates_state, test_onclick_dispatches_event) extract handler code and execute it via Node.js subprocess, evaluating actual behavior. test_repo_prettier_formatting and test_repo_client_build run real build/lint commands. Not purely text-matching."
+      "reason": "Tests extract the handler via Node.js and actually execute it with eval to verify behavior (state updates, dispatch calls)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_onclick_prop_present, test_onclick_updates_state, test_onclick_dispatches_event, test_no_on_fullscreen_directive) all fail on the base commit because the base code uses 'on:fullscreen' directive instead of 'onclick' prop. A stub/no-op change would not pass these tests."
+      "reason": "Tests require executable handler that updates state and calls dispatch with fullscreen event; a stub cannot satisfy these checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes: fullscreen button should work (onclick handler), download button should still work (DownloadLink preserved), and the broken on:fullscreen pattern should be fixed. All of these are tested."
+      "reason": "Tests cover onclick wiring, state update, dispatch, removal of on:fullscreen, and regression preservation of DownloadLink/ShareButton."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "Task is a UI bug fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, component names, and commands in instruction.md are all correct and consistent with the actual repository structure."
+      "reason": "File paths and component names match the repo layout."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names both files (ImagePreview.svelte and FullscreenButton.svelte), states the exact problem pattern ('uses an event-based pattern that the FullscreenButton component does not support'), and says 'the same pattern needs to be applied' from Gallery. This significantly narrows the solution space beyond what a bug report would normally provide."
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files but does not pinpoint specific lines or provide the fix code; localization of the FullscreenButton pattern is appropriate context."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Svelte component, not a config edit task."
+      "reason": "Code-only task, no config edits involved."
     }
   },
   "tier_a_fails": [
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

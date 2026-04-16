@@ -29,11 +29,24 @@ JSG_TRY(js) {
 }
 ```
 
-## Implementation Locations
+Where `JSG_TRY(js)` takes a `jsg::Lock&` parameter (by convention named `js`), and `JSG_CATCH(exception)` introduces a `jsg::Value&` variable with the user-provided name.
 
-- Define the macros in `src/workerd/jsg/jsg.h`
-- Implement supporting functionality in `src/workerd/jsg/jsg.c++`
-- Update documentation in `src/workerd/jsg/README.md` to reflect the new patterns
+## Implementation Requirements
+
+### Macros
+
+Define `JSG_TRY` and `JSG_CATCH` macros in `src/workerd/jsg/jsg.h` using `#define`.
+
+### Supporting Class
+
+The macros require a helper class to manage exception state. In `src/workerd/jsg/jsg.h`, declare a class named `JsgCatchScope` with:
+- A constructor taking `jsg::Lock& js`
+- A `catchException()` method accepting optional `ExceptionToJsOptions`
+- A `getCaughtException()` method returning `jsg::Value&`
+
+In `src/workerd/jsg/jsg.c++`, implement `JsgCatchScope::catchException()` to:
+- Convert `JsExceptionThrown` to the caught V8 exception as `jsg::Value`
+- Convert `kj::Exception` to a JavaScript error via `js.exceptionToJs()`
 
 ## Migration Scope
 
@@ -46,9 +59,11 @@ Migrate the existing `js.tryCatch()` call sites in these files to use the new ma
 - `src/workerd/api/urlpattern.c++`
 - `src/workerd/jsg/modules-new.c++`
 
+At least 4 of these 7 files must be successfully migrated.
+
 ## Documentation Updates
 
 After implementing the code changes, update the relevant documentation in `src/workerd/jsg/README.md` to:
-- Document the new exception handling macros
+- Document the `JSG_TRY` and `JSG_CATCH` macros with usage examples showing `JSG_TRY(js)` syntax
 - Update the exception handling guidance to reflect current best practices (`js.error()`, `js.throwException()`)
 - Include usage examples showing the recommended patterns

@@ -3,58 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_usematchroute_opts_inside_memo checks for 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo; test_matchroute_uses_memo_for_children checks for 'const renderedChild = Solid.createMemo'; test_matchroute_returns_jsx_fragment checks for 'return <>{renderedChild()}</>'. None of these specific patterns are described in instruction.md."
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_usematchroute_opts_inside_memo checks for 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo; test_matchroute_uses_memo_for_children checks for 'const renderedChild = Solid.createMemo' and 'const child = props.children' inside the memo; test_matchroute_returns_jsx_fragment checks for exact string 'return <>{renderedChild()}</>'. None of these specific patterns are described in the instru"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the bug symptoms (MatchRoute not updating on navigation/signal changes) and the file to modify, but does not specify the exact code changes needed like moving destructuring inside createMemo or wrapping in JSX fragments."
+      "outcome": "fail",
+      "reason": "While instruction.md doesn't explicitly state the fix, the hidden tests check for extremely specific implementation patterns (moving destructuring inside createMemo, wrapping renderedChild in Solid.createMemo, returning JSX fragment). However, instruction.md itself only describes the bug symptoms, so from the agent's perspective it doesn't leak. But the tests effectively require a single specific solution pattern that instruction.md doesn't describe - this is more a solution_uniqueness_guard iss"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation patterns: test_usematchroute_opts_inside_memo requires 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo; test_matchroute_uses_memo_for_children requires 'const renderedChild = Solid.createMemo' and 'const child = props.children' inside it; test_matchroute_returns_jsx_fragment requires exactly 'return <>{renderedChild()}</>'. An alternative correct fix (e.g., using createEffect, different variable names, or different reactive wrapper patte"
+      "reason": "Tests assert on exact implementation strings like 'const renderedChild = Solid.createMemo', 'return <>{renderedChild()}</>', and 'const { pending, caseSensitive, fuzzy, includeSearch' being inside createMemo. Alternative correct fixes (e.g., using createEffect, using a different variable name, using Solid.memo wrapper, or returning renderedChild differently) would fail these text-matching tests even if they correctly fix the reactivity bug."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Three of the fail_to_pass tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are purely text-based assertions using string matching on file contents (e.g., `assert 'const renderedChild = Solid.createMemo' in content`). They never import, call, or execute the code to verify behavioral correctness."
+      "reason": "Three of the fail_to_pass tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are purely text-matching tests that read file content and assert on string patterns. They never import, call, or execute the code. Only test_repo_unit_tests and test_repo_type_tests actually execute code, but those are pass_to_pass tests."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the original file (e.g., destructuring inside createMemo, renderedChild wrapped in createMemo, JSX fragment return). A stub or no-op wouldn't produce these patterns, so the agent must actually modify the file."
+      "outcome": "fail",
+      "reason": "The f2p tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are text-matching tests. A developer could pass them by simply rearranging code text to match the expected patterns without actually fixing the reactivity bug. For example, moving the destructuring line inside createMemo textually without fixing the actual reactive tracking would pass test_usematchroute_opts_inside_memo."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires 'MatchRoute properly reactive to both navigation changes and signal updates', but no test actually verifies this reactive behavior at runtime. Tests only check static code patterns in the source file."
+      "reason": "Instruction.md requires that 'MatchRoute properly reactive to both navigation changes and signal updates' but no test actually verifies this behavior by rendering components and checking reactivity. The tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, etc.), have docstrings explaining what they verify, and comments distinguish pass_to_pass from fail_to_pass tests."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why, clearly separating pass_to_pass from fail_to_pass concerns."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a reactivity bug in source code, not producing structured data output."
+      "reason": "This task involves fixing a UI component reactivity bug, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and package names in instruction.md are all correct and consistent with the repository structure."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (Matches.tsx) which is reasonable since the task is about the MatchRoute component, but doesn't specify exact lines or the specific code change needed."
+      "reason": "instruction.md names the file to modify (packages/solid-router/src/Matches.tsx) which is reasonable since it's the file containing MatchRoute. It doesn't specify exact lines or the specific fix needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single source file, not a config-edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

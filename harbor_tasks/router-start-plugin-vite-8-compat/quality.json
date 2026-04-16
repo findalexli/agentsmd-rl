@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific literal strings like \"isRolldown = 'rolldownVersion' in vite\", \"bundlerOptionsKey = isRolldown\", \"import * as vite from 'vite'\", \"build?.rolldownOptions ?? build?.rollupOptions\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\", \"getBundlerOptions(serverEnv?.build)?.input\", and \"[bundlerOptionsKey]:\". The instruction.md does not specify these exact variable names, import styles, or expression forms. For example, the instruction says 'export a computed k"
+      "reason": "Tests assert very specific literal strings like \"isRolldown = 'rolldownVersion' in vite\", \"bundlerOptionsKey = isRolldown\", \"import * as vite from 'vite'\", \"build?.rolldownOptions ?? build?.rollupOptions\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\", and \"getBundlerOptions(serverEnv?.build)?.input\". The instruction.md does not specify these exact variable names, import styles, or implementation patterns. For example, the instruction says 'Export a computed key' but never nam"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction tells the agent exactly what to do: detect 'rolldownVersion' in vite ('Vite exposes a marker...that identifies when Rolldown is in use'), export a computed key resolving to the correct property name, export a helper that reads bundler options, and replace all hardcoded references with computed property access. It specifies the exact files to change and the exact pattern of the fix. This goes well beyond describing what's broken."
+      "reason": "The instruction explicitly says 'Vite exposes a marker in its module that identifies when Rolldown is in use. Detect this at runtime', 'Export a computed key that resolves to the correct property name (rolldownOptions or rollupOptions)', and 'Also export a helper that reads the bundler options from a build config'. This describes WHAT to implement in significant detail, not just what's broken. It also specifies exact file paths and what to add to each file."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact import syntax (\"import * as vite from 'vite'\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\"), exact expressions (\"build?.rolldownOptions ?? build?.rollupOptions\"), and exact usage patterns (\"[bundlerOptionsKey]:\"). An alternative correct fix using different names (e.g., 'bundlerKey', 'getOptions') or a different detection mechanism would fail."
+      "reason": "Tests assert exact implementation details: variable name 'isRolldown', exact expression \"isRolldown = 'rolldownVersion' in vite\", exact import style \"import * as vite from 'vite'\", exact function name 'getBundlerOptions', exact pattern \"build?.rolldownOptions ?? build?.rollupOptions\", exact import statement \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\". An alternative correct fix using different names (e.g., 'useRolldown', 'bundlerKey', 'readBundlerConfig') or different detect"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, test_plugin_imports_bundler_utils, etc.) are ALL pure text-matching: they read files and assert substrings exist. None import or execute the TypeScript code, none call functions. The p2p tests (build, types, eslint) do run subprocesses, but every f2p test is purely 'assert X in open(path).read()'."
+      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, etc.) are ALL purely string-matching tests using 'assert \"...\" in content' on file contents. None of them import, call, or execute the code. The p2p tests (build, types, eslint) do execute subprocesses, but every f2p test is text-matching only."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since f2p tests only check for string presence in source files, a stub implementation that simply contains the asserted strings as comments or dead code would pass all f2p tests. For example, adding '// isRolldown = rolldownVersion in vite' and similar strings would satisfy the assertions without implementing any actual fix."
+      "reason": "Since f2p tests only check for string presence in source files, a stub implementation that simply contains the right strings as comments or dead code would pass. For example, writing '// isRolldown = \"rolldownVersion\" in vite' and '// bundlerOptionsKey = isRolldown' as comments would satisfy the string assertions without implementing any actual functionality."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction mentions build, types, eslint passing, and the specific changes to utils.ts, plugin.ts, and preview-server-plugin/plugin.ts. All of these are tested (build/types/eslint via subprocess tests, file changes via string-matching tests)."
+      "reason": "The instruction requires: bundler detection utilities in utils.ts (tested), updated plugin.ts (tested), updated preview-server-plugin/plugin.ts (tested), build passes (tested), types pass (tested), eslint passes (tested). All explicitly required behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by file (utils, plugin, preview-server), and marked as f2p or p2p. The structure is clear and informative."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, grouped logically by file (utils, plugin, preview-server-plugin) and type (f2p vs p2p)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task produces code changes, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, variable names, and property names in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files to modify (utils.ts, plugin.ts, preview-server-plugin/plugin.ts) and describes the exact nature of the fix (add detection using vite marker, export computed key, replace hardcoded rollupOptions). It also hints at the specific detection mechanism ('Vite exposes a marker in its module')."
+      "outcome": "pass",
+      "reason": "The instruction names the three files to modify, which is reasonable given the task domain. It doesn't specify exact line numbers or exact code to write, though it does describe the approach in detail (covered under no_solution_leakage)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,7 @@
     "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 4,
+  "fail_count": 5
 }

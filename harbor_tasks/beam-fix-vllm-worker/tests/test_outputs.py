@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Task: beam-fix-vllm-worker
 Repo: apache/beam @ c8e45e79c699ef6df8847824833aeefab3b5767a
@@ -255,89 +256,138 @@ def test_repo_pylint_errors_vllm_inference():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_parse_args_default_max_num_seqs():
-    """parse_known_args exposes --vllm_max_num_seqs with a reasonable int default."""
+def test_parse_args_accepts_max_num_seqs_flag():
+    """parse_known_args() accepts a custom max-num-seqs flag and parses it as int."""
     _run("""\
-known, _ = vtc.parse_known_args(['--output', '/tmp/out'])
+known, _ = vtc.parse_known_args(['--vllm_max_num_seqs', '64', '--output', '/tmp/out'])
 assert hasattr(known, 'vllm_max_num_seqs'), "Missing vllm_max_num_seqs arg"
 val = known.vllm_max_num_seqs
 assert isinstance(val, int), f"Expected int, got {type(val)}"
-assert 1 <= val <= 256, f"Default {val} not in reasonable range [1, 256]"
+assert val == 64, f"Expected 64, got {val}"
 """)
 
 
 # [pr_diff] fail_to_pass
-def test_parse_args_default_gpu_memory_utilization():
-    """parse_known_args exposes --vllm_gpu_memory_utilization with a reasonable float default."""
+def test_parse_args_accepts_gpu_memory_utilization_flag():
+    """parse_known_args() accepts a custom gpu_memory_utilization flag and parses it as float."""
     _run("""\
-known, _ = vtc.parse_known_args(['--output', '/tmp/out'])
+known, _ = vtc.parse_known_args(['--vllm_gpu_memory_utilization', '0.85', '--output', '/tmp/out'])
 assert hasattr(known, 'vllm_gpu_memory_utilization'), "Missing vllm_gpu_memory_utilization arg"
 val = known.vllm_gpu_memory_utilization
 assert isinstance(val, float), f"Expected float, got {type(val)}"
-assert 0.1 <= val <= 0.95, f"Default {val} not in reasonable range [0.1, 0.95]"
+assert abs(val - 0.85) < 1e-6, f"Expected 0.85, got {val}"
 """)
 
 
 # [pr_diff] fail_to_pass
-def test_parse_args_custom_overrides():
-    """--vllm_max_num_seqs and --vllm_gpu_memory_utilization accept custom values."""
+def test_parse_args_provides_sensible_defaults():
+    """parse_known_args() provides sensible defaults when flags are not provided."""
     _run("""\
-known, _ = vtc.parse_known_args([
-    '--output', '/tmp/out',
-    '--vllm_max_num_seqs', '64',
-    '--vllm_gpu_memory_utilization', '0.9',
-])
-assert known.vllm_max_num_seqs == 64, f"Expected 64, got {known.vllm_max_num_seqs}"
-assert abs(known.vllm_gpu_memory_utilization - 0.9) < 1e-6, \\
-    f"Expected 0.9, got {known.vllm_gpu_memory_utilization}"
+known, _ = vtc.parse_known_args(['--output', '/tmp/out'])
+# Both flags must be present and have reasonable default values
+assert hasattr(known, 'vllm_max_num_seqs'), "Missing vllm_max_num_seqs arg"
+max_seqs = known.vllm_max_num_seqs
+assert isinstance(max_seqs, int), f"vllm_max_num_seqs should be int, got {type(max_seqs)}"
+assert 1 <= max_seqs <= 256, f"Default max_seqs={max_seqs} not in range [1, 256]"
+
+assert hasattr(known, 'vllm_gpu_memory_utilization'), "Missing vllm_gpu_memory_utilization arg"
+mem_util = known.vllm_gpu_memory_utilization
+assert isinstance(mem_util, float), f"vllm_gpu_memory_utilization should be float, got {type(mem_util)}"
+assert 0.1 <= mem_util <= 0.95, f"Default mem_util={mem_util} not in range [0.1, 0.95]"
 """)
 
 
 # [pr_diff] fail_to_pass
-def test_build_vllm_server_kwargs():
-    """A helper builds a dict of vLLM server CLI flags from parsed args."""
+def test_kwargs_helper_returns_dict_with_server_flags():
+    """A helper returns a dict mapping vLLM server flag names to string values."""
     _run("""\
 from types import SimpleNamespace
-fn = getattr(vtc, 'build_vllm_server_kwargs', None)
-assert fn is not None, "build_vllm_server_kwargs function must exist"
 
-args = SimpleNamespace(vllm_max_num_seqs=32, vllm_gpu_memory_utilization=0.72)
-result = fn(args)
+# Find any function that accepts an object with max_num_seqs and gpu_memory_utilization
+# and returns a dict with vLLM server flags
+candidates = [name for name in dir(vtc) if not name.startswith('_')]
+fn = None
+for name in candidates:
+    obj = getattr(vtc, name)
+    if callable(obj) and not name.startswith('parse_') and not name.startswith('run'):
+        # Quick check: call with dummy args
+        try:
+            args = SimpleNamespace(vllm_max_num_seqs=32, vllm_gpu_memory_utilization=0.72)
+            result = obj(args)
+            if isinstance(result, dict) and len(result) >= 2:
+                # Looks like the right function
+                fn = obj
+                break
+        except Exception:
+            pass
+
+assert fn is not None, f"No function found that accepts args and returns dict with server flags. Candidates: {candidates}"
+result = fn(SimpleNamespace(vllm_max_num_seqs=32, vllm_gpu_memory_utilization=0.72))
+
 assert isinstance(result, dict), f"Expected dict, got {type(result)}"
-# Must contain server-flag keys
-assert any('max' in k and 'seq' in k for k in result), \\
-    f"Missing max-num-seqs key in {list(result.keys())}"
-assert any('gpu' in k and 'memory' in k for k in result), \\
-    f"Missing gpu-memory-utilization key in {list(result.keys())}"
-# Values must be strings (CLI args passed to vLLM server)
+# Must contain at least two keys for max-num-seqs and gpu-memory-utilization
+assert len(result) >= 2, f"Expected at least 2 keys, got {len(result)}"
+# All values must be strings
 for k, v in result.items():
     assert isinstance(v, str), f"Value for {k} should be str, got {type(v)}"
+# Check for max-num related key
+keys_lower = {k.lower(): k for k in result}
+has_max = any('max' in k.lower() and 'seq' in k.lower() for k in result)
+has_gpu = any('gpu' in k.lower() and 'memory' in k.lower() for k in result)
+assert has_max, f"Missing max-num related key in {list(result.keys())}"
+assert has_gpu, f"Missing gpu-memory related key in {list(result.keys())}"
 """)
 
 
 # [pr_diff] fail_to_pass
-def test_build_vllm_server_kwargs_propagates_values():
-    """build_vllm_server_kwargs correctly converts numeric args to string CLI flags."""
+def test_kwargs_helper_converts_numeric_values_to_strings():
+    """The kwargs helper correctly converts numeric args to string CLI flags."""
     _run("""\
 from types import SimpleNamespace
-fn = vtc.build_vllm_server_kwargs
-for max_seqs, mem_util in [(16, 0.5), (64, 0.9), (128, 0.85)]:
+
+# Find the helper function
+candidates = [name for name in dir(vtc) if not name.startswith('_')]
+fn = None
+for name in candidates:
+    obj = getattr(vtc, name)
+    if callable(obj) and not name.startswith('parse_') and not name.startswith('run'):
+        try:
+            args = SimpleNamespace(vllm_max_num_seqs=32, vllm_gpu_memory_utilization=0.72)
+            result = obj(args)
+            if isinstance(result, dict) and len(result) >= 2:
+                fn = obj
+                break
+        except Exception:
+            pass
+
+assert fn is not None, "Helper function not found"
+
+# Test that numeric values are converted to string values
+test_cases = [(16, 0.5), (64, 0.9), (128, 0.85)]
+for max_seqs, mem_util in test_cases:
     args = SimpleNamespace(vllm_max_num_seqs=max_seqs, vllm_gpu_memory_utilization=mem_util)
     result = fn(args)
     vals = list(result.values())
-    assert str(max_seqs) in vals, f"Expected '{max_seqs}' in values {vals}"
-    assert str(mem_util) in vals, f"Expected '{mem_util}' in values {vals}"
+    str_seqs = str(max_seqs)
+    str_mem = str(mem_util)
+    assert any(str_seqs in v for v in vals), f"Expected '{str_seqs}' in values {vals}"
+    assert any(str_mem in v for v in vals), f"Expected '{str_mem}' in values {vals}"
 """)
 
 
 # [pr_diff] fail_to_pass
-def test_run_accepts_vllm_server_kwargs():
-    """run() function accepts a vllm_server_kwargs parameter for programmatic use."""
+def test_run_function_supports_external_kwargs():
+    """run() function accepts a parameter for programmatic vllm_server_kwargs override."""
     _run("""\
 import inspect
 sig = inspect.signature(vtc.run)
-assert 'vllm_server_kwargs' in sig.parameters, \\
-    f"run() must accept vllm_server_kwargs; params: {list(sig.parameters)}"
+# The run() function must accept some form of vLLM server kwargs override
+# Check for a parameter whose name suggests vLLM server kwargs
+params = list(sig.parameters)
+has_vllm_kwarg = any('vllm' in p.lower() and 'kwarg' in p.lower() for p in params)
+has_vllm_server_kwarg = any('vllm_server_kwargs' in p for p in params)
+assert has_vllm_kwarg or has_vllm_server_kwarg, \
+    f"run() must accept vllm_server_kwargs or similar parameter; params: {params}"
 """)
 
 
@@ -346,12 +396,18 @@ assert 'vllm_server_kwargs' in sig.parameters, \\
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
-def test_readme_documents_gpu_memory_settings():
-    """README.md documents GPU memory constraints and vLLM tuning flags."""
+def test_readme_documents_gpu_memory_constraints():
+    """README.md explains GPU memory constraints for ~16GiB GPUs."""
     readme_content = Path(README).read_text()
-    assert "vllm_max_num_seqs" in readme_content, \
-        "README must document --vllm_max_num_seqs flag"
-    assert "vllm_gpu_memory_utilization" in readme_content, \
-        "README must document --vllm_gpu_memory_utilization flag"
-    assert "16GiB" in readme_content or "CUDA out of memory" in readme_content, \
-        "README must explain GPU memory constraints (16GiB or CUDA OOM)"
+    # Must mention GPU memory constraints for smaller GPUs
+    assert "CUDA out of memory" in readme_content or "16GiB" in readme_content or "T4" in readme_content, \
+        "README must explain GPU memory constraints (16GiB, T4, or CUDA OOM)"
+    # Must document that defaults exist (without hardcoding flag names)
+    lines = readme_content.split('\n')
+    # Look for a paragraph that explains default behavior for small GPUs
+    has_conservative_defaults = any(
+        'default' in line.lower() and ('gpu' in line.lower() or 'memory' in line.lower())
+        for line in lines
+    )
+    assert has_conservative_defaults, \
+        "README must document that conservative default values are provided for small GPUs"

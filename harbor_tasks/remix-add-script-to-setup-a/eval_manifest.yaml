@@ -95,6 +95,49 @@ rubric:
     ```
 
     '
+- rule: Include .ts extensions in imports
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '23'
+  source_text: '- **Imports**: Always use `import type { X }` for types (separate
+    from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+  evidence: 'In `scripts/setup-installable-branch.ts`, the local import explicitly
+    includes the extension: `import { logAndExec } from ''./utils/process.ts''`'
+  category: imports
+  verification: llm_judge
+- rule: Prefer let for locals
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '24'
+  source_text: '- **Variables**: Prefer `let` for locals, `const` only at module scope;
+    never use `var`'
+  evidence: The `scripts/setup-installable-branch.ts` file extensively uses `let`
+    for all local variables, such as `let { values, positionals } = util.parseArgs`,
+    `let installableBranch`, and `let remoteBranches`.
+  category: variables
+  verification: llm_judge
+- rule: Use regular function declarations
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '25'
+  source_text: '- **Functions**: Use regular function declarations/expressions by
+    default. Only use arrow functions as callbacks (e.g., route handlers, array methods)
+    where preserving lexical `this` is beneficial or the syntax is more concise'
+  evidence: The script uses regular function declarations for its utility functions
+    like `async function updateGitignore()`, `async function updatePackageDependencies()`,
+    and `function commitChanges()`.
+  category: functions
+  verification: llm_judge
+- rule: Format with single quotes and no semicolons
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '28'
+  source_text: '- **Formatting**: Prettier (printWidth: 100, no semicolons, single
+    quotes, spaces not tabs)'
+  evidence: The code in the gold diff uses single quotes for strings (e.g., `'nightly'`)
+    and omits trailing semicolons across all statements.
+  category: formatting
+  verification: llm_judge
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -185,6 +228,35 @@ distractors:
   source:
     path: AGENTS.md
     lines: 38-38
+- rule: Two-phase component structure
+  source:
+    path: /workspace/repo/packages/component/AGENTS.md
+    lines: 86-89
+  source_text: 'All components follow a consistent two-phase structure:
+
+
+    1. **Setup Phase** - Runs once when the component is first created
+
+    2. **Render Phase** - Runs on initial render and every update afterward'
+  collision_type: scope_ambiguity
+  why_distracting: An agent searching for "setup" (since the PR introduces setup-installable-branch.ts)
+    might mistakenly try to apply component-based setup/render phases to the simple
+    Node.js build script. This rule only applies to UI components, not repo maintenance
+    scripts.
+  severity: medium
+- rule: Controlled vs Uncontrolled Inputs
+  source:
+    path: /workspace/repo/packages/component/AGENTS.md
+    lines: 1672-1673
+  source_text: Only control an input's value when something besides the user's interaction
+    with that input can also control its state. Otherwise, let the DOM manage the
+    input's value and read from it when needed. **This follows the principle of using
+    minimal component state** - don't store input state you don't need.
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies specifically to browser DOM inputs and frontend
+    state management. An agent seeing 'input' or 'state' might get confused if applying
+    this to CLI arguments or node script variables.
+  severity: low
 hierarchy_analysis: The config is a flat single file (`AGENTS.md`). The agent must
   synthesize the task instructions with the config rules, specifically recognizing
   that the instruction to override `publishConfig` to `dist/` takes precedence for

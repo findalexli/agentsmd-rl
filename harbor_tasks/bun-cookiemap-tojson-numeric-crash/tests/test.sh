@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Standardized test runner — do NOT modify this file per task.
-# All test logic lives in test_outputs.py.
 set +e
 
 # Ensure python3 + pip + pytest are available on any base image
@@ -12,6 +10,10 @@ if ! python3 -c "import pytest" 2>/dev/null; then
     python3 -m pip install -q pytest pytest-json-ctrf 2>/dev/null || \
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
+
+# Install pycparser for AST-based C++ analysis
+python3 -m pip install -q --break-system-packages pycparser 2>/dev/null || \
+    pip3 install -q --break-system-packages pycparser 2>/dev/null
 
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 

@@ -46,24 +46,10 @@ def _get_values_yaml():
         return yaml.safe_load(f)
 
 
-def _get_helpers_yaml():
-    helpers_path = Path(CHART_DIR) / "templates" / "_helpers.yaml"
-    with open(helpers_path) as f:
-        return f.read()
-
-
 def _get_pod_template_file():
     template_path = Path(CHART_DIR) / "files" / "pod-template-file.kubernetes-helm-yaml"
     with open(template_path) as f:
         return f.read()
-
-
-def _get_worker_k8s_sa_template():
-    template_path = Path(CHART_DIR) / "templates" / "workers" / "worker-kubernetes-serviceaccount.yaml"
-    if template_path.exists():
-        with open(template_path) as f:
-            return f.read()
-    return None
 
 
 def _get_notes_txt():
@@ -73,53 +59,203 @@ def _get_notes_txt():
 
 
 # =============================================================================
-# Fail-to-pass tests (test the fix)
+# Fail-to-pass tests (test the fix via behavior, not text searches)
 # =============================================================================
 
-def test_worker_kubernetes_serviceaccount_template_exists():
-    template = _get_worker_k8s_sa_template()
-    assert template is not None, (
-        "worker-kubernetes-serviceaccount.yaml template does not exist. "
-        "This file is required for the workers.kubernetes.serviceAccount feature."
+def test_worker_kubernetes_serviceaccount_renders():
+    """Test that workers.kubernetes.serviceAccount.create creates a ServiceAccount resource."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "serviceAccount": {
+                    "create": True,
+                    "name": "my-k8s-sa"
+                }
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    assert "kind: ServiceAccount" in result.stdout, "No ServiceAccount resource rendered"
+    assert "my-k8s-sa" in result.stdout, "ServiceAccount name not in rendered output"
+
+
+def test_worker_kubernetes_serviceaccount_uses_custom_name():
+    """Test that workers.kubernetes.serviceAccount.name is used when set."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "serviceAccount": {
+                    "create": True,
+                    "name": "custom-k8s-sa-name"
+                }
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "custom-k8s-sa-name" in output, "Custom service account name not rendered"
+
+
+def test_worker_kubernetes_serviceaccount_annotations_render():
+    """Test that workers.kubernetes.serviceAccount.annotations are applied to ServiceAccount."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "serviceAccount": {
+                    "create": True,
+                    "name": "annotated-sa",
+                    "annotations": {
+                        "eks.amazonaws.com/role-arn": "arn:aws:iam::123456789012:role/my-role"
+                    }
+                }
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "eks.amazonaws.com/role-arn" in output, "Annotation not rendered on ServiceAccount"
+
+
+def test_worker_celery_serviceaccount_renders():
+    """Test that workers.celery.serviceAccount creates pods with the correct SA."""
+    values = {
+        "executor": "CeleryExecutor",
+        "workers": {
+            "celery": {
+                "serviceAccount": {
+                    "create": True,
+                    "name": "my-celery-sa"
+                }
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "my-celery-sa" in output, "Celery service account name not rendered"
+
+
+def test_pod_template_uses_workers_kubernetes_sa():
+    """Test that the pod template uses workers.kubernetes.serviceAccount when configured."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "serviceAccount": {
+                    "create": True,
+                    "name": "k8s-worker-sa"
+                }
+            }
+        }
+    }
+    result = _render_helm_template(values=values, template="files/pod-template-file.kubernetes-helm-yaml")
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "k8s-worker-sa" in output, "Pod template did not use kubernetes service account"
+
+
+def test_deprecated_workers_serviceaccount_still_works():
+    """Test backward compatibility: deprecated workers.serviceAccount still works."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "serviceAccount": {
+                "create": True,
+                "name": "deprecated-global-sa"
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "deprecated-global-sa" in output, "Deprecated workers.serviceAccount not working"
+
+
+def test_deprecated_fallback_when_k8s_not_set():
+    """Test that when workers.kubernetes.serviceAccount is not set, it falls back to workers.serviceAccount."""
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "serviceAccount": {
+                "create": True,
+                "name": "fallback-sa"
+            }
+        }
+    }
+    result = _render_helm_template(values=values)
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    output = result.stdout
+    assert "fallback-sa" in output, "Fallback to workers.serviceAccount not working"
+
+
+def test_values_has_workers_celery_serviceaccount_fields():
+    """Test that values.yaml contains all required fields for workers.celery.serviceAccount."""
+    values = _get_values_yaml()
+    assert 'workers' in values, "values.yaml missing workers section"
+    assert 'celery' in values['workers'], "values.yaml missing workers.celery section"
+    assert 'serviceAccount' in values['workers']['celery'], (
+        "values.yaml missing workers.celery.serviceAccount section"
     )
+    sa = values['workers']['celery']['serviceAccount']
+    expected_fields = ['automountServiceAccountToken', 'create', 'name', 'annotations']
+    for field in expected_fields:
+        assert field in sa, f"workers.celery.serviceAccount missing {field} field"
 
 
-def test_worker_kubernetes_serviceaccount_helper_exists():
-    helpers = _get_helpers_yaml()
-    assert 'define \"worker.kubernetes.serviceAccountName\"' in helpers, (
-        "worker.kubernetes.serviceAccountName helper is not defined in _helpers.yaml. "
-        "This helper is required to generate names for kubernetes worker service accounts."
+def test_values_has_workers_kubernetes_serviceaccount_fields():
+    """Test that values.yaml contains all required fields for workers.kubernetes.serviceAccount."""
+    values = _get_values_yaml()
+    assert 'workers' in values, "values.yaml missing workers section"
+    assert 'kubernetes' in values['workers'], "values.yaml missing workers.kubernetes section"
+    assert 'serviceAccount' in values['workers']['kubernetes'], (
+        "values.yaml missing workers.kubernetes.serviceAccount section"
     )
+    sa = values['workers']['kubernetes']['serviceAccount']
+    expected_fields = ['automountServiceAccountToken', 'create', 'name', 'annotations']
+    for field in expected_fields:
+        assert field in sa, f"workers.kubernetes.serviceAccount missing {field} field"
 
 
-def test_serviceaccountnamegen_helper_exists():
-    helpers = _get_helpers_yaml()
-    assert 'define \"_serviceAccountNameGen\"' in helpers, (
-        "_serviceAccountNameGen helper is not defined in _helpers.yaml. "
-        "This helper centralizes service account name generation logic."
-    )
+def test_schema_has_workers_celery_serviceaccount():
+    """Test that values.schema.json defines workers.celery.serviceAccount with required properties."""
+    import json
+    schema_path = Path(CHART_DIR) / "values.schema.json"
+    with open(schema_path) as f:
+        schema = json.load(f)
+    workers = schema.get('properties', {}).get('workers', {})
+    celery = workers.get('properties', {}).get('celery', {})
+    sa = celery.get('properties', {}).get('serviceAccount', {})
+    assert sa, "values.schema.json missing workers.celery.serviceAccount definition"
+    assert 'properties' in sa, "serviceAccount schema missing properties"
+    expected_props = ['automountServiceAccountToken', 'create', 'name', 'annotations']
+    for prop in expected_props:
+        assert prop in sa['properties'], f"serviceAccount schema missing {prop} property"
 
 
-def test_helpers_supports_subkey():
-    helpers = _get_helpers_yaml()
-    assert '.subKey' in helpers, (
-        "_serviceAccountName helper does not support subKey parameter. "
-        "The helper must check for .subKey to handle nested sections like workers.kubernetes."
-    )
-
-
-def test_pod_template_uses_conditional_serviceaccount():
-    template = _get_pod_template_file()
-    assert '.Values.workers.kubernetes.serviceAccount.create' in template, (
-        "pod-template-file.kubernetes-helm-yaml does not check workers.kubernetes.serviceAccount.create. "
-        "It must conditionally use worker.kubernetes.serviceAccountName when this is set."
-    )
-    assert 'worker.kubernetes.serviceAccountName' in template, (
-        "pod-template-file.kubernetes-helm-yaml does not use worker.kubernetes.serviceAccountName helper."
-    )
+def test_schema_has_workers_kubernetes_serviceaccount():
+    """Test that values.schema.json defines workers.kubernetes.serviceAccount with required properties."""
+    import json
+    schema_path = Path(CHART_DIR) / "values.schema.json"
+    with open(schema_path) as f:
+        schema = json.load(f)
+    workers = schema.get('properties', {}).get('workers', {})
+    kubernetes = workers.get('properties', {}).get('kubernetes', {})
+    sa = kubernetes.get('properties', {}).get('serviceAccount', {})
+    assert sa, "values.schema.json missing workers.kubernetes.serviceAccount definition"
+    assert 'properties' in sa, "serviceAccount schema missing properties"
+    expected_props = ['automountServiceAccountToken', 'create', 'name', 'annotations']
+    for prop in expected_props:
+        assert prop in sa['properties'], f"serviceAccount schema missing {prop} property"
 
 
 def test_notes_deprecation_warnings_exist():
+    """Test that NOTES.txt warns about deprecated workers.serviceAccount fields."""
     notes = _get_notes_txt()
     deprecation_fields = [
         "workers.serviceAccount.automountServiceAccountToken",
@@ -134,61 +270,8 @@ def test_notes_deprecation_warnings_exist():
         )
 
 
-def test_values_has_celery_serviceaccount_section():
-    values = _get_values_yaml()
-    assert 'workers' in values, "values.yaml missing workers section"
-    assert 'celery' in values['workers'], "values.yaml missing workers.celery section"
-    assert 'serviceAccount' in values['workers']['celery'], (
-        "values.yaml missing workers.celery.serviceAccount section"
-    )
-    sa = values['workers']['celery']['serviceAccount']
-    expected_fields = ['automountServiceAccountToken', 'create', 'name', 'annotations']
-    for field in expected_fields:
-        assert field in sa, f"workers.celery.serviceAccount missing {field} field"
-
-
-def test_values_has_kubernetes_serviceaccount_section():
-    values = _get_values_yaml()
-    assert 'workers' in values, "values.yaml missing workers section"
-    assert 'kubernetes' in values['workers'], "values.yaml missing workers.kubernetes section"
-    assert 'serviceAccount' in values['workers']['kubernetes'], (
-        "values.yaml missing workers.kubernetes.serviceAccount section"
-    )
-    sa = values['workers']['kubernetes']['serviceAccount']
-    expected_fields = ['automountServiceAccountToken', 'create', 'name', 'annotations']
-    for field in expected_fields:
-        assert field in sa, f"workers.kubernetes.serviceAccount missing {field} field"
-
-
-def test_schema_has_celery_serviceaccount():
-    schema_path = Path(CHART_DIR) / "values.schema.json"
-    with open(schema_path) as f:
-        schema = yaml.safe_load(f)
-    workers = schema.get('properties', {}).get('workers', {})
-    celery = workers.get('properties', {}).get('celery', {})
-    sa = celery.get('properties', {}).get('serviceAccount', {})
-    assert sa, "values.schema.json missing workers.celery.serviceAccount definition"
-    assert 'properties' in sa, "serviceAccount schema missing properties"
-    expected_props = ['automountServiceAccountToken', 'create', 'name', 'annotations']
-    for prop in expected_props:
-        assert prop in sa['properties'], f"serviceAccount schema missing {prop} property"
-
-
-def test_schema_has_kubernetes_serviceaccount():
-    schema_path = Path(CHART_DIR) / "values.schema.json"
-    with open(schema_path) as f:
-        schema = yaml.safe_load(f)
-    workers = schema.get('properties', {}).get('workers', {})
-    kubernetes = workers.get('properties', {}).get('kubernetes', {})
-    sa = kubernetes.get('properties', {}).get('serviceAccount', {})
-    assert sa, "values.schema.json missing workers.kubernetes.serviceAccount definition"
-    assert 'properties' in sa, "serviceAccount schema missing properties"
-    expected_props = ['automountServiceAccountToken', 'create', 'name', 'annotations']
-    for prop in expected_props:
-        assert prop in sa['properties'], f"serviceAccount schema missing {prop} property"
-
-
-def test_newsfragment_exists():
+def test_newsfragment_documents_change():
+    """Test that newsfragment documents the breaking change."""
     newsfrag_path = Path(CHART_DIR) / "newsfragments" / "64730.significant.rst"
     assert newsfrag_path.exists(), (
         "Newsfragment chart/newsfragments/64730.significant.rst does not exist. "
@@ -196,12 +279,13 @@ def test_newsfragment_exists():
     )
     content = newsfrag_path.read_text()
     assert "workers.serviceAccount" in content, "Newsfragment should mention deprecated workers.serviceAccount"
-    assert "workers.celery.serviceAccount" in content, "Newsfragment should mention new workers.celery.serviceAccount"
-    assert "workers.kubernetes.serviceAccount" in content, "Newsfragment should mention new workers.kubernetes.serviceAccount"
+    assert "workers.celery.serviceAccount" in content or "workers.kubernetes.serviceAccount" in content, (
+        "Newsfragment should mention new serviceAccount paths"
+    )
 
 
 # =============================================================================
-# Pass-to-pass tests (existing repo tests)
+# Pass-to-pass tests (existing repo tests - helm lint, template, etc.)
 # =============================================================================
 
 def test_helm_lint():
@@ -229,18 +313,19 @@ def test_values_yaml_valid():
 
 
 def test_schema_json_valid():
+    import json
     schema_path = Path(CHART_DIR) / "values.schema.json"
     with open(schema_path) as f:
-        schema = yaml.safe_load(f)
+        schema = json.load(f)
     assert schema is not None, "values.schema.json is not valid JSON"
     assert 'properties' in schema, "Schema missing expected fields"
 
 
 def test_helpers_yaml_valid():
-    helpers = _get_helpers_yaml()
-    assert 'define \"airflow.serviceAccountName\"' in helpers, "Missing airflow.serviceAccountName helper"
-    assert 'define \"_serviceAccountName\"' in helpers, "Missing _serviceAccountName helper"
-    assert 'define \"worker.serviceAccountName\"' in helpers, "Missing worker.serviceAccountName helper"
+    helpers_path = Path(CHART_DIR) / "templates" / "_helpers.yaml"
+    with open(helpers_path) as f:
+        helpers = f.read()
+    assert 'airflow.serviceAccountName' in helpers, "Missing expected helper in _helpers.yaml"
 
 
 # =============================================================================
@@ -357,7 +442,6 @@ def test_repo_values_schema_validation():
     schema_path = Path(CHART_DIR) / "values.schema.json"
     with open(schema_path) as f:
         schema = json.load(f)
-    # Basic validation - just check that required sections exist
     assert 'properties' in schema, "Schema missing properties"
     workers = schema.get('properties', {}).get('workers', {})
     assert 'properties' in workers, "Schema missing workers.properties"

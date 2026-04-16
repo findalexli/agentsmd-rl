@@ -2,59 +2,59 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path, class name (AwsEventServiceInjector), suggested helper function name (_get_default_aws_endpoint_url), field name (endpoint_url), pydantic Field import, environment variable names (AWS_S3_ENDPOINT, AWS_S3_SECURE), and the self.endpoint_url usage pattern. All test-asserted specifics are discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the function name '_get_default_aws_endpoint_url', the use of 'pydantic Field' import, the field 'endpoint_url: str | None = Field(default_factory=...)', and 'endpoint_url=self.endpoint_url' in the boto3 call. The instruction only describes the behavioral problem (protocol handling) but doesn't mention these specific implementation requirements."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the helper function name '_get_default_aws_endpoint_url', the field name 'endpoint_url' with type 'str | None', using 'default value' initialization, and replacing os.getenv with self.endpoint_url. This goes beyond describing what's broken and prescribes the exact fix structure."
+      "outcome": "pass",
+      "reason": "instruction.md describes the broken behavior (endpoint URLs not properly converted based on AWS_S3_SECURE) and expected behavior, but does not specify the exact code changes like adding a helper function, using pydantic Field, or changing os.getenv to self.endpoint_url."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_get_default_aws_endpoint_url_function_exists assert the exact function name '_get_default_aws_endpoint_url', test_pydantic_field_import_present requires 'Field' import from pydantic, test_injector_uses_self_endpoint_url checks for the literal string 'endpoint_url=self.endpoint_url'. An alternative correct fix using a different helper name, a property, or __init__ logic would fail these tests."
+      "reason": "Tests assert gold-specific implementation details: test_get_default_aws_endpoint_url_function_exists requires a function named exactly '_get_default_aws_endpoint_url', test_pydantic_field_import_present requires 'Field' from pydantic, test_injector_uses_self_endpoint_url checks for exact string 'endpoint_url=self.endpoint_url'. A correct alternative (e.g., inline logic, a differently-named helper, using a property or validator) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests are predominantly AST/text inspection: test_pydantic_field_import_present checks AST imports, test_injector_uses_self_endpoint_url checks 'endpoint_url=self.endpoint_url' in source text, test_get_default_aws_endpoint_url_function_structure checks string patterns in unparsed AST. While pass-to-pass tests do execute code (unit tests, imports), most f2p tests are source-text assertions rather than behavioral execution tests."
+      "reason": "Many f2p tests are pure AST/text inspection (e.g., test_pydantic_field_import_present checks AST imports, test_injector_uses_self_endpoint_url does 'assert ... in source', test_get_default_aws_endpoint_url_function_structure inspects ast.unparse output for string literals). While some p2p tests execute the code (test_repo_unit_tests_aws_event_service), the f2p tests primarily check source text/AST rather than executing behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Several f2p tests like test_pydantic_field_import_present only check for an import statement, test_injector_uses_self_endpoint_url only checks a string in source code. These could be satisfied by adding the import and string without actually implementing the protocol handling logic correctly. The behavioral tests are in the pass-to-pass category (repo unit tests), not the f2p tests themselves."
+      "reason": "Several f2p tests can be passed without implementing the actual fix: test_pydantic_field_import_present just checks for an import statement, test_get_default_aws_endpoint_url_function_exists just checks a function exists (a stub 'def _get_default_aws_endpoint_url(): pass' would pass), test_injector_uses_self_endpoint_url just checks a string appears in source. These are structural checks, not behavioral verification."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction's expected behaviors (protocol conversion for various AWS_S3_ENDPOINT/AWS_S3_SECURE combinations, None when unset) are tested via the truncated f2p tests and the repo's own unit tests run in test_repo_unit_tests_aws_event_service."
+      "outcome": "fail",
+      "reason": "The instruction specifies 5 concrete behavioral scenarios (e.g., 'AWS_S3_ENDPOINT=minio.example.com:9000 and AWS_S3_SECURE=true should produce https://minio.example.com:9000'). While tests truncated, the visible f2p tests primarily check structural/AST properties rather than directly testing these input\u2192output scenarios. The behavioral testing is delegated to repo unit tests (test_repo_unit_tests_aws_event_service) which are not shown."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Pass-to-pass Tests' and 'Fail-to-pass Tests' with descriptive names and docstrings indicating test purpose."
+      "reason": "Tests are well-organized with clear section comments ('Pass-to-pass Tests' and 'Fail-to-pass Tests'), descriptive function names, and docstrings indicating test category (e.g., 'F2P:', 'pass_to_pass')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Python source code for protocol handling; it does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task doesn't produce structured data like JSON/CSV/API/DB; it modifies Python source code for protocol handling."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, the exact function name to create ('_get_default_aws_endpoint_url'), the exact field name and type ('endpoint_url: str | None'), and the exact replacement pattern ('self.endpoint_url' instead of 'os.getenv'). This is excessive localization that removes the need for the agent to reason about the fix."
+      "outcome": "pass",
+      "reason": "instruction.md names the specific file to modify (aws_event_service.py) and the class (AwsEventServiceInjector), which is reasonable for a single-file fix task. It doesn't mention specific line numbers, helper function names, or implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 4,
   "fail_count": 5

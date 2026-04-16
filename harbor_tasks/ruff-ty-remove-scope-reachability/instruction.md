@@ -1,28 +1,21 @@
-# Remove per-scope reachability tracking from ty semantic index
+# Remove redundant per-scope reachability tracking from ty semantic index
 
 ## Problem
 
-The ty type checker's semantic index maintains redundant reachability tracking at the scope level. Each `Scope` carries a dedicated field for reachability constraints (`reachability`) that is stored during scope construction and propagated through various scope-related methods. A method called `is_scope_reachable` performs recursive scope-level reachability checks.
+The ty type checker's semantic index maintains redundant reachability tracking. The `is_scope_reachable` method in `semantic_index.rs` performs recursive scope-level reachability checks by walking parent scopes. The `Scope` struct in `scope.rs` carries a dedicated `reachability` field that is stored during scope construction and used by `is_scope_reachable`.
 
-This per-scope tracking overlaps entirely with the more general range-based reachability checking provided by `is_range_reachable`. The `is_range_reachable` method currently delegates to `is_scope_reachable` before checking use-def maps, creating unnecessary complexity. Scope reachability could instead be determined by walking ancestor scopes and checking their use-def maps directly, eliminating the need for a separate scope-level tracking mechanism.
+This per-scope tracking is unnecessary because scope reachability can be determined by walking ancestor scopes and examining their use-def maps directly. The redundancy creates maintenance burden and complexity.
 
-Additionally, the IDE support for type hierarchy has a reachability bug: when iterating over class definitions to build the subtype hierarchy, it calls `is_scope_reachable` which doesn't properly account for the actual code range of the class definition. This causes incorrect filtering of type hierarchy results when scopes contain unreachable code. The fix should use range-based reachability checking that considers the actual class definition's text range.
+Additionally, the IDE type hierarchy code in `ide_support.rs` has a reachability-related bug: when iterating over class definitions to build the subtype hierarchy, it uses `is_scope_reachable` for scope-level reachability checking. This doesn't properly account for the actual text range of class definitions, causing incorrect filtering of type hierarchy results when scopes contain unreachable code.
 
 ## Requirements
 
-1. The `is_scope_reachable` method should be removed entirely - it is dead code that creates unnecessary recursive complexity.
+1. The `is_scope_reachable` method should be removed from `semantic_index.rs`. The method currently performs recursive scope-level reachability checks and should be eliminated entirely.
 
-2. The `reachability` field on the `Scope` struct should be removed, along with any constructor parameters related to it and any code that marks reachability constraints as used during scope finalization.
+2. The `reachability` field should be removed from the `Scope` struct in `scope.rs`. This field stores reachability constraints during scope construction and is no longer needed.
 
-3. The `is_range_reachable` method should be updated to walk ancestor scopes directly using their use-def maps instead of delegating to `is_scope_reachable`. The `ancestor_scopes` iterator on `SemanticIndex` provides a way to iterate through parent scopes.
+3. The `is_range_reachable` method in `semantic_index.rs` should be updated to determine scope reachability by walking ancestor scopes and examining their use-def maps directly. The implementation should use the `ancestor_scopes` iterator to traverse parent scopes.
 
-4. The IDE type hierarchy code that currently calls `is_scope_reachable` should be updated to use `is_range_reachable` with the proper text range of the class definition being checked.
+4. The IDE type hierarchy code in `ide_support.rs` should use `is_range_reachable` instead of `is_scope_reachable` for checking reachability of class definitions. The reachability check should be based on the actual text range of class definitions being processed.
 
-5. After these changes, the crate should compile cleanly with no warnings. All existing type checker behavior should be preserved — reachability checks for diagnostics and IDE features should continue to work correctly.
-
-## Files to Look At
-
-- `crates/ty_python_semantic/src/semantic_index.rs` - contains `is_scope_reachable` and `is_range_reachable` methods
-- `crates/ty_python_semantic/src/semantic_index/scope.rs` - contains the `Scope` struct with the `reachability` field
-- `crates/ty_python_semantic/src/semantic_index/builder.rs` - contains scope construction logic with reachability parameters
-- `crates/ty_python_semantic/src/types/ide_support.rs` - contains type hierarchy IDE support with the reachability bug
+5. After these changes, the `ty_python_semantic` crate should compile cleanly with no warnings. All existing type checker behavior should be preserved — reachability checks for diagnostics and IDE features should continue to work correctly. The code should pass `cargo check`, `cargo clippy`, `cargo test`, and `cargo fmt` checks.

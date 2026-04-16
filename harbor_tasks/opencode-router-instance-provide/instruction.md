@@ -1,38 +1,40 @@
-# Workspace routing and Instance.provide are split across two middleware layers
+# Workspace routing causes convoluted request round-trips
 
 ## Problem
 
-In the opencode server, there are two separate middleware concerns that should be unified:
+In the opencode server, workspace routing and instance bootstrapping are handled by two separate middleware layers, causing a convoluted round-trip for worktree workspace requests.
 
-1. **Workspace routing** — in `packages/opencode/src/control-plane/workspace-router-middleware.ts`, this middleware decides whether to handle requests locally or forward them to a workspace adaptor (e.g., worktree). However, it doesn't handle `Instance.provide` at all.
+The workspace router in `packages/opencode/src/control-plane/workspace-router-middleware.ts` forwards requests to workspace adaptors (like the worktree adaptor), which then re-create the HTTP request, set the `x-opencode-directory` header, and call back into the server via `Server.Default().fetch()`. This is inefficient because:
 
-2. **Instance bootstrapping** — in `packages/opencode/src/server/instance.ts`, a Hono middleware inside `InstanceRoutes` resolves the `directory` parameter (from query string or `x-opencode-directory` header), then wraps the handler in `Instance.provide({ directory, init: InstanceBootstrap, ... })`.
+- The router already knows the workspace's directory but delegates to an adaptor that has to reconstruct the request
+- The `Instance.provide` middleware in `packages/opencode/src/server/instance.ts` applies to all routes including those from remote workspace adaptors that don't need project bootstrapping
+- There's no way to provide different `Instance.provide` contexts for different workspace types without going through the adaptor fetch dance
 
-This split causes several issues:
+## Current architecture
 
-- The workspace router forwards requests to workspace adaptors (like the worktree adaptor), which then have to re-create the HTTP request, set headers, and call `Server.Default().fetch()` just to get back into the same middleware chain. This is a convoluted round-trip.
-- For worktree workspaces specifically, the adaptor has to reconstruct the entire request with the right `x-opencode-directory` header, even though the router already knows the workspace's directory.
-- The `Instance.provide` middleware in `InstanceRoutes` is applied to every route handler, even for requests that come from remote workspace adaptors that don't need project bootstrapping.
-- There's no way to provide different `Instance.provide` contexts for different workspace types without going through the adaptor fetch dance.
+- **Workspace routing** (`workspace-router-middleware.ts`): Decides whether to handle requests locally or forward to workspace adaptors. Does not call `Instance.provide`.
+- **Instance bootstrapping** (`instance.ts`): The `InstanceRoutes` function wraps handlers in `Instance.provide({ directory, init: InstanceBootstrap, ... })` after resolving the directory from query string parameter `directory` or header `x-opencode-directory`.
 
 ## Expected behavior
 
-The workspace routing and instance bootstrapping should be consolidated into a single router module at `packages/opencode/src/server/router.ts`. This router should:
+Consolidate workspace routing and instance bootstrapping to eliminate the round-trip for worktree requests:
 
-- Export a middleware function named `WorkspaceRouterMiddleware`
-- Take over the `Instance.provide` responsibility that is currently in `InstanceRoutes`
-- Handle directory resolution from query param `directory` and header `x-opencode-directory` directly
-- For requests without a workspace parameter, wrap in `Instance.provide` with the resolved directory
-- For worktree workspaces, call `Instance.provide` directly with the workspace's directory instead of going through the adaptor's fetch
-- For remote workspaces, continue forwarding through the adaptor
-- The old `workspace-router-middleware.ts` in the control-plane directory should be removed
-- The worktree adaptor's `fetch` method is no longer needed and can throw
+1. **Single routing entry point** — A router module should export a `WorkspaceRouterMiddleware` function that handles both routing decisions and instance bootstrapping
 
-The router must have at least two separate `Instance.provide` calls to handle: (1) requests with no workspace parameter, and (2) worktree workspace requests.
+2. **Directory resolution in the router** — The router must extract the directory from the `directory` query parameter or `x-opencode-directory` header (same logic as currently in `instance.ts`)
+
+3. **Routing branches to support**:
+   - **No workspace parameter**: Wrap the request in `Instance.provide` with the resolved directory and `init: InstanceBootstrap`
+   - **Worktree workspace**: Call `Instance.provide` directly with the workspace's directory (skip the adaptor round-trip)
+   - **Remote workspace**: Forward through the adaptor's `fetch` method (adaptor handles the remote call)
+
+4. **Delegation**: The router should delegate to `InstanceRoutes` for actual request handling
+
+5. **Cleanup**: The old `workspace-router-middleware.ts` file in the control-plane directory should be removed, and `server.ts` should import from the new location. The worktree adaptor's `fetch` method should throw an error since it's no longer called directly.
 
 ## Files to investigate
 
-- `packages/opencode/src/control-plane/workspace-router-middleware.ts` — current workspace routing
-- `packages/opencode/src/server/instance.ts` — current `InstanceRoutes` with Instance.provide middleware
-- `packages/opencode/src/control-plane/adaptors/worktree.ts` — worktree adaptor with fetch logic
+- `packages/opencode/src/control-plane/workspace-router-middleware.ts` — current workspace routing with adaptor delegation
+- `packages/opencode/src/server/instance.ts` — current `InstanceRoutes` with `Instance.provide` middleware
+- `packages/opencode/src/control-plane/adaptors/worktree.ts` — worktree adaptor with `fetch` logic that calls back to server
 - `packages/opencode/src/server/server.ts` — imports the workspace router middleware

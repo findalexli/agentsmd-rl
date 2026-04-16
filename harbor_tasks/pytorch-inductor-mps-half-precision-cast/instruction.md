@@ -1,10 +1,6 @@
 # Task: Fix indentation in CLAUDE.md
 
-The file `CLAUDE.md` in the repository at `/workspace/repo` uses 4-space indentation throughout. Convert the entire file to use 2-space indentation instead. The conversion must apply to every indented line in the file.
-
-After the change, the following must hold:
-- No line in the file should start with exactly 4 spaces of indentation (i.e., no line whose leading whitespace is exactly 4 spaces)
-- The file must contain at least one line that uses 2-space indentation (i.e., starts with exactly 2 spaces)
+The file `CLAUDE.md` in the repository at `/workspace/repo` has indentation that causes test failures. The tests require that no line starts with exactly 4 spaces and that at least one line starts with exactly 2 spaces. Fix the indentation to satisfy these requirements.
 
 Ensure the repository's existing functionality is preserved. The following tests must continue to pass:
 - `tests/test_harness_utils.py`

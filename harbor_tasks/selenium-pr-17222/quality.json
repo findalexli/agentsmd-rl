@@ -7,53 +7,54 @@
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to add (configurable flag, try-finally, fix stream parsing) but does not specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
+      "reason": "The instruction describes what's broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to add (a configurable flag) but does not specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names ('containerStopTimeout', 'videoContainerStopTimeout', 'stopGracePeriod', 'DEFAULT_STOP_GRACE_PERIOD'), exact method signature ('private Duration getStopGracePeriod()'), exact Require.nonNull strings, exact field visibility ('private final Duration'). An alternative correct fix using different names (e.g., 'browserStopTimeout', 'getContainerStopGracePeriod', 'STOP_TIMEOUT_DEFAULT') would fail."
+      "reason": "Tests assert gold-specific implementation details: exact variable names (containerStopTimeout, videoContainerStopTimeout, stopGracePeriod), exact constant names (DEFAULT_STOP_GRACE_PERIOD), exact method signatures ('private Duration getStopGracePeriod()'), exact Require.nonNull strings, and exact fix approach (readFully vs skipBytes). Alternative valid implementations using different names (e.g., 'browserStopTimeout', 'shutdownGracePeriod') or different approaches (e.g., readNBytes, a loop aroun"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads source files as text and uses string/regex matching (e.g., `assert 'DEFAULT_STOP_GRACE_PERIOD' in source`, `re.search(pattern, source)`). No test compiles Java code, instantiates objects, or verifies runtime behavior. The 'syntax check' test only counts braces."
+      "reason": "Every single test is purely text-based pattern matching on source files using regex and string containment checks (e.g., `assert 'DEFAULT_STOP_GRACE_PERIOD' in source`, `re.search(pattern, source)`). No test imports, compiles, or executes any Java code to verify behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since tests only check for string presence in source files, an agent could pass all fail-to-pass tests by inserting dead code comments or unused declarations containing the expected strings (e.g., adding `// DEFAULT_STOP_GRACE_PERIOD` or `private final Duration containerStopTimeout = null;`) without actually implementing the fix."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific additions (new fields, methods, constants, try-finally patterns, readFully usage) that don't exist in the base code at the checked-out commit, so a stub/no-op wouldn't pass them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in the instruction (configurable timeout flag, try-finally exception safety, stream parsing fix) are tested, along with the supporting infrastructure (factory changes, constructor changes)."
+      "reason": "All three requirements from instruction.md are tested: configurable stop grace period (tests for flag, constant, method, factory parameter), exception safety via try-finally in stop() method, and stream parsing fix (readFully instead of skipBytes)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names, docstrings marking fail_to_pass vs pass_to_pass, and a module-level docstring explaining the three areas being tested."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into 'Fail-to-Pass' and 'Pass-to-Pass' sections with comments, and each test focuses on a specific aspect."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves Java source code modifications, not structured data output."
+      "reason": "This task involves modifying Java source code, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, flag names, or variable names across instruction.md and test files."
+      "reason": "File paths, variable names, commands, and flag names in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction mentions specific files (which is appropriate since it's a code modification task) and describes what's wrong conceptually (hardcoded values, missing try-finally, skipBytes issue) without specifying exact line numbers or replacement code."
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the exact method ('DockerSession.stop()'), exact hardcoded values ('Duration.ofMinutes(1)', 'Duration.ofSeconds(10)'), and the exact buggy method ('DockerSession.parseMultiplexedStream()') with the specific problematic call ('skipBytes()'). While files are listed, pointing to specific methods and exact problematic calls goes beyond domain-obvious file identification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-modification task, not a config-edit task."
+      "reason": "This is a code-editing task, not a configuration-editing task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 5,
   "fail_count": 4
 }

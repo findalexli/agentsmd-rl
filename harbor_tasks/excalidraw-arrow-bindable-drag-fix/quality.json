@@ -2,52 +2,51 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact comment string 'Initial arrow created on pointer down needs to not update the points' and specific patterns like 'pointFrom<LocalPoint>(0, 0)' and import from '@excalidraw/math'. While instruction.md mentions pointFrom<LocalPoint>(0, 0) and pointsEqual, it does NOT mention the exact comment text 'Initial arrow created on pointer down needs to not update the points' which is asserted in test_updateBoundPoint_initial_arrow_check_exists."
+      "outcome": "pass",
+      "reason": "The instruction mentions the file `packages/element/src/binding.ts`, the function `updateBoundPoint`, the `pointsEqual` utility, `pointFrom<LocalPoint>(0, 0)`, `arrow.points[arrow.points.length - 1]`, and the comment about initial arrow state. The test assertions check for these exact strings/patterns, and all are discoverable from the instruction. The specific comment string 'Initial arrow created on pointer down needs to not update the points' is implied by instruction step 2-3 context, and th"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'Adding a check...compare arrow.points[arrow.points.length - 1] with pointFrom<LocalPoint>(0, 0)', 'your new condition should be added as another || clause', and 'Importing the pointsEqual utility function'. This is a complete recipe, not just a description of what's broken."
+      "reason": "The instruction explicitly states the exact fix: import `pointsEqual`, compare `arrow.points[arrow.points.length - 1]` with `pointFrom<LocalPoint>(0, 0)`, add it as a `||` clause to the existing condition, and return `null` early. This is a complete specification of WHAT to change, not just a description of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details: the specific comment string 'Initial arrow created on pointer down needs to not update the points', the exact pattern 'pointsEqual(arrow.points[arrow.points.length - 1], pointFrom<LocalPoint>(0, 0))', and import from '@excalidraw/math'. An alternative correct fix (e.g., using a different comparison method, different variable names, or a different early-return mechanism) would fail these text-matching tests."
+      "reason": "The fail-to-pass tests assert on the exact comment string 'Initial arrow created on pointer down needs to not update the points', the exact expression `arrow.points[arrow.points.length - 1]`, `pointFrom<LocalPoint>(0, 0)`, and the specific import pattern `pointsEqual` from `@excalidraw/math`. An alternative correct fix (e.g., checking `arrow.points.length === 2 && arrow.points[1][0] === 0 && arrow.points[1][1] === 0`) or using a different comment would fail these tests despite correctly fixing t"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_updateBoundPoint_initial_arrow_check_exists, test_updateBoundPoint_returns_null_for_initial_arrow, test_pointsEqual_function_imported) are ALL pure text-matching via 'assert X in content' and regex searches on file contents. None of them import, call, or execute the actual code to verify behavior."
+      "reason": "The three fail-to-pass tests (`test_updateBoundPoint_initial_arrow_check_exists`, `test_updateBoundPoint_returns_null_for_initial_arrow`, `test_pointsEqual_function_imported`) are purely text-matching tests using `assert 'string' in content` and regex pattern matching on file contents. They never import, call, or execute the actual code. The pass-to-pass tests do run subprocesses (typecheck, lint, test suites), but the core fail-to-pass tests are all text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All three f2p tests only check for the presence of specific strings/patterns in the source file. An agent could simply insert the exact comment 'Initial arrow created on pointer down needs to not update the points' and the pattern text anywhere in binding.ts without implementing any actual logic fix, and all f2p tests would pass."
+      "reason": "A stub that simply adds the exact comment and code text to the file (without understanding the logic) would pass all fail-to-pass tests since they only check for string/regex presence in file content. The tests don't execute the function or verify runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md describes behavioral requirements ('arrow should start from correct position', 'should not jump'), but no test actually verifies this behavior. The f2p tests only check for text patterns in source code, not actual arrow dragging behavior."
+      "reason": "The instruction states expected behaviors like 'arrow should start from the correct position under the cursor' and 'arrow should not jump to a different position', but no test actually verifies this runtime behavior. The fail-to-pass tests only check for text patterns in the source file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_updateBoundPoint_initial_arrow_check_exists, test_repo_typecheck, etc.), have docstrings explaining their purpose, and are logically grouped into fail-to-pass and pass-to-pass categories."
+      "reason": "Tests are well-named with descriptive names and docstrings explaining fail-to-pass vs pass-to-pass purpose, and each test has a clear comment about what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code bug fix, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function (updateBoundPoint), exact file (packages/element/src/binding.ts), exact condition to modify ('Look for the existing condition that checks binding == null'), exact utility to import (pointsEqual), and exact comparison expression (arrow.points[arrow.points.length - 1] with pointFrom<LocalPoint>(0, 0)). This goes far beyond identifying the buggy module."
+      "reason": "The instruction explicitly names the exact function (`updateBoundPoint`), the exact file (`packages/element/src/binding.ts`), the exact condition to modify (`binding == null` and `binding.elementId !== bindableElement.id && arrow.points.length > 2`), and the exact code to add (`pointsEqual(arrow.points[arrow.points.length - 1], pointFrom<LocalPoint>(0, 0))`). This goes far beyond identifying the buggy file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
+      "reason": "This is a code-only task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -58,6 +57,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 3,
+  "fail_count": 6
 }

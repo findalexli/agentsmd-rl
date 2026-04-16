@@ -1,0 +1,109 @@
+task:
+  name: airflow-git-hook-security-hardening
+  description: Harden GitHook SSH command building and URL construction to prevent shell injection and credential exposure
+
+source:
+  repo: apache/airflow
+  pr_number: 64756
+  base_commit: b5dae4e72df868004b53006bb995256ef88d9c0b
+  merge_commit: 8ad491d0de3ed3753a1bf3135084dc37e108faf0
+
+checks:
+  - id: test_shlex_import_present
+    type: pass_to_pass
+    origin: pr_behavior
+    description: The shlex module must be imported to enable shell quoting
+
+  - id: test_urlquote_import_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The urllib.parse.quote function must be imported for URL encoding
+
+  - id: test_key_path_uses_shlex_quote
+    type: fail_to_pass
+    origin: pr_behavior
+    description: SSH key paths must be shell-quoted with shlex.quote
+
+  - id: test_known_hosts_file_uses_shlex_quote
+    type: fail_to_pass
+    origin: pr_behavior
+    description: known_hosts_file paths must be shell-quoted with shlex.quote
+
+  - id: test_ssh_config_file_uses_shlex_quote
+    type: fail_to_pass
+    origin: pr_behavior
+    description: ssh_config_file paths must be shell-quoted with shlex.quote
+
+  - id: test_proxy_command_uses_shlex_quote
+    type: fail_to_pass
+    origin: pr_behavior
+    description: host_proxy_cmd must be shell-quoted with shlex.quote
+
+  - id: test_strict_host_key_checking_validation_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Invalid strict_host_key_checking values must raise ValueError
+
+  - id: test_valid_strict_host_key_checking_values_defined
+    type: fail_to_pass
+    origin: pr_behavior
+    description: All valid strict_host_key_checking SSH options should be in validation set
+
+  - id: test_https_url_uses_urlquote_for_username
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Usernames in HTTPS URLs must be URL-encoded
+
+  - id: test_https_url_uses_urlquote_for_token
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Auth tokens in HTTPS URLs must be URL-encoded
+
+  - id: test_url_replace_uses_count_parameter
+    type: fail_to_pass
+    origin: pr_behavior
+    description: URL credential injection should only replace first occurrence
+
+  - id: test_logic_bug_or_to_and_fixed
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Logic bug fix - use 'and' not 'or' for local path handling
+
+  - id: test_shlex_quote_behavior_key_path
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Behavioral verification that shlex.quote properly handles special chars
+
+  - id: test_urlquote_behavior_special_chars
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Behavioral verification that urlquote properly encodes special chars
+
+  - id: test_source_file_exists
+    type: pass_to_pass
+    origin: static
+    description: Verify the git hook source file exists
+
+  - id: test_source_file_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Verify the git hook source file has valid Python syntax
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on the git hook file
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on the git hook file
+
+  - id: test_repo_python_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check passes on the git hook file
+
+# Rubric rules for config file edits - not applicable for this code-only task
+# The fail-to-pass tests verify the security fixes directly on the source code
+rubric: []

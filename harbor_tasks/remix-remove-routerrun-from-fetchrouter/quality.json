@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all five files tested (router.ts, router.test.ts, fetch-router README.md, bookstore README.md, .changes/minor.router-run.md), describes removing run() from the Router interface and createRouter, removing the describe block and createStorageKey import, deleting the change file, and removing the README sections. The test checks for specific strings like 'createStorageKey', 'router.run(', 'Running Code In Request Context', '#running-code-in-request-context' \u2014 all of which are "
+      "reason": "All asserted paths (router.ts, router.test.ts, README.md, bookstore README, change file) are named; the 'Running Code In Request Context' section and createStorageKey import are implied by 'full section' and 'imports only used by those tests'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT should be removed (the router.run() API, its tests, its documentation sections, its change file) but does not specify exact line numbers, exact replacement text, or the precise diff. A developer still needs to reason about which lines to remove and how to clean up imports."
+      "reason": "Instruction describes what to remove but doesn't provide the exact replacement code or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_router_run_tests_and_imports_removed checks for the absence of 'createStorageKey' anywhere in the test file. An alternative correct fix might retain createStorageKey if it were used elsewhere, or might remove the run() tests but reorganize imports differently. More critically, test_readme_router_run_section_removed checks for the exact heading string '### Running Code In Request Context' \u2014 an agent that rewrites the section differently (e.g., rephrasing while still removing run() references"
+      "outcome": "pass",
+      "reason": "Tests check for absence of run() patterns, describe blocks, and specific import; alternative correct fixes would all satisfy these."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_router_run_removed_from_source, test_router_run_tests_and_imports_removed, test_readme_router_run_section_removed, test_bookstore_readme_no_router_run) are purely text-based: they read file contents and check for string presence/absence with no code execution. test_change_file_deleted checks file existence. Only test_repo_unit_tests, test_repo_lint, and test_repo_typecheck execute code, and those are pass-to-pass tests. The core fail-to-pass tests are all string-mat"
+      "outcome": "pass",
+      "reason": "Tests include executing pnpm test, lint, and typecheck subprocesses, not just text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that specific strings (run method declarations, test blocks, imports, README sections) have been removed from files that initially contain them. A stub/no-op solution that doesn't modify the files would fail these tests since the original files contain router.run() references."
+      "reason": "A stub wouldn't pass since tests require actual removal of code and preservation of fetch/map; repo unit tests must still pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are tested: removing run() from Router interface and implementation (test_router_run_removed_from_source), removing tests and unused imports (test_router_run_tests_and_imports_removed), deleting the change file (test_change_file_deleted), updating fetch-router README (test_readme_router_run_section_removed), and updating bookstore README (test_bookstore_readme_no_router_run). Pass-to-pass tests verify preserved functionality."
+      "reason": "All behaviors in instruction (interface, impl, tests, changefile, readmes) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names and section comments (fail-to-pass vs pass-to-pass). Each test function has a docstring explaining its purpose."
+      "reason": "Tests are sectioned with comments for fail-to-pass, pass-to-pass static, and repo tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and documentation removal, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and identifiers in the instruction and tests are correct and consistent."
+      "reason": "Paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify, the exact method name to remove, the exact describe block name, the exact import (createStorageKey is implied by 'imports that were only used by those tests'), the exact README section title, and the exact change file path. While this is a removal task where specificity is somewhat expected, the instruction essentially provides a complete checklist that eliminates the need for the agent to locate what needs changing."
+      "outcome": "pass",
+      "reason": "Instruction names files but the task is explicitly about removing a named API, so file references are appropriate."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation removal task, not an agentmd-edits or config-editing task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

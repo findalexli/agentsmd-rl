@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction mentions the key file paths (goose.go, testdata/examples/externalglobals/externalglobals.go, testdata/examples/externalglobals/externalglobals.gold.v), the test command (go test -v -run TestExamples/externalglobals ./...), the exact string formats (#unittest vs #unittest.unittest), and the go build/go vet commands. All test-specific literals like 'globals.get #unittest.unittest' and 'globals.get #unittest' are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (inconsistent package identifier format) and the desired output format, but does not specify which lines to change, which functions to modify (selectorExprAddr, exprAddr), or the exact code changes needed. A developer must still locate and reason about the fix in goose.go."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check for the presence of 'globals.get #unittest.unittest' in generated output and that the old format '#unittest' is not used. Any correct fix that produces the right output format would pass, regardless of implementation details (e.g., using different variable names, different approaches to constructing the pkgIdent string)."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The tests execute subprocess calls (go test, go build, go vet, gofmt, go mod verify) and inspect their results. While some tests also read file contents, the primary f2p tests (test_external_globals_format, test_globals_consistency_with_function_calls) run the actual Go test suite and check actual generated output, which constitutes behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests (test_external_globals_format, test_globals_consistency_with_function_calls) check that generated Coq output contains 'globals.get #unittest.unittest' and does not contain the old format. A stub or no-op implementation would produce the old format and fail these tests. The tests actively run the translator and verify its output."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) globals.get uses #unittest.unittest format - tested by test_external_globals_format and test_globals_consistency_with_function_calls, (2) go build passes - tested by test_go_build, (3) go vet passes - tested by test_go_vet, (4) the specific test passes - tested by test_external_globals_format. All specified behaviors are covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_external_globals_format, test_globals_consistency_with_function_calls, test_goose_unit_tests, etc.), each has a docstring explaining its purpose, and they are logically grouped into f2p behavioral tests and p2p infrastructure tests."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task produces Coq source code output, not structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "fail",
+      "reason": "In test_external_globals_format, line raises 'AssertionError' (typo) instead of 'AssertionError' \u2014 wait, actually looking more carefully, the code says `raise AssertionError` which is a typo for `AssertionError` (missing 'e': should be `AssertionError`). This is actually `raise AssertionError(...)` which would cause a NameError at runtime since the correct class is `AssertionError`. Actually, the correct spelling is `AssertionError` \u2014 no wait, the correct Python exception is `AssertionError`. Le"
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction mentions goose.go as the file to fix, which is reasonable for a task about the goose translator. It does not specify line numbers, function names (selectorExprAddr, exprAddr), or the exact code changes needed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

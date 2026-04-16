@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (TTDDialogOutput.tsx, useTextGeneration.ts, en.json), translation keys (chat.errors.mermaidParseError, chat.errors.requestFailed, chat.errors.generationFailed), exact string values, the removal of ttd.errorMermaidSyntax, removal of getReadableErrorMsg/handleError helpers, consolidated 429/rateLimitRemaining check, removeLastAssistantMessage cleanup, trackEvent call, and the test commands (yarn test:typecheck, test:code,"
+      "reason": "Instruction names all translation keys, file paths, the trackEvent arguments, and the 429/rateLimitRemaining consolidation required by tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exact fixes: use 't(\"chat.errors.mermaidParseError\")' instead of 't(\"ttd.errorMermaidSyntax\")', remove helper functions by name (getReadableErrorMsg, handleError), inline their logic, add specific trackEvent call with exact arguments, consolidate error checks into a single conditional with exact pattern 'error?.status === 429 || rateLimitRemaining === 0'. This goes well beyond describing what's broken \u2014 it prescribes the exact solution."
+      "outcome": "pass",
+      "reason": "Instruction describes what is broken and required behavior without giving exact code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on implementation-specific details like exact string matches: 'const getReadableErrorMsg' and 'const handleError' must not exist (test_getreadableerrormsg_removed, test_handleerror_removed), regex pattern for 'error?.status === 429.*rateLimitRemaining === 0' (test_consolidated_429_error_handling), exact trackEvent call signature. An alternative correct fix that e.g. renamed the helpers instead of removing them, or used a different consolidation pattern like checking rateLimitRemaini"
+      "reason": "Tests assert specific helper names must be removed ('const getReadableErrorMsg', 'const handleError') and a specific regex pattern 'error?.status === 429.*rateLimitRemaining === 0'; a valid alternative fix using different helper names or different condition ordering (e.g., rateLimitRemaining === 0 || error?.status === 429) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_translation_key_moved, test_ttd_dialog_uses_new_translation_key, test_getreadableerrormsg_removed, test_handleerror_removed, test_new_error_keys_present, test_consolidated_429_error_handling, test_mermaid_parse_success_tracking) are purely text-matching via 'assert X in open(path).read()' or regex on file contents without importing, calling, or executing the code. Only the pass-to-pass tests (typecheck, lint, prettier, unit tests) actually execute code."
+      "outcome": "pass",
+      "reason": "Tests run yarn test:typecheck, test:code, test:other, and multiple vitest suites in addition to string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific string patterns and structural changes that wouldn't pass with a stub/no-op implementation. The base commit has the old translation keys and helper functions, so without actual edits these tests would fail."
+      "reason": "Tests verify JSON schema values, specific strings, and run actual test suites that can't be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: translation key migration, new key existence with correct values, old key removal, TTDDialogOutput usage update, helper function removal, new error key usage in useTextGeneration, consolidated 429 handling, removeLastAssistantMessage cleanup, analytics tracking, and build/lint/format/unit tests."
+      "reason": "All the behaviors described in instruction.md (translation keys, trackEvent call, 429 consolidation, removal of helpers) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., test_translation_key_moved, test_consolidated_429_error_handling)."
+      "reason": "Tests are named descriptively with docstrings grouping them by concern."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The JSON schema for en.json translation keys is explicitly documented in instruction.md with exact key paths and values."
+      "reason": "The en.json schema (chat.errors.* keys and values) is explicitly spelled out in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or translation keys across instruction.md and test files."
+      "reason": "File paths and command names match existing repo structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files (useTextGeneration.ts, TTDDialogOutput.tsx), exact function names to remove (getReadableErrorMsg, handleError), exact translation key strings to use, and exact conditional patterns \u2014 far more specific than just describing the bug domain."
+      "outcome": "pass",
+      "reason": "Instruction names files whose role is central to the task (locales, TTDDialogOutput, useTextGeneration) without citing exact line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-only edit task."
+      "reason": "This is a code-fix task, not an agentmd-config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

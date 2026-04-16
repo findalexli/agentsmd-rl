@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction describes all key behaviors tested: DatabaseFilter accepting created_by_fk/changed_by_fk, ListDatabasesRequest parsing JSON strings, importing DATABASE_DEFAULT_COLUMNS from schema_discovery, timezone-aware timestamps in DatabaseError.create(), _humanize_timestamp handling aware datetimes, app.py documentation updates with specific literal strings, and re-exporting field_validator/parse_json_or_list/parse_json_or_model_list from the schemas module. All file paths (schemas, list_da"
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_schemas_py_imports_field_validator asserts that `field_validator` is importable from `superset.mcp_service.database.schemas` and is identical to `pydantic.field_validator`; test_schemas_py_imports_parse_utilities asserts `parse_json_or_list` and `parse_json_or_model_list` are importable from that namespace. While instruction.md mentions re-exporting these, the test also checks `assert field_validator is"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is very prescriptive about the exact fix: e.g., 'import DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery and use it (e.g., default_columns=DATABASE_DEFAULT_COLUMNS)', 'the literal text charts/dashboards/databases should appear', 'The database schemas module must re-export field_validator (from pydantic), parse_json_or_list, and parse_json_or_model_list'. These are implementation-level directives, not just descriptions of broken behavior."
+      "reason": "Instruction.md is extremely prescriptive: it says exactly to import `DATABASE_DEFAULT_COLUMNS` from `superset.mcp_service.common.schema_discovery` and use `default_columns=DATABASE_DEFAULT_COLUMNS`, to add `created_by_fk` and `changed_by_fk` to DatabaseFilter, to re-export `field_validator`, `parse_json_or_list`, and `parse_json_or_model_list`, to change docstring from `(chart, dataset, dashboard)` to `(chart, dataset, dashboard, database)`, and to add literal text `charts/dashboards/databases`."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Several tests assert on implementation details rather than behavior: test_list_databases_imports_default_columns_from_schema_discovery checks for exact string 'default_columns=DATABASE_DEFAULT_COLUMNS' in source code; test_schemas_py_imports_field_validator checks that field_validator is importable from the schemas module (an alternative could use inline validators); test_schemas_py_imports_parse_utilities checks that parse_json_or_list is importable from schemas (could be implemented differentl"
+      "reason": "test_list_databases_imports_default_columns_from_schema_discovery does static source code analysis checking for exact strings like `from superset.mcp_service.common.schema_discovery import` and `DATABASE_DEFAULT_COLUMNS` and `default_columns=DATABASE_DEFAULT_COLUMNS`. An alternative correct fix (e.g., using a different variable name or import style like `from superset.mcp_service.common import schema_discovery; schema_discovery.DATABASE_DEFAULT_COLUMNS`) would fail. test_app_py_has_database_crea"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Multiple tests are purely text-based: test_list_databases_imports_default_columns_from_schema_discovery only reads source and checks for string patterns; test_app_py_has_database_created_by_fk_documentation only reads file content and asserts on literal strings; test_model_get_schema_core_docstring_includes_database checks docstring text. These do not execute or call any code."
+      "reason": "test_list_databases_imports_default_columns_from_schema_discovery and test_app_py_has_database_created_by_fk_documentation are purely text/source-code inspection tests using `file_path.read_text()` and string `in content` checks with no code execution. While many other tests do execute code via subprocess, these two are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (e.g., test_database_filter_accepts_created_by_fk, test_list_databases_request_parses_json_filters, test_database_error_has_timezone_aware_timestamp) assert on specific attribute values and conditions that cannot be satisfied by stub implementations returning None or empty collections. For example, DatabaseFilter must have .col == 'created_by_fk', and DatabaseError.create() must produce a timestamp with non-None tzinfo."
+      "reason": "The f2p tests that execute code check non-trivial behavior: DatabaseFilter validation would reject unknown columns, ListDatabasesRequest without validators would fail on JSON strings, DatabaseError.create() without timezone fix would produce naive timestamps, and _humanize_timestamp would fail on aware datetimes. A stub/default implementation wouldn't pass these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (filter fields, JSON parsing, default columns import, timezone-aware timestamps, humanize_timestamp, documentation updates, docstring fix, re-exports) have corresponding tests."
+      "reason": "All six categories of fixes described in instruction.md are tested: DatabaseFilter fields, JSON parsing validators, import deduplication, timezone-aware timestamps, humanize_timestamp with aware datetimes, documentation updates, and the docstring fix (referenced in instruction #6 and likely in truncated test code)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped with a clear section header comment for 'Fail-to-Pass' tests, and each test function name clearly indicates what it verifies."
+      "reason": "Tests are well-named with descriptive function names, have docstrings indicating which issue they test, and are grouped with section comments like '# Fail-to-Pass (f2p) Tests'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing code bugs and updating documentation, not producing structured data output like JSON/CSV/API responses."
+      "reason": "The task involves fixing Python code/models, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or class names throughout the instruction and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact implementation details: 'import DATABASE_DEFAULT_COLUMNS from superset.mcp_service.common.schema_discovery', 're-export field_validator (from pydantic), parse_json_or_list, and parse_json_or_model_list', 'default_columns=DATABASE_DEFAULT_COLUMNS'. These specify exact variable names, import paths, and code patterns beyond what's needed to describe the bug."
+      "reason": "Instruction.md names exact modules/files: `superset.mcp_service.database.schemas`, `superset.mcp_service.common.schema_discovery`, `ModelGetSchemaCore.__init__`, `list_databases.py`, `app.py`, and specifies exact imports/variable names like `DATABASE_DEFAULT_COLUMNS`, `parse_json_or_list`, `parse_json_or_model_list`. This removes the need for the agent to locate bugs."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config editing task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

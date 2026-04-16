@@ -1,0 +1,65 @@
+source:
+  repo: cline/cline
+  pr_number: 9898
+  base_commit: b3fc79b8ce7df37a3dc4814281089c1866edf49c
+  merge_commit: 6308fef0a9772c23fd533e0d39717d8710c03637
+  target_files:
+    - cli/src/index.ts
+    - cli/src/index.test.ts
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_kanban_spawn_uses_latest_tag
+    type: fail_to_pass
+    origin: gold_patch
+    description: CLI spawns kanban@latest instead of just kanban
+
+  - id: test_kanban_error_message_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: Error message references kanban@latest
+
+  - id: test_kanban_command_description_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: Kanban command description references kanban@latest
+
+  - id: test_kanban_option_description_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: Kanban option description references kanban@latest
+
+  - id: test_test_file_consistent
+    type: fail_to_pass
+    origin: gold_patch
+    description: Test file descriptions match implementation
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_cli_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CLI TypeScript has valid syntax
+
+  - id: test_index_file_exists_and_readable
+    type: pass_to_pass
+    origin: repo_tests
+    description: CLI index.ts exists and is readable
+
+  - id: test_test_file_exists_and_readable
+    type: pass_to_pass
+    origin: repo_tests
+    description: CLI test file exists and is readable
+
+# Agent config rules extracted from applicable config files
+rubric:
+  - rule: "When updating CLI, update corresponding test descriptions"
+    source: ".github/copilot-instructions.md - Architecture section mentions CLI tests"
+    relevance: "The PR updates both implementation and test files to maintain consistency"
+
+  - rule: "CLI uses React Ink for terminal UI and shares core logic with webview"
+    source: ".github/copilot-instructions.md - Architecture section"
+    relevance: "Understanding CLI structure helps locate kanban command implementation"
+
+  - rule: "When updating strings in CLI, ensure consistency across spawn calls, error messages, and descriptions"
+    source: ".clinerules/cli.md - CLI Development section"
+    relevance: "The fix requires updating all occurrences of the kanban command string"

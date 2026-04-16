@@ -1,0 +1,113 @@
+source:
+  pr:
+    owner: JetBrains
+    repo: kotlin
+    number: 5807
+    merge_commit: 17efd263bb6b0e2a59984d0ceae187996e069611
+    base_commit: cf158c2f4a54d62787dc129cc1afdc86d08c9b9f
+    title: "[Analysis API] Avoid explicit arguments for AnalysisApiTestConfiguratorFactoryData"
+
+  analysis_api_files:
+    primary: analysis/analysis-api-fir/testFixtures/org/jetbrains/kotlin/analysis/api/fir/test/configurators/AnalysisApiFirTestConfiguratorFactory.kt
+    affected:
+      - generators/sir-tests-generator/main/org/jetbrains/kotlin/generators/tests/native/swift/sir/GenerateSirTests.kt
+      - native/swift/swift-export-ide/tests-gen/org/jetbrains/kotlin/swiftexport/ide/SwiftExportInIdeTestGenerated.java
+      - plugins/compose/compiler-hosted/src/test/kotlin/androidx/compose/compiler/plugins/kotlin/ComposeCompilerBoxTests.kt
+      - plugins/kotlin-dataframe/testFixtures/org/jetbrains/kotlin/fir/dataframe/AbstractCompilerFacilityTestForDataFrame.kt
+      - plugins/kotlinx-serialization/testFixtures/org/jetbrains/kotlinx/serialization/runners/AbstractCompilerFacilityTestForSerialization.kt
+
+  agent_configs:
+    - file: CLAUDE.md
+      commit: cf158c2f4a54d62787dc129cc1afdc86d08c9b9f
+    - file: AGENTS.md
+      commit: cf158c2f4a54d62787dc129cc1afdc86d08c9b9f
+    - file: .ai/guidelines.md
+      commit: cf158c2f4a54d62787dc129cc1afdc86d08c9b9f
+    - file: analysis/AGENTS.md
+      commit: cf158c2f4a54d62787dc129cc1afdc86d08c9b9f
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_workaround_removed_from_main_factory
+    type: fail_to_pass
+    origin: gold_patch
+    description: The workaround mapping TestModuleKind.Source to SourceLike must be removed from AnalysisApiFirTestConfiguratorFactory
+    file: analysis/analysis-api-fir/testFixtures/org/jetbrains/kotlin/analysis/api/fir/test/configurators/AnalysisApiFirTestConfiguratorFactory.kt
+
+  - id: test_factory_uses_direct_data
+    type: fail_to_pass
+    origin: gold_patch
+    description: Factory should use 'data' parameter directly without reassignment
+    file: analysis/analysis-api-fir/testFixtures/org/jetbrains/kotlin/analysis/api/fir/test/configurators/AnalysisApiFirTestConfiguratorFactory.kt
+
+  - id: test_generator_uses_default_constructor
+    type: fail_to_pass
+    origin: gold_patch
+    description: Test generator must use AnalysisApiTestConfiguratorFactoryData() with default parameters instead of explicit arguments
+    file: generators/sir-tests-generator/main/org/jetbrains/kotlin/generators/tests/native/swift/sir/GenerateSirTests.kt
+
+  - id: test_compose_test_uses_default_constructor
+    type: fail_to_pass
+    origin: gold_patch
+    description: Compose compiler test must use AnalysisApiTestConfiguratorFactoryData() with defaults
+    file: plugins/compose/compiler-hosted/src/test/kotlin/androidx/compose/compiler/plugins/kotlin/ComposeCompilerBoxTests.kt
+
+  - id: test_dataframe_test_uses_default_constructor
+    type: fail_to_pass
+    origin: gold_patch
+    description: DataFrame test must use AnalysisApiTestConfiguratorFactoryData() with defaults
+    file: plugins/kotlin-dataframe/testFixtures/org/jetbrains/kotlin/fir/dataframe/AbstractCompilerFacilityTestForDataFrame.kt
+
+  - id: test_serialization_test_uses_default_constructor
+    type: fail_to_pass
+    origin: gold_patch
+    description: Serialization test must use AnalysisApiTestConfiguratorFactoryData() with defaults
+    file: plugins/kotlinx-serialization/testFixtures/org/jetbrains/kotlinx/serialization/runners/AbstractCompilerFacilityTestForSerialization.kt
+
+  - id: test_generated_test_uses_sourcelike
+    type: fail_to_pass
+    origin: gold_patch
+    description: Generated Swift export test must use TestModuleKind.SourceLike instead of Source
+    file: native/swift/swift-export-ide/tests-gen/org/jetbrains/kotlin/swiftexport/ide/SwiftExportInIdeTestGenerated.java
+
+  # Pass-to-pass tests using subprocess.run() (repo_tests)
+  - id: test_repo_files_tracked
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified files should be tracked in git (verified via git ls-files subprocess)
+
+  - id: test_java_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generated Java file should have valid syntax (verified via head/grep subprocess)
+
+  - id: test_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository should be valid and at expected commit (verified via git rev-parse subprocess)
+
+  # Pass-to-pass tests using file content checks (static)
+  - id: test_syntax_valid_main_file
+    type: pass_to_pass
+    origin: static
+    description: Main factory file should have valid Kotlin syntax with balanced braces
+
+  - id: test_syntax_valid_compose_file
+    type: pass_to_pass
+    origin: static
+    description: Compose test file should have valid Kotlin syntax
+
+  - id: test_syntax_valid_serialization_file
+    type: pass_to_pass
+    origin: static
+    description: Serialization test file should have valid Kotlin syntax
+
+  - id: test_imports_clean_in_test_files
+    type: pass_to_pass
+    origin: static
+    description: Test files should use specific imports instead of wildcard imports for configurator package
+
+  - id: test_copyright_year_updated
+    type: pass_to_pass
+    origin: static
+    description: Copyright year should be updated to 2026 in modified files

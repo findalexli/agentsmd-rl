@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert specific details not mentioned in instruction.md: test_no_unwrap_or_panic checks that preview.rs must not contain .unwrap(), panic!(), or unreachable!() (citing AGENTS.md line 79); test_rust_imports_at_top checks no local imports inside function bodies (citing AGENTS.md line 76); test_sim102_snapshot_tests runs 'cargo test -- SIM102'; test_cargo_test_flake8_simplify runs flake8_simplify tests; test_cargo_check_ruff_linter checks ruff_linter package compilation. These constraints"
+      "reason": "The test `test_no_unwrap_or_panic` checks for `.unwrap()`, `panic!()`, and `unreachable!()` patterns in preview.rs, referencing 'AGENTS.md line 79'. The test `test_rust_imports_at_top` references 'AGENTS.md line 76'. Neither AGENTS.md nor these specific coding conventions are mentioned in instruction.md. Also, `test_sim102_snapshot_tests` runs `cargo test -- SIM102` and `test_cargo_test_flake8_simplify` runs flake8_simplify tests \u2014 the requirement that existing snapshot/module tests must pass is"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'The fix safety should be gated by a function named is_collapsible_if_fix_safe_enabled in preview.rs that returns true when preview mode is enabled.' This names the exact function to create, the exact file to put it in, and its behavior \u2014 essentially dictating the implementation rather than just describing the problem."
+      "reason": "instruction.md explicitly states the exact function name to create (`is_collapsible_if_fix_safe_enabled`), the exact file to put it in (`preview.rs`), exactly what it should return (`true` when preview mode is enabled), and the exact file to modify (`collapsible_if.rs`). It also specifies the fix should use `Safe` vs `Unsafe` applicability. This is essentially a complete implementation specification, not just a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_preview_function_defined asserts 'is_collapsible_if_fix_safe_enabled' must appear in preview.rs. This forces the agent to use this exact function name. An alternative correct implementation that uses a different function name (e.g., 'is_sim102_safe_fix_enabled' or inline preview check) would fail this test despite being behaviorally correct."
+      "reason": "test_preview_function_defined asserts `'is_collapsible_if_fix_safe_enabled' in content` \u2014 this requires the exact function name from the gold solution. An alternative correct implementation could use a different function name (e.g., `is_sim102_safe_fix_enabled` or inline the preview check) and would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests build the ruff binary and execute it as a subprocess, checking JSON output for behavioral properties (applicability='safe'/'unsafe'). test_preview_function_defined is text-based, but the majority of fail-to-pass tests (test_fix_safe_in_preview, test_fix_safe_in_preview_varied_inputs) verify actual runtime behavior."
+      "reason": "The core behavioral tests (test_fix_safe_in_preview, test_fix_safe_in_preview_varied_inputs, test_fix_unsafe_without_preview) build and execute the ruff binary, run it on actual Python code, and inspect JSON output for behavioral properties. While test_preview_function_defined is text-based, the majority of tests verify actual execution behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that SIM102 fix applicability changes from 'unsafe' to 'safe' when --preview is enabled. A stub or no-op implementation would leave the fix as 'unsafe' (the base behavior), failing test_fix_safe_in_preview. test_preview_function_defined checks for existence of the new function which doesn't exist at baseline."
+      "reason": "The fail-to-pass tests (test_fix_safe_in_preview, test_fix_safe_in_preview_varied_inputs, test_preview_function_defined) cannot be satisfied by stub implementations. The first two require the compiled ruff binary to output `applicability: 'safe'` when `--preview` is passed, which requires actual code changes. A no-op or stub would still produce 'unsafe' applicability."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors specified in instruction.md are tested: safe applicability in preview mode (test_fix_safe_in_preview), unsafe without preview (test_fix_unsafe_without_preview), and the gating function existence (test_preview_function_defined)."
+      "reason": "instruction.md specifies three behaviors: (1) safe fix with --preview, (2) unsafe fix without --preview, (3) gating function in preview.rs. All three are tested by test_fix_safe_in_preview, test_fix_unsafe_without_preview, and test_preview_function_defined respectively."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and detailed docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The JSON output schema from ruff (with 'fix' containing 'applicability') is implicitly documented through the test assertions and the ruff tool's --output-format json flag, which is a well-known tool with documented output."
+      "outcome": "not_applicable",
+      "reason": "The task modifies Rust source code; it does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files to modify (collapsible_if.rs and preview.rs), the exact function name to create (is_collapsible_if_fix_safe_enabled), and the exact function to modify (nested_if_statements). This goes beyond describing the problem and into specifying the implementation."
+      "reason": "instruction.md names the exact files to modify (`collapsible_if.rs`, `preview.rs`), the exact function to create (`is_collapsible_if_fix_safe_enabled`), and the exact function containing the diagnostic (`nested_if_statements`). This goes beyond domain-obvious localization and specifies the implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Rust source files, not configuration edits."
+      "reason": "This is a code-only task modifying Rust source files, not a configuration edit task."
     }
   },
   "tier_a_fails": [
@@ -55,6 +55,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
+  "pass_count": 5,
   "fail_count": 4
 }

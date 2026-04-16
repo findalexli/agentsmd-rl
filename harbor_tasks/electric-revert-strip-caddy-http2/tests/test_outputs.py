@@ -57,50 +57,182 @@ def test_vite_plugin_exports():
     assert data["hasBuildEnd"], "Plugin must have buildEnd method"
 
 
-
 def test_vite_config_uses_caddy():
-    """vite.config.ts must import and use caddyPlugin with host enabled."""
+    """vite.config.ts must import and use caddyPlugin with host enabled.
+
+    Evaluates the config module with stubbed external dependencies via a custom
+    Node module loader, then inspects the resulting config object for the caddy
+    plugin and server.host setting.
+    """
     config_path = Path(EXAMPLE_DIR) / "vite.config.ts"
     assert config_path.exists(), "vite.config.ts must exist"
 
-    content = config_path.read_text()
-    assert "caddyPlugin" in content, "vite.config.ts must import caddyPlugin"
-    assert "caddyPlugin()" in content, "vite.config.ts must instantiate caddyPlugin()"
-    assert "host: true" in content, "vite.config.ts must set server.host to true"
+    loader_path = Path(EXAMPLE_DIR) / "_eval_loader.mjs"
+    register_path = Path(EXAMPLE_DIR) / "_eval_register.mjs"
+    test_path = Path(EXAMPLE_DIR) / "_eval_config_test.ts"
+
+    try:
+        # Custom module loader: stubs npm packages, resolves @/ path alias
+        loader_path.write_text(
+            'const STUBS = {\n'
+            """  "vite": 'export function defineConfig(c) { return c; }',\n"""
+            """  "@tanstack/react-start/plugin/vite": 'export function tanstackStart() { return { name: "tanstackStart" } }',\n"""
+            """  "@vitejs/plugin-react": 'export default function viteReact() { return { name: "viteReact" } }',\n"""
+            """  "vite-tsconfig-paths": 'export default function viteTsConfigPaths() { return { name: "viteTsConfigPaths" } }',\n"""
+            """  "@tailwindcss/vite": 'export default function tailwindcss() { return { name: "tailwindcss" } }',\n"""
+            '};\n'
+            'export function resolve(specifier, context, next) {\n'
+            '  if (specifier in STUBS) {\n'
+            '    return { url: "data:text/javascript," + encodeURIComponent(STUBS[specifier]), shortCircuit: true };\n'
+            '  }\n'
+            '  if (specifier.startsWith("@/")) {\n'
+            '    const parentDir = new URL("./", context.parentURL).href;\n'
+            '    const resolved = new URL("src/" + specifier.slice(2) + ".ts", parentDir).href;\n'
+            '    return { url: resolved, shortCircuit: true };\n'
+            '  }\n'
+            '  return next(specifier, context);\n'
+            '}\n'
+        )
+
+        register_path.write_text(
+            'import { register } from "node:module";\n'
+            'register("./_eval_loader.mjs", import.meta.url);\n'
+        )
+
+        test_path.write_text(
+            'const configModule = await import("./vite.config.ts");\n'
+            'const config = configModule.default;\n'
+            'const plugins = (config?.plugins || []).flat().filter(Boolean);\n'
+            'const names = plugins.map((p: any) => p?.name).filter(Boolean);\n'
+            'console.log(JSON.stringify({\n'
+            '  pluginNames: names,\n'
+            '  hasCaddyPlugin: names.includes("vite-plugin-caddy"),\n'
+            '  hostEnabled: config?.server?.host === true,\n'
+            '}));\n'
+        )
+
+        result = subprocess.run(
+            ["node", "--experimental-strip-types", "--no-warnings",
+             "--import", "./_eval_register.mjs", str(test_path)],
+            capture_output=True, text=True, timeout=30, cwd=EXAMPLE_DIR,
+        )
+        assert result.returncode == 0, f"Config evaluation failed: {result.stderr}"
+        data = json.loads(result.stdout.strip())
+        assert data["hasCaddyPlugin"], "Config must include a plugin named 'vite-plugin-caddy'"
+        assert data["hostEnabled"], "Config must set server.host to true"
+    finally:
+        for p in (loader_path, register_path, test_path):
+            p.unlink(missing_ok=True)
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update tests
+# Fail-to-pass (pr_diff) — documentation behavior tests
+# These execute Node scripts that parse markdown structure and validate content.
 # -----------------------------------------------------------------------------
 
 
 def test_agents_md_http2_proxy_tip():
-    """AGENTS.md slow shapes tip must mention HTTP/2 proxy, not outdated version upgrade."""
-    agents_md = Path(REPO) / "AGENTS.md"
-    content = agents_md.read_text()
-    # The old text was: "Fixed by default in `@electric-sql/client` v1.0.13+ UPGRADE!"
-    assert "HTTP/2" in content, "AGENTS.md must mention HTTP/2 in the slow shapes tip"
-    assert "proxy" in content.lower(), \
-        "AGENTS.md must mention proxy as the fix for slow shapes"
-    assert "UPGRADE!" not in content, \
-        "AGENTS.md should not have outdated v1.0.13 UPGRADE text"
+    """AGENTS.md slow shapes tip must mention HTTP/2 proxy, not outdated version upgrade.
 
+    Runs a Node script that parses the numbered tips list in AGENTS.md,
+    extracts the slow shapes tip, and checks its content.
+    """
+    agents_md = Path(REPO) / "AGENTS.md"
+    assert agents_md.exists(), "AGENTS.md must exist"
+
+    script_path = Path(EXAMPLE_DIR) / "_eval_agents_analysis.ts"
+    script_path.write_text(
+        'import { readFileSync } from "fs"\n'
+        "\n"
+        "const content = readFileSync(process.argv[2], \"utf8\")\n"
+        "\n"
+        "// Parse numbered list items: 'N. **Title** - description'\n"
+        "const tipRegex = /^\\d+\\.\\s+\\*\\*(.+?)\\*\\*\\s*[-\\u2013]\\s*(.+)$/gm\n"
+        "let match: RegExpExecArray | null\n"
+        "const tips: Record<string, string> = {}\n"
+        "while ((match = tipRegex.exec(content)) !== null) {\n"
+        "    tips[match[1].trim()] = match[2].trim()\n"
+        "}\n"
+        "\n"
+        "// Find the slow shapes / local dev tip\n"
+        "let slowText = \"\"\n"
+        "for (const [title, body] of Object.entries(tips)) {\n"
+        '    if (title.toLowerCase().includes("slow") || title.toLowerCase().includes("local dev")) {\n'
+        "        slowText = body\n"
+        "        break\n"
+        "    }\n"
+        "}\n"
+        "\n"
+        "console.log(JSON.stringify({\n"
+        "    found: !!slowText,\n"
+        "    http2: /HTTP.?2/i.test(slowText),\n"
+        "    proxy: /proxy/i.test(slowText),\n"
+        "    outdated: /v1\\.0\\.13[\\s\\S]*?UPGRADE/.test(slowText),\n"
+        "}))\n"
+    )
+
+    try:
+        result = subprocess.run(
+            ["node", "--experimental-strip-types", "--no-warnings",
+             str(script_path), str(agents_md)],
+            capture_output=True, text=True, timeout=10, cwd=EXAMPLE_DIR,
+        )
+        assert result.returncode == 0, f"Analysis script failed: {result.stderr}"
+        data = json.loads(result.stdout.strip())
+        assert data["found"], "AGENTS.md must have a tip about local dev slow shapes"
+        assert not data["outdated"], "Tip must not reference outdated v1.0.13 UPGRADE"
+        assert data["http2"], "Tip must mention HTTP/2 as part of the solution"
+        assert data["proxy"], "Tip must mention proxy as part of the solution"
+    finally:
+        script_path.unlink(missing_ok=True)
 
 
 def test_readme_documents_caddy():
-    """README must document Caddy with HTTP/2 multiplexing explanation and setup."""
+    """README must document Caddy with HTTP/2 multiplexing explanation and setup.
+
+    Runs a Node script that parses the README markdown, extracts code blocks,
+    and verifies Caddy documentation requirements.
+    """
     readme = Path(EXAMPLE_DIR) / "README.md"
-    content = readme.read_text()
-    assert "Caddy" in content, "README must mention Caddy"
-    assert "HTTP/2" in content, "README must explain HTTP/2 benefit"
-    # Must explain the connection limit problem
-    assert ("multiplex" in content.lower()
-            or "connection limit" in content.lower()
-            or "6 concurrent" in content.lower()
-            or "6 simultaneous" in content.lower()), \
-        "README must explain the HTTP/1.1 connection limit problem"
-    assert "caddy trust" in content.lower(), \
-        "README must include caddy trust setup instruction"
+    assert readme.exists(), "README.md must exist"
+
+    script_path = Path(EXAMPLE_DIR) / "_eval_readme_analysis.ts"
+    script_path.write_text(
+        'import { readFileSync } from "fs"\n'
+        "\n"
+        "const content = readFileSync(process.argv[2], \"utf8\")\n"
+        "\n"
+        "// Extract fenced code blocks\n"
+        "const codeBlocks: string[] = []\n"
+        "const codeRegex = /```[\\s\\S]*?```/g\n"
+        "let m: RegExpExecArray | null\n"
+        "while ((m = codeRegex.exec(content)) !== null) {\n"
+        "    codeBlocks.push(m[0])\n"
+        "}\n"
+        'const codeContent = codeBlocks.join("\\n")\n'
+        "\n"
+        "console.log(JSON.stringify({\n"
+        "    mentionsCaddy: /caddy/i.test(content),\n"
+        "    mentionsHttp2: /HTTP.?2/i.test(content),\n"
+        "    explainsLimit: /(multiplex|connection.{0,5}limit|6.concurrent|6.simultaneous)/i.test(content),\n"
+        "    hasCaddyTrustInCode: /caddy\\s+trust/i.test(codeContent),\n"
+        "}))\n"
+    )
+
+    try:
+        result = subprocess.run(
+            ["node", "--experimental-strip-types", "--no-warnings",
+             str(script_path), str(readme)],
+            capture_output=True, text=True, timeout=10, cwd=EXAMPLE_DIR,
+        )
+        assert result.returncode == 0, f"Analysis script failed: {result.stderr}"
+        data = json.loads(result.stdout.strip())
+        assert data["mentionsCaddy"], "README must mention Caddy"
+        assert data["mentionsHttp2"], "README must mention HTTP/2"
+        assert data["explainsLimit"], "README must explain the HTTP/1.1 connection limit problem"
+        assert data["hasCaddyTrustInCode"], "README must include caddy trust in a code block"
+    finally:
+        script_path.unlink(missing_ok=True)
 
 
 # -----------------------------------------------------------------------------

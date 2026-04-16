@@ -18,7 +18,7 @@ Replace the single coarse-grained type system with granular constants:
 | Constant | Value | Description |
 |----------|-------|-------------|
 | `ACTIVITY_TYPE_USER` | `'user'` | Regular authenticated user |
-| `ACTIVITY_TYPE_ADMIN` | `'admin'` | Console admin operating in `APP_MODE_ADMIN` |
+| `ACTIVITY_TYPE_ADMIN` | `'admin'` | Console admin operating in `APP_MODE_ADMIN` mode |
 | `ACTIVITY_TYPE_GUEST` | `'guest'` | Unauthenticated guest user |
 | `ACTIVITY_TYPE_KEY_PROJECT` | `'keyProject'` | Standard/dynamic project-scoped API key |
 | `ACTIVITY_TYPE_KEY_ACCOUNT` | `'keyAccount'` | Account-scoped API key |
@@ -28,26 +28,28 @@ Remove the old `ACTIVITY_TYPE_APP` constant.
 
 ### 2. Update `app/controllers/shared/api.php`
 
-**Mode-based user type assignment:** When setting the audit user type for authenticated users, distinguish between console admin mode and regular user mode. The appropriate constants are `ACTIVITY_TYPE_ADMIN` and `ACTIVITY_TYPE_USER`.
+**Mode-based user type assignment:** When setting the audit user type for authenticated users, the code must determine whether the request is in admin mode and assign the appropriate activity type constant (`ACTIVITY_TYPE_ADMIN` for admin mode, `ACTIVITY_TYPE_USER` for regular users).
 
-**Existing type preservation:** User type values that are already set should not be overwritten.
+**Existing type preservation:** User type values that are already set on the user object should not be overwritten by subsequent type assignments.
 
-**API key type mapping:** API keys have three types (`API_KEY_STANDARD`, `API_KEY_ACCOUNT`, `API_KEY_ORGANIZATION`) that must map to their corresponding activity types (`ACTIVITY_TYPE_KEY_PROJECT`, `ACTIVITY_TYPE_KEY_ACCOUNT`, `ACTIVITY_TYPE_KEY_ORGANIZATION`).
+**API key type mapping:** API keys have three types that must map to their corresponding activity types:
+- `API_KEY_STANDARD` → `ACTIVITY_TYPE_KEY_PROJECT`
+- `API_KEY_ACCOUNT` → `ACTIVITY_TYPE_KEY_ACCOUNT`
+- `API_KEY_ORGANIZATION` → `ACTIVITY_TYPE_KEY_ORGANIZATION`
 
-**Mode parameter access:** The action handler needs access to the current application mode to determine if the request is in admin context.
+**Mode parameter access:** The API controller action must have access to the current application mode to determine if the request is in admin context.
 
 ### 3. Update `src/Appwrite/Utopia/Response/Model/Log.php`
 
-Add a `userType` field to the Log response model with:
-- Description: "User type who triggered the audit log"
-- Possible values: `user`, `admin`, `guest`, `keyProject`, `keyAccount`, `keyOrganization`
+Add a `userType` field to the Log response model. The field must have:
+- Description: "User type who triggered the audit log. Possible values: user, admin, guest, keyProject, keyAccount, keyOrganization."
 
 ### 4. Include `userType` in all log response builders
 
-All log listing endpoints must return the `userType` field from `$log['data']['userType'] ?? null`:
+All log listing endpoints must return the `userType` field from the log data:
 
-- `app/controllers/api/users.php` - include both `userType` and `mode`
-- `app/controllers/api/messaging.php` - include `userType` (4 locations)
+- `app/controllers/api/users.php` - include both `userType` and `mode` fields
+- `app/controllers/api/messaging.php` - include `userType` field in 4 locations
 - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Logs/XList.php`
 - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Logs/XList.php`
 - `src/Appwrite/Platform/Modules/Databases/Http/Databases/Logs/XList.php`

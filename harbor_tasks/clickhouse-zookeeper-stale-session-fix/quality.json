@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'current_zookeeper', 'retries_ctl.isRetry()', and 'zookeeper_getter.getZooKeeper()' which are not mentioned in instruction.md. The instruction describes the expected behavior abstractly ('fresh ZooKeeper session should be obtained') but never names these specific identifiers that the tests check for."
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name pattern `current_zookeeper` (or any variable assigned from `zookeeper_getter.getZooKeeper().first`), that `getObjectNamesAndSetWatch` must be called with that same variable inside the retry lambda, that `tryLoadObject` must use the same fresh handle variable, and the exact regex patterns like `retries_ctl.isRetry()` block structure. The instruction mentions these API methods but doesn't specify the"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's 'Expected behavior' section essentially describes the fix implementation: 'When a retry occurs, a fresh ZooKeeper session should be obtained', 'tryLoadObject() calls within the retry loop should use the current (potentially refreshed) session handle, not the stale one originally passed'. Combined with the 'Code context' listing zookeeper_getter and specific method names, this strongly narrows to the exact solution."
+      "reason": "The instruction explicitly describes the fix: 'captures the ZooKeeper session handle and object names before entering the retry loop' and 'the code uses the captured (now expired) session and stale object names'. Combined with listing `retries_ctl.isRetry()` and `zookeeper_getter.getZooKeeper()`, this effectively tells the agent to move getObjectNamesAndSetWatch inside the retry loop and refresh the session on retry using isRetry()."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: test_fix_session_refresh_in_retry_loop checks for 'current_zookeeper' literal string, test_fix_uses_current_zookeeper_in_tryload asserts `match == 'current_zookeeper'`. An alternative fix using a different variable name (e.g., 'fresh_zk', 'live_zookeeper', 'refreshed_session') would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_fix_session_refresh_in_retry_loop requires `zookeeper_getter.getZooKeeper().first` assigned to a variable inside an `isRetry()` block; test_fix_fresh_zookeeper_used_for_object_names and test_fix_fresh_zookeeper_used_for_tryload assert that the exact same variable name is used in both the assignment and function calls. An alternative correct fix (e.g., calling zookeeper_getter.getZooKeeper().first directly as an argument, or using a diffe"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test reads the source file as text and uses string matching (e.g., `'retries_ctl.isRetry()' in func_content`, regex `tryLoadObject\\((\\w+),`). No test compiles the code, executes it, or verifies runtime behavior. All tests are pure text/pattern assertions on source code."
+      "reason": "Every test function reads the source file as text and uses regex/string matching (e.g., `assert 'getObjectNamesAndSetWatch' in lambda_body`, `re.search(assign_pattern, retry_block)`). No test compiles, executes, or behaviorally tests the code. This is purely textual/structural verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns (isRetry check, getObjectNamesAndSetWatch inside retry loop, current_zookeeper in tryLoadObject) that are absent in the buggy code. A stub or no-op would not pass since the original file lacks these patterns."
+      "reason": "The tests check for specific code patterns that don't exist in the original buggy code (e.g., getObjectNamesAndSetWatch inside the retry loop, isRetry() block with getZooKeeper()), so a stub or unmodified file would fail them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The three key behaviors from instruction.md (fresh session on retry, object names fetched inside retry loop, tryLoadObject uses current session) are each tested by dedicated test functions."
+      "reason": "The instruction describes two issues (stale session handle and stale object names on retry), and the tests check for both: fresh session via getZooKeeper() on retry, and getObjectNamesAndSetWatch moved inside the retry loop."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_fix_session_refresh_in_retry_loop, test_fix_object_names_inside_retry_loop, etc.), grouped by FAIL-TO-PASS and PASS-TO-PASS categories, and include docstrings explaining the bug and fix rationale."
+      "reason": "Tests are well-named (test_fix_session_refresh_in_retry_loop, test_fix_object_names_inside_retry_loop, etc.) with docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a C++ source file, not producing structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file (which is obvious from the task domain) and describes the bug location (refreshObjects method) but doesn't specify exact line numbers or the precise code change needed."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (`src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`), the exact method (`refreshObjects()`), and lists specific API methods (`retries_ctl.isRetry()`, `zookeeper_getter.getZooKeeper()`) that form the fix, effectively localizing the bug and its solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -53,7 +53,9 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

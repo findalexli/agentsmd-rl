@@ -81,6 +81,29 @@ rubric:
   evidence: The gold solution updates `turbopack/crates/turbo-persistence/README.md`
     to accurately reflect the new value types (INLINE, SMALL, MEDIUM, BLOB) and their
     updated size thresholds, demonstrating that t
+- rule: Group imports from the same crate
+  source:
+    path: .rustfmt.toml
+    lines: '13'
+  source_text: imports_granularity = "Crate"
+  evidence: In `turbopack/crates/turbo-persistence/src/value_block_count_tracker.rs`
+    and `static_sorted_file_builder.rs`, imports from `crate::constants` are cleanly
+    grouped together into a single block (e.g., `use crate::constants::{MAX_VALUE_BLOCK_COUNT,
+    MIN_SMALL_VALUE_BLOCK_SIZE};`).
+  category: imports
+  verification: llm_judge
+- rule: Wrap comments to a maximum width of 100 characters
+  source:
+    path: .rustfmt.toml
+    lines: 4-5
+  source_text: 'comment_width = 100
+
+    wrap_comments = true'
+  evidence: In `turbopack/crates/turbo-persistence/src/constants.rs`, the new multiline
+    comments added for `MAX_VALUE_BLOCK_COUNT` and `MIN_SMALL_VALUE_BLOCK_SIZE` are
+    manually wrapped to stay within the 100-character limit.
+  category: style
+  verification: llm_judge
 config_edits:
 - path: turbopack/crates/turbo-persistence/README.md
   tier: 2
@@ -135,6 +158,67 @@ distractors:
     test` instead. Using the JS/TS test commands would lead to confusion and wasted
     time.
   severity: medium
+- rule: Generating tests non-interactively using pnpm new-test is mandatory
+  source:
+    path: AGENTS.md
+    lines: 123-125
+  source_text: '**Generate tests non-interactively (for AI agents):**
+
+
+    Generating tests using `pnpm new-test` is mandatory.'
+  collision_type: architecture_boundary
+  why_distracting: The PR involves changes to a Rust crate (`turbo-persistence`).
+    The `pnpm new-test` script is specifically designed for generating Next.js TypeScript/JavaScript
+    integration/e2e tests. Attempting to use this JS-centric workflow for new Rust
+    code would be inappropriate and fail.
+  severity: high
+- rule: Use HTML table wrapper for horizontal scroll on mobile
+  source:
+    path: .claude/skills/update-docs/references/DOC-CONVENTIONS.md
+    lines: 163-172
+  source_text: '<div style={{ overflowX: ''auto'', width: ''100%'' }}>
+
+
+    | Prop              | Example             | Type    | Status   |
+
+    | ----------------- | ------------------- | ------- | -------- |
+
+    | [`src`](#src)     | `src="/image.png"`  | String  | Required |
+
+    | [`alt`](#alt)     | `alt="Description"` | String  | Required |
+
+    | [`width`](#width) | `width={500}`       | Integer | -        |
+
+
+    </div>'
+  collision_type: would_cause_bug
+  why_distracting: The gold diff adds a standard markdown table to an internal Rust
+    crate's `README.md`. Applying this convention would inject Next.js-specific MDX/JSX
+    formatting (`<div style={{...}}>`) into a standard markdown file, violating standard
+    GitHub markdown formatting.
+  severity: high
+- rule: All MDX files must start with YAML frontmatter
+  source:
+    path: .claude/skills/update-docs/references/DOC-CONVENTIONS.md
+    lines: 7-9
+  source_text: All MDX files must start with YAML frontmatter enclosed in `---` delimiters.
+  collision_type: scope_ambiguity
+  why_distracting: While the PR updates documentation (the crate's `README.md`), the
+    file is a standard markdown file for GitHub, not a Next.js public documentation
+    MDX page. An agent might mistakenly add YAML frontmatter (`title`, `description`)
+    to the README.
+  severity: medium
+- rule: Always use async for cached functions
+  source:
+    path: .claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md
+    lines: '388'
+  source_text: 1. **Always use `async`** - All cached functions must be async
+  collision_type: architecture_boundary
+  why_distracting: The gold diff modifies `turbo-persistence`, a low-level synchronous
+    Rust storage crate. An agent might see 'persistence' or 'cache' operations and
+    mistakenly apply this React Server Cache Components rule to force the Rust functions
+    to be `async`, breaking the crate's architecture.
+  severity: high
 hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical and
   primarily focus on the Next.js JS/TS ecosystem. For this specific PR, which is entirely
   within the Rust `turbopack` subtree, most of the build and test commands are inapplicable.

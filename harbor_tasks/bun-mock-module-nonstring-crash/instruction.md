@@ -2,7 +2,7 @@
 
 ## Summary
 
-Calling `mock.module()` with a non-string first argument (e.g., `SharedArrayBuffer`, an object, a number, or a Symbol) causes Bun's test runner to crash with an address-related error instead of throwing a clean `TypeError`.
+Calling `mock.module()` with a non-string first argument causes Bun's test runner to crash with an address-related error (`Address:unknown-crash:bun-debug+0x90074c1`) instead of throwing a clean `TypeError`.
 
 ## Reproduction
 
@@ -16,18 +16,23 @@ mock.module(123, () => ({}));
 mock.module(Symbol("test"), () => ({}));
 ```
 
-Running any of the above in a test file with `bun test` causes a hard crash. The crash fingerprint is: `Address:unknown-crash:bun-debug+0x90074c1`.
+Running any of the above in a test file with `bun test` causes a hard crash.
 
 ## Expected Behavior
 
-`mock.module()` should throw a `TypeError` with a clear message when the first argument is not a string, similar to how other Bun APIs validate their arguments.
+`mock.module()` should throw a `TypeError` with the message `"mock(module, fn) requires a module name string"` when the first argument is not a string, similar to how other Bun APIs validate their arguments.
 
 ## Requirements
 
-1. **Type validation must occur before string conversion**: The implementation must check that the first argument is a string before attempting any string conversion operations. Acceptable type guard patterns include: `isString(`, `isCell(`, `isObject(`, `isSymbol(`, `isNumber(`, `isUndefinedOrNull(`, `isBoolean(`, `isHeapBigInt(`, `jsTypeInfo(`, `JSType::` string checks, `toStringOrNull`, or `tryGetString`.
+The fix must ensure that:
+1. Passing a non-string value as the first argument to `mock.module()` throws a `TypeError` instead of crashing.
+2. The error message is exactly `"mock(module, fn) requires a module name string"`.
+3. The existing `argumentCount()` and `isEmpty()` validation guards remain in place.
 
-2. **Error must be thrown with early return**: When the first argument fails type validation, the code must throw an exception (using patterns like `throwException`, `createTypeError`, `createError`, `throwTypeError`, or `ThrowTypeError`) and return early (using `return;`, `return JSValue`, `return js`, or `RETURN_IF_EXCEPTION`).
+## Test Requirements
 
-3. **Error message must be descriptive**: The error message should mention "string", "module", or "specifier" so the user understands what went wrong.
-
-4. **Existing validation must be preserved**: The current `argumentCount()` and `isEmpty()` validation guards must remain in place.
+Create a test file in `test/js/bun/` that:
+- Verifies `mock.module()` throws `TypeError` for non-string arguments including `SharedArrayBuffer`, objects, numbers, and Symbols
+- Asserts the error message contains `"mock(module, fn) requires a module name string"`
+- Uses `toThrow` or similar assertions to verify the error is thrown
+- Does not use `setTimeout`, custom timeouts, or shell commands like `find`/`grep`

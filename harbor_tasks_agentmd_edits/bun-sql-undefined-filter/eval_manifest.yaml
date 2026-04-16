@@ -1,0 +1,164 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 25830
+  base_commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+  merge_commit: "bf937f7294762d5e1a11a0d72f63fbeb00de9468"
+
+# Config edits extracted deterministically from solve.sh
+config_edits:
+  - path: "test/CLAUDE.md"
+    tier: 1
+    gold_added: |
+      ### Nested/complex object equality
+
+      Prefer usage of `.toEqual` rather than many `.toBe` assertions for nested or complex objects.
+
+      <example>
+
+      BAD (try to avoid doing this):
+
+      ```ts
+      expect(result).toHaveLength(3);
+      expect(result[0].optional).toBe(null);
+      expect(result[1].optional).toBe("middle-value"); // CRITICAL: middle item's value must be preserved
+      expect(result[2].optional).toBe(null);
+      ```
+
+      **GOOD (always prefer this):**
+
+      ```ts
+      expect(result).toEqual([
+        { optional: null },
+        { optional: "middle-value" }, // CRITICAL: middle item's value must be preserved
+        { optional: null },
+      ]);
+      ```
+
+      </example>
+    gold_removed: ""
+
+  - path: "test/CLAUDE.md"
+    tier: 1
+    gold_added: "const { promise, resolve, reject } = Promise.withResolvers<void>(); // Can specify any type here for resolution value"
+    gold_removed: "const { promise, resolve, reject } = Promise.withResolvers();"
+
+# Binary checks - all must pass for reward=1
+checks:
+  # Code behavior tests (functional fixes)
+  - id: shared_ts_has_build_defined_columns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "shared.ts must contain buildDefinedColumnsAndQuery function"
+
+  - id: sqlite_ts_uses_new_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sqlite.ts must import and use buildDefinedColumnsAndQuery"
+
+  - id: postgres_ts_uses_new_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "postgres.ts must import and use buildDefinedColumnsAndQuery"
+
+  - id: mysql_ts_uses_new_function
+    type: fail_to_pass
+    origin: pr_diff
+    description: "mysql.ts must import and use buildDefinedColumnsAndQuery"
+
+  - id: build_defined_columns_logic_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "buildDefinedColumnsAndQuery must correctly filter undefined columns"
+
+  - id: error_message_for_empty_columns
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Must throw SyntaxError when all columns are undefined"
+
+  # Config file update tests (agentmd-edit specific)
+  - id: claude_md_has_object_equality_section
+    type: fail_to_pass
+    origin: agent_config
+    description: "test/CLAUDE.md must have nested/complex object equality section"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "156-180"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+
+  - id: claude_md_has_fixed_promise_with_resolvers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md Promise.withResolvers example must have type annotation"
+
+  # Pass-to-pass tests
+  - id: type_script_compiles
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript files must have valid syntax"
+
+# Rubric rules for LLM judge evaluation
+rubric:
+  - rule: "TypeScript code should use proper type annotations and avoid any implicit any types"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+    category: "type_safety"
+    verification: "llm_judge"
+
+  - rule: "Test documentation should use concrete examples with clear BAD/GOOD comparisons"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "1-50"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+    category: "documentation"
+    verification: "llm_judge"
+
+  - rule: "Prefer using toEqual for object equality instead of multiple toBe assertions"
+    source:
+      path: "test/CLAUDE.md"
+      lines: "156-180"
+      commit: "bf937f7294762d5e1a11a0d72f63fbeb00de9468"
+    category: "testing_style"
+    verification: "programmatic"
+    check_cmd: "grep -A 20 'Nested/complex object equality' /workspace/bun/test/CLAUDE.md | grep -q 'toEqual'"
+
+  - rule: "Functions that iterate over arrays should handle both single items and arrays uniformly"
+    source:
+      path: "src/js/internal/sql/shared.ts"
+      lines: "180-220"
+      commit: "bf937f7294762d5e1a11a0d72f63fbeb00de9468"
+    category: "code_quality"
+    verification: "programmatic"
+    check_cmd: "grep -q 'if (\\$isArray(items))' /workspace/bun/src/js/internal/sql/shared.ts"
+
+  - rule: "Error messages should be descriptive and actionable"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+    category: "error_handling"
+    verification: "programmatic"
+    check_cmd: "grep -q 'Insert needs to have at least one column with a defined value' /workspace/bun/src/js/internal/sql/shared.ts"
+
+# Distractor rules - conventions that might seem relevant but shouldn't be applied
+distractors:
+  - rule: "Always use single quotes for string literals in TypeScript"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-30"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+    collision_type: "rule_conflict"
+    why_distracting: "The PR uses double quotes for string literals in many places; enforcing single quotes would cause unnecessary churn"
+    severity: "low"
+
+  - rule: "Always use explicit return type annotations on all functions"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-30"
+      commit: "27ff6aaae0e925659c8f82ab6a4be17ec9c35a4a"
+    collision_type: "scope_ambiguity"
+    why_distracting: "Internal functions often rely on type inference; the PR only adds explicit types where necessary for the public API"
+    severity: "low"

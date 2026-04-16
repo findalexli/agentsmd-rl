@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (libs/npm/resolution/snapshot.rs), the function (snapshot_from_lockfile), the test name (test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps), the lockfile key format (@myorg/shared@1.0.0_zod@4.3.6), the link_package_ids comparison, and the expected dist: None / dist: Some(...) behavior. All test-asserted specifics are discoverable from the instruction."
+      "reason": "Instruction names the test function, file path (libs/npm/resolution/snapshot.rs), lockfile key format (@myorg/shared@1.0.0_zod@4.3.6), and dist: None/Some(...) assertions."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'Correctly identify linked packages by comparing against the parsed name and version fields (id.nv) rather than the raw serialized key that includes peer-dep suffixes.' This directly tells the agent the fix: use id.nv instead of the raw key. It also says 'link_package_ids.contains(key)' is the buggy pattern. This is essentially specifying what code to change and what to change it to."
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom (raw key includes suffix, lookup fails) but doesn't prescribe the exact fix like using PackageNv or &id.nv."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_no_raw_key_comparison_for_link_packages asserts 'link_package_ids.contains(key)' is not in the file, and test_dist_check_not_using_raw_key uses a regex for 'dist: if !<word>.contains(key)'. An alternative correct fix that strips the peer-dep suffix from the key before comparing (keeping link_package_ids as a set of strings but using a trimmed key) would need to remove both patterns to pass. However, a fix that renames the variable but still uses a string-based approach (e.g., extracting bas"
+      "outcome": "pass",
+      "reason": "Tests check for absence of buggy patterns and behavioral correctness; regex allows multiple valid fixes (&id.nv, key_base, etc.)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_no_raw_key_comparison_for_link_packages and test_dist_check_not_using_raw_key are pure text/regex searches on source code (assert 'link_package_ids.contains(key)' not in content, regex match on source). Only test_linked_peer_deps_unit_test_passes actually executes code. Two of three fail-to-pass tests are text-matching only, not behavioral."
+      "outcome": "pass",
+      "reason": "Tests execute cargo test, cargo check, clippy, and run the unit test that exercises snapshot_from_lockfile."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-matching tests (test_no_raw_key_comparison_for_link_packages, test_dist_check_not_using_raw_key) would fail on the original buggy code which contains 'link_package_ids.contains(key)'. The unit test (test_linked_peer_deps_unit_test_passes) requires actually implementing the fix and having the test pass with correct dist values. A stub wouldn't satisfy these."
+      "reason": "The unit test asserts dist: None for linked and dist: Some for non-linked; a stub wouldn't pass without implementing the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: fixing the comparison logic, adding a specific unit test, and ensuring linked packages get dist: None while non-linked get dist: Some. All of these are tested (text checks for the fix pattern, cargo test for the unit test, existing test suites for regression)."
+      "reason": "Required unit test name, dist assertions, and compilation are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test checks."
+      "reason": "Tests are grouped with section headers (Gates, Fail-to-pass, Pass-to-pass) and clearly named."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output (JSON/CSV/API/DB)."
+      "reason": "No structured data output task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact buggy pattern 'link_package_ids.contains(key)' and says to compare against 'id.nv' instead. It also names the specific function snapshot_from_lockfile. This goes beyond identifying the file/module and specifies the exact code pattern and its replacement."
+      "outcome": "pass",
+      "reason": "Points to the relevant file/function as localization guidance but doesn't name the exact buggy line."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

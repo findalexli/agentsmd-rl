@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), specific identifiers to remove (FILTER_FILENAME, FILTER_PATH, readTestFilter, subscribeFilterFile, testfilter.txt, debug property on TestFilter), specific identifiers to add (.boolean('debug'), .alias('d','debug'), inputMode, inputBuffer, key handlers for 'p','d','a', debugMode: boolean, initialPattern), and the CLAUDE.md file at compiler/CLAUDE.md with content requirements. All test assertions map"
+      "reason": "Instruction names all relevant files (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), the CLAUDE.md path, the required CLI flags (-p, -d, -u), keyboard keys (p, d, a), state names (inputMode/inputBuffer approximated via 'currently typing a pattern'/'accumulated pattern characters'), and parameters (debugMode, initialPattern)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: 'Register as .boolean(\"debug\") with short alias via .alias(\"d\", \"debug\")', 'RunnerState type should include inputMode and inputBuffer', 'Remove the subscribeFilterFile function entirely', etc. This specifies the exact implementation rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what to remove/add at a behavior level without giving exact line edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like .boolean('debug'), .alias('d','debug') syntax, exact field names 'inputMode' and 'inputBuffer' in RunnerState, exact regex patterns like /debugMode\\s*:\\s*boolean/ and /initialPattern\\s*\\??\\s*:\\s*string/. An alternative correct implementation using e.g. yargs .option('debug', {type:'boolean', alias:'d'}) syntax would fail the test_debug_cli_option test."
+      "reason": "Tests assert specific identifiers like 'inputMode', 'inputBuffer', 'debugMode: boolean', and 'initialPattern' via regex \u2014 alternative correct naming (e.g., 'isTypingPattern', 'patternBuffer', 'debug') would fail despite being behaviorally equivalent."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_filter_file_mechanism_removed, test_filter_option_removed, test_debug_cli_option, test_interactive_watch_mode, test_watch_runner_signature_updated, test_claudemd_documents_cli) are purely text-based: they read file contents and check for string inclusion or regex matches. While some pass-to-pass tests do compile/build/run tests, the core behavioral tests are all string-in-file checks."
+      "reason": "Most f2p tests are text/regex greps against source files (e.g., test_interactive_watch_mode, test_watch_runner_signature_updated, test_debug_cli_option) rather than executing the CLI; pass_to_pass tests do build/lint but behavior of the new flags is never run."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check both for removal of old code (e.g., FILTER_FILENAME must not exist) and addition of new code (e.g., .boolean('debug') must exist, inputMode/inputBuffer must exist). A stub or no-op implementation that leaves files unchanged would fail the removal checks, and an empty file would fail the addition checks. The TypeScript compilation test also prevents trivially broken code."
+      "reason": "Stubs cannot satisfy checks requiring specific token presence like '.alias(\"d\", \"debug\")' and key handlers for p/d/a."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: removal of filter file mechanism, removal of --filter option, addition of --debug/-d, interactive watch mode keys (p/d/a), updated makeWatchRunner signature, CLAUDE.md creation with required content. The -p/--pattern option is less explicitly tested but is covered indirectly through the broader compilation and build tests."
+      "reason": "Tests cover CLI flags, watch keyboard handling, removal of filter mechanism, and CLAUDE.md creation as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass/static vs Fail-to-pass/pr_diff), descriptive function names (test_filter_file_mechanism_removed, test_debug_cli_option, etc.), and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass code behavior, CLAUDE.md creation) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "No structured data output required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and identifiers in the instruction are consistent and correct throughout."
+      "reason": "Paths and commands appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact yargs API calls to use (.boolean('debug'), .alias('d', 'debug')), exact field names for RunnerState (inputMode, inputBuffer), exact function signatures (debugMode: boolean, initialPattern), and exact key.name checks. This goes beyond describing behavior to specifying implementation details."
+      "outcome": "pass",
+      "reason": "Instruction points to files to look at which is appropriate; no line-specific leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not an agentmd-edits/config-only task."
+      "reason": "Not an agentmd-config edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

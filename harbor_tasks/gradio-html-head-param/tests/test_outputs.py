@@ -143,7 +143,6 @@ else:
 
 
 
-
 def test_repo_ruff_format_components_dir():
     """Ruff format check passes on entire components directory (pass_to_pass)."""
     r = subprocess.run(
@@ -162,140 +161,141 @@ def test_repo_gradio_import():
     assert r.returncode == 0, f"Gradio import failed:\n{r.stderr[-500:]}"
     assert "OK" in r.stdout
 
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - code behavior
 # ---------------------------------------------------------------------------
 
 
 def test_head_param_in_init():
-    """HTML.__init__ must accept a head parameter before server_functions."""
-    r = _run_py(r"""
-import ast
-from pathlib import Path
+    """HTML.__init__ must accept a head parameter and work correctly."""
+    r = _run_py("""
+from gradio.components.html import HTML
 
-tree = ast.parse(Path("gradio/components/html.py").read_text())
-found = False
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "HTML":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                # Check both regular args and keyword-only args
-                regular_params = [arg.arg for arg in item.args.args]
-                kwonly_params = [arg.arg for arg in item.args.kwonlyargs]
-                all_params = regular_params + kwonly_params
-                assert "head" in all_params, (
-                    f"head not found in __init__ params: {all_params}"
-                )
-                # head must come before server_functions
-                if "server_functions" in all_params:
-                    head_idx = all_params.index("head")
-                    sf_idx = all_params.index("server_functions")
-                    assert head_idx < sf_idx, (
-                        "head param must come before server_functions"
-                    )
-                found = True
-                print("PASS")
-                break
-        if found:
-            break
-if not found:
-    raise AssertionError("Could not find HTML.__init__ with head param")
+# Test that head parameter is accepted
+html = HTML(value="<div>test</div>", head="<script src='test.js'></script>")
+print("PASS: head parameter accepted")
 """)
-    assert r.returncode == 0, f"head param check failed: {r.stderr}"
+    assert r.returncode == 0, f"head param not accepted: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_head_stored_as_attribute():
-    """HTML.__init__ must store head as self.head."""
-    r = _run_py(r"""
-import ast
-from pathlib import Path
+    """HTML instance must store head value and return it via attribute access."""
+    r = _run_py("""
+from gradio.components.html import HTML
 
-source = Path("gradio/components/html.py").read_text()
-tree = ast.parse(source)
+test_head = "<script src='test.js'></script>"
+html = HTML(value="<div>test</div>", head=test_head)
 
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "HTML":
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                # Check for self.head = head assignment
-                has_attr = False
-                for stmt in ast.walk(item):
-                    if (isinstance(stmt, ast.Assign)
-                        and len(stmt.targets) == 1
-                        and isinstance(stmt.targets[0], ast.Attribute)
-                        and stmt.targets[0].attr == "head"
-                        and isinstance(stmt.targets[0].value, ast.Name)
-                        and stmt.targets[0].value.id == "self"):
-                        has_attr = True
-                        break
-                assert has_attr, "self.head = head not found in __init__"
-                print("PASS")
-                break
-        else:
-            continue
-        break
+# Verify self.head attribute returns the value
+actual = html.head
+assert actual == test_head, f"Expected {test_head!r}, got {actual!r}"
+print("PASS: head attribute stored correctly")
 """)
-    assert r.returncode == 0, f"self.head check failed: {r.stderr}"
+    assert r.returncode == 0, f"self.head not accessible: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_publish_format_uses_self_head():
-    """_to_publish_format must use self.head as fallback for the head key."""
-    r = _run_py(r"""
-from pathlib import Path
+    """_to_publish_format must use self.head as fallback when head arg not provided."""
+    r = _run_py("""
+from gradio.components.html import HTML
 
-source = Path("gradio/components/html.py").read_text()
+test_head = "<script src='https://example.com/lib.js'></script>"
+html = HTML(value="<div>test</div>", head=test_head)
 
-# Find _to_publish_format method
-idx = source.find("def _to_publish_format(")
-assert idx != -1, "_to_publish_format method not found"
+# Call _to_publish_format WITHOUT passing head argument
+result = html._to_publish_format(name="test")
 
-# Get the method body (up to next def at same indent)
-method_start = idx
-after = source[idx:]
-end_idx = after.find("\ndef push_to_hub(")
-if end_idx == -1:
-    end_idx = len(after)
-method_source = after[:end_idx]
-
-# Must reference self.head (not just head parameter)
-assert "self.head" in method_source, (
-    "_to_publish_format must use self.head as fallback"
-)
-# The key pattern: "head": head or self.head or ""
-assert 'head or self.head' in method_source, (
-    '_to_publish_format must have "head or self.head" pattern'
-)
-print("PASS")
+# Verify the result contains self.head as the fallback
+actual_head = result.get("head")
+assert actual_head == test_head, f"Expected head={test_head!r}, got {actual_head!r}"
+print("PASS: _to_publish_format falls back to self.head")
 """)
-    assert r.returncode == 0, f"_to_publish_format check failed: {r.stderr}"
+    assert r.returncode == 0, f"_to_publish_format doesn't use self.head: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_publish_format_head_arg_takes_precedence():
+    """_to_publish_format must use head arg when provided, overriding self.head."""
+    r = _run_py("""
+from gradio.components.html import HTML
+
+instance_head = "<script src='instance.js'></script>"
+arg_head = "<script src='arg.js'></script>"
+html = HTML(value="<div>test</div>", head=instance_head)
+
+# Call _to_publish_format WITH head argument
+result = html._to_publish_format(name="test", head=arg_head)
+
+# Verify the head argument takes precedence
+actual_head = result.get("head")
+assert actual_head == arg_head, f"Expected head={arg_head!r}, got {actual_head!r}"
+print("PASS: head argument takes precedence over self.head")
+""")
+    assert r.returncode == 0, f"head arg doesn't take precedence: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_push_to_hub_uses_self_head():
-    """push_to_hub must pass self.head as fallback when head is not provided."""
-    r = _run_py(r"""
-from pathlib import Path
+    """push_to_hub must pass self.head as fallback to _to_publish_format."""
+    r = _run_py("""
+from gradio.components.html import HTML
+from unittest.mock import patch, MagicMock
 
-source = Path("gradio/components/html.py").read_text()
+test_head = "<script src='https://example.com/lib.js'></script>"
+html = HTML(value="<div>test</div>", head=test_head)
 
-idx = source.find("def push_to_hub(")
-assert idx != -1, "push_to_hub method not found"
+# Track what _to_publish_format is called with
+captured_args = {}
+original_to_publish_format = html._to_publish_format
 
-# Get method body
-after = source[idx:]
-method_source = after[:after.find("\n\ndef ", 1) if "\n\ndef " in after else len(after)]
+def tracking_to_publish_format(*args, **kwargs):
+    captured_args['args'] = args
+    captured_args['kwargs'] = kwargs
+    # Return minimal required data
+    return {
+        "id": "test-id",
+        "name": "test",
+        "head": kwargs.get('head', 'NOT_PASSED'),
+        "description": "",
+        "author": "",
+    }
 
-assert "self.head" in method_source, (
-    "push_to_hub must reference self.head"
-)
-assert "head or self.head" in method_source or "head=head or self.head" in method_source, (
-    "push_to_hub must use self.head as fallback for head parameter"
-)
-print("PASS")
+# Patch the method on the instance
+html._to_publish_format = tracking_to_publish_format
+
+# Mock huggingface_hub imports that are imported inside push_to_hub
+with patch.dict('sys.modules', {'huggingface_hub': MagicMock()}):
+    import sys
+    mock_hf = sys.modules['huggingface_hub']
+    mock_hf.CommitOperationAdd = MagicMock
+    mock_hf.HfApi = MagicMock
+    mock_hf.hf_hub_download = MagicMock(return_value=None)
+    
+    # Mock HfApi instance methods
+    mock_api = MagicMock()
+    mock_commit = MagicMock()
+    mock_commit.pr_url = "https://example.com/pr"
+    mock_api.create_commit.return_value = mock_commit
+    mock_hf.HfApi.return_value = mock_api
+    
+    # Also need to mock the open() call for reading manifest
+    from unittest.mock import mock_open
+    with patch('builtins.open', mock_open(read_data='[]')):
+        try:
+            html.push_to_hub(name="test")
+        except Exception as e:
+            # Some errors are expected with mocking, but we captured the call
+            pass
+
+# Verify _to_publish_format was called with head=self.head
+actual_head = captured_args.get('kwargs', {}).get('head')
+assert actual_head == test_head, f"Expected head={test_head!r}, got {actual_head!r}"
+print("PASS: push_to_hub passes self.head to _to_publish_format")
 """)
-    assert r.returncode == 0, f"push_to_hub check failed: {r.stderr}"
+    assert r.returncode == 0, f"push_to_hub doesn't use self.head: {r.stderr}"
     assert "PASS" in r.stdout
 
 
@@ -317,11 +317,10 @@ def test_skill_md_html_signature_has_head():
     sig_line = content[html_start:sig_end + 1]
 
     assert "head" in sig_line, "head parameter not in HTML signature in SKILL.md"
-    assert "head: str | None = None" in sig_line, (
-        "head must have type str | None = None in SKILL.md signature"
-    )
+    # Check that head appears with reasonable type annotation
+    assert "head:" in sig_line, "head must have type annotation in SKILL.md signature"
     # head must appear before server_functions in the signature
-    head_pos = sig_line.find("head: str | None = None")
+    head_pos = sig_line.find("head:")
     sf_pos = sig_line.find("server_functions")
     assert head_pos < sf_pos, (
         "head parameter must come before server_functions in SKILL.md signature"
@@ -335,8 +334,8 @@ def test_guide_documents_head_parameter():
     )
     lower = content.lower()
     # Must have a section about head
-    assert "## loading third-party scripts" in lower or "head" in lower, (
-        "Guide must have a section about the head parameter"
+    assert "## loading third-party scripts" in lower or "## loading third-party scripts with head" in lower, (
+        "Guide must have a section about the head parameter titled 'Loading Third-Party Scripts'"
     )
     # Must mention third-party libraries
     assert "third-party" in lower or "third party" in lower, (

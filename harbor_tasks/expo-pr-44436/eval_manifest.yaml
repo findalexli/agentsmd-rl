@@ -1,0 +1,68 @@
+# eval_manifest.yaml for expo/expo#44436
+
+version: 1
+
+task:
+  repo: expo/expo
+  pr_number: 44436
+  base_commit: 68af44553b6f53b6329c59a42dc586b1d83bf2d6
+  merge_commit: 5ec643cbbc4887a7008be9831a8ecec15620c80e
+  title: "[auto-linking] Fix uuid collision and stale pods cache for precompiled"
+  changes:
+    - file: packages/expo-modules-autolinking/scripts/ios/cocoapods/installer.rb
+      description: Added collision-safe UUID generation after predictabilize_uuids
+    - file: packages/expo-modules-autolinking/scripts/ios/precompiled_modules.rb
+      description: Extended clear_cocoapods_cache to also clear Local Podspecs and pod directories
+
+checks:
+  - id: test_installer_defines_uuid_singleton_method
+    type: fail_to_pass
+    description: installer.rb defines generate_available_uuid_list singleton method with collision-safe random UUIDs
+    timeout: 60
+
+  - id: test_installer_uuid_no_collision_with_existing
+    type: fail_to_pass
+    description: generate_available_uuid_list checks against existing project UUIDs to avoid collisions
+    timeout: 60
+
+  - id: test_precompiled_clears_local_podspecs
+    type: fail_to_pass
+    description: clear_cocoapods_cache removes .podspec.json from Local Podspecs so specs are re-fetched and patched
+    timeout: 60
+
+  - id: test_precompiled_clears_pod_dir_without_xcframework
+    type: fail_to_pass
+    description: clear_cocoapods_cache removes stale pod directories lacking xcframework Info.plist
+    timeout: 60
+
+  - id: test_installer_ruby_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: installer.rb has valid Ruby syntax
+    timeout: 30
+
+  - id: test_precompiled_modules_ruby_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: precompiled_modules.rb has valid Ruby syntax
+    timeout: 30
+
+  - id: test_all_ruby_files_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Ruby files in expo-modules-autolinking/scripts/ pass ruby -c syntax check
+    timeout: 60
+
+  - id: test_precompiled_modules_loads_without_cocoapods
+    type: pass_to_pass
+    origin: repo_tests
+    description: precompiled_modules.rb loads in isolation without the CocoaPods gem
+    timeout: 30
+
+  - id: test_installer_syntax_check
+    type: pass_to_pass
+    origin: static
+    description: installer.rb contains Pod module and Installer class structure
+    timeout: 30
+
+rubric: []

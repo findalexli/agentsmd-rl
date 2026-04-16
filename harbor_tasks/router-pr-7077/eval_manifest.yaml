@@ -1,0 +1,95 @@
+source:
+  type: github_pr
+  repo: TanStack/router
+  pr_number: 7077
+  merge_commit: 796406da66cfb12b518bb3ca326c9d541368fb06
+  base_commit: d1174179082d896a9674532994a4d6b38238c37e
+  title: "fix: preserve render-thrown notFound errors"
+
+checks:
+  # React router fail-to-pass tests
+  - id: test_react_match_preserves_routeid_on_notfound_error
+    type: fail_to_pass
+    origin: behavioral
+    description: React Match component assigns routeId to notFound errors in onCatch handler
+
+  - id: test_react_notfound_error_handling_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: React Match component has proper notFound error handling (not simple rethrow)
+
+  # Solid router fail-to-pass tests
+  - id: test_solid_has_getnotfound_helper
+    type: fail_to_pass
+    origin: behavioral
+    description: Solid router exports getNotFound helper to unwrap Solid's error wrapping
+
+  - id: test_solid_match_uses_getnotfound
+    type: fail_to_pass
+    origin: behavioral
+    description: Solid Match component uses getNotFound for proper error unwrapping
+
+  # Vue router fail-to-pass tests
+  - id: test_vue_match_preserves_routeid_on_notfound_error
+    type: fail_to_pass
+    origin: behavioral
+    description: Vue Match component assigns routeId to notFound errors
+
+  - id: test_vue_notfound_error_handling_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: Vue Match component has proper notFound error handling (not simple rethrow)
+
+  # Pass-to-pass tests from repo CI
+  - id: test_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation passes for react-router package
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for react-router package
+
+  - id: test_react_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: React router unit tests pass
+
+  # Pass-to-pass tests for solid-router (touched by the fix)
+  - id: test_solid_router_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for solid-router package
+
+  - id: test_solid_router_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation passes for solid-router package
+
+  - id: test_solid_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid router unit tests pass
+
+  # Pass-to-pass tests for vue-router (touched by the fix)
+  - id: test_vue_router_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for vue-router package
+
+  - id: test_vue_router_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation passes for vue-router package
+
+  - id: test_vue_router_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vue router unit tests pass
+
+rubric:
+  - id: code_only_fix
+    description: "This is a code-only bug fix - no documentation or config file changes required. The fix modifies Match.tsx and not-found.tsx across React, Solid, and Vue packages to preserve routeId on notFound errors."
+    reference: "N/A - pure code fix, no documentation edits expected. Agent correctly made no config file changes."
+    weight: 1

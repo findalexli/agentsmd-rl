@@ -1,0 +1,107 @@
+# eval_manifest.yaml for openai/openai-agents-js#1075
+# Task: Fold unreleased RunState schema changes into 1.8
+
+task_name: openai-agents-js-fold-runstate-schema
+
+source:
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 1075
+  base_commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+  merge_commit: 94c18cd9b7d45e9b61c9e11e86d81c5471612463
+  title: "fix(agents-core): fold unreleased RunState schema changes into 1.8"
+
+description: |
+  This PR consolidates the unreleased RunState schema changes (originally planned
+  for versions 1.8 and 1.9) into a single schema version 1.8. The current schema
+  version should be '1.8' and '1.9' should not be a separate supported version.
+
+checks:
+  # Fail-to-pass tests (behavior that changes with the fix)
+  - id: test_current_schema_version_is_1_8
+    type: fail_to_pass
+    origin: code
+    description: CURRENT_SCHEMA_VERSION is '1.8'
+    test_name: test_current_schema_version_is_1_8
+
+  - id: test_assert_function_rejects_1_9
+    type: fail_to_pass
+    origin: code
+    description: assertSchemaVersionSupportsToolSearch rejects schema version '1.9'
+    test_name: test_assert_function_rejects_1_9
+
+  # Pass-to-pass tests (repo CI that should work on both commits)
+  - id: test_agents_core_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: agents-core package builds successfully
+    test_name: test_agents_core_builds
+
+  - id: test_agents_core_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: agents-core passes build-check type validation
+    test_name: test_agents_core_build_check
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo linter passes
+    test_name: test_repo_lint
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full monorepo build succeeds
+    test_name: test_repo_build
+
+  - id: test_dist_declaration_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: All packages pass dist:check (declaration file validation)
+    test_name: test_dist_declaration_files
+
+# Agent config rules that apply to this task
+agent_config:
+  - file: AGENTS.md
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    rules:
+      # Soft rule about when to bump schema version
+      - id: runstate-schema-bump
+        description: "If serialized RunState shape changes in a released or otherwise supported snapshot format, bump the schema version and update serialization/deserialization."
+        type: rubric
+      # Soft rule about unreleased changes
+      - id: unreleased-post-tag-rewrite
+        description: "Unreleased post-tag RunState changes on main may fold into the same next schema version when no supported snapshot consumer exists yet."
+        type: rubric
+      # Soft rule about implementation strategy
+      - id: implementation-strategy-usage
+        description: "Before changing runtime code, exported APIs, external configuration, persisted schemas, wire protocols, or other user-facing behavior, use $implementation-strategy to decide the compatibility boundary and implementation shape."
+        type: rubric
+      # Soft rule about direct rewrite
+      - id: direct-rewrite-unreleased
+        description: "Interfaces introduced or changed after the latest release tag may be rewritten without compatibility shims unless they already have a released or otherwise supported durable-state consumer."
+        type: rubric
+
+  - file: .agents/skills/implementation-strategy/SKILL.md
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    rules:
+      - id: compatibility-layer-threshold
+        description: "Add a compatibility layer only when there is a concrete released consumer, an otherwise supported durable external state that requires it, or when the user explicitly asks for a migration path."
+        type: rubric
+      - id: compatibility-boundary-stop
+        description: "The change would modify durable external data or protocol formats that are already released or otherwise supported."
+        type: rubric
+      - id: post-tag-interface-rewrite
+        description: "Interface changes present on main but added after the latest release tag: not a semver breaking change by themselves. Rewrite them directly unless they already back a released or otherwise supported durable format."
+        type: rubric
+
+rubric:
+  # Rule 1 (code: CURRENT_SCHEMA_VERSION=1.8, assertion rejects 1.9) is already validated by fail_to_pass tests.
+  # Rule 2 (changeset file created) is confirmed by the extracted .changeset directory.
+  # Rule 3: The agent config skill was correctly followed — judge evaluates SKILL.md changes.
+  - rule: "The agent followed the implementation strategy guidance: used $implementation-strategy skill, recognized this as unreleased post-tag interface that can be rewritten directly without a compatibility layer."
+    source:
+      path: .agents/skills/implementation-strategy/SKILL.md
+    reference: "Add a compatibility layer only when there is a concrete released consumer, an otherwise supported durable external state that requires it, or when the user explicitly asks for a migration path."
+    weight: 1

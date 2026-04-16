@@ -64,7 +64,37 @@ checks:
     path: AGENTS.md
     lines: '91'
     commit: f23c455ca2f762f0067ed0bfc810209ee3ab8323
-rubric: []
+rubric:
+- rule: Use `import type` for type-only imports
+  source:
+    path: AGENTS.md
+    lines: 91-91
+  source_text: '- Use `import type { X }` for type-only imports (`@typescript-eslint/consistent-type-imports`)'
+  evidence: The gold diff explicitly adds `import type { ExpectStatic } from "vitest";`
+    instead of importing it as a value.
+  category: imports
+  verification: llm_judge
+- rule: Never import expect from vitest; use test context instead
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: 49-49
+  source_text: '- Never import `expect` from vitest — use test context `({ expect
+    }) => {}`'
+  evidence: 'The gold diff removes `import { expect } from "vitest";` from the test
+    files and helpers, updating functions to accept `expect: ExpectStatic` as an argument
+    from the test context (e.g. `runC3ForFrameworkTest(expect, ...)`).'
+  category: testing
+  verification: llm_judge
+- rule: expect must come from test context
+  source:
+    path: packages/vitest-pool-workers/AGENTS.md
+    lines: 50-50
+  source_text: '- `expect` must come from test context: `it("name", ({ expect }) =>
+    {})` — never `import { expect } from "vitest"`'
+  evidence: The gold diff removes `import { expect } from "vitest";` and refactors
+    test execution to pass the contextual `expect` object down to helper functions.
+  category: testing
+  verification: llm_judge
 distractors:
 - rule: Shared lint config in `packages/lint-config-shared/`
   collision_type: architecture_boundary
@@ -84,6 +114,30 @@ distractors:
   source:
     path: packages/create-cloudflare/AGENTS.md
     lines: 18-18
+- rule: consistent-type-imports temporarily DISABLED
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: 26-27
+  source_text: '- Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`,
+    `consistent-type-imports`, `no-shadow`, `no-floating-promises`, others
+
+    - Comment in config: "temporarily enabled while we transition Miniflare to use
+    the standard workers-sdk eslint config"'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see that `consistent-type-imports` is disabled and
+    wrongly assume it doesn't need to use `import type { ExpectStatic }` in the `create-cloudflare`
+    package. However, this exception only applies to the `miniflare` package.
+  severity: medium
+- rule: Test files use .spec.ts (NOT .test.ts)
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: 39-39
+  source_text: '- Test files use `.spec.ts` (NOT `.test.ts`)'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies files in `create-cloudflare` which actually uses
+    `.test.ts` (e.g. `frameworks.test.ts`). An agent might see this miniflare rule
+    and incorrectly rename or expect test files to be named `.spec.ts`.
+  severity: low
 hierarchy_analysis: The hierarchy is relatively flat for this task. The root AGENTS.md
   provides monorepo context (shared lint config), while the package-specific AGENTS.md
   provides local context. The agent must respect the architecture boundary by not

@@ -1,0 +1,68 @@
+source_pr:
+  owner: excalidraw
+  repo: excalidraw
+  pr_number: 10727
+  title: "fix(editor): crop editor cursor drift"
+  merge_commit: d29fd62e417b8cb73d1d5dc3e207735046401491
+  base_commit: b57f3e009694acaa73e83ab9bab9a1470dd52ab3
+
+checks:
+  # Fail-to-pass tests - these should fail on base commit and pass after fix
+  - id: test_vectorScale_import_removed
+    type: fail_to_pass
+    origin: code_change
+    description: "vectorScale import should be removed from imports"
+
+  - id: test_getUncroppedWidthAndHeight_import_added
+    type: fail_to_pass
+    origin: code_change
+    description: "getUncroppedWidthAndHeight import should be added"
+
+  - id: test_natural_width_scaling_used
+    type: fail_to_pass
+    origin: code_change
+    description: "Drag offset should use naturalWidth/uncroppedSize.width ratio"
+
+  - id: test_uncropped_size_variable_created
+    type: fail_to_pass
+    origin: code_change
+    description: "uncroppedSize variable should be created using getUncroppedWidthAndHeight"
+
+  - id: test_zoom_scaling_removed
+    type: fail_to_pass
+    origin: code_change
+    description: "Old zoom-based scaling (Math.max(this.state.zoom.value, 2)) should be removed"
+
+  - id: test_vector_function_used_directly
+    type: fail_to_pass
+    origin: code_change
+    description: "vector() should be called directly instead of vectorScale()"
+
+  # Pass-to-pass tests - these should pass on both base and fixed versions
+  - id: test_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript compilation should pass"
+
+  - id: test_linting_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint should pass on the modified file"
+
+  - id: test_crop_element_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crop element unit tests should pass"
+
+  - id: test_image_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Image insertion tests should pass"
+
+  - id: test_element_package_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All element package tests should pass"
+
+# Rubric for subjective/agent config rules (empty - no agent configs found for this repo at base commit)
+rubric: []

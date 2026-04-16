@@ -1,0 +1,93 @@
+# Evaluation manifest for airflow-helm-worker-affinity benchmark task
+
+source:
+  repo: apache/airflow
+  pr_number: 64860
+  pr_url: https://github.com/apache/airflow/pull/64860
+  base_commit: bc26d6b135d9a2b6b60e6b3208328adab88b03c4
+  merge_commit: c35d1d77fa2b1725a0e7ed7d33b9b0ea0f2313a8
+
+checks:
+  # Fail-to-pass tests: behavior that should work after the fix
+  - id: test_kubernetes_affinity_precedence_node_affinity
+    type: fail_to_pass
+    origin: pr_behavior
+    description: workers.kubernetes.affinity takes precedence over workers.affinity for pod-template-file with nodeAffinity
+
+  - id: test_kubernetes_affinity_precedence_pod_anti_affinity
+    type: fail_to_pass
+    origin: pr_behavior
+    description: workers.kubernetes.affinity takes precedence over workers.affinity for pod-template-file with podAntiAffinity
+
+  - id: test_deprecation_warning_in_notes
+    type: fail_to_pass
+    origin: pr_behavior
+    description: NOTES.txt template includes deprecation warning for workers.affinity
+
+  - id: test_schema_has_kubernetes_affinity
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.schema.json includes workers.kubernetes.affinity property
+
+  - id: test_schema_has_celery_affinity
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.schema.json includes workers.celery.affinity property
+
+  # Pass-to-pass tests: behavior that should work before and after
+  - id: test_helm_template_default_values
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template renders with default values
+
+  - id: test_helm_template_with_kubernetes_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template renders configmap with pod_template_file.yaml for KubernetesExecutor
+
+  - id: test_helm_template_with_celery_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template renders worker deployment for CeleryExecutor
+
+  - id: test_workers_affinity_still_works_alone
+    type: pass_to_pass
+    origin: repo_tests
+    description: workers.affinity still works for backward compatibility when used alone
+
+  - id: test_celery_workers_affinity_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: workers.affinity works for Celery workers
+
+  - id: test_repo_helm_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's helm lint passes on the chart
+
+  - id: test_repo_chart_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's chart_schema.py CI script passes
+
+  - id: test_repo_values_schema_valid_json
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's values.schema.json is valid JSON schema
+
+rubric:
+  # Note: This is a helm chart task. Rubric rules are minimal since functional
+  # correctness is verified by the test suite. This rule checks task documentation.
+  - id: has_readme
+    rule: Task has README documenting helm chart conventions followed
+    description: README documents deprecation warnings, schema updates, and conventions
+    origin: task_specific
+    source:
+      path: README.md
+    reference: |
+      # Airflow Helm Worker Affinity Task
+      Conventions Followed
+      1. Deprecation warning in NOTES.txt
+      2. Schema update: workers.kubernetes.affinity and workers.celery.affinity
+      3. Values.yaml deprecation comments
+      4. Newsfragment for changelog

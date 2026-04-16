@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (ColumnDefinition41.zig, PreparedStatement.zig, MySQLStatement.zig, MySQLConnection.zig), function names (deinit, decodeInternal, checkForDuplicateFields), field names (name_or_index, catalog, schema, table, org_table, name, org_name, params), struct names (Execute, ColumnDefinition41), and behavioral requirements (zero-initialization after alloc, freeing before reassignment) are explicitly described in instruction.md."
+      "reason": "All test-asserted file paths (ColumnDefinition41.zig, PreparedStatement.zig, MySQLStatement.zig, MySQLConnection.zig), function names (deinit, decodeInternal, checkForDuplicateFields), field names (name_or_index, catalog, schema, table, org_table, name, org_name, params), and struct names (Execute, ColumnDefinition41) are explicitly mentioned in instruction.md's 'Relevant Files' and 'Required Behavior' sections."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md section 'Required Behavior' effectively tells the agent exactly what to change: e.g., 'when decodeInternal() assigns a new value to name_or_index, any previously owned memory must be freed first', 'The params slice array itself must be freed', 'when a column's name_or_index field is overwritten, any previously owned memory must be freed before the assignment', 'must be properly initialized before use'. These are not just descriptions of what's broken \u2014 they are precise prescriptio"
+      "reason": "instruction.md essentially describes the exact fix for each file: e.g., 'deinit() method must release all owned heap memory for these fields' including 'name_or_index', 'no cleanup occurs before reassignment' in decodeInternal, 'the params slice array itself is never freed after the loop completes', 'name_or_index field is overwritten with .duplicate without first releasing the memory', and 'not initialized before use'. These are precise descriptions of what code to add, not just symptoms."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific patterns like 'bun.default_allocator.free(this.params)' (test_execute_deinit_frees_params_slice), 'field.name_or_index.deinit()' before '.duplicate' (test_checkduplicate_frees_before_overwrite), and exact zero-init syntax 'for(statement.columns)|*col| col.* = .{}' (test_columns_zero_initialized_after_alloc). Alternative correct fixes \u2014 e.g., using a different allocator wrapper, freeing in a helper function, or using @memset for zero-init \u2014 would fail these regex-based "
+      "reason": "Tests use regex to check for specific patterns like 'this.name_or_index.deinit()' or 'this.<field>.deinit()' in specific function bodies. An alternative correct fix that, say, used a helper function to batch-free fields, or used a different cleanup pattern (e.g., calling a separate cleanup utility), would fail these pattern-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads source files and does regex pattern matching on the text content (e.g., searching for 'this.name_or_index.deinit()', 'bun.default_allocator.free(this.params)'). No test compiles the code, runs it, or inspects actual runtime behavior. This is purely textual/syntactic checking."
+      "reason": "Every test reads source files and uses regex to check for the presence of specific text patterns (e.g., 'name_or_index\\.\\s*deinit', 'this\\.catalog\\.\\s*(?:deinit|free)'). No test compiles the code, runs it, or checks actual memory behavior. These are purely textual/syntactic checks."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that do not exist in the original codebase (e.g., name_or_index.deinit() in the deinit function, free(this.params) in Execute.deinit, zero-initialization loops). A stub or no-op would not contain these patterns, so the tests would fail."
+      "outcome": "fail",
+      "reason": "A stub that simply adds the specific text patterns the tests look for (e.g., adding 'this.name_or_index.deinit()' as dead code) would pass without actually fixing the memory leak. The tests only check text presence, not behavioral correctness."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md (ColumnDefinition41 deinit freeing all fields, decodeInternal freeing before reassign, Execute.deinit freeing params slice, zero-initialization after alloc, checkForDuplicateFields freeing before overwrite) are tested."
+      "outcome": "fail",
+      "reason": "instruction.md requires 'After 5,000 queries on a 50-column table, RSS should remain stable instead of growing by ~17 MB' and 'All heap allocations should have corresponding deallocation during cleanup.' No test verifies actual RSS stability or memory behavior \u2014 only source code text patterns are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_coldef_deinit_frees_name_or_index, test_execute_deinit_frees_params_slice, etc.), grouped into gates and fail-to-pass sections with comments, and each has a docstring."
+      "reason": "Tests are well-named (test_coldef_deinit_frees_name_or_index, test_execute_deinit_frees_params_slice, etc.), grouped with comments into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) - core behavioral tests', and each has a docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is about fixing memory leaks in Zig code; no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "This task involves fixing memory leaks in Zig source code; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, field names, and variable names in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths, function names, field names, and variable names in instruction.md all match those in the actual codebase and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files, exact functions (deinit, decodeInternal, checkForDuplicateFields), exact fields (name_or_index, params), and exact fix actions (free before reassignment, free the params slice, zero-initialize after alloc). This goes well beyond identifying what's broken and essentially specifies the patch."
+      "reason": "instruction.md names exact files AND exact functions AND exact fields AND exact bugs: e.g., 'In decodeInternal(), when assigning a new value to name_or_index, the previously owned memory is leaked because no cleanup occurs before reassignment.' This tells the agent precisely what line-level change to make."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -49,12 +49,14 @@
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

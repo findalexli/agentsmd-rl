@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "instruction.md names the specific files (fixtures.rs, the snapshot file), the function (ensure_unchanged_ast), the data structure (HashMap), and the sorting requirement. All test-asserted paths and function names are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_sort_applied_to_errors checks for '.sort' in the function body, test_hashmap_iteration_order_addressed checks for specific patterns like 'formatted_unsupported_syntax_errors.values().map' and 'diagnostics.sort', test_no_panic_unwrap_in_sorting_section checks for absence of panic!/unwrap between .retain() and SourceFileBuilder::new, and test_no_local_imports_in_modified_function checks for no 'use' statements. Thes"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (non-deterministic HashMap iteration order) and the expected behavior (sorted by source location), but does not specify exact code changes like 'add .sort_by_key' or 'change .values() to .iter()'. A developer must reason about the implementation."
+      "reason": "instruction.md describes the problem (HashMap non-deterministic iteration causing unsorted diagnostics) and the expected behavior (sorted by source location) but does not specify the exact fix like 'add .sort_by_key(|error| (error.range().start(), error.range().end()))' or 'change .values() to .iter()'. The developer must still reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_hashmap_iteration_order_addressed checks for the specific pattern 'formatted_unsupported_syntax_errors\\s*\\.\\s*values\\s*\\(\\s*\\)\\s*\\.\\s*map' and if found, requires 'diagnostics\\s*\\.\\s*sort'. An alternative correct fix that collects HashMap values into a BTreeMap, or uses .into_values() instead of .values(), or sorts with a different variable name, would not match these specific regex patterns and could fail. test_sort_applied_to_errors requires '.sort' somewhere in the function, which is reas"
+      "reason": "test_hashmap_iteration_order_addressed specifically checks for the pattern 'formatted_unsupported_syntax_errors.values().map' and requires 'diagnostics.sort' if that pattern is present. An alternative correct fix like converting the HashMap to a BTreeMap (sorted map) would not have a .sort call and would fail test_sort_applied_to_errors. Another alternative that collects and sorts but uses a different variable name than 'diagnostics' would fail the regex check."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are predominantly text-matching: test_sort_applied_to_errors does `re.search(r'\\.sort', func_body)` on source text, test_hashmap_iteration_order_addressed does regex matching on source text, and test_snapshot_errors_sorted_by_location parses a snapshot file's text. However, test_repo_formatter_tests actually runs `cargo test`, which executes the code. The fail-to-pass tests (the ones that distinguish fixed from unfixed) are all text inspection, not behavioral execution."
+      "reason": "test_sort_applied_to_errors and test_hashmap_iteration_order_addressed are purely text-matching tests (regex on source code). test_snapshot_errors_sorted_by_location parses a snapshot file for text patterns. While test_repo_formatter_tests does execute `cargo test`, the fail-to-pass tests are all text inspection without executing the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass: test_sort_applied_to_errors requires '.sort' in the function body (not present in base), test_snapshot_errors_sorted_by_location requires errors sorted by line number (not true in base commit's snapshot), and test_repo_formatter_tests requires cargo test to pass (which regenerates snapshots)."
+      "reason": "The fail-to-pass tests cannot be satisfied by a stub: test_snapshot_errors_sorted_by_location requires specific sorted line numbers in a real snapshot file, test_sort_applied_to_errors requires '.sort' in the function body, and test_hashmap_iteration_order_addressed requires addressing HashMap iteration order. The base commit fails these tests, and actual code changes are needed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires sorted diagnostic output in snapshots and a fix to the HashMap iteration issue in ensure_unchanged_ast. Both behaviors are tested: snapshot ordering (test_snapshot_errors_sorted_by_location), sorting in code (test_sort_applied_to_errors, test_hashmap_iteration_order_addressed), and repo tests passing (test_repo_formatter_tests)."
+      "reason": "instruction.md requires errors sorted by source location (line number, then column) and stable snapshot output. The tests check for sorted order in snapshots (test_snapshot_errors_sorted_by_location), sorting logic in code (test_sort_applied_to_errors), and HashMap iteration addressed (test_hashmap_iteration_order_addressed). All described behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config), descriptive function names, and detailed docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized into three labeled sections (fail_to_pass/pr_diff, pass_to_pass/repo_tests, pass_to_pass/agent_config) with descriptive names and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves sorting diagnostics in snapshot test output, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "All file paths, function names, and identifiers in instruction.md and tests match correctly (e.g., fixtures.rs, ensure_unchanged_ast, format@expression__nested_string_quote_style.py.snap)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact function (ensure_unchanged_ast), the exact file (fixtures.rs), the specific data structure (HashMap of unsupported syntax errors), and even the specific snapshot file. It also explains the root cause (HashMap iteration order). While the function and file are reasonable to mention, specifying that 'formatted_unsupported_syntax_errors' uses HashMap iteration via .values().map() is detailed enough to be hint leakage about localization."
+      "reason": "instruction.md explicitly names the exact function ('ensure_unchanged_ast function in crates/ruff_python_formatter/tests/fixtures.rs') and mentions it 'iterates over a HashMap of unsupported syntax errors', which directly hints at the fix (sort after HashMap iteration). It also names the specific snapshot file to update. This goes beyond describing what's broken and into localizing the exact fix location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "This is a code-only task involving Rust source files and snapshot files, not agent configuration edits."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
@@ -54,6 +55,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 5,
+  "fail_count": 4
 }

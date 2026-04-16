@@ -1,57 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (types.ts, UsageExportHeader.tsx, UsageViewSelect.tsx, AGENTS.md, CLAUDE.md), the EntityType type including 'user', the filterMode concept, and the documentation updates. The test assertions check for 'user' in EntityType, 'user' in UsageViewSelect, 'filterMode' in UsageExportHeader, 'contract' and 'single'/'array' in AGENTS.md, and 'ui'/'backend'/'consistency' in CLAUDE.md \u2014 all discoverable from the instruction."
+      "reason": "instruction.md names all relevant files (types.ts, UsageExportHeader.tsx, EntityUsage.tsx, UsageViewSelect.tsx, AGENTS.md, CLAUDE.md), the 'user' entity type, 'User Usage' label, userDailyActivityCall endpoint, and the documentation concepts tested."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to happen (add user entity type, support single-select mode, update docs) but does not specify exact code changes like specific line numbers, variable assignments, or implementation details. A developer must still reason about how to implement filterMode, wire it to the Select component, etc."
+      "reason": "Instruction describes what should work (add user option, support single/multi modes) without specifying prop names like 'filterMode' or exact implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_export_header_supports_filter_mode checks for the exact string 'mode={filterMode' \u2014 this forces the prop to be named exactly 'filterMode' and wired with exactly that JSX pattern. An alternative correct implementation using e.g. 'selectMode' or 'isSingleSelect' as the prop name, or wiring it differently like 'mode={isSingleSelect ? undefined : \"multiple\"}', would fail this test despite being functionally correct."
+      "reason": "test_export_header_supports_single_select_mode asserts on specific prop name 'filterMode' with literal values 'multiple'/'single' and specific patterns like 'selectedFilters[0]' \u2014 an alternative correct implementation using e.g. 'mode' prop or different value extraction would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_entity_type_includes_user, test_usage_view_select_has_user_option, test_export_header_supports_filter_mode, test_agents_md_documents_contract_mismatch, test_claude_md_adds_ui_backend_consistency) all use string/regex matching on file contents rather than importing, compiling, or executing the code. They are purely textual checks \u2014 e.g., checking 'content.includes(\"filterMode\")' rather than actually rendering the component."
+      "outcome": "pass",
+      "reason": "Tests use TypeScript compilation via tsc, run Vitest suites via npm, and parse/evaluate code, not just grep file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific additions that don't exist in the base commit: 'user' in EntityType, 'user' in UsageViewSelect, 'filterMode' in UsageExportHeader, 'contract' in AGENTS.md, 'ui'+'backend'+'consistency' in CLAUDE.md. A stub or no-op implementation would not add these strings to the source files, so these tests cannot be trivially satisfied."
+      "reason": "Tests require actual type union changes, runtime option values, conditional mode handling, and passing Vitest suites \u2014 a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) 'user' in EntityType \u2014 tested, (2) 'user' in view selector \u2014 tested, (3) single/multi-select support via filterMode \u2014 tested, (4) AGENTS.md contract mismatch pitfall \u2014 tested, (5) CLAUDE.md UI/backend consistency \u2014 tested. All explicitly required behaviors are covered."
+      "reason": "Tests cover EntityType union, UsageViewSelect option, single-select support, EntityUsage user handling, and AGENTS.md/CLAUDE.md documentation updates as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_entity_type_includes_user, test_export_header_supports_filter_mode, etc.), docstrings explaining what each tests, and clear comments separating 'fail_to_pass' and 'pass_to_pass' sections."
+      "reason": "Tests are grouped under '# --- Code behavior tests ---', '# --- Config/documentation update tests ---', '# --- Pass-to-pass tests ---' comment sections with descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component changes and documentation updates, not structured data output like JSON/CSV/API schemas."
+      "reason": "Task is UI/documentation changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, component names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths and names match between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction lists files to look at (which is appropriate for a feature task) but doesn't specify exact line numbers or exact code to write. The file list is domain-appropriate since the task requires coordinated changes across multiple components."
+      "reason": "Instruction identifies component files to look at without specifying exact lines or the exact buggy statements."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch for AGENTS.md and CLAUDE.md adds only a few localized lines (2 lines in AGENTS.md pitfalls section, 4 lines in CLAUDE.md) without rewriting entire files, and the additions are consistent with the instruction's requirements."
+      "reason": "Gold patch to AGENTS.md and CLAUDE.md adds small localized sections (2 new items, one new section) rather than rewriting the files."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 1
 }

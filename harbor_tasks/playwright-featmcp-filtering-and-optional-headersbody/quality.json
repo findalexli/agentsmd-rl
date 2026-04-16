@@ -1,56 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the files (network.ts, commands.ts, .github/copilot-instructions.md), the parameter names (filter, requestHeaders, requestBody, static replacing includeStatic), the CLI flag names (--filter, --request-headers, --request-body), the function renderRequest(), and the output format ('Request headers:', 'Request body:' sections). All assert'd specifics in tests are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests are hidden (empty in the prompt), but the instruction doesn't specify exact literal strings like 'Request headers:' formatting details, indentation, or the exact content of .github/copilot-instructions.md that tests might assert on."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior to add (filtering, headers, body display, rename) and where to look, but does not specify exact code changes, line numbers, or implementation details like 'use new RegExp()' or 'use .test()'."
+      "reason": "Instruction describes what should change (add filter, requestHeaders, requestBody; rename includeStatic to static) without dictating implementation details."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_filter_regex_applied asserts specific implementation details: 'params.filter' reference, 'new RegExp(' construction, and '.test(' call via regex on source text. An alternative correct implementation using e.g. String.match(), String.search(), or a different variable name for the filter param access would fail these checks. test_render_request_headers_and_body strips TypeScript annotations with hardcoded regexes and requires the function signature to match specific patterns, constraining imp"
+      "outcome": "pass",
+      "reason": "Without seeing tests, the described behavior (param names, CLI flags, section labels) is the public contract; multiple implementations could satisfy it."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "test_render_request_headers_and_body actually extracts, transpiles, and executes the renderRequest function with a mock object, checking behavioral output. test_repo_build and test_repo_lint_packages run actual build/lint commands. However, test_filter_regex_applied, test_schema_has_new_params, test_static_replaces_include_static, and test_cli_new_options are purely text-based regex checks. Since at least some tests do execute code behaviorally, this is a mixed case but the key behavioral test d"
+      "outcome": "not_applicable",
+      "reason": "Test file content is not shown in the prompt, cannot assess."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_render_request_headers_and_body executes renderRequest and checks for 'Request headers', 'content-type', 'Request body', and body content in output. test_schema_has_new_params checks for specific zod schema declarations. test_copilot_instructions_created checks file existence and content. None of these can be satisfied by empty/default returns."
+      "outcome": "not_applicable",
+      "reason": "Test file content is not shown, cannot evaluate tautology."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: URL filtering (test_filter_regex_applied), request headers/body display (test_render_request_headers_and_body), includeStatic->static rename (test_static_replaces_include_static), CLI options (test_cli_new_options), schema params (test_schema_has_new_params), copilot-instructions.md creation (test_copilot_instructions_created), and build/lint pass."
+      "outcome": "not_applicable",
+      "reason": "Test file content is hidden/empty."
     },
     "informative_test_structure": {
-      "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (pass_to_pass static gate, pass_to_pass repo CI/CD gates, fail_to_pass behavioral, fail_to_pass schema & rename), descriptive function names, and docstrings explaining each test's purpose."
+      "outcome": "not_applicable",
+      "reason": "Test file content is hidden/empty."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it modifies tool parameters and rendering functions."
+      "reason": "Task produces text output, not structured data requiring a schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, parameter names, CLI flag names, and function names in the instruction match those referenced in tests without typos."
+      "reason": "File paths and flag names in instruction.md appear correct and consistent with the gold patch."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files and functions relevant to the task domain (network.ts, commands.ts, renderRequest) but doesn't specify exact line numbers or the precise code to write. The 'Files to Look At' section is appropriate guidance, not implementation leakage."
+      "reason": "Instruction points to files but doesn't give exact line numbers or code replacements; localization of the renderRequest function is appropriate guidance."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not a config-edit task. The .github/copilot-instructions.md is a new file creation, not editing existing config."
+      "outcome": "pass",
+      "reason": "The .github/copilot-instructions.md is a new localized file, and code edits are scoped to the named files without full rewrites."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard"
+    "behavior_in_task_description"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
+  "pass_count": 5,
   "fail_count": 1
 }

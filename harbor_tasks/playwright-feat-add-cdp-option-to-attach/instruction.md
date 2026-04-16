@@ -14,13 +14,13 @@ Additionally, the `--extension` option for connecting to a browser extension is 
 
 3. The attach command should also accept an `--endpoint` named option as an alternative to the positional argument for specifying the target browser endpoint.
 
-4. Conflicting usage (providing both a positional target AND named options like `--cdp`, `--endpoint`, or `--extension`) should produce an error. The error-checking condition must be exactly: `attachTarget && (args.cdp || args.endpoint || args.extension)`.
+4. Conflicting usage (providing both a positional target AND named options like `--cdp`, `--endpoint`, or `--extension`) should produce an error. The error should indicate that these options cannot be used together with a positional target.
 
-5. The following source code patterns must be present in the implementation:
-   - In `packages/playwright-core/src/tools/cli-client/program.ts`: The string `'cdp'` must appear in the `globalOptions` array declaration
-   - In `packages/playwright-core/src/tools/cli-daemon/commands.ts`: The attach command declared via `const attach = declareCommand` must include a `cdp` field in its options schema
-   - In `packages/playwright-core/src/tools/cli-daemon/program.ts`: A `--cdp` flag must be registered via the `.option()` method
-   - In `packages/playwright-core/src/tools/cli-client/session.ts`: The pattern `cliArgs.cdp` must be used when passing arguments to the daemon
-   - In `packages/playwright-core/src/tools/mcp/config.ts`: The CLI `cdp` option must be mapped to `cdpEndpoint` using either `cdpEndpoint: options.cdp` or `cdpEndpoint: cliOptions.cdp`
+5. The implementation must:
+   - Add `cdp` to the global CLI argument parsing in the cli-client program
+   - Add a `cdp` field to the attach command's options schema in the cli-daemon commands
+   - Register a `--cdp` CLI flag in the cli-daemon program
+   - Pass the `--cdp` flag value from cli-client to cli-daemon through the session management code
+   - Map the CLI `cdp` option to `cdpEndpoint` in the MCP config for browser isolation logic
 
 6. CLI documentation in `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` must document `--extension` under the attach command section (e.g., `playwright-cli attach --extension`), and must not document `playwright-cli open --extension` in the open command section.

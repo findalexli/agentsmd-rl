@@ -3,56 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_same_object_reference_used checks for 'const bundlerOptions = {' literal string; test_bundler_options_key_removed checks that 'export const bundlerOptionsKey' and 'export const isRolldown' are removed from utils.ts; test_plugin_sets_both_bundler_options checks for exact strings 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions'. The instruction says to set both options but never speci"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_same_object_reference_used asserts 'const bundlerOptions = {' must appear in plugin.ts; test_bundler_options_key_removed asserts 'export const bundlerOptionsKey' and 'export const isRolldown' must NOT appear in utils.ts; test_plugin_sets_both_bundler_options asserts exact strings 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions'. The instruction says to 'set both rollupOptions and ro"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (version detection at import time fails in pnpm workspaces) and the expected behavior (set both rollupOptions and rolldownOptions), but doesn't specify exact code changes, line numbers, or the specific implementation pattern (IIFE, shared object reference, etc.)."
+      "reason": "The instruction describes the bug (version detection at import time) and the expected behavior (set both rollupOptions and rolldownOptions) but does not specify exact code changes, line numbers, or the specific implementation pattern (IIFE, shared object reference, etc.)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_same_object_reference_used requires 'const bundlerOptions = {' exactly; test_plugin_sets_both_bundler_options requires 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions' as exact strings. An alternative correct fix using a different variable name (e.g., 'const opts = {') or a different structure (e.g., spreading options inline) would fail these tests despite being functionally correct."
+      "reason": "Tests assert gold-specific implementation details: test_same_object_reference_used checks for 'const bundlerOptions = {' (a specific variable name); test_plugin_sets_both_bundler_options checks for 'rollupOptions: bundlerOptions' and 'rolldownOptions: bundlerOptions' (exact variable references). An alternative correct fix using a different variable name (e.g., 'const opts = {') or using spread syntax would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_bundler_options_key_removed, test_plugin_imports_correct_utils, test_plugin_sets_both_bundler_options, test_plugin_sets_both_bundler_options_for_server, and test_same_object_reference_used are ALL purely text-matching tests using 'assert X in open(path).read()' with no execution. While test_typescript_compiles, test_package_builds, etc. do run subprocesses, the FAIL-TO-PASS tests are entirely text-based."
+      "reason": "Tests test_bundler_options_key_removed, test_plugin_imports_correct_utils, test_plugin_sets_both_bundler_options, test_plugin_sets_both_bundler_options_for_server, and test_same_object_reference_used are ALL purely text-matching with 'assert ... in open(path).read()' patterns. While test_typescript_compiles, test_package_builds, test_eslint_passes do execute subprocesses, the fail-to-pass tests are entirely text-based."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific content patterns that wouldn't be satisfied by stub/default implementations. The original buggy code contains 'bundlerOptionsKey' and 'isRolldown' exports, so a no-op wouldn't pass. The tests require active removal of old code and addition of new patterns."
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests only check for string patterns in source files. A developer could satisfy them by simply writing the exact expected strings in comments or dead code without actually fixing the bug. For example, adding '// rollupOptions: bundlerOptions' and 'const bundlerOptions = {' as comments would pass the text-matching tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: builds succeed for both environments (tested), both rollupOptions and rolldownOptions set (tested), TypeScript compiles (tested), ESLint passes (tested), unit tests pass (tested). All explicit requirements are covered."
+      "reason": "The instruction requires: builds succeed (tested by test_package_builds), both rollupOptions and rolldownOptions are set (tested by test_plugin_sets_both_bundler_options and _for_server), TypeScript compiles (test_typescript_compiles), ESLint passes (test_eslint_passes), unit tests pass (test_unit_tests_pass)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings (e.g., 'FAIL-TO-PASS' and 'PASS-TO-PASS' labels), and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive function names and docstrings clearly indicating what each test verifies (e.g., 'FAIL-TO-PASS' vs 'PASS-TO-PASS' labels)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves fixing source code in a build tool plugin; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, variable names, and package names are all consistent and correct across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the package (start-plugin-core) which is appropriate for task scoping, and mentions the detection mechanism ('rolldownVersion' in vite) as context for the bug, but doesn't specify exact lines or the specific fix implementation."
+      "outcome": "fail",
+      "reason": "The instruction specifically names the buggy detection mechanism ('rolldownVersion' in vite), explains it's in start-plugin-core, and tells the agent that bundlerOptionsKey causes the issue by setting rolldownOptions vs rollupOptions. This significantly narrows the localization effort."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task modifying TypeScript source files, not a config-editing task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

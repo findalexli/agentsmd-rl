@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests reference specific diagnostics like 'unresolved-reference', 'invalid-argument-type', and 'error[' patterns that the agent must produce. The instruction.md mentions 'duplicate diagnostics' and 'unresolved-reference' generally but never specifies the exact diagnostic codes like 'invalid-argument-type' used in test_constant_key_type_error. Also, test_repo_clippy_ty_python_semantic and test_repo_typed_dict_mdtest reference specific cargo test commands and clippy checks not mentioned in instruc"
+      "outcome": "pass",
+      "reason": "Instruction describes all three behaviors tested: duplicate unresolved-reference, Final string constant keys, and mixed dict+keyword validation; tests use these exact diagnostic names (unresolved-reference, invalid-argument-type, error[) which are mentioned in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (duplicate diagnostics, Final constants not resolved, mixed dict+keyword args not validated) and points to relevant files, but does not specify the exact code changes needed (e.g., adding get_or_infer_expression, modifying infer_typed_dict_constructor_values, etc.)."
+      "reason": "Instruction describes symptoms and expected behaviors without naming specific functions, files, or lines to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral outcomes (number of diagnostics, presence/absence of errors) by running the ty binary on Python snippets. They don't assert on specific Rust function names, variable names, or implementation details. Any correct fix that produces the right diagnostic behavior would pass."
+      "reason": "Tests only check counts of diagnostic types in ty output (unresolved-reference, invalid-argument-type, error[) and cargo check outcomes; no gold-specific identifiers are asserted."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute the ty binary via subprocess on Python code snippets and inspect the diagnostic output. test_repo_clippy_ty_python_semantic runs cargo clippy. These are execution-based behavioral tests, not simple text matching on source files."
+      "reason": "Tests execute the ty binary as a subprocess on Python snippets and also run cargo clippy/check commands."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check specific conditions: test_no_duplicate_diagnostics asserts exactly 1 unresolved-reference (not 0 or 2), test_constant_key_in_dict_literal asserts 0 errors, test_constant_key_type_error asserts >=1 invalid-argument-type errors. A stub or no-op implementation of ty wouldn't produce these specific diagnostic patterns."
+      "reason": "A stub cannot satisfy both the 'no errors' and 'at least one invalid-argument-type' assertions across tests; behavior requires actual fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behaviors described in instruction.md are tested: (1) duplicate diagnostics in test_no_duplicate_diagnostics, (2) Final string constants in test_constant_key_in_dict_literal and test_constant_key_type_error, (3) mixed dict+keyword args in test_mixed_dict_keyword_valid."
+      "reason": "All three problems described in instruction.md map to explicit tests (test_no_duplicate_diagnostics, test_constant_key_in_dict_literal, test_mixed_dict_keyword_valid, test_constant_key_type_error)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are grouped with section headers (Gates, Fail-to-pass, Pass-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is about type checker behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos observed in paths, commands, or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the two specific files to modify ('crates/ty_python_semantic/src/types/infer/builder.rs' and 'crates/ty_python_semantic/src/types/typed_dict.rs') and describes their roles in detail, significantly narrowing the localization task in a large codebase."
+      "outcome": "pass",
+      "reason": "Instruction only references the ty_python_semantic crate (the obvious domain) and does not name specific files/lines to modify."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

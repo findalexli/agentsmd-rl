@@ -77,10 +77,6 @@ checks:
   source:
     path: src/js/node/dns.ts
     validation: syntax
-# Note: No rubric rules for this task. The gold solution is a simple one-line
-# bugfix (changing isCell to isObject in dns.zig). There are no documentation
-# or config file edits required. The existing checks (pass_to_pass and
-# fail_to_pass) fully validate the correctness of the solution.
 distractors:
 - rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
     in the test output. These tests will never fail in CI.
@@ -104,7 +100,80 @@ distractors:
   source:
     path: AGENTS.md
     lines: 31-32
+- rule: Always use bun.* APIs instead of std.*
+  source:
+    path: src/CLAUDE.md
+    lines: 16-16
+  source_text: '**Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace
+    (`@import("bun")`) provides cross-platform wrappers that preserve OS error info
+    and never use `unreachable`. Using `std.fs`, `std.posix`, or `std.os` directly
+    is wrong in this codebase.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies broadly to Zig files in the repository to replace
+    standard library calls, but the PR is strictly modifying JavaScriptCore type checking
+    logic (replacing `isCell` with `isObject`), not using system APIs. An agent might
+    mistakenly try to rewrite unrelated parts of the file if it aggressively applies
+    this rule.
+  severity: medium
+- rule: Use .$call and .$apply, never .call or .apply
+  source:
+    path: src/js/CLAUDE.md
+    lines: 56-65
+  source_text: '**CRITICAL**: Use `.$call` and `.$apply`, never `.call` or `.apply`:
+
+
+    ```typescript
+
+    // ✗ WRONG - User can tamper
+
+    callback.call(undefined, arg1);
+
+    fn.apply(undefined, args);
+
+
+    // ✓ CORRECT - Tamper-proof
+
+    callback.$call(undefined, arg1);
+
+    fn.$apply(undefined, args);
+
+    ```'
+  collision_type: architecture_boundary
+  why_distracting: This rule is strictly for JavaScript builtins (`src/js/*.ts`) to
+    prevent prototype pollution. An agent seeing a change in the JavaScript engine
+    binding (`src/bun.js/api/bun/dns.zig`) might confuse it with JS builtin development,
+    but this file is Zig code and doesn't use these JS prototypes.
+  severity: medium
+- rule: Use isolate->currentHandleScope()->createLocal<T>() to create handles
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 222-224
+  source_text: '- All V8 values must be created within an active handle scope
+
+    - Use `isolate->currentHandleScope()->createLocal<T>()` to create handles
+
+    - Handle scopes automatically clean up when destroyed'
+  collision_type: architecture_boundary
+  why_distracting: This rule governs the V8 compatibility layer (`src/bun.js/bindings/v8`).
+    The modified file is in the direct JSC bindings (`src/bun.js/api/bun/dns.zig`).
+    Following this rule here would lead to attempting to use V8 C++ patterns in Zig
+    JSC bindings, which would cause compilation failure.
+  severity: high
 hierarchy_analysis: The hierarchy includes root-level testing instructions and src-level
   Zig conventions. The root-level testing rules act as strong distractors because
   the bug involves a crash, but the rules forbid testing for 'no panic'. The src-level
   Zig rules are largely irrelevant since the fix is a single-line type check change.
+rubric:
+- rule: Access CallFrame arguments as a slice using .ptr and .len
+  source:
+    path: .claude/skills/implementing-jsc-classes-zig/SKILL.md
+    lines: 97-99
+  source_text: 'const args = callFrame.arguments();
+
+    const first_arg = args.ptr[0];  // Access as slice
+
+    const argCount = args.len;'
+  evidence: The gold diff accesses arguments using `arguments.len > 1` and `arguments.ptr[1]`
+    instead of relying on a method call.
+  category: style
+  verification: llm_judge

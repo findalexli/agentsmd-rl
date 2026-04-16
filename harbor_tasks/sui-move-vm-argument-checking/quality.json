@@ -3,51 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_vm_code_present asserts exact literal strings like 'argument length mismatch: expected' and 'type argument length mismatch: expected' which are not specified in instruction.md. The instruction says 'error messages should include both the expected and actual counts' but does not specify the exact phrasing. Also test_repo_cargo_xlint and test_repo_move_clippy are not mentioned in the instructions at all."
+      "reason": "The test `test_vm_code_present` asserts exact literal strings like 'argument length mismatch: expected' and 'type argument length mismatch: expected' in vm.rs. While the instruction mentions error messages should 'include both the expected and actual counts', it does not specify these exact string patterns. Also, the test checks for 'INTERNAL_TYPE_ERROR' for type argument mismatches and 'NUMBER_OF_ARGUMENTS_MISMATCH' for value argument mismatches, which ARE mentioned in instruction.md. However, "
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (missing argument count validation in execute_function) and what behavior is expected (return specific error codes), but does not specify exact code changes, line numbers to modify, or the precise implementation. A developer must still reason about where and how to add the checks."
+      "outcome": "fail",
+      "reason": "The instruction specifies the exact file to change (vm.rs), the exact function (execute_function), the exact error codes (NUMBER_OF_ARGUMENTS_MISMATCH, INTERNAL_TYPE_ERROR), the exact macro to use (partial_vm_error!), the exact method to access metadata (function.to_ref()), and the exact finish pattern (.finish(Location::Module(...))). This is essentially a detailed recipe for the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_vm_code_present asserts exact literal strings ('argument length mismatch: expected', 'type argument length mismatch: expected') via text search in vm.rs. An alternative correct fix using different error message wording (e.g., 'wrong number of arguments: expected' or 'value argument count mismatch') would fail this test despite being functionally correct."
+      "reason": "test_vm_code_present asserts exact string literals ('argument length mismatch: expected', 'type argument length mismatch: expected') via file content inspection. An alternative correct fix using different error message wording (e.g., 'wrong number of arguments: expected' or 'value argument count mismatch') would fail this test despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_vm_code_present is purely a text-matching test: it opens vm.rs and asserts specific strings are present ('argument length mismatch: expected', 'NUMBER_OF_ARGUMENTS_MISMATCH', etc.) with no execution. While other tests do execute cargo test, this test is purely textual."
+      "reason": "test_vm_code_present is purely a text-matching test: it reads vm.rs and asserts specific strings are present ('argument length mismatch: expected', 'NUMBER_OF_ARGUMENTS_MISMATCH', etc.) without any execution. While the other tests do execute cargo test, this test is purely textual. Since 'every test' must pass the criterion and this one fails, the rubric fails."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (e.g., test_argument_count_mismatch_0_expected_1_got) run actual cargo test commands that execute compiled Rust test code. These tests would fail without the validation logic being implemented because the underlying Rust tests assert specific error codes are returned for mismatched arguments."
+      "reason": "The f2p tests (e.g., test_argument_count_mismatch_0_expected_1_got) run actual cargo tests that exercise the VM with mismatched argument counts. Without the validation code, these tests would not exist in the test suite or would fail because the expected error behavior wouldn't occur. A stub/no-op implementation would not cause these tests to pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: value argument mismatches (4 cases), type argument mismatches (5 cases), happy paths (2 cases), correct error codes, and compilation. Additional tests (xlint, clippy) go beyond what's specified but don't omit any required behavior."
+      "reason": "All behaviors described in instruction.md are tested: value argument mismatches (4 cases), type argument mismatches (5 cases), happy paths (2 cases), and the presence of error codes in the implementation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, have docstrings indicating the test purpose and category (f2p vs p2p), and are logically grouped by concern (compilation, argument count mismatches, type argument mismatches, happy paths, code presence)."
+      "reason": "Tests are well-organized with descriptive names (test_argument_count_mismatch_*, test_type_argument_count_mismatch_*, test_argument_count_happy_path_*), clear docstrings indicating f2p vs p2p, and logical grouping by category."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves adding validation logic to a VM runtime, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and test names in the instruction and test files are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (external-crates/move/crates/move-vm-runtime/src/execution/vm.rs) and exact function (execute_function), plus specifies exact macro usage (partial_vm_error!) and method chain (.finish(Location::Module(...))). This significantly narrows the search space beyond what's needed for the task domain."
+      "reason": "The instruction names the exact file ('external-crates/move/crates/move-vm-runtime/src/execution/vm.rs'), the exact function ('execute_function'), the exact macro ('partial_vm_error!'), and the exact method chain ('function.to_ref()' and '.finish(Location::Module(...))'). This goes well beyond naming the module/domain and essentially localizes the fix to a specific code location with implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

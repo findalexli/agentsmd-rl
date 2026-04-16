@@ -1,65 +1,59 @@
-# Add IR PGO build support
+# Add IR PGO build support to Bun
 
-## Problem
+## Background
 
-The Bun build system currently does not support Profile-Guided Optimization (PGO). Developers cannot use `--pgo-generate` or `--pgo-use` flags when building Bun, which limits optimization opportunities for release builds.
+The Bun build system currently lacks Profile-Guided Optimization (PGO) support. Developers cannot leverage PGO workflows for release builds.
 
-## Expected Behavior
+## Required Behavior
 
-Add two new CLI flags to the build system:
-- `--pgo-generate=<dir>` — produce an instrumented build that writes `.profraw` files at runtime
-- `--pgo-use=<file.profdata>` — produce an optimized build using merged profile data
+### CLI Flag Recognition
 
-These flags should be implemented across the build system's TypeScript configuration layer, using the internal field names `pgoGenerate` and `pgoUse` throughout.
+The build system's argument parser must accept two new flags:
+- `--pgo-generate=<directory>` — enables an instrumented build that writes `.profraw` files at runtime
+- `--pgo-use=<file.profdata>` — enables an optimized build using merged profile data
 
-### 1. CLI Argument Parsing (`scripts/build.ts`)
+When a user passes an unknown flag like `--pgo-generate`, the build system should not silently ignore it — it should be recognized and processed.
 
-The flags should be recognized by the CLI argument parser. Add `"pgoGenerate"` and `"pgoUse"` to the long options list alongside the existing options (around line 314).
+### Mutual Exclusivity
 
-### 2. Config Interface (`scripts/build/config.ts`)
+The two flags are mutually exclusive. When a user attempts to use both `--pgo-generate` and `--pgo-use` in the same build, the build system must fail with a clear error. The error message must be:
 
-**Config interface** — add two new fields with types `string | undefined`:
-- `pgoGenerate: string | undefined`
-- `pgoUse: string | undefined`
+```
+--pgo-generate and --pgo-use are mutually exclusive
+```
 
-**PartialConfig interface** — add corresponding optional fields:
-- `pgoGenerate?: string`
-- `pgoUse?: string`
+### Feature Label Reporting
 
-**resolveConfig function** — the function should:
-- Resolve paths using `resolve(partial.pgoGenerate)` and `resolve(partial.pgoUse)` (or equivalent ternary like `partial.pgoGenerate ? resolve(...)`), assigning to local constants
-- Validate mutual exclusivity: check the condition `pgoGenerate && pgoUse` (after resolving), and when true, throw a `BuildError` with the exact message: `--pgo-generate and --pgo-use are mutually exclusive`
-- Include the resolved `pgoGenerate` and `pgoUse` in the returned Config object
+When PGO is active, the build system should report it in its feature output. The feature label for an instrumented (generate) build must be: `pgo-gen`. The feature label for an optimized (use) build must be: `pgo-use`.
 
-**formatConfig function** — add feature labels to the features list:
-- `if (cfg.pgoGenerate) features.push("pgo-gen")`
-- `if (cfg.pgoUse) features.push("pgo-use")`
+### Compiler and Linker Flags
 
-### 3. Compiler and Linker Flags (`scripts/build/flags.ts`)
+When `--pgo-generate` is active on a Unix platform, the compiler must receive `-fprofile-generate=<dir>` where `<dir>` is the provided directory path.
 
-Add PGO-related entries to both the `globalFlags` and `linkerFlags` arrays. Each entry is an object with `flag`, `when`, and `desc` fields (following the existing pattern).
+When `--pgo-use` is active on a Unix platform, the compiler must receive `-fprofile-use=<file>` along with warning suppression flags `-Wno-profile-instr-out-of-date`, `-Wno-profile-instr-unprofiled`, and `-Wno-backend-plugin`.
 
-**In `globalFlags`** — add a section with the header comment `─── PGO (compile-side) ───` containing:
-- An entry for instrumentation with flag `-fprofile-generate=${c.pgoGenerate}`, gated on `c.unix && !!c.pgoGenerate`, with description `IR PGO: instrument for profile generation`
-- An entry for optimization with flags `-fprofile-use=${c.pgoUse}` plus the warning suppressions `-Wno-profile-instr-out-of-date`, `-Wno-profile-instr-unprofiled`, `-Wno-backend-plugin`, gated on `c.unix && !!c.pgoUse`, with description `IR PGO: optimize with profile data`
+These flags must be passed to both the compiler (compile-time) via `globalFlags` in `scripts/build/flags.ts` and to the linker (link-time) via `linkerFlags` in `scripts/build/flags.ts`.
 
-**In `linkerFlags`** — add a section with the header comment `─── PGO (link-side) ───` containing:
-- An entry for the profiling runtime with flag `-fprofile-generate=${c.pgoGenerate}`, gated on `c.unix && !!c.pgoGenerate`
-- An entry for LTO+PGO at link time with flag `-fprofile-use=${c.pgoUse}`, gated on `c.unix && !!c.pgoUse`
+### WebKit Build Integration
 
-This ensures `-fprofile-generate=` and `-fprofile-use=` each appear in both the compile and link flag arrays.
+When building WebKit locally, the PGO flags must be forwarded to WebKit's CMake configuration via `CMAKE_C_FLAGS` and `CMAKE_CXX_FLAGS`. This is done by calling `webkit.build()` from `scripts/build/deps/webkit.ts` with the resolved config.
 
-### 4. WebKit Dependency (`scripts/build/deps/webkit.ts`)
+When `--pgo-use` is set, the warning suppression flags must also be included.
 
-Forward PGO optimization flags to WebKit when building locally:
-- Collect optimization flags (LTO and PGO) into an array variable named `optFlags`
-- Join them into a string variable named `optFlagStr`
-- Set the CMAKE args as object properties: `CMAKE_C_FLAGS: optFlagStr` and `CMAKE_CXX_FLAGS: optFlagStr` (instead of the previous empty strings)
-- The `optFlags` array should check `cfg.pgoGenerate` and `cfg.pgoUse` and include `-fprofile-generate=` and `-fprofile-use=` flags accordingly
-- When `cfg.pgoUse` is set, also include the warning suppression flags in `optFlags`
+### Platform Constraint
 
-### Notes
+All PGO flags apply only on Unix platforms (Linux and macOS). On Windows, the flags have no effect.
 
-- The flags should only apply on Unix platforms (check `c.unix`)
-- The existing `lto` flag pattern in each file is a good reference for implementation style
-- Follow the existing code formatting and comment conventions in each file
+### Config Schema
+
+The resolved config object (returned by `resolveConfig()` from `scripts/build/config.ts`) must preserve the following properties when set:
+- `pgoGenerate` — the directory path provided to `--pgo-generate`
+- `pgoUse` — the file path provided to `--pgo-use`
+
+## Verification
+
+A correct implementation can be verified by:
+1. Running the build with `--pgo-generate=/tmp/pgo-data` and confirming the build starts with the feature label `pgo-gen` reported
+2. Running the build with `--pgo-use=./merged.profdata` and confirming the build starts with the feature label `pgo-use` reported
+3. Running the build with both flags and confirming the build fails with the exact error message `--pgo-generate and --pgo-use are mutually exclusive`
+4. Inspecting the compiler and linker flags in the build output to confirm `-fprofile-generate=` and `-fprofile-use=` appear

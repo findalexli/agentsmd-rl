@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert on the exact file path TARGET_FILE = '/workspace/selenium/dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs', but instruction.md never names this file explicitly \u2014 it only says 'Locate and fix the GetDiscriminator extension method that operates on Utf8JsonReader'. Also, test_correct_read_skip_pattern checks for exact comment strings like '// move to the property value' on the same line as 'readerClone.Read()', and '// skip the value' on the same line as 'Skip()'. While the instru"
+      "reason": "The tests assert on the exact file path 'dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs' (TARGET_FILE), exact comment strings like 'move past StartObject to first PropertyName', 'move to the property value', 'skip the value (including nested objects/arrays)', 'move to the next PropertyName or EndObject', and the exact pattern 'readerClone.Read()' with specific inline comments. While instruction.md does mention the comment phrases and ValueTextEquals, it does not explicitly name the file path '"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states to 'Use ValueTextEquals for property name comparison', 'Remove any usage of propertyName == name', 'Remove any usage of string? propertyName = readerClone.GetString()', and gives exact comment strings to add. It also specifies the exact Read-Skip-Read pattern. This essentially dictates the fix rather than describing what's broken."
+      "reason": "The instruction explicitly tells the agent to 'Use ValueTextEquals for property name comparison', 'Remove any usage of propertyName == name', 'Remove any usage of string? propertyName = readerClone.GetString()', and specifies the exact comment strings to use. It also describes the exact Read-Skip-Read pattern needed. This is essentially the complete solution specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_correct_read_skip_pattern checks for the exact pattern of 'readerClone.Read()' with '// move to the property value' on the same line, followed by 'Skip()' with '// skip the value' on the same line. test_no_old_property_name_variable checks for the exact string 'string? propertyName = readerClone.GetString()'. An alternative correct fix that uses different variable names, different comment wording, or a different but correct advancement pattern would fail these tests."
+      "reason": "test_correct_read_skip_pattern requires the exact pattern of 'readerClone.Read()' on a line containing '// move to the property value' followed within 3 lines by 'Skip()' on a line containing '// skip the value'. An alternative correct fix using different comment wording, or using a helper method, or restructuring the loop differently would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_valuetextequals_usage, test_no_old_property_name_variable, test_reader_advancement_comments, test_correct_read_skip_pattern, test_valuetextequals_in_property_loop) all exclusively use string/regex matching on file contents with open(TARGET_FILE).read(). None of them compile, execute, or test the actual runtime behavior of GetDiscriminator."
+      "reason": "The fail-to-pass tests (test_valuetextequals_usage, test_no_old_property_name_variable, test_reader_advancement_comments, test_correct_read_skip_pattern, test_valuetextequals_in_property_loop) all exclusively use 'open(TARGET_FILE).read()' and string/regex matching. None of them compile, execute, or call the code to verify actual behavior. The pass-to-pass tests run dotnet format but don't test the discriminator functionality."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "An agent could satisfy all fail-to-pass tests by simply text-editing the file to contain the expected strings ('ValueTextEquals', the exact comments, the Read-Skip-Read pattern) without actually fixing any bug. The tests only check for text patterns, not actual behavior."
+      "reason": "A stub implementation that simply contains the right string patterns in comments and code text would pass all f2p tests. For example, adding 'ValueTextEquals' as a comment, removing the old patterns, and adding the expected comment strings would satisfy all assertions without actually fixing the bug or implementing correct JSON parsing logic."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'The method must still correctly extract discriminator values from JSON objects' and mentions handling 'Nested JSON objects' and 'JSON arrays', but no test actually verifies runtime correctness of discriminator extraction \u2014 only text patterns in the source file."
+      "reason": "The instruction says 'The method must still correctly extract discriminator values from JSON objects' and mentions handling nested objects and arrays correctly, but no test actually verifies the runtime behavior of discriminator extraction. The tests only check textual patterns in the source file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (ValueTextEquals usage, old pattern removal, comments, Read-Skip-Read pattern, formatting checks), and clearly indicate fail-to-pass vs pass-to-pass."
+      "reason": "Tests are well-named (test_valuetextequals_usage, test_correct_read_skip_pattern, etc.), have docstrings explaining fail-to-pass vs pass-to-pass, and are logically grouped by what they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying C# source code, not producing structured data output."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly tells the agent to use 'ValueTextEquals', remove 'propertyName == name', remove 'string? propertyName = readerClone.GetString()', and add specific exact comment phrases. This goes well beyond describing what's broken and essentially dictates the exact code changes."
+      "reason": "The instruction specifies exact method name 'GetDiscriminator', exact replacement patterns ('ValueTextEquals' instead of 'propertyName == name'), exact comment strings to add, and the exact Read-Skip-Read ordering. This goes beyond identifying the buggy area and essentially provides the complete fix specification."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "This is a code-only task, not an agentmd-edits or config-edit task."
     }
   },
   "tier_a_fails": [

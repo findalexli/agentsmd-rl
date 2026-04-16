@@ -1,0 +1,26 @@
+name = "clickhouse-refreshable-mv-drop-fix"
+difficulty = "medium"
+estimated_time = "90m"
+tags = ["c++", "clickhouse", "sql", "materialized-views", "bug-fix"]
+
+[description]
+brief = "Fix DROP handling for refreshable materialized views in stress tests"
+detail = """
+The `ignore_drop_queries_probability` setting used in stress tests converts
+`DROP TABLE` to `TRUNCATE TABLE`, but this does not stop the periodic refresh
+task of a refreshable materialized view. The orphaned view continues refreshing
+indefinitely, consuming background pool threads and progressively overwhelming
+the server.
+
+The fix adds a check in `InterpreterDropQuery::executeToTableImpl` to detect
+refreshable materialized views and skip the DROP-to-TRUNCATE conversion for
+them, ensuring proper cleanup of refresh tasks.
+"""
+
+[requirements]
+build_deps = ["clang-18", "cmake", "ninja-build"]
+test_deps = ["python3-pytest"]
+environment = "linux"
+
+[solution]
+files = ["src/Interpreters/InterpreterDropQuery.cpp"]

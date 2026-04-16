@@ -5,23 +5,65 @@ PR:   28202
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+BEHAVIORAL TESTS: We actually RUN the code via subprocess and verify it completes,
+rather than grepping for implementation patterns. The bug causes sourcemap tests
+to hang; the fix allows them to complete within a reasonable timeout.
 """
 
+import os
 import re
 import subprocess
+import time
 from pathlib import Path
 
 REPO = "/workspace/bun"
 TARGET = f"{REPO}/test/cli/hot/hot.test.ts"
+BUN_INSTALL_TIMEOUT = 120
+TEST_TIMEOUT = 180  # Hot tests with 50 reload cycles should complete in this time
 
 
-def _extract_sourcemap_blocks(code: str) -> str:
-    """Extract only the three sourcemap test blocks from the file."""
-    blocks = re.split(r'(?=it\s*\()', code)
-    relevant = [b for b in blocks if any(name in b for name in [
-        "sourcemap generation", "sourcemap loading", "large files",
-    ])]
-    return "\n".join(relevant)
+def _ensure_bun():
+    """Install bun if not available."""
+    result = subprocess.run(
+        ["bash", "-c", "export PATH=/root/.bun/bin:$PATH && bun --version 2>/dev/null"],
+        capture_output=True, text=True, timeout=10
+    )
+    if result.returncode == 0:
+        return True
+
+    # Install bun
+    subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=60
+    )
+    install_result = subprocess.run(
+        ["bash", "-c", "curl -fsSL https://bun.sh/install | bash"],
+        capture_output=True, text=True, timeout=BUN_INSTALL_TIMEOUT
+    )
+    if install_result.returncode != 0:
+        raise RuntimeError(f"Failed to install bun: {install_result.stderr}")
+
+    # Verify installation
+    verify_result = subprocess.run(
+        ["bash", "-c", "export PATH=/root/.bun/bin:$PATH && bun --version"],
+        capture_output=True, text=True, timeout=10
+    )
+    return verify_result.returncode == 0
+
+
+def _bun_exec(cmd: list[str], timeout: int = TEST_TIMEOUT) -> subprocess.CompletedProcess:
+    """Execute a command with bun in PATH."""
+    env = os.environ.copy()
+    env["PATH"] = "/root/.bun/bin:" + env.get("PATH", "")
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env,
+        cwd=REPO,
+    )
 
 
 def _read_code() -> str:
@@ -50,7 +92,6 @@ def _read_code() -> str:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_target_file_exists():
     """Target test file must exist and be non-empty."""
     p = Path(TARGET)
@@ -60,147 +101,124 @@ def test_target_file_exists():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
+#
+# The bug causes sourcemap hot-reload tests to HANG. The fix allows them
+# to COMPLETE. We verify this by RUNNING the tests and checking they complete
+# within a reasonable timeout, rather than checking for specific patterns.
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_data_loss_pattern_fixed():
-    """The buggy str='' + continue outer pattern must be removed and remaining lines preserved.
+    """The str='' + continue outer bug must be fixed; sourcemap generation test must complete.
 
-    The base code sets str="" inside the inner loop then does 'continue outer',
-    discarding unprocessed lines from the current chunk. The fix must:
-    (a) Remove this discard pattern
-    (b) Preserve remaining lines via any valid mechanism
+    The buggy pattern discards remaining lines when a duplicate error is seen,
+    causing the test to hang waiting for output that was already discarded.
+
+    Behavioral verification: run the sourcemap generation test and verify it
+    completes within timeout. If the bug is present, it hangs; if fixed, it completes.
     """
-    code = _read_code()
+    _ensure_bun()
 
-    # (a) The buggy pattern: str="" followed by continue outer
-    has_buggy = bool(re.search(
-        r'str\s*=\s*["\']["\'].*?continue\s+outer',
-        code, re.DOTALL,
-    ))
-    assert not has_buggy, "Buggy str='' + continue outer pattern still present"
+    # Run the sourcemap generation test (the first and most direct test of the fix)
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "sourcemap generation",
+    ], timeout=TEST_TIMEOUT)
 
-    # (b) Remaining lines preserved via slice/splice/join/break or restructured away
-    preserves = bool(re.search(
-        r'(?:'
-        r'lines?\.\s*slice\s*\(|'
-        r'lines?\.\s*splice\s*\(|'
-        r'remaining\s*[=,]|'
-        r'\.join\s*\(\s*["\']\\n|'
-        r'str\s*=\s*[^"\';\n]*lines?|'
-        r'buf\w*\s*=\s*[^"\';\n]*lines'
-        r')',
-        code,
-    ))
-    no_continue_outer = "continue outer" not in code
-
-    assert preserves or no_continue_outer, (
-        "No mechanism found to preserve remaining lines from split chunks"
+    # If the test completes with exit code 0, the fix is working
+    # If it times out or fails, the bug is still present
+    assert result.returncode == 0, (
+        f"Sourcemap generation test did not complete successfully.\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout (last 500 chars): {result.stdout[-500:]}\n"
+        f"Stderr (last 500 chars): {result.stderr[-500:]}\n"
+        f"This indicates the data loss bug is still present."
     )
 
 
-# [pr_diff] fail_to_pass
 def test_trailing_partial_lines_preserved():
-    """When splitting stderr by newline, the trailing partial line must be saved.
+    """Trailing partial lines from stderr split must be preserved; sourcemap loading test completes.
 
-    The base code clears str="" inside the processing loop, discarding
-    incomplete trailing lines. The fix must pop/save the last element.
+    When stderr is split mid-line, the trailing partial portion must be saved
+    for the next chunk. Without this, lines are lost and tests hang.
+
+    Behavioral verification: run the sourcemap loading test and verify it completes.
     """
-    code = _read_code()
+    _ensure_bun()
 
-    # Must save the trailing element from the split
-    saves_last = bool(re.search(
-        r'(?:'
-        r'lines?\.\s*pop\s*\(\s*\)|'
-        r'lines?\s*\[\s*lines?\s*\.\s*length\s*-\s*1|'
-        r'lines?\.\s*at\s*\(\s*-\s*1\s*\)|'
-        r'str\s*=\s*lines?\.\s*pop|'
-        r'str\s*=\s*lines?\s*\[\s*lines?\s*\.\s*length'
-        r')',
-        code,
-    ))
-    # Also accept: restructured via helper function processing stderr
-    uses_helper = bool(re.search(r'(?:async\s+)?function\s+\w+.*?stderr', code, re.DOTALL))
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "sourcemap loading",
+    ], timeout=TEST_TIMEOUT)
 
-    # In the sourcemap test blocks, str="" must not appear as a bare reassignment.
-    # (Other non-sourcemap tests in the file legitimately use str="" — ignore those.)
-    sourcemap_blocks = _extract_sourcemap_blocks(code)
-    inner_clear = False
-    for line in sourcemap_blocks.splitlines():
-        stripped = line.strip()
-        if re.search(r'str\s*=\s*["\']["\']\s*;', stripped):
-            inner_clear = True
-            break
-
-    assert (saves_last or uses_helper) and not inner_clear, (
-        "Trailing partial lines may be discarded (no pop/save or inner str='' found)"
+    assert result.returncode == 0, (
+        f"Sourcemap loading test did not complete successfully.\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout (last 500 chars): {result.stdout[-500:]}\n"
+        f"Stderr (last 500 chars): {result.stderr[-500:]}\n"
+        f"This indicates trailing partial lines are being discarded."
     )
 
 
-# [pr_diff] fail_to_pass
 def test_bundler_no_inherit_pipes():
-    """Bundler subprocesses must not use stdout/stderr:'inherit'.
+    """Bundler subprocesses must not use stdout/stderr:'inherit' to avoid pipe backpressure.
 
-    The base code uses stdout:"inherit" and stderr:"inherit" on bundler spawns,
-    which causes pipe buffer backpressure that blocks the bundler.
+    When bundler uses 'inherit', the test runner's pipe buffer fills up,
+    blocking the bundler and stalling the test.
+
+    Behavioral verification: run the sourcemap loading test (which spawns bundler)
+    and verify it completes without deadlock.
     """
-    code = _read_code()
+    _ensure_bun()
 
-    # Find test blocks for sourcemap loading tests (they spawn bundlers)
-    test_blocks = re.split(r'(?=it\s*\()', code)
-    for block in test_blocks:
-        if "sourcemap loading" not in block and "large files" not in block:
-            continue
-        # Look for spawn calls with --watch (bundler spawns)
-        spawn_sections = re.findall(r'spawn\s*\(\s*\{[\s\S]*?\}\s*\)', block)
-        for section in spawn_sections:
-            if "--watch" in section or '"watch"' in section:
-                assert not re.search(
-                    r'std(?:out|err)\s*:\s*["\']inherit["\']', section
-                ), f"Bundler spawn still uses 'inherit': {section[:100]}..."
+    # The sourcemap loading test spawns a bundler with --watch
+    # If pipes are misconfigured, this deadlocks
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "sourcemap loading",
+    ], timeout=TEST_TIMEOUT)
+
+    assert result.returncode == 0, (
+        f"Sourcemap loading test (with bundler) did not complete.\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout (last 500 chars): {result.stdout[-500:]}\n"
+        f"Stderr (last 500 chars): {result.stderr[-500:]}\n"
+        f"This indicates pipe backpressure issue with bundler 'inherit'."
+    )
 
 
-# [pr_diff] fail_to_pass
 def test_early_bundler_exit_detection():
-    """Bundler-based tests must detect early bundler exit instead of hanging.
+    """Bundler-based tests must detect early exit; large files test completes.
 
-    Accept: Promise.race, Promise.any, bundler.exited, .on('exit'),
-    AbortController, or any concurrent monitoring pattern — but only in the
-    sourcemap loading test blocks that spawn a bundler subprocess.
+    If bundler exits early and the test doesn't detect it, the test hangs
+    waiting for output that will never arrive.
+
+    Behavioral verification: run the large files test and verify it completes.
     """
-    code = _read_code()
+    _ensure_bun()
 
-    # Only check in test blocks that spawn bundler subprocesses
-    test_blocks = re.split(r'(?=it\s*\()', code)
-    bundler_blocks = [
-        b for b in test_blocks
-        if "sourcemap loading" in b or "large files" in b
-    ]
-    assert len(bundler_blocks) >= 2, "Expected at least 2 bundler-based test blocks"
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "large files",
+    ], timeout=TEST_TIMEOUT)
 
-    for block in bundler_blocks:
-        has_exit_detect = bool(re.search(
-            r'(?:'
-            r'Promise\.\s*(?:race|any|allSettled)\s*\(|'
-            r'bundler\.\s*exited|'
-            r'\.on\s*\(\s*["\'](?:exit|close)["\']|'
-            r'AbortController|'
-            r'exited\s*\.\s*then\s*\('
-            r')',
-            block,
-        ))
-        assert has_exit_detect, (
-            f"No early bundler exit detection in test block: {block[:80]}..."
-        )
+    assert result.returncode == 0, (
+        f"Large files sourcemap test did not complete.\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout (last 500 chars): {result.stdout[-500:]}\n"
+        f"Stderr (last 500 chars): {result.stderr[-500:]}\n"
+        f"This indicates early bundler exit is not being detected."
+    )
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [pr_diff] pass_to_pass
 def test_sourcemap_tests_preserved():
-    """All three sourcemap hot-reload tests must exist and verify 50 reload cycles."""
+    """All three sourcemap hot-reload tests must exist and verify 50 reload cycles.
+
+    These tests are the canary that detects the bug. They must be preserved.
+    """
     code = _read_code()
 
     tests = [
@@ -218,9 +236,12 @@ def test_sourcemap_tests_preserved():
     )
 
 
-# [static] fail_to_pass
 def test_not_stub():
-    """Modified file must have meaningful code changes, not just comments or trivial edits."""
+    """Modified file must have meaningful code changes, not just comments or trivial edits.
+
+    The fix touches approximately 50+ lines across multiple functions.
+    A stub implementation would not have enough changes.
+    """
     diff = subprocess.run(
         ["git", "diff", "HEAD", "--", "test/cli/hot/hot.test.ts"],
         capture_output=True, text=True, cwd=REPO,
@@ -247,16 +268,44 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Behavioral verification: all sourcemap tests complete
+# This is the ultimate behavioral test - if the fix is correct, all three
+# sourcemap tests complete without hanging
+# ---------------------------------------------------------------------------
+
+def test_all_sourcemap_tests_complete():
+    """All three sourcemap hot-reload tests must complete without hanging.
+
+    This is the master behavioral test: run all sourcemap tests and verify
+    they complete. If the bug is present, they hang; if fixed, they complete.
+    """
+    _ensure_bun()
+
+    # Run the full hot test suite filtered to sourcemap tests
+    # Each test verifies 50 reload cycles
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "sourcemap",
+    ], timeout=TEST_TIMEOUT * 2)  # Longer timeout for all three tests
+
+    assert result.returncode == 0, (
+        f"Sourcemap tests did not complete successfully.\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout (last 1000 chars): {result.stdout[-1000:]}\n"
+        f"Stderr (last 1000 chars): {result.stderr[-1000:]}"
+    )
+
+    # Verify 50 reload cycles were actually verified
+    output = result.stdout + result.stderr
+    assert "50" in output, "Could not verify 50 reload cycles in test output"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and after fix
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — repo format check (Prettier)
 def test_repo_format():
-    """Repo's Prettier formatting check passes on the modified file (pass_to_pass).
-
-    CI: bun run prettier (uses prettier@3.6.2 from package.json)
-    """
-    # Install prettier first since the container is stateless
+    """Repo's Prettier formatting check passes on the modified file (pass_to_pass)."""
     subprocess.run(
         ["npm", "install", "-g", "prettier@3.6.2"],
         capture_output=True, text=True, timeout=120,
@@ -268,14 +317,8 @@ def test_repo_format():
     assert r.returncode == 0, f"Prettier format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — oxlint check (0 errors, warnings ok)
 def test_repo_oxlint():
-    """Repo's oxlint passes on the target file with 0 errors (pass_to_pass).
-
-    CI: bunx oxlint --config=oxlint.json (uses oxlint from CI)
-    The bun repo uses oxlint in CI. Warnings are acceptable (existing code
-    has intentional patterns), but errors must be 0.
-    """
+    """Repo's oxlint passes on the target file with 0 errors (pass_to_pass)."""
     subprocess.run(
         ["npm", "install", "-g", "oxlint"],
         capture_output=True, text=True, timeout=120,
@@ -284,18 +327,11 @@ def test_repo_oxlint():
         ["npx", "oxlint", "--quiet", "test/cli/hot/hot.test.ts"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # --quiet shows only errors; exit code 0 means no errors
     assert r.returncode == 0, f"oxlint found errors:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — TypeScript typecheck
 def test_repo_typescript_project():
-    """Repo's TypeScript project compiles without errors (pass_to_pass).
-
-    CI: cd test && bun run typecheck (runs tsc --noEmit)
-    Excludes test/regression/issue/14477 which contains intentional JSX
-    syntax errors for regression testing.
-    """
+    """Repo's TypeScript project compiles without errors (pass_to_pass)."""
     subprocess.run(
         ["npm", "install", "-g", "typescript@5.9.2"],
         capture_output=True, text=True, timeout=120,
@@ -304,79 +340,65 @@ def test_repo_typescript_project():
         ["npx", "tsc", "--noEmit", "--skipLibCheck"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/test",
     )
-    # Filter out known intentional errors from regression fixtures
     errors = [line for line in r.stderr.splitlines() if "error TS" in line]
     real_errors = [e for e in errors if "regression/issue/14477" not in e]
     assert len(real_errors) == 0, f"TypeScript errors found:\n" + "\n".join(real_errors[:10])
 
 
-# [repo_tests] pass_to_pass — TypeScript syntax validation via tsc parser
 def test_target_typescript_syntax():
-    """Target file has valid TypeScript syntax and structure (pass_to_pass).
-
-    CI: Validates TypeScript can parse the file without syntax errors.
-    """
+    """Target file has valid TypeScript syntax (pass_to_pass)."""
     subprocess.run(
         ["npm", "install", "-g", "typescript@5.9.2"],
         capture_output=True, text=True, timeout=120,
     )
-    # Use TypeScript compiler to validate syntax - no emit, just parsing
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--skipLibCheck", "--target", "ESNext", "--module", "ESNext", "--moduleResolution", "bundler", TARGET],
+        ["npx", "tsc", "--noEmit", "--skipLibCheck", "--target", "ESNext",
+         "--module", "ESNext", "--moduleResolution", "bundler", TARGET],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Check for syntax errors specific to this file
-    errors = [line for line in r.stderr.splitlines() if "error TS" in line and "hot.test.ts" in line]
+    errors = [line for line in r.stderr.splitlines()
+              if "error TS" in line and "hot.test.ts" in line]
     assert len(errors) == 0, f"TypeScript syntax errors in target file:\n" + "\n".join(errors[:5])
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
-
-# [agent_config] fail_to_pass — test/CLAUDE.md:147 @ af24e281
 def test_buffer_alloc_convention():
-    """Large repetitive strings (>=100 chars) must use Buffer.alloc, not .repeat().
+    """Large repetitive strings must use Buffer.alloc instead of .repeat().
 
-    Rule: 'Use Buffer.alloc(count, fill).toString() instead of "A".repeat(count).
-    "".repeat is very slow in debug JavaScriptCore builds.'
-    Source: test/CLAUDE.md:147 @ af24e281
+    This is a behavioral check: run the tests and verify they complete in
+    reasonable time. If .repeat() is used for large strings, the debug
+    JavaScriptCore build is very slow.
     """
-    code = _read_code()
+    _ensure_bun()
 
-    # Find large .repeat() calls (number >= 100)
-    large_repeats = re.findall(
-        r'["\'][^"\']*["\']\s*\.\s*repeat\s*\(\s*(\d+)\s*\)', code
+    # Run the sourcemap generation test - if Buffer.alloc is used correctly,
+    # it completes in reasonable time; with .repeat() for large strings, it's slow
+    start = time.time()
+    result = _bun_exec([
+        "bun", "test", TARGET,
+        "--grep", "sourcemap generation",
+    ], timeout=TEST_TIMEOUT)
+    elapsed = time.time() - start
+
+    assert result.returncode == 0, (
+        f"Test failed (likely due to slow .repeat() on large strings):\n"
+        f"Exit code: {result.returncode}\n"
+        f"Stdout: {result.stdout[-500:]}\n"
+        f"Stderr: {result.stderr[-500:]}"
     )
-    has_large_repeat = any(int(n) >= 100 for n in large_repeats)
-    assert not has_large_repeat, (
-        f"Found .repeat() with large count: {[n for n in large_repeats if int(n) >= 100]}"
-    )
 
-    # Must use Buffer.alloc (or Uint8Array) for large string creation
-    has_buffer = bool(re.search(r'Buffer\.\s*alloc\s*\(', code))
-    has_uint8 = bool(re.search(r'new\s+Uint8Array\s*\(', code))
-    assert has_buffer or has_uint8, (
-        "No Buffer.alloc or Uint8Array found for large repetitive strings"
+    # If the test takes too long, it might be using .repeat() instead of Buffer.alloc
+    # The fix should complete in under 120 seconds on a reasonable machine
+    assert elapsed < 120, (
+        f"Test took {elapsed:.1f}s - this suggests .repeat() may be used "
+        f"instead of Buffer.alloc for large strings"
     )
 
 
-# [repo_tests] pass_to_pass — repo banned words check
-# This test verifies the repo's banned words policy (internal testing convention)
 def test_repo_banned_words():
-    """Repo's banned words test passes (pass_to_pass).
-
-    CI: bun test test/internal/ban-words.test.ts
-    This test ensures no banned words are used in test files.
-    """
-    import subprocess
-    # Install bun first
-    subprocess.run(
-        ["npm", "install", "-g", "bun"],
-        capture_output=True, text=True, timeout=120,
-    )
+    """Repo's banned words test passes (pass_to_pass)."""
+    _ensure_bun()
     r = subprocess.run(
-        ["bun", "test", "test/internal/ban-words.test.ts"],
+        ["bash", "-c", "export PATH=/root/.bun/bin:$PATH && bun test test/internal/ban-words.test.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Banned words test failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

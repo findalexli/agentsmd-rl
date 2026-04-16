@@ -116,46 +116,91 @@ def test_adrq_without_serialized_dag_is_excluded():
 
     The bug: When a DAG has AssetDagRunQueue rows but no SerializedDagModel
     (orphan ADRQ), the buggy code includes the dag_id in triggered_date_by_dag.
-    
+
     The fix: The dag_id should be excluded from triggered_date_by_dag when
     no matching SerializedDagModel exists.
-    
-    This test verifies the fix is present by checking the code logic.
+
+    This test calls the actual dags_needing_dagruns method with a scenario
+    where an ADRQ exists but no SerializedDagModel - and verifies the
+    dag_id is NOT in triggered_date_by_dag.
     """
-    dag_file = f"{REPO}/airflow-core/src/airflow/models/dag.py"
+    # Run a behavioral test via pytest using the repo's test infrastructure
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "airflow-core/tests/unit/models/test_dag.py::TestDagModel::test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing",
+            "-v", "--tb=short",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        env=AIRFLOW_ENV,
+    )
 
-    with open(dag_file, "r") as f:
-        content = f.read()
-
-    # Find the dags_needing_dagruns method
-    method_start = content.find("def dags_needing_dagruns")
-    if method_start == -1:
-        raise AssertionError("Method dags_needing_dagruns not found")
-
-    # Extract the method body
-    method_content = content[method_start:]
-    next_method = method_content.find("\n    def ", 1)
-    if next_method == -1:
-        method_body = method_content
-    else:
-        method_body = method_content[:next_method]
-
-    # Check that the fix is present: code should handle missing serialized dags
-    # The fix includes: missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids
-    has_missing_check = "missing_from_serialized" in method_body
-    has_ser_dag_ids = "ser_dag_ids" in method_body
-    has_deletion = "del adrq_by_dag[dag_id]" in method_body or "adrq_by_dag.pop" in method_body
-
-    # The fix should check for missing serialized dags and remove them
-    if not (has_missing_check and has_ser_dag_ids):
+    # The test should pass on the fixed code
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
         raise AssertionError(
-            "BUG NOT FIXED: Missing serialized dag check not found. "
-            "The code should check for dags in ADRQ but not in SerializedDagModel."
+            f"F2P FAIL: Orphan DAG with ADRQ but no SerializedDagModel was NOT excluded.\n"
+            f"Expected: test passes (dag_id excluded from triggered_date_by_dag)\n"
+            f"Actual: test failed\n"
+            f"Output:\n{output[-1500:]}"
         )
 
-    if not has_deletion:
+
+def test_adrq_rows_preserved_after_skip():
+    """
+    F2P: ADRQ rows must remain in database after dags_needing_dagruns().
+
+    The fix only removes orphan DAGs from in-memory data structures,
+    NOT from the database. This test verifies ADRQ rows are preserved.
+    """
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "airflow-core/tests/unit/models/test_dag.py::TestDagModel::test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing",
+            "-v", "--tb=short",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        env=AIRFLOW_ENV,
+    )
+
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
         raise AssertionError(
-            "BUG NOT FIXED: Code does not remove orphan dags from adrq_by_dag."
+            f"F2P FAIL: ADRQ row preservation check failed.\n"
+            f"Output:\n{output[-1500:]}"
+        )
+
+
+def test_multiple_orphan_dags_sorted_log():
+    """
+    F2P: When multiple DAGs lack SerializedDagModel, log message should list them sorted.
+
+    This verifies the fix properly sorts orphan DAG IDs alphabetically.
+    """
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "airflow-core/tests/unit/models/test_dag.py::TestDagModel::test_dags_needing_dagruns_missing_serialized_debug_lists_sorted_dag_ids",
+            "-v", "--tb=short",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        env=AIRFLOW_ENV,
+    )
+
+    if result.returncode != 0:
+        output = result.stdout + result.stderr
+        raise AssertionError(
+            f"F2P FAIL: Multiple orphan DAGs not sorted in log message.\n"
+            f"Output:\n{output[-1500:]}"
         )
 
 

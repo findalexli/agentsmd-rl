@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md explicitly names the target file (tpl/internal/templatefuncsRegistry.go), the deprecated APIs (parser.ParseDir, doc.New), the required new function signature (func parseDir(fset *token.FileSet, dir string) returning []*ast.File), the required patterns (parser.ParseFile(fset, with parser.ParseComments, doc.NewFromFiles(fset, astFiles,), the required import (go/ast), and all build/test/vet/fmt commands. Every string and pattern asserted in the tests is discoverable from the inst"
+      "outcome": "fail",
+      "reason": "The tests assert very specific implementation details not fully discoverable from instruction.md: test_parse_dir_helper_exists checks for a function named exactly 'parseDir' with a specific signature pattern '(*token.FileSet, dir) returns []*ast.File'; test_uses_doc_new_from_files checks for 'doc.NewFromFiles(fset, <files>, ...)' with the specific variable name 'fset'; test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile'. While instruction.md mentions parseDir helper, parser.Parse"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact function signature 'func parseDir(fset *token.FileSet, dir string)' returning '[]*ast.File', the exact call patterns 'parser.ParseFile(fset,' with 'parser.ParseComments', and 'doc.NewFromFiles(fset, astFiles,'. This essentially dictates the implementation rather than just describing what's broken. A competent developer doesn't need to reason about WHAT to change \u2014 the instruction tells them exactly what code to write."
+      "reason": "instruction.md explicitly states the exact fix: 'must use parser.ParseFile API (not parser.ParseDir)', 'must use doc.NewFromFiles instead of doc.New', 'must define an unexported helper function for directory parsing', 'must import the go/ast package'. These are not descriptions of what's broken but direct prescriptions of what to change to."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_parse_dir_helper_exists checks for exact signature 'func parseDir(fset *token.FileSet, dir string)', test_uses_doc_new_from_files checks for exact string 'doc.NewFromFiles(fset, astFiles,', and test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile(fset,'. An alternative correct fix could use a different helper name (e.g., parseDirFiles), different parameter names (e.g., 'files' instead of 'astFiles'), or inline the logic wit"
+      "reason": "Tests enforce gold-specific implementation details: test_parse_dir_helper_exists requires a function named exactly 'parseDir' with a specific signature involving *token.FileSet returning []*ast.File. An alternative correct fix could use a different helper name (e.g., 'parseDirFiles'), use a closure instead of a named function, or inline the logic. test_uses_doc_new_from_files requires the variable name 'fset' in the call to doc.NewFromFiles. These constraints reject valid alternative implementat"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_parse_dir_helper_exists, test_parse_dir_uses_parser_parse_file, test_uses_doc_new_from_files, and test_ast_import_added are purely text-matching tests (reading file content and checking for string presence). While tests like test_code_compiles, test_package_tests_pass, test_repo_go_vet do execute subprocesses, the majority of fail-to-pass tests are pure text assertions."
+      "reason": "Tests test_parse_dir_helper_exists, test_parse_dir_uses_parser_parse_file, test_uses_doc_new_from_files, test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_ast_import_added, and test_parse_dir_not_exported are all purely text-matching (regex on file content). However, tests test_code_compiles, test_package_tests_pass, test_check_script_compiles, test_repo_go_vet, test_repo_gofmt, and test_repo_build_all do execute subprocesses. Since not EVERY test is text-only, this is border"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the original file (e.g., parseDir helper, doc.NewFromFiles, go/ast import). A stub or no-op cannot satisfy these since the original file contains parser.ParseDir and doc.New which would trigger failures. The build tests also ensure the code actually compiles."
+      "reason": "The fail-to-pass tests check for specific code patterns (parseDir function, parser.ParseFile usage, doc.NewFromFiles usage, go/ast import) and absence of deprecated calls. A stub or no-op implementation would not pass these tests since the original file contains the deprecated calls and lacks the required new patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 11 verification criteria listed in instruction.md are covered by corresponding tests: deprecated API removal (tests 1-2), new code patterns (tests 3-6), and build/quality checks (tests 7-11)."
+      "reason": "All 11 verification criteria listed in instruction.md are covered by corresponding test functions: deprecated API removal (tests 1-2), new code requirements (tests 3-6), and build/quality checks (tests 7-11)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_no_deprecated_parser_parse_dir, test_code_compiles), have docstrings indicating fail-to-pass vs pass-to-pass nature, and are logically grouped by concern (deprecated removal, new patterns, build quality)."
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating what each checks (e.g., 'Fail-to-pass: parser.ParseDir should not be used') and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Go source code, not producing structured data output."
+      "reason": "This task involves code refactoring, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (tpl/internal/templatefuncsRegistry.go) AND the exact function signature, exact call patterns, and exact variable names to use (e.g., 'doc.NewFromFiles(fset, astFiles,'). This goes beyond identifying the buggy file and essentially provides the implementation details, making localization and solution design trivial."
+      "reason": "instruction.md names the exact file 'tpl/internal/templatefuncsRegistry.go' and specifies exact replacement APIs (parser.ParseFile, doc.NewFromFiles), the exact helper function name (unexported parseDir), and the exact import (go/ast). This goes well beyond identifying what's broken and prescribes the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

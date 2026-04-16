@@ -1,0 +1,131 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 43138
+  base_commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+  merge_commit: "372c27e71f80e64571ac1149d1708e641d7d44da"
+
+# Track 1: Hard tests (binary pass/fail via test.sh)
+checks:
+  # Code behavior tests
+  - id: training_args_has_new_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrainingArguments should have train_sampling_strategy field instead of group_by_length"
+
+  - id: training_args_choices_documented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TrainingArguments should document the three valid choices for train_sampling_strategy"
+
+  - id: trainer_uses_new_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Trainer should use train_sampling_strategy instead of group_by_length"
+
+  - id: sequential_sampler_imported
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SequentialSampler should be available for the new sampling option"
+
+  - id: iterable_dataset_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "IterableDataset should log info message instead of raising ValueError"
+
+  # Config/instruction file update tests
+  - id: readme_examples_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "README.md examples should use --train_sampling_strategy instead of --group_by_length"
+
+  - id: readme_multiple_examples_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "All 6 occurrences in README should be updated (all CTC and seq2seq examples)"
+
+  # Pass-to-pass tests
+  - id: module_imports_correctly
+    type: pass_to_pass
+    origin: static
+    description: "The transformers module should import without errors after the change"
+
+  - id: train_sampling_strategy_values_work
+    type: pass_to_pass
+    origin: static
+    description: "TrainingArguments should accept all valid train_sampling_strategy values"
+
+# Track 2: Gold config edits (extracted deterministically from solve.sh)
+config_edits:
+  - path: "examples/pytorch/speech-recognition/README.md"
+    tier: 2
+    gold_added: "--train_sampling_strategy group_by_length"
+    gold_removed: "--group_by_length"
+
+# Track 3: Positive rubric - conventions the gold solution FOLLOWS
+rubric:
+  - rule: "Prefer minimal changes when refactoring - replace boolean with string enum, don't add unnecessary abstractions"
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    evidence: "Gold changes group_by_length bool to train_sampling_strategy str with 3 choices - minimal API change"
+    category: code_style
+    verification: llm_judge
+
+  - rule: "When updating examples, keep the same parameter value semantics (--group_by_length becomes --train_sampling_strategy group_by_length)"
+    source:
+      path: "AGENTS.md"
+      lines: "11-12"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    evidence: "Gold preserves group_by_length behavior by using explicit value in examples"
+    category: code_style
+    verification: llm_judge
+
+  - rule: "Update docstrings when changing parameter semantics - document new options clearly"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15-16"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    evidence: "Gold updates docstrings to document random/sequential/group_by_length options"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Handle backward compatibility gracefully - warn instead of error for incompatible options"
+    source:
+      path: "AGENTS.md"
+      lines: "10"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    evidence: "Gold changes ValueError to logger.info for IterableDataset - graceful degradation"
+    category: error_handling
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that create COLLISIONS
+distractors:
+  - rule: "Always maintain backward compatibility by keeping old parameter names as aliases"
+    source:
+      path: "AGENTS.md"
+      lines: "1-5"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    collision_type: scope_ambiguity
+    why_distracting: "This PR breaks backward compatibility intentionally (API change). Adding aliases would contradict the design goal."
+    severity: medium
+
+  - rule: "Keep PRs as brief as possible - only change the core implementation, don't update examples"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "12"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    collision_type: scope_ambiguity
+    why_distracting: "Examples MUST be updated when API changes - users need working examples."
+    severity: high
+
+  - rule: "When adding new sampler options, add comprehensive tests in tests/trainer/test_trainer.py"
+    source:
+      path: "AGENTS.md"
+      lines: "31-35"
+      commit: "8efd81513f51cd343d086e0e8f69190caa49dbcf"
+    collision_type: scope_ambiguity
+    why_distracting: "This PR updates existing tests to use new parameter but doesn't add new test file - appropriate for this scope."
+    severity: low

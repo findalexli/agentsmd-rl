@@ -1,58 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all key file paths (chart/values.yaml, chart/values.schema.json, chart/templates/workers/worker-kubernetes-serviceaccount.yaml, chart/templates/_helpers.yaml, chart/files/pod-template-file.kubernetes-helm-yaml, chart/templates/NOTES.txt, chart/newsfragments/64730.significant.rst), helper names (_serviceAccountNameGen, worker.kubernetes.serviceAccountName, _serviceAccountName with .subKey), configuration keys (workers.celery.serviceAccount, workers.kubernetes.serviceAccou"
+      "reason": "All tested paths (chart/values.yaml, chart/values.schema.json, chart/templates/workers/worker-kubernetes-serviceaccount.yaml, chart/templates/_helpers.yaml, chart/files/pod-template-file.kubernetes-helm-yaml, chart/templates/NOTES.txt, chart/newsfragments/64730.significant.rst) and helper names (_serviceAccountNameGen, worker.kubernetes.serviceAccountName, .subKey) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be added/changed at a requirements level (new configuration sections, new template files, helper names, backward compatibility behavior) but does not give exact code or line-by-line changes. A developer must still reason about the implementation."
+      "reason": "The instruction describes what must exist (helpers, fields, fallback behavior) but doesn't give line-level edit instructions or code snippets."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on specific helper names like '_serviceAccountNameGen' and 'worker.kubernetes.serviceAccountName' (visible in the truncated test file and instruction), and the test test_helpers_yaml_has_serviceaccountnameGen checks for exact helper naming. An alternative correct implementation using different helper names (e.g., 'kubernetes.worker.saName') would fail these tests despite being functionally correct. The tests also check for exact .subKey parameter support in _serviceAccountName, whic"
+      "reason": "Tests assert specific helper names like `_serviceAccountNameGen`, `worker.kubernetes.serviceAccountName`, and `.subKey` parameter\u2014an alternative correct fix using different helper names would fail; however these names are prescribed in the instruction, so this is by design but still constrains implementation."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests execute helm template rendering via subprocess (_render_helm_template) and check the rendered output for expected ServiceAccount resources and names. While some tests like test_values_has_workers_celery_serviceaccount_fields and test_schema_has_workers_celery_serviceaccount inspect file contents, they parse YAML/JSON and check structure rather than raw text matching. The behavioral tests (rendering helm templates) are the primary fail-to-pass tests."
+      "reason": "Tests run `helm template` subprocess and assert rendered output contains expected SA names/annotations, verifying actual Helm rendering behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests render helm templates with specific values and assert that custom service account names (e.g., 'my-k8s-sa', 'custom-k8s-sa-name', 'my-celery-sa') appear in the rendered output. A stub/no-op implementation would not produce these names in helm template output, so the tests require actual implementation."
+      "reason": "Tests like test_worker_kubernetes_serviceaccount_renders require actual ServiceAccount resources with custom names to render; a stub could not satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major requirements from the instruction: kubernetes SA rendering, celery SA rendering, custom names, annotations, backward compatibility/fallback, values.yaml structure, schema validation, pod template usage, and deprecation warnings in NOTES.txt."
+      "reason": "Tests cover rendering, custom names, annotations, pod-template usage, backward compatibility fallback, values.yaml structure, and schema definitions as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_worker_kubernetes_serviceaccount_renders, test_deprecated_fallback_when_k8s_not_set, etc.), have docstrings, and are grouped with a section comment separating fail-to-pass tests."
+      "reason": "Tests have descriptive names, docstrings, and a section header comment separating fail-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact schema structure for values.yaml (four fields: automountServiceAccountToken, create, name, annotations) and values.schema.json properties. The JSON schema requirements are documented."
+      "reason": "Instruction specifies exact field names and types for values.yaml and values.schema.json sections."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, configuration keys, helper names, and commands in the instruction are consistent and correctly spelled throughout."
+      "reason": "File paths and helper names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact helper function names (_serviceAccountNameGen, worker.kubernetes.serviceAccountName), exact parameter names (.subKey), and exact template file paths to create. This goes beyond describing requirements and prescribes implementation details that should be the agent's job to determine."
+      "outcome": "pass",
+      "reason": "Instruction describes the feature requirement rather than pinpointing buggy lines; naming affected files is appropriate given the task is to add/modify them."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch (from PR #64730) makes localized additions to values.yaml, schema, templates, and helpers without full-file rewrites, and doesn't contradict the instruction or test expectations."
+      "outcome": "not_applicable",
+      "reason": "This is a feature-addition task to a Helm chart, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
+  "tier_c_fails": [],
   "pass_count": 9,
-  "fail_count": 2
+  "fail_count": 1
 }

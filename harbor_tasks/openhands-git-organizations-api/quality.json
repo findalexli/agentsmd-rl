@@ -2,56 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific names like 'saas_get_user_git_organizations' (the exact function name in enterprise/server/routes/user.py), 'get_user_groups' method on GitLabService, 'get_github_organizations' and 'get_gitlab_groups' on ProviderHandler, '_make_request' as the internal method name, 'min_access_level=10' and 'per_page=100' as string params, and 'service.BASE_URL' usage. While the instruction mentions some of these concepts, it never names 'saas_get_user_git_organizations' explicitly, nev"
+      "outcome": "pass",
+      "reason": "The instruction names the endpoint path GET /git-organizations, the function name saas_get_user_git_organizations, the module server.routes.user, the method get_user_groups on GitLabService, get_github_organizations and get_gitlab_groups on ProviderHandler, the path field extraction, min_access_level/per_page as string params, the JSON response schema with provider and organizations keys, 400 for unsupported providers, and 401 for missing tokens. All test-asserted specifics are discoverable from"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to implement (new endpoint, new methods) but doesn't specify exact line changes or the precise code to write. It describes behavior and requirements, not the fix itself."
+      "reason": "The instruction describes what to implement (new endpoint, new methods, expected behavior) but does not specify exact line numbers, diffs, or verbatim code to insert. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the exact function name 'saas_get_user_git_organizations', the exact method names 'get_github_organizations' and 'get_gitlab_groups' on ProviderHandler, the exact method 'get_user_groups' on GitLabService, and that '_make_request' is called with string parameters {'min_access_level': '10', 'per_page': '100'}. An alternative correct implementation using different method names or passing integer params would fail."
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes: method existence, return values from mocked services, error status codes. They don't assert on specific internal variable names, line positions, or implementation-specific helpers. Alternative correct implementations (e.g., different error messages, different internal structure) would pass as long as they return the right values and status codes."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests import modules, instantiate objects, call async methods, and check return values. While test_enterprise_api_endpoint_exists has a fallback that checks file content via string matching, the primary path attempts actual import and callable check, and most other tests execute real code paths."
+      "reason": "Most tests import modules, instantiate classes, call async methods, and assert on return values. The test_enterprise_api_endpoint_exists has a fallback that checks file content, but the primary path imports and calls the function. The subprocess tests actually run pytest. This is predominantly behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests like test_gitlab_get_user_groups_returns_group_paths verify that the method calls _make_request with specific parameters and returns extracted 'path' fields, which cannot be satisfied by a stub returning None or empty list. test_get_github_organizations_delegates_to_service checks delegation to the service. These require actual implementation logic."
+      "reason": "The f2p tests require non-trivial implementations: test_gitlab_get_user_groups_returns_group_paths requires extracting 'path' fields from dicts (a stub returning [] would fail since it asserts == ['my-team', 'open-source']). test_get_github_organizations_delegates_to_service asserts == ['org1', 'org2']. test_enterprise_api_unsupported_provider_returns_400 requires returning a JSONResponse with status 400. These cannot be satisfied by stubs returning None or empty collections."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: handler function, GitLab get_user_groups method, provider handler methods for GitHub/GitLab/Bitbucket, error handling for unsupported providers, and structured JSON response. Tests cover all these behaviors including error cases and provider delegation."
+      "reason": "The instruction requires: organizations endpoint, multiple providers, error handling (400/unsupported, 401/no tokens), structured response, GitLab get_user_groups, GitHub/GitLab delegation methods. Tests cover all these: provider-specific delegation, unsupported provider 400, method existence, correct return values, error handling returning empty lists."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'FAIL TO PASS TESTS' and 'PASS TO PASS TESTS' sections with descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive docstrings, grouped into 'FAIL TO PASS' and 'PASS TO PASS' sections with clear comments, and each test focuses on a single behavior."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies the JSON response schema: '{\"provider\": \"github\", \"organizations\": [\"org1\", \"org2\"]}' with 'provider' and 'organizations' keys, which matches what the tests verify."
+      "reason": "The instruction specifies the JSON response schema: {\"provider\": \"github\", \"organizations\": [\"org1\", \"org2\"]} with provider and organizations keys. This matches what tests verify."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what to implement at a feature level without pointing to exact files or line numbers. It mentions 'enterprise server routes' and 'GitLab service' generically, which is appropriate for the task domain."
+      "outcome": "fail",
+      "reason": "The instruction specifies exact implementation details like 'importable as server.routes.user', exact method names get_github_organizations/get_gitlab_groups on ProviderHandler, exact parameter format {'min_access_level': '10', 'per_page': '100'} as strings, and 'use the path field from each group dict'. While these are necessary for correctness, the level of specificity (especially string-typed params and path field extraction) goes beyond describing behavior and into prescribing implementation"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code implementation task, not a config edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 9,
+  "fail_count": 1
 }

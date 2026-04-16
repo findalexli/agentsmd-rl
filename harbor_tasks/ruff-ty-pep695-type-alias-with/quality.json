@@ -3,59 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_typealias_before_no_instance_fallback checks that 'Type::TypeAlias' match arm appears before 'no_instance_fallback()' guard; test_typealias_unwraps_to_value_type checks for 'value_type' and 'member_lookup_with_policy' delegation pattern; test_mdtest_type_alias_section checks for specific markdown section header 'Type aliases preserve context manager behavior' and specific class names A/B with Self return types. The instruction m"
+      "reason": "Tests assert specific structural details like the function name 'member_lookup_with_policy', the identifier 'no_instance_fallback()', and exact file paths like 'crates/ty_python_semantic/src/types.rs' and 'crates/ty_python_semantic/resources/mdtest/with/sync.md'. While instruction.md does mention these paths and function names, the tests also check for specific patterns like 'Type::TypeAlias(alias) => alias' and 'value_type' delegation within the function body (test_typealias_unwraps_to_value_ty"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md states 'the member_lookup_with_policy method on Type handles member lookup dispatch; the order of match arms matters for dunder method resolution' \u2014 this directly reveals that the fix is about reordering match arms in member_lookup_with_policy, which is essentially the entire solution."
+      "reason": "instruction.md explicitly states: 'Member lookup dispatch for type system variants must handle Type::TypeAlias(alias) before the descriptor protocol fallback (identified by no_instance_fallback())' and 'the implementation must unwrap the alias by accessing its value_type(db) and recursively perform member lookup via member_lookup_with_policy()'. This is essentially the complete fix \u2014 move the TypeAlias arm before no_instance_fallback and call value_type(db).member_lookup_with_policy(). No reason"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_typealias_before_no_instance_fallback explicitly checks that 'Type::TypeAlias' arm appears before 'no_instance_fallback()' in the source code. test_typealias_unwraps_to_value_type checks for 'value_type' and 'member_lookup_with_policy' in the arm body. These are implementation-specific checks that would fail for alternative correct fixes (e.g., modifying no_instance_fallback to handle TypeAlias, or adding special TypeAlias handling in the with-statement checker itself)."
+      "reason": "test_typealias_before_no_instance_fallback checks that a 'Type::TypeAlias' match arm with '=>' appears before 'no_instance_fallback()' in the function body. test_typealias_unwraps_to_value_type checks for 'value_type' and 'member_lookup_with_policy' in the arm body. These assert on gold-specific implementation details \u2014 an alternative correct fix (e.g., modifying the no_instance_fallback logic itself to check for TypeAlias, or handling it in a different function) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail_to_pass tests (test_typealias_before_no_instance_fallback, test_typealias_unwraps_to_value_type) are purely text-matching tests that read the source file and check string patterns/line ordering. test_mdtest_type_alias_section also checks for specific text content in the markdown test file. While some pass_to_pass tests do execute cargo commands, the fail_to_pass tests that verify the bug fix are entirely text-based."
+      "reason": "The fail_to_pass tests (test_typealias_before_no_instance_fallback, test_typealias_unwraps_to_value_type) are purely text-inspection tests that read the source file and check for string patterns. They do not execute the code. However, the pass_to_pass tests (test_mdtest_with_sync, test_cargo_check_ty_python_semantic, etc.) do compile and run the code. The f2p tests themselves are text-based assertions."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail_to_pass tests check specific structural properties of the code that would not be satisfied by the base commit \u2014 the TypeAlias arm is after no_instance_fallback in the original code, and test_typealias_before_no_instance_fallback would fail. test_mdtest_with_sync also runs actual cargo tests that would fail without the fix."
+      "outcome": "fail",
+      "reason": "The f2p test test_typealias_before_no_instance_fallback only checks line ordering of text patterns in the source file. A stub that simply moves the existing TypeAlias arm text above no_instance_fallback without any functional implementation would pass this test. Similarly, test_typealias_unwraps_to_value_type just checks for the presence of 'value_type' and 'member_lookup_with_policy' strings. However, test_mdtest_with_sync (pass_to_pass) does execute cargo test which would verify behavior. But "
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes that all three forms of type alias should resolve context manager protocol methods in with statements, and the tests verify this through the mdtest additions (test_mdtest_type_alias_section) and the structural code checks."
+      "reason": "All behaviors described in instruction.md are tested: the structural code change (TypeAlias before no_instance_fallback), the delegation to value_type, the mdtest file with all three alias forms, and the cargo test execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (pass_to_pass repo_tests, static gates, fail_to_pass pr_diff, behavioral integration), descriptive function names, and docstrings explaining the purpose of each test."
+      "reason": "Tests are well-grouped with comments separating 'pass_to_pass (repo_tests)', 'Gates (pass_to_pass, static)', and 'Fail-to-pass (pr_diff)' sections, with descriptive docstrings for each test function."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Rust source code and markdown test files, not producing structured data."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names 'member_lookup_with_policy' method and states 'the order of match arms matters for dunder method resolution', which directly reveals the fix mechanism. It also points to the exact file and method where the change needs to be made."
+      "reason": "instruction.md names the exact file ('crates/ty_python_semantic/src/types.rs'), the exact function ('member_lookup_with_policy'), the exact guard ('no_instance_fallback()'), and the exact fix pattern ('handle Type::TypeAlias before the descriptor protocol fallback'). This is extreme localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Rust source and markdown test file changes, not configuration edits."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

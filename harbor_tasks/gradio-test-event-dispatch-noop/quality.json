@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (js/utils/src/utils.svelte.ts, js/tootils/src/render.ts, js/textbox/shared/Textbox.svelte, js/spa/vite.config.ts, js/tootils/src/index.ts), the Gradio class constructor, __GRADIO_BROWSER_TEST__, register_component, handle_copy, clipboard API, IconButtonWrapper prop mismatch, contextOptions vs instances permissions, and the render() function's event helpers. All assert'd specifics in tests (file paths, function names, concepts like listener Map, liste"
+      "reason": "All file paths and component names referenced in tests (utils.svelte.ts, render.ts, Textbox.svelte, vite.config.ts, Gradio class, register_component, handle_copy, contextOptions) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (no-op dispatcher, missing event helpers, clipboard crash, prop mismatch, wrong permissions location) but does not specify exact code changes like 'change line X to Y' or 'replace foo with bar'. A developer must still reason about the specific implementation."
+      "reason": "Instruction describes WHAT is broken (no-op override, missing functions, missing error handling, wrong prop name, wrong location) but not exact code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details that alternative correct fixes might not share. For example: test_listener_registry requires a regex match for 'function listen(' (a named function), and requires a Map with specific naming patterns (listener|event|handler). test_dispatcher_notifies_listeners checks for specific variable naming patterns like 'notify|listener|emit|callback|fn'. test_render_returns_event_helpers checks for >= 5 returned fields. An alternative correct fix using diff"
+      "reason": "Tests assert specific implementation details: test_listener_registry requires `function listen(` declaration specifically, test_render_returns_event_helpers requires >=5 return fields, test_dispatcher_notifies_listeners forbids dispatchEvent \u2014 alternative valid fixes (e.g., arrow function `const listen =`, returning fewer fields, or using both dispatchEvent and listeners) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses only file reading and regex/string matching (e.g., `re.search(...)`, `'X' in stripped`, `'X' not in stripped`). No test imports, calls, or executes any code. This is purely textual/structural analysis with no behavioral verification."
+      "reason": "All tests are regex/string analysis on file contents (per the docstring: 'All checks use structural/regex analysis'); no code is executed since node_modules aren't installed."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific structural properties that a stub/no-op would not satisfy. For example, test_noop_dispatcher_removed checks that __GRADIO_BROWSER_TEST__ is NOT present and that dispatcher IS assigned; test_listener_registry checks for a Map and listen function; test_clipboard_error_handling checks for try/catch around clipboard. A trivial stub (empty file, pass, etc.) would fail these assertions."
+      "reason": "Each test asserts specific structural changes (removal of __GRADIO_BROWSER_TEST__, addition of try/catch around clipboard, contextOptions location) that a stub couldn't trivially pass."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction item #4 (IconButtonWrapper prop mismatch - on_custom_button_click vs oncustombuttonclick) is not tested at all. The gold patch changes the prop name in Textbox.svelte but no test verifies this fix. Also, the barrel export change in js/tootils/src/index.ts (removing 'export * from ./render') mentioned in the instruction's files list is not tested."
+      "outcome": "pass",
+      "reason": "All 5 issues from instruction (dispatcher override, render helpers, clipboard error handling, IconButtonWrapper prop, vitest permissions) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_noop_dispatcher_removed, test_listener_registry, etc.), each has a docstring explaining what it checks, and they're grouped into gate tests (pass_to_pass) and behavioral tests (fail_to_pass) with clear comments."
+      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass) and each test has descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing JS/Svelte source code and configuration, not producing structured data output."
+      "reason": "Task is code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands appear correct. 'tootils' is the actual directory name in the Gradio repo, not a typo."
+      "reason": "File paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction identifies files and general areas (constructor, render function) but doesn't specify exact line numbers. Mentioning 'the constructor of the Gradio class' is appropriate since the task requires understanding what's broken, not just finding the line."
+      "reason": "Instruction names files but localization within files is still required (e.g., 'Look at the constructor', 'the prop name used doesn't match')."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diff in vite.config.ts is localized to the browser/provider permissions section, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "vite.config.ts diff is localized to the browser/provider block, not a full rewrite."
     }
   },
   "tier_a_fails": [
@@ -51,9 +51,7 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

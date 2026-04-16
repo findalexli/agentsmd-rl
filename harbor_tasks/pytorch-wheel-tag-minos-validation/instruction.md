@@ -24,6 +24,11 @@ This matters because:
      - Reads the single `torch-*.whl` file from the directory in env var `PYTORCH_FINAL_PACKAGE_DIR` (if set) or from the installed torch package metadata (if not set)
      - Raises `RuntimeError` if more than one torch wheel is found in that directory
      - Validates each tag's python tag, ABI tag, and platform tag
+     - Each tag must be exactly in the format `<python>-<abi>-<platform>` (three dash-separated parts). Malformed tags — including but not limited to:
+       - `cp312-linux_x86_64` (only one part, missing ABI and platform)
+       - `cp312` (only one part)
+       - `cp312-cp312-linux_x86_64-extra` (four parts, an extra component after the platform)
+       must be rejected with a `RuntimeError`
      - Raises `RuntimeError` on any mismatch
    - Provides a function `check_mac_wheel_minos()` that on macOS extracts dylibs from the wheel, runs `otool -l` on each, and verifies the `minos` field matches the wheel filename's OS version
    - Raises `RuntimeError` on any mismatch
@@ -31,3 +36,8 @@ This matters because:
 2. **Integrate the new module** into `smoke_test.py` by:
    - Importing `check_wheel_platform_tag` and `check_mac_wheel_minos` from `check_wheel_tags`
    - Calling both functions from `main()`
+
+3. **Code quality requirements**:
+   - All functions in `check_wheel_tags.py` must be genuine implementations with at least 3 statements in the function body beyond the docstring (no stub functions)
+   - The code in `.ci/pytorch/smoke_test/` must pass `ruff check` linting with no errors
+   - The script `.ci/pytorch/check_binary.sh` must pass `shellcheck` validation with no errors

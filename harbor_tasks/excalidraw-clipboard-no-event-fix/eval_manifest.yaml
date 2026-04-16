@@ -1,0 +1,82 @@
+source:
+  pr: "excalidraw/excalidraw#10729"
+  title: "fix(editor): copying to clipboard with no ClipboardEvent"
+  merge_commit: "54a98268177c19cee7a49d05ce56e64f7a424db1"
+  base_commit: "d29fd62e417b8cb73d1d5dc3e207735046401491"
+
+task:
+  name: "excalidraw-clipboard-no-event-fix"
+  description: "Fix clipboard copying when no ClipboardEvent is available"
+  target_files:
+    - "packages/excalidraw/clipboard.ts"
+    - "packages/excalidraw/components/FilledButton.scss"
+
+# Test-to-check mapping
+checks:
+  # Fail-to-pass tests (behavioral fixes)
+  - id: test_const_plainTextEntry_not_let
+    type: fail_to_pass
+    origin: behavior
+    description: "plainTextEntry should be declared as const, not let"
+
+  - id: test_return_inside_clipboardEvent_block
+    type: fail_to_pass
+    origin: behavior
+    description: "First return statement should be inside the if (clipboardEvent) block"
+
+  - id: test_return_after_navigator_clipboard_writeText
+    type: fail_to_pass
+    origin: behavior
+    description: "Should return after navigator.clipboard.writeText succeeds"
+
+  - id: test_no_plainTextEntry_reassignment
+    type: fail_to_pass
+    origin: behavior
+    description: "plainTextEntry should not be reassigned (no 'plainTextEntry = undefined')"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes"
+
+  - id: test_clipboard_ts_no_syntax_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "clipboard.ts has no syntax errors"
+
+  - id: test_repo_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ESLint checks pass (yarn test:code)"
+
+  - id: test_repo_prettier_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo Prettier checks pass (yarn test:other)"
+
+  - id: test_clipboard_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Clipboard unit tests pass"
+
+  - id: test_clipboard_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Clipboard integration tests pass"
+
+# Note: This is a code-only bugfix task. The rubric is informational only
+# since the judge evaluates config file edits, not code changes.
+# The actual validation is done by the test suite (test_outputs.py).
+rubric:
+  - rule: "TypeScript code changes follow project conventions"
+    source: "CLAUDE.md"
+    description: "Code is TypeScript and uses const for immutable variables"
+
+  - rule: "Code changes properly handle control flow"
+    source: "clipboard.ts"
+    description: "Return statements correctly placed in conditional blocks"
+
+  - rule: "Clipboard operations properly handle async flow"
+    source: "copilot-instructions.md"
+    description: "Try/catch blocks used for async clipboard operations"

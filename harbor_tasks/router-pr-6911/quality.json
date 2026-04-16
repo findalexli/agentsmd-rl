@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (Matches.tsx in @tanstack/solid-router), the specific patterns to look for (useMatchRoute, MatchRoute, createMemo, renderedChild, props.children), and the expected variable names and code structures that the tests assert on."
+      "reason": "The instruction names the file (Matches.tsx in @tanstack/solid-router), the specific patterns to implement (e.g., 'const renderedChild = Solid.createMemo(', 'const child = props.children', 'return <>{renderedChild()}</>'), the functions useMatchRoute and MatchRoute, and mentions type checking, build, ESLint, and unit tests. All assert'd specifics in the tests (file path, variable names, patterns) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'The options parameter destructuring pattern must be moved so it happens inside the Solid.createMemo() callback', provides exact code snippets of the fix, and lists specific patterns that 'must appear in the code' like 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>'. This tells the agent exactly WHAT to change, not just what's broken."
+      "reason": "instruction.md explicitly states the exact fix: 'The options parameter destructuring pattern must be moved so it happens inside the Solid.createMemo() callback', provides the exact code pattern, and specifies 'const renderedChild = Solid.createMemo(', 'const child = props.children (inside the memo callback)', and 'return <>{renderedChild()}</>'. This leaves no reasoning for the agent \u2014 it's a direct specification of the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'renderedChild' (test_matchroute_uses_creatememo asserts 'const renderedChild = Solid.createMemo('), exact pattern 'const child = props.children' inside memo (test_matchroute_child_inside_memo), and exact return pattern 'return <>{renderedChild()}</>' (test_matchroute_returns_fragment). Alternative correct fixes using different variable names or patterns would fail."
+      "reason": "Tests assert exact string patterns like 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>' and 'const child = props.children' inside createMemo. An alternative correct fix (e.g., using a different variable name like 'memoChild', or using createEffect, or restructuring differently while still fixing reactivity) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The first 4 fail_to_pass tests (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, test_matchroute_child_inside_memo, test_matchroute_returns_fragment) are purely text-matching tests using regex/string matching on file content with no execution. They do `assert 'const renderedChild = Solid.createMemo(' in content` etc. The pass_to_pass tests do run builds/tests, but the core fail_to_pass tests are entirely text-based."
+      "reason": "The first 4 fail_to_pass tests (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, test_matchroute_child_inside_memo, test_matchroute_returns_fragment) are purely text-matching with regex/string assertions on file content (e.g., 'assert \"const renderedChild = Solid.createMemo(\" in content'). They never import, call, or execute the code. The pass_to_pass tests do run subprocesses, but the core fail_to_pass tests are all text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string patterns in source code. An agent could simply insert the exact string patterns as dead code or comments (e.g., add '// const renderedChild = Solid.createMemo(') and pass the text-matching tests without actually fixing the bug. The regex patterns are not strict enough to verify the code is functional."
+      "reason": "The fail_to_pass tests only check for string patterns in the source file. Writing exactly the specified strings into the file (without any actual logic) would pass tests like test_matchroute_uses_creatememo and test_matchroute_returns_fragment. A stub that contains the literal text 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>' would pass those tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: opts destructuring inside createMemo, renderedChild using createMemo, props.children inside memo, fragment return, plus type checking, build, eslint, and unit tests."
+      "reason": "The instruction requires reactivity fixes, type checking, build, ESLint, and unit tests passing. The tests cover all of these: text-based checks for the reactivity patterns, plus subprocess tests for types, build, ESLint, unit tests, and build validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, etc.), have detailed docstrings explaining the buggy vs fixed patterns, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, etc.), each has a detailed docstring explaining the buggy vs fixed pattern, and they are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data output."
+      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (Matches.tsx), exact function names (useMatchRoute, MatchRoute), exact variable names (renderedChild), and provides before/after code patterns. It also states exact required patterns like 'const renderedChild = Solid.createMemo(' which is extreme localization beyond what's needed for the task domain."
+      "reason": "instruction.md names the exact file (Matches.tsx), the exact functions (useMatchRoute, MatchRoute), and provides the exact code patterns including variable names and line-level restructuring details. This goes far beyond describing what's broken \u2014 it specifies exactly where and how to fix it."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

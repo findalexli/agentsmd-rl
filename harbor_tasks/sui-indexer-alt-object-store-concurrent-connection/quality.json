@@ -1,57 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key test functions (test_reader_watermark_roundtrip, test_pruner_watermark_wait_for_ms, test_init_watermark_migrates_legacy_format, test_init_watermark_returns_existing_on_conflict), the crate name (sui-indexer-alt-object-store), the file path (crates/sui-indexer-alt-object-store/src/lib.rs), struct fields (reader_lo, pruner_hi, pruner_timestamp_ms), helper functions (watermark_path, get_watermark_for_read, get_watermark_for_write, set_watermark), and the cargo test com"
+      "outcome": "fail",
+      "reason": "Tests reference specific test names like test_set_pruner_watermark, test_init_watermark_fresh_with_checkpoint which are not mentioned in instruction.md; instruction lists only 4 test cases but tests check for more."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what needs to be implemented (trait methods, helper functions, watermark format) but does not give exact code or line-level changes. The developer must reason about HOW to implement the ConcurrentConnection trait methods, concurrency control, format migration, etc."
+      "outcome": "fail",
+      "reason": "Instruction explicitly names helper functions to implement (watermark_path, get_watermark_for_read, get_watermark_for_write, set_watermark) and specifies field names (reader_lo, pruner_hi, pruner_timestamp_ms) along with formulas like 'pruner_timestamp_ms + delay - now'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests test_watermark_path_helper_exists, test_get_watermark_helpers_exist, and test_object_store_watermark_struct_exists use string matching like 'async fn get_watermark_for_read', 'async fn get_watermark_for_write', 'fn watermark_path', 'reader_lo: u64', 'pruner_hi: u64', 'pruner_timestamp_ms: u64' in the source file. An alternative correct implementation could name helpers differently (e.g., 'read_watermark', 'fetch_watermark_for_reading') or inline the logic without separate helpers and still"
+      "reason": "Structural tests (test_watermark_path_helper_exists, test_get_watermark_helpers_exist, test_object_store_watermark_struct_exists) assert on specific function names 'fn watermark_path', 'get_watermark_for_read', 'get_watermark_for_write' and struct name 'ObjectStoreWatermark' with exact field signatures, failing alternative valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Three tests (test_watermark_path_helper_exists, test_get_watermark_helpers_exist, test_object_store_watermark_struct_exists) are purely text-matching tests that read lib.rs and assert on string presence without any code execution. While the majority of tests execute cargo test/check subprocesses, these three are pure text-matching."
+      "outcome": "pass",
+      "reason": "Most tests run cargo test subprocesses that execute the code; structural checks are supplementary."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests run actual cargo test commands that execute Rust unit tests. The stub implementations (returning Ok(None) or bailing with errors) would cause the Rust tests like test_reader_watermark_roundtrip to fail since they assert on actual watermark data being returned. A stub cannot satisfy these."
+      "reason": "Tests call cargo test on named test functions in the hidden test suite that exercise roundtrip behavior, wait_ms calculations, and migration logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: reader_watermark, pruner_watermark with wait_for_ms, set_reader_watermark, set_pruner_watermark, init_watermark with checkpoint parameter, legacy format migration, and existing-on-conflict handling."
+      "reason": "Tests cover reader/pruner watermark read/set, init with checkpoint, legacy migration, and idempotency as described in instructions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, structural verification), descriptive function names, and detailed docstrings explaining before/after behavior."
+      "reason": "Tests are clearly grouped into 'Fail-to-pass', 'Pass-to-pass', and 'Structural verification' sections with comments."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the watermark JSON schema including the new fields (reader_lo, pruner_hi, pruner_timestamp_ms) and the migration from old format (checkpoint_hi_inclusive as required u64 to Option<u64>)."
+      "reason": "JSON watermark schema fields (reader_lo, pruner_hi, pruner_timestamp_ms, checkpoint_hi_inclusive) and path format _metadata/watermarks/{pipeline}.json are documented."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or function names across instruction.md and test files."
+      "reason": "No obvious typos in paths, commands, or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction specifies the single file to modify (crates/sui-indexer-alt-object-store/src/lib.rs) which is appropriate given the task domain. It describes what to implement rather than pointing to specific buggy lines."
+      "outcome": "fail",
+      "reason": "Instruction names the exact file crates/sui-indexer-alt-object-store/src/lib.rs and specifies exact helper function names to implement, which goes beyond domain-obvious hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "behavior_in_task_description",
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
 }

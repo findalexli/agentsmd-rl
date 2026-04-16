@@ -14,10 +14,14 @@ result = demo("Some text to summarize")
 # -> RecursionError: maximum recursion depth exceeded
 ```
 
+## Relevant Files
+
+- `gradio/external.py` — contains the `from_model` function
+- `gradio/external_utils.py` — contains the `handle_hf_error` function
+
 ## Expected Behavior
 
 - `gr.load()` should return a working `gr.Interface` that correctly delegates to the HuggingFace inference endpoint without recursion.
-- The code should include a `kwargs.pop("fn", ...)` pattern to extract a function from keyword arguments.
 - Error handling must satisfy all of the following:
   - `StopIteration` exceptions must be caught and converted to informative error messages (not leaked through).
   - Error messages for exceptions with no string representation (e.g., bare `Exception()`, `RuntimeError()`, `ValueError()`, `OSError()`) must be non-empty and contain the exception type name.

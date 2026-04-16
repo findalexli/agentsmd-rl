@@ -2,57 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "instruction.md names the specific file paths (crates/uv/src/commands/project/run.rs, crates/uv/src/lib.rs, crates/uv/src/commands/mod.rs), function names (run(), as_command(), run_project()), enum name (RunCommand), variant name (PythonRemote), and parameter name (downloaded_script). All asserted specifics in tests (file paths, function names, parameter names, enum variant names) are discoverable from instruction.md's 'Behavioral requirements (tested)' section and 'Relevant files' section."
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths (crates/uv/src/commands/project/run.rs, crates/uv/src/lib.rs), specific function names (run, run_project, as_command), specific enum variant names (PythonRemote, RunCommand), and specific parameter names (downloaded_script). While instruction.md mentions most of these, the test test_no_unwrap_on_downloaded_script injects Rust code that checks PythonRemote holds a tempfile::NamedTempFile specifically, and that as_command takes exactly (&self, &Interpreter) \u2014 th"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes what's broken (unsafe .unwrap(), Option threading of downloaded_script, PythonRemote holding only a URL) and what the expected behavior is (type system enforcement, no .unwrap()), but does not prescribe the exact fix (e.g., it doesn't say 'create ParsedRunCommand enum' or 'embed NamedTempFile in PythonRemote'). A developer must still reason about the specific implementation."
+      "reason": "instruction.md describes the problem (unwrap on optional, type system doesn't enforce download completion) and behavioral requirements, but does not specify exact code changes like 'add ParsedRunCommand enum' or 'move NamedTempFile into PythonRemote variant'. The developer must reason about HOW to restructure the code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests check structural constraints (no downloaded_script parameter, no Option<downloaded_script>, no .unwrap() on downloaded_script, PythonRemote must hold a file type) that are flexible enough to accept multiple valid approaches. For instance, the file type check accepts NamedTempFile, TempPath, PathBuf, tempfile, DownloadedScript, ScriptFile, File, or DownloadedFile. The approach of embedding vs restructuring vs using a different wrapper would all pass. Tests don't assert gold-specific helper "
+      "outcome": "fail",
+      "reason": "The injected Rust test explicitly constructs RunCommand::PythonRemote(tf, vec![...]) where tf is a tempfile::NamedTempFile, and verify_as_command_arity calls c.as_command(i) with exactly two args. An alternative fix that, say, stores a PathBuf instead of NamedTempFile, or has as_command take an additional context parameter, would fail these tests despite being a correct fix. The tests are locked to the gold solution's specific type choices."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_no_unwrap_on_downloaded_script, test_python_remote_not_url_only, test_as_command_no_option_downloaded_script, test_run_fn_no_downloaded_script_param, test_lib_no_downloaded_script_threading) are purely text/structural checks using string matching on source files (e.g., 'downloaded_script' in sig, '.unwrap()' in line). While test_repo_cargo_check and test_no_unwrap_on_downloaded_script do run `cargo check`, the core behavioral assertions are text-based inspections, n"
+      "outcome": "pass",
+      "reason": "The core f2p tests inject Rust code that must compile and run (behavioral_result fixture uses cargo test), and other tests run cargo check/cargo fmt. While some tests do text inspection of signatures, the key behavioral tests actually compile and execute Rust code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: the tests check that specific patterns are ABSENT from the source code (no downloaded_script parameter, no .unwrap() on downloaded_script, PythonRemote must contain a file type), and cargo check must pass. Simply doing nothing or adding stubs wouldn't remove the existing problematic code, and removing code without proper replacement would fail cargo check."
+      "reason": "The f2p tests (test_no_unwrap_on_downloaded_script, test_run_fn_no_downloaded_script_param, test_lib_no_downloaded_script_threading) cannot be satisfied by stubs \u2014 they require actual compilation of injected Rust code with specific type signatures, and signature checks that 'downloaded_script' is absent. A no-op change would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements listed in instruction.md are tested: (1) run() no downloaded_script param, (2) as_command() no Option param, (3) run_project() no downloaded_script param, (4) PythonRemote must embed file type, (5) no .unwrap() on downloaded_script. Additional structural integrity tests (not stub, variant exists, handles all variants) are also present."
+      "reason": "All five behavioral requirements listed in instruction.md are tested: no downloaded_script param in run(), no Option param in as_command(), no downloaded_script in run_project(), PythonRemote embeds a file type, and no .unwrap() on downloaded script."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (pass-to-pass repo_tests, fail-to-pass pr_diff, pass-to-pass static), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests are organized into two clearly labeled sections (SECTION 1 without behavioral fixture, SECTION 2 with it), each test has descriptive names and docstrings, and tests are tagged with [repo_tests], [pr_diff], [static] markers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves Rust code refactoring, not structured data output (JSON/CSV/API/DB)."
+      "reason": "Task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and match what appears in the actual codebase and tests."
+      "reason": "File paths, function names, variable names, and commands in instruction.md and tests are all correctly spelled and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact method (.unwrap()), the exact parameter name (downloaded_script), the exact enum variant (PythonRemote), and the exact function signatures that need changing (run(), as_command(), run_project()). While it doesn't give line numbers, it essentially specifies the complete set of changes needed, making localization trivial rather than part of the task."
+      "reason": "instruction.md explicitly names the exact method (as_command()), the exact parameter (downloaded_script), the exact enum variant (PythonRemote), the exact files, and describes the precise fix ('The type system should enforce... no .unwrap() call... PythonRemote must embed a file type'). This goes beyond describing what's broken and prescribes the structural solution, especially 'PythonRemote variant must not hold only a URL \u2014 it must embed a file type'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "tests_verify_behavior_not_text"
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 6,
+  "fail_count": 3
 }

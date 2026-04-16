@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md: (1) test_account_scoped_inflight_key checks that the in-flight key uses accountId and NOT remoteAddress \u2014 instruction.md never specifies this; it only vaguely says 'keyed per logical endpoint'. (2) test_makeres_statuscode_sync checks bidirectional statusCode/_status syncing on makeRes() \u2014 instruction.md only says 'may need updating' without specifying this property syncing behavior. (3) test_cleanup_clears_inflight_limiter check"
+      "outcome": "pass",
+      "reason": "Instruction names the handler file, test-http-utils.ts, the import path `openclaw/plugin-sdk/webhook-ingress`, the cleanup function name `clearSynologyWebhookRateLimiterStateForTest`, HTTP 429, and the `statusCode`/`_status` sync requirement."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The hints section explicitly names the exact functions to use: 'beginWebhookRequestPipelineOrReject' and 'createWebhookInFlightLimiter', and specifies the scoping strategy ('scoped to a key that makes sense') and lifecycle ('only span the pre-auth request pipeline'). Combined with 'makeRes() may need updating to support how the guard writes status codes', this essentially prescribes the solution rather than just describing the problem."
+      "outcome": "pass",
+      "reason": "Instruction describes requirements (account-scoped key, try/finally, 429 rejection) without prescribing exact code, function names like `beginWebhookRequestPipelineOrReject`, or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_account_scoped_inflight_key uses regex patterns to find specific function naming patterns like 'InFlightKey' or 'WebhookKey' and checks the function body uses accountId. An alternative correct implementation that uses a differently-named helper or inlines the key computation would fail this test. test_import_guard_from_plugin_sdk checks for specific import of 'beginWebhookRequestPipelineOrReject' and 'createWebhookInFlightLimiter' from 'webhook-ingress', forcing the gold-specific approach."
+      "outcome": "pass",
+      "reason": "Tests check observable behavior (429 counts, statusCode sync, shared limiter, reset) and the `test_account_scoped_inflight_key` tries multiple regex patterns for key function, not a specific name."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The behavioral tests (concurrent_requests_429, shared_limiter_across_handlers, cleanup_resets_inflight, makeres_statuscode_sync) actually instantiate handlers, send mock requests, and check HTTP status codes on responses. While some tests do grep source code (test_account_scoped_inflight_key, test_import_guard_from_plugin_sdk), the majority execute the code behaviorally."
+      "reason": "Tests run vitest via subprocess, invoking `createWebhookHandler` and sending stalled requests; they assert on runtime `_status` values."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation that does nothing would not reject any requests with 429, so test_concurrent_requests_429 (which asserts rejected > 0) would fail. The behavioral tests require actual in-flight limiting logic to pass."
+      "reason": "Stub returning always-pass would not produce 429s on overflow nor share state across handler instances; `concurrent_requests_429` requires both >0 and <12 rejections."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction.md requires: (1) excess concurrent pre-auth requests rejected with 429 \u2014 tested by concurrent_requests_429, (2) requests past pre-auth not affected \u2014 implicitly tested by checking that not all 12 are rejected, (3) shared limiter mechanism \u2014 tested by shared_limiter_across_handlers. All key behaviors are covered."
+      "reason": "Tests cover 429 on overflow, statusCode sync, shared limiter across handlers (account scoping), and cleanup function \u2014 matching the instruction's requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into clear sections with descriptive names: 'Gates (pass_to_pass, static)', 'Behavioral fail-to-pass (pr_diff)', and the vitest tests are in a 'describe(\"behavioral\")' block with descriptive test names like 'concurrent_requests_429' and 'shared_limiter_across_handlers'."
+      "reason": "Tests are grouped under `describe('behavioral')` with descriptive names and comments; Python tests are separated into gates/behavioral sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript webhook handler code, not producing structured data output."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
-      "outcome": "fail",
-      "reason": "The instruction references 'openclaw/plugin-sdk/webhook-ingress' as a module path, but the actual import in the gold solution uses the same path. However, the organization name 'openclaw' appears to be the actual repo name. No clear typos detected in paths or function names. Actually, upon re-examination, the paths and names are consistent \u2014 changing to pass."
+      "outcome": "pass",
+      "reason": "Filenames and function names are consistent between instruction and tests (e.g., `clearSynologyWebhookRateLimiterStateForTest`)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The hints section names exact functions: 'beginWebhookRequestPipelineOrReject' and 'createWebhookInFlightLimiter', and specifies the exact file 'test-http-utils.ts' needs updating for 'how the guard writes status codes'. This localizes the fix to specific API calls and specific files beyond what's necessary for understanding the problem."
+      "outcome": "pass",
+      "reason": "Instruction mentions files to modify but does not cite specific lines or the exact buggy location; localization within the file remains the agent's work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "no_typos",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

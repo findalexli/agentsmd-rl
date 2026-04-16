@@ -104,6 +104,33 @@ rubric:
     the new 'In Review' status requirement while preserving the existing documentation
     structure and the requirement to add a compl
   category: documentation
+- rule: Replace magic numbers or strings with well-named constants
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '35'
+  source_text: '- Replace magic numbers or strings with well-named constants.'
+  evidence: The diff replaces the magic number 180 with REFRESH_TOKEN_GRACE_PERIOD_SECONDS
+    and extracts error string arrays into NON_RETRYABLE_OIDC_ERRORS and DETERMINISTIC_FAILURES.
+  category: style
+  verification: llm_judge
+- rule: Describe business scenarios and expected behavior in tests
+  source:
+    path: .cursor/rules/testing-guide/testing-guide.mdc
+    lines: '115'
+  source_text: '- **描述业务场景**: `describe` 和 `it` 的标题应该描述具体的业务场景和预期行为'
+  evidence: The new tests use highly descriptive titles like 'should allow RefreshToken
+    reuse within grace period' that clearly explain the business logic being tested.
+  category: testing
+  verification: llm_judge
+- rule: Group related tests logically within describe blocks
+  source:
+    path: .cursor/rules/testing-guide/testing-guide.mdc
+    lines: '153'
+  source_text: '- **逻辑分组**: 相关的测试用例应该组织在同一个 `describe` 块内'
+  evidence: Tests for the newly extracted isNonRetryableError function are logically
+    grouped inside their own describe('isNonRetryableError', ...) block in RemoteServerConfigCtr.test.ts.
+  category: testing
+  verification: llm_judge
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -153,6 +180,48 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 92-93
+- rule: Avoid testing specific error texts
+  source:
+    path: .cursor/rules/testing-guide/testing-guide.mdc
+    lines: 378-379
+  source_text: '// ❌ 避免测试具体错误文本
+
+    expect(() => processUser({})).toThrow(''用户数据不能为空，请检查输入参数'');'
+  collision_type: would_cause_bug
+  why_distracting: An agent might refuse to write tests verifying specific error strings,
+    but the diff involves testing a string-matching utility (isNonRetryableError)
+    where evaluating exact error strings is the core business logic.
+  severity: high
+- rule: Use comments to group tests
+  source:
+    path: packages/prompts/CLAUDE.md
+    lines: '555'
+  source_text: 7. **分组测试用例**：使用注释将相关测试分组（如按语言、边界情况）
+  collision_type: scope_ambiguity
+  why_distracting: An agent might think it should use inline comments to group tests
+    instead of describe blocks. However, this rule applies specifically to the promptfoo
+    testing framework used in packages/prompts, not Vitest unit tests.
+  severity: medium
+- rule: Use English for prompts
+  source:
+    path: packages/prompts/CLAUDE.md
+    lines: '223'
+  source_text: '#### 使用英文提示词'
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff translates Chinese test comments to English. An agent
+    might think it's applying this rule, but this rule is strictly about the content
+    of LLM system prompts for better task performance, not standard code documentation.
+  severity: low
+- rule: Default to realistic test data
+  source:
+    path: .cursor/rules/testing-guide/testing-guide.mdc
+    lines: '232'
+  source_text: '**核心原则**: 测试数据应默认追求真实性，只有在引入"高昂的测试成本"时才进行简化。'
+  collision_type: meta_confusion
+  why_distracting: An agent might over-engineer the test setup by generating real
+    UUIDs/JWTs instead of using simple 'test-id' strings (as the diff does), misinterpreting
+    the rule's threshold for when simplified data is appropriate.
+  severity: medium
 hierarchy_analysis: 'Both CLAUDE.md and AGENTS.md contain overlapping instructions
   regarding package management and testing. However, the primary conflict in this
   PR is meta-referential: the prompt asks the agent to modify the very instructions

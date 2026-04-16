@@ -1,0 +1,94 @@
+manifest_version: "1.0"
+task_name: "kotlin-swift-export-coroutines-safeimport"
+source_pr:
+  owner: "JetBrains"
+  repo: "kotlin"
+  number: 5787
+  merge_commit: "4bec1c4ea14e02e6f52d7ed7dea8b59b9a75315f"
+  base_commit: "ff1ea74e2d4c120495571a5b32d7075a9e8dba07"
+  title: "[Swift Export] Use safeImportName for coroutines imports"
+  description: |
+    Extension functions need to be imported using the safeImportName so they
+    match with the imports that will be generated for the KotlinxCoroutinesCore module.
+
+checks:
+  # Fail-to-pass tests (test the fix)
+  - id: "test_additional_imports_uses_safe_import_name"
+    type: fail_to_pass
+    origin: behavioral
+    description: "additionalImports() generates explicit coroutine imports with safeImportName for launch"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_coroutine_launch_uses_aliased_name"
+    type: fail_to_pass
+    origin: behavioral
+    description: "Bridge code uses kotlinx_coroutines_launch instead of unaliased launch"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_fqname_safe_import_name_extension"
+    type: fail_to_pass
+    origin: structural
+    description: "FqName.safeImportName extension property exists"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_no_wildcard_coroutine_imports"
+    type: fail_to_pass
+    origin: behavioral
+    description: "Does not generate wildcard import for kotlinx.coroutines"
+    target: "SirBridgeProviderImpl.kt"
+
+  # Pass-to-pass tests (sanity checks)
+  - id: "test_bridge_function_uses_fqname_extension"
+    type: pass_to_pass
+    origin: structural
+    description: "BridgeFunctionDescriptor.safeImportName delegates to FqName extension"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_kotlin_file_compiles"
+    type: pass_to_pass
+    origin: syntax
+    description: "Kotlin file has valid syntax (balanced braces/parens)"
+    target: "SirBridgeProviderImpl.kt"
+
+  # New p2p tests - repo CI environment checks using subprocess.run()
+  - id: "test_java_runtime_available"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Java runtime is available in Docker environment (CI sanity check)"
+    target: "environment"
+
+  - id: "test_target_file_exists"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file exists and is accessible (CI file check)"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_kotlin_file_has_package_declaration"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin file has proper package declaration (CI syntax check)"
+    target: "SirBridgeProviderImpl.kt"
+
+  - id: "test_kotlin_file_has_required_imports"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin file has required core imports (CI import check)"
+    target: "SirBridgeProviderImpl.kt"
+
+# Code quality rubric for the gold solution
+rubric:
+  - rule: "Code should use proper Kotlin naming conventions and formatting"
+    source:
+      file: "SirBridgeProviderImpl.kt"
+      lines: "style check"
+    type: style
+    weight: minor
+
+scoring:
+  # At least these F2P tests must pass to get reward=1
+  required_fail_to_pass:
+    - "test_additional_imports_uses_safe_import_name"
+    - "test_coroutine_launch_uses_aliased_name"
+    - "test_fqname_safe_import_name_extension"
+  # Minimum tests that must pass (4 f2p + 6 p2p = 10 when fix applied)
+  min_passing_tests: 9

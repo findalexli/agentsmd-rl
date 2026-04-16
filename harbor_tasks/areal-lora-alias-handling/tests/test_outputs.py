@@ -40,8 +40,16 @@ class FakeLoRARequest:
         self.lora_path = lora_path
         self.base_model_name = kwargs.get("base_model_name")
 
+class FakeUpdateWeightsFromXcclRequestLora:
+    pass
+
+class FakeRequest:
+    pass
+
 logger = MagicMock()
-NS = {"LoRARequest": FakeLoRARequest, "logger": logger, "getattr": getattr}
+NS = {"LoRARequest": FakeLoRARequest, "logger": logger, "getattr": getattr,
+      "UpdateWeightsFromXcclRequestLora": FakeUpdateWeightsFromXcclRequestLora,
+      "Request": FakeRequest}
 
 def _extract_func(name):
     tree = ast.parse(SOURCE)
@@ -51,12 +59,35 @@ def _extract_func(name):
             return "".join(lines[node.lineno - 1 : node.end_lineno])
     return None
 
-infer_src = _extract_func("_infer_runtime_lora_path")
-reg_src = _extract_func("_register_runtime_lora_name")
-if infer_src:
-    exec(textwrap.dedent(infer_src), NS)
-if reg_src:
-    exec(textwrap.dedent(reg_src), NS)
+def _extract_all_funcs():
+    """Extract all function defs and search for ones matching expected signature patterns."""
+    tree = ast.parse(SOURCE)
+    found = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            args = {arg.arg for arg in node.args.args}
+            # A registration helper should accept app + lora_name + lora_int_id + base_model_name
+            if {"app", "lora_name", "lora_int_id", "base_model_name"} <= args:
+                lines = SOURCE.splitlines(keepends=True)
+                src = "".join(lines[node.lineno - 1 : node.end_lineno])
+                name = node.name
+                exec(textwrap.dedent(src), NS)
+            # A path inference helper should accept (serving_models, lora_name, lora_int_id)
+            if {"serving_models", "lora_name", "lora_int_id"} <= args:
+                lines = SOURCE.splitlines(keepends=True)
+                src = "".join(lines[node.lineno - 1 : node.end_lineno])
+                name = node.name
+                exec(textwrap.dedent(src), NS)
+    return found
+
+# Try explicit names first (compatible with gold solution)
+for name in ["_infer_runtime_lora_path", "_register_runtime_lora_name"]:
+    src = _extract_func(name)
+    if src:
+        exec(textwrap.dedent(src), NS)
+
+# Also try signature-based discovery
+sig_found = _extract_all_funcs()
 
 register_fn = None
 infer_fn = None
@@ -112,9 +143,9 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_register_helper_creates_lora_request():
-    """A dedicated helper creates a new LoRARequest in the registry."""
+    """A dedicated helper creates a new LoRARequest in the registry instead of mutating the existing one."""
     r = _run_python("""
-assert register_fn is not None, "No LoRA registration helper found"
+assert register_fn is not None, "No registration helper found with expected signature"
 
 test_cases = [
     ("adapter-v1", 42, None),
@@ -130,7 +161,7 @@ for name, int_id, base_model in test_cases:
     registry = app.state.openai_serving_models.lora_requests
     assert name in registry, f"{name} not registered"
     req = registry[name]
-    assert isinstance(req, FakeLoRARequest), f"Not a new LoRARequest: {type(req)}"
+    # Check the request has correct fields - inspect attributes, not type name
     assert req.lora_int_id == int_id
     assert req.lora_name == name
 
@@ -142,7 +173,7 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_stale_aliases_removed():
-    """Registering a new name for the same adapter id removes old aliases."""
+    """Registering a new name for the same adapter id removes all old aliases."""
     r = _run_python("""
 assert register_fn is not None
 
@@ -184,16 +215,17 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_infer_path_synthetic_fallback():
-    """Path inference returns xccl:// synthetic path when no existing path."""
+    """Path inference returns a stable runtime identifier when no existing filesystem path."""
     r = _run_python("""
-assert infer_fn is not None, "No LoRA path inference helper found"
+assert infer_fn is not None, "No path inference helper found with expected signature"
 
 serving_models = MagicMock()
 serving_models.lora_requests = {}
 
 for name, int_id in [("adapter-v1", 99), ("my-lora", 1), ("test_adapter", 500)]:
     result = infer_fn(serving_models, name, int_id)
-    assert "xccl://" in result, f"Expected xccl:// fallback, got: {result}"
+    # Must produce a runtime identifier that embeds the name
+    assert "xccl://" in result, f"Expected runtime identifier prefix, got: {result}"
     assert name in result, f"Expected name '{name}' in path, got: {result}"
 
 print("PASS")
@@ -224,13 +256,13 @@ serving2.lora_requests = {"old-name": old_entry}
 result2 = infer_fn(serving2, "new-name", 42)
 assert result2 == "/models/lora/old", f"Expected path from same id, got: {result2}"
 
-# Case 3: entry exists but lora_path is empty -> falls back to xccl://
+# Case 3: entry exists but lora_path is empty -> falls back to runtime identifier
 empty_path = _make_req("no-path", 88, "")
 serving3 = MagicMock()
 serving3.lora_requests = {"no-path": empty_path}
 
 result3 = infer_fn(serving3, "no-path", 88)
-assert "xccl://" in result3, f"Expected xccl:// fallback, got: {result3}"
+assert "xccl://" in result3, f"Expected runtime identifier fallback, got: {result3}"
 
 print("PASS")
 """)
@@ -240,14 +272,17 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_success_gating():
-    """Registry update in update_weight_lora_xccl is gated on XCCL success."""
-    # AST-only: update_weight_lora_xccl is async FastAPI requiring vLLM engine + CUDA
+    """Registry update in update_weight_lora_xccl is gated on all XCCL operations succeeding."""
+    # This endpoint is an async FastAPI function that can't be easily tested via subprocess
+    # because it requires the full FastAPI app and vLLM engine. Instead we verify the
+    # behavioral requirement: the registry update must be conditional on XCCL success,
+    # by checking the source code structure.
     source = _read_source()
     tree = ast.parse(source)
 
     func_node = None
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, (ast.AsyncFunctionDef)):
             if node.name == "update_weight_lora_xccl":
                 func_node = node
                 break
@@ -262,25 +297,18 @@ def test_success_gating():
         "Old mutation pattern still present — should use dedicated helper"
     )
 
-    # Must delegate to a helper or create new LoRARequest
-    has_new_request = "LoRARequest(" in func_src
-    has_helper_call = bool(re.search(r"_?\w*(?:register|lora_name)\w*\(", func_src))
-    assert has_helper_call or has_new_request, (
-        "Should use a registration helper or create new LoRARequest"
+    # Registry update must be conditional on success - look for if/all/any around ret_list
+    has_success_check = bool(
+        re.search(r"(if|all|any)\s*\(", func_src) and "ret_list" in func_src
     )
-
-    # Registry update must be conditional on success
-    has_success_gate = "all(" in func_src or bool(
-        re.search(r"if\s+.*(?:success|ret_list|result)", func_src)
-    )
-    assert has_success_gate, (
-        "Registry update should be gated on XCCL success"
+    assert has_success_check, (
+        "Registry update should be gated on XCCL success using if/all/any with ret_list"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_base_model_name_propagated():
-    """Registration helper propagates base_model_name to the LoRARequest."""
+    """Registration helper propagates base_model_name to the new LoRARequest."""
     r = _run_python("""
 assert register_fn is not None
 

@@ -6,7 +6,14 @@ In `src/transformers/models/xlnet/modeling_xlnet.py`, the `XLNetModel.relative_p
 
 ## Expected Behavior
 
-Tensors should be created directly on the target device so that the redundant device-transfer call in `forward()` is no longer needed. Follow standard PyTorch conventions for device-aware tensor creation functions.
+Modify `relative_positional_encoding` and `forward` in `XLNetModel` to satisfy all of the following:
+
+1. `relative_positional_encoding` must accept a parameter named `device` that defaults to `None`
+2. All `torch.arange` calls within `relative_positional_encoding` must use the keyword argument `device=device` so tensors are created directly on the target device
+3. `forward()` must pass `device=output_h.device` when calling `relative_positional_encoding`
+4. The redundant device-transfer line `pos_emb = pos_emb.to(...)` in `forward()` must be removed
+
+These changes ensure positional embedding tensors are created directly on the target device, eliminating the unnecessary CPU-to-GPU transfer.
 
 ## Files to Investigate
 

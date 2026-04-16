@@ -9,8 +9,10 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import re
 import subprocess
-from pathlib import Path
+import json
+import tempfile
 import os
+from pathlib import Path
 
 REPO = "/workspace/bun"
 TARGET = Path(REPO) / "src" / "shell" / "braces.zig"
@@ -109,6 +111,27 @@ def _ensure_zig():
     _setup_done["zig"] = True
 
 
+def _run_js_code(js_code, timeout=30):
+    """Run JavaScript code using bun and return (returncode, stdout, stderr)."""
+    _ensure_bun()
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+        f.write(js_code)
+        f.flush()
+        tmp_path = f.name
+
+    try:
+        r = subprocess.run(
+            ["bun", "run", tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return r.returncode, r.stdout, r.stderr
+    finally:
+        os.unlink(tmp_path)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -129,172 +152,271 @@ def test_braces_zig_structure_intact():
 
 
 # [pr_diff] fail_to_pass
-def test_flatten_tokens_empty_guard():
-    """flattenTokens must guard against empty token list before first items[] access.
+def test_braces_empty_string_no_crash():
+    """Bun.$.braces("") must not crash and should return [""].
 
     Bug: flattenTokens calls items[0] unconditionally — panics when token list is empty.
-    Valid fixes: 'if (len == 0) return', 'if (len < 1) return', wrap body, etc.
+    Bug: advance() calls self.prev() which does current-1; u32 underflows at 0.
+
+    This test verifies the ACTUAL BEHAVIOR: running braces on empty input
+    should return [""] without panicking.
     """
-    lines = _src().splitlines()
+    js_code = """
+        const result = Bun.$.braces("");
+        console.log(JSON.stringify(result));
+    """
 
-    # Find the flattenTokens function definition line
-    fn_line = next(
-        (i for i, l in enumerate(lines) if "fn flattenTokens(" in l), None
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    # Must not crash (returncode 0)
+    assert returncode == 0, (
+        f"Bun.$.braces('') crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
     )
-    assert fn_line is not None, "flattenTokens not found in braces.zig"
 
-    # Find first unconditional items[] access after the function start
-    first_access = None
-    for i in range(fn_line + 1, min(fn_line + 80, len(lines))):
-        stripped = lines[i].strip()
-        if stripped.startswith("//"):
-            continue
-        if re.search(r"items\[", stripped):
-            first_access = i
-            break
+    # Parse the output and verify it returns [""]
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
 
-    assert first_access is not None, "No items[] access found near flattenTokens"
-
-    # There must be an empty/length guard BEFORE the first items[] access
-    guard_found = False
-    for i in range(fn_line + 1, first_access):
-        stripped = lines[i].strip()
-        if stripped.startswith("//"):
-            continue
-        # Guard patterns: .len == 0, .len < 1, tokens.items.len check
-        if re.search(r"\.len\s*(==\s*0|<\s*1)", stripped) and "return" in stripped:
-            guard_found = True
-            break
-        # Early-return guard split across two lines
-        if re.search(r"\.len\s*(==\s*0|<\s*1)", stripped):
-            for j in range(i + 1, min(i + 3, first_access)):
-                if "return" in lines[j].strip():
-                    guard_found = True
-                    break
-            if guard_found:
-                break
-        # Wrap body in if (len > 0) { ... }
-        if re.search(r"if\s*\(.*\.len\s*(>|!=|>=)", stripped):
-            guard_found = True
-            break
-
-    assert guard_found, (
-        f"No empty-token guard found in flattenTokens before items[] access "
-        f"at line {first_access + 1}"
+    # Should return [""] for empty input
+    assert result == [""], (
+        f"Expected [''] for empty input, got {result}"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_advance_prev_no_underflow():
-    """advance()/prev() must not underflow when current == 0.
+def test_braces_empty_string_parse_true():
+    """Bun.$.braces("", {parse: true}) must not crash and return valid object.
 
-    Bug: advance() calls self.prev() which does current-1; u32 underflows at 0.
-    Valid fixes:
-      A) advance() uses conditional: 'return if (self.current > 0) self.prev() else ...'
-      B) prev() guards: 'if (self.current == 0) return .eof;'
-      C) Either uses saturating subtraction (-|)
+    Verifies the fix works with parse:true option.
     """
-    lines = _src().splitlines()
+    js_code = """
+        const result = Bun.$.braces("", { parse: true });
+        console.log(JSON.stringify(result));
+    """
 
-    # Find the Parser struct
-    parser_line = next(
-        (i for i, l in enumerate(lines) if "pub const Parser = struct" in l), None
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    assert returncode == 0, (
+        f"Bun.$.braces('', {{parse: true}}) crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
     )
-    assert parser_line is not None, "pub const Parser = struct not found"
 
-    # Find advance() and prev() inside Parser (search from parser_line)
-    advance_line = next(
-        (
-            i
-            for i, l in enumerate(lines)
-            if i > parser_line and "fn advance(" in l
-        ),
-        None,
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
+
+    # parse:true returns { expansions: [...], tokens: [...] }
+    assert isinstance(result, dict), f"Expected object, got {type(result)}"
+    assert "expansions" in result, f"Expected expansions field, got {result}"
+
+
+# [pr_diff] fail_to_pass
+def test_braces_empty_string_tokenize_true():
+    """Bun.$.braces("", {tokenize: true}) must not crash and return valid tokens.
+
+    Verifies the fix works with tokenize:true option.
+    """
+    js_code = """
+        const result = Bun.$.braces("", { tokenize: true });
+        console.log(JSON.stringify(result));
+    """
+
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    assert returncode == 0, (
+        f"Bun.$.braces('', {{tokenize: true}}) crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
     )
-    prev_line = next(
-        (
-            i
-            for i, l in enumerate(lines)
-            if i > parser_line and "fn prev(" in l
-        ),
-        None,
+
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
+
+    # tokenize:true returns an array of tokens
+    assert isinstance(result, list), f"Expected list, got {type(result)}"
+
+
+# [pr_diff] fail_to_pass
+def test_braces_nonempty_input_still_works():
+    """Bun.$.braces("a{b,c}d") must still work correctly after the fix.
+
+    Regression test: the fix for empty input shouldn't break normal brace expansion.
+    """
+    js_code = """
+        const result = Bun.$.braces("a{b,c}d");
+        console.log(JSON.stringify(result));
+    """
+
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    assert returncode == 0, (
+        f"Bun.$.braces('a{{b,c}}d') crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
     )
-    assert advance_line is not None, "fn advance( not found in Parser"
-    assert prev_line is not None, "fn prev( not found in Parser"
 
-    fixed = False
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
 
-    # Approach A: advance() uses conditional return instead of bare prev()
-    for i in range(advance_line, min(advance_line + 20, len(lines))):
-        stripped = lines[i].strip()
-        if stripped.startswith("//"):
-            continue
-        # Conditional return pattern
-        if re.search(r"return\s+if\s*\(.*current", stripped) and "prev" in stripped:
-            fixed = True
-            break
-        # Guard: if (current > 0 || != 0) before calling prev
-        if re.search(r"current\s*(>|!=|>=)\s*(0|1)", stripped) and "prev" in stripped:
-            fixed = True
-            break
-        # Saturating sub in advance
-        if "-|" in stripped and "current" in stripped:
-            fixed = True
-            break
-
-    # Approach B: prev() guards against current == 0
-    if not fixed:
-        for i in range(prev_line, min(prev_line + 15, len(lines))):
-            stripped = lines[i].strip()
-            if stripped.startswith("//"):
-                continue
-            if re.search(r"current\s*==\s*0", stripped) and "return" in stripped:
-                fixed = True
-                break
-            # Saturating sub in prev
-            if "-|" in stripped and "current" in stripped:
-                fixed = True
-                break
-            if "@max" in stripped and "current" in stripped:
-                fixed = True
-                break
-
-    assert fixed, (
-        "advance()/prev() still vulnerable to u32 underflow: "
-        "no guard found for current==0 in either function"
+    # a{b,c}d should expand to ["abd", "acd"]
+    assert result == ["abd", "acd"], (
+        f"Expected ['abd', 'acd'] for 'a{{b,c}}d', got {result}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (behavioral) — anti-stub: verifying fix is complete not partial
 # ---------------------------------------------------------------------------
 
 
-# [static] pass_to_pass
-def test_prev_normal_case_intact():
-    """prev() still accesses current-1 for the non-zero case (not replaced by stub)."""
-    content = _src()
-    assert any(s in content for s in ("current - 1", "current -| 1")), (
-        "prev() no longer accesses current-1 — normal case may be broken"
+# [behavioral] pass_to_pass
+def test_prev_normal_case_behavioral():
+    """prev() still works correctly for the non-zero case — verified behaviorally.
+
+    This test uses a Zig test that exercises prev() through normal parsing.
+    It compiles and runs a test that relies on prev() working for non-zero
+    current positions. Any implementation that correctly parses brace patterns
+    will pass, regardless of internal variable naming.
+    """
+    _ensure_zig()
+
+    # Create a test file within the repo directory that imports braces.zig
+    # We need to use a relative import from within the repo
+    zig_test = '''
+const std = @import("std");
+const braces = @import("src/shell/braces.zig");
+
+test "prev() works correctly for non-empty input" {
+    const allocator = std.testing.allocator;
+
+    // Test with input that requires looking at previous tokens
+    // The parser needs to call prev() when advancing through tokens
+    const input = "a{b,c}d";
+
+    // Tokenize first (this exercises the Lexer)
+    var lexer = braces.Lexer.init(input, allocator);
+    defer lexer.deinit();
+    try lexer.run();
+
+    // Now parse - this exercises advance() and prev()
+    var parser = braces.Parser.init(lexer.tokens.items, input, allocator);
+    const result = try parser.parse();
+    defer {
+        for (result.items) |item| {
+            allocator.free(item);
+        }
+        result.deinit();
+    }
+
+    // Verify we got the expected expansions
+    try std.testing.expectEqual(@as(usize, 2), result.items.len);
+    try std.testing.expectEqualStrings("abd", result.items[0]);
+    try std.testing.expectEqualStrings("acd", result.items[1]);
+}
+'''
+    # Write test file in the repo directory so relative imports work
+    test_path = Path(REPO) / "test_prev_behavior.zig"
+    with open(test_path, 'w') as f:
+        f.write(zig_test)
+
+    try:
+        # Run zig test - compile and execute the behavioral test
+        r = subprocess.run(
+            ["zig", "test", str(test_path)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+
+        # The test passes if compilation and execution succeed
+        assert r.returncode == 0, (
+            f"Zig test for prev() behavior failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-1000:]}"
+        )
+    finally:
+        # Clean up test file
+        if test_path.exists():
+            test_path.unlink()
+
+
+# [behavioral] pass_to_pass
+def test_flatten_tokens_behavioral():
+    """flattenTokens still has real brace-expansion logic — verified behaviorally.
+
+    This test uses complex brace patterns that require flattenTokens to have
+    actual implementation. A stub that doesn't properly merge adjacent text
+    tokens would produce incorrect expansions.
+    """
+    js_code = """
+        // Test that complex brace expansion still works
+        // This requires flattenTokens to have real implementation
+        const result = Bun.$.braces("{a,b,c}{1,2}");
+        console.log(JSON.stringify(result));
+    """
+
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    assert returncode == 0, (
+        f"Complex brace expansion crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
+    )
+
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
+
+    # {a,b,c}{1,2} should expand to ["a1", "a2", "b1", "b2", "c1", "c2"]
+    # If flattenTokens is stubbed or broken, we wouldn't get this correct expansion
+    expected = ["a1", "a2", "b1", "b2", "c1", "c2"]
+    assert result == expected, (
+        f"Expected {expected} for '{{a,b,c}}{{1,2}}', got {result}. "
+        f"flattenTokens may be stubbed or broken."
     )
 
 
-# [static] pass_to_pass
-def test_flatten_tokens_not_stub():
-    """flattenTokens still has real brace-expansion logic (not a stub return)."""
-    content = _src()
-    assert "brace_count" in content, "brace_count variable missing — flattenTokens may be stubbed"
-    assert ".open" in content, ".open token reference missing"
-    lines = content.splitlines()
-    fn_line = next((i for i, l in enumerate(lines) if "fn flattenTokens(" in l), None)
-    assert fn_line is not None
-    # Count substantive lines in the ~60 lines after the function signature
-    body = [
-        l
-        for l in lines[fn_line : fn_line + 70]
-        if l.strip() and not l.strip().startswith("//")
-    ]
-    assert len(body) >= 15, f"flattenTokens only {len(body)} lines — likely stubbed"
+# [behavioral] pass_to_pass
+def test_flatten_tokens_adjacent_text_merging():
+    """flattenTokens correctly merges adjacent text tokens — verified behaviorally.
+
+    This test verifies that adjacent text tokens are merged during lexing,
+    which is flattenTokens' core responsibility. The pattern "abc" should
+    be tokenized as a single text token (not ['a', 'b', 'c']).
+    """
+    js_code = """
+        // Tokenize a simple string to check text token merging
+        const result = Bun.$.braces("abc", { tokenize: true });
+        console.log(JSON.stringify(result));
+    """
+
+    returncode, stdout, stderr = _run_js_code(js_code)
+
+    assert returncode == 0, (
+        f"Tokenize test crashed with exit code {returncode}.\n"
+        f"stderr: {stderr[:1000]}"
+    )
+
+    try:
+        result = json.loads(stdout.strip())
+    except json.JSONDecodeError:
+        assert False, f"Could not parse output as JSON: {stdout[:500]}"
+
+    # tokenize:true returns an array of tokens
+    assert isinstance(result, list), f"Expected list, got {type(result)}"
+
+    # "abc" should result in minimal tokens due to flattenTokens merging:
+    # text("abc") + eof, so 2 tokens total
+    # Without flattenTokens working, we'd get separate tokens for each char
+    assert len(result) <= 2, (
+        f"Expected at most 2 tokens (text + eof) for 'abc', got {len(result)} tokens. "
+        f"flattenTokens may not be merging adjacent text tokens correctly."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -426,7 +548,10 @@ def test_repo_zig_fmt_braces():
 
     r = subprocess.run(
         ["zig", "fmt", "--check", "src/shell/braces.zig"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
     )
     assert r.returncode == 0, f"zig fmt check failed on braces.zig:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 

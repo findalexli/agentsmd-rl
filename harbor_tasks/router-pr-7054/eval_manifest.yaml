@@ -1,0 +1,98 @@
+version: "1.0"
+
+source:
+  repo: TanStack/router
+  pr_number: 7054
+  base_commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+  merge_commit: 5ca661c2f8a7e50167b4112c64aa06cef4148ea9
+
+checks:
+  - id: test_ssr_scripts_test_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The SSR scripts test should pass - the repo's test expectation is
+      updated alongside the code change to reflect the new behavior.
+
+  - id: test_onrendered_returns_null_on_server
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      The OnRendered component should check for server environment
+      and return null to avoid rendering any markup during SSR.
+
+  - id: test_onrendered_uses_layout_effect
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      The OnRendered component should use useLayoutEffect on the client
+      to fire onRendered events instead of using a script tag ref callback.
+
+  - id: test_onrendered_no_script_tag_rendering
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      The OnRendered function should not render a <script> element;
+      it should return null on server and use useLayoutEffect on client.
+
+  - id: test_solid_router_onrendered_comment_updated
+    type: fail_to_pass
+    origin: behavioral
+    description: >
+      The Solid Router OnRendered comment should be updated to remove
+      reference to rendering a dummy DOM element.
+
+  - id: test_react_router_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The react-router unit tests should continue to pass after the fix.
+
+  - id: test_react_router_type_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The react-router TypeScript type check should pass.
+
+  - id: test_react_router_build_succeeds
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The react-router package should build successfully.
+
+  - id: test_solid_router_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The solid-router unit tests should pass (PR modifies solid-router Match.tsx).
+
+  - id: test_solid_router_type_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The solid-router TypeScript type check should pass.
+
+  - id: test_solid_router_build_succeeds
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The solid-router package should build successfully.
+
+  - id: test_react_router_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The react-router ESLint check should pass.
+
+  - id: test_solid_router_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The solid-router ESLint check should pass.
+
+rubric:
+  - id: changeset_describes_fix
+    rule: >
+      This PR does not require documentation updates. The changeset file
+      .changeset/calm-suns-thank.md adequately describes the fix. No additional
+      config file changes are needed for this SSR script removal task.

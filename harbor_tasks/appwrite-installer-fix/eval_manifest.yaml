@@ -1,0 +1,152 @@
+source_pr:
+  owner: appwrite
+  repo: appwrite
+  number: 11689
+  title: "Fix installer"
+  merge_commit: ec20fb59e2883f47afce681614f40ad6d7a7d973
+  base_commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+
+# Task metadata
+task_name: appwrite-installer-fix
+description: Fix installer response handling, coroutine support, and upgrade detection
+
+checks:
+  # ============================================================================
+  # PASS-TO-PASS TESTS (Repo CI checks - must pass on base commit)
+  # ============================================================================
+  - id: test_p2p_php_syntax_install_php
+    type: pass_to_pass
+    origin: repo_tests
+    description: PHP syntax check on Install.php passes
+
+  - id: test_p2p_php_syntax_server_php
+    type: pass_to_pass
+    origin: repo_tests
+    description: PHP syntax check on Server.php passes
+
+  - id: test_p2p_php_syntax_http_install_php
+    type: pass_to_pass
+    origin: repo_tests
+    description: PHP syntax check on HTTP Install.php passes
+
+  - id: test_p2p_php_syntax_step4_template
+    type: pass_to_pass
+    origin: repo_tests
+    description: PHP syntax check on step-4.phtml template passes
+
+  - id: test_p2p_php_syntax_step5_template
+    type: pass_to_pass
+    origin: repo_tests
+    description: PHP syntax check on step-5.phtml template passes
+
+  - id: test_p2p_swoole_extension_loaded
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swoole extension is loaded and available
+
+  - id: test_p2p_installer_files_exist
+    type: pass_to_pass
+    origin: static
+    description: All installer-related files exist in the repository
+
+  # ============================================================================
+  # FAIL-TO-PASS TESTS (These check the fix is applied)
+  # ============================================================================
+  # Core PHP functional fixes
+  - id: test_swoole_coroutine_enabled
+    type: fail_to_pass
+    origin: agent_config
+    description: Server.php must enable Swoole coroutines with SWOOLE_HOOK_ALL
+    source: AGENTS.md - "PHP 8.3+, Swoole 6.x (async runtime)"
+
+  - id: test_has_explicit_cli_params_method
+    type: fail_to_pass
+    origin: agent_config
+    description: Install.php must have hasExplicitCliParams method for CLI mode detection
+    source: src/Appwrite/Platform/AGENTS.md - CLI task patterns
+
+  - id: test_web_installer_skip_logic
+    type: fail_to_pass
+    origin: agent_config
+    description: Web installer must be skipped when explicit CLI params are provided
+    source: src/Appwrite/Platform/AGENTS.md - Tasks pattern
+
+  - id: test_gethostbyname_error_suppression
+    type: fail_to_pass
+    origin: code_fix
+    description: gethostbyname must use @ error suppression for DNS failures
+
+  - id: test_tracking_payload_ip_key
+    type: fail_to_pass
+    origin: code_fix
+    description: Tracking payload must use 'ip' key instead of 'hostIp'
+
+  - id: test_tracking_hostip_validation
+    type: fail_to_pass
+    origin: code_fix
+    description: IP tracking must properly validate hostIp against false and domain
+
+  - id: test_http_client_timeouts
+    type: fail_to_pass
+    origin: code_fix
+    description: HTTP client for tracking must have connection and request timeouts
+
+  - id: test_oncomplete_callback_parameter
+    type: fail_to_pass
+    origin: code_fix
+    description: performInstallation must accept onComplete callback parameter
+
+  - id: test_oncomplete_called_before_tracking
+    type: fail_to_pass
+    origin: code_fix
+    description: onComplete must be called before tracking to allow immediate SSE redirect
+
+  - id: test_coroutine_tracking_non_blocking
+    type: fail_to_pass
+    origin: code_fix
+    description: Tracking must run in coroutine when in Swoole context to avoid blocking
+
+  - id: test_upgrade_detection_for_web_installer
+    type: fail_to_pass
+    origin: code_fix
+    description: Web installer must detect existing installation as upgrade
+
+  - id: test_responsesent_flag_in_http_install
+    type: fail_to_pass
+    origin: code_fix
+    description: HTTP Install must have responseSent flag to prevent duplicate responses
+
+  - id: test_http_oncomplete_callback
+    type: fail_to_pass
+    origin: code_fix
+    description: HTTP Install must define onComplete callback with proper SSE handling
+
+  - id: test_performinstallation_accepts_oncomplete
+    type: fail_to_pass
+    origin: code_fix
+    description: performInstallation call must pass onComplete as parameter
+
+  # Frontend/UI fixes
+  - id: test_css_upgrade_minheight
+    type: fail_to_pass
+    origin: code_fix
+    description: CSS must have upgrade-specific min-height rule for installer step
+
+  - id: test_step4_secret_key_hidden_on_upgrade
+    type: fail_to_pass
+    origin: code_fix
+    description: Step 4 template must hide secret key row when in upgrade mode
+
+  - id: test_step5_upgrade_text
+    type: fail_to_pass
+    origin: code_fix
+    description: Step 5 template must use 'Appwrite' instead of 'your app' in progress text
+
+# Rubric: Not applicable for this code fix task
+# The f2p tests comprehensively verify all coding convention requirements:
+# - Swoole coroutines (test_swoole_coroutine_enabled)
+# - Error handling (test_gethostbyname_error_suppression, test_tracking_hostip_validation)
+# - HTTP timeouts (test_http_client_timeouts)
+# - CLI patterns (test_has_explicit_cli_params_method, test_web_installer_skip_logic)
+# - Callback patterns (test_oncomplete_callback_parameter, test_oncomplete_called_before_tracking)
+rubric: []

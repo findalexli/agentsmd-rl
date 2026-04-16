@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_variable_width_formatter_array_updated checks for exact pattern \"variable_width_formatter_M_is_month_name = {'M'}\"; test_unconditional_w_check_added checks for exact code patterns like \"variable_width_formatter.begin()\" with specific newline formatting; test_w_in_variable_width_formatter checks for \"variable_width_formatter\" array containing 'W'. The instruction never mentions these array names or the required cod"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_variable_width_formatter_array_updated checks for the exact string \"static constexpr std::array variable_width_formatter_M_is_month_name = {'M'};\", test_unconditional_w_check_added checks for specific code patterns like \"if (std::any_of(\\n                            variable_width_formatter.begin(),\" with exact whitespace, and test_w_in_variable_width_formatter checks for the variable_width_formatter array cont"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'The bug is in src/Functions/formatDateTime.cpp, in the containsOnlyFixedWidthMySQLFormatters function' and '%W should always be treated as variable-length' \u2014 this essentially tells the agent exactly what to change (make %W unconditionally variable-length in that specific function), leaving very little reasoning required."
+      "reason": "The instruction says '%W should always be treated as variable-length' and points to the exact function containsOnlyFixedWidthMySQLFormatters. Combined with saying 'When mysql_M_is_month_name is enabled, %W is incorrectly considered a fixed-width formatter', this essentially tells the developer exactly what to change: make %W unconditionally variable-width in that function. The fix is nearly fully specified."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_unconditional_w_check_added asserts exact code formatting including specific newline patterns ('if (std::any_of(\\n                            variable_width_formatter.begin(),') and ordering of specific code blocks. test_variable_width_formatter_array_updated requires the exact pattern \"variable_width_formatter_M_is_month_name = {'M'}\". An alternative correct fix (e.g., adding 'W' directly to a switch case, or using a different check mechanism) would fail these tests."
+      "reason": "test_unconditional_w_check_added asserts the exact code pattern with specific whitespace: 'if (std::any_of(\\n                            variable_width_formatter.begin(),' and checks ordering of specific code blocks. test_variable_width_formatter_array_updated asserts the exact line \"static constexpr std::array variable_width_formatter_M_is_month_name = {'M'};\". An alternative correct fix (e.g., adding 'W' handling via a separate if-statement, or restructuring the logic differently) would fail t"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_variable_width_formatter_array_updated, test_unconditional_w_check_added, test_no_redundant_w_in_m_array) are purely text-matching with regex/string searches on the source file. They never compile the code, run the function, or test actual formatting behavior. Every core f2p test is essentially 'assert pattern in open(path).read()'."
+      "reason": "The core f2p tests (test_variable_width_formatter_array_updated, test_unconditional_w_check_added, test_no_redundant_w_in_m_array) all use regex/string matching on file contents (e.g., re.search(pattern, content), func_body.find(...)). They never compile, execute, or call the code. Only test_repo_style_cpp and test_repo_various_checks run subprocesses, but these are p2p style checks, not behavioral tests of the bug fix."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code changes (removing 'W' from one array, adding unconditional check) that would not be present in the original unmodified file. A stub or no-op would fail these tests."
+      "reason": "The f2p tests check for specific code changes: the array must contain only 'M' (not 'W'), and the variable_width_formatter check must appear before the mysql_M_is_month_name check. A stub or unmodified file would fail these tests since the original code has {'W', 'M'} in the array and different ordering."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'running 00719_format_datetime_f_varsize_bug.sql should produce correct output without truncation' but no test actually runs this SQL test or verifies the formatting behavior. Only file existence is checked (test_repo_functional_test_files_exist), not execution."
+      "reason": "The instruction says 'running 00719_format_datetime_f_varsize_bug.sql should produce correct output without truncation' but no test actually runs the SQL test or verifies the functional behavior of formatDateTime with %W. Tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive names and docstrings explaining what each test verifies (e.g., 'F2P: Verify variable_width_formatter_M_is_month_name no longer includes W'). Tests are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive names (test_variable_width_formatter_array_updated, test_unconditional_w_check_added, etc.), have docstrings explaining what they check, and include F2P/P2P annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves fixing a C++ function, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,7 +39,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact function ('containsOnlyFixedWidthMySQLFormatters'), the exact file, and even provides the full function signature. This goes beyond describing what's broken and localizes the bug precisely."
+      "reason": "The instruction names the exact function (containsOnlyFixedWidthMySQLFormatters), the exact file (src/Functions/formatDateTime.cpp), the full function signature, and describes the exact nature of the fix needed. This goes beyond identifying the buggy area and essentially specifies the solution location and approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

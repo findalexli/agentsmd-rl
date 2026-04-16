@@ -101,8 +101,117 @@ distractors:
     to the VM execution path requires a protocol config flag to avoid breaking consensus,
     but this is an internal invariant check that should be applied directly.
   severity: high
+- rule: NEVER disable or ignore tests - all tests must pass and be enabled
+  source:
+    path: CLAUDE.md
+    lines: '112'
+  source_text: '- **NEVER disable or ignore tests** - all tests must pass and be enabled'
+  collision_type: rule_conflict
+  why_distracting: The gold diff correctly deletes several obsolete tests (e.g., tests
+    checking for `FAILED_TO_DESERIALIZE_ARGUMENT`) because the underlying API changed.
+    An agent reading 'NEVER disable or ignore tests' might mistakenly try to preserve
+    and fix these obsolete tests instead of rightfully removing them.
+  severity: high
+- rule: NEVER use linting suppressions
+  source:
+    path: CLAUDE.md
+    lines: '113'
+  source_text: '- **NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other
+    linting suppressions** - fix the underlying issues instead'
+  collision_type: rule_conflict
+  why_distracting: The test file `function_arg_tests.rs` heavily uses `#[allow(non_snake_case)]`
+    for test names like `expected_T__T_ref_got_u64__u64` to represent type signatures.
+    An agent might misinterpret this absolute rule and remove the suppression or forcibly
+    rename the tests, breaking the file's established convention.
+  severity: medium
+- rule: 'use #[tokio::test] for async tests, not #[test]'
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '- **All unit tests must work properly** - use `#[tokio::test]` for
+    async tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might incorrectly interpret this as a mandate to use `#[tokio::test]`
+    everywhere, but the tests in `function_arg_tests.rs` are standard synchronous
+    tests that correctly use standard `#[test]`.
+  severity: low
+- rule: 'Use #[tokio::test] for all unit tests'
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: 114-114
+  source_text: '- **All unit tests must work properly** - use `#[tokio::test]` for
+    async tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies `function_arg_tests.rs`, which contains multiple
+    synchronous unit tests using the `#[test]` attribute. An agent might misinterpret
+    this rule as a mandate to convert all `#[test]` macros to `#[tokio::test]`, incorrectly
+    assuming the tests should be async or ignoring the 'for async tests' qualifier.
+  severity: high
+- rule: Create a new protocol version for protocol changes
+  source:
+    path: /workspace/repo/.claude/skills/protocol-config/SKILL.md
+    lines: 64-66
+  source_text: '### 4. Determine if you need a new protocol version
+
+
+    **If the release branch and your feature branch have the SAME max version number**,
+    you MUST create a new protocol version in your feature branch before making changes.'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff adds new argument length checks and error returns
+    (`NUMBER_OF_ARGUMENTS_MISMATCH`) inside the core Move VM. Since this changes execution
+    behavior, an agent might incorrectly assume it must create a new protocol version
+    or feature flag to avoid breaking consensus. However, the PR simply applies the
+    fix directly.
+  severity: medium
 hierarchy_analysis: The hierarchy consists of root-level AGENTS.md and CLAUDE.md files
   with generic repository guidelines. No crate-specific configs are present to guide
   the Move VM modifications.
 version: '2.0'
-rubric: []
+rubric:
+- rule: Comment assumptions about external state or preconditions
+  source:
+    path: CLAUDE.md
+    lines: 119-124
+  source_text: '**When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions'
+  evidence: The diff adds a comment `// Internal type error if we get here -- find_function
+    should have already verified the type arguments...` which explains an assumption
+    about the external state (the postcondition of `find_function`) to justify why
+    a type argument mismatch returns an `INTERNAL_TYPE_ERROR`.
+  category: documentation
+  verification: llm_judge
+- rule: Document preconditions, assumptions, and non-obvious reasoning
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: 118-124
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions'
+  evidence: 'The gold diff adds a detailed comment in `vm.rs` explaining why a specific
+    block of code implies an internal type error: `// Internal type error if we get
+    here -- find_function should have already verified the type arguments as part
+    of the type resolution that it performs.` This perfectly aligns with documenting
+    ''Assumptions about external state or preconditions'' instead of commenting obvious
+    code.'
+  category: style
+  verification: llm_judge

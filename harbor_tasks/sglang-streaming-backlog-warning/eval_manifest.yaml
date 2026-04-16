@@ -1,87 +1,103 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21432
-  base_commit: "4dd4e06f1d5fd1d294cb82a84b803256760cbfff"
-  merge_commit: "75682f1d2f60797fb438da8fd6fe40e92e1a26fe"
-
+  base_commit: 4dd4e06f1d5fd1d294cb82a84b803256760cbfff
+  merge_commit: 75682f1d2f60797fb438da8fd6fe40e92e1a26fe
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "tokenizer_manager.py must parse without syntax errors"
-
-  - id: no_backlog_warning_at_runtime
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Executing the streaming drain path with multiple pending chunks must not emit WARNING-level logs"
-
-  - id: no_warning_call_in_method
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No WARNING-level logger calls about streaming backlog in _wait_one_response AST"
-
-  - id: async_generator_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Async generator structure with drain loop and event handling preserved"
-
-  - id: method_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "Method has substantial body with real logic, error handling, and completion detection"
-
-  - id: repo_ruff_tokenizer_manager
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenizer manager passes ruff linting checks (F401, F821, E9)"
-
-  - id: repo_black_tokenizer_manager
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenizer manager passes black formatting checks"
-
-  - id: repo_py_compile_managers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Managers module compiles without syntax errors"
-
-  - id: test_repo_isort_tokenizer_manager
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenizer manager passes isort import sorting checks"
-
-  - id: test_repo_precommit_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenizer manager passes pre-commit AST validation"
-
-  - id: test_repo_precommit_debug_statements
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenizer manager has no debug statements like pdb"
-
-  - id: test_repo_ruff_all_managers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All manager files pass ruff syntax checks E9 W1"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: tokenizer_manager.py must parse without syntax errors
+- id: no_backlog_warning_at_runtime
+  type: fail_to_pass
+  origin: pr_diff
+  description: Executing the streaming drain path with multiple pending chunks must
+    not emit WARNING-level logs
+- id: no_warning_call_in_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: No WARNING-level logger calls about streaming backlog in _wait_one_response
+    AST
+- id: async_generator_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Async generator structure with drain loop and event handling preserved
+- id: method_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Method has substantial body with real logic, error handling, and completion
+    detection
+- id: repo_ruff_tokenizer_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer manager passes ruff linting checks (F401, F821, E9)
+- id: repo_black_tokenizer_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer manager passes black formatting checks
+- id: repo_py_compile_managers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Managers module compiles without syntax errors
+- id: test_repo_isort_tokenizer_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer manager passes isort import sorting checks
+- id: test_repo_precommit_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer manager passes pre-commit AST validation
+- id: test_repo_precommit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenizer manager has no debug statements like pdb
+- id: test_repo_ruff_all_managers
+  type: pass_to_pass
+  origin: repo_tests
+  description: All manager files pass ruff syntax checks E9 W1
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "python/sglang/multimodal_gen/.claude/CLAUDE.md"
-      lines: "1-5"
-      commit: "4dd4e06f1d5fd1d294cb82a84b803256760cbfff"
-
-  - rule: "When writing tests, always use CustomTestCase — never raw unittest.TestCase."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "18"
-      commit: "4dd4e06f1d5fd1d294cb82a84b803256760cbfff"
-
-  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources that setUpClass may not have finished allocating."
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "19"
-      commit: "4dd4e06f1d5fd1d294cb82a84b803256760cbfff"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 1-5
+    commit: 4dd4e06f1d5fd1d294cb82a84b803256760cbfff
+- rule: When writing tests, always use CustomTestCase — never raw unittest.TestCase.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '18'
+    commit: 4dd4e06f1d5fd1d294cb82a84b803256760cbfff
+- rule: tearDownClass must be defensive — use hasattr/null checks before accessing
+    resources that setUpClass may not have finished allocating.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '19'
+    commit: 4dd4e06f1d5fd1d294cb82a84b803256760cbfff
+distractors:
+- rule: Only use logger.warning_once for hardware limitation fallbacks
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-triton-kernel/SKILL.md
+    lines: '229'
+  source_text: '- Add `logger.warning_once(...)` only when falling back due to a **known
+    hardware limitation** (e.g., unsupported SM compute capability), not for wrong-input
+    errors.'
+  collision_type: architecture_boundary
+  why_distracting: The PR removes a logger.warning() related to 'Streaming backlog'
+    in the tokenizer manager (SRT runtime). An agent might mistakenly apply this Triton
+    kernel rule and think the warning was removed because it wasn't a hardware limitation
+    fallback. However, the rule is strictly for diffusion Triton kernels, not the
+    LLM serving runtime async queues.
+  severity: medium
+- rule: Use at::cuda::getCurrentCUDAStream() for stream
+  source:
+    path: .claude/skills/add-sgl-kernel/SKILL.md
+    lines: '108'
+  source_text: '- Use `at::Tensor` (PyTorch tensors), `TORCH_CHECK` for validation,
+    `at::cuda::getCurrentCUDAStream()` for stream'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies a Python async method where `is_stream` refers
+    to HTTP response streaming (Server-Sent Events). The config rule refers to CUDA
+    execution streams. An agent searching for 'stream' could be distracted by this
+    rule and mistakenly try to apply CUDA stream abstractions in a pure Python HTTP-related
+    loop.
+  severity: high

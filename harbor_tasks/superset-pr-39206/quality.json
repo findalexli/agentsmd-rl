@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: variable name `needs_full_model`, class name `_SchemaFieldNormalizer`, `@model_serializer`, `populate_by_name=True`, `database_name` and `database` in `DEFAULT_DATASET_COLUMNS`, the condition `if relationship_loads or needs_full_model`, comments about `@property`/descriptors, file paths, and class inheritance requirements are all explicitly stated in the instructions."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: variable name `needs_full_model`, class name `_SchemaFieldNormalizer`, `@model_serializer`, `populate_by_name=True`, file paths, inheritance requirements for `SaveSqlQueryResponse`/`SqlLabResponse`, `database` and `database_name` in `DEFAULT_DATASET_COLUMNS`, and the condition `if relationship_loads or needs_full_model` are all explicitly stated."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly prescribes the exact implementation: variable name `needs_full_model`, the exact condition `if relationship_loads or needs_full_model`, the exact mixin class name `_SchemaFieldNormalizer` with `@model_serializer(mode=\"wrap\")`, `populate_by_name=True` in `ConfigDict`, and the exact two entries to add to `DEFAULT_DATASET_COLUMNS`. This is not describing what's broken \u2014 it's specifying exactly what to write."
+      "reason": "The instruction explicitly prescribes the exact implementation: variable name `needs_full_model`, exact class name `_SchemaFieldNormalizer`, exact inheritance changes, exact condition string `if relationship_loads or needs_full_model`, exact decorator `@model_serializer(mode=\"wrap\")`, and exact entries to add to `DEFAULT_DATASET_COLUMNS`. This goes far beyond describing what's broken \u2014 it dictates the precise fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name `needs_full_model` (test_dao_handles_property_descriptors), exact class name `_SchemaFieldNormalizer` (test_schema_field_normalizer_exists), exact string `if relationship_loads or needs_full_model` (test_dao_uses_needs_full_model_in_query), and inheritance checks for `_SchemaFieldNormalizer`. An alternative correct fix using different variable/class names or a different architecture would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: exact variable name `needs_full_model` (test_dao_handles_property_descriptors), exact class name `_SchemaFieldNormalizer` (test_schema_field_normalizer_exists), exact string `if relationship_loads or needs_full_model` (test_dao_uses_needs_full_model_in_query). Alternative correct fixes using different variable names (e.g., `require_full_model`) or different class names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is purely text-based: they use `ast.parse`, `re.search`, and string `in` checks on file contents. No test imports the modules, instantiates classes, calls methods, or checks runtime behavior. For example, test_dao_handles_property_descriptors just checks `'needs_full_model' in content`."
+      "reason": "Every fail-to-pass test uses only string matching (`assert 'needs_full_model' in content`, `assert '_SchemaFieldNormalizer' in class_names`, regex on file content, etc.) or AST inspection of source text. No test imports, instantiates, or calls any code. No behavioral execution is performed."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all tests are text-matching (e.g., checking if string 'needs_full_model' appears in a file), an agent could add a comment like `# needs_full_model @property descriptor if relationship_loads or needs_full_model` and a dummy `_SchemaFieldNormalizer` class without actually fixing any bug, and pass all tests."
+      "reason": "Since tests only check for string/AST presence in files, a stub that simply adds the text `needs_full_model = False` as a comment, adds an empty `_SchemaFieldNormalizer` class, and adds string entries to a list would pass most tests without actually implementing the bug fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: `needs_full_model` variable, `@property` comment, query condition, `_SchemaFieldNormalizer` class and inheritance, `populate_by_name`, and `DEFAULT_DATASET_COLUMNS` entries."
+      "reason": "All behaviors described in instruction.md are covered by tests: `needs_full_model` flag, `_SchemaFieldNormalizer` mixin with `@model_serializer`, inheritance for both response classes, `populate_by_name` for both request/response, and `database`/`database_name` in DEFAULT_DATASET_COLUMNS."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (comments separating SQL Lab, list_datasets, DAO, and pass-to-pass tests), descriptive function names, and docstrings indicating fail_to_pass vs pass_to_pass."
+      "reason": "Tests are clearly grouped with section comments (sql_lab/schemas.py, list_datasets.py, daos/base.py, pass-to-pass tests), descriptively named, and include docstrings with fail_to_pass/pass_to_pass annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task is about fixing code bugs in Python files, not producing structured data output like JSON/CSV/API responses."
+      "reason": "The task involves code fixes, not production of structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, class names, and commands in instruction.md are consistent with the test file and solution \u2014 no typos detected."
+      "reason": "File paths, variable names, class names, and commands in instruction.md are consistent with test assertions and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact variable names (`needs_full_model`), exact class names (`_SchemaFieldNormalizer`), exact conditions (`if relationship_loads or needs_full_model`), exact config keys (`populate_by_name=True`), and exact list entries to add. This goes far beyond identifying the buggy area and essentially dictates the implementation."
+      "reason": "Instruction.md specifies exact variable names (`needs_full_model`), exact class names (`_SchemaFieldNormalizer`), exact condition strings (`if relationship_loads or needs_full_model`), exact decorator usage (`@model_serializer(mode=\"wrap\")`), and exact list entries to add. This is essentially the complete solution specification, not just a bug description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both file paths (universal_marker.rs, export/mod.rs), function names (resolve_conflicts, resolve_activated_extras, conflict_marker_reachability), the Edge enum, field names (dep_extras, scope_package, etc.), and type information (Option<&PackageName>, Vec, ConflictItem). All test-asserted specifics like function names, parameter names, enum names, and field names are discoverable from the instruction."
+      "reason": "instruction.md names both files (universal_marker.rs, export/mod.rs), the Edge enum, conflict_marker_reachability function, and suggests parameter names (scope_package, etc.) and field names (dep_extras, etc.) that tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive: it specifies the exact function rename (resolve_activated_extras), the exact parameter name and type (scope_package: Option<&PackageName>), the exact field name (dep_extras), the exact enum transformation (tuple to struct variants), and specific implementation details like 'package.clone() and name.clone()'. This goes far beyond describing what's broken \u2014 it describes exactly what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and what should change structurally, but doesn't give specific code/line-level fixes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable/field names: test_edge_carries_dep_extras checks for exact strings like 'dep_extras', 'child_extras', 'activated_extras'; test_resolve_handles_package_scope checks for 'scope_package', 'package_name', etc.; test_unencoded_extra_lookup checks for 'package.clone()', 'name.clone()', 'scope_package'. A correct alternative using different naming (e.g., 'target_extras', 'context_package') would fail these tests."
+      "outcome": "pass",
+      "reason": "Tests accept multiple parameter name variants (scope_package/package_name/scope/pkg_name/current_package) and field variants (dep_extras/extras/child_extras/activated_extras), and check for any of several indicator patterns."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_resolve_handles_package_scope, test_edge_carries_dep_extras, test_unencoded_extra_lookup, test_dep_extras_fed_into_conflict_map) exclusively use string matching on source code: reading files, extracting function signatures/bodies, and checking for substring presence. None import, call, or execute the actual code. The cargo tests do execute subprocesses but only check formatting/compilation, not behavioral correctness."
+      "reason": "F2p tests (test_resolve_handles_package_scope, test_edge_carries_dep_extras, test_unencoded_extra_lookup, test_dep_extras_fed_into_conflict_map) all rely on reading source text and regex/substring checks rather than executing the code; cargo tests are only pass-to-pass and timeout-tolerant."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for structural changes that don't exist in the base commit (e.g., scope_package parameter, dep_extras field in Edge enum, unencoded extra handling logic). A stub or no-op wouldn't add these specific patterns to the source files, so the tests would fail."
+      "outcome": "fail",
+      "reason": "test_unencoded_extra_lookup falls back to scanning the entire file source if body extraction fails, so merely adding a 'scope_package' parameter and a 'name.clone()' usage anywhere in the file would satisfy it; similarly test_dep_extras_fed_into_conflict_map scans whole file when body is small."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction describes expected behavior: 'uv export --extra cpu should produce correct marker expressions'. No test actually verifies this end-to-end behavior \u2014 tests only check source code text patterns."
+      "reason": "Instruction promises 'uv export --extra cpu ... should produce correct marker expressions' but no test actually runs uv export or verifies output markers; only structural code-shape checks are performed."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (pass-to-pass, fail-to-pass), descriptive function names, and detailed docstrings explaining what each test validates."
+      "reason": "Tests are grouped with section comments (pass-to-pass CI, fail-to-pass core, regression) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves code changes to a Rust crate, not structured data output."
+      "reason": "Task is code-internal; no external structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths and identifiers appear consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact function names to create/modify (resolve_activated_extras), exact parameter names (scope_package), exact field names (dep_extras), exact implementation patterns (package.clone(), name.clone(), ConflictItem construction), and exact enum transformation strategy. This is severe localization and implementation leakage."
+      "outcome": "pass",
+      "reason": "Files are named as the task domain requires; no specific line numbers leaked."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, no config-edits involved."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

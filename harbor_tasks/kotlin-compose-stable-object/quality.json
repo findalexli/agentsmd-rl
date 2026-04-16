@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (Stability.kt, AbstractComposeLowering.kt, golden file paths, test file paths), the exact string checks (e.g., 'declaration.isObject', 'symbol.owner.isObject'), test method names (testObjectTypesAreStable, testNoStablePropertyOnCompanionObjects), and golden file content requirements that correspond to what the tests assert."
+      "reason": "Instruction names all required file paths, test method names, golden file paths, and the exact literal strings tested."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'checking symbol.owner.isObject instead of only checking for companion objects', 'an isObject check should return Stability.Stable', and even gives the exact code pattern 'if (declaration.isObject) return Stability.Stable'. This tells the agent exactly what to change rather than just describing the broken behavior."
+      "reason": "Instruction explicitly gives the exact resulting code lines 'if (declaration.isObject) return Stability.Stable' and 'if (symbol.owner.isObject) true', which are the exact strings the tests check for."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'if (declaration.isObject) return Stability.Stable' and 'if (symbol.owner.isObject) true' via simple string matching. An alternative correct fix (e.g., using 'declaration.kind == ClassKind.OBJECT' or a different code structure) would fail these tests even if it correctly fixes the bug."
+      "reason": "Tests assert exact string matches like 'if (declaration.isObject) return Stability.Stable' and 'if (symbol.owner.isObject) true'; a semantically equivalent fix with different formatting/whitespace would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_stability_kt_has_object_check, test_lowering_kt_has_isobject_check, test_no_stable_property_in_golden_files, test_new_golden_files_exist, test_test_methods_exist) are ALL pure text-matching assertions using 'assert X in open(path).read()'. No code is compiled, executed, or behaviorally tested."
+      "reason": "All f2p tests are file content substring checks (e.g., 'in content') plus kotlinc syntax check; no test actually exercises compiler behavior for object stability."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The agent could satisfy all fail-to-pass tests by simply inserting the exact strings the tests look for (e.g., appending 'if (declaration.isObject) return Stability.Stable' as a comment) and creating golden/test files with the right content, without actually fixing the compiler bug."
+      "outcome": "pass",
+      "reason": "The specific string checks require the actual code edits to be present, not satisfiable by a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (stability inference check, lowering fix, golden file updates, new test methods, new golden files) are tested by the test suite."
+      "reason": "Tests cover stability code edit, lowering edit, new test methods, new golden files, and absence of .%stable in updated goldens."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_stability_kt_has_object_check, test_lowering_kt_has_isobject_check, etc.), have docstrings explaining purpose, and are grouped into fail-to-pass and pass-to-pass categories with comments."
+      "reason": "Tests have descriptive names, docstrings, and are grouped with a fail-to-pass / pass-to-pass comment header."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves compiler plugin source code modifications, not structured data output."
+      "reason": "Task is code-editing, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests appear consistent and correct."
+      "reason": "Paths and names in instruction.md match those used in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files (Stability.kt in analysis/ subdirectory, AbstractComposeLowering.kt in lower/ subdirectory), the exact code to add ('if (declaration.isObject) return Stability.Stable'), and the exact change to make ('checking symbol.owner.isObject instead of only checking for companion objects'). This is excessive localization."
+      "reason": "Instruction specifies exact files and exact resulting code strings ('if (declaration.isObject) return Stability.Stable' and 'if (symbol.owner.isObject) true'), removing the need to localize or reason about the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

@@ -1,0 +1,64 @@
+name = "appwrite-installer-fix"
+title = "Fix Appwrite Installer Response Handling and Upgrade Detection"
+description = """
+Fixes several issues in the Appwrite installer:
+1. Enable Swoole coroutines for non-blocking I/O during installation tracking
+2. Add CLI parameter detection to skip web installer when explicit args provided
+3. Add error suppression for DNS lookups that might fail
+4. Fix tracking payload key naming (hostIp -> ip) with proper validation
+5. Add HTTP client timeouts to prevent hanging on external calls
+6. Implement onComplete callback for proper SSE stream completion before tracking
+7. Fix upgrade detection when existing installation found
+8. UI fixes: hide secret key on upgrade, fix progress text, adjust CSS min-height
+"""
+
+# Estimated difficulty: 3/5 (moderate - requires understanding PHP, Swoole, and async patterns)
+difficulty = 3
+
+# Tags for categorization
+tags = ["php", "swoole", "installer", "async", "coroutines", "http-client", "cli"]
+
+# Estimated time for an agent to complete
+estimated_time_minutes = 45
+
+# Number of test assertions
+test_count = 16
+
+# Source PR info
+[source]
+owner = "appwrite"
+repo = "appwrite"
+pr_number = 11689
+merge_commit = "ec20fb59e2883f47afce681614f40ad6d7a7d973"
+base_commit = "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
+
+# Files modified (excluding AGENTS.md which is just docs)
+[[files]]
+path = "src/Appwrite/Platform/Installer/Http/Installer/Install.php"
+role = "primary"
+description = "HTTP installer with onComplete callback and response deduplication"
+
+[[files]]
+path = "src/Appwrite/Platform/Installer/Server.php"
+role = "primary"
+description = "Enable Swoole coroutines for non-blocking operations"
+
+[[files]]
+path = "src/Appwrite/Platform/Tasks/Install.php"
+role = "primary"
+description = "CLI installer with param detection and async tracking"
+
+[[files]]
+path = "app/views/install/installer/css/styles.css"
+role = "supporting"
+description = "CSS fix for upgrade mode min-height"
+
+[[files]]
+path = "app/views/install/installer/templates/steps/step-4.phtml"
+role = "supporting"
+description = "Hide secret key row in upgrade mode"
+
+[[files]]
+path = "app/views/install/installer/templates/steps/step-5.phtml"
+role = "supporting"
+description = "Fix progress text to say 'Appwrite' instead of 'your app'"

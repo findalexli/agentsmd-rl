@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -197,14 +198,55 @@ def test_poll_script_requires_args():
 
 # [pr_diff] fail_to_pass
 def test_poll_script_api_and_event():
-    """poll.sh uses the GitHub timeline API and checks for copilot_work_finished."""
+    """poll.sh detects copilot_work_finished by calling the GitHub timeline API."""
     poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
-    content = poll_sh.read_text()
-    assert "timeline" in content, "poll.sh must use the GitHub timeline API"
-    assert "copilot_work_finished" in content, \
-        "poll.sh must check for copilot_work_finished event"
-    assert "1800" in content or "max_seconds" in content, \
-        "poll.sh must have a timeout mechanism"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        call_log = os.path.join(tmpdir, "gh_calls.log")
+
+        # Mock gh: logs every invocation and returns copilot_work_finished event.
+        # Handles both --jq (pre-filtered output) and raw JSON approaches.
+        mock_gh_script = (
+            '#!/usr/bin/env bash\n'
+            'echo "$@" >> "CALL_LOG_PLACEHOLDER"\n'
+            'for arg in "$@"; do\n'
+            '    if [[ "$arg" == "--jq" ]]; then\n'
+            '        echo "2024-01-01T00:00:00Z"\n'
+            '        exit 0\n'
+            '    fi\n'
+            'done\n'
+            "echo '[{\"event\":\"copilot_work_finished\",\"created_at\":\"2024-01-01T00:00:00Z\"}]'\n"
+            'exit 0\n'
+        ).replace("CALL_LOG_PLACEHOLDER", call_log)
+
+        mock_gh_path = os.path.join(tmpdir, "gh")
+        with open(mock_gh_path, "w") as f:
+            f.write(mock_gh_script)
+        os.chmod(mock_gh_path, 0o755)
+
+        # Mock sleep so the polling loop does not block
+        mock_sleep_path = os.path.join(tmpdir, "sleep")
+        with open(mock_sleep_path, "w") as f:
+            f.write("#!/usr/bin/env bash\nexit 0\n")
+        os.chmod(mock_sleep_path, 0o755)
+
+        env = os.environ.copy()
+        env["PATH"] = tmpdir + ":" + env.get("PATH", "")
+
+        r = subprocess.run(
+            ["bash", str(poll_sh), "mlflow/mlflow", "123"],
+            capture_output=True, text=True, timeout=30, env=env,
+        )
+        assert r.returncode == 0, (
+            f"poll.sh should exit 0 when copilot_work_finished event is detected.\n"
+            f"stdout: {r.stdout}\nstderr: {r.stderr}"
+        )
+        # Verify the script actually invoked gh (rules out no-op stubs)
+        assert os.path.exists(call_log), \
+            "poll.sh must call gh to query the GitHub API"
+        log_content = open(call_log).read()
+        assert len(log_content.strip()) > 0, \
+            "poll.sh must invoke gh with arguments"
 
 
 # ---------------------------------------------------------------------------

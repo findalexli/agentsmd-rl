@@ -43,7 +43,82 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Cargo check for move-stdlib passes (test dependency)
-rubric: []
+rubric:
+- rule: Do not comment the obvious, including simple variable assignments, standard
+    library usage, and self-descriptive function calls.
+  source:
+    path: CLAUDE.md
+    lines: 118-130
+  source_text: '### **Comment Writing Guidelines**
+
+
+    **Do NOT comment the obvious** - comments should not simply repeat what the code
+    does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions
+
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The diff introduces simple variable assignments (`linkage_table`, `linkage_context`),
+    standard library iterator patterns (`.map().collect()`), and self-descriptive
+    function calls (`LinkageContext::new()`). It strictly adheres to this rule by
+    omitting any obvious or redundant comments for these operations.
+  category: style
+  verification: llm_judge
+- rule: Do not comment the obvious (simple variable assignments, standard library
+    usage, self-descriptive function calls)
+  source:
+    path: CLAUDE.md
+    lines: 118-130
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions
+
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The gold diff introduces new variable assignments (`let linkage_table
+    = ...`, `let linkage_context = ...`) and calls a descriptively named function
+    (`StoredPackage::from_module_for_testing_with_linkage`). Following the convention,
+    the author adds no explanatory comments for these straightforward operations.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: All new files must start with the Mysten Labs license header
   collision_type: scope_ambiguity
@@ -55,6 +130,48 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 16-19
+- rule: Sui uses an object-centric model with unique IDs and versions for each object.
+  source:
+    path: CLAUDE.md
+    lines: 85-88
+  source_text: "2. **Object Model**: Unlike account-based blockchains, Sui uses an\
+    \ object-centric model where:\n   - Each object has a unique ID and version\n\
+    \   - Objects can be owned, shared, or immutable"
+  collision_type: architecture_boundary
+  why_distracting: The modified file is located in `external-crates/move/`, which
+    is the core upstream Move VM implementation. It is independent of Sui's specific
+    object-centric model. An agent reading this rule might attempt to incorrectly
+    map Move module addresses to Sui's `ObjectID` types or introduce versioning concepts,
+    which would violate the architecture boundary separating the generic Move VM from
+    the Sui framework.
+  severity: high
+- rule: 'All unit tests must work properly - use #[tokio::test] for async tests, not
+    #[test]'
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '   - **All unit tests must work properly** - use `#[tokio::test]`
+    for async tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: The modified file is `test_runner.rs`, which builds the testing
+    infrastructure for `move-unit-test`. An agent might see the word 'test' and assume
+    this code represents individual application unit tests, mistakenly trying to rewrite
+    the test runner's internal synchronous framework execution loop to use async paradigms
+    or `#[tokio::test]`.
+  severity: medium
+- rule: 'Use #[tokio::test] for async tests, not #[test]'
+  source:
+    path: CLAUDE.md
+    lines: '115'
+  source_text: '- **All unit tests must work properly** - use `#[tokio::test]` for
+    async tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: The modified file `test_runner.rs` is in the `move-unit-test` crate.
+    An AI agent might see the filename/path and assume it is working on Rust unit
+    tests, thereby inappropriately attempting to apply `#[tokio::test]` to new test
+    functions. However, this file implements the Move VM test runner infrastructure,
+    not async Rust unit tests.
+  severity: low
 hierarchy_analysis: The config hierarchy is flat, consisting only of root-level `CLAUDE.md`
   and `AGENTS.md` files. There are no crate-specific overrides provided in the context,
   meaning the agent only has to rely on generic repository guidelines.

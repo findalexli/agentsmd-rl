@@ -57,118 +57,275 @@ def get_doc_by_kind(docs, kind):
     return None
 
 
+def get_pod_from_configmap(docs):
+    """Extract pod template from ConfigMap containing pod-template-file."""
+    for doc in docs:
+        if doc and doc.get("kind") == "ConfigMap":
+            # The pod template is stored as a string value in the ConfigMap
+            for key, value in doc.get("data", {}).items():
+                if "template" in key.lower() or key == "pod_template_file.yaml":
+                    # Parse the embedded pod template
+                    pod_template = yaml.safe_load(value)
+                    if pod_template and pod_template.get("kind") == "Pod":
+                        return pod_template
+    return None
+
+
 # =============================================================================
 # Fail-to-pass tests (must fail on base commit, pass on fix)
 # =============================================================================
 
 
-def test_kubernetes_affinity_in_pod_template():
-    """Test that workers.kubernetes.affinity is applied to pod-template-file.
+def test_kubernetes_affinity_applied_to_pod_template():
+    """Test that workers.kubernetes.affinity is actually applied to pod-template.
 
-    This test verifies that the new workers.kubernetes.affinity field
-    is properly read and applied in the pod template file template.
-
-    The pod-template-file is stored in a ConfigMap, so we check that the
-    template file contains the logic to use workers.kubernetes.affinity.
+    This test verifies that when workers.kubernetes.affinity is set, it appears
+    in the rendered pod template. This is a behavioral test that actually
+    renders the template and checks the output.
     """
-    # Read the template file directly to verify the logic exists
-    template_path = CHART_DIR / "files" / "pod-template-file.kubernetes-helm-yaml"
+    # Define a test affinity configuration
+    test_affinity = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {
+                        "matchExpressions": [
+                            {"key": "test-label", "operator": "In", "values": ["test-value"]}
+                        ]
+                    }
+                ]
+            }
+        }
+    }
 
-    with open(template_path) as f:
-        template_content = f.read()
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "affinity": test_affinity
+            }
+        }
+    }
 
-    # Check that the template uses workers.kubernetes.affinity with precedence
-    assert "workers.kubernetes.affinity" in template_content, \
-        "pod-template-file template should reference workers.kubernetes.affinity"
+    # Render the pod-template-file ConfigMap
+    docs = helm_template(values=values, show_only=["templates/pod-template-file.yaml"])
 
-    # Check the order of precedence: kubernetes.affinity > affinity > global affinity
-    # The template should check workers.kubernetes.affinity first
-    affinity_line = None
-    for line in template_content.split("\n"):
-        if "$affinity := or" in line and "workers.kubernetes.affinity" in line:
-            affinity_line = line
-            break
+    # Get the pod template from the ConfigMap
+    pod = get_pod_from_configmap(docs)
+    assert pod is not None, "Could not find pod template in rendered output"
 
-    assert affinity_line is not None, \
-        "Template should define $affinity with workers.kubernetes.affinity as first option"
-    assert "workers.kubernetes.affinity" in affinity_line, \
-        "workers.kubernetes.affinity should be the first option in the or chain"
-    assert "workers.affinity" in affinity_line, \
-        "workers.affinity should be the fallback option"
+    # Verify the affinity is applied to the pod spec
+    rendered_affinity = pod.get("spec", {}).get("affinity")
+    assert rendered_affinity is not None, "Pod template should have affinity set"
+    assert rendered_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms") is not None, \
+        "Rendered pod should have nodeAffinity with nodeSelectorTerms"
 
 
-def test_celery_affinity_in_worker_deployment():
-    """Test that workers.celery.affinity is defined and accessible.
+def test_celery_affinity_applied_to_worker_deployment():
+    """Test that workers.celery.affinity is applied to Celery worker deployment.
 
-    This test verifies that the new workers.celery.affinity field
-    is properly defined in values.yaml and the schema. The worker deployment
-    template uses workersMergeValues to merge celery config, so the affinity
-    will be available through the merged workers config.
+    This test verifies that when workers.celery.affinity is set, it appears
+    in the rendered worker deployment's pod spec.
     """
-    # Check values.yaml has the celery.affinity field defined
-    values_path = CHART_DIR / "values.yaml"
+    # Define a test affinity configuration
+    test_affinity = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {
+                        "matchExpressions": [
+                            {"key": "celery-label", "operator": "In", "values": ["celery-value"]}
+                        ]
+                    }
+                ]
+            }
+        }
+    }
 
-    with open(values_path) as f:
-        values_content = f.read()
+    values = {
+        "executor": "CeleryExecutor",
+        "workers": {
+            "celery": {
+                "affinity": test_affinity
+            }
+        }
+    }
 
-    # Find the celery section and check it has affinity defined
-    # Look for the pattern in values.yaml where celery.affinity should be
-    assert "celery:" in values_content, "values.yaml should have celery section"
+    # Render the worker deployment
+    docs = helm_template(values=values, show_only=["templates/workers/worker-deployment.yaml"])
 
-    # Check that after the celery section there's an affinity: {} defined
-    # We need to verify the structure exists - look for affinity defined in the right context
-    lines = values_content.split("\n")
-    in_celery_section = False
-    celery_affinity_found = False
-    celery_indent = None
+    # Get the deployment
+    deployment = get_doc_by_kind(docs, "Deployment")
+    assert deployment is not None, "Could not find worker deployment in rendered output"
 
-    for i, line in enumerate(lines):
-        # Detect start of celery section (should be at certain indent level under workers)
-        if line.strip().startswith("celery:") and not line.startswith("  celery:"):
-            # This is the top-level celery section, not what we want
-            continue
-        if line.startswith("  celery:") or line.startswith("    celery:"):
-            in_celery_section = True
-            celery_indent = len(line) - len(line.lstrip())
-            continue
-
-        if in_celery_section:
-            # Check if we've exited the celery section
-            current_indent = len(line) - len(line.lstrip())
-            if line.strip() and current_indent <= celery_indent:
-                break
-
-            # Look for affinity definition within celery section
-            if "affinity:" in line and current_indent > celery_indent:
-                celery_affinity_found = True
-                break
-
-    assert celery_affinity_found, \
-        "values.yaml should have workers.celery.affinity defined (affinity: {} under celery section)"
+    # Verify the affinity is applied to the pod template spec
+    pod_spec = deployment.get("spec", {}).get("template", {}).get("spec", {})
+    rendered_affinity = pod_spec.get("affinity")
+    assert rendered_affinity is not None, "Worker deployment pod spec should have affinity set"
+    assert rendered_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms") is not None, \
+        "Rendered worker should have nodeAffinity with nodeSelectorTerms"
 
 
-def test_deprecated_workers_affinity_deprecation_warning():
-    """Test that NOTES.txt includes deprecation warning for workers.affinity.
+def test_precedence_new_fields_over_deprecated():
+    """Test that new specific affinity fields take precedence over deprecated workers.affinity.
 
-    When workers.affinity is set, NOTES.txt should display a deprecation warning
-    indicating to use workers.celery.affinity and/or workers.kubernetes.affinity.
+    When both the old workers.affinity and new workers.kubernetes.affinity are set,
+    the new specific field should take precedence.
     """
-    notes_path = CHART_DIR / "templates" / "NOTES.txt"
+    # Define different affinity configurations for old and new fields
+    old_deprecated_affinity = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {"matchExpressions": [{"key": "old-label", "operator": "In", "values": ["old-value"]}]}
+                ]
+            }
+        }
+    }
 
-    with open(notes_path) as f:
-        notes_content = f.read()
+    new_kubernetes_affinity = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {"matchExpressions": [{"key": "new-label", "operator": "In", "values": ["new-value"]}]}
+                ]
+            }
+        }
+    }
 
-    # Check that NOTES.txt contains a deprecation warning for workers.affinity
-    assert "workers.affinity" in notes_content, \
-        "NOTES.txt should reference workers.affinity"
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "affinity": old_deprecated_affinity,  # deprecated
+            "kubernetes": {
+                "affinity": new_kubernetes_affinity  # new field
+            }
+        }
+    }
 
-    # Check that it suggests the new fields
+    # Render the pod-template-file
+    docs = helm_template(values=values, show_only=["templates/pod-template-file.yaml"])
+
+    # Get the pod template
+    pod = get_pod_from_configmap(docs)
+    assert pod is not None, "Could not find pod template"
+
+    # Verify the new affinity takes precedence (has new-label, not old-label)
+    rendered_affinity = pod.get("spec", {}).get("affinity")
+    assert rendered_affinity is not None, "Pod should have affinity"
+
+    terms = rendered_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms", [])
+    assert len(terms) > 0, "Should have nodeSelectorTerms"
+
+    # Check that the new label is present (new field took precedence)
+    match_expressions = terms[0].get("matchExpressions", [])
+    keys = [me.get("key") for me in match_expressions]
+    assert "new-label" in keys, "New workers.kubernetes.affinity should take precedence over deprecated workers.affinity"
+
+
+def test_backwards_compatibility_deprecated_affinity():
+    """Test that deprecated workers.affinity still works for backwards compatibility.
+
+    When only the old workers.affinity is set (without new specific fields),
+    it should still be applied to both pod-template and worker deployments.
+    """
+    deprecated_affinity = {
+        "nodeAffinity": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                    {"matchExpressions": [{"key": "deprecated-label", "operator": "In", "values": ["deprecated-value"]}]}
+                ]
+            }
+        }
+    }
+
+    # Test for pod-template (KubernetesExecutor)
+    values_k8s = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "affinity": deprecated_affinity
+        }
+    }
+
+    docs_k8s = helm_template(values=values_k8s, show_only=["templates/pod-template-file.yaml"])
+    pod = get_pod_from_configmap(docs_k8s)
+    assert pod is not None, "Could not find pod template"
+
+    rendered_affinity = pod.get("spec", {}).get("affinity")
+    assert rendered_affinity is not None, "Pod should have affinity when using deprecated workers.affinity"
+
+    terms = rendered_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms", [])
+    assert len(terms) > 0, "Should have nodeSelectorTerms"
+
+    match_expressions = terms[0].get("matchExpressions", [])
+    keys = [me.get("key") for me in match_expressions]
+    assert "deprecated-label" in keys, "Deprecated workers.affinity should still work for pod template"
+
+    # Test for worker deployment (CeleryExecutor)
+    values_celery = {
+        "executor": "CeleryExecutor",
+        "workers": {
+            "affinity": deprecated_affinity
+        }
+    }
+
+    docs_celery = helm_template(values=values_celery, show_only=["templates/workers/worker-deployment.yaml"])
+    deployment = get_doc_by_kind(docs_celery, "Deployment")
+    assert deployment is not None, "Could not find worker deployment"
+
+    pod_spec = deployment.get("spec", {}).get("template", {}).get("spec", {})
+    rendered_affinity = pod_spec.get("affinity")
+    assert rendered_affinity is not None, "Worker deployment should have affinity when using deprecated workers.affinity"
+
+    terms = rendered_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms", [])
+    match_expressions = terms[0].get("matchExpressions", []) if terms else []
+    keys = [me.get("key") for me in match_expressions]
+    assert "deprecated-label" in keys, "Deprecated workers.affinity should still work for worker deployment"
+
+
+def test_deprecation_warning_in_notes():
+    """Test that NOTES.txt displays deprecation warning when workers.affinity is set.
+
+    When workers.affinity is set, the NOTES.txt template should render a deprecation
+    warning mentioning workers.celery.affinity and workers.kubernetes.affinity.
+    """
+    values = {
+        "workers": {
+            "affinity": {"podAntiAffinity": {}}  # Set the deprecated field
+        }
+    }
+
+    # Render NOTES.txt
+    docs = helm_template(values=values, show_only=["templates/NOTES.txt"])
+
+    # NOTES.txt renders as a plain text string in a ConfigMap-like structure
+    notes_content = None
+    for doc in docs:
+        if doc and doc.get("data"):
+            for key, value in doc.get("data", {}).items():
+                if "NOTES" in key or value:
+                    notes_content = value
+                    break
+
+    # NOTES.txt might be rendered directly as a string
+    if notes_content is None and docs:
+        # Try to get raw output by running helm again with different parsing
+        result = subprocess.run(
+            ["helm", "template", "test-release", str(CHART_DIR), "--show-only", "templates/NOTES.txt"],
+            capture_output=True, text=True, timeout=60
+        )
+        notes_content = result.stdout
+
+    assert notes_content is not None, "Could not get NOTES.txt content"
+
+    # Verify deprecation warning is present
+    notes_upper = notes_content.upper()
+    assert "DEPRECATION" in notes_upper or "DEPRECATED" in notes_upper, \
+        "NOTES.txt should contain deprecation warning when workers.affinity is set"
+
+    # Verify the new fields are mentioned as alternatives
     assert "workers.celery.affinity" in notes_content or "workers.kubernetes.affinity" in notes_content, \
         "NOTES.txt should suggest workers.celery.affinity and/or workers.kubernetes.affinity as alternatives"
-
-    # Check that there's a deprecation warning
-    assert "DEPRECATION" in notes_content.upper() or "deprecated" in notes_content.lower(), \
-        "NOTES.txt should contain a deprecation warning"
 
 
 def test_schema_includes_celery_affinity():
@@ -213,33 +370,6 @@ def test_schema_includes_kubernetes_affinity():
     affinity_prop = k8s_props["affinity"]
     assert affinity_prop.get("type") == "object", \
         "workers.kubernetes.affinity should be type object"
-
-
-def test_deprecated_affinity_backwards_compatibility():
-    """Test that workers.affinity still works for backwards compatibility.
-
-    The old workers.affinity field should still be applied when the new
-    fields are not set, maintaining backwards compatibility.
-    We verify this by checking the template has the fallback logic.
-    """
-    template_path = CHART_DIR / "files" / "pod-template-file.kubernetes-helm-yaml"
-
-    with open(template_path) as f:
-        template_content = f.read()
-
-    # Check that the template still references the deprecated workers.affinity
-    # for backwards compatibility
-    assert "workers.affinity" in template_content, \
-        "Template should reference workers.affinity for backwards compatibility"
-
-    # Check the deprecation comment in values.yaml
-    values_path = CHART_DIR / "values.yaml"
-    with open(values_path) as f:
-        values_content = f.read()
-
-    # Check that the deprecated affinity field has a deprecation comment
-    assert "deprecated" in values_content.lower() and "workers.celery.affinity" in values_content.lower(), \
-        "values.yaml should indicate workers.affinity is deprecated and suggest new fields"
 
 
 # =============================================================================

@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names all file paths (enterprise/integrations/slack/slack_manager.py), function names (_generate_repo_selection_form, _build_repo_options, _parse_form_action, receive_form_interaction), literal strings ('Select a repository or continue without one:', 'no_repository:', 'repository_select:', 'return [', 'options = [', 'repos[:100]', 'repos[:99]', '-', 'logger.warning', 'startswith'), and schema keys ('type': 'button', 'type': 'external_select', 'action_id', 'value') that "
+      "reason": "The instruction names the file path (enterprise/integrations/slack/slack_manager.py), all function names (_generate_repo_selection_form, _build_repo_options, receive_form_interaction, plus the new _parse_form_action helper), action_id prefixes (no_repository:, repository_select:), the value '-', the updated text string, and the 100 vs 99 limit. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact implementation details: 'Must use a direct return [ pattern', 'Must allow up to 100 repositories: repos[:100]', 'Must contain return [ and must NOT contain options = [', specific action_id prefixes, exact instruction text string, specific method signatures. This tells the agent exactly WHAT to change rather than describing what's broken."
+      "reason": "The instruction explicitly tells the agent exactly what to implement: add a button with specific action_id prefix and value, add a new helper method _parse_form_action, change 99 to 100, change the instruction text to a specific string, use startswith for prefix checking, etc. This is a detailed implementation specification, not a bug description. A competent developer doesn't need to reason about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_build_repo_options_returns_directly checks for 'return [' pattern and absence of 'options = [' in source text; test_parse_form_action_exists requires a specific helper method name '_parse_form_action'; test_parse_form_action_handles_no_repository requires 'startswith' in source. An alternative correct fix could use 'options = []' with append, or inline the parsing logic without a separate _parse_form_action method, or use '==' instead of"
+      "reason": "Tests assert on gold-specific implementation details: test_build_repo_options_returns_directly requires 'return [' and forbids 'options = [' (a correct alternative could use options variable with direct assignment). test_parse_form_action_exists requires exact method name '_parse_form_action'. test_parse_form_action_handles_no_repository requires 'startswith' in source. test_receive_form_interaction_handles_none_parsed requires exact string 'if parsed is None' or 'if not parsed'. These are imple"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test uses AST parsing and string matching on source code (e.g., 'assert \"return [\" in func_source', 'assert \"startswith\" in func_source', 'assert \"logger.warning\" in func_source'). No test imports the module, instantiates the class, calls any method, or checks runtime behavior."
+      "reason": "Every single test uses AST parsing and string matching on source code (e.g., assert \"'type': 'button'\" in func_source, assert 'return [' in func_source). No test imports the module, instantiates the class, calls a method, or checks runtime behavior. All tests are purely textual/structural assertions."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The tests check for specific strings and patterns in the source code that wouldn't be present in the original unmodified file (e.g., 'no_repository:' prefix, button element, _parse_form_action method, 'repos[:100]'). A stub or the original code would not pass these tests."
+      "outcome": "fail",
+      "reason": "Since all tests check source text rather than executing code, a stub implementation that simply contains the right string literals in function bodies (without any actual logic) would pass. For example, _parse_form_action could contain comments with 'no_repository:', 'repository_select:', 'startswith' and pass all related tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md's Verification Criteria are tested: form instruction text, button element, external_select element, _build_repo_options return pattern and limit, _parse_form_action existence and handling, receive_form_interaction integration."
+      "reason": "All six requirements from the instruction are tested: button element, retained dropdown, updated text, 100 repo limit, _parse_form_action helper with prefix handling, and graceful None handling in receive_form_interaction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_generate_repo_selection_form_has_button_element), have docstrings explaining before/after behavior, and are logically grouped by the method they test."
+      "reason": "Tests are well-named with descriptive docstrings explaining before/after behavior, grouped by function under test, and clearly labeled as F2P (fail-to-pass) tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying Python code for Slack integration, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves modifying Python code to change Slack form structures; no JSON/CSV/API/DB schema output is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or string literals in instruction.md or test files."
+      "reason": "File paths, function names, variable names, and commands in the instruction are all correct and consistent with the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (enterprise/integrations/slack/slack_manager.py), exact methods, exact code patterns ('return [' vs 'options = ['), exact string replacements ('repos[:99]' \u2192 'repos[:100]'), and exact new method name (_parse_form_action). This goes far beyond describing what's broken and essentially specifies the implementation."
+      "reason": "The instruction names the exact file (enterprise/integrations/slack/slack_manager.py) and exact method names to modify (_generate_repo_selection_form, _build_repo_options, receive_form_interaction), plus specifies exactly what new method to create (_parse_form_action) with its exact behavior. This goes well beyond domain-obvious localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

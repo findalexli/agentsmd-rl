@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_field_validator_exists checks for a function named '_validate_dimensions' with @field_validator decorator, test_dimensions_passed_in_source checks for the literal string 'dimensions=self.dimensions' in source. While the hints mention field_validator, the exact function name '_validate_dimensions' and the exact string 'dimensions=self.dimensions' are not specified in the instruction."
+      "outcome": "pass",
+      "reason": "Instruction names the file, field name `dimensions`, type `int | None`, default None, validator name `_validate_dimensions`, decorator `@field_validator`, error message substring 'positive integer', and the `dimensions=self.dimensions` kwarg expression."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says 'You'll need to add a field_validator to validate the dimensions value' and 'Look at how other parameters like keep_alive are passed to the Ollama client', which essentially tells the agent exactly what to do rather than just describing what's broken. The hints section provides the implementation approach directly."
+      "reason": "Instruction specifies the exact implementation: validator function name `_validate_dimensions`, decorator `@field_validator`, exact kwarg expression `dimensions=self.dimensions`, and error message \u2014 leaving almost no design decisions to the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_field_validator_exists asserts that a function named exactly '_validate_dimensions' with a @field_validator decorator exists in the AST. test_dimensions_passed_in_source asserts the exact string 'dimensions=self.dimensions' appears in source. An alternative correct implementation using @model_validator or a property or passing dimensions differently would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check behavior (field value, kwarg passed to client, ValueError with 'positive integer') which alternative correct implementations would also satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_field_validator_exists and test_dimensions_passed_in_source are pure source-text/AST inspection tests that don't execute the code behavior. While most other tests do call the code, these two tests check implementation details via file reading rather than behavioral execution."
+      "outcome": "pass",
+      "reason": "Tests instantiate OllamaEmbeddings, call embed_documents/aembed_documents, and inspect mock call_args.kwargs."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests like test_dimensions_field_exists, test_embed_documents_passes_dimensions, test_dimensions_validation_zero etc. all require actual implementation of the dimensions parameter - a stub returning None or default would fail the dimension=512 assertion and the validation tests."
+      "reason": "Tests assert `emb.dimensions == 512`, mock.embed.call_args.kwargs['dimensions'] == 512, and require ValueError \u2014 a stub cannot satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: optional int/None field (test_dimensions_field_exists), positive integer validation (test_dimensions_validation_zero/negative), passing to embed() for sync and async (test_embed_documents_passes_dimensions, test_aembed_documents_passes_dimensions), and None default (test_embed_documents_dimensions_none_by_default)."
+      "reason": "Tests cover field existence, validation (positive/zero/negative), sync and async embed passing dimensions, and default None."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, logically grouped by concern (field existence, validation, sync behavior, async behavior, source inspection, repo pass-to-pass tests)."
+      "reason": "Tests have descriptive names and docstrings grouping field, validation, and embed-call behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a Python class, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, class names, and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify (libs/partners/ollama/langchain_ollama/embeddings.py), tells the agent to add a 'field_validator', and says to look at 'keep_alive' as a pattern. The hints section essentially provides the implementation blueprint."
+      "reason": "Instruction explicitly names the exact validator function `_validate_dimensions`, the exact expression `dimensions=self.dimensions`, and the exact error message fragment, going beyond naming the file to dictating implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

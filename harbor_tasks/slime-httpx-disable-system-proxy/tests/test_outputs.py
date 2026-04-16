@@ -109,49 +109,67 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_ray_actor_trust_env_disabled():
-    """_HttpPosterActor creates AsyncClient with trust_env=False.
+    """_HttpPosterActor's client must ignore system proxy env vars.
 
     The actor class is nested inside _init_ray_distributed_post and decorated
-    with @ray.remote, so direct instantiation requires a Ray cluster.
-    AST-only because: class is nested in a function and requires Ray runtime.
+    with @ray.remote.  We mock Ray just enough to instantiate the actor locally
+    and verify the client does not mount proxy transports when HTTP_PROXY /
+    HTTPS_PROXY environment variables are present.
     """
-    source = TARGET.read_text()
-    tree = ast.parse(source)
+    r = subprocess.run(
+        ["python3", "-c", """
+import os, sys, types
 
-    actor_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_init_ray_distributed_post":
-            for child in ast.walk(node):
-                if isinstance(child, ast.ClassDef) and "HttpPoster" in child.name:
-                    actor_class = child
-                    break
-            break
+# Proxy env vars must be set BEFORE importing the module
+os.environ["HTTP_PROXY"] = "http://fake-proxy:8080"
+os.environ["HTTPS_PROXY"] = "http://fake-proxy:8080"
 
-    assert actor_class is not None, "_HttpPosterActor class not found in _init_ray_distributed_post"
+# --- Minimal Ray mock so the nested class can be defined & instantiated ---
+ray_mod = types.ModuleType("ray")
 
-    found_trust_env_false = False
-    for method in ast.iter_child_nodes(actor_class):
-        if isinstance(method, ast.FunctionDef) and method.name == "__init__":
-            for call_node in ast.walk(method):
-                if not isinstance(call_node, ast.Call):
-                    continue
-                func = call_node.func
-                is_async_client = (
-                    (isinstance(func, ast.Attribute) and func.attr == "AsyncClient")
-                    or (isinstance(func, ast.Name) and func.id == "AsyncClient")
-                )
-                if is_async_client:
-                    for kw in call_node.keywords:
-                        if (
-                            kw.arg == "trust_env"
-                            and isinstance(kw.value, ast.Constant)
-                            and kw.value.value is False
-                        ):
-                            found_trust_env_false = True
+class _MockRemote:
+    def __init__(self, cls):
+        self._cls = cls
+    def options(self, **kw):
+        return self
+    def remote(self, *a, **kw):
+        return self._cls(*a, **kw)
 
-    assert found_trust_env_false, (
-        "_HttpPosterActor.__init__ must create AsyncClient with trust_env=False"
+ray_mod.remote = lambda cls: _MockRemote(cls)
+ray_mod.nodes = lambda: [{"Alive": True, "NodeID": "node-0"}]
+
+sched_mod = types.ModuleType("ray.util.scheduling_strategies")
+class _FakeStrategy:
+    def __init__(self, **kw): pass
+sched_mod.NodeAffinitySchedulingStrategy = _FakeStrategy
+
+sys.modules["ray"] = ray_mod
+sys.modules["ray.util"] = types.ModuleType("ray.util")
+sys.modules["ray.util.scheduling_strategies"] = sched_mod
+
+# --- Run the real code ---
+import slime.utils.http_utils as mod
+import httpx
+
+mod._post_actors = []       # reset global
+mod._client_concurrency = 8
+
+mod._init_ray_distributed_post(types.SimpleNamespace(num_gpus_per_node=1))
+
+assert mod._post_actors, "No actors were created"
+for idx, actor in enumerate(mod._post_actors):
+    client = actor._client
+    assert isinstance(client, httpx.AsyncClient), f"Actor {idx}: not an AsyncClient"
+    assert len(client._mounts) == 0, (
+        f"Actor {idx}: client has {len(client._mounts)} proxy mount(s); "
+        "system proxy env vars must be ignored for intra-cluster traffic."
     )
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

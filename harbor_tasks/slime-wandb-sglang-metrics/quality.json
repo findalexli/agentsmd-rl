@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key function names (reinit_wandb_primary_with_open_metrics, init_wandb_secondary, update_tracking_open_metrics, get_metrics_router_addr), parameter names (args, router_addr), behavioral details (return early when router_addr is None, call wandb.finish() before wandb.init(), use resume='allow', configure wandb.Settings with x_stats_open_metrics_endpoints containing 'sgl_engine'), and the files involved (wandb_utils, logging_utils, rollout manager, train scripts). All tes"
+      "reason": "The instruction names all file paths (wandb_utils.py, logging_utils.py, rollout.py, train.py, train_async.py), function names (init_wandb_secondary, reinit_wandb_primary_with_open_metrics, update_tracking_open_metrics, get_metrics_router_addr), parameter names (args, router_addr), and key concepts (x_stats_open_metrics_endpoints, sgl_engine, wandb.finish/init, resume mode) that the tests assert on. The tests check for these exact names and behaviors which are all discoverable from instruction.md"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact solution: create a function named 'reinit_wandb_primary_with_open_metrics' with specific parameters, call wandb.finish() then wandb.init() with resume='allow', configure specific Settings keys, create 'update_tracking_open_metrics' that delegates to it, add 'get_metrics_router_addr()' public wrapper method. This is a step-by-step implementation specification, not a problem description."
+      "reason": "The instruction explicitly states the exact fix: create 'reinit_wandb_primary_with_open_metrics' with specific parameters, remove 'router_addr' from 'init_wandb_secondary', add 'update_tracking_open_metrics' to logging_utils.py, expose 'get_metrics_router_addr' as a public method, and call 'update_tracking_open_metrics' in both training scripts. This is a step-by-step implementation specification, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "While the tests check for specific function names and parameter names, these are all explicitly required by the instruction. The tests check behavioral properties (call order of finish/init, presence of endpoints, early return on None) rather than exact line positions or internal implementation details. Alternative implementations that meet the stated requirements would pass."
+      "reason": "The tests check for specific function names, parameter names, and behavioral contracts (wandb.finish before wandb.init, metrics endpoints containing router_addr, early return on None) but allow flexibility in implementation details. For example, the reinit function's internal structure is tested behaviorally via mocking, not by exact source matching. Alternative implementations that satisfy the same contracts would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing to find functions and extract parameters, and several tests (test_reinit_calls_wandb_finish_and_init, test_reinit_configures_metrics_endpoints, test_reinit_noop_when_no_router) actually exec the function code with mocks and verify behavioral outcomes like call order and arguments passed. They are not simple text-matching."
+      "reason": "Tests use AST parsing to check function signatures, and crucially test_reinit_calls_wandb_finish_and_init and test_reinit_configures_metrics_endpoints actually execute the function code via exec() with mocked wandb, checking call order and arguments. test_reinit_noop_when_no_router similarly executes the function. These are behavioral tests, not pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation of reinit_wandb_primary_with_open_metrics that just does 'pass' or 'return None' would fail test_reinit_calls_wandb_finish_and_init (which checks that wandb.finish and wandb.init are called in order) and test_reinit_configures_metrics_endpoints (which checks wandb.Settings is called with endpoints). The tests require actual behavioral implementation."
+      "reason": "A stub 'reinit_wandb_primary_with_open_metrics' that just does 'pass' or 'return None' would fail test_reinit_calls_wandb_finish_and_init (which checks wandb.finish() and wandb.init() are called in order) and test_reinit_configures_metrics_endpoints (which checks wandb.Settings is called with endpoints). The tests require substantial implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction are tested: (1) router_addr removed from secondary (test_router_addr_removed_from_secondary), (2) reinit function exists and behaves correctly (test_reinit_function_exists, test_reinit_calls_wandb_finish_and_init, test_reinit_configures_metrics_endpoints, test_reinit_noop_when_no_router), (3) logging utilities bridge (test_update_tracking_bridge), (4) rollout manager public method (test_rollout_manager_public_method), (5) training script upda"
+      "reason": "All five behavioral requirements from instruction.md are tested: (1) router_addr removed from secondary, (2) reinit function exists with correct params and behavior, (3) logging bridge function exists, (4) public rollout method exists, (5) training script integration (though the truncated tests likely cover train.py and train_async.py imports)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections with clear comments."
+      "reason": "Tests are well-named (test_router_addr_removed_from_secondary, test_reinit_function_exists, etc.), have docstrings explaining what each checks, and are grouped into 'Gates (pass_to_pass)' and 'Fail-to-pass (pr_diff)' sections with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "All file paths, function names, parameter names, and variable names in the instruction match those used in the tests and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact function names to create (reinit_wandb_primary_with_open_metrics, update_tracking_open_metrics, get_metrics_router_addr), exact parameter names, exact kwargs (resume='allow'), exact Settings keys (x_stats_open_metrics_endpoints with 'sgl_engine'), and exact call patterns (wandb.finish() before wandb.init()). This goes far beyond describing the bug and essentially specifies the implementation."
+      "reason": "The instruction specifies exact function names to create (reinit_wandb_primary_with_open_metrics, update_tracking_open_metrics, get_metrics_router_addr), exact parameter signatures, exact files to modify, and detailed behavioral specs like 'must call wandb.finish() then wandb.init()'. This goes well beyond naming the buggy module and essentially dictates the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

@@ -1,0 +1,55 @@
+source_pr:
+  owner: prometheus
+  repo: prometheus
+  number: 18230
+  title: "UI: Skip recomputing stacked chart data on hover"
+  merge_commit: "53f807255344996abdb19b09a267eeafe46bd3e6"
+  base_commit: "ac12e30f99df9d2f68025f0238c0aef95146e94b"
+
+# Fail-to-pass checks (test behavior that fails on base, passes with fix)
+checks:
+  - id: test_hook_accepts_opts_parameter
+    type: fail_to_pass
+    origin: behavioral
+    description: "The setSeries hook callback must accept the third opts parameter"
+
+  - id: test_hook_checks_opts_show
+    type: fail_to_pass
+    origin: behavioral
+    description: "The hook must check 'if (opts.show != null)' before restacking"
+
+  - id: test_hook_conditionally_restack
+    type: fail_to_pass
+    origin: behavioral
+    description: "Restacking operations must only happen inside the opts.show != null conditional"
+
+  - id: test_hook_not_called_on_hover
+    type: fail_to_pass
+    origin: behavioral
+    description: "The hook should NOT restack when called without opts.show (simulating hover)"
+
+  - id: test_comment_updated
+    type: fail_to_pass
+    origin: behavioral
+    description: "The comment should be updated to reflect the new behavior"
+
+# Pass-to-pass checks (test behavior that passes on base commit and with fix)
+# These validate that the repository's existing CI tests pass on the base commit.
+p2p_tests:
+  - id: test_repo_ui_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "UI linting passes (ESLint)"
+
+  - id: test_repo_ui_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "UI unit tests pass (Vitest)"
+
+  - id: test_target_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and is readable"
+
+# No agent config rules found in this repository at base commit
+rubric: []

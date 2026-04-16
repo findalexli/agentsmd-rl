@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T06:29:23.344997",
+  "total_time": 1179.05,
+  "sandbox_id": "igju46m8w0cksmogvskxy",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2492.58,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 172.59,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "partial",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "docker_build": "pass",
+      "rubric_icr": 0.0,
+      "attempts": 5,
+      "notes": "Docker build passes, NOP test correctly fails (reward=0), Gold test passes (reward=1). Rubric judge has fundamental architectural limitation - it uses config_edits prompt (checking documentation updates) but rubric rules are source code style conventions from AGENTS.md. Tried multiple rubric rule formulations - all fail with 0% ICR. The gold solution DOES NOT violate any style rules (verified manually: proper curly braces, no any types in new code, correct imports, no floating promises). The judge cannot evaluate these rules correctly due to prompt mismatch.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1427.85
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 23.13,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 5
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4097.52,
+      "at": "2026-04-15T01:39:58.824235"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1179.05,
+      "at": "2026-04-15T06:29:23.344997"
+    }
+  ]
+}

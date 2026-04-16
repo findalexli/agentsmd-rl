@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific file paths like `src/js/internal/sql/shared.ts`, `src/js/internal/sql/sqlite.ts`, `src/js/internal/sql/mysql.ts`, `src/js/internal/sql/postgres.ts`, and `test/CLAUDE.md`. While the instruction names these paths, the tests also check for `$isArray` replacement pattern (test_undefined_filtering_behavior uses `$isArray` in the function body extraction), specific regex patterns for TypeScript stripping, and the exact error message `'Insert needs to have at least one column with"
+      "outcome": "pass",
+      "reason": "Instruction names all paths (shared.ts, sqlite.ts, mysql.ts, postgres.ts, test/CLAUDE.md), the exact function signature, required destructured names, exact error message, and the import pattern."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly specifies the exact function name `buildDefinedColumnsAndQuery`, its exact TypeScript signature, the exact file it must be created in (`src/js/internal/sql/shared.ts`), which files must import it, and even the return value field names (`definedColumns`, `columnsSql`). This dictates WHAT to change and HOW, not just what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and required API surface but not the internal implementation of the filter function."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the exact function name `buildDefinedColumnsAndQuery` in shared.ts (test_undefined_filtering_behavior regex-searches for it), assert `definedColumns` appears in all adapter files (test_adapters_import_shared_function), and extract the function by name to run behavioral tests. An alternative correct fix that uses a different function name, different file structure, or inline logic would fail these tests despite correctly fixing the bug."
+      "reason": "Tests assert specific literal import pattern `require(\"internal/sql/shared\")`, destructured names `definedColumns`/`columnsSql`, and a function with generic `<T>` signature and specific return shape \u2014 though the instruction mandates these, so alternative valid fixes are constrained; additionally the behavioral extraction uses regex that requires specific TypeScript structure (`function <T>`) which a correct arrow-function implementation would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_undefined_filtering_behavior extracts the function from shared.ts, converts it to JS, and executes it via `node` subprocess with actual test cases checking return values. test_adapters_import_shared_function does text-matching but the core behavioral test actually executes code."
+      "reason": "Tests extract the function source and execute it via node subprocess with multiple behavioral cases."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_undefined_filtering_behavior runs 6 behavioral tests that check filtering logic \u2014 a stub returning empty arrays or default values would fail T1 (expects 2 cols), T2 (expects 1 col named 'a'), T3 (expects 2 cols for bulk insert), T5 (expects specific SQL format). These cannot be satisfied by trivial implementations."
+      "reason": "Behavioral tests check 6 distinct input/output pairs including the data-loss fix; a stub returning empty/default would fail T1, T3, T5, T6."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: undefined filtering in single inserts (tested in T2), bulk insert column union (tested in T3, T6), undefined\u2192null for missing values in bulk (implicit in column inclusion logic), SyntaxError for all-undefined (mentioned in instruction, implicitly tested by the function structure), adapter imports (tested), and CLAUDE.md update (tested). All major behaviors are covered."
+      "reason": "Tests cover single/bulk inserts, undefined filtering, SQL format, all three adapters, and CLAUDE.md docs requirement."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates/pass_to_pass, Fail-to-pass/pr_diff), descriptive function names and docstrings, and the behavioral test has numbered test cases (T1-T6) with clear descriptions."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact TypeScript signature of `buildDefinedColumnsAndQuery` including return type `{ definedColumns: (keyof T)[]; columnsSql: string }`, which defines the structured data schema."
+      "reason": "Return object schema `{definedColumns, columnsSql}` is explicitly documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "Paths and names in instruction match those used in tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact file paths (`src/js/internal/sql/shared.ts`, `src/js/internal/sql/sqlite.ts`, etc.), exact function name and signature (`buildDefinedColumnsAndQuery`), and exact import paths (`internal/sql/shared`). This goes beyond describing the bug domain and prescribes the exact implementation structure."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify which is appropriate for this API-refactor task; no line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task, not an agentmd-edits task. The CLAUDE.md edit is a minor documentation addition."
+      "reason": "Code task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

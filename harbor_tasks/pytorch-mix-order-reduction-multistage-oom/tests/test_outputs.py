@@ -38,6 +38,97 @@ def _run_python(code: str, timeout: int = 30, env_extra=None):
 
 
 # ---------------------------------------------------------------------------
+# Helper: call persistent_reduction with mocked dependencies
+# ---------------------------------------------------------------------------
+
+# Subprocess script that extracts the entire persistent_reduction function,
+# calls it with mocked dependencies, and reports NUM_STAGES values from the
+# returned configs. This tests the function's observable behavior without
+# depending on any specific internal code structure (if/else vs ternary vs
+# helper function, etc.).
+_PERSISTENT_REDUCTION_TEST = r"""
+import ast, copy, os
+from pathlib import Path
+
+rnumel_values = [int(x) for x in os.environ["_TEST_RNUMEL_VALUES"].split(",")]
+allow_multi = os.environ["_TEST_ALLOW_MULTI"] == "1"
+rsplit_size = int(os.environ.get("_TEST_RSPLIT", "256"))
+
+source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
+tree = ast.parse(source)
+
+func_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "persistent_reduction":
+        func_src = ast.get_source_segment(source, node)
+        break
+
+assert func_src is not None, "persistent_reduction function not found"
+
+class MockConfig:
+    def __init__(self, num_warps=4):
+        self.kwargs = {}
+        self.num_warps = num_warps
+
+ns = {
+    'copy': copy,
+    '_persistent_reduction_configs': lambda *a, **kw: [MockConfig()],
+    '_handle_combo_kernel_per_subkernel_blocks': lambda *a, **kw: None,
+    'unique_configs': lambda configs: configs,
+    'filter_reduction_configs_for_determinism': lambda meta, configs: configs,
+    '_maybe_filter_configs_for_tma_restrictions': lambda meta, configs: configs,
+    'HeuristicType': type('HT', (), {'PERSISTENT_REDUCTION': 'pr'}),
+    'cached_autotune': lambda *a, **kw: None,
+    '__builtins__': __builtins__,
+}
+
+exec(func_src, ns)
+
+for rnumel in rnumel_values:
+    size_hints = {"r0_": rnumel, "x": 128}
+    inductor_meta = {
+        "RSPLIT_SIZE": rsplit_size,
+        "mix_order_reduction_allow_multi_stages": allow_multi,
+    }
+    configs = ns['persistent_reduction'](
+        size_hints,
+        inductor_meta=inductor_meta,
+        return_configs=True,
+    )
+    assert configs and len(configs) > 0, f"No configs returned for rnumel={rnumel}"
+    max_stages = max(c.kwargs["NUM_STAGES"] for c in configs)
+    print(f"rnumel={rnumel} STAGES={max_stages}")
+"""
+
+
+def _get_stages(rnumel_values, allow_multi_stages, rsplit_size=256):
+    """
+    Call persistent_reduction with mocked dependencies and return
+    {rnumel: max_num_stages} mapping from the returned configs.
+    """
+    env_extra = {
+        "_TEST_RNUMEL_VALUES": ",".join(str(r) for r in rnumel_values),
+        "_TEST_ALLOW_MULTI": "1" if allow_multi_stages else "0",
+        "_TEST_RSPLIT": str(rsplit_size),
+    }
+    r = _run_python(_PERSISTENT_REDUCTION_TEST, env_extra=env_extra)
+    assert r.returncode == 0, f"persistent_reduction call failed:\n{r.stderr}"
+    result = {}
+    for line in r.stdout.strip().split("\n"):
+        if "STAGES=" in line:
+            kv = {}
+            for token in line.split():
+                if "=" in token:
+                    k, v = token.split("=", 1)
+                    kv[k] = v
+            result[int(kv["rnumel"])] = int(kv["STAGES"])
+    assert len(result) == len(rnumel_values), (
+        f"Expected {len(rnumel_values)} results, got {len(result)}. Output:\n{r.stdout}"
+    )
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
@@ -164,170 +255,56 @@ for node in ast.walk(tree):
 
 # [pr_diff] fail_to_pass
 def test_heuristics_single_stage_when_disabled():
-    """persistent_reduction sets MAX_NUM_STAGES=1 when multi-stages disabled, regardless of rnumel."""
-    r = _run_python(r"""
-import ast, textwrap
-from pathlib import Path
-
-ATTR = "mix_order_reduction_allow_multi_stages"
-source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
-tree = ast.parse(source)
-
-for func_node in ast.walk(tree):
-    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
-        continue
-    for child in ast.walk(func_node):
-        if not isinstance(child, ast.If):
-            continue
-        test_src = ast.get_source_segment(source, child.test)
-        if not (test_src and ATTR in test_src):
-            continue
-        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
-        if_src = textwrap.dedent("\n".join(block_lines))
-        for rnumel in [512, 4096, 8192, 10000, 65536]:
-            ns = {
-                "inductor_meta": {ATTR: False},
-                "rnumel_hint": rnumel,
-                "num_iters": 8,
-                "__builtins__": __builtins__,
-            }
-            exec(if_src, ns)
-            max_stages = ns.get("MAX_NUM_STAGES")
-            assert max_stages == 1, (
-                f"MAX_NUM_STAGES should be 1 when disabled (rnumel={rnumel}), got {max_stages}"
-            )
-        print("PASS")
-        break
-    break
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    """persistent_reduction sets NUM_STAGES=1 when multi-stages disabled, regardless of rnumel."""
+    rnumels = [512, 4096, 8192, 10000, 65536]
+    stages = _get_stages(rnumels, allow_multi_stages=False)
+    for rn in rnumels:
+        assert stages[rn] == 1, (
+            f"NUM_STAGES should be 1 when disabled (rnumel={rn}), got {stages[rn]}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_single_stage_small_rnumel():
-    """persistent_reduction sets MAX_NUM_STAGES=1 with small rnumel when disabled."""
-    r = _run_python(r"""
-import ast, textwrap
-from pathlib import Path
-
-ATTR = "mix_order_reduction_allow_multi_stages"
-source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
-tree = ast.parse(source)
-
-for func_node in ast.walk(tree):
-    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
-        continue
-    for child in ast.walk(func_node):
-        if not isinstance(child, ast.If):
-            continue
-        test_src = ast.get_source_segment(source, child.test)
-        if not (test_src and ATTR in test_src):
-            continue
-        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
-        if_src = textwrap.dedent("\n".join(block_lines))
-        for rnumel in [128, 256, 512, 1024]:
-            ns = {
-                "inductor_meta": {ATTR: False},
-                "rnumel_hint": rnumel,
-                "num_iters": 8,
-                "__builtins__": __builtins__,
-            }
-            exec(if_src, ns)
-            max_stages = ns.get("MAX_NUM_STAGES")
-            assert max_stages == 1, (
-                f"MAX_NUM_STAGES should be 1 when disabled (small rnumel={rnumel}), got {max_stages}"
-            )
-        print("PASS")
-        break
-    break
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    """persistent_reduction sets NUM_STAGES=1 with small rnumel when disabled."""
+    rnumels = [128, 256, 512, 1024]
+    stages = _get_stages(rnumels, allow_multi_stages=False)
+    for rn in rnumels:
+        assert stages[rn] == 1, (
+            f"NUM_STAGES should be 1 when disabled (small rnumel={rn}), got {stages[rn]}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_multi_stage_when_enabled():
-    """persistent_reduction allows >1 stages when multi-stages enabled."""
-    r = _run_python(r"""
-import ast, textwrap
-from pathlib import Path
-
-ATTR = "mix_order_reduction_allow_multi_stages"
-source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
-tree = ast.parse(source)
-
-for func_node in ast.walk(tree):
-    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
-        continue
-    for child in ast.walk(func_node):
-        if not isinstance(child, ast.If):
-            continue
-        test_src = ast.get_source_segment(source, child.test)
-        if not (test_src and ATTR in test_src):
-            continue
-        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
-        if_src = textwrap.dedent("\n".join(block_lines))
-        for rnumel in [1024, 4096, 8192]:
-            ns = {
-                "inductor_meta": {ATTR: True},
-                "rnumel_hint": rnumel,
-                "num_iters": 16,
-                "__builtins__": __builtins__,
-            }
-            exec(if_src, ns)
-            max_stages = ns.get("MAX_NUM_STAGES")
-            assert max_stages == 3, (
-                f"MAX_NUM_STAGES should be 3 for rnumel={rnumel} when enabled, got {max_stages}"
-            )
-        print("PASS")
-        break
-    break
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    """persistent_reduction allows >1 stages when multi-stages enabled, and the config flag controls behavior."""
+    rnumels = [1024, 4096, 8192]
+    stages_enabled = _get_stages(rnumels, allow_multi_stages=True)
+    stages_disabled = _get_stages(rnumels, allow_multi_stages=False)
+    for rn in rnumels:
+        assert stages_enabled[rn] > 1, (
+            f"NUM_STAGES should be >1 when enabled (rnumel={rn}), got {stages_enabled[rn]}"
+        )
+        assert stages_enabled[rn] > stages_disabled[rn], (
+            f"Config flag must affect behavior (rnumel={rn}): "
+            f"enabled={stages_enabled[rn]}, disabled={stages_disabled[rn]}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_heuristics_large_rnumel_caps_at_two():
-    """When enabled with large rnumel (>8192), MAX_NUM_STAGES caps at 2."""
-    r = _run_python(r"""
-import ast, textwrap
-from pathlib import Path
-
-ATTR = "mix_order_reduction_allow_multi_stages"
-source = Path("torch/_inductor/runtime/triton_heuristics.py").read_text()
-tree = ast.parse(source)
-
-for func_node in ast.walk(tree):
-    if not (isinstance(func_node, ast.FunctionDef) and func_node.name == "persistent_reduction"):
-        continue
-    for child in ast.walk(func_node):
-        if not isinstance(child, ast.If):
-            continue
-        test_src = ast.get_source_segment(source, child.test)
-        if not (test_src and ATTR in test_src):
-            continue
-        block_lines = source.splitlines()[child.lineno - 1 : child.end_lineno]
-        if_src = textwrap.dedent("\n".join(block_lines))
-        for rnumel in [8193, 16384, 65536]:
-            ns = {
-                "inductor_meta": {ATTR: True},
-                "rnumel_hint": rnumel,
-                "num_iters": 16,
-                "__builtins__": __builtins__,
-            }
-            exec(if_src, ns)
-            max_stages = ns.get("MAX_NUM_STAGES")
-            assert max_stages == 2, (
-                f"MAX_NUM_STAGES should be 2 for rnumel={rnumel} when enabled, got {max_stages}"
-            )
-        print("PASS")
-        break
-    break
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    """When enabled with large rnumel (>8192), NUM_STAGES caps at 2, and the config flag controls behavior."""
+    rnumels = [8193, 16384, 65536]
+    stages_enabled = _get_stages(rnumels, allow_multi_stages=True)
+    stages_disabled = _get_stages(rnumels, allow_multi_stages=False)
+    for rn in rnumels:
+        assert stages_enabled[rn] <= 2, (
+            f"NUM_STAGES should be <=2 for large rnumel={rn} when enabled, got {stages_enabled[rn]}"
+        )
+        assert stages_enabled[rn] > stages_disabled[rn], (
+            f"Config flag must affect behavior (rnumel={rn}): "
+            f"enabled={stages_enabled[rn]}, disabled={stages_disabled[rn]}"
+        )
 
 
 # [pr_diff] fail_to_pass

@@ -1,0 +1,136 @@
+source:
+  pr:
+    owner: dagster-io
+    repo: dagster
+    number: 33330
+    title: "[buildkite] skip dagster-docker tests when credentials are not present"
+    merge_commit: "058e48e0c08d45007e684512d1dc146736e161cf"
+    base_commit: "a75f1d9f9829f5306639d3db73f826a53051e101"
+
+  target_files:
+    - python_modules/libraries/dagster-docker/dagster_docker_tests/conftest.py
+
+  agent_config_files:
+    - CLAUDE.md
+    - README.md
+
+scoring:
+  checks:
+    # Fail-to-pass tests
+    - id: test_pytest_runtest_setup_function_exists
+      type: fail_to_pass
+      origin: agent_config
+      description: "pytest_runtest_setup hook function must be defined in conftest.py"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_integration_keyword_check_exists
+      type: fail_to_pass
+      origin: agent_config
+      description: "Must check for 'integration' keyword in test items"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_buildkite_env_check_exists
+      type: fail_to_pass
+      origin: agent_config
+      description: "Must check BUILDKITE environment variable"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_required_env_vars_listed
+      type: fail_to_pass
+      origin: agent_config
+      description: "Must list all required environment variables"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_pytest_skip_called_with_missing_vars
+      type: fail_to_pass
+      origin: agent_config
+      description: "Must call pytest.skip when credentials are missing"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_missing_vars_computed_correctly
+      type: fail_to_pass
+      origin: agent_config
+      description: "Must compute missing vars by checking os.getenv for each required var"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_hook_logic_integration_keyword_filter
+      type: fail_to_pass
+      origin: agent_config
+      description: "pytest_runtest_setup must return early for non-integration tests"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_hook_logic_buildkite_conditional
+      type: fail_to_pass
+      origin: agent_config
+      description: "BUILDKITE check must be conditional"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    - id: test_skip_message_includes_missing_vars
+      type: fail_to_pass
+      origin: agent_config
+      description: "Skip message must include the list of missing environment variables"
+      source:
+        config_file: "CLAUDE.md"
+        rule: "After ANY Python code changes, ALWAYS run `make ruff`"
+
+    # Pass-to-pass tests (repo quality checks)
+    - id: test_conftest_syntax_valid
+      type: pass_to_pass
+      origin: repo_tests
+      description: "conftest.py must have valid Python syntax"
+
+    - id: test_conftest_pytest_can_load
+      type: pass_to_pass
+      origin: repo_tests
+      description: "pytest can collect tests from conftest.py"
+
+    - id: test_repo_ruff_check
+      type: pass_to_pass
+      origin: repo_tests
+      description: "ruff check passes on the repository"
+
+    - id: test_repo_ruff_format
+      type: pass_to_pass
+      origin: repo_tests
+      description: "ruff format check passes on the repository"
+
+    - id: test_dagster_docker_conftest_syntax
+      type: pass_to_pass
+      origin: repo_tests
+      description: "dagster-docker conftest.py has valid Python syntax"
+
+  rubric:
+    # Soft/subjective rules from agent config
+    - rule: "Always run `make ruff` after any Python code changes"
+      weight: 0.1
+      source:
+        config_file: "CLAUDE.md"
+        lines: "After ANY Python code changes, ALWAYS run `make ruff` - this is mandatory and must never be skipped."
+
+    - rule: "Use uv instead of pip for package management"
+      weight: 0.1
+      source:
+        config_file: "CLAUDE.md"
+        lines: "Always use uv instead of pip"
+
+    - rule: "Run make commands from repo root"
+      weight: 0.1
+      source:
+        config_file: "CLAUDE.md"
+        lines: "Whenever there is an instruction to run a make command, ALWAYS cd to $DAGSTER_GIT_REPO_DIR"

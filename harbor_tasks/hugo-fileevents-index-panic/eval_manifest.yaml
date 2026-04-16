@@ -1,0 +1,81 @@
+source:
+  repo: gohugoio/hugo
+  pr: 14575
+  base_commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  merge_commit: f797f84902297b7dd37c3f39ce057789a4d8e950
+  target_file: hugolib/site.go
+
+task:
+  name: hugo-fileevents-index-panic
+  description: Fix index out of range panic in fileEventsContentPaths when multiple directories exist
+  language: go
+
+# Rubric from AGENTS.md
+rubric:
+  - id: brevity
+    description: Fix should be brief and not over-engineered
+    source: AGENTS.md "Brevity is good"
+  - id: no_global_state
+    description: Fix should not introduce global state
+    source: AGENTS.md "Avoid global state at (almost) all cost"
+  - id: self_explanatory_names
+    description: Use self-explanatory variable names
+    source: AGENTS.md "Use self-explanatory variable and function names"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_rebuild_add_content_with_multiple_dir_creations
+    type: fail_to_pass
+    origin: pr_test
+    description: "TestRebuildAddContentWithMultipleDirCreations reproduces the issue #14573 - should not panic with index out of range"
+
+  - id: test_loop_order_correct
+    type: fail_to_pass
+    origin: agent_config
+    description: "Verify the loop order fix was applied correctly - outer loop over 'others' with 'keep' pattern"
+    source: "AGENTS.md: Look hard for helper functions before creating new ones; self-explanatory variable names"
+
+  - id: test_no_counter_overflow
+    type: fail_to_pass
+    origin: agent_config
+    description: "Verify counter 'n' is only incremented in outer loop, preventing overflow"
+    source: "AGENTS.md: Brevity is good; use self-explanatory variable names"
+
+  # Pass-to-pass tests (repo CI commands)
+  - id: test_repo_hugolib_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo hugolib package compiles without errors"
+
+  - id: test_repo_hugolib_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo hugolib package passes go vet"
+
+  - id: test_repo_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo source passes gofmt check"
+
+  - id: test_repo_hugolib_rebuild_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo hugolib rebuild tests pass"
+
+  - id: test_repo_hugolib_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo hugolib unit tests pass"
+
+  - id: test_repo_doctree_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hugo doctree subpackage tests pass"
+
+scoring:
+  # Weights for fail_to_pass tests
+  f2p_weight: 0.7
+  # Weights for pass_to_pass tests
+  p2p_weight: 0.3
+  # Minimum required tests to pass
+  min_passed: 4

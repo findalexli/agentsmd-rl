@@ -3,57 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths, class name (TestCreateGrammarBackend), all four affected method names, the parameter name (think_end_id), and the attribute (tokenizer.think_end_id). The test checks for think_end_id=42 and think_end_id=None which are discoverable from the instruction's description of the mock attribute value (42) and the default (None)."
+      "reason": "The instruction names the exact test file path, the four affected test method names, the production file path, the expected think_end_id values (42 and None), and describes the API change pattern (think_end_id as explicit keyword argument vs tokenizer attribute). All specifics asserted in tests (function names, values, file paths) are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states: 'the create_grammar_backend call must pass think_end_id as an explicit keyword argument' and 'any tokenizer.think_end_id = N assignments in the affected methods must be removed'. This tells the agent exactly WHAT to change (add keyword arg, remove assignment lines), not just what's broken."
+      "outcome": "pass",
+      "reason": "The instruction tells the agent to 'examine the current signature of create_grammar_backend' and 'update the four affected test methods to supply think_end_id through the current API'. It does not specify exact line changes, does not say 'add think_end_id=42 as a kwarg', and does not mention removing tokenizer.think_end_id assignments explicitly. The agent must reason about what the old vs new pattern is."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for specific API usage patterns (think_end_id=42, think_end_id=None as keyword args, no tokenizer.think_end_id assignments) which are the only correct way to fix the described problem. Alternative correct fixes would need to pass the same keyword arguments, so the tests appropriately constrain the solution space."
+      "reason": "The tests verify behavior: that think_end_id is passed as a keyword argument to create_grammar_backend (via spy), that no tokenizer.think_end_id attribute assignment occurs, and that the actual test methods pass when run. Any correct fix that passes think_end_id as a kwarg and removes the old tokenizer attribute assignment would pass. The tests don't assert on exact line positions or specific variable names beyond what the API requires."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All f2p tests use AST analysis (parsing the source file and checking for specific patterns) rather than executing the code. They never import or call create_grammar_backend, never run the test suite. While AST analysis is more sophisticated than raw text matching, it's still static analysis of source text, not behavioral verification."
+      "outcome": "pass",
+      "reason": "Tests execute the actual test methods via subprocess (using unittest runner), use spy functions to capture kwargs, and use a tracking mock to detect attribute assignments. Only test_syntax_check does static analysis (AST parsing), and test_no_tokenizer_think_end_id_assignment uses runtime tracking. The tests are behavioral, not text-matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific structural changes: think_end_id=42 keyword in specific calls, think_end_id=None in another, and removal of .think_end_id assignments. A stub/no-op change would fail these tests since the original file has tokenizer.think_end_id = 42 assignments and lacks the keyword arguments."
+      "reason": "The fail-to-pass tests would not pass without the fix: test_think_end_id_passed_in_reasoner_test runs the actual test which asserts ReasonerGrammarBackend wrapping with think_end_id=42; the spy tests verify think_end_id appears in kwargs; test_no_tokenizer_think_end_id_assignment fails if tokenizer.think_end_id is still being set. A stub/no-op would not satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires (1) passing think_end_id as explicit keyword arg in affected methods, and (2) removing tokenizer.think_end_id assignments. Both behaviors are tested: tests check for keyword args with correct values and test_no_tokenizer_think_end_id_assignment checks removal of assignments across all four methods."
+      "reason": "The instruction requires: (1) all four test methods still exist, (2) think_end_id=42 for three tests and None for one, (3) tests pass, (4) clean up dead code. The test suite verifies all four methods run successfully, checks the correct think_end_id values are passed as kwargs, verifies no tokenizer.think_end_id assignment (dead code cleanup), and test_syntax_check ensures the file parses."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings, clear section comments (Gate, Fail-to-pass, Pass-to-pass), and helper functions with documentation."
+      "reason": "Tests are well-named (test_syntax_check, test_think_end_id_passed_in_reasoner_test, etc.), have docstrings explaining what each verifies, and are grouped by gate type (static pass_to_pass vs behavioral fail_to_pass) with clear comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying test code, not producing structured data output."
+      "reason": "This task involves fixing unit tests in Python code, not producing structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, parameter names, and variable names are all correctly spelled and consistent between instruction.md and the test file."
+      "reason": "File paths, function names, variable names, and commands in instruction.md and test files are all correct and consistent with the actual repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact four affected methods, specifies exactly what changes to make (pass think_end_id as keyword, remove tokenizer.think_end_id assignments), effectively eliminating any localization or reasoning challenge."
+      "outcome": "pass",
+      "reason": "The instruction names the test file and production file, which is appropriate since both are directly relevant. It doesn't specify exact line numbers or the exact code change needed. It says to 'examine the current signature' which is a reasonable hint, not a solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task (fixing test methods), not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

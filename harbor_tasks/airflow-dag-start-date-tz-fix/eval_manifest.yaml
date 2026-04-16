@@ -1,0 +1,115 @@
+source_pr:
+  owner: apache
+  repo: airflow
+  pr_number: 64758
+  base_commit: 5baee8a5a58e56afa7788c193753ad3cf804aa58
+  merge_commit: a3c52775a2b39287161da6d45c72259498eda8cc
+
+target_files:
+  - airflow-core/src/airflow/example_dags/example_inlet_event_extra.py
+  - airflow-core/src/airflow/example_dags/example_outlet_event_extra.py
+
+checks:
+  # Pass-to-pass tests (validity checks - static file checks)
+  - id: test_inlet_file_exists
+    type: pass_to_pass
+    origin: static
+    description: The inlet event extra example DAG file exists
+
+  - id: test_outlet_file_exists
+    type: pass_to_pass
+    origin: static
+    description: The outlet event extra example DAG file exists
+
+  - id: test_inlet_file_valid_python
+    type: pass_to_pass
+    origin: static
+    description: The inlet file is valid Python syntax
+
+  - id: test_outlet_file_valid_python
+    type: pass_to_pass
+    origin: static
+    description: The outlet file is valid Python syntax
+
+  # Pass-to-pass tests (real CI commands)
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on modified example DAG files
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on modified example DAG files
+
+  # Fail-to-pass tests (the actual bug fix verification)
+  - id: test_inlet_no_datetime_min
+    type: fail_to_pass
+    origin: problem
+    description: Inlet DAG does not use datetime.min (causes TZ overflow)
+
+  - id: test_outlet_no_datetime_min
+    type: fail_to_pass
+    origin: problem
+    description: Outlet DAG does not use datetime.min (causes TZ overflow)
+
+  - id: test_inlet_has_utc_aware_datetime
+    type: fail_to_pass
+    origin: problem
+    description: Inlet DAG uses timezone-aware start_date with UTC
+
+  - id: test_outlet_has_utc_aware_datetime
+    type: fail_to_pass
+    origin: problem
+    description: Outlet DAG uses timezone-aware start_date with UTC
+
+  - id: test_all_dag_start_dates_fixed
+    type: fail_to_pass
+    origin: problem
+    description: All 5 DAG definitions use safe start_date
+
+  - id: test_fixed_datetime_safe_for_timezone_conversion
+    type: fail_to_pass
+    origin: problem
+    description: Fixed datetime values are safe for timezone conversion
+
+# Rubric rules from agent config files
+rubric:
+  - rule: |
+      Use proper datetime handling in DAG definitions.
+      datetime.datetime.min causes timezone conversion overflow.
+      Use datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc) instead.
+    source:
+      file: CLAUDE.md
+      lines: "Coding Standards"
+    type: agent_config
+
+  - rule: |
+      Always format and check Python files with ruff immediately after writing or editing them.
+    source:
+      file: CLAUDE.md
+      lines: "Coding Standards"
+    type: agent_config
+
+  - rule: |
+      Add tests for new behavior — cover success, failure, and edge cases.
+      Use pytest patterns, not unittest.TestCase.
+    source:
+      file: CLAUDE.md
+      lines: "Testing Standards"
+    type: agent_config
+
+  - rule: |
+      Apache License header on all new files.
+    source:
+      file: CLAUDE.md
+      lines: "Coding Standards"
+    type: agent_config
+
+  - rule: |
+      Never use datetime.datetime.min for Airflow start_date.
+      It causes OverflowError when Airflow tries to convert it to another timezone.
+    source:
+      file: PR #64758
+      lines: "PR description"
+    type: problem

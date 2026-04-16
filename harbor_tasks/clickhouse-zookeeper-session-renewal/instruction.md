@@ -17,25 +17,21 @@ The stale session causes the function to crash or behave incorrectly when transi
 When a transient Keeper error occurs during `refreshObjects`:
 
 1. The retry loop catches the error
-2. On retry, a fresh ZooKeeper session must be obtained
+2. On retry, a fresh ZooKeeper session must be obtained (the provided handle may point to an expired session)
 3. Object names must be re-fetched with the new session (watches set on live session)
 4. Objects must be loaded using the current (valid) session
 5. If retries are exhausted, the exception must propagate (not silently fail)
 
 ## Required Implementation
 
-The fix must include these specific patterns:
+The fix must ensure:
 
-1. **Session renewal check**: The code must check `retries_ctl.isRetry()` to detect when a retry is occurring
-2. **Fresh session acquisition**: On retry, obtain a fresh session via `zookeeper_getter.getZooKeeper().first`
-3. **Variable naming**: Use a `current_zookeeper` variable to hold the active session (initialized from the parameter, renewed on retry)
-4. **Move object_names into loop**: The `Strings object_names = getObjectNamesAndSetWatch(...)` declaration must be inside the retryLoop lambda so it re-fetches on each retry
-5. **Use current_zookeeper**: All calls to `getObjectNamesAndSetWatch` and `tryLoadObject` must use `current_zookeeper`, not the stale parameter
-6. **Comment updates**: Include comments with the following phrases:
-   - "Renew the session on retry"
-   - "re-fetch the object list"
-   - "watches are set on the live session"
-7. **Remove old comment**: Remove the comment mentioning "5-second sleep in processWatchQueue"
+1. **Session renewal on retry**: The retry loop must detect when a retry is occurring and obtain a fresh session
+2. **Fresh session variable**: A local variable must hold the active session (initialized from the parameter, renewed on retry)
+3. **Object names in retry loop**: The object name fetching must be inside the retry loop so it re-fetches on each retry
+4. **Use current session**: All operations inside the retry loop must use the current (potentially renewed) session
+5. **Updated comments**: Comments must explain that the session is renewed on retry and that the object list is re-fetched
+6. **Remove misleading comment**: Any comment referencing "5-second sleep in processWatchQueue" must be removed
 
 ## Style Requirements
 

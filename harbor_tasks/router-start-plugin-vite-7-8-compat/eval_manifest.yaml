@@ -1,0 +1,71 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6985
+  title: "fix(start-plugin-core): improve rollupOptions/rolldownOptions handling"
+  merge_commit: 0f585d5289c8a3b11697caa9b2aa3015d37d776e
+  base_commit: 5accb6f86de38d62d1daae3aeed8b168ede46b30
+
+target_files:
+  - packages/start-plugin-core/src/utils.ts
+  - packages/start-plugin-core/src/plugin.ts
+
+checks:
+  # Fail-to-pass tests (core behavioral changes)
+  - id: test_bundler_options_key_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "bundlerOptionsKey and isRolldown exports removed from utils.ts"
+
+  - id: test_plugin_imports_correct_utils
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts imports only getBundlerOptions, not bundlerOptionsKey"
+
+  - id: test_plugin_sets_both_bundler_options
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts sets both rollupOptions and rolldownOptions for client"
+
+  - id: test_plugin_sets_both_bundler_options_for_server
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts sets both rollupOptions and rolldownOptions for server"
+
+  - id: test_same_object_reference_used
+    type: fail_to_pass
+    origin: behavioral
+    description: "Same object reference used for both options to avoid Vite 8 warning"
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes"
+
+  - id: test_package_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package builds successfully"
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on modified files"
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Unit tests pass"
+
+  - id: test_build_output_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package build output passes publint and attw checks"
+
+# Note: No rubric rules for this task since it's a pure code-fix PR.
+# The judge's rubric evaluation is designed for tasks that update agent config
+# files (CLAUDE.md, AGENTS.md, etc.) alongside code changes.
+# This PR only modifies source code files (utils.ts, plugin.ts), so the rubric
+# track is not applicable. Without rubric rules or config_edits, the judge
+# returns 1.0 (perfect) by default.

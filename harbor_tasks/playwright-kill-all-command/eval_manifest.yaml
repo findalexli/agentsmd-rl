@@ -70,9 +70,63 @@ rubric:
     path: packages/playwright/src/skill/SKILL.md
     lines: 180-190
     commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- rule: Register CLI command
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '28'
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The gold diff registers the new `killAll` command by calling `declareCommand`
+    and adding it to the `commandsArray` in `packages/playwright/src/mcp/terminal/commands.ts`.
+  category: architecture
+  verification: llm_judge
+- rule: Update skill file and references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The gold diff updates `packages/playwright/src/skill/SKILL.md` and `packages/playwright/src/skill/references/session-management.md`
+    to document the new `kill-all` command.
+  category: documentation
+  verification: llm_judge
+- rule: Place new tests
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '31'
+  source_text: '- Place new tests in `tests/mcp/cli-<category>.spec.ts`'
+  evidence: The gold diff adds the test for the `kill-all` command (which belongs
+    to the `session` category) directly into `tests/mcp/cli-session.spec.ts`.
+  category: testing
+  verification: llm_judge
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
   gold_added: 'playwright-cli kill-all  # forcefully kill all daemon processes (for
     stale/zombie processes)'
   gold_removed: ''
+distractors:
+- rule: Create corresponding MCP tool
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 8-12, 24
+  source_text: '## Adding MCP Tools
+
+    - Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`
+
+    - Place new tests in `tests/mcp/mcp-<category>.spec.ts`
+
+    ...
+
+    - CLI commands are based on MCP tools. Implement the corresponding MCP tool as
+    per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: An agent reading that 'CLI commands are based on MCP tools' might
+    mistakenly try to implement a new MCP browser tool for 'kill-all'. However, 'kill-all'
+    is a purely terminal-level utility for managing daemon processes with no browser
+    interaction component, so creating an MCP tool for it would be incorrect and violate
+    architectural boundaries.
+  severity: high

@@ -1,0 +1,151 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39116
+  base_commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+  merge_commit: "f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea"
+
+# Track 2: Config edits - gold references extracted from PR
+gold_config_edits:
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "playwright-cli kill-all  # forcefully kill all daemon processes (for stale/zombie processes)"
+    gold_removed: ""
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    gold_added: "# Forcefully kill all daemon processes (for stale/zombie processes)\nplaywright-cli kill-all"
+    gold_removed: ""
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    gold_added: "# If sessions become unresponsive or zombie processes remain\nplaywright-cli kill-all"
+    gold_removed: ""
+
+checks:
+  # Code behavior tests
+  - id: kill_all_command_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "kill-all command is properly registered in commands.ts with correct metadata (name, description, category)"
+
+  - id: kill_all_handler_implemented
+    type: fail_to_pass
+    origin: pr_diff
+    description: "killAllDaemons function is implemented in program.ts with platform-specific process termination logic"
+
+  - id: commands_file_compiles
+    type: pass_to_pass
+    origin: static
+    description: "commands.ts has valid syntax with balanced braces and proper comma placement"
+
+  # Config/instruction file update tests (REQUIRED for agentmd-edit)
+  - id: skill_md_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents the kill-all command in the Sessions section"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "35-36"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  - id: session_management_md_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "session-management.md documents kill-all in Session Commands and Common Patterns sections"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "35-36"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  - id: skill_md_follows_existing_format
+    type: fail_to_pass
+    origin: agent_config
+    description: "kill-all documentation in SKILL.md follows the existing format with comment explanation"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "175-190"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+rubric:
+  # Rules from SKILL.md and session-management.md about documentation conventions
+  - rule: "When adding CLI commands, update skill file at packages/playwright/src/skill/SKILL.md"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "35-36"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "SKILL.md line 35-36: 'Update skill file at packages/playwright/src/skill/SKILL.md and references if necessary in packages/playwright/src/skill/references/'"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "When adding CLI commands, update references in packages/playwright/src/skill/references/ if necessary"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "35-36"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "session-management.md is the relevant reference file for session-related commands"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "CLI commands for session management should be documented in session-management.md"
+    source:
+      path: "packages/playwright/src/skill/references/session-management.md"
+      lines: "1-10"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Session management commands like session-stop, session-stop-all are documented in session-management.md"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Skill file commands should follow the format: command-name followed by comment explaining purpose"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "175-190"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Lines 175-190 show session commands with comments, e.g., 'playwright-cli session-delete mysession' format"
+    category: style
+    verification: llm_judge
+
+  - rule: "New commands should be added to the commandsArray to be registered"
+    source:
+      path: "packages/playwright/src/mcp/terminal/commands.ts"
+      lines: "900-925"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Commands are registered by being added to commandsArray which is then exported"
+    category: code_structure
+    verification: llm_judge
+
+  - rule: "CLI command implementation should handle both subcommand and top-level command routing"
+    source:
+      path: "packages/playwright/src/mcp/terminal/program.ts"
+      lines: "430-450"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Other session commands are handled via handleSessionCommand and program function routing"
+    category: code_structure
+    verification: llm_judge
+
+distractors:
+  - rule: "Always add tests in tests/mcp/cli-<category>.spec.ts when adding commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "40-41"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: scope_ambiguity
+    why_distracting: "The PR includes test file changes but our task focuses on the implementation and documentation. Adding tests is part of full development but not required for this fix task."
+    severity: low
+
+  - rule: "Use npm run flint to lint everything before commit"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "43"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: meta_confusion
+    why_distracting: "This is a process rule for human developers, not for the agent fixing the bug. The agent should focus on implementing the feature and updating docs."
+    severity: low
+
+  - rule: "Run watch at all times during development"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "28-29"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: meta_confusion
+    why_distracting: "Development workflow rule for humans, not applicable to the agent task of implementing a specific feature."
+    severity: low

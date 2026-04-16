@@ -1,0 +1,59 @@
+source_pr:
+  repo: goose-lang/goose
+  number: 111
+  title: "Fix globals translation to use `pkgPathBase.pkgName`, like function calls do"
+  merge_commit: fea16bec040c2c141c156c4a56f9f1d2a1925f36
+  base_commit: 383286a33bba089cf05f6ffbc73836a81f355569
+
+task:
+  name: goose-globals-pkgpath-format
+  description: |
+    Fix the goose translator to use consistent package identifiers for global
+    variables. The translator should use `pkgPathBase.pkgName` format (e.g.,
+    #unittest.unittest) for globals.get calls, matching the format already used
+    for function calls.
+
+checks:
+  # Fail-to-pass tests
+  - id: test_external_globals_format
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Globals from external packages use pkgPathBase.pkgName format (e.g.,
+      #unittest.unittest) instead of just package name (#unittest).
+
+  - id: test_globals_consistency_with_function_calls
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Globals.get uses consistent package identifier format with function calls,
+      using pkgPathBase.pkgName for cross-package references.
+
+  # Pass-to-pass tests - CI/CD gates from the repo's actual CI
+  - id: test_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go package builds successfully
+
+  - id: test_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: go vet passes without issues
+
+  - id: test_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go code is properly formatted (gofmt -d -s)
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go module dependencies are verified
+
+  - id: test_go_test_examples
+    type: pass_to_pass
+    origin: repo_tests
+    description: TestExamples unit tests pass (translation tests)
+
+rubric: []
+  # No agent config files found in repo, so no rubric rules needed

@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests write Go test files using helper function `createTestAgentDB` (e.g., in TestSTFieldPersisted and TestSTVaryingValues), which is not mentioned in instruction.md. The tests also reference specific types like `record.RefSample.ST`, `record.SamplesV2`, `wlog.NewSegmentsReader`, and the `AppenderV2` method signature with specific parameters (ref, ls, st, t, v, h, fh, opts) \u2014 none of these specific API details are documented in the instruction. The instruction mentions the concept but not the sp"
+      "reason": "The hidden tests write temporary Go test files (e.g., TestSTFieldPersisted, TestSTVaryingValues) that call createTestAgentDB, AppenderV2, specific WAL reading functions, and assert on specific ST values like [1000,2000,3000,4000,5000] and [1234,2234,3234,4234,5234]. The instruction mentions these values and functions conceptually, but does not name the exact test functions TestSTFieldPersisted or TestSTVaryingValues, nor does it mention that the tests dynamically write Go test files to the agent"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the symptom (ST values read as 0 after WAL commit) and the general area (sample appending flow in tsdb/agent), but does not specify the exact line, file, or code change needed. A developer must investigate the append flow to find where ST is dropped."
+      "reason": "The instruction describes the broken behavior (ST values come back as 0) and asks the agent to investigate the append flow to find where ST values are dropped. It does not specify the exact file, line, or code change needed (e.g., it doesn't say 'add ST: st to the RefSample struct literal in db_append_v2.go')."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests verify behavior: they append samples with specific ST values, commit, read the WAL, and check that ST values match. Any correct fix that causes ST to be persisted in RefSample records would pass. The tests don't assert on specific variable names, line positions, or implementation details of the fix itself."
+      "reason": "The hidden tests write their own Go test files that test the observable behavior: append samples with specific ST values, commit, read WAL, and verify ST values match. Any correct fix that causes ST values to be persisted to WAL RefSample records would pass these tests, regardless of implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "All tests execute Go code via subprocess (go build, go test, go vet, go fmt). The fail-to-pass tests write and execute Go test files that actually append samples, commit, read WAL, and verify ST values. No test simply reads source files for string patterns."
+      "reason": "All tests execute Go commands (go build, go test, go vet, go fmt) via subprocess and check return codes and behavioral output. The core f2p tests compile and run actual Go test code that exercises the WAL append/read path."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_st_field_actually_persisted, test_st_persistence_with_varying_values) write samples with non-zero ST values (e.g., [1000,2000,3000,4000,5000]) and assert they are recovered from the WAL. A stub or default implementation would produce ST=0, which would fail the require.Equal assertion against the expected non-zero values."
+      "reason": "The f2p tests (test_st_field_actually_persisted, test_st_persistence_with_varying_values) write Go tests that append samples with specific non-zero ST values and then read the WAL to verify those exact values are persisted. A stub or default implementation would leave ST as 0 (the zero value for int64), causing require.Equal to fail with [1000,2000,...] != [0,0,...]."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: code compiles, go vet passes, go fmt passes, full TSDB compiles, and several named test patterns pass. All of these are covered by the test suite (test_agent_st_append_compiles, test_go_vet_tsdb_agent, test_go_fmt_tsdb_agent, test_all_agent_code_compiles, test_append_v2_unit_tests_pass, test_rollback_append_v2, test_wal_replay_append_v2, test_st_zero_injection_append_v2, test_invalid_series_append_v2)."
+      "reason": "The instruction requires: ST persistence with specific values, compilation, vet/fmt checks, and passing upstream AppendV2 tests. All of these are tested: build tests, vet/fmt tests, upstream test patterns (TestCommit_AppendV2, etc.), and the core ST persistence tests with both fixed and varying values."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_st_field_actually_persisted, test_st_persistence_with_varying_values), have docstrings explaining what they test and whether they're pass_to_pass or fail_to_pass, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_agent_st_append_compiles, test_st_field_actually_persisted, etc.), have docstrings explaining what they test and whether they are pass_to_pass or fail_to_pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Go code bug, not producing structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the `tsdb/agent` package and the general area (sample appending flow) but does not name the specific file `db_append_v2.go` or the exact line where the fix is needed. It only describes the symptom and the general investigation area."
+      "reason": "The instruction mentions the tsdb/agent package and the AppenderV2 interface but does not name the exact file (db_append_v2.go) or the specific line where the ST field is missing from the RefSample struct literal. It appropriately describes the symptom without pinpointing the exact buggy location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

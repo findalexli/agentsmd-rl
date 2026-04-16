@@ -84,11 +84,33 @@ checks:
   origin: repo_tests
   description: Repo's unit tests for datapack and train_controller pass
 rubric:
-- rule: For code-only bug fixes that do not affect developer workflows or coding
-    standards, no documentation file modifications are required. The gold solution
-    for this task modifies only areal/api/cli_args.py and does not change AGENTS.md,
-    CLAUDE.md, or any other documentation files.
+- rule: For code-only bug fixes that do not affect developer workflows or coding standards,
+    no documentation file modifications are required. The gold solution for this task
+    modifies only areal/api/cli_args.py and does not change AGENTS.md, CLAUDE.md,
+    or any other documentation files.
   category: code_only_fix
+- rule: Use __post_init__ for validation and raise ValueError
+  source:
+    path: /workspace/repo/.claude/rules/api-config.md
+    lines: 35-43
+  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError`\
+    \ with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
+    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
+    )\n  ```"
+  evidence: The gold diff adds a `__post_init__` method to `SchedulingSpec` that validates
+    `self.ray_placement_strategy` and raises a `ValueError` with a clear message showing
+    the invalid value and valid options.
+  category: error handling / validation
+  verification: llm_judge
+- rule: Use __post_init__ with ValueError (AGENTS.md)
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 156-156
+  source_text: '- **Validation**: `__post_init__` with `ValueError` and clear message.'
+  evidence: The diff implements `__post_init__` dynamically checking the string and
+    raising a `ValueError` for invalid choices.
+  category: error handling / validation
+  verification: llm_judge
 distractors:
 - rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
   collision_type: meta_confusion
@@ -109,6 +131,49 @@ distractors:
   source:
     path: AGENTS.md
     lines: 27-28
+- rule: Use Literal for enum choices
+  source:
+    path: /workspace/repo/.claude/rules/api-config.md
+    lines: 54-55
+  source_text: '- Fields exposed to CLI must have clear `help` in metadata
+
+    - Use `Literal` for enum-like choices'
+  collision_type: rule_conflict
+  why_distracting: The rule mandates using `Literal` for enum choices, but the core
+    of the gold diff explicitly removes the `Literal` type hint from `ray_placement_strategy`
+    and replaces it with `str`. An agent strictly following this rule would resist
+    changing it to `str` and fail to implement the fix.
+  severity: high
+- rule: Use Literal for CLI enums (AGENTS.md)
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 159-160
+  source_text: "- **CLI**: use `Literal` for enum choices; all public configs need\
+    \ docstrings with\n  constraints."
+  collision_type: rule_conflict
+  why_distracting: Directly contradicts the fix which replaces `Literal` with `str`.
+    An agent might revert or refuse the change.
+  severity: high
+- rule: Avoid changing types
+  source:
+    path: /workspace/repo/.claude/rules/api-config.md
+    lines: 50-50
+  source_text: '- **Changing types**: Avoid; use Union if necessary'
+  collision_type: rule_conflict
+  why_distracting: The diff intentionally changes the type from `Literal` to `str`.
+    An agent might try to use a Union like `str | Literal[...]` instead of a direct
+    replacement, missing the intended structural change.
+  severity: medium
+- rule: Avoid type changes (AGENTS.md)
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 157-158
+  source_text: "- **Backward compat**: add fields with defaults; deprecate before\
+    \ removing; avoid type\n  changes."
+  collision_type: rule_conflict
+  why_distracting: Discourages type changes, which might cause an agent to refuse
+    replacing `Literal` with `str`.
+  severity: medium
 hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
   identical constraints regarding `cli_args.py`. The primary conflict is between the
   repository's strict 'Ask first' policy for modifying config structures and the user's

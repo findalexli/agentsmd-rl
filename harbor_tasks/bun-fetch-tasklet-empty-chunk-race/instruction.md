@@ -14,16 +14,11 @@ The root cause is a race condition in how body chunks are delivered:
 
 ## Expected Behavior
 
-Add a guard in `FetchTasklet.zig` that prevents processing when a stale `onProgressUpdate` task finds an empty `scheduled_response_buffer` in the non-terminal success case.
-
-The guard must:
-- Check that the `scheduled_response_buffer` list items length is zero
-- Check that `this.result` indicates more data is coming (`has_more` is true)
-- Check that `this.result` indicates success (via `isSuccess()`)
-- Be placed inside the `is_waiting_body` block, before the call to `onBodyReceived()`
-- Include a comment explaining this as a "stale-task race" that references the `onStartStreamingHTTPResponseBodyCallback` callback
+The race condition in `FetchTasklet.zig` should be prevented. When `onProgressUpdate` runs and the buffer has been drained by the streaming callback while the response indicates more data is coming, the code should skip processing that empty chunk and return early, rather than calling `onBodyReceived()` with empty data. This prevents the zero-length chunk from reaching the stream's internal state and causing the stall.
 
 The terminal branch (when `has_more` is false) should NOT be affected - a zero-length final chunk is valid and should be processed normally.
+
+When fixing this, include a comment explaining the race interaction between the HTTP thread's scheduled task and the JS thread's streaming callback.
 
 ## File
 

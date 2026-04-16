@@ -1,0 +1,21 @@
+name = "clickhouse-scope-exit-object-deserialization"
+version = "1.0.0"
+description = "Fix use-after-scope bug in parallel Object type deserialization by adding SCOPE_EXIT to drain pending tasks"
+difficulty = "medium"
+tags = ["c++", "memory-safety", "concurrency", "clickhouse", "bug-fix"]
+
+[estimated_time]
+min = 20
+max = 45
+
+[repository]
+owner = "ClickHouse"
+name = "ClickHouse"
+url = "https://github.com/ClickHouse/ClickHouse"
+base_commit = "7edb784eccbce08cebbec3147591f56d11dd5f9f"
+merge_commit = "857a9cba17dd4ac4ffe4134b79fef78e952e00a4"
+pr_number = 102068
+
+[[files]]
+path = "src/DataTypes/Serializations/SerializationObject.cpp"
+description = "Main file with the use-after-scope bug in deserializeBinaryBulkStatePrefix function"

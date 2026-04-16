@@ -2,59 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific file paths like 'app/init/resources.php', 'src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php', and exact string patterns like 'Domain($request->getHostname())' and 'function (Request $request, Document $project)'. The instruction.md says 'Files Likely Involved' but does not name 'app/init/resources.php' specifically (only says 'Resource initialization files'), and does not specify the exact Teams file path 'src/Appwrite/Platform/Modules/Teams/Http/Membe"
+      "outcome": "pass",
+      "reason": "The instruction names all key file paths (app/init/resources.php, app/controllers/general.php, app/controllers/api/account.php, src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php), resource names (domainVerification, cookieDomain), class names (Utopia\\Domains\\Domain, Request, Document), parameter types (bool, ?string), and the Config::getParam/setParam patterns that tests check. The tests verify these same paths, resource names, dependencies, and absence of Config calls \u2014 all"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change (move from global config to request-scoped resources) and the logic requirements, but doesn't specify exact line numbers or the precise code to write. It describes the problem and required behavior, leaving implementation to the developer."
+      "reason": "The instruction describes what needs to change (move from global config to request-scoped resources, inject into controllers) but does not specify exact line numbers, exact closure implementations, or the precise code to write. A developer still needs to reason about the implementation details."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_domain_verification_resource_exists checks for exact string 'Domain($request->getHostname())'; test_cookie_domain_resource_exists checks for 'function (Request $request, Document $project)'; test_create_session_closure_uses_params uses a regex matching specific parameter ordering. An alternative correct implementation using e.g. '$hostname = $request->getHostname(); new Domain($hostname)' would fail the Domain($request->getHostname()) check"
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: resource registration in the Http framework, dependency declarations, absence of Config::getParam/setParam calls, and presence of inject calls and typed parameters. Alternative correct implementations (e.g., different closure bodies, different parameter ordering) would pass as long as they register the resources with correct names and dependencies and inject them into controllers."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The majority of tests (test_cookie_domain_resource_exists, test_domain_verification_resource_exists, test_domain_class_imported, test_general_php_no_config_mutations, test_account_controller_uses_injection, etc.) are purely text-based string searches using 'assert X in open(path).read()'. While there are some execution tests (php -l, composer validate, pint, phpstan), the core behavioral tests only check file contents, not actual resource resolution or injection behavior."
+      "outcome": "pass",
+      "reason": "Tests execute PHP scripts that load resources.php and use Reflection to inspect the Http framework's runtime state (resourcesCallbacks). They also use PHP's token_get_all() to parse code at the AST token level rather than simple string matching. This is genuine behavioral/structural verification, not plain text search."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns that wouldn't exist in the base commit (e.g., Http::setResource('cookieDomain') in resources.php, ->inject('domainVerification') in account.php, removal of Config::setParam('domainVerification') from general.php). A stub/no-op implementation would not satisfy these checks."
+      "reason": "The fail-to-pass tests check that resources are registered in the Http framework (they aren't by default), that Config::setParam calls are removed from general.php (they exist by default), and that controllers have inject calls and typed parameters (they don't by default). A stub or no-op implementation would not pass these tests."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies that cookieDomain should 'Return null for migration hosts defined in _APP_MIGRATION_HOST environment variable' and 'Return . + registerable domain when project ID is console AND _APP_CONSOLE_ROOT_SESSION env var equals enabled', but no tests verify this logic actually works correctly at runtime - only that certain strings appear in the file."
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) two new resources in resources.php with specific dependencies \u2014 tested by test_domainVerification_resource_registered, test_cookieDomain_resource_registered, test_domainVerification_depends_on_request, test_cookieDomain_depends_on_request_and_project; (2) removal of Config::setParam in general.php \u2014 tested by test_general_php_no_config_mutation; (3) controller injection \u2014 tested by the controller-specific tests checking for inject calls and absence of Config::getPar"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_cookie_domain_resource_exists, test_account_controller_no_global_config, etc.) and each has a docstring explaining what it verifies."
+      "reason": "Tests are clearly grouped with section comments (Resource registration, Config mutation removal, Controller migration) and have descriptive function names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task, not producing structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "File paths, variable names, class names, and commands in the instruction are all correct and consistent with the test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the files as 'Files Likely Involved' with generic descriptions rather than exact file paths. It doesn't specify exact line numbers or the precise code changes needed."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact files to modify (app/controllers/general.php, app/controllers/api/account.php, src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php, app/init/resources.php), the exact parameter names and types (bool $domainVerification, ?string $cookieDomain), and the exact method to use ($createSession closure). It even specifies that 'action callbacks must declare bool $domainVerification and ?string $cookieDomain parameters'. This goes beyond descr"
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not an agent config edit task."
+      "reason": "This is a code-only refactoring task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 1
 }

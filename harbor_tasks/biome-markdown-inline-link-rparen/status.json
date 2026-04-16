@@ -1,0 +1,104 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T09:26:25.840088",
+  "total_time": 31.37,
+  "sandbox_id": "iag00rtiz4b9rubvl35jl",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2344.03,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 453.61,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "partial_pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "Docker build: PASS. NOP test: PASS (reward=0). Gold test: PASS (reward=1). Rubric judge: FAIL (ICR=0.0). The rubric rules expect config/documentation edits (AGENTS.md, SKILL.md references) but this is a pure code fix task with no such edits. The rubric rules have empty reference fields and check for config file changes using extract_config_hunks, which finds nothing. The gold solution correctly follows the rubric principles (references #9640 in code comments, handles whitespace properly, uses proper Biome APIs) but the judge mechanism is mismatched for pure code fix tasks. Fixed YAML quoting issue in eval_manifest.yaml (unquoted colons in descriptions).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 620.03
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.26,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:7: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 8.97,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 0
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2185.8,
+      "at": "2026-04-15T03:52:38.452854"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3788.36,
+      "at": "2026-04-15T11:17:32.512569"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3667.18,
+      "at": "2026-04-15T12:21:27.794389"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 207.45,
+      "at": "2026-04-15T12:39:11.699874"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 31.37,
+      "at": "2026-04-16T09:26:25.840088"
+    }
+  ]
+}

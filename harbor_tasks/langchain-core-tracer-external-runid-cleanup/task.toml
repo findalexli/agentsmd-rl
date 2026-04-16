@@ -1,0 +1,21 @@
+name = "langchain-core-tracer-external-runid-cleanup"
+description = "Fix memory leak by adding reference counting for external RunTree entries in tracer run_map"
+difficulty = "medium"
+tags = ["python", "langchain", "tracing", "memory-leak", "reference-counting"]
+time_limit = 600  # 10 minutes
+
+[metadata]
+owner = "langchain-ai"
+repo = "langchain"
+pr_number = 36660
+base_commit = "c59e83a1ffba63d709ea4847445845edd82085dc"
+merge_commit = "a6eb82970166a8fb966f1eb04238e6c378811bcc"
+
+[source]
+target_files = [
+    "libs/core/langchain_core/callbacks/manager.py",
+    "libs/core/langchain_core/tracers/base.py",
+    "libs/core/langchain_core/tracers/core.py",
+    "libs/core/langchain_core/tracers/langchain.py",
+]
+test_file = "libs/core/tests/unit_tests/runnables/test_tracing_interops.py"

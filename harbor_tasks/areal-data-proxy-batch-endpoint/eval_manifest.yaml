@@ -168,6 +168,30 @@ rubric:
     (e.g., returning `missing_shard_ids`, using `orjson.dumps(serialize_value(data))`)
     by mirroring the logic from `rpc_server
   category: architecture
+- rule: 'Use specific log levels: DEBUG for detailed tracing and ERROR for failures
+    requiring attention.'
+  source:
+    path: .claude/rules/code-style.md
+    lines: 22-26
+  source_text: "- Log levels:\n  - DEBUG: Detailed tracing (avoid in hot paths)\n\
+    \  - INFO: Milestones (training start, checkpoint saved)\n  - WARNING: Recoverable\
+    \ issues\n  - ERROR: Failures requiring attention"
+  evidence: The diff uses `logger.debug` to trace the number and size of retrieved
+    shards, and `logger.error` to log exceptions when batch retrieval fails.
+  category: logging
+  verification: llm_judge
+- rule: Do not use wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 23-25
+  source_text: '**Hard rules** -- never violate:
+
+
+    - No wildcard imports (`from x import *`).'
+  evidence: The diff explicitly imports `JSONResponse` and `StreamingResponse` from
+    `fastapi.responses` rather than using a wildcard import.
+  category: imports
+  verification: llm_judge
 distractors:
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
@@ -197,6 +221,21 @@ distractors:
   source:
     path: AGENTS.md
     lines: 54-56
+- rule: DeviceMesh & DTensor
+  source:
+    path: .claude/rules/distributed.md
+    lines: 17-23
+  source_text: "## DeviceMesh & DTensor\n\n- Mesh dimension names must match `ArchonParallelDims`:\
+    \ `dp_shard`, `tp`, `cp`, `ep`,\n  `etp`\n- DTensor requires consistent mesh across\
+    \ all ranks\n- Use `DTensor.from_local()` with correct placements"
+  collision_type: meta_confusion
+  why_distracting: The code deals with `RTensor` shards and is located in `areal/experimental/**`,
+    which matches the path for distributed rules. An agent might confuse `RTensor`
+    with `DTensor` and try to apply distributed tensor rules (like checking mesh dimensions
+    or using `from_local()`). However, this is a data proxy service that simply stores
+    and retrieves opaque bytes, so distributed tensor operations are completely irrelevant
+    here.
+  severity: medium
 hierarchy_analysis: The configuration consists of two root-level markdown files (`AGENTS.md`
   and `CLAUDE.md`) with overlapping rules. The agent must synthesize these flat rules
   and apply them contextually, ignoring rules that conflict with the specific framework

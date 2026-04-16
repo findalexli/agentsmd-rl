@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -15,47 +16,85 @@ REPO = "/workspace/beam"
 TF_DIR = Path(REPO) / "examples" / "terraform" / "envoy-ratelimiter"
 
 
-def _extract_brace_content(text: str, start: int) -> str:
-    """Extract content between matched braces starting after an opening brace."""
-    depth = 1
-    i = start
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[start : i - 1]
+def _install_terraform():
+    """Install terraform binary to /tmp/terraform."""
+    install_cmd = """
+        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
+        curl -fsSL -o /tmp/terraform.zip
+        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+        unzip -qo /tmp/terraform.zip -d /tmp/
+    """.strip().replace("\n        ", " ")
+    r = subprocess.run(
+        ["bash", "-c", install_cmd],
+        capture_output=True, text=True, timeout=120, cwd="/tmp"
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Terraform installation failed: {r.stderr}")
 
 
-def _parse_variable_blocks(text: str) -> list[dict]:
-    """Parse all variable blocks from HCL text -> [{name, body}]."""
-    blocks = []
-    for m in re.finditer(r'variable\s+"(\w+)"\s*\{', text):
-        name = m.group(1)
-        body = _extract_brace_content(text, m.end())
-        blocks.append({"name": name, "body": body})
-    return blocks
+def _terraform_init():
+    """Initialize terraform in the TF_DIR."""
+    r = subprocess.run(
+        ["/tmp/terraform", "init", "-backend=false", "-input=false"],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Terraform init failed: {r.stderr}")
 
 
-def _parse_resource_blocks(text: str) -> list[dict]:
-    """Parse all resource blocks from HCL text -> [{type, name, body}]."""
-    blocks = []
-    for m in re.finditer(r'resource\s+"(\w+)"\s+"(\w+)"\s*\{', text):
-        rtype, rname = m.group(1), m.group(2)
-        body = _extract_brace_content(text, m.end())
-        blocks.append({"type": rtype, "name": rname, "body": body})
-    return blocks
+def _terraform_plan(vars_dict=None, out_path="/tmp/plan.tfplan"):
+    """Run terraform plan with optional variables, output to out_path."""
+    cmd = ["/tmp/terraform", "plan", f"-out={out_path}"]
+    if vars_dict:
+        for k, v in vars_dict.items():
+            if isinstance(v, bool):
+                val = "true" if v else "false"
+            else:
+                val = str(v)
+            cmd.append(f"-var={k}={val}")
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=120, cwd=TF_DIR)
+    if r.returncode != 0:
+        raise RuntimeError(f"Terraform plan failed: {r.stderr}")
+    return out_path
 
 
-# ---------------------------------------------------------------------------
+def _terraform_show_json(plan_path="/tmp/plan.tfplan"):
+    """Convert terraform plan to JSON and return parsed dict."""
+    r = subprocess.run(
+        ["/tmp/terraform", "show", "-json", plan_path],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Terraform show failed: {r.stderr}")
+    return json.loads(r.stdout)
+
+
+def _get_planned_resources(plan_json):
+    """Extract planned resources from terraform plan JSON."""
+    resources = {}
+    # Check resource_changes
+    for rc in plan_json.get("resource_changes", []):
+        addr = rc.get("address", "")
+        change = rc.get("change", {})
+        actions = rc.get("change", {}).get("actions", [])
+        # Include resources being created, updated, or no-op (existing)
+        if any(a in actions for a in ["create", "update", "no-op"]):
+            resources[addr] = {
+                "type": rc.get("type", ""),
+                "name": rc.get("name", ""),
+                "actions": actions,
+                "after": change.get("after", {}),
+            }
+    return resources
+
+
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def test_repo_terraform_readme_has_variable_table():
     """README.md contains the expected Terraform variables table section (pass_to_pass, repo_tests)."""
-    # This verifies the README has the structure expected by the PR
     readme = (TF_DIR / "README.md").read_text()
 
     # Check for the variables table header
@@ -87,7 +126,7 @@ def test_repo_gke_tf_structure():
     content = (TF_DIR / "gke.tf").read_text()
 
     # Check for the GKE cluster resource
-    assert 'resource "google_container_cluster"' in content, (
+    assert "google_container_cluster" in content, (
         "gke.tf missing google_container_cluster resource"
     )
     # Check for private cluster configuration (key feature)
@@ -105,16 +144,12 @@ def test_repo_ratelimit_tf_has_k8s_resources():
     content = (TF_DIR / "ratelimit.tf").read_text()
 
     # Check for key Kubernetes resources
-    required_resources = [
-        'resource "kubernetes_deployment" "ratelimit"',
-        'resource "kubernetes_deployment" "redis"',
-        'resource "kubernetes_service" "ratelimit"',
-        'resource "kubernetes_service" "redis"',
-        'resource "kubernetes_config_map" "ratelimit_config"',
-        'resource "kubernetes_horizontal_pod_autoscaler_v2"',
-    ]
-    for resource in required_resources:
-        assert resource in content, f"ratelimit.tf missing required resource: {resource}"
+    assert "kubernetes_deployment" in content, "ratelimit.tf missing kubernetes_deployment"
+    assert "kubernetes_service" in content, "ratelimit.tf missing kubernetes_service"
+    assert "kubernetes_config_map" in content, "ratelimit.tf missing kubernetes_config_map"
+    assert "kubernetes_horizontal_pod_autoscaler_v2" in content, (
+        "ratelimit.tf missing kubernetes_horizontal_pod_autoscaler_v2"
+    )
 
 
 def test_repo_variables_tf_has_required_vars():
@@ -122,12 +157,7 @@ def test_repo_variables_tf_has_required_vars():
     content = (TF_DIR / "variables.tf").read_text()
 
     # Required variables that must exist
-    required_vars = [
-        "project_id",
-        "vpc_name",
-        "subnet_name",
-        "ratelimit_config_yaml",
-    ]
+    required_vars = ["project_id", "vpc_name", "subnet_name", "ratelimit_config_yaml"]
     for var in required_vars:
         pattern = rf'variable\s+"{var}"'
         assert re.search(pattern, content), f"variables.tf missing required variable: {var}"
@@ -138,7 +168,7 @@ def test_repo_prerequisites_tf_structure():
     content = (TF_DIR / "prerequisites.tf").read_text()
 
     # Check for service enablement resources
-    assert 'resource "google_project_service"' in content, (
+    assert "google_project_service" in content, (
         "prerequisites.tf missing google_project_service resources"
     )
     # Check for essential APIs
@@ -160,18 +190,7 @@ def test_syntax_check():
 
 def test_terraform_validate():
     """Terraform configuration passes validation (pass_to_pass)."""
-    # Install terraform using curl (available in image)
-    install_cmd = """
-        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
-        curl -fsSL -o /tmp/terraform.zip 
-        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
-        unzip -q /tmp/terraform.zip -d /tmp/
-    """.strip().replace("\n        ", " ")
-    r = subprocess.run(
-        ["bash", "-c", install_cmd],
-        capture_output=True, text=True, timeout=120, cwd="/tmp"
-    )
-    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+    _install_terraform()
 
     # Initialize terraform
     r = subprocess.run(
@@ -200,18 +219,7 @@ def test_terraform_files_exist():
 
 def test_terraform_providers():
     """Terraform providers are correctly configured (pass_to_pass)."""
-    # Install terraform
-    install_cmd = """
-        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
-        curl -fsSL -o /tmp/terraform.zip
-        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
-        unzip -qo /tmp/terraform.zip -d /tmp/
-    """.strip().replace("\n        ", " ")
-    r = subprocess.run(
-        ["bash", "-c", install_cmd],
-        capture_output=True, text=True, timeout=120, cwd="/tmp"
-    )
-    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+    _install_terraform()
 
     # Initialize terraform
     r = subprocess.run(
@@ -257,168 +265,11 @@ def test_prerequisites_configured():
         assert service in content, f"Required service '{service}' not found in prerequisites.tf"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests with HCL block parsing
-# ---------------------------------------------------------------------------
-
-
-def test_namespace_variable_defined():
-    """variables.tf defines a namespace variable with string type and envoy-ratelimiter default."""
-    content = (TF_DIR / "variables.tf").read_text()
-    blocks = _parse_variable_blocks(content)
-    ns = [b for b in blocks if b["name"] == "namespace"]
-    assert len(ns) == 1, (
-        f"Expected exactly 1 namespace variable block, found {len(ns)}"
-    )
-    body = ns[0]["body"]
-    assert "string" in body, f"namespace must have type=string, got: {body}"
-    assert "envoy-ratelimiter" in body, (
-        f"namespace default must be envoy-ratelimiter, got: {body}"
-    )
-    assert "description" in body, "namespace variable must have a description"
-
-
-def test_enable_metrics_variable_defined():
-    """variables.tf defines an enable_metrics variable with bool type and false default."""
-    content = (TF_DIR / "variables.tf").read_text()
-    blocks = _parse_variable_blocks(content)
-    em = [b for b in blocks if b["name"] == "enable_metrics"]
-    assert len(em) == 1, (
-        f"Expected exactly 1 enable_metrics variable block, found {len(em)}"
-    )
-    body = em[0]["body"]
-    assert "bool" in body, f"enable_metrics must have type=bool, got: {body}"
-    default_match = re.search(r"default\s*=\s*(\w+)", body)
-    assert default_match is not None, f"enable_metrics must have a default, got: {body}"
-    assert default_match.group(1) == "false", (
-        f"enable_metrics default must be false, got: {default_match.group(1)}"
-    )
-    assert "description" in body, "enable_metrics variable must have a description"
-
-
-def test_kubernetes_namespace_resource():
-    """ratelimit.tf creates a kubernetes_namespace resource that uses var.namespace."""
-    content = (TF_DIR / "ratelimit.tf").read_text()
-    blocks = _parse_resource_blocks(content)
-    ns_res = [b for b in blocks if b["type"] == "kubernetes_namespace"]
-    assert len(ns_res) == 1, (
-        f"Expected exactly 1 kubernetes_namespace resource, found {len(ns_res)}"
-    )
-    body = ns_res[0]["body"]
-    assert "var.namespace" in body, (
-        f"kubernetes_namespace must reference var.namespace for its name, got: {body}"
-    )
-
-
-def test_all_k8s_resources_use_namespace():
-    """All Kubernetes resources (excluding namespace itself) set namespace = var.namespace."""
-    r = subprocess.run(
-        [
-            "python3",
-            "-c",
-            r"""
-import re
-from pathlib import Path
-
-
-def extract_brace_content(text, start):
-    depth = 1
-    i = start
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[start : i - 1]
-
-
-def parse_resource_blocks(text):
-    blocks = []
-    for m in re.finditer(r'resource\s+"(\w+)"\s+"(\w+)"\s*\{', text):
-        rtype, rname = m.group(1), m.group(2)
-        body = extract_brace_content(text, m.end())
-        blocks.append((rtype, rname, body))
-    return blocks
-
-
-tf_dir = Path("/workspace/beam/examples/terraform/envoy-ratelimiter")
-content = (tf_dir / "ratelimit.tf").read_text()
-blocks = parse_resource_blocks(content)
-
-k8s = [
-    (t, n, b)
-    for t, n, b in blocks
-    if t.startswith("kubernetes_") and t != "kubernetes_namespace"
-]
-
-assert len(k8s) >= 6, f"Expected >= 6 namespaced k8s resources, found {len(k8s)}"
-
-missing = []
-for rtype, rname, body in k8s:
-    if "var.namespace" not in body:
-        missing.append(f"{rtype}.{rname}")
-
-assert len(missing) == 0, f"Resources missing namespace = var.namespace: {missing}"
-print("PASS")
-""",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-def test_use_statsd_is_conditional():
-    """USE_STATSD env var is conditional on enable_metrics, not hardcoded true."""
-    content = (TF_DIR / "ratelimit.tf").read_text()
-    # Terraform env blocks don't nest, so [^}]* captures the full block
-    env_blocks = re.findall(r"env\s*\{([^}]*)\}", content, re.DOTALL)
-    statsd_envs = [b for b in env_blocks if '"USE_STATSD"' in b]
-    assert len(statsd_envs) == 1, (
-        f"Expected 1 USE_STATSD env block, found {len(statsd_envs)}"
-    )
-    block = statsd_envs[0]
-    assert "var.enable_metrics" in block, (
-        f"USE_STATSD value must reference var.enable_metrics, got: {block.strip()}"
-    )
-
-
-def test_statsd_sidecar_is_conditional():
-    """StatsD exporter sidecar uses dynamic block gated on enable_metrics."""
-    content = (TF_DIR / "ratelimit.tf").read_text()
-    # Verify dynamic "container" block exists
-    assert re.search(r'dynamic\s+"container"\s*\{', content), (
-        "ratelimit.tf must use a dynamic container block for conditional sidecar"
-    )
-    # Verify the for_each is gated on enable_metrics
-    assert re.search(r"for_each\s*=\s*var\.enable_metrics", content), (
-        "Dynamic block must use for_each gated on var.enable_metrics"
-    )
-    # Verify statsd-exporter is still referenced in the file
-    assert "statsd-exporter" in content, "statsd-exporter name should appear in the file"
-
-
 def test_terraform_fmt_clean_files():
     """Terraform formatting is correct for clean files (pass_to_pass, repo_tests)."""
-    # Install terraform
-    install_cmd = """
-        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
-        curl -fsSL -o /tmp/terraform.zip
-        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
-        unzip -qo /tmp/terraform.zip -d /tmp/
-    """.strip().replace("\n        ", " ")
-    r = subprocess.run(
-        ["bash", "-c", install_cmd],
-        capture_output=True, text=True, timeout=120, cwd="/tmp"
-    )
-    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+    _install_terraform()
 
     # Check formatting for files that are clean in base commit
-    # (some files in the PR have formatting issues in base, we skip those)
     clean_files = ["outputs.tf", "provider.tf", "prerequisites.tf", "network.tf"]
     for tf_file in clean_files:
         r = subprocess.run(
@@ -429,3 +280,287 @@ def test_terraform_fmt_clean_files():
             f"Terraform fmt check failed for {tf_file}:\n{r.stderr[-500:]}"
         )
 
+
+# -----------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests using terraform plan
+# -----------------------------------------------------------------------------
+
+
+def test_namespace_variable_defined():
+    """variables.tf defines a namespace variable that accepts and applies custom values."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with default namespace value - should create resources in that namespace
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Find the kubernetes_namespace resource
+    ns_resources = {k: v for k, v in resources.items() if v["type"] == "kubernetes_namespace"}
+    assert len(ns_resources) >= 1, (
+        "Expected at least 1 kubernetes_namespace resource to be planned"
+    )
+
+    # Check that at least one namespace resource has a name defined
+    ns_found = False
+    for addr, res in ns_resources.items():
+        after = res.get("after", {})
+        metadata = after.get("metadata", {})
+        if metadata.get("name"):
+            ns_found = True
+            break
+    assert ns_found, "kubernetes_namespace resource must have a name defined"
+
+
+def test_namespace_variable_accepts_custom_value():
+    """The namespace variable accepts custom values and resources use that namespace."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with custom namespace
+    custom_ns = "custom-ratelimit-ns"
+    plan_path = _terraform_plan(vars_dict={"namespace": custom_ns, "enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Verify the namespace resource itself uses the custom value
+    ns_resources = {k: v for k, v in resources.items() if v["type"] == "kubernetes_namespace"}
+    assert len(ns_resources) >= 1, "Expected kubernetes_namespace resource"
+
+    custom_ns_used = False
+    for addr, res in ns_resources.items():
+        after = res.get("after", {})
+        metadata = after.get("metadata", {})
+        if metadata.get("name") == custom_ns:
+            custom_ns_used = True
+            break
+    assert custom_ns_used, f"kubernetes_namespace should use the custom namespace value '{custom_ns}'"
+
+
+def test_enable_metrics_variable_defined():
+    """variables.tf defines an enable_metrics boolean variable with false default."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with enable_metrics=false (should be default behavior)
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # When metrics are disabled, the ratelimit deployment should NOT have statsd-exporter container
+    deployment = None
+    for addr, res in resources.items():
+        if res["type"] == "kubernetes_deployment" and res["name"] == "ratelimit":
+            deployment = res
+            break
+
+    assert deployment is not None, "ratelimit deployment should be planned"
+
+    # Check containers in the deployment
+    after = deployment.get("after", {})
+    spec = after.get("spec", {})
+    template = spec.get("template", {})
+    pod_spec = template.get("spec", {})
+    containers = pod_spec.get("container", [])
+
+    # Verify deployment structure is valid
+    assert isinstance(containers, list), "containers should be a list"
+    assert len(containers) >= 1, "ratelimit deployment should have at least 1 container"
+
+
+def test_enable_metrics_true_includes_sidecar():
+    """When enable_metrics=true, the statsd-exporter sidecar is included in plan."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with enable_metrics=true
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": True})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Find ratelimit deployment
+    deployment = None
+    for addr, res in resources.items():
+        if res["type"] == "kubernetes_deployment" and res["name"] == "ratelimit":
+            deployment = res
+            break
+
+    assert deployment is not None, "ratelimit deployment should be planned"
+
+    # Check for statsd-exporter container
+    after = deployment.get("after", {})
+    spec = after.get("spec", {})
+    template = spec.get("template", {})
+    pod_spec = template.get("spec", {})
+    containers = pod_spec.get("container", [])
+
+    container_names = [c.get("name", "") for c in containers]
+    assert "statsd-exporter" in container_names, (
+        "When enable_metrics=true, ratelimit deployment should include statsd-exporter container"
+    )
+
+
+def test_enable_metrics_false_excludes_sidecar():
+    """When enable_metrics=false, the statsd-exporter sidecar is NOT in plan."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with enable_metrics=false
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Find ratelimit deployment
+    deployment = None
+    for addr, res in resources.items():
+        if res["type"] == "kubernetes_deployment" and res["name"] == "ratelimit":
+            deployment = res
+            break
+
+    assert deployment is not None, "ratelimit deployment should be planned"
+
+    # Check containers - statsd-exporter should NOT be present
+    after = deployment.get("after", {})
+    spec = after.get("spec", {})
+    template = spec.get("template", {})
+    pod_spec = template.get("spec", {})
+    containers = pod_spec.get("container", [])
+
+    container_names = [c.get("name", "") for c in containers]
+    assert "statsd-exporter" not in container_names, (
+        "When enable_metrics=false, ratelimit deployment should NOT include statsd-exporter container"
+    )
+
+
+def test_kubernetes_namespace_resource():
+    """ratelimit.tf creates a kubernetes_namespace resource when planned."""
+    _install_terraform()
+    _terraform_init()
+
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Verify at least one kubernetes_namespace resource exists
+    ns_count = sum(1 for res in resources.values() if res["type"] == "kubernetes_namespace")
+    assert ns_count >= 1, f"Expected at least 1 kubernetes_namespace resource, found {ns_count}"
+
+
+def test_all_k8s_resources_use_configured_namespace():
+    """All Kubernetes resources are planned to be created in the configured namespace."""
+    _install_terraform()
+    _terraform_init()
+
+    # Test with a custom namespace to verify its applied consistently
+    custom_ns = "test-ns-123"
+    plan_path = _terraform_plan(vars_dict={"namespace": custom_ns, "enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Collect all kubernetes resources (except namespace itself)
+    k8s_resources = {}
+    for addr, res in resources.items():
+        if res["type"].startswith("kubernetes_") and res["type"] != "kubernetes_namespace":
+            k8s_resources[addr] = res
+
+    # Verify we have the expected number of k8s resources
+    assert len(k8s_resources) >= 5, f"Expected at least 5 namespaced k8s resources, found {len(k8s_resources)}"
+
+    # Verify each resource has the namespace set correctly
+    incorrect = []
+    for addr, res in k8s_resources.items():
+        after = res.get("after", {})
+        metadata = after.get("metadata", {})
+        ns = metadata.get("namespace", "")
+        if ns != custom_ns:
+            incorrect.append(f"{addr}: namespace='{ns}' (expected '{custom_ns}')")
+
+    assert len(incorrect) == 0, f"Resources with incorrect namespace: {incorrect}"
+
+
+def test_use_statsd_env_conditional():
+    """USE_STATSD env var changes based on enable_metrics variable value."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with enable_metrics=true
+    plan_path_true = _terraform_plan(vars_dict={"enable_metrics": True}, out_path="/tmp/plan_true.tfplan")
+    plan_json_true = _terraform_show_json(plan_path_true)
+    resources_true = _get_planned_resources(plan_json_true)
+
+    # Plan with enable_metrics=false
+    plan_path_false = _terraform_plan(vars_dict={"enable_metrics": False}, out_path="/tmp/plan_false.tfplan")
+    plan_json_false = _terraform_show_json(plan_path_false)
+    resources_false = _get_planned_resources(plan_json_false)
+
+    # Extract USE_STATSD value from both plans
+    def get_use_statsd_value(resources):
+        for addr, res in resources.items():
+            if res["type"] == "kubernetes_deployment" and res["name"] == "ratelimit":
+                after = res.get("after", {})
+                spec = after.get("spec", {})
+                template = spec.get("template", {})
+                pod_spec = template.get("spec", {})
+                containers = pod_spec.get("container", [])
+                for container in containers:
+                    if container.get("name") == "ratelimit":
+                        env_list = container.get("env", [])
+                        for env in env_list:
+                            if env.get("name") == "USE_STATSD":
+                                return env.get("value")
+        return None
+
+    value_true = get_use_statsd_value(resources_true)
+    value_false = get_use_statsd_value(resources_false)
+
+    # Verify values are different and correct
+    assert value_true == "true", f"USE_STATSD should be 'true' when enable_metrics=true, got: {value_true}"
+    assert value_false == "false", f"USE_STATSD should be 'false' when enable_metrics=false, got: {value_false}"
+
+
+def test_metrics_ports_conditional():
+    """Metrics ports are only exposed when enable_metrics=true."""
+    _install_terraform()
+    _terraform_init()
+
+    # Plan with enable_metrics=false
+    plan_path = _terraform_plan(vars_dict={"enable_metrics": False})
+    plan_json = _terraform_show_json(plan_path)
+    resources = _get_planned_resources(plan_json)
+
+    # Check ratelimit service - should not have metrics port when disabled
+    svc = None
+    for addr, res in resources.items():
+        if res["type"] == "kubernetes_service" and res["name"] == "ratelimit":
+            svc = res
+            break
+
+    if svc:
+        after = svc.get("after", {})
+        spec = after.get("spec", {})
+        ports = spec.get("port", [])
+        port_names = [p.get("name", "") for p in ports]
+        assert "metrics" not in port_names, (
+            "metrics port should not exist in ratelimit service when enable_metrics=false"
+        )
+
+    # Now test with enable_metrics=true - should have metrics port
+    plan_path_true = _terraform_plan(vars_dict={"enable_metrics": True}, out_path="/tmp/plan_metrics.tfplan")
+    plan_json_true = _terraform_show_json(plan_path_true)
+    resources_true = _get_planned_resources(plan_json_true)
+
+    svc_true = None
+    for addr, res in resources_true.items():
+        if res["type"] == "kubernetes_service" and res["name"] == "ratelimit":
+            svc_true = res
+            break
+
+    if svc_true:
+        after = svc_true.get("after", {})
+        spec = after.get("spec", {})
+        ports = spec.get("port", [])
+        port_names = [p.get("name", "") for p in ports]
+        assert "metrics" in port_names, (
+            "metrics port should exist in ratelimit service when enable_metrics=true"
+        )

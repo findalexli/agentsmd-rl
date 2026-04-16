@@ -106,6 +106,19 @@ rubric:
     \ well.\")\n+        to_output = []\n+\n+    for _, file_name, files_to_test in\
     \ to_output:\n+        with open(file_name, \"w\") as f:\n+            f.write(\"\
     \\n\".join(files_to_test))"
+- rule: Keep PRs brief and minimize diffs without adding large docstrings or new functions
+    for bugfixes
+  source:
+    path: .github/copilot-instructions.md
+    lines: 15-15
+  source_text: '- PRs should be as brief as possible. Bugfix PRs in particular can
+    often be only one or two lines long, and do not need large comments, docstrings
+    or new functions in this case. Aim to minimize the size of the diff.'
+  evidence: The gold diff strictly modifies the existing logic of `create_test_list_from_filter`
+    to collect state into `to_output` rather than adding a new helper function or
+    introducing comprehensive docstrings for the new variables.
+  category: A
+  verification: llm_judge
 distractors:
 - rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
     In blocked cases, return a short explanation of what is missing.
@@ -129,6 +142,74 @@ distractors:
   source:
     path: AGENTS.md
     lines: 32-38
+- rule: Use Copied from syntax or Modular files for duplicated code
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-29
+  source_text: "- \"Copied from\" syntax. Functions or entire classes can have a comment\
+    \ at the top like this: `# Copied from transformers.models.llama.modeling_llama.rotate_half`\
+    \ or `# Copied from transformers.models.t5.modeling_t5.T5LayerNorm with T5->MT5`\n\
+    \  These comments are actively checked by the style tools, and copies will automatically\
+    \ be updated when the base code is updated. If you need to update a copied function,\
+    \ you should\n  either update the base function and use `make fixup` to propagate\
+    \ the change to all copies, or simply remove the `# Copied from` comment if that\
+    \ is inappropriate.\n- \"Modular\" files. These files briefly define models by\
+    \ composing them using inheritance from other models. They are not meant to be\
+    \ used directly. Instead, the style tools\n  automatically generate a complete\
+    \ modeling file, like `modeling_bert.py`, from the modular file like `modular_bert.py`.\
+    \ If a model has a modular file, the modeling file\n  should never be edited directly!\
+    \ Instead, changes should be made in the modular file, and then you should run\
+    \ `make fixup` to update the modeling file automatically."
+  collision_type: architecture_boundary
+  why_distracting: This rule governs how code duplication and model files are managed
+    in the main `src/transformers/models/` directory. However, the changes in the
+    gold diff apply to an internal CI script in `utils/`. Applying these synchronization
+    rules or looking for modular files here would cause confusion and misdirected
+    effort.
+  severity: medium
+- rule: Avoid direct inheritance using Copies or Modular files
+  source:
+    path: .ai/AGENTS.md
+    lines: 64-71
+  source_text: 'We try to avoid direct inheritance between model-specific files in
+    `src/transformers/models/`. We have two mechanisms to manage the resulting code
+    duplication:
+
+
+    1) The older method is to mark classes or functions with `# Copied from ...`.
+    Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block,
+    as it will be reverted by `make fix-repo`. Ideally you should edit the code it''s
+    copying from and propagate the change, but you can break the `# Copied from` link
+    if needed.
+
+    2) The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files **can** inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files from the `modular` file. When
+    a `modular` file is present, generated files should not be edited, as changes
+    will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See
+    [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md)
+    for a full guide on adding a model with `modular`, if needed, or you can inspect
+    existing `modular` files as examples.'
+  collision_type: architecture_boundary
+  why_distracting: 'An agent reading this might think it needs to use a # Copied from
+    mechanism or check for a modular file if they happen to move or copy utility logic.
+    But these rules explicitly target `src/transformers/models/`, not CI tools in
+    `utils/`.'
+  severity: medium
+- rule: Annotate untyped attributes
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 86-89
+  source_text: "   e. **Annotate untyped attributes**. Add type annotations to instance\
+    \ variables\n      set in `__init__` or elsewhere (for example `self.foo: list[int]\
+    \ = []`).\n      Declare class-level attributes that are set dynamically later\n\
+    \      (for example `_cache: Cache`, `_token_tensor: torch.Tensor | None`)."
+  collision_type: scope_ambiguity
+  why_distracting: 'Since the PR creates a new list variable `to_output = []`, an
+    agent might be tempted to add a type annotation `to_output: list[...] = []` based
+    on this rule. However, the PR is a minimal logic fix in a non-type-checked utility
+    script, so adding type annotations would unnecessarily expand the scope.'
+  severity: low
 hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
   files at the root level. There is no deep hierarchy, but the rules within these
   files present significant behavioral constraints (agent contribution policies) that

@@ -1,0 +1,234 @@
+"""
+Test outputs for cline/cline PR #9773: MCP add shortcuts for stdio/http servers.
+
+These tests validate:
+1. The mcp.ts utility module exists with correct exports
+2. The mcp command is registered in the CLI
+3. Adding stdio servers writes correct config with type="stdio"
+4. Adding http servers writes correct config with type="streamableHttp"
+5. URL without --type http produces a clear error
+6. Existing repo tests pass
+"""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path("/workspace/cline")
+CLI_DIR = REPO / "cli"
+MCP_UTILS_PATH = CLI_DIR / "src" / "utils" / "mcp.ts"
+INDEX_PATH = CLI_DIR / "src" / "index.ts"
+MCP_TEST_PATH = CLI_DIR / "src" / "utils" / "mcp.test.ts"
+
+
+def test_mcp_utility_module_exists():
+    """Fail-to-pass: mcp.ts utility module must exist."""
+    assert MCP_UTILS_PATH.exists(), f"MCP utility module not found at {MCP_UTILS_PATH}"
+
+
+def test_mcp_test_file_exists():
+    """Fail-to-pass: mcp.test.ts test file must exist."""
+    assert MCP_TEST_PATH.exists(), f"MCP test file not found at {MCP_TEST_PATH}"
+
+
+def test_mcp_exports_addMcpServerShortcut():
+    """Fail-to-pass: mcp.ts must export addMcpServerShortcut function."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "export async function addMcpServerShortcut" in content, \
+        "addMcpServerShortcut function not exported from mcp.ts"
+
+
+def test_mcp_exports_McpAddOptions():
+    """Fail-to-pass: mcp.ts must export McpAddOptions interface."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "export interface McpAddOptions" in content, \
+        "McpAddOptions interface not exported from mcp.ts"
+
+
+def test_mcp_exports_AddMcpServerResult():
+    """Fail-to-pass: mcp.ts must export AddMcpServerResult interface."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "export interface AddMcpServerResult" in content, \
+        "AddMcpServerResult interface not exported from mcp.ts"
+
+
+def test_index_imports_mcp_module():
+    """Fail-to-pass: index.ts must import from mcp module."""
+    content = INDEX_PATH.read_text()
+    assert 'from "./utils/mcp"' in content, \
+        "index.ts does not import from ./utils/mcp"
+
+
+def test_index_has_mcp_command():
+    """Fail-to-pass: CLI must have mcp command registered."""
+    content = INDEX_PATH.read_text()
+    assert 'program.command("mcp")' in content or 'mcpCommand' in content, \
+        "mcp command not registered in index.ts"
+
+
+def test_index_has_mcp_add_subcommand():
+    """Fail-to-pass: mcp command must have add subcommand."""
+    content = INDEX_PATH.read_text()
+    # Check for add subcommand registration
+    has_add = ('.command("add")' in content and 'mcp' in content.lower()) or \
+              ('mcpCommand.command("add")' in content)
+    assert has_add, "mcp add subcommand not registered"
+
+
+def test_mcp_stdio_writes_type_stdio():
+    """Fail-to-pass: createMcpServerConfig must write type=stdio for stdio transport."""
+    content = MCP_UTILS_PATH.read_text()
+    # Look for the stdio config setting type
+    assert 'type: "stdio"' in content, \
+        "mcp.ts does not set type: 'stdio' for stdio transport"
+
+
+def test_mcp_http_maps_to_streamableHttp():
+    """Fail-to-pass: normalizeMcpTransportType must map http to streamableHttp."""
+    content = MCP_UTILS_PATH.read_text()
+    assert 'return "streamableHttp"' in content, \
+        "mcp.ts does not map http type to streamableHttp"
+
+
+def test_mcp_validates_url_without_type():
+    """Fail-to-pass: mcp.ts must error when URL provided without --type http."""
+    content = MCP_UTILS_PATH.read_text()
+    # Look for URL validation error message
+    assert 'Use --type http' in content or "Looks like you provided a URL" in content, \
+        "mcp.ts does not validate URL without --type http"
+
+
+def test_mcp_uses_ServerConfigSchema():
+    """Fail-to-pass: mcp.ts must use ServerConfigSchema for validation."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "ServerConfigSchema.parse(config)" in content, \
+        "mcp.ts does not use ServerConfigSchema for validation"
+
+
+def test_mcp_checks_duplicate_names():
+    """Fail-to-pass: mcp.ts must check for duplicate server names."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "already exists" in content, \
+        "mcp.ts does not check for duplicate server names"
+
+
+def test_mcp_stdio_config_structure():
+    """Fail-to-pass: mcp.ts must create correct stdio config structure."""
+    content = MCP_UTILS_PATH.read_text()
+    # Check for command/args/type structure for stdio
+    has_command = "command," in content or "config.command" in content
+    has_args = "config.args" in content or "args:" in content
+    assert has_command and has_args, \
+        "mcp.ts does not create correct stdio config structure"
+
+
+def test_mcp_remote_config_structure():
+    """Fail-to-pass: mcp.ts must create correct remote config structure with url."""
+    content = MCP_UTILS_PATH.read_text()
+    # Check for url/type structure for remote
+    assert "url:" in content, \
+        "mcp.ts does not create correct remote config with url field"
+
+
+def test_syntax_valid():
+    """Pass-to-pass: New files should have valid TypeScript syntax (parsable)."""
+    import re
+
+    # Check that the mcp.ts file has balanced braces and valid structure
+    content = MCP_UTILS_PATH.read_text()
+
+    # Basic syntax checks
+    assert content.count("{") == content.count("}"), "Unbalanced braces in mcp.ts"
+    assert content.count("(") == content.count(")"), "Unbalanced parentheses in mcp.ts"
+
+    # Check for valid TypeScript keywords
+    assert "import " in content, "Missing imports in mcp.ts"
+    assert "export " in content, "Missing exports in mcp.ts"
+
+
+def test_unit_tests_exist():
+    """Pass-to-pass: Unit test files must exist and have valid test structure."""
+    # Check mcp.test.ts exists and has tests
+    assert MCP_TEST_PATH.exists(), "mcp.test.ts does not exist"
+    content = MCP_TEST_PATH.read_text()
+    assert "describe(" in content, "No test suites in mcp.test.ts"
+    assert "it(" in content, "No test test cases in mcp.test.ts"
+
+
+def test_repo_cli_utils_tests():
+    """Repo's CLI utility tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run",
+         "src/utils/piped.test.ts",
+         "src/utils/display.test.ts",
+         "src/utils/parser.test.ts",
+         "src/utils/mode-selection.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=CLI_DIR,
+    )
+    assert r.returncode == 0, f"CLI utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cli_agent_tests():
+    """Repo's CLI agent tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run",
+         "src/agent/ClineSessionEmitter.test.ts",
+         "src/agent/messageTranslator.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=CLI_DIR,
+    )
+    assert r.returncode == 0, f"CLI agent tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cli_constants_tests():
+    """Repo's CLI constants tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/constants/featured-models.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=CLI_DIR,
+    )
+    assert r.returncode == 0, f"CLI constants tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cli_task_tests():
+    """Repo's CLI task-related tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/utils/plain-text-task.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=CLI_DIR,
+    )
+    assert r.returncode == 0, f"CLI task tests failed:\n{r.stderr[-500:]}"
+
+
+def test_mcp_command_parsing_test_exists():
+    """Fail-to-pass: Test for mcp command parsing must exist in index.test.ts."""
+    test_content = (CLI_DIR / "src" / "index.test.ts").read_text()
+    assert 'describe("mcp command"' in test_content or "describe('mcp command'" in test_content, \
+        "No mcp command test suite in index.test.ts"
+
+
+def test_addMcpServer_function_exists_in_index():
+    """Fail-to-pass: addMcpServer function must be defined in index.ts."""
+    content = INDEX_PATH.read_text()
+    assert "async function addMcpServer(" in content or "function addMcpServer(" in content, \
+        "addMcpServer function not found in index.ts"
+
+
+def test_mcp_uses_initializeCliContext():
+    """Fail-to-pass: mcp.ts must use initializeCliContext for config resolution."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "initializeCliContext" in content, \
+        "mcp.ts does not use initializeCliContext for config resolution"
+
+
+def test_mcp_reads_existing_settings():
+    """Fail-to-pass: mcp.ts must read existing MCP settings file."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "fs.readFile" in content or "readFile" in content, \
+        "mcp.ts does not read existing settings file"
+
+
+def test_mcp_writes_settings():
+    """Fail-to-pass: mcp.ts must write updated settings to file."""
+    content = MCP_UTILS_PATH.read_text()
+    assert "fs.writeFile" in content or "writeFile" in content, \
+        "mcp.ts does not write settings to file"

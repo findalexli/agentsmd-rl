@@ -74,6 +74,41 @@ distractors:
   source:
     path: compiler/CLAUDE.md
     lines: 7-8
+- rule: When the compiler encounters an unsupported but known pattern, use `CompilerError.throwTodo()`
+    instead of `CompilerError.invariant()`.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 242-242
+  source_text: When the compiler encounters an unsupported but known pattern, use
+    `CompilerError.throwTodo()` instead of `CompilerError.invariant()`. Todo errors
+    cause graceful bailouts in production; Invariant errors are hard failures indicating
+    unexpected/invalid states.
+  collision_type: scope_ambiguity
+  why_distracting: The PR updates error parsing and typing (`CompileErrors` and `compileAndGetError`)
+    in the `snap` test utility runner to include a `description` field, not the React
+    Compiler's internal error throwing mechanism. An agent might mistakenly try to
+    use `throwTodo()` inside the test runner instead of correctly propagating the
+    error details.
+  severity: high
+- rule: Use inline `gate()` if both paths should run. It's `gate(flags => flags.name)`,
+    not `gate('name')`
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: 76-78
+  source_text: '- **Using @gate for behavior differences** - Use inline `gate()` if
+    both paths should run
+
+    - **Missing fork files** - New flags must be added to ALL fork files, not just
+    the main one
+
+    - **Wrong gate syntax** - It''s `gate(flags => flags.name)`, not `gate(''name'')`'
+  collision_type: architecture_boundary
+  why_distracting: These feature flag conventions strictly apply to the main React
+    codebase. The PR is in the `compiler/` directory, which has its own distinct feature
+    flag system configured via `Environment.ts` and pragma comments (as noted in `compiler/CLAUDE.md`).
+    Using React's `gate()` syntax or modifying `ReactFeatureFlags.js` here would cause
+    a bug.
+  severity: high
 hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` that explicitly delegates
   compiler-specific instructions to `compiler/CLAUDE.md`. The agent must recognize
   that it is working within the `/compiler/` directory and apply the rules from the

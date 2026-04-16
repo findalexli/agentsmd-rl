@@ -1,0 +1,124 @@
+# Evaluation manifest for Storybook dual-slot status task
+# Source: storybookjs/storybook#34346
+
+task:
+  name: storybook-dual-slot-status
+  description: Implement dual-slot status icons for change detection and test results
+  source_pr: "https://github.com/storybookjs/storybook/pull/34346"
+  base_commit: 6abc5278709d3d598392e8cb50f740ae6dd2eb4e
+  merge_commit: 7cb708bc21e24c3d5c066e0b737d7bb5a24be43c
+
+checks:
+  # Fail-to-pass tests: These should fail on base commit, pass after fix
+  - id: test_change_detection_status_function_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: getChangeDetectionStatus function is exported from status.tsx
+    points: 10
+
+  - id: test_group_dual_status_function_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: getGroupDualStatus function is exported from status.tsx
+    points: 10
+
+  - id: test_status_priority_exported
+    type: fail_to_pass
+    origin: code_structure
+    description: statusPriority array is exported for use in Tree.tsx
+    points: 5
+
+  - id: test_change_detection_imports_constant
+    type: fail_to_pass
+    origin: code_structure
+    description: status.tsx imports CHANGE_DETECTION_STATUS_TYPE_ID constant
+    points: 5
+
+  - id: test_change_detection_status_filters_by_typeid
+    type: fail_to_pass
+    origin: behavioral
+    description: getChangeDetectionStatus filters by CHANGE_DETECTION_STATUS_TYPE_ID
+    points: 10
+
+  - id: test_change_detection_uses_most_critical
+    type: fail_to_pass
+    origin: behavioral
+    description: getChangeDetectionStatus uses getMostCriticalStatusValue for priority
+    points: 10
+
+  - id: test_group_dual_status_traverses_descendants
+    type: fail_to_pass
+    origin: behavioral
+    description: getGroupDualStatus uses getDescendantIds to find leaf stories
+    points: 10
+
+  - id: test_group_dual_status_returns_correct_shape
+    type: fail_to_pass
+    origin: behavioral
+    description: getGroupDualStatus returns {change, test} structure
+    points: 10
+
+  # Pass-to-pass tests: These should pass on both base and after fix
+  - id: test_status_function_signatures
+    type: pass_to_pass
+    origin: code_structure
+    description: Existing status utility functions still work
+    points: 5
+
+  - id: test_types_import_correct
+    type: pass_to_pass
+    origin: code_structure
+    description: Type imports are correct
+    points: 5
+
+  - id: test_imports_from_internal_types
+    type: pass_to_pass
+    origin: code_structure
+    description: Imports come from storybook/internal/types
+    points: 5
+
+  - id: test_getstatus_still_works
+    type: pass_to_pass
+    origin: code_structure
+    description: Existing getStatus function still works
+    points: 5
+
+  - id: test_getgroupstatus_still_works
+    type: pass_to_pass
+    origin: code_structure
+    description: Existing getGroupStatus function still works
+    points: 5
+
+  # Agent config rules from AGENTS.md and .cursorrules
+  - id: follow_repo_structure
+    type: rubric
+    origin: agent_config
+    source: "AGENTS.md: Repository Structure section"
+    description: Changes are in the correct location (code/core/src/manager/utils/)
+    points: 5
+
+  - id: use_nx_commands
+    type: rubric
+    origin: agent_config
+    source: "AGENTS.md: Common Commands section"
+    description: Uses NX commands (yarn nx run-many -t check) for validation
+    points: 5
+
+  - id: maintain_typescript_types
+    type: rubric
+    origin: agent_config
+    source: "AGENTS.md: Architecture section"
+    description: Maintains proper TypeScript types and exports
+    points: 5
+
+  - id: follow_test_conventions
+    type: rubric
+    origin: agent_config
+    source: ".cursorrules: Test Configuration section"
+    description: Follows Vitest testing conventions used in the repo
+    points: 5
+
+scoring:
+  total_points: 100
+  passing_threshold: 80
+  # Partial credit is available for rubric items

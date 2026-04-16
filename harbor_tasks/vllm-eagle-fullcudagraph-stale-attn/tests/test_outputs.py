@@ -45,14 +45,21 @@ import ast, sys
 src = open("vllm/v1/worker/gpu/spec_decode/eagle/speculator.py").read()
 tree = ast.parse(src)
 
-# Find propose() in EagleSpeculator
-propose = None
+# Find EagleSpeculator class and its propose() method
+eagle_class = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "EagleSpeculator":
-        for child in ast.walk(node):
-            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
-                propose = child
-                break
+        eagle_class = node
+        break
+
+if eagle_class is None:
+    print("FAIL: EagleSpeculator class not found")
+    sys.exit(1)
+
+propose = None
+for child in ast.walk(eagle_class):
+    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
+        propose = child
         break
 
 if propose is None:
@@ -66,22 +73,30 @@ def get_call_name(node):
         return node.func.id
     return None
 
-def is_attn_build(name):
-    if name is None:
-        return False
-    nl = name.lower()
-    return ("attn" in nl or "attention" in nl) and \
-           any(w in nl for w in ("build", "metadata", "prepare", "create"))
+# Find class methods that call build_attn_metadata (the imported utility).
+# This allows any helper name — the check is that build_attn_metadata is
+# ultimately invoked, not that the wrapper has a specific name.
+methods_calling_build = set()
+for child in eagle_class.body:
+    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        for subnode in ast.walk(child):
+            if isinstance(subnode, ast.Call):
+                name = get_call_name(subnode)
+                if name == "build_attn_metadata":
+                    methods_calling_build.add(child.name)
 
-# Collect all attn metadata build call lines in propose()
-attn_build_lines = []
+# Collect lines where build_attn_metadata is invoked in propose(),
+# either directly or via a class method that itself calls it.
+metadata_build_lines = []
 for node in ast.walk(propose):
     if isinstance(node, ast.Call):
         name = get_call_name(node)
-        if is_attn_build(name):
-            attn_build_lines.append(node.lineno)
+        if name == "build_attn_metadata":
+            metadata_build_lines.append(node.lineno)
+        elif name in methods_calling_build:
+            metadata_build_lines.append(node.lineno)
 
-# Find FULL cudagraph if-blocks and check for returns before attn build
+# Find FULL cudagraph if-blocks and check for returns before metadata build
 for node in ast.walk(propose):
     if not isinstance(node, ast.If):
         continue
@@ -93,10 +108,10 @@ for node in ast.walk(propose):
     # Found a FULL cudagraph mode check — look for returns in its body
     for stmt in node.body:
         if isinstance(stmt, ast.Return):
-            builds_before = [l for l in attn_build_lines if l < stmt.lineno]
+            builds_before = [l for l in metadata_build_lines if l < stmt.lineno]
             if not builds_before:
                 print(f"FAIL: FULL cudagraph early return at line {stmt.lineno} "
-                      f"before any attn metadata build")
+                      f"before any attention metadata build")
                 sys.exit(1)
 
 print("PASS")
@@ -124,14 +139,21 @@ import ast, sys
 src = open("vllm/v1/worker/gpu/spec_decode/eagle/speculator.py").read()
 tree = ast.parse(src)
 
-# Find propose() in EagleSpeculator
-propose = None
+# Find EagleSpeculator class and its propose() method
+eagle_class = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "EagleSpeculator":
-        for child in ast.walk(node):
-            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
-                propose = child
-                break
+        eagle_class = node
+        break
+
+if eagle_class is None:
+    print("FAIL: EagleSpeculator class not found")
+    sys.exit(1)
+
+propose = None
+for child in ast.walk(eagle_class):
+    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and child.name == "propose":
+        propose = child
         break
 
 if propose is None:
@@ -145,23 +167,31 @@ def get_call_name(node):
         return node.func.id
     return None
 
-def is_attn_build(name):
-    if name is None:
-        return False
-    nl = name.lower()
-    return ("attn" in nl or "attention" in nl) and \
-           any(w in nl for w in ("build", "metadata", "prepare", "create"))
+# Find class methods that call build_attn_metadata (the imported utility).
+# This allows any helper name — the check is that build_attn_metadata is
+# ultimately invoked, not that the wrapper has a specific name.
+methods_calling_build = set()
+for child in eagle_class.body:
+    if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        for subnode in ast.walk(child):
+            if isinstance(subnode, ast.Call):
+                name = get_call_name(subnode)
+                if name == "build_attn_metadata":
+                    methods_calling_build.add(child.name)
 
-# Collect attn build lines, FULL check lines, and fullgraph call lines
-attn_build_lines = []
+# Collect lines where build_attn_metadata is invoked in propose(),
+# either directly or via a class method that itself calls it.
+metadata_build_lines = []
 full_check_lines = []
 fullgraph_call_lines = []
 
 for node in ast.walk(propose):
     if isinstance(node, ast.Call):
         name = get_call_name(node)
-        if is_attn_build(name):
-            attn_build_lines.append(node.lineno)
+        if name == "build_attn_metadata":
+            metadata_build_lines.append(node.lineno)
+        elif name in methods_calling_build:
+            metadata_build_lines.append(node.lineno)
         if name and "fullgraph" in name.lower():
             fullgraph_call_lines.append(node.lineno)
     if isinstance(node, ast.If):
@@ -177,30 +207,30 @@ elif fullgraph_call_lines:
     full_exec_line = min(fullgraph_call_lines)
 
 if full_exec_line is None:
-    if attn_build_lines:
-        print("PASS: attn metadata built, no explicit FULL path")
+    if metadata_build_lines:
+        print("PASS: attention metadata built, no explicit FULL path")
         sys.exit(0)
-    print("FAIL: no FULL path and no attn metadata building found")
+    print("FAIL: no FULL path and no attention metadata building found")
     sys.exit(1)
 
-if not attn_build_lines:
-    print(f"FAIL: no attn metadata build found; FULL execution at line {full_exec_line}")
+if not metadata_build_lines:
+    print(f"FAIL: no attention metadata build found; FULL execution at line {full_exec_line}")
     sys.exit(1)
 
-before_full = [l for l in attn_build_lines if l < full_exec_line]
+before_full = [l for l in metadata_build_lines if l < full_exec_line]
 if not before_full:
-    print(f"FAIL: attn metadata built at {attn_build_lines} but FULL path at line {full_exec_line}")
+    print(f"FAIL: attention metadata built at {metadata_build_lines} but FULL path at line {full_exec_line}")
     sys.exit(1)
 
-print(f"PASS: attn metadata at line {min(before_full)} before FULL path at line {full_exec_line}")
+print(f"PASS: attention metadata at line {min(before_full)} before FULL path at line {full_exec_line}")
 """
 
 
 def test_attn_metadata_before_fullgraph_execution():
     """Attention metadata must be built before FULL cudagraph execution.
 
-    The fix ensures build_attn_metadata (or _build_draft_attn_metadata)
-    is called before the if-block that dispatches FULL cudagraph.
+    The fix ensures build_attn_metadata is called (directly or via a
+    helper) before the if-block that dispatches FULL cudagraph.
     """
     r = subprocess.run(
         ["python3", "-c", SCRIPT_ATTN_BEFORE_FULL],

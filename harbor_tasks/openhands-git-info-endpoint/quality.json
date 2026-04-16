@@ -2,56 +2,56 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific file paths and module names not mentioned in instruction.md: 'openhands.integrations.service_types' (for UserGitInfo import), 'openhands.app_server.user.user_router' (for get_current_user_git_info), 'openhands.app_server.user.user_context' (for UserContext), 'openhands.app_server.user.specifiy_user_context' (for SpecifyUserContext - note the typo), 'openhands.app_server.user.auth_user_context' (for AuthUserContext), 'openhands.server.user_auth.user_auth' (for UserAuth). The"
+      "outcome": "pass",
+      "reason": "All test-asserted specifics \u2014 module paths (openhands.integrations.service_types, openhands.app_server.user.user_router, etc.), class/function names (UserGitInfo, User, get_current_user_git_info, get_user_git_info), field names (id, login, avatar_url, company, name, email), HTTP 401 status, 'Not authenticated' detail string, deprecated=True flag, and the /info route path \u2014 are all explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be built (new endpoint, model, deprecation) but does not specify exact code changes, line numbers, or implementation details like specific function bodies."
+      "reason": "The instruction describes what to build (new endpoint, model, methods, deprecation flag) but does not specify exact code changes, line numbers, or diffs. A developer must still reason about how to implement it."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact function names (get_current_user_git_info), exact module paths (openhands.app_server.user.user_router), exact class names (UserGitInfo in openhands.integrations.service_types), and exact method names (get_user_git_info) across specific classes (UserContext, SpecifyUserContext, AuthUserContext, UserAuth). An alternative correct implementation placing the endpoint function in a different module or naming the method differently would fail."
+      "outcome": "pass",
+      "reason": "The tests check behavioral contracts \u2014 importability, field values, async nature, abstract method decoration, 401 behavior, deprecated flag on routes \u2014 rather than gold-specific implementation details. Alternative correct implementations (different internal helpers, different file organization within the specified modules) would all pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute actual Python code via subprocess, import modules, instantiate classes, call async functions, check return types, and verify runtime behavior (e.g., 401 response when not authenticated). They are not simple text-matching tests."
+      "reason": "Tests execute actual Python code via subprocess (_run_python_code), import modules, instantiate classes, call async functions, check return types, and verify runtime behavior (e.g., 401 exception raising). They do not just grep source files for text patterns."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests verify non-trivial behavior: UserGitInfo model instantiation with field validation, optional fields defaulting to None, User alias being identical to UserGitInfo, abstract method checking, 401 exception raising with specific message. A stub returning None/empty would fail most of these."
+      "reason": "Stub implementations would not pass: test_user_git_info_model_importable requires a working Pydantic model with specific fields; test_new_endpoint_raises_401_when_not_authenticated requires actual HTTPException raising with status 401; test_user_context_has_get_user_git_info_abstract checks __isabstractmethod__=True; test_old_endpoint_has_deprecated_flag iterates routes checking deprecated attribute. None of these are satisfiable by empty stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: new endpoint returning UserGitInfo, 401 on unauthenticated access, Pydantic model with required/optional fields, User alias, old endpoint deprecation flag, user context method integration."
+      "reason": "All six requirements from instruction.md are tested: (1) new endpoint behavior including 401, (2) UserGitInfo model with all fields and defaults, (3) endpoint function importability and return type, (4) User alias for backwards compatibility, (5) get_user_git_info on all four context classes, (6) deprecated flag on old endpoint."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear section comments (FAIL-TO-PASS TESTS), descriptive function names (test_user_git_info_model_importable, test_new_endpoint_raises_401_when_not_authenticated), and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with a docstring header explaining what's tested, section comments ('FAIL-TO-PASS TESTS'), and each test function has a descriptive name and docstring indicating what it verifies."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The Pydantic model schema (UserGitInfo with fields id, login, avatar_url, company, name, email and their types/optionality) is documented in instruction.md under 'Model requirements'."
+      "reason": "The UserGitInfo model schema (fields: id, login, avatar_url as required str; company, name, email as optional str defaulting to None) is fully documented in instruction.md requirement #2, and the JSON serialization format is tested."
     },
     "no_typos": {
-      "outcome": "pass",
-      "reason": "The typo 'specifiy_user_context' appears in both the test and likely the existing codebase (it's a pre-existing typo in the repo's file name), so it's consistent. No other typos found in instruction.md."
+      "outcome": "fail",
+      "reason": "The instruction references 'openhands.app_server.user.specifiy_user_context' with 'specifiy' (likely a typo for 'specify'). However, this matches the actual module path in the tests (test_specify_user_context_has_get_user_git_info imports from 'openhands.app_server.user.specifiy_user_context'), so it's consistent \u2014 but it's still a typo in the path name. The original codebase apparently uses this misspelling, so it's inherited rather than introduced."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction mentions openhands/server/routes/git.py for the deprecation change which is reasonable given the task domain. It does not reveal specific internal module paths like openhands.app_server.user.user_router or openhands.integrations.service_types."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names exact module paths for every file to modify (openhands.app_server.user.user_router, openhands.app_server.user.user_context, openhands.app_server.user.specifiy_user_context, openhands.app_server.user.auth_user_context, openhands.server.user_auth.user_auth, openhands.server.routes.git, openhands.integrations.service_types), exact function/class names, and exact method signatures. This eliminates the localization aspect of the task entirely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "no_typos",
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 8,
   "fail_count": 2
 }

@@ -20,24 +20,29 @@ $ bun repro.js | wc -c
 
 Node.js outputs all 200001 bytes correctly in the same scenario.
 
-## Analysis
-
-The issue is in the writable stream implementation used for `process.stdout` and `process.stderr`. These streams use a fast-path write mechanism that bypasses `Writable._writableState` tracking — it never updates `pendingcb`. When `.end()` is called, the internal `finishMaybe()` sees `pendingcb === 0` and immediately schedules the finish callback, even though the underlying file sink may still have buffered data waiting to be flushed through the pipe.
-
 ## Expected Behavior
 
 The `.end(callback)` should only invoke the callback after all buffered data has been fully flushed through the underlying sink, matching Node.js behavior.
 
-The stream's completion mechanism must:
+The fix must:
 
-1. Call `sink.flush()` to flush any pending data through the underlying file descriptor
-2. Handle synchronous flush completion by invoking the callback with `null` or `undefined`
-3. Handle asynchronous flush completion by detecting when `sink.flush()` returns a Promise, waiting for it to resolve before invoking the callback with `null` or `undefined`
-4. Propagate any errors from the flush operation to the callback without throwing uncaught exceptions
-5. Use `$isPromise` (not `instanceof Promise`) for Promise detection
-6. Use `.$call` and `.$apply` (not `.call` and `.apply`) for function invocation
+1. Ensure buffered data is flushed before the callback fires
+2. Handle both synchronous and asynchronous flush completion
+3. Propagate any flush errors to the callback without throwing uncaught exceptions
+4. Use `$isPromise` (not `instanceof Promise`) for Promise detection
+5. Use `.$call` and `.$apply` (not `.call` and `.apply`) for function invocation
+6. Preserve all existing stream properties: `_destroy`, `_isStdio`, `destroySoon`, `fd`, `_type`
 
 ## Relevant Files
 
-- `src/js/builtins/ProcessObjectInternals.ts` — contains the stream creation logic for stdio
-- Look for references to `kWriteStreamFastPath` and `internal/fs/streams` module usage
+- The writable stream implementation for `process.stdout` and `process.stderr`
+- The stream setup logic that configures `_destroy`, `_isStdio`, `destroySoon`, `fd`, and `_type` properties
+- Uses the `internal/fs/streams` module and the `kWriteStreamFastPath` mechanism for fast-path writes
+- Exports the `getStdioWriteStream` function for creating stdio write streams
+
+## Technical Context
+
+The issue involves Bun's writable stream implementation. The codebase uses:
+- TypeScript files in `src/js/builtins/` with Bun's JavaScriptCore intrinsics (`$isPromise`, `.$call`, `.$apply`)
+- All `require()` calls must use string literals
+- Oxlint and Prettier are used for linting and formatting

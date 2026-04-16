@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (constants.php, api.php, Log.php, users.php, messaging.php, all 5 XList.php paths), all constant names and values (ACTIVITY_TYPE_USER='user', ACTIVITY_TYPE_ADMIN='admin', etc.), the field name 'userType', the description string 'User type who triggered the audit log', possible values list, APP_MODE_ADMIN, API_KEY_STANDARD/ACCOUNT/ORGANIZATION, and the behavioral requirements like preserving existing types and mode injection. All test assertions reference spec"
+      "reason": "The instruction names all file paths (constants.php, api.php, Log.php, users.php, messaging.php, all 5 XList.php paths), all constant names and values (ACTIVITY_TYPE_USER='user', ACTIVITY_TYPE_ADMIN='admin', etc.), the description string for userType, the API key type mappings (API_KEY_STANDARD, API_KEY_ACCOUNT, API_KEY_ORGANIZATION), APP_MODE_ADMIN, the requirement to preserve existing type, mode injection, and removal of ACTIVITY_TYPE_APP. All specifics asserted in tests are discoverable from "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive: it specifies exact constant names and values, exact field descriptions, exact mapping logic (API_KEY_STANDARD -> ACTIVITY_TYPE_KEY_PROJECT), the need for 'empty($user->getAttribute('type'))' guard pattern, mode injection via '->inject('mode')', and 'string $mode' parameter. While it doesn't give line numbers, it essentially dictates the implementation rather than describing the problem."
+      "reason": "The instruction is extremely prescriptive, telling the agent exactly what to do: 'Replace the single coarse-grained type system with granular constants', exact constant names/values in a table, 'API_KEY_STANDARD \u2192 ACTIVITY_TYPE_KEY_PROJECT', 'User type values that are already set on the user object should not be overwritten', specific mode parameter injection. It goes well beyond describing what's broken and essentially dictates the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details like \"'type' => ACTIVITY_TYPE_KEY_PROJECT\" (test_key_project_replaces_app_type), \"empty($user->getAttribute('type'))\" (test_api_controller_preserves_existing_type), \"->inject('mode')\" and \"string $mode\" (test_api_controller_uses_mode_injection), and \"$mode === APP_MODE_ADMIN\" (test_api_controller_mode_based_user_type). An alternative correct implementation using e.g. '$user->getAttribute('type', '')' instead of 'empty(...)' or 'match($mode)' instead of d"
+      "reason": "Tests assert very specific implementation details like exact string matches: `'$mode === APP_MODE_ADMIN'` (test_api_controller_mode_based_user_type), `empty($user->getAttribute('type'))` (test_api_controller_preserves_existing_type), `'type' => ACTIVITY_TYPE_KEY_PROJECT` (test_key_project_replaces_app_type), `$log['data']['userType']` (test_xlist_endpoints_include_usertype). Alternative correct implementations using different guard expressions, different variable names, or different data access "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every F2P test is purely text-matching via `assert 'X' in content` on file contents. The only behavioral tests are PHP syntax checks (test_php_syntax_valid, test_repo_phplint), Pint style check, and PHPStan. No test actually imports/calls PHP code, runs the application, or tests runtime behavior of the audit logging."
+      "reason": "Nearly every f2p test (test_constants_defined, test_log_model_has_usertype_field, test_api_controller_mode_based_user_type, test_api_controller_key_type_mapping, test_api_controller_uses_mode_injection, test_api_controller_preserves_existing_type, test_users_api_includes_usertype_and_mode, test_messaging_api_includes_usertype, test_xlist_endpoints_include_usertype, test_key_project_replaces_app_type) uses only `assert 'string' in content` pattern on file reads. Only test_php_syntax_valid, test_r"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The F2P tests check for specific strings that don't exist in the unmodified codebase (e.g., ACTIVITY_TYPE_ADMIN, ACTIVITY_TYPE_KEY_PROJECT constants, 'userType' field in Log.php, mode injection). A stub/no-op implementation wouldn't have these strings in the files, so the tests would fail."
+      "reason": "While tests are text-based, they do check for specific strings that would not be present in the unmodified codebase. For example, ACTIVITY_TYPE_ADMIN, ACTIVITY_TYPE_KEY_PROJECT, 'userType' fields in XList files, and the absence of ACTIVITY_TYPE_APP all require actual code changes. A stub or no-op would not pass these tests."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that 'API keys have three types that must map to their corresponding activity types' with actual runtime behavior (cloning user, setting type via match expression), but tests only verify string presence in source files, not actual mapping behavior. The guest type (ACTIVITY_TYPE_GUEST) is defined as a constant but no test verifies it's actually used anywhere in the codebase."
+      "outcome": "pass",
+      "reason": "All behaviors described in the instruction are tested: new constants defined (test_constants_defined), Log model field (test_log_model_has_usertype_field), mode-based assignment (test_api_controller_mode_based_user_type), key mapping (test_api_controller_key_type_mapping), mode injection (test_api_controller_uses_mode_injection), type preservation (test_api_controller_preserves_existing_type), users/messaging/XList endpoints (respective tests), and removal of ACTIVITY_TYPE_APP."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_constants_defined, test_log_model_has_usertype_field, etc.), have docstrings with F2P/P2P annotations, and are logically grouped by the component they verify."
+      "reason": "Tests are well-named (e.g., test_constants_defined, test_api_controller_mode_based_user_type), have docstrings with F2P/P2P annotations, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for constants (table with Constant/Value/Description), the userType field properties (description, possible values), and the mapping between API key types and activity types."
+      "reason": "The instruction provides a table of constants with their values and descriptions, specifies the userType field description text, and lists the possible values. The schema for the Log model field is adequately documented."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, constant names, field names, and variable names in the instruction all match the test expectations and actual repository structure correctly."
+      "reason": "File paths, constant names, variable names, and commands in the instruction match what's expected in the codebase and tests. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'mode parameter access' via injection, 'empty($user->getAttribute('type'))' pattern for preservation, specific match expression mapping, and exact file paths with specific behavioral changes per file. This goes beyond describing what's broken into prescribing the exact fix."
+      "reason": "The instruction names exact files, specific code patterns like 'mode parameter access', 'existing type preservation', exact constant-to-constant mappings, and the precise locations (4 locations in messaging.php, 5 XList.php files). This goes beyond task-domain-obvious file naming and essentially localizes the exact changes needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -53,9 +53,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 4
 }

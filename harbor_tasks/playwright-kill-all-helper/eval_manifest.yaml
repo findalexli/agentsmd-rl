@@ -1,0 +1,149 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39116
+  base_commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+  merge_commit: "f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea"
+
+# Track 1: Code correctness (behavioral tests)
+checks:
+  # Pass-to-pass: TypeScript compilation
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files compile without errors"
+
+  # Fail-to-pass: Core functionality tests
+  - id: kill_all_command_declared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "killAll command is declared in commands.ts with correct name, description, and category"
+
+  - id: kill_all_in_commands_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: "killAll is included in the commandsArray for CLI registration"
+
+  - id: kill_all_implemented_in_program
+    type: fail_to_pass
+    origin: pr_diff
+    description: "killAllDaemons function is implemented with cross-platform process detection and termination"
+
+  # Config edit tests (Track 2)
+  - id: skill_md_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents the kill-all command in the Sessions section"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-33"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  - id: session_management_md_documents_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "session-management.md reference documents kill-all with usage examples"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-33"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  # Config consistency tests
+  - id: skill_md_follows_existing_format
+    type: pass_to_pass
+    origin: agent_config
+    description: "kill-all documentation in SKILL.md follows the same format as other session commands"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "180-195"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+  - id: session_management_includes_use_case
+    type: pass_to_pass
+    origin: agent_config
+    description: "session-management.md includes explanatory context for when to use kill-all"
+    source:
+      path: "packages/playwright/src/skill/references/session-management.md"
+      lines: "1-20"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+
+# Track 2: Config edits (gold reference for what should be added)
+config_edits:
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "playwright-cli kill-all  # forcefully kill all daemon processes (for stale/zombie processes)"
+    gold_removed: ""
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    gold_added: |-
+      # Forcefully kill all daemon processes (for stale/zombie processes)
+      playwright-cli kill-all
+
+      # If sessions become unresponsive or zombie processes remain
+      playwright-cli kill-all
+    gold_removed: ""
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "Update skill file at packages/playwright/src/skill/SKILL.md when adding new CLI commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-33"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Gold updates SKILL.md to document the new kill-all command"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Update references in packages/playwright/src/skill/references/ when adding new CLI commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-33"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Gold updates session-management.md with kill-all documentation"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "CLI commands must be registered in commands.ts and implemented in program.ts"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "19-26"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    evidence: "Gold registers killAll in commands.ts and implements killAllDaemons in program.ts"
+    category: architecture
+    verification: llm_judge
+
+  - rule: "Use platform-specific implementations for OS-dependent operations"
+    evidence: "Gold uses PowerShell for Windows and ps/SIGKILL for Unix platforms"
+    category: implementation
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that might cause confusion
+distractors:
+  - rule: "Run npm run flint to lint everything before commit"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "37"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: workflow
+    why_distracting: "This is a pre-commit workflow rule, not relevant to the actual code implementation task. The agent should focus on implementing the feature, not linting."
+    severity: low
+
+  - rule: "Place new tests in tests/mcp/cli-<category>.spec.ts"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "28"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: scope_ambiguity
+    why_distracting: "The PR doesn't include adding tests - the test file is already handled. The agent should focus on implementation and docs, not test creation."
+    severity: medium
+
+  - rule: "Create a new tool in packages/playwright/src/mcp/browser/tools/your-tool.ts"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "10-12"
+      commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
+    collision_type: architecture_boundary
+    why_distracting: "This rule is for MCP browser tools, not CLI commands. The kill-all feature is a CLI command only, not an MCP tool."
+    severity: high

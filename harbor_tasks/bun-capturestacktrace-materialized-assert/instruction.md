@@ -25,29 +25,10 @@ foo();
 
 ## Implementation Requirements
 
-The fix is in `src/bun.js/bindings/FormatStackTraceForJS.cpp`, in the `errorConstructorFuncCaptureStackTrace` function. The following patterns must be present:
-
-### Branching structure
-- The function must use a **positive** `hasMaterializedErrorInfo()` conditional (an `if` with a corresponding `else` branch) to distinguish already-materialized errors from non-materialized ones.
-
-### Materialized path (inside `if hasMaterializedErrorInfo()`)
-- Must call `computeErrorInfoToJSValue` to compute the error info
-- Must call `putDirect` to eagerly set the `.stack` property
-- Must NOT call `setStackFrames` (that belongs in the non-materialized path)
-
-### Non-materialized path (inside `else`)
-- Must call `setStackFrames` to install the new stack frames
-- Must call `deleteProperty` to remove the existing `.stack` property before installing a custom accessor
-- Must call `putDirectCustomAccessor` to install a lazy accessor for `.stack`
-- Must preserve `RETURN_IF_EXCEPTION` for exception safety
-
-### General requirements
-- Function must have at least 35 non-blank, non-comment lines
-- Must use at least 4 distinct JSC API calls
-- Code must use spaces for indentation (no tabs)
-- File must include `#include "root.h"`
-- File must end with a newline and have no trailing whitespace
-
-## Affected Component
-
-The `errorConstructorFuncCaptureStackTrace` host function in the JavaScriptCore bindings for Bun.
+- The function implementing `Error.captureStackTrace` must handle both materialized and non-materialized error states correctly.
+- When error info has already been materialized, the implementation must not violate JSC's internal invariants (specifically, it must not cause `ASSERT(!m_errorInfoMaterialized)` failures).
+- The function must have at least 35 non-blank, non-comment lines.
+- Must use at least 4 distinct JSC API calls from this set: `jsDynamicCast`, `RETURN_IF_EXCEPTION`, `putDirect`, `deleteProperty`, `setStackFrames`, `hasMaterializedErrorInfo`, `materializeErrorInfoIfNeeded`, `computeErrorInfo`, `getFramesForCaller`, `DeletePropertyModeScope`, `putDirectCustomAccessor`.
+- Code must use spaces for indentation (no tabs).
+- File must include `#include "root.h"`.
+- File must end with a newline and have no trailing whitespace.

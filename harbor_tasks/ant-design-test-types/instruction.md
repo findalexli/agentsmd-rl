@@ -1,6 +1,6 @@
 # Fix TypeScript Type Safety Issues in Test Utilities
 
-The ant-design test utilities have type safety issues that reduce TypeScript's ability to catch bugs at compile time. These issues manifest as `any` types being used where more specific types would provide better type checking.
+The ant-design test utilities have type safety issues that reduce TypeScript's ability to catch bugs at compile time. Unsafe use of `any` types, missing type parameters on generic functions, and lack of proper null checking force the code to rely on type assertions that bypass TypeScript's type checker.
 
 ## Affected Files
 
@@ -8,49 +8,75 @@ The ant-design test utilities have type safety issues that reduce TypeScript's a
 2. **`tests/shared/focusTest.tsx`** - Focus testing utilities for components
 3. **`package.json`** - Dependency configuration
 
-## What's Wrong
+## Required Type Definitions
+
+The following specific type definitions, function signatures, and strings must be present in the codebase after your changes:
 
 ### In tests/setupAfterEnv.ts:
-The snapshot serialization code lacks proper TypeScript typing:
-- The `formatHTML` function accepts DOM elements but lacks proper type annotations for its parameters (currently uses `any`)
-- Variables holding cloned nodes use `any` type instead of more specific DOM types
-- Type assertions in the code use `as any` which bypasses type checking; these should use proper HTMLElement assertions
-- The `print` callback functions pass elements to `formatHTML` without proper type assertions that match the expected parameter types
 
-The `formatHTML` function handles multiple DOM element types: single `HTMLElement`, `DocumentFragment`, `HTMLCollection`, `NodeList`, and arrays of `Node` elements. It needs a proper type that represents this union of possible inputs.
+1. A type named **`SnapshotTarget`** defined as:
+   ```typescript
+type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]
+```
+
+2. The **`formatHTML`** function must use `SnapshotTarget` as its parameter type:
+   ```typescript
+function formatHTML(nodes: SnapshotTarget)
+```
+
+3. The **`cloneNodes`** variable must be typed as:
+   ```typescript
+let cloneNodes: Node | Node[]
+```
+
+4. The code must NOT use `as any` for type assertions; use **`as HTMLElement`** or **`as SnapshotTarget`** instead
+
+5. Both **`print`** callback functions in the snapshot serializers must pass elements to `formatHTML` with the type assertion **`as SnapshotTarget`** (at least 2 occurrences required)
 
 ### In tests/shared/focusTest.tsx:
-The focus testing utilities have several type safety gaps:
-- `React.createRef()` is called without a type parameter for refs that have `focus()` and `blur()` methods, falling back to `any`
-- The `getElement` function lacks return type annotation and performs unchecked nullable lookups
-- `querySelector` calls don't use generic type parameters for element selection
-- `fireEvent` calls rely on the non-null assertion operator `!` because `getElement` returns a nullable type; once properly typed, these assertions should be removable
 
-The `getElement` function searches for focusable elements (input, button, textarea, or div with tabIndex) but doesn't guarantee a return value, forcing callers to use unsafe non-null assertions.
+1. A type named **`FocusableRef`** with this exact structure:
+   ```typescript
+type FocusableRef = {
+  focus: () => void;
+  blur: () => void;
+};
+```
+
+2. **`React.createRef()`** must be called with the type parameter **`FocusableRef`**:
+   ```typescript
+React.createRef<FocusableRef>()
+```
+   It must NOT use `React.createRef<any>()`
+
+3. The **`getElement`** function must have this exact signature with explicit return type:
+   ```typescript
+const getElement = (container: HTMLElement): HTMLElement => {
+```
+
+4. All **`querySelector`** calls must use the generic type parameter **`HTMLElement`**:
+   ```typescript
+querySelector<HTMLElement>(...)
+```
+
+5. The **`getElement`** function must include a null check assertion using **`expect(element).not.toBeNull()`** before returning the element
+
+6. All **`fireEvent`** calls (e.g., `fireEvent.focus()`, `fireEvent.blur()`) must NOT use the non-null assertion operator (`!`) on `getElement(container)` calls. The pattern **`getElement(container)!`** must NOT appear in the file.
 
 ### In package.json:
-After making the above type changes, TypeScript compilation may fail due to dependency version conflicts with `@sinonjs/fake-timers`. The package.json needs configuration adjustments (pnpm.overrides, npm overrides, or resolutions) to resolve these conflicts by pinning `@sinonjs/fake-timers` to version `15.2.0`.
 
-## What Needs to Be Fixed
+The package.json must include version **`15.2.0`** for **`@sinonjs/fake-timers`** configured via all three of the following fields:
+- **`pnpm.overrides`**
+- **`overrides`** (npm)
+- **`resolutions`** (yarn)
 
-Your task is to:
+## Problem Description
 
-1. **In tests/setupAfterEnv.ts:**
-   - Define a type that represents all valid snapshot targets (HTMLElement, DocumentFragment, HTMLCollection, NodeList, and arrays of Node elements)
-   - Update `formatHTML` to use this type for its parameter
-   - Add proper type annotations to the `cloneNodes` variable
-   - Replace unsafe `as any` assertions with proper `as HTMLElement` assertions
-   - Update both `print` callback functions to properly assert elements before passing to `formatHTML`
+The snapshot serialization code in `tests/setupAfterEnv.ts` handles multiple DOM element types including single `HTMLElement`, `DocumentFragment`, `HTMLCollection`, `NodeList`, and arrays of `Node` elements, but currently uses implicit `any` types that disable TypeScript's compile-time checking. The lack of a proper union type for the `formatHTML` parameter means type errors at call sites are not caught.
 
-2. **In tests/shared/focusTest.tsx:**
-   - Define a type for focusable refs that includes `focus()` and `blur()` methods
-   - Use properly typed `React.createRef()` with the focusable ref type
-   - Update `getElement` to have an explicit return type and include a null check assertion before returning
-   - Use generic type parameters for all `querySelector` calls
-   - Remove all non-null assertion operators (`!`) on `getElement(container)` calls for `fireEvent` operations
+The focus testing utilities in `tests/shared/focusTest.tsx` use refs for focusable elements without proper type parameters, causing the refs to default to `any`. The `querySelector` calls don't use generic type parameters to specify the return type, and the `getElement` function lacks proper return type annotations and null checking, forcing callers to use unsafe non-null assertions with the `!` operator.
 
-3. **In package.json:**
-   - Add configuration for `@sinonjs/fake-timers` version `15.2.0` via `pnpm.overrides`, `overrides`, and `resolutions` fields
+After making the type changes, TypeScript compilation may fail due to dependency version conflicts with `@sinonjs/fake-timers`, which must be resolved by pinning to version `15.2.0`.
 
 ## Verification
 

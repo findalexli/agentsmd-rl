@@ -10,6 +10,10 @@ dict(path: str | None, url: str | None, orig_name: str | None, mime_type: str | 
 
 This is confusing for users trying to understand the API — they just need to know they should provide a filepath.
 
+## Target Function
+
+The function `gradio_client.utils._json_schema_to_python_type` converts JSON schemas to human-readable Python type strings. This is the function that must be updated to handle file-type schemas.
+
 ## Expected Behavior
 
 File-type JSON schemas should display as simply `filepath` instead of the full dict representation. Non-file objects should continue showing the dict format.
@@ -25,4 +29,4 @@ When such a schema is detected, the display should return the literal string `"f
 
 For plain objects without file characteristics (no `path` property, no `gradio.FileData` meta), continue displaying as `dict(...)` with the property names.
 
-There is also a helper function `value_is_file` that should correctly identify whether a schema represents a file type for API info purposes.
+The helper function `value_is_file` in `gradio_client.utils` should also correctly identify whether a schema represents a file type for API info purposes.

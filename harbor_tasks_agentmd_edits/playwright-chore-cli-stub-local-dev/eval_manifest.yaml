@@ -1,0 +1,88 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39432
+  base_commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+  merge_commit: "03d79f60d61f8abea8f2c557524bd4af87380247"
+
+checks:
+  - id: cli_stub_package_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/playwright-cli-stub/package.json is created with correct metadata"
+
+  - id: cli_stub_script_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "packages/playwright-cli-stub/playwright-cli-stub.js is created and executable"
+
+  - id: root_package_json_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Root package.json playwright-cli script is removed"
+
+  - id: skill_md_updated_for_local_npx
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents trying local npx playwright-cli before global install"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "216-230"
+      commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+
+  - id: stub_imports_playwright_program
+    type: pass_to_pass
+    origin: static
+    description: "Stub script imports from playwright/lib/cli/client/program"
+
+config_edits:
+  - path: "packages/playwright-cli-stub/package.json"
+    tier: 1
+    gold_added: 'New file: {"name": "playwright-cli-stub", "version": "0.0.0", "private": true, "bin": {"playwright-cli": "playwright-cli-stub.js"}}'
+    gold_removed: ""
+
+  - path: "packages/playwright-cli-stub/playwright-cli-stub.js"
+    tier: 1
+    gold_added: "New executable script that imports from playwright/lib/cli/client/program"
+    gold_removed: ""
+
+  - path: "package.json"
+    tier: 2
+    gold_added: ""
+    gold_removed: '"playwright-cli": "node packages/playwright/lib/cli/client/cli.js"'
+
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "Try local version via npx playwright-cli --version before global install"
+    gold_removed: "Install globally first as primary option"
+
+rubric:
+  - rule: "When adding CLI tools, prefer local workspace packages over global installation"
+    source:
+      path: "packages/playwright/src/skill/SKILL.md"
+      lines: "216-226"
+      commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+    evidence: "Gold shows updated docs recommend npx playwright-cli --version before npm install -g"
+    category: architecture
+    verification: llm_judge
+
+  - rule: "CLI scripts must have proper shebang (#!/usr/bin/env node) and be executable"
+    source:
+      path: ".claude/skills/playwright-dev/SKILL.md"
+      lines: "1-20"
+      commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+    evidence: "Gold stub has shebang and imports from playwright/lib/cli/client/program"
+    category: conventions
+    verification: programmatic
+
+  - rule: "Workspace packages should be marked as private to prevent accidental publishing"
+    source:
+      path: ".claude/skills/playwright-dev/SKILL.md"
+      lines: "1-20"
+      commit: "23b2c1599085bb6dad0f8fb916b631e3cb50ba4b"
+    evidence: "Gold package.json has \"private\": true for playwright-cli-stub"
+    category: conventions
+    verification: programmatic
+
+distractors: []

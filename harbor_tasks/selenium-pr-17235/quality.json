@@ -3,55 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file paths (SessionCapabilitiesMutator.java, SessionCapabilitiesMutatorTest.java), the method name apply(), the test method name shouldPropagateVncCapsWhenRequestHasNoBrowserName, the capability keys (se:vncEnabled, se:noVncPort), the required comment text ('Always propagate VNC capabilities from the stereotype'), and the reproduction scenario. All assert targets in the tests are discoverable from the instruction."
+      "reason": "The instruction names the exact file paths (SessionCapabilitiesMutator.java, SessionCapabilitiesMutatorTest.java), the method name `apply()`, the test method name `shouldPropagateVncCapsWhenRequestHasNoBrowserName`, the capability keys `se:vncEnabled` and `se:noVncPort`, the required comment text 'Always propagate VNC capabilities from the stereotype', and the reproduction scenario. All asserted specifics in the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially describes the fix: move VNC propagation before the browserName check, and add a specific comment. While it doesn't say 'change line X', it strongly implies the exact structural change needed. However, the instruction describes the problem (VNC caps missing when no browserName) and expected behavior rather than explicitly stating 'move the browserName check after VNC propagation'. The comment requirement is very specific but could be seen as a documentation requirement"
+      "reason": "The instruction essentially describes the fix: VNC capabilities must be propagated regardless of browserName, and the apply() method must include a specific comment. Combined with the 'Files to Investigate' pointing to the exact file and method, and the problem description explaining the early return issue, a developer knows exactly what to change (move VNC propagation before the browserName check). The required comment text 'Always propagate VNC capabilities from the stereotype' is also dictate"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_vnc_propagation_order_in_apply_method uses a specific regex to check that VNC handling code appears before the browserName early-return check, enforcing a particular code structure. An alternative valid fix (e.g., removing the early return entirely, or adding a separate VNC propagation block after the browserName check, or using a helper method) would fail this positional regex test. The test also requires the exact pattern 'Object vncEnabled = slotStereotype.getCapability(SE_VNC_ENABLED)' "
+      "reason": "test_vnc_propagation_order_in_apply_method uses a specific regex to check that `Object vncEnabled = slotStereotype.getCapability(SE_VNC_ENABLED)` appears before a specific browserName check pattern. An alternative correct fix (e.g., removing the early return entirely, or using a different variable name, or restructuring the logic differently) would fail this regex-based test. test_vnc_propagation_comment_exists also requires the exact string 'Always propagate VNC capabilities from the stereotype"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Tests include both textual inspection (test_vnc_propagation_order_in_apply_method, test_vnc_propagation_comment_exists, test_new_test_method_exists) AND behavioral execution via bazel test (test_session_capabilities_mutator_test_suite, test_existing_vnc_tests_still_pass, test_build_source_module, test_default_slot_matcher_vnc). The behavioral tests actually compile and run the Java code. Not every test is text-only."
+      "outcome": "fail",
+      "reason": "Tests test_vnc_propagation_order_in_apply_method and test_vnc_propagation_comment_exists are purely textual checks (regex on source code, string presence in file). test_new_test_method_exists is also purely textual. Only 3 of 7 tests (test_session_capabilities_mutator_test_suite, test_existing_vnc_tests_still_pass, test_build_source_module) actually execute code. The fail-to-pass tests are all text-based assertions."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests require: (1) a new test method with specific name and @Test annotation, (2) VNC handling code positioned before browserName check in the apply method, (3) a specific comment string. A stub/no-op implementation would not satisfy these - particularly the order check requires actual code restructuring, and the bazel test suite must pass meaning the Java test must actually verify VNC propagation behavior."
+      "outcome": "fail",
+      "reason": "test_vnc_propagation_comment_exists (f2p) can be satisfied by simply adding the comment string 'Always propagate VNC capabilities from the stereotype' anywhere in the file without implementing any actual bug fix. test_new_test_method_exists (f2p) can be satisfied by adding an empty test method with the right name and @Test annotation. These don't verify the actual behavioral fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: VNC caps propagation when no browserName (test_vnc_propagation_order_in_apply_method, test_session_capabilities_mutator_test_suite), the comment requirement (test_vnc_propagation_comment_exists), and the new test method (test_new_test_method_exists)."
+      "reason": "The instruction requires: (1) VNC caps propagation regardless of browserName - tested via test_session_capabilities_mutator_test_suite which runs the full test suite including the new test, (2) comment with specific text - tested by test_vnc_propagation_comment_exists, (3) new test method - tested by test_new_test_method_exists. All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_vnc_propagation_order_in_apply_method, test_new_test_method_exists), have docstrings explaining purpose and categorization (fail_to_pass vs pass_to_pass), and the file has a module-level docstring explaining the bug."
+      "reason": "Tests are well-named, each has a docstring explaining what it verifies and whether it's fail_to_pass or pass_to_pass, and the module docstring explains the bug context."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves Java source code changes, not structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, capability keys, and other identifiers are consistent across instruction.md and test files with no typos detected."
+      "reason": "File paths, method names, capability keys, and variable names are all correctly spelled and consistent between instruction.md and the test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file SessionCapabilitiesMutator.java and the apply() method, but these are the obvious files given the task domain. It doesn't specify exact line numbers or the precise code change needed (moving the browserName check)."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (SessionCapabilitiesMutator.java) and exact method (apply()), describes the exact mechanism of the bug (browserName check causing early return before VNC propagation), and dictates the exact comment text to include. This goes beyond describing what's broken and essentially prescribes the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (load-matches.ts, router.ts), variable names (prevLoadPromise, previousCommitPromise, loadPromise, loaderPromise), function names (executeBeforeLoad, loadRouteMatch), property paths (match._nonReactive.loadPromise, this.commitLocationPromise), and patterns (let vs const, setting to undefined) that the tests assert on."
+      "reason": "All test-asserted specifics (file paths like load-matches.ts and router.ts, variable names like prevLoadPromise and previousCommitPromise, patterns like 'let prevLoadPromise', 'match._nonReactive.loadPromise = undefined', 'match._nonReactive.loaderPromise = undefined', '!loaderIsRunningAsync', 'this.commitLocationPromise') are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'declared with let (not const) to allow reassignment', 'prevLoadPromise = undefined inside the callback', 'match._nonReactive.loadPromise = undefined alongside loaderPromise', etc. It specifies exactly what code changes to make, leaving no reasoning for the developer."
+      "reason": "The instruction explicitly states the exact fix: 'declared with let (not const)', 'set to undefined after resolution', provides exact variable names, exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined'. This is a complete specification of what to change, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex like r\"let\\s+prevLoadPromise\\s*=\\s*match\\._nonReactive\\.loadPromise\" and exact string matches like 'prevLoadPromise = undefined'. An alternative correct fix (e.g., using a WeakRef, or a cleanup function, or nulling via a different mechanism) would fail these text-matching tests."
+      "reason": "Tests assert on exact gold-specific patterns: regex for 'let prevLoadPromise', exact string 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', and proximity of 'match._nonReactive.loadPromise = undefined' to 'match._nonReactive.loaderPromise = undefined'. An alternative correct fix (e.g., using WeakRef, nullifying via a helper function, or using different variable naming) would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The first 4 fail-to-pass tests (test_load_matches_prevLoadPromise_cleanup, test_load_matches_loadPromise_cleanup_in_try_block, test_load_matches_loadPromise_cleanup_after_sync_load, test_router_previousCommitPromise_cleanup) are purely text-matching with regex/string searches on file contents. They do not execute any code or test actual memory behavior."
+      "reason": "The four fail_to_pass tests (test_load_matches_prevLoadPromise_cleanup, test_load_matches_loadPromise_cleanup_in_try_block, test_load_matches_loadPromise_cleanup_after_sync_load, test_router_previousCommitPromise_cleanup) all exclusively use 'read_text()' and regex/string matching on source files. They never import, execute, or test runtime behavior. The pass_to_pass tests do run builds/tests but the core f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for text patterns in source files (e.g., 'let prevLoadPromise', 'prevLoadPromise = undefined'). A trivial approach of adding these exact strings as dead code comments would pass the text-matching tests without actually fixing the memory leak."
+      "reason": "The f2p tests only check for text patterns in source files (e.g., 'prevLoadPromise = undefined' in content). A stub that simply appends the required strings as comments to the file would pass all four f2p tests without actually fixing the memory leak."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four cleanup locations (A-D) described in the instruction are tested, plus build/type/lint/unit tests verify existing functionality is maintained."
+      "reason": "All four cleanup locations (A-D) described in instruction.md are tested: prevLoadPromise cleanup, loadPromise alongside loaderPromise, sync loader path cleanup, and previousCommitPromise cleanup. Build/type/lint/unit tests also verify existing functionality is maintained."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_load_matches_prevLoadPromise_cleanup), have docstrings explaining what they verify, and are logically grouped by location in the codebase."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated by concern (each cleanup location gets its own test), and annotated with fail_to_pass vs pass_to_pass markers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code fixes, not structured data output."
+      "reason": "This task involves fixing source code for memory leaks, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in the instruction match those in the tests and solution without typos."
+      "reason": "File paths, variable names, and patterns in instruction.md match those in test assertions and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names, exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', exact locations within specific functions, and exact cleanup patterns. This goes far beyond describing what's broken and essentially dictates the exact code changes."
+      "reason": "instruction.md names exact files (load-matches.ts, router.ts), exact functions (executeBeforeLoad, loadRouteMatch), exact variable names (prevLoadPromise, previousCommitPromise), exact properties (match._nonReactive.loadPromise), and exact fix patterns ('let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined'). This is extreme localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

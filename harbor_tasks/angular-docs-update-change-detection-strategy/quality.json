@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction lists all affected file paths that tests check, describes the expected behaviors (OnPush as default in JSDoc, Eager references, removal of manual OnPush instructions), and the commit SHA c1261b0 is implicit in the repo setup. The specific string checks in tests (e.g., 'default' near 'OnPush', 'optional' near 'Eager') align with the Expected Behavior section items 1-4."
+      "reason": "All file paths and key strings (OnPush, Eager, default, optional) are listed in instruction.md; test checks map to described behaviors."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (documentation contradicts new default behavior) and what the expected state should be, but does not specify exact line changes, replacement strings, or precise edits. A developer must reason about how to update each file."
+      "reason": "Instruction describes what's broken (OnPush described as manual, Eager as default) without prescribing exact replacement text."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The truncated tests (visible portion ends at ~10000 chars) include checks like searching for specific strings near 'OnPush' and 'default' in specific files. The test likely asserts exact phrases like 'OnPush is enabled by default' (seen in solve.sh's idempotency check) or checks that the first mention of 'OnPush' in skipping-subtrees.md appears with 'default'. Alternative correct phrasings like 'OnPush is the default since v22' vs 'NOTE: OnPush is enabled by default' could fail string-matching t"
+      "outcome": "pass",
+      "reason": "Tests check for presence of keywords like 'default' near OnPush and 'optional' near Eager, and absence of instructions to set OnPush \u2014 allows multiple valid phrasings."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The visible tests are entirely file-content checks: reading files, checking string presence/absence, counting braces, grep commands. No code is imported or executed behaviorally. The truncated portion likely continues with `assert 'default' in ...` style text checks. This is fundamentally a documentation-update task where all tests inspect file text content rather than runtime behavior."
+      "reason": "All substantive checks are text grep/regex on markdown and JSDoc content (e.g., 'OnPush is enabled by default' substring checks); no code execution of behavior since this is a docs task."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The pass_to_pass (gate) tests verify structural properties of the existing repo (file existence, brace balance, copyright headers, valid git status). These would pass on the unmodified repo but the fail_to_pass tests (truncated) verify specific content changes like 'OnPush' being described as default. A stub or no-op wouldn't pass the content-specific checks."
+      "reason": "Stub implementations cannot pass; tests require specific textual updates like 'NOTE: OnPush is enabled by default' and removal of OnPush instructions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction's Expected Behavior items 1-4 map to test checks: JSDoc updates in constants.ts and directives.ts, removal of manual OnPush instructions from docs/config files, and correct default/optional descriptions. All explicitly required behaviors appear to be tested."
+      "reason": "Each of the 4 expected behaviors in instruction.md is covered by corresponding assertions in test_outputs.py."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_jsdoc_comments_structure, test_markdown_files_valid, etc.), grouped by concern (gates vs behavioral), and include docstrings explaining their purpose."
+      "reason": "Tests are grouped with comment headers (Gates, pass_to_pass) and have descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces documentation/text file edits, not structured data like JSON/CSV/API/DB."
+      "reason": "Task produces documentation updates, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in instruction.md match those in the test files and solution. No typos detected."
+      "reason": "File paths and identifiers appear correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly lists all 8 affected files, describes exactly what's wrong in each, and specifies precise expected outcomes like 'The first mention of OnPush in skipping-subtrees.md should be in context with the word default' and 'The first mention of Eager in advanced-configuration.md should be in context with the word optional'. This goes beyond describing what's broken and into specifying the exact fix pattern."
+      "outcome": "pass",
+      "reason": "Instruction names affected files but localization within each file is part of the task; doesn't give exact line/replacement."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch (solve.sh) makes localized changes to specific files - updating JSDoc comments, removing specific sections of markdown, and editing specific lines in config files. No full-file rewrites."
+      "reason": "Gold patch modifies agent config files (airules.md, guidelines.md, angular-20.mdc) with localized edits removing OnPush rules, not full rewrites."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

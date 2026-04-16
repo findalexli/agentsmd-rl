@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names the file path (packages/@mantine/hooks/src/use-did-update/use-did-update.ts), the function (useDidUpdate), the exact patterns needed (mounted.current = false, return undefined, separate useEffect with empty deps), and the function signature. All test assertions reference concepts explicitly described in the instruction."
+      "reason": "The instruction names the file path (`packages/@mantine/hooks/src/use-did-update/use-did-update.ts`), the function signature (`useDidUpdate(fn: EffectCallback, dependencies?: DependencyList)`), the imports, the patterns like `mounted.current = false`, `return undefined`, and the need for two `useEffect` calls. All test-asserted specifics (file path, string patterns, function signature, import line) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'This effect should return a cleanup function that sets mounted.current = false', and 'The main effect should explicitly return undefined after setting mounted.current = true'. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly states the exact fix: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'This effect should return a cleanup function that sets mounted.current = false', and 'The main effect should explicitly return undefined after setting mounted.current = true'. This is a complete implementation specification, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_returns_undefined_in_effect checks for literal 'return undefined' in source, test_two_useeffect_calls requires exactly 2+ useEffect calls, test_cleanup_effect_exists checks for 'mounted.current = false'. An alternative correct fix (e.g., using a counter ref instead of boolean, or using useRef with a different reset mechanism) would fail these text-matching tests."
+      "reason": "Tests assert exact string patterns like `return undefined` and `mounted.current = false`, and count `useEffect` occurrences. An alternative correct fix (e.g., using `return void 0` instead of `return undefined`, or using a different ref-reset mechanism, or using a single useEffect with cleanup) would fail these string-matching tests even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_cleanup_effect_exists, test_returns_undefined_in_effect, test_two_useeffect_calls, test_cleanup_effect_structure, test_strict_mode_fix_complete) are ALL string-matching assertions like 'assert \"mounted.current = false\" in source' and 'assert \"return undefined\" in source'. They never import, call, or execute the hook to verify its runtime behavior. The pass-to-pass tests do run jest/eslint/prettier but those aren't the fail-to-pass tests."
+      "reason": "The fail-to-pass tests (test_cleanup_effect_exists, test_returns_undefined_in_effect, test_two_useeffect_calls, test_cleanup_effect_structure, test_strict_mode_fix_complete) are ALL string-matching on source code using `assert 'pattern' in source`. None of them actually execute the hook or test its runtime behavior in Strict Mode. The pass-to-pass tests do run Jest/ESLint/Prettier, but no f2p test verifies actual behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all fail-to-pass tests are pure text-matching (checking for strings like 'mounted.current = false' and 'return undefined' in the source file), an agent could pass them by simply appending comments containing these strings without actually fixing the bug. No behavioral execution validates the fix works."
+      "reason": "A trivial solution that just adds a dead-code comment containing `mounted.current = false`, `return undefined`, and an extra `useEffect` reference in a comment would pass all f2p tests since they only check for string presence in the source file, not actual runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'The hook should NOT run the callback on initial mount' and 'should work correctly in React Strict Mode'. No test actually verifies this runtime behavior - there's no test that renders a component in Strict Mode and checks whether the callback fires on mount."
+      "reason": "The instruction says 'useDidUpdate should only execute the callback when dependencies change after the initial mount' and 'should work correctly in React Strict Mode', but no test actually verifies the hook's runtime behavior in Strict Mode. Tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cleanup_effect_exists, test_returns_undefined_in_effect, etc.), have docstrings with fail-to-pass/pass-to-pass annotations, and the file has a module-level docstring explaining the bug and fix."
+      "reason": "Tests are well-named (test_cleanup_effect_exists, test_returns_undefined_in_effect, etc.), have docstrings with fail-to-pass/pass-to-pass annotations, and the module has a comprehensive docstring explaining the bug and fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React hook, not producing structured data output."
+      "reason": "This task involves fixing a React hook; no structured data output (JSON/CSV/API/DB) is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file, describes the exact code changes needed ('Adding a separate useEffect...empty dependency array', 'return a cleanup function that sets mounted.current = false', 'explicitly return undefined'), effectively providing the complete implementation rather than just describing the bug."
+      "reason": "The instruction specifies the exact file path AND the exact implementation details: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'return a cleanup function that sets mounted.current = false', 'explicitly return undefined after setting mounted.current = true'. This is full solution leakage, not just localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
     }
   },
   "tier_a_fails": [

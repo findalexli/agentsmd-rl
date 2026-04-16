@@ -1,0 +1,113 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 7077
+  merge_commit: 796406da66cfb12b518bb3ca326c9d541368fb06
+  base_commit: d1174179082d896a9674532994a4d6b38238c37e
+
+description: |
+  Preserve component-thrown notFound() errors through framework error boundaries
+  so route notFoundComponent handlers render without requiring an explicit routeId.
+
+  The bug: When notFound() was thrown from a route component (not a loader),
+  the error would lose its routeId context as it propagated through React/Solid/Vue
+  error boundaries. This caused the wrong notFoundComponent to render.
+
+  The fix: Assign error.routeId ??= currentMatch.routeId in the onCatch and
+  fallback handlers in Match.tsx for each framework. For Solid, also add a
+  getNotFound() helper to unwrap errors that Solid wraps in Error objects.
+
+# One check per test function in test_outputs.py
+checks:
+  # Fail-to-pass checks (verify the fix is applied)
+  - id: test_react_match_assigns_routeId_onCatch
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md lines about TypeScript strict mode and error handling
+    description: React Match.tsx assigns routeId in onCatch handler
+
+  - id: test_react_match_assigns_routeId_in_fallback
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md lines about framework-agnostic core logic separated from bindings
+    description: React Match.tsx assigns routeId in ResolvedNotFoundBoundary fallback
+
+  - id: test_solid_match_uses_getNotFound_helper
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md lines about Solid framework-specific notes
+    description: Solid Match.tsx imports and uses getNotFound helper
+
+  - id: test_solid_notFound_exports_getNotFound
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md Framework-specific notes for Solid
+    description: Solid not-found.tsx exports getNotFound helper function
+
+  - id: test_vue_match_assigns_routeId
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md lines about Vue framework-specific notes
+    description: Vue Match.tsx assigns routeId in fallback and onCatch handlers
+
+  # Pass-to-pass checks (repo tests that should continue to pass)
+  - id: test_react_router_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: React Router not-found test suite passes
+
+  - id: test_solid_router_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid Router not-found test suite passes
+
+  - id: test_vue_router_notfound_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vue Router not-found test suite passes
+
+  - id: test_react_router_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: React Router TypeScript types compile without errors
+
+  - id: test_solid_router_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid Router TypeScript types compile without errors
+
+  - id: test_vue_router_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vue Router TypeScript types compile without errors
+
+  - id: test_react_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: React Router ESLint checks pass
+
+  - id: test_solid_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Solid Router ESLint checks pass
+
+  - id: test_vue_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vue Router ESLint checks pass
+
+  - id: test_router_core_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router Core unit tests pass
+
+  - id: test_history_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: History package unit tests pass
+
+# Rubric from AGENTS.md agent configuration
+# Note: This is a code fix task with no config file edits required.
+# The rubric rules below are verified through the pass-to-pass tests
+# (type checks, eslint, unit tests) rather than judge evaluation.
+rubric: []

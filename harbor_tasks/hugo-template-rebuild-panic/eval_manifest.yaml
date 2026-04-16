@@ -1,0 +1,86 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14741
+  merge_commit: c48551677c2504e3f2d7fa53ee42766e0333b957
+  base_commit: 161d0d475773c5251ec00cc8848f1a174393155c
+
+# Checks correspond 1:1 with test_outputs.py test functions
+checks:
+  # Fail-to-pass tests for the bug fix
+  - id: test_template_functions_parse_template_signature
+    type: fail_to_pass
+    origin: code_fix
+    description: parseTemplate function should not have replace parameter
+
+  - id: test_template_functions_do_parse_template_signature
+    type: fail_to_pass
+    origin: code_fix
+    description: doParseTemplate function should not have replace parameter
+
+  - id: test_template_store_parse_templates_signature
+    type: fail_to_pass
+    origin: code_fix
+    description: parseTemplates function should not have replace parameter
+
+  - id: test_template_parsing_calls_no_replace_arg
+    type: fail_to_pass
+    origin: code_fix
+    description: All parseTemplate calls should not pass replace argument
+
+  - id: test_duplicate_template_name_check_always_runs
+    type: fail_to_pass
+    origin: code_fix
+    description: Template duplicate name check should not be gated by replace flag
+
+  - id: test_regression_tags_list_edit
+    type: fail_to_pass
+    origin: regression_test
+    description: Editing tags/list.html template should not cause panic
+
+  # Pass-to-pass tests for repo health
+  - id: test_hugo_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo binary compiles and runs
+
+  - id: test_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository builds with go build
+
+  - id: test_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository passes go vet
+
+  - id: test_repo_tests_tplimpl
+    type: pass_to_pass
+    origin: repo_tests
+    description: tpl/tplimpl template tests pass
+
+  - id: test_repo_tests_hugolib_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: Basic hugolib rebuild/template tests pass
+
+  - id: test_gofmt_tplimpl
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified package passes gofmt
+
+  - id: test_staticcheck_tplimpl
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified package passes staticcheck
+
+  - id: test_go_build_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full repository compiles with go build ./...
+
+  - id: test_hugolib_rebuild_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Rebuild-related tests in hugolib pass
+

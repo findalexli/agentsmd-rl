@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_no_searchparams_get_inside_effect checks that searchParams.get() is not called inside useEffect; test_useeffect_has_primitive_dependencies checks that 'searchParams' is NOT in the dependency array and that 'amount' and 'sessionId' ARE. While instruction.md mentions variable naming, it never describes the root cause (unstable searchParams reference in useEffect deps) or the specific fix pattern (extract "
+      "reason": "Tests assert specific variable names like 'amount' and 'sessionId' (test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect), exact extraction patterns like 'const amount = searchParams.get(\"amount\")' and 'const sessionId = searchParams.get(\"session_id\")', and the exact file path 'frontend/src/routes/billing.tsx'. While the file path is mentioned in instruction.md, the specific variable names 'sessionId' (as opposed to 'session_id' or 'stripeSessionId') and the exac"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies the exact variable naming convention ('checkout' \u2192 checkoutStatus, 'amount' \u2192 amount, 'session_id' \u2192 sessionId) and that these are extracted from searchParams, which combined with the React context strongly hints at the exact fix. However, it doesn't explicitly say 'move extraction outside useEffect' or 'remove searchParams from deps'. This is borderline but the variable naming details are very specific to the solution pattern."
+      "reason": "Requirement #4 in instruction.md essentially prescribes the fix: 'objects with unstable references (like the searchParams object returned by useSearchParams()) must NOT appear in the dependency array' \u2014 this tells the agent exactly what to change (remove searchParams from deps, extract primitives). This goes beyond describing what's broken and into specifying the implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce a very specific implementation: test_useeffect_has_primitive_dependencies requires 'amount' and 'sessionId' in useEffect deps and 'searchParams' NOT in deps; test_searchparams_extracted_outside_effect requires exact patterns like 'const amount = searchParams.get(\"amount\")' before the useEffect; test_no_searchparams_get_inside_effect forbids searchParams.get() inside useEffect. Alternative correct fixes (e.g., using useRef to track if effect already ran, using a custom hook, using u"
+      "reason": "Tests enforce gold-specific variable names and patterns. test_useeffect_has_primitive_dependencies asserts 'amount' in deps_str and 'sessionId' in deps_str. test_searchparams_extracted_outside_effect uses regex for exact patterns like 'const sessionId = searchParams.get(...)'. An alternative correct fix using different variable names (e.g., 'purchaseAmount', 'stripeSession') or using useMemo, or extracting via a custom hook, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, test_no_searchparams_get_inside_effect, and test_checkout_status_extraction are pure text/regex checks on file content (open(BILLING_FILE).read() with re.search). While some tests do run subprocesses (test_vitest_billing_tests, test_frontend_build_passes, etc.), the fail_to_pass tests are entirely text-matching, not behavioral."
+      "reason": "The fail_to_pass tests (test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, test_no_searchparams_get_inside_effect, test_checkout_status_extraction) are ALL pure text/regex inspection of the source file \u2014 they open billing.tsx and assert on string patterns. They do not execute the code or test behavior. The pass_to_pass tests (vitest, lint, build etc.) do execute but those aren't the fail_to_pass tests that verify the bug fix."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check specific code structure patterns (primitives extracted outside useEffect, no searchParams in deps) that cannot be satisfied by a stub/no-op implementation. The vitest tests also run actual component rendering tests that verify toast behavior."
+      "reason": "The f2p tests check specific code patterns (variable extraction, dependency arrays) and the vitest billing tests include behavioral assertions (mockDisplaySuccessToast called exactly once). A stub/no-op implementation would not pass these regex-based source inspection tests since the original buggy code has searchParams in the dependency array."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: success toast once (vitest billing tests), error toast once (vitest billing tests), analytics tracking once (vitest billing tests), and variable naming (test_checkout_status_extraction, test_searchparams_extracted_outside_effect)."
+      "reason": "All four requirements from instruction.md are tested: (1) success toast once (vitest), (2) error toast once (vitest), (3) analytics tracking once with correct params (vitest), (4) primitive dependencies (test_useeffect_has_primitive_dependencies)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating what they check and whether they are pass_to_pass or fail_to_pass, e.g., test_useeffect_has_primitive_dependencies has a clear docstring explaining the bug and fix."
+      "reason": "Tests are well-named with descriptive function names and docstrings explaining the purpose, grouped logically between pass_to_pass and fail_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly names the file (frontend/src/routes/billing.tsx), the hook (useSearchParams), the exact variable naming convention, and the parameter-to-variable mapping. While naming the file is reasonable, specifying exact variable names like 'checkoutStatus', 'amount', 'sessionId' goes beyond describing the bug and leaks implementation details of the fix."
+      "reason": "Instruction.md requirement #4 explicitly names the exact buggy pattern: 'objects with unstable references (like the searchParams object returned by useSearchParams()) must NOT appear in the dependency array.' This identifies the exact bug location (the useEffect dependency array) and the exact problematic variable (searchParams), removing the need for the agent to diagnose the issue."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

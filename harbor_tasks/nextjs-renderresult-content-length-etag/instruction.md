@@ -4,13 +4,12 @@
 
 Pages Router JSON responses at `/_next/data/<BUILD_ID>/...` are missing `Content-Length` and `ETag` headers. This breaks CDN-side compression (e.g., CloudFront requires `Content-Length` to compress responses on-the-fly).
 
-When `RenderResult` is constructed with certain data types, the `isDynamic` getter may incorrectly return `true`, causing `sendRenderResult` to skip `Content-Length` and `ETag` generation even for cacheable responses.
+Data requests and cached HTML responses served by the Pages Router are not returning with proper caching headers, which causes issues with CDN behavior.
 
 ## Expected Behavior
 
 - Data requests (`/_next/data/`) should return with `Content-Length` and `ETag` headers
 - Cached HTML responses should also include these headers
-- The response type passed to `RenderResult` must be compatible with static/bufferable handling
 
 ## Files to Examine
 
@@ -28,5 +27,5 @@ The `AGENTS.md` file in the repository root contains examples of the `pnpm new-t
 
 ## Summary
 
-1. Fix the code: Ensure `RenderResult` is constructed with a type that does not trigger dynamic handling for data requests and cached HTML
+1. Fix the code: Ensure data requests and cached HTML responses include `Content-Length` and `ETag` headers
 2. Fix the docs: Update `pnpm new-test` command syntax in `AGENTS.md` to use `-- --args` before any arguments

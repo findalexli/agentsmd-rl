@@ -1,0 +1,80 @@
+source:
+  repo: ant-design/ant-design
+  pr_number: 57557
+  base_commit: ffe7ccf17f689af990c4757c8197c8727c8f4184
+  merge_commit: 75feea4c5543ef2dc68f7832c2774d592fe4a032
+  title: "docs: deprecate Cascader popupMenuColumnStyle in favor of styles.popup.listItem"
+
+checks:
+  - id: test_dropdown_deprecation_points_to_styles_popup_listitem
+    type: fail_to_pass
+    origin: pr_behavior
+    description: dropdownMenuColumnStyle deprecation should point to styles.popup.listItem
+
+  - id: test_popup_menu_column_style_is_deprecated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: popupMenuColumnStyle should be deprecated with warning pointing to styles.popup.listItem
+
+  - id: test_jsdoc_deprecation_comment_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: JSDoc @deprecated comment for popupMenuColumnStyle should mention styles.popup.listItem
+
+  - id: test_english_doc_popupmenucolumnstyle_deprecated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: English documentation should mark popupMenuColumnStyle as deprecated
+
+  - id: test_chinese_doc_popupmenucolumnstyle_deprecated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Chinese documentation should mark popupMenuColumnStyle as deprecated
+
+  - id: test_migration_doc_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: v6 migration doc should say dropdownMenuColumnStyle replaced by styles.popup.listItem
+
+  - id: test_cascader_component_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cascader component file has valid TypeScript syntax
+
+  - id: test_repo_eslint_cascader
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check passes on cascader component files
+
+  - id: test_repo_biome_lint_cascader
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint check passes on cascader index.tsx
+
+  - id: test_repo_cascader_semantic_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cascader semantic tests pass
+
+  - id: test_repo_markdown_lint_cascader_docs
+    type: pass_to_pass
+    origin: repo_tests
+    description: Markdown linting passes on cascader documentation
+
+  - id: test_repo_markdown_lint_migration_docs
+    type: pass_to_pass
+    origin: repo_tests
+    description: Markdown linting passes on v6 migration documentation
+
+  - id: test_english_doc_dropdown_deprecation_updated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: English docs point dropdownMenuColumnStyle to styles.popup.listItem
+
+rubric:
+  - id: readme_update_not_required
+    rule: This PR modifies component documentation - no README.md changes are required or expected
+    source:
+      file: README.md
+      lines: "none"
+      commit: ffe7ccf17f689af990c4757c8197c8727c8f4184

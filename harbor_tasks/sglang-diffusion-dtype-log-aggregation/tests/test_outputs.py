@@ -1,7 +1,6 @@
 """
 Task: sglang-diffusion-dtype-log-aggregation
 Repo: sgl-project/sglang @ 7160b6cb76d3619468b219ea066fcb6358a8000e
-PR:   #21552
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
@@ -10,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import subprocess
 from pathlib import Path
+from collections import Counter, defaultdict
 
 REPO = "/workspace/sglang"
 TARGET = f"{REPO}/python/sglang/multimodal_gen/runtime/loader/fsdp_load.py"
@@ -23,63 +23,6 @@ def _parse_tree(source=None):
     if source is None:
         source = _read_source()
     return ast.parse(source), source
-
-
-# ---------------------------------------------------------------------------
-# Subprocess helper: extracts the summary formatter function as `func`
-# ---------------------------------------------------------------------------
-
-_FORMATTER_PREAMBLE = """\
-import ast, textwrap, types
-from collections import Counter, defaultdict
-from pathlib import Path
-
-TARGET = "/workspace/sglang/python/sglang/multimodal_gen/runtime/loader/fsdp_load.py"
-source = Path(TARGET).read_text()
-tree = ast.parse(source)
-lines = source.splitlines(keepends=True)
-
-func = None
-for node in ast.iter_child_nodes(tree):
-    if not isinstance(node, ast.FunctionDef):
-        continue
-    if node.name in ("_make_param_like", "load_model_from_full_model_state_dict", "shard_model"):
-        continue
-    func_src = "from __future__ import annotations\\n" + textwrap.dedent(
-        "".join(lines[node.lineno - 1 : node.end_lineno])
-    )
-    mock_torch = types.ModuleType("torch")
-    mock_torch.dtype = type("dtype", (), {})
-    env = {"Counter": Counter, "defaultdict": defaultdict, "torch": mock_torch, "__builtins__": __builtins__}
-    try:
-        exec(func_src, env)
-        fn = env[node.name]
-        test_counts = Counter()
-        test_examples = defaultdict(list)
-        test_counts[("torch.float32", "torch.bfloat16")] = 1
-        test_examples[("torch.float32", "torch.bfloat16")] = ["w"]
-        probe = fn(test_counts, test_examples)
-        if isinstance(probe, str) and len(probe) > 0:
-            func = fn
-            break
-    except Exception:
-        continue
-
-assert func is not None, "No summary formatter function found at module level"
-"""
-
-
-def _run_formatter_test(test_body: str) -> subprocess.CompletedProcess:
-    """Write a script that extracts the formatter as `func`, appends test_body, and runs it."""
-    script = Path(REPO) / "_eval_formatter_test.py"
-    script.write_text(_FORMATTER_PREAMBLE + "\n" + test_body + "\nprint('PASS')\n")
-    try:
-        return subprocess.run(
-            ["python3", str(script)],
-            capture_output=True, text=True, timeout=30, cwd=REPO,
-        )
-    finally:
-        script.unlink(missing_ok=True)
 
 
 def _find_loading_func_and_loop():
@@ -103,6 +46,90 @@ def _find_loading_func_and_loop():
     return func, for_loop, tree
 
 
+def _discover_summary_formatter():
+    """Discover the summary formatter function by behavior (accepts Counter/defaultdict, returns string)."""
+    import textwrap
+    import types
+
+    source = _read_source()
+    tree = ast.parse(source)
+    lines = source.splitlines(keepends=True)
+
+    for node in ast.iter_child_nodes(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+
+        func_src = "from __future__ import annotations\n" + textwrap.dedent(
+            "".join(lines[node.lineno - 1 : node.end_lineno])
+        )
+
+        mock_torch = types.ModuleType("torch")
+        mock_torch.dtype = type("dtype", (), {})
+
+        env = {
+            "Counter": Counter,
+            "defaultdict": defaultdict,
+            "torch": mock_torch,
+            "__builtins__": __builtins__,
+        }
+
+        try:
+            exec(func_src, env)
+            fn = env[node.name]
+
+            # Test if this function behaves like a summary formatter
+            test_counts = Counter()
+            test_examples = defaultdict(list)
+            test_counts[("torch.float32", "torch.bfloat16")] = 50
+            test_examples[("torch.float32", "torch.bfloat16")] = ["blocks.0.weight"]
+
+            result = fn(test_counts, test_examples)
+
+            # Check it returns a non-empty string with expected content
+            if isinstance(result, str) and len(result) > 0:
+                if "50" in result and "float32" in result:
+                    return fn, node.name
+        except Exception:
+            continue
+
+    return None, None
+
+
+def _run_formatter_with_inputs(counts, examples):
+    """Run the discovered formatter function with given inputs via subprocess."""
+    formatter_fn, formatter_name = _discover_summary_formatter()
+    assert formatter_fn is not None, "No summary formatter function found"
+
+    import textwrap
+    import types
+
+    source = _read_source()
+    tree = ast.parse(source)
+    lines = source.splitlines(keepends=True)
+
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == formatter_name:
+            func_src = "from __future__ import annotations\n" + textwrap.dedent(
+                "".join(lines[node.lineno - 1 : node.end_lineno])
+            )
+
+            mock_torch = types.ModuleType("torch")
+            mock_torch.dtype = type("dtype", (), {})
+
+            env = {
+                "Counter": Counter,
+                "defaultdict": defaultdict,
+                "torch": mock_torch,
+                "__builtins__": __builtins__,
+            }
+
+            exec(func_src, env)
+            fn = env[formatter_name]
+            return fn(counts, examples)
+
+    raise RuntimeError("Formatter function disappeared during test")
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -116,85 +143,81 @@ def test_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_multiple_types():
     """Summary function aggregates multiple dtype mismatch pairs with counts and examples."""
-    r = _run_formatter_test("""
-counts = Counter()
-examples = defaultdict(list)
-counts[("torch.float32", "torch.bfloat16")] = 50
-examples[("torch.float32", "torch.bfloat16")] = ["blocks.0.weight", "blocks.1.bias", "embed.pos"]
-counts[("torch.float16", "torch.bfloat16")] = 12
-examples[("torch.float16", "torch.bfloat16")] = ["norm.weight"]
+    counts = Counter()
+    examples = defaultdict(list)
+    counts[("torch.float32", "torch.bfloat16")] = 50
+    examples[("torch.float32", "torch.bfloat16")] = ["blocks.0.weight", "blocks.1.bias", "embed.pos"]
+    counts[("torch.float16", "torch.bfloat16")] = 12
+    examples[("torch.float16", "torch.bfloat16")] = ["norm.weight"]
 
-result = func(counts, examples)
-assert isinstance(result, str) and len(result) > 0
-assert "float32" in result, f"Missing float32 in: {result}"
-assert "float16" in result, f"Missing float16 in: {result}"
-assert "bfloat16" in result, f"Missing bfloat16 in: {result}"
-assert "50" in result, f"Missing count 50 in: {result}"
-assert "12" in result, f"Missing count 12 in: {result}"
-assert any(name in result for name in ["blocks.0.weight", "blocks.1.bias", "embed.pos"]), f"Missing example names in: {result}"
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    result = _run_formatter_with_inputs(counts, examples)
+
+    assert isinstance(result, str) and len(result) > 0
+    assert "50" in result, f"Missing count 50 in: {result}"
+    assert "12" in result, f"Missing count 12 in: {result}"
+    assert "float32" in result, f"Missing float32 in: {result}"
+    assert "float16" in result, f"Missing float16 in: {result}"
+    assert "bfloat16" in result, f"Missing bfloat16 in: {result}"
+    assert any(name in result for name in ["blocks.0.weight", "blocks.1.bias", "embed.pos"]), f"Missing example names in: {result}"
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_empty_examples():
     """Summary function handles pairs with no example parameter names."""
-    r = _run_formatter_test("""
-counts = Counter()
-examples = defaultdict(list)
-counts[("torch.float32", "torch.bfloat16")] = 7
-examples[("torch.float32", "torch.bfloat16")] = []
+    counts = Counter()
+    examples = defaultdict(list)
+    counts[("torch.float32", "torch.bfloat16")] = 7
+    examples[("torch.float32", "torch.bfloat16")] = []
 
-result = func(counts, examples)
-assert isinstance(result, str)
-assert "7" in result, f"Missing count with empty examples: {result}"
-assert "float32" in result, f"Missing dtype in: {result}"
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    result = _run_formatter_with_inputs(counts, examples)
+
+    assert isinstance(result, str)
+    assert "7" in result, f"Missing count with empty examples: {result}"
+    assert "float32" in result, f"Missing dtype in: {result}"
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_single_pair():
     """Summary function works correctly with a single mismatch type."""
-    r = _run_formatter_test("""
-counts = Counter()
-examples = defaultdict(list)
-counts[("torch.int8", "torch.float32")] = 100
-examples[("torch.int8", "torch.float32")] = ["fc.weight", "fc.bias"]
+    counts = Counter()
+    examples = defaultdict(list)
+    counts[("torch.int8", "torch.float32")] = 100
+    examples[("torch.int8", "torch.float32")] = ["fc.weight", "fc.bias"]
 
-result = func(counts, examples)
-assert "int8" in result, f"Missing int8 in: {result}"
-assert "100" in result, f"Missing count 100 in: {result}"
-assert "fc.weight" in result or "fc.bias" in result, f"Missing example in: {result}"
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    result = _run_formatter_with_inputs(counts, examples)
+
+    assert "int8" in result, f"Missing int8 in: {result}"
+    assert "100" in result, f"Missing count 100 in: {result}"
+    assert "fc.weight" in result or "fc.bias" in result, f"Missing example in: {result}"
 
 
 # [pr_diff] fail_to_pass
 def test_summary_formatter_no_raw_repr():
     """Summary output is human-readable, not raw Counter/defaultdict repr."""
-    r = _run_formatter_test("""
-counts = Counter()
-examples = defaultdict(list)
-counts[("torch.float32", "torch.bfloat16")] = 5
-examples[("torch.float32", "torch.bfloat16")] = ["layer.0.w"]
+    counts = Counter()
+    examples = defaultdict(list)
+    counts[("torch.float32", "torch.bfloat16")] = 5
+    examples[("torch.float32", "torch.bfloat16")] = ["layer.0.w"]
 
-result = func(counts, examples)
-assert "Counter(" not in result, f"Raw Counter repr in output: {result}"
-assert "defaultdict(" not in result, f"Raw defaultdict repr in output: {result}"
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    result = _run_formatter_with_inputs(counts, examples)
+
+    assert "Counter(" not in result, f"Raw Counter repr in output: {result}"
+    assert "defaultdict(" not in result, f"Raw defaultdict repr in output: {result}"
+
+
+# [pr_diff] fail_to_pass
+def test_summary_formatter_function_exists():
+    """A module-level function exists that can format dtype mismatch summaries."""
+    formatter_fn, formatter_name = _discover_summary_formatter()
+    assert formatter_fn is not None, "No summary formatter function found at module level"
+    assert formatter_name is not None
 
 
 # ---------------------------------------------------------------------------

@@ -92,7 +92,8 @@ checks:
     lines: 26-46
     commit: 67c3183913af13afa3c98d219f8882e278cdea0b
 rubric:
-- rule: README observability documentation follows the repository's documentation style
+- rule: README observability documentation follows the repository's documentation
+    style
   source:
     path: examples/terraform/envoy-ratelimiter/README.md
     lines: 1-40
@@ -114,6 +115,63 @@ rubric:
   source:
     path: examples/terraform/envoy-ratelimiter/ratelimit.tf
     commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: Every new file needs a license header - No exceptions for source files
+  source:
+    path: repo/.agent/skills/license-compliance/SKILL.md
+    lines: '189'
+  source_text: 1. **Every new file needs a license header** - No exceptions for source
+    files
+  evidence: The new file `examples/terraform/envoy-ratelimiter/deploy.sh` includes
+    the Apache 2.0 license header at the top.
+  category: Imperative coding conventions
+  verification: llm_judge
+- rule: Shell scripts must include the bash-specific Apache 2.0 license header
+  source:
+    path: repo/.agent/skills/license-compliance/SKILL.md
+    lines: 132-150
+  source_text: '### Shell Scripts (.sh, .bash)
+
+    ```bash
+
+    #!/bin/bash
+
+    #
+
+    # Licensed to the Apache Software Foundation (ASF) under one or more
+
+    # contributor license agreements.  See the NOTICE file distributed with
+
+    # this work for additional information regarding copyright ownership.
+
+    # The ASF licenses this file to You under the Apache License, Version 2.0
+
+    # (the "License"); you may not use this file except in compliance with
+
+    # the License.  You may obtain a copy of the License at
+
+    #
+
+    #    http://www.apache.org/licenses/LICENSE-2.0
+
+    #
+
+    # Unless required by applicable law or agreed to in writing, software
+
+    # distributed under the License is distributed on an "AS IS" BASIS,
+
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+    # See the License for the specific language governing permissions and
+
+    # limitations under the License.
+
+    #
+
+    ```'
+  evidence: The `deploy.sh` script starts with exactly this template, including the
+    `#!/bin/bash` shebang and the commented license text.
+  category: Imperative coding conventions
+  verification: llm_judge
 config_edits:
 - path: examples/terraform/envoy-ratelimiter/README.md
   tier: 2
@@ -162,3 +220,28 @@ config_edits:
     4. **Test with Dataflow Workflow**:
 
     |enable_metrics         |Deploy statsd-exporter sidecar                       |false                            |'
+distractors:
+- rule: Add unit tests for your changes
+  source:
+    path: repo/.agent/skills/contributing/SKILL.md
+    lines: '68'
+  source_text: '- Add unit tests for your changes'
+  collision_type: scope_ambiguity
+  why_distracting: This PR adds a helper Bash script (`deploy.sh`) for a Terraform
+    example. While unit tests are required for core SDK code, they are not typically
+    expected or practical for simple example deployment wrappers. An agent might waste
+    time trying to create a Bash testing framework (like BATS) for this script.
+  severity: medium
+- rule: The entire project (Java, Python, Go, website) is managed as a single Gradle
+    project
+  source:
+    path: repo/.agent/skills/gradle-build/SKILL.md
+    lines: '26'
+  source_text: Apache Beam is a mono-repo using Gradle as its build system. The entire
+    project (Java, Python, Go, website) is managed as a single Gradle project.
+  collision_type: architecture_boundary
+  why_distracting: The PR adds a standalone Terraform deployment script (`deploy.sh`)
+    in the `examples/terraform` directory. An agent might mistakenly try to register
+    this script or the Terraform execution as a Gradle task in `build.gradle` or `settings.gradle.kts`,
+    overcomplicating the example.
+  severity: medium

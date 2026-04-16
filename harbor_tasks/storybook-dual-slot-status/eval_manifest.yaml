@@ -1,0 +1,88 @@
+eval_steps:
+  # Fail-to-pass tests: These verify the fix is implemented correctly
+  - id: test_change_detection_status_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: getChangeDetectionStatus function must exist
+
+  - id: test_group_dual_status_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: getGroupDualStatus function must exist
+
+  - id: test_status_priority_exported
+    type: fail_to_pass
+    origin: agent_config
+    description: statusPriority must be exported for Tree.tsx to use
+
+  - id: test_change_detection_imports_constant
+    type: fail_to_pass
+    origin: agent_config
+    description: status.tsx must import CHANGE_DETECTION_STATUS_TYPE_ID
+
+  - id: test_change_detection_status_filters_by_typeid
+    type: fail_to_pass
+    origin: agent_config
+    description: getChangeDetectionStatus must filter by typeId
+
+  - id: test_change_detection_uses_most_critical
+    type: fail_to_pass
+    origin: agent_config
+    description: getChangeDetectionStatus must call getMostCriticalStatusValue
+
+  - id: test_group_dual_status_traverses_descendants
+    type: fail_to_pass
+    origin: agent_config
+    description: getGroupDualStatus must use getDescendantIds
+
+  - id: test_group_dual_status_returns_correct_shape
+    type: fail_to_pass
+    origin: agent_config
+    description: getGroupDualStatus must return {change, test} structure
+
+  # Pass-to-pass tests: These verify the fix doesn't break existing functionality
+  - id: test_status_function_signatures
+    type: pass_to_pass
+    origin: static
+    description: Status utility functions have correct signatures
+
+  - id: test_types_import_correct
+    type: pass_to_pass
+    origin: static
+    description: Types are correctly imported
+
+  - id: test_imports_from_internal_types
+    type: pass_to_pass
+    origin: static
+    description: Imports come from storybook/internal/types
+
+  - id: test_getstatus_still_works
+    type: pass_to_pass
+    origin: static
+    description: Existing getStatus function still works
+
+  - id: test_getgroupstatus_still_works
+    type: pass_to_pass
+    origin: static
+    description: Existing getGroupStatus function still works
+
+  # Repository CI tests: These run actual CI commands as pass-to-pass gates
+  - id: test_repo_esbuild_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: status.tsx compiles with esbuild (repo CI check)
+
+  - id: test_repo_syntax_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: status.tsx has valid syntax (repo CI check)
+
+  - id: test_repo_status_test_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: status.test.ts exists and is readable (repo CI check)
+
+  - id: test_repo_no_empty_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: No empty source files in manager utils (repo CI check)

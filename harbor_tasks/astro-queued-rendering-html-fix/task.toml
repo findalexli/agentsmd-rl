@@ -1,0 +1,20 @@
+name = "astro-queued-rendering-html-fix"
+difficulty = "medium"
+tags = ["javascript", "typescript", "astro", "html-escaping", "ssr"]
+
+[time]
+estimated_minutes = 45
+
+[source]
+repo = "withastro/astro"
+pr_number = 16080
+merge_commit = "e80ac73e4433d1ac0518af731f2af00f8aaa46ad"
+base_commit = "be661fb9fd1348ffb038f561f9f053b1c64a3696"
+
+[environment]
+base_image = "node:22-slim"
+type = "nodejs"
+
+[description]
+brief = "Fix HTML page rendering in experimental queued rendering mode"
+detail = """When experimental.queuedRendering is enabled, .html page files have their raw HTML content incorrectly escaped, causing the page to render as plain text instead of HTML in the browser. The fix involves marking .html page strings as safe HTML so the queue builder doesn't escape them."""

@@ -91,6 +91,34 @@ rubric:
   evidence: The solution leverages the existing `hugio.CopyDir` function to handle
     the recursive directory copying instead of implementing a custom file tree traversal.
   category: tooling
+- rule: Use self-explanatory variable and function names.
+  source:
+    path: AGENTS.md
+    lines: 4-4
+  source_text: '   * Use self-explanatory variable and function names.'
+  evidence: The diff introduces the function `copyContentDirsForOutput` and variables
+    like `contentDirs`, `outputDirAbs`, and `skipDirs` which clearly describe their
+    purpose.
+  category: naming
+  verification: llm_judge
+- rule: Use short variable names when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 5-5
+  source_text: '   * Use short variable names when the context is clear.'
+  evidence: The diff uses short variable names like `p` for `page.Page` and `c` for
+    the `convertCommand` receiver.
+  category: naming
+  verification: llm_judge
+- rule: Don't use comments to explain the obvious.
+  source:
+    path: AGENTS.md
+    lines: 3-3
+  source_text: '   * Don''t use comments to explain the obvious.'
+  evidence: The diff adds a new function and logic without adding any unnecessary
+    comments to explain the straightforward Go code.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: Use short variable names when the context is clear.
   collision_type: rule_conflict
@@ -102,6 +130,41 @@ distractors:
   source:
     path: AGENTS.md
     lines: '5'
+- rule: '- `content/`: Directory for markdown content files.'
+  source:
+    path: docs/AGENTS.md
+    lines: 19-19
+  source_text: '   - `content/`: Directory for markdown content files.'
+  collision_type: scope_ambiguity
+  why_distracting: The code change involves copying content directories (`copyContentDirsForOutput`).
+    An AI might read this project knowledge and attempt to hardcode the string `"content/"`
+    or filter specifically for markdown files. However, the Go code correctly determines
+    the content directory dynamically using `p.File().Path()` and `p.File().Filename()`
+    to support custom configurations and various content formats.
+  severity: high
+- rule: You are an expert front-end and Tailwind CSS developer.
+  source:
+    path: docs/AGENTS.md
+    lines: 4-9
+  source_text: 'You are an expert front-end and Tailwind CSS developer. Your primary
+    goal is to build reliable, readable, and scalable user interfaces using the existing
+    project structure and design system.
+
+
+    ### Directives
+
+    *   **ALWAYS** use existing Tailwind utility classes for styling.
+
+    *   **NEVER** write raw CSS in `.css` files unless absolutely necessary for a
+    non-utility-based global reset.
+
+    *   **NEVER** use inline styles (e.g., `<div style="...">`).'
+  collision_type: meta_confusion
+  why_distracting: This role definition and its directives are strictly for frontend/theme
+    development. An agent might get confused by this global persona and hesitate to
+    write or modify the core backend Go code (`commands/convert.go`), or mistakenly
+    look for frontend files to apply the conversion logic.
+  severity: low
 hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply referencing
   `AGENTS.md`. The rules are straightforward Go conventions, but there is a slight
   internal tension between using short variable names and self-explanatory names in

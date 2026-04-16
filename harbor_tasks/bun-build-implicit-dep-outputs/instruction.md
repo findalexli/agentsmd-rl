@@ -4,6 +4,8 @@
 
 When running the build twice after rebuilding a sub-build (e.g. WebKit) that updates forwarding headers, `.c` files and no-PCH `.cpp` files do not recompile even though their included headers changed. This produces stale object files and a relink that yields an inconsistent binary.
 
+The build appears to lag one build behind: after the sub-build completes, the first main build uses stale object files; only on the second main build do affected sources recompile.
+
 ## Background
 
 The ninja build system distinguishes between dependency types:
@@ -14,57 +16,61 @@ The compiler generates `.d` depfiles that record which headers were actually inc
 
 The build graph has a `depOutputs` array containing dependency library outputs like `libJavaScriptCore.a`. These library outputs come from sub-builds (like WebKit) that rewrite forwarding headers as undeclared side effects.
 
-## Specific Values Required for Fix Verification
+## Files to Modify
 
-The following variable names, field names, and patterns appear in the build system code and will be verified by tests:
+The build system is implemented in TypeScript files within the `scripts/build/` directory:
 
-**Variable Names:**
-- `depOutputs` — array of dependency library outputs (e.g., `libJavaScriptCore.a`)
-- `codegen.cppAll` — array of codegen-generated C++ sources
-- `codegenOrderOnly` — variable name that must appear in the fixed build graph
-- `depOrderOnly` — variable name from the original build graph that must be removed
-
-**Interface Fields:**
-- `implicitInputs` — field for implicit dependencies that invalidate on change
-- `orderOnlyInputs` — field for order-only dependencies
-
-**Required Assignment Patterns:**
-- `const codegenOrderOnly = codegen.cppAll` — the variable `codegenOrderOnly` must be defined exactly as `codegen.cppAll`
-- `implicitInputs: depOutputs` — for C compilation, the `depOutputs` must be passed via `implicitInputs`
-- `orderOnlyInputs: codegenOrderOnly` — for C compilation, codegen headers must be passed via `orderOnlyInputs`
-- `implicitInputs = depOutputs` — for no-PCH C++ compilation, `depOutputs` must be assigned to `implicitInputs`
-- `orderOnlyInputs = codegenOrderOnly` — for no-PCH C++ compilation, `codegenOrderOnly` must be assigned to `orderOnlyInputs`
-
-**Required Documentation in CLAUDE.md:**
-- Gotchas section must mention "PCH, cc, and no-PCH cxx" together
-- Gotchas section must contain the phrase "implicit dep on `depOutputs`"
-- Ninja primer example must show a dep output (like `deps/zstd/libzstd.a`) as implicit dependency (using `|`), not order-only
-- depfile section must explain that WebKit sub-builds rewrite forwarding headers as undeclared side effects
-- depfile section must distinguish codegen headers (order-only, declared ninja outputs with restat) from dep outputs (`lib*.a`)
-- depOutputs variable comment must describe "implicit-dep signal" (not "PCH order-only-deps")
-- `implicitInputs` documentation must mention "dep outputs" and "invalidation signal"
-- `orderOnlyInputs` documentation must redirect dep outputs to `implicitInputs`
-
-## Expected Behavior After Fix
-
-After modifying the build system:
-1. The variable `depOrderOnly` (which combined `depOutputs` and `codegen.cppAll`) must be removed
-2. A new variable `codegenOrderOnly` defined as `codegen.cppAll` must exist
-3. C compilation must pass `depOutputs` via `implicitInputs` and `codegenOrderOnly` via `orderOnlyInputs`
-4. No-PCH C++ compilation must use `implicitInputs` with `depOutputs` and `orderOnlyInputs` with `codegenOrderOnly`
-5. Documentation must correctly describe the dependency model for codegen headers vs dep outputs
+- `bun.ts` — contains `emitBun()` function that assembles the ninja build graph, including C compilation and no-PCH C++ compilation paths
+- `compile.ts` — contains `CompileOpts` interface defining compilation options (`implicitInputs`, `orderOnlyInputs` fields)
+- `CLAUDE.md` — documentation explaining ninja dependency types and build system concepts
 
 ## Root Cause
 
-The ninja build graph uses order-only dependencies for dep library outputs in C compilation and no-PCH C++ compilation. Order-only dependencies only enforce ordering — they do not invalidate the dependent compile edge when the library itself changes. Since the dep library's forwarding headers are rewritten as undeclared side effects, the compiler's depfile records those headers, but ninja evaluates stats on the lib before the sub-build completes, so order-only does not trigger invalidation.
+Local sub-builds (like WebKit) rewrite forwarding headers as undeclared side effects. The depfile records these headers, but ninja evaluates stats on the library before the sub-build completes. When order-only dependencies are used for the library outputs, ninja does not invalidate dependent compile edges even though the headers (tracked via depfile) have changed.
 
-## Files Involved
+The library output itself (`libJavaScriptCore.a`) must serve as the invalidation signal. When the library changes, all compilation edges that may include its headers must be considered dirty. This applies to PCH compilation, C compilation, and no-PCH C++ compilation.
 
-The relevant files are within the build system scripts directory:
-- TypeScript source files containing the ninja build graph assembly
-- TypeScript files containing compilation interfaces
-- Markdown documentation files covering ninja dependency types
+## Expected Correct Behavior
+
+After modifying the build graph:
+1. The build should not lag one build behind — C and no-PCH C++ sources should recompile on the first build after a sub-build updates forwarding headers
+2. Codegen headers (from `codegen.cppAll`) should remain order-only — they are declared ninja outputs with restat, so depfile tracking is exact
+3. Dependency library outputs (`depOutputs`) should trigger invalidation for PCH, C, and no-PCH C++ compilation
+4. Documentation should correctly describe which dependency types use implicit vs order-only inputs and why
+
+## Required Documentation Content
+
+The verification checks for these literal strings in the modified files:
+
+**CLAUDE.md Gotchas section** must contain:
+- "PCH, cc, and no-PCH cxx" (or a pattern matching all three)
+- "implicit dep on `depOutputs`"
+
+**CLAUDE.md Ninja primer section** must show:
+- An example with `deps/zstd/libzstd.a` as an implicit dependency (using `|`)
+- Must NOT show the old pattern with `||` and `.ref` files
+
+**CLAUDE.md depfile section** must explain:
+- "implicit" dependencies for dep outputs
+- "forwarding headers" or "undeclared side effect" of WebKit sub-builds
+
+**bun.ts depOutputs comment** must:
+- Mention "implicit-dep signal"
+- NOT mention "PCH order-only-deps"
+
+**compile.ts interface documentation** must:
+- `implicitInputs`: mention "dep outputs" as "invalidation signal"
+- `orderOnlyInputs`: redirect dep outputs to `implicitInputs` and clarify use for "codegen" headers
+
+## Required Code Patterns
+
+The verification checks for these patterns in `bun.ts`:
+
+1. A variable containing `codegen.cppAll` for order-only use (to be used with `orderOnlyInputs`)
+2. No variable combining both `depOutputs` and `codegen.cppAll` together
+3. C compilation (`compileC`) passing `depOutputs` via `implicitInputs` and the codegen variable via `orderOnlyInputs`
+4. No-PCH C++ compilation using the same pattern: `depOutputs` via `implicitInputs`, codegen variable via `orderOnlyInputs`
 
 ## Verification
 
-After modifying the build graph, run the build command twice after rebuilding a sub-build that updates forwarding headers. All affected C and no-PCH C++ source files should recompile on the second run, producing a consistent binary.
+After modifying the build graph, run the build command twice after rebuilding a sub-build that updates forwarding headers. All affected C and no-PCH C++ source files should recompile on the second run (the first main build after the sub-build), producing a consistent binary without requiring a third build.

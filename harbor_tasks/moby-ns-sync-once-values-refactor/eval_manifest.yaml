@@ -1,0 +1,84 @@
+task:
+  name: moby-ns-sync-once-values-refactor
+  source_pr:
+    owner: moby
+    repo: moby
+    number: 52262
+    merge_commit: cd83e4506167b4268854246a2e661e2d1cc9b416
+    base_commit: a78d0a29777dc83d83eda80276bb847fb30f6b13
+
+checks:
+  # Fail-to-pass tests
+  - id: test_nshandle_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: NsHandle() function exists and returns netns.NsHandle type
+
+  - id: test_parsehandlerint_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: ParseHandlerInt() function should be removed
+
+  - id: test_sync_oncevalues_used
+    type: fail_to_pass
+    origin: behavioral
+    description: sync.OnceValues should be used for initialization
+
+  - id: test_netlink_socket_timeout_is_const
+    type: fail_to_pass
+    origin: behavioral
+    description: NetlinkSocketsTimeout should be a const, not a var
+
+  - id: test_error_handling_with_error
+    type: fail_to_pass
+    origin: behavioral
+    description: Error handling should use WithError() instead of Errorf with %v
+
+  - id: test_windows_stub_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: Windows stub file should be removed
+
+  - id: test_interface_uses_nshandle
+    type: fail_to_pass
+    origin: behavioral
+    description: interface_linux.go should use ns.NsHandle() instead of ns.ParseHandlerInt()
+
+  # Pass-to-pass tests (CI/CD)
+  - id: test_code_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The code should compile without errors
+
+  - id: test_go_vet_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: go vet should pass on the modified package
+
+  - id: test_package_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Tests in the ns package should pass
+
+  - id: test_osl_package_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The osl package that uses ns should compile
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go modules should be verified
+
+  - id: test_gofmt_libnetwork
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified libnetwork files should be properly formatted
+
+  - id: test_vet_libnetwork_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: go vet should pass on ns and osl packages
+
+# No agent config files found in this repository
+rubric: []

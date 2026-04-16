@@ -1,0 +1,50 @@
+# Evaluation manifest for SeleniumHQ/selenium#17235
+# Fix VNC caps not propagated for sessions without browserName
+
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17235
+  base_commit: b1a7b8de7bf8c9889627914888adee44c01f925a
+  merge_commit: 458c350ca9c711184366d4cfc0dc547a26150f67
+  title: "[grid] Fix VNC caps not propagated for sessions without browserName"
+
+checks:
+  - id: test_new_test_method_exists
+    type: fail_to_pass
+    origin: pr_tests
+    description: Test method shouldPropagateVncCapsWhenRequestHasNoBrowserName must exist
+
+  - id: test_vnc_propagation_order_in_apply_method
+    type: fail_to_pass
+    origin: behavioral
+    description: The browserName check must occur AFTER VNC capability handling
+
+  - id: test_vnc_propagation_comment_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: Fix must include comment explaining VNC propagation behavior
+
+  - id: test_session_capabilities_mutator_test_suite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full SessionCapabilitiesMutator test suite passes
+
+  - id: test_existing_vnc_tests_still_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing VNC capability tests continue to pass
+
+  - id: test_build_source_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Source module compiles successfully
+
+  - id: test_default_slot_matcher_vnc
+    type: pass_to_pass
+    origin: repo_tests
+    description: DefaultSlotMatcher VNC capability tests pass
+
+# Note: This task is a pure Java code fix with no CLAUDE.md/AGENTS.md edits.
+# The rubric judge evaluates config/doc file edits, so ICR=0 is expected.
+# Code quality is enforced by the fail_to_pass tests (test existence, comment, order).
+rubric: []

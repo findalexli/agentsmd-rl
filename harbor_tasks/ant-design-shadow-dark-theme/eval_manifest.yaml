@@ -122,6 +122,25 @@ rubric:
     a new test case using existing variables (`theme.darkAlgorithm`) without introducing
     any forbidden absolute imports (like `antd` '
   category: testing
+- rule: Develop using TypeScript and React.
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  source_text: '- 使用 TypeScript 和 React 开发'
+  evidence: 'The diff modifies TypeScript files (`.ts` and `.tsx`), adding type annotations
+    such as `shadowColor?: string` in `components/theme/themes/ColorMap.ts`.'
+  category: architecture
+  verification: llm_judge
+- rule: Support Design Token theme system and dark mode.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  source_text: '- 支持 Design Token 主题系统、暗色模式、RTL 布局、SSR、国际化（150+ 语言）'
+  evidence: The diff adds a `colorShadow` token to the Design Token system (`ColorNeutralMapToken`),
+    implements dark mode shadow colors in `components/theme/themes/dark/colors.ts`,
+    and adds a test specifically for shadow tokens adapting to the dark theme (`theme.darkAlgorithm`).
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: 'Changelog 规范: 必须同时提供中英文两个版本'
   collision_type: scope_ambiguity

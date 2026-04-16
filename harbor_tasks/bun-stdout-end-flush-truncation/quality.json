@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_final_sync_flush/test_final_async_flush/test_final_error_propagation extract a '_final' function via regex '_final\\s*=\\s*(?:async\\s+)?function\\s*\\(\\w+\\)\\s*\\{' and test it with a sink object having flush(). The instruction mentions sink.flush() and callback behavior but never explicitly states the fix must be implemented as a '_final' method assignment (stream._final = function(cb){...}). Also, tests lik"
+      "outcome": "pass",
+      "reason": "Instruction names ProcessObjectInternals.ts implicitly via 'writable stream implementation for process.stdout', mentions $isPromise, .$call/.$apply, kWriteStreamFastPath, internal/fs/streams, getStdioWriteStream, and properties _destroy, _isStdio, destroySoon, fd, _type \u2014 all asserted by tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md effectively describes the exact fix: it says to call sink.flush(), handle sync/async completion, propagate errors to callback, use $isPromise not instanceof Promise, use .$call and .$apply. Combined with specifying the exact file (ProcessObjectInternals.ts) and referencing kWriteStreamFastPath, this is a near-complete specification of the solution code rather than just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and requirements (flush before callback, handle async, propagate errors) without dictating exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests extract the _final function body via regex '_final\\s*=\\s*(?:async\\s+)?function\\s*\\(\\w+\\)\\s*\\{' and test it in isolation. An alternative correct fix that uses a different approach (e.g., overriding .end() directly, using an arrow function for _final, using async function syntax differently, or naming it differently) would fail the regex extraction. The test helper's specific pattern matching for 'this[closureVar]' also constrains implementation to accessing the sink via a closure variable s"
+      "reason": "Tests extract and invoke the `_final` function specifically (via regex `_final\\s*=\\s*function`), so a correct fix that implements flushing via a different mechanism (e.g., overriding `write`/`end` or using a different property name than `_final`) would fail, even though instruction.md never requires `_final`."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_final_sync_flush, test_final_async_flush, test_final_error_propagation) extract the _final function and actually execute it with mock sink objects, testing real behavior (callback invocation, promise handling, error propagation). test_existing_stream_setup does string matching but is a pass-to-pass regression test. The behavioral tests are the primary ones."
+      "reason": "Tests extract the _final body and execute it via Node.js with mock sinks, verifying callback behavior, not text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub _final that does nothing (or just calls cb()) would fail test_final_sync_flush (which checks flushed===true), test_final_async_flush (which checks cb is NOT called before promise resolves), and test_final_error_propagation (which checks error message 'pipe_broken' is passed to cb). These require actual flush() invocation and proper async/error handling."
+      "reason": "A stub _final that just calls cb(null) would fail test_final_async_flush (cb would fire before promise resolves) and test_final_error_propagation (would not propagate error)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies 5 behavioral requirements (flush, sync handling, async handling, error propagation, $isPromise usage). Tests cover sync flush (test_final_sync_flush), async flush (test_final_async_flush), and error propagation (test_final_error_propagation). The $isPromise requirement is implicitly tested since the async test uses a real Promise. The .$call/.$apply requirement is not directly tested but is a style constraint."
+      "reason": "Sync flush, async flush, error propagation, and preservation of _destroy/_isStdio/destroySoon are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, repo_ci), descriptive function names (test_final_sync_flush, test_final_async_flush, etc.), and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments (fail_to_pass, pass_to_pass, repo_ci) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a stream flushing bug, not producing structured data output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and identifiers appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names the exact file 'src/js/builtins/ProcessObjectInternals.ts', references the exact internal symbol 'kWriteStreamFastPath', describes the exact mechanism ('pendingcb === 0', 'finishMaybe()'), and prescribes the exact implementation approach (call sink.flush(), use $isPromise, use .$call/.$apply). This goes well beyond describing what's broken and into specifying the exact location and fix."
+      "outcome": "pass",
+      "reason": "Instruction points to general areas (writable stream for stdio, getStdioWriteStream) without naming specific lines or the exact function name `_final` to add."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

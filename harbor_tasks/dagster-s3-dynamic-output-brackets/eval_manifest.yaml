@@ -1,0 +1,65 @@
+task:
+  name: dagster-s3-dynamic-output-brackets
+  source_pr:
+    repo: dagster-io/dagster
+    number: 33544
+    title: "Fix s3_pickle_io_manager to work with dynamic outputs"
+    merge_commit: 46abb39ef2efdc9abd69b06348db99d54bd439c5
+    base_commit: fe1beaad91470275c9fe30e0e12ef24d077cfa7b
+
+checks:
+  # Fail-to-pass tests
+  - id: test_sanitize_path_method_exists
+    type: fail_to_pass
+    origin: task_author
+    description: "_sanitize_path method must exist on PickledObjectS3IOManager"
+
+  - id: test_sanitize_path_transforms_brackets
+    type: fail_to_pass
+    origin: task_author
+    description: "_sanitize_path must transform brackets: [ -> -- and ] removed"
+
+  - id: test_get_op_output_relative_path_uses_sanitization
+    type: fail_to_pass
+    origin: task_author
+    description: "get_op_output_relative_path must call _sanitize_path"
+
+  # Pass-to-pass tests
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: agent_config
+    description: "make ruff passes (code quality check from CLAUDE.md)"
+    source:
+      config_file: CLAUDE.md
+      lines: "Code Quality Requirements section"
+
+  - id: test_repo_check_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "make check_ruff passes (repo CI linting/formatting check)"
+
+  - id: test_repo_s3_io_manager_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "S3 IO manager unit tests from dagster_aws_tests/s3_tests/test_io_manager.py pass"
+
+  - id: test_module_imports
+    type: pass_to_pass
+    origin: task_author
+    description: "dagster_aws.s3.io_manager imports cleanly"
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - id: run_ruff_after_changes
+    description: "Run 'make ruff' after ANY Python code changes (CLAUDE.md requirement)"
+    source:
+      config_file: CLAUDE.md
+      lines: "Code Quality Requirements section"
+    origin: agent_config
+
+  - id: use_uv_not_pip
+    description: "Always use uv instead of pip for package management (CLAUDE.md requirement)"
+    source:
+      config_file: CLAUDE.md
+      lines: "Package Management section"
+    origin: agent_config

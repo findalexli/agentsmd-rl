@@ -98,6 +98,35 @@ distractors:
   source:
     path: AGENTS.md
     lines: 30-31
+- rule: No low-value busywork PRs
+  source:
+    path: AGENTS.md
+    lines: 21-24
+  source_text: '### No low-value busywork PRs
+
+
+    Do not open one-off PRs for tiny edits (single typo, isolated style change, one
+    mutable default, etc.). Mechanical cleanups are acceptable only when bundled with
+    substantive work.'
+  collision_type: rule_conflict
+  why_distracting: An agent asked to perform this specific change might mistakenly
+    refuse to do so, incorrectly categorizing the splitting of the context manager
+    as an 'isolated style change' or 'tiny edit' and thus violating this rule.
+  severity: high
+- rule: Fail-closed behavior
+  source:
+    path: AGENTS.md
+    lines: 34-36
+  source_text: '### Fail-closed behavior
+
+
+    If work is duplicate/trivial busywork, **do not proceed**. Return a short explanation
+    of what is missing.'
+  collision_type: rule_conflict
+  why_distracting: An agent might evaluate the context manager restructuring as 'trivial
+    busywork' and prematurely abort the execution instead of implementing the required
+    fix.
+  severity: high
 hierarchy_analysis: The config hierarchy is shallow. `CLAUDE.md` simply includes `@AGENTS.md`.
   The rules in `AGENTS.md` are mostly project policies and workflow instructions rather
   than coding conventions. The main challenge is avoiding false-positive refusals

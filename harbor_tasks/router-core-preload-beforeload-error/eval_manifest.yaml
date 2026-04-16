@@ -1,0 +1,107 @@
+source:
+  pr:
+    owner: TanStack
+    repo: router
+    number: 7075
+    title: "fix(router-core): stop preload after beforeLoad errors"
+    merge_commit: 2d1ec865a446926f7db6e29dbbde82d265de6d36
+    base_commit: 4756d760ca00e290210684fcd23f39e0931ab384
+
+files:
+  - path: packages/router-core/src/load-matches.ts
+    description: Core file with the preload error handling bug
+  - path: packages/router-core/tests/load.test.ts
+    description: Test file with regression test for the fix
+
+checks:
+  # Fail-to-pass tests
+  - id: test_preload_parent_beforeload_error_skips_child_handlers
+    type: fail_to_pass
+    origin: regression_test
+    description: >
+      When parent beforeLoad throws during preload, child beforeLoad and
+      head handlers should NOT be called. This is the primary regression
+      test added in the PR.
+
+  - id: test_code_logic_fix
+    type: fail_to_pass
+    origin: code_structure
+    description: >
+      The fix must be correctly implemented in load-matches.ts:
+      1. Loop break condition should check firstBadMatchIndex
+      2. headMaxIndex should use firstBadMatchIndex when defined
+
+  # Pass-to-pass tests
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      router-core unit tests should continue to pass after the fix.
+      Uses: pnpm nx run @tanstack/router-core:test:unit
+
+  - id: test_typescript_types_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      TypeScript type checking should pass for router-core.
+      Uses: pnpm nx run @tanstack/router-core:test:types
+
+  - id: test_eslint_linter_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      ESLint linter checks should pass for router-core.
+      Uses: pnpm nx run @tanstack/router-core:test:eslint
+
+  - id: test_build_package_validation_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Package build validation (publint + attw) should pass.
+      Uses: pnpm nx run @tanstack/router-core:test:build
+
+  - id: test_prettier_formatting_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Code formatting should follow prettier standards for modified file.
+      Uses: npx prettier --check packages/router-core/src/load-matches.ts
+
+  # Agent config based checks from AGENTS.md and SKILL.md
+  - id: agent_config_nx_usage
+    type: pass_to_pass
+    origin: agent_config
+    description: >
+      Agents should use pnpm nx for running tests, not direct test runners.
+      Source: AGENTS.md: "Always prefer pnpm nx ... over npx nx ..."
+
+  - id: agent_config_test_workflow
+    type: pass_to_pass
+    origin: agent_config
+    description: >
+      Critical: Always run unit and type tests during development.
+      Do not proceed if they fail.
+      Source: AGENTS.md: "Critical: Always run unit and type tests..."
+
+rubric:
+  - rule: "Use pnpm nx for test commands with CI=1 NX_DAEMON=false"
+    weight: minor
+    source: "AGENTS.md - Agent execution guardrails"
+
+  - rule: "Run specific tests via pnpm nx run @tanstack/router-core:test:unit -- tests/load.test.ts -t 'pattern'"
+    weight: minor
+    source: "AGENTS.md - Granular unit testing through Nx"
+
+  - rule: "Check both serialError AND firstBadMatchIndex in the load loop"
+    weight: major
+    source: "PR diff - The core fix logic"
+
+  - rule: "Fix headMaxIndex calculation to use firstBadMatchIndex when defined"
+    weight: major
+    source: "PR diff - The secondary fix logic"
+
+notes: >
+  This is a bug fix in the router-core package where preload behavior
+  was incorrect. When a parent route's beforeLoad handler fails during
+  preload, child route handlers should not be executed. The fix involves
+  checking firstBadMatchIndex in two places in load-matches.ts.

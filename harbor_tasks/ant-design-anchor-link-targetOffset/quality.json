@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (Anchor.tsx, AnchorLink.tsx), interfaces (AnchorLinkBaseProps, AntAnchor), function names (registerLink, scrollTo, getInternalCurrentAnchor), type signatures (Record<string, number>), React ref usage, nullish coalescing patterns, useEffect dependency arrays, and cleanup behavior \u2014 all of which correspond to what the tests assert. The tests check for specific patterns like `linkTargetOffsetRef`, `registerLink?.(href, targetOffset)`, etc., and the instructi"
+      "reason": "The instruction.md names all specific file paths (components/anchor/Anchor.tsx, components/anchor/AnchorLink.tsx), interface names (AnchorLinkBaseProps, AntAnchor), type signatures (registerLink, scrollTo), variable patterns (Record<string, number>), dependency arrays ([href, targetOffset]), and precedence chains (targetOffsetParams ?? targetOffset ?? offsetTop ?? 0) that the tests assert. Each test's asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: 'Use a type of Record<string, number>', 'Be stored using a React ref', 'including the targetOffset in the useEffect dependency array alongside href', 'nullish coalescing: individual offset ?? global offset', specific variable naming patterns. This goes far beyond describing what's broken and tells the agent exactly what code to write."
+      "reason": "The instruction essentially dictates the exact implementation: specific variable names (linkTargetOffsetRef implied by Record<string, number> mapping), exact expressions like 'targetOffsetParams ?? targetOffset ?? offsetTop ?? 0', exact function signatures, exact dependency arrays [href, targetOffset], and exact patterns like '_linkTargetOffset?.[link] ?? _offsetTop'. This leaves virtually no reasoning for the agent about WHAT to change \u2014 it's a step-by-step implementation specification."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details via regex: exact variable name 'linkTargetOffsetRef' (test_linkTargetOffsetRef_exists), exact pattern 'React.useRef<Record<string, number>>({})', exact expression 'const linkOffsetTop = _linkTargetOffset?.[link] ?? _offsetTop' (test_getInternalCurrentAnchor_uses_link_offset), exact parameter name 'targetOffsetParams' (test_handleScrollTo_uses_link_targetOffset), exact expression 'const finalTargetOffset = targetOffsetParams ?? targetOffset ?? "
+      "reason": "Tests use regex to match gold-specific implementation details: test_linkTargetOffsetRef_exists checks for exact 'const linkTargetOffsetRef = React.useRef<Record<string, number>>({})', test_registerLink_stores_targetOffset checks for exact 'if (newTargetOffset !== undefined)' with 'linkTargetOffsetRef.current[link] = newTargetOffset', test_handleScrollTo_uses_link_targetOffset checks exact 'React.useCallback<(link: string, targetOffsetParams?: number) => void>'. An alternative using useState, a M"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all fail-to-pass tests (test_anchor_link_interface_has_targetOffset through test_getInternalCurrentAnchor_called_with_linkTargetOffset) use only regex pattern matching on source file contents (e.g., `re.search(pattern, content)`). None of these import or execute the code. The pass-to-pass tests do run commands (lint, tsc, jest), but the core feature tests are purely textual."
+      "reason": "Almost all fail-to-pass tests (test_anchor_link_interface_has_targetOffset, test_registerLink_signature_updated, test_scrollTo_signature_updated, test_linkTargetOffsetRef_exists, etc.) use regex pattern matching on source file contents via open(path).read(). They do not import, call, or execute the code. The pass-to-pass tests do run commands (lint, tsc, jest), but every f2p test is purely text-matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since tests only check for text patterns in source files, a stub implementation that simply contains the right text patterns/comments without actually implementing the logic would pass. For example, adding dead code with the exact regex-matched strings would satisfy tests like test_linkTargetOffsetRef_exists and test_handleScrollTo_uses_link_targetOffset without any functional implementation."
+      "reason": "Since f2p tests only check for text patterns in source files (e.g., regex matching 'targetOffset?: number' in an interface, or 'linkTargetOffsetRef' declaration), a stub that merely adds the right text patterns without functional implementation would pass. For example, adding dead code with the right variable names and signatures would satisfy all f2p regex tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 8 behavioral requirements from instruction.md have corresponding test functions: interface changes (tests 1-3), ref storage (test 4), registration (tests 5, 9), cleanup (test 6), active link detection (test 7), scroll offset precedence (test 8), click handler (test 10), and useEffect dependency (test 11)."
+      "reason": "All eight behavioral requirements in instruction.md (interface prop, context signatures, offset tracking, registration, precedence, active link detection, cleanup, click handler) have corresponding test functions that check for them."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Fail-to-pass: AnchorLinkBaseProps interface must have targetOffset property') and are clearly separated into fail-to-pass and pass-to-pass categories with a section comment."
+      "reason": "Tests are well-named with descriptive function names (e.g., test_anchor_link_interface_has_targetOffset, test_registerLink_stores_targetOffset), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by feature area."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying React component code, not producing structured data output."
+      "reason": "This task involves modifying React component code, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and function names in instruction.md are consistent and correct (e.g., components/anchor/Anchor.tsx, AnchorLinkBaseProps, registerLink, targetOffset)."
+      "reason": "File paths, variable names, commands, and type signatures in instruction.md are consistent and correct with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like 'const linkTargetOffsetRef = React.useRef<Record<string, number>>({})', exact variable names, exact nullish coalescing expressions, and exact function parameter names (e.g., 'newTargetOffset'). This is implementation-level leakage far beyond what's needed to describe the feature."
+      "reason": "The instruction names exact internal implementation details: specific expressions like 'targetOffsetParams ?? targetOffset ?? offsetTop ?? 0', exact parameter names '_linkTargetOffset?: Record<string, number>', exact patterns '_linkTargetOffset?.[link] ?? _offsetTop', and exact dependency arrays. These are internal implementation choices, not behavioral requirements."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying React component files, not configuration files."
+      "reason": "This is a code-only task modifying React component files, not a configuration edit task."
     }
   },
   "tier_a_fails": [

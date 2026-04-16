@@ -122,6 +122,68 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 18-22
+- rule: The main form of integration test in deno is the 'spec' test... Create a directory
+    in `tests/specs/` with a descriptive name and add a `__test__.jsonc` file.
+  source:
+    path: CLAUDE.md
+    lines: 164-176
+  source_text: '## "spec" tests
+
+
+    The main form of integration test in deno is the "spec" test. These tests can
+    be
+
+    found in `tests/specs`. The idea is that you have a `__test__.jsonc` file that
+
+    lays out one or more tests, where a test is a CLI command to execute and the
+
+    output is captured and asserted against.
+
+
+    The name of the test comes from the directory the `__test__.jsonc` appears in.
+
+
+    ### Creating a New Spec Test
+
+
+    1. Create a directory in `tests/specs/` with a descriptive name
+
+    2. Add a `__test__.jsonc` file describing your test steps'
+  collision_type: scope_ambiguity
+  why_distracting: Since lockfile behavior has a user-facing CLI aspect, an agent
+    might incorrectly assume it should write a full CLI integration 'spec' test in
+    `tests/specs/`. However, this specific fix modifies an internal logic function
+    (`snapshot_from_lockfile`) inside a library crate (`libs/npm`), which is most
+    appropriately tested with an inline unit test.
+  severity: medium
+- rule: Test fixtures and data files belong in `tests/testdata/`.
+  source:
+    path: CLAUDE.md
+    lines: '63'
+  source_text: '- `tests/testdata/` - Test fixtures and data files'
+  collision_type: rule_conflict
+  why_distracting: An agent might interpret this list of directories as a strict requirement
+    that all mock data (such as the JSON lockfile content required for the test) must
+    be placed in a separate file in `tests/testdata/`. The gold diff correctly uses
+    a more readable raw string literal (`r#"..."#`) inline for the unit test instead.
+  severity: low
+- rule: The main form of integration test is the 'spec' test in `tests/specs/`. Each
+    test has a `__test__.jsonc` file describing CLI commands to run and expected output.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 130-134
+  source_text: '### Spec Tests
+
+
+    The main form of integration test is the "spec" test in `tests/specs/`. Each
+
+    test has a `__test__.jsonc` file describing CLI commands to run and expected
+
+    output. The schema is in `tests/specs/schema.json`.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to create an integration test via CLI rather
+    than verifying the rust-level fix with a module-level unit test.
+  severity: medium
 hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`). The primary
   conflict arises between the general repository layout guidelines (which dictate
   tests go in `tests/unit/`) and the local file conventions (which use inline `mod
@@ -134,3 +196,24 @@ rubric:
   evidence: The diff strictly targets the `snapshot_from_lockfile` function and its
     corresponding test module, avoiding any unrelated refactoring or drive-by changes.
   category: style
+- rule: Unit tests must be written inline with the source code in each module.
+  source:
+    path: CLAUDE.md
+    lines: '160'
+  source_text: '- **Unit tests** - Inline with source code in each module'
+  evidence: The diff adds a new test `test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps`
+    using the `#[tokio::test]` macro directly inside the `libs/npm/resolution/snapshot.rs`
+    file within a `mod tests` block, adhering perfectly to this inline unit testing
+    convention.
+  category: Testing
+  verification: llm_judge
+- rule: Unit tests should be placed inline with the source code in each module.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '126'
+  source_text: '- **Unit tests** — Inline with source code in each module'
+  evidence: The new test `test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps`
+    is added directly within `libs/npm/resolution/snapshot.rs` instead of an external
+    testing file.
+  category: Testing
+  verification: llm_judge

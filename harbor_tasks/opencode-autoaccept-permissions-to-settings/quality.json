@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: data-action='prompt-permissions' removal, data-action='settings-auto-accept-permissions' addition, Switch component, usePermission context, toggleAutoAcceptDirectory/enableAutoAccept/disableAutoAccept for session/directory handling, toggleAccept/acceptLabel removal, and the exact file paths (prompt-input.tsx, settings-general.tsx). The e2e test files are also mentioned. All assert'd strings and paths are discoverable from the instruction."
+      "reason": "Instruction names all key paths (prompt-input.tsx, settings-general.tsx, e2e specs), data-action strings ('prompt-permissions', 'settings-auto-accept-permissions'), and identifiers (acceptLabel, toggleAccept, usePermission via 'permission context', Switch, SettingsRow)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact data-action attribute value to use ('settings-auto-accept-permissions'), specifies using a Switch component inside a SettingsRow, names the exact functions to remove (toggleAccept, acceptLabel), and tells the agent to use usePermission context. This is prescriptive enough that the agent doesn't need to reason about WHAT to change\u2014it's told exactly what to implement."
+      "outcome": "pass",
+      "reason": "Instruction describes what to move and required attributes/behavior but doesn't provide code or line-level edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact data-action string 'settings-auto-accept-permissions' (test_auto_accept_toggle_in_settings), exact Switch component with checked/onChange props, exact import name 'usePermission' (test_settings_uses_permission_context), exact variable names 'toggleAutoAcceptDirectory' and 'enableAutoAccept'/'disableAutoAccept' (test_settings_toggle_handles_session_and_directory). An alternative correct implementation using different naming (e.g., 'autoA"
+      "outcome": "pass",
+      "reason": "Tests check for required data-action strings, Switch usage, usePermission import/call, and either toggleAutoAccept or enable/disableAutoAccept pair \u2014 allowing reasonable implementation variants."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests are AST-based text inspection (checking for presence/absence of specific strings, variable names, JSX attributes in source files) rather than executing the code. test_settings_toggle_handles_session_and_directory is literally 'toggleAutoAcceptDirectory in src' \u2014 a plain text search. The typecheck test does execute compilation, but the core behavioral tests (f2p) are all static analysis of source text, not runtime behavior verification."
+      "outcome": "pass",
+      "reason": "Tests parse TS AST via node, run bun typecheck and bun test for unit/e2e suites, not just string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass these tests. test_permissions_button_removed_from_composer requires actual removal of specific code from prompt-input.tsx. test_auto_accept_toggle_in_settings requires adding a Switch with checked/onChange and a specific data-action. test_settings_uses_permission_context requires importing and calling usePermission. test_prompt_input_not_stubbed requires >1000 lines. These collectively prevent trivial stubs."
+      "reason": "F2P tests require real AST changes (removal of data-action, addition of Switch with checked/onChange, usePermission call, directory/session handlers) that a stub couldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors explicitly required by the instruction are tested: removal of old button/code from prompt-input.tsx, addition of Switch with correct data-action in settings-general.tsx, use of permission context, handling session and directory toggling, and typecheck passing."
+      "reason": "Removal from prompt-input, addition to settings with correct data-action and permission context usage, and e2e updates all covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, repo_tests), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are grouped under section comments (Gates, Fail-to-pass, Pass-to-pass repo_tests) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component refactoring, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, data-action strings, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "Filenames and identifiers match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact implementation details: specific data-action value 'settings-auto-accept-permissions', exact variable names to remove (acceptLabel, toggleAccept), exact component type (Switch in SettingsRow), and the onMouseDown selector reference. This goes beyond describing the problem and prescribes the exact solution shape."
+      "outcome": "pass",
+      "reason": "Task inherently requires naming the files being refactored; no line-number leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

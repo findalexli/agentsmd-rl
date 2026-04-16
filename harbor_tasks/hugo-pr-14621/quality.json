@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_css_loader_extension_constant_exists checks that defaultCSSFileLoaderExts is in 'resolve.go' specifically (instruction only says 'internal/js/esbuild package'); test_loader_from_filename_returns_default parses the function body looking for 'opts.IsCSS' inside loaderFromFilename (instruction never mentions opts.IsCSS appearing inside that function); test_no_regression_in_loaderFromFilename checks for the exact string 'default to "
+      "reason": "Tests assert specific file paths like 'internal/js/esbuild/resolve.go' (test_css_loader_extension_constant_exists) and exact string patterns like 'default to the file loader for unknown extensions' (test_no_regression_in_loaderFromFilename), the exact function signature 'func (o Options) loaderFromFilename' (test_loader_from_filename_returns_default), and test names like 'TestResolveComponentInAssets' and 'TestToBuildOptions' and 'TestCSSBuild$' which are never mentioned in instruction.md. The i"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: create 'defaultCSSFileLoaderExts' constant, configure 'api.LoaderFile' loaders when 'opts.IsCSS' is true and no explicit loaders config exists, change loaderFromFilename to return 'api.LoaderDefault' instead of 'api.LoaderJS', and include a specific comment string 'default to the file loader for common static'. This prescribes the exact code changes rather than just describing what's broken."
+      "reason": "instruction.md explicitly states the exact fix: create a constant named 'defaultCSSFileLoaderExts', configure 'api.LoaderFile' loaders when 'opts.IsCSS' is true, change 'loaderFromFilename' to return 'api.LoaderDefault' instead of 'api.LoaderJS', and include a specific comment phrase. This prescribes exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_css_loader_extension_constant_exists requires the variable be named exactly 'defaultCSSFileLoaderExts' and be in 'resolve.go'; test_css_loader_default_in_options requires 'defaultCSSFileLoaderExts' in options.go; test_no_regression_in_loaderFromFilename checks for the exact comment string 'default to the file loader for common static'. An alternative correct fix using a different variable name, different file organization, or different comm"
+      "reason": "Tests check for gold-specific implementation details: the exact variable name 'defaultCSSFileLoaderExts' in resolve.go (test_css_loader_extension_constant_exists), the exact comment string 'default to the file loader for common static' (test_no_regression_in_loaderFromFilename), 'return api.LoaderDefault' in loaderFromFilename (test_loader_from_filename_returns_default). An alternative correct fix using a different variable name, different file, or different structure would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_css_loader_extension_constant_exists, test_css_loader_default_in_options, test_loader_from_filename_returns_default, and test_no_regression_in_loaderFromFilename are purely text-matching tests (reading files and checking for string presence). While some tests do execute code (test_repo_css_integration_test, test_esbuild_package_compiles, etc.), the majority of f2p tests are assert-string-in-file patterns."
+      "reason": "Tests test_css_loader_extension_constant_exists, test_css_loader_default_in_options, test_loader_from_filename_returns_default, and test_no_regression_in_loaderFromFilename are purely text-matching tests (assert 'X' in open(path).read()). While some tests do run subprocesses (test_repo_css_integration_test, test_esbuild_package_compiles, etc.), the majority of f2p tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The integration test test_repo_css_integration_test runs the actual Go test TestCSSBuildLoadersDefault which would fail without the real fix applied. A stub implementation couldn't pass the go test and go build checks."
+      "reason": "The integration test test_repo_css_integration_test runs the actual Go test TestCSSBuildLoadersDefault which would fail without the real fix. The compilation tests also verify structural correctness. A stub implementation cannot pass these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six explicit requirements from instruction.md are covered by tests: defaultCSSFileLoaderExts constant (test 1), auto-configure LoaderFile for CSS (test 2), loaderFromFilename returns LoaderDefault (test 3), comment with specific phrase (test 7 checks for it), backward compatibility (test 4/integration), and TestCSSBuildLoadersDefault passing (test 4)."
+      "reason": "All six behaviors from instruction.md are tested: (1) defaultCSSFileLoaderExts constant, (2) automatic LoaderFile for CSS builds, (3) loaderFromFilename returning LoaderDefault, (4) comment phrase, (5) backward compatibility via existing tests, (6) TestCSSBuildLoadersDefault passing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test validates. They are logically grouped from unit-level checks to integration tests."
+      "reason": "Tests are well-named (test_css_loader_extension_constant_exists, test_loader_from_filename_returns_default, etc.), have docstrings explaining their purpose, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names the exact constant 'defaultCSSFileLoaderExts', the exact method signature 'func (o Options) loaderFromFilename', the exact package 'internal/js/esbuild', and the exact test name 'TestCSSBuildLoadersDefault' in 'tpl/css'. It also specifies the exact return value change (LoaderDefault vs LoaderJS) and exact comment text. This goes far beyond describing the bug domain."
+      "reason": "instruction.md names exact files ('internal/js/esbuild' package), exact method signatures ('func (o Options) loaderFromFilename'), exact constant names ('defaultCSSFileLoaderExts'), exact return values to change ('api.LoaderDefault instead of api.LoaderJS'), and exact comment text to include. This goes far beyond describing the bug domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

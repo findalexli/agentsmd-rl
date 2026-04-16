@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific literal strings not mentioned in instruction.md, e.g. '\"org\", \"get-default\"' (Go string formatting), '[\"org\", \"get-default\"]' (Python list formatting), 'newAutoError', 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")', 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])', 'Returns the default organization' (exact docstring text). The instruction doesn't specify these exact string patterns, error handling with newAutoError, or the exact CLI runner method names."
+      "outcome": "pass",
+      "reason": "All file paths, method names, signatures, test function names, command patterns, and required docstring phrase 'Returns the default organization' are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md provides exact method signatures like 'OrgGetDefault(context.Context) (string, error)' and 'OrgSetDefault(ctx context.Context, orgName string) error', exact file paths to modify, and exact test function names. While it describes WHAT to add, it provides so much specificity (exact signatures, exact receiver types like 'func (l *LocalWorkspace)') that little reasoning is needed about what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes what methods to add and their signatures/behavior, not specific line edits or implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'l.runPulumiCmdSync(ctx, \"org\", \"get-default\")' in test_go_methods_follow_existing_patterns, 'self._run_pulumi_cmd_sync([\"org\", \"get-default\"])' in test_python_methods_follow_existing_patterns, 'newAutoError' in test_go_org_methods_have_proper_error_handling. An alternative correct implementation using different formatting (e.g., extra spaces, different variable capture patterns, or a helper wrapper) would fail these string-match"
+      "reason": "test_go_methods_follow_existing_patterns asserts the literal string `l.runPulumiCmdSync(ctx, \"org\", \"get-default\")` and test_python_methods_follow_existing_patterns asserts `self._run_pulumi_cmd_sync([\"org\", \"get-default\"])`, forcing specific internal helper usage that alternative correct implementations might not match."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The vast majority of tests (test_go_workspace_interface_has_org_methods, test_go_local_workspace_has_org_methods, test_python_workspace_has_abstract_org_methods, test_python_local_workspace_has_org_methods, test_go_methods_follow_existing_patterns, test_python_methods_follow_existing_patterns, etc.) are purely text-matching with 'assert X in open(path).read()'. While some tests do run 'go build' and 'py_compile', those are compilation checks, not behavioral execution of the new methods."
+      "outcome": "pass",
+      "reason": "Tests include subprocess runs like `go build ./...`, `go vet`, `gofmt`, and `py_compile` to verify compilation behavior, not only string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-matching tests check for specific implementation patterns (method definitions, CLI command strings, error handling) that wouldn't be present by default. A stub/empty implementation wouldn't contain strings like '\"org\", \"get-default\"' or 'newAutoError'. The go build/vet tests also enforce interface compliance."
+      "reason": "Tests assert specific method signatures, command strings, and error-handling patterns that a stub cannot satisfy without actual implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (Go interface methods, Go implementation, Python abstract methods, Python implementation, Go tests, Python tests) are covered by corresponding test functions."
+      "reason": "Tests cover interface methods, implementation, error handling (newAutoError), docstrings, signatures, and both language test file presence as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_go_workspace_interface_has_org_methods, test_python_local_workspace_has_org_methods, etc.), have docstrings, and are logically grouped by language and concern. There's even a comment section header for 'Pass-to-pass tests'."
+      "reason": "Tests have descriptive names and are grouped with a pass-to-pass CI-commands section separator comment."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and method names in instruction.md appear correct and consistent with the test expectations."
+      "reason": "Filenames, method names, and paths are consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files (local_workspace.go, _local_workspace.py, workspace.go, _workspace.py), exact method signatures, exact struct/class names, and exact test function names, leaving essentially no localization work for the agent."
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files at module level (expected), doesn't identify specific line numbers or buggy code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

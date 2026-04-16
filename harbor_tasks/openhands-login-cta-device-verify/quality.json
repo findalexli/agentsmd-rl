@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all file paths (login-cta.tsx, device-verify.tsx), variable names (LoginCTAProps, ENTERPRISE_URL, isDeviceVerifySource, learnMoreButtonClassName), literal strings ('https://openhands.dev/enterprise', 'login_page', 'device_verify'), CSS classes (lg:items-stretch, rounded-2xl, border-[#242424], lg:self-stretch), import paths, and the specific comment text that the tests assert on. All test-asserted specifics are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert exact strings like 'isDeviceVerifySource', 'Use <a> for external destination', 'type LoginCTAProps', 'source?: \"login_page\" | \"device_verify\"', 'ENTERPRISE_URL = \"https://openhands.dev/enterprise\"', 'href={ENTERPRISE_URL}', and 'isDeviceVerifySource ? (' \u2014 many of these specific variable names, comment text, and JSX patterns are not mentioned in instruction.md. For example, the variable name 'isDeviceVerifySource' and the exact comment 'Use <a> for external destination' are not spec"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: specific variable names (isDeviceVerifySource, learnMoreButtonClassName, ENTERPRISE_URL), exact prop types, exact conditional rendering pattern ('isDeviceVerifySource ? ('), exact comment text, exact CSS classes, and exact import statements. This leaves virtually no reasoning for the developer \u2014 it's a dictation of the solution, not a description of what's broken."
+      "reason": "The instruction explicitly tells the agent to accept a 'source' prop with type 'login_page' | 'device_verify', to use an <a> tag with target='_blank' and rel='noopener noreferrer', to use ENTERPRISE_URL constant, to pass className='lg:self-stretch', etc. This goes well beyond describing what's broken and essentially dictates the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details via string matching: 'isDeviceVerifySource' variable name (test_login_cta_has_source_prop), exact string 'isDeviceVerifySource ? (' (test_login_cta_renders_external_link_for_device_verify), 'href={ENTERPRISE_URL}' instead of the literal URL (test_login_cta_renders_external_link_for_device_verify), and exact type syntax 'source?: \"login_page\" | \"device_verify\"'. An alternative correct implementation using different variable names or inline cond"
+      "reason": "Tests like test_login_cta_has_source_prop assert exact strings: 'isDeviceVerifySource' (a specific variable name), 'Use <a> for external destination' (exact comment text), 'isDeviceVerifySource ? (' (exact conditional pattern), 'ENTERPRISE_URL = \"https://openhands.dev/enterprise\"' (exact constant declaration). An alternative correct implementation using different variable names or comment wording would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_login_cta_has_source_prop, test_login_cta_renders_external_link_for_device_verify, test_device_verify_uses_login_cta, test_device_verify_passes_correct_props, and test_layout_classes_updated all use only `open(path).read()` and string `assert ... in content` with no execution or behavioral testing. While tests like test_repo_frontend_tests and test_repo_build do execute code, the majority of f2p tests (5 out of 11) are pure text matching."
+      "reason": "Tests test_login_cta_has_source_prop, test_login_cta_renders_external_link_for_device_verify, test_device_verify_uses_login_cta, test_device_verify_passes_correct_props, and test_layout_classes_updated are purely text-matching (reading file content and asserting substrings). While test_repo_frontend_tests and test_repo_tests_login_cta do run actual tests, the majority of f2p tests are pure text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-matching tests would fail on a stub/empty file since they check for specific strings. The execution-based tests (test_repo_frontend_tests, test_repo_tests_login_cta, test_repo_build, test_repo_lint, test_repo_typescript_compile) run actual compilation and test suites that would fail without a real implementation. A stub implementation cannot pass these."
+      "reason": "The tests do require actual implementation changes \u2014 a stub/empty file would not contain the required strings, and the subprocess tests (build, lint, typecheck, unit tests) would fail without proper code changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors from the instruction are tested: source prop type, ENTERPRISE_URL constant, isDeviceVerifySource logic, external link attributes, LoginCTA import in device-verify, source prop passing, layout classes, and the existing test suite runs verify the component renders correctly in both modes."
+      "reason": "The tests cover source prop, external link rendering, device-verify page integration, layout classes, analytics tracking (via the repo's own unit tests), and build/lint/typecheck requirements, which maps to the instruction's requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_login_cta_has_source_prop, test_device_verify_uses_login_cta, etc.) and include docstrings explaining what each test verifies. They are logically grouped by concern."
+      "reason": "Tests are individually named with descriptive function names and docstrings, grouped by concern (component props, rendering, page integration, layout, build checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component changes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves UI component changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, CSS classes, URLs, and commands in the instruction match those expected by the tests without typographical errors."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details including variable names (isDeviceVerifySource, learnMoreButtonClassName, ENTERPRISE_URL), exact CSS classes to add (h-full, mt-auto), exact conditional rendering pattern, and exact comment text. This goes far beyond naming the buggy file \u2014 it dictates the exact solution line by line."
+      "reason": "The instruction specifies exact file paths, exact prop names and types ('source?: \"login_page\" | \"device_verify\"'), exact CSS classes ('lg:self-stretch', 'lg:items-stretch', 'rounded-2xl', 'border-[#242424]'), exact import paths, and exact component replacements. This goes beyond identifying the problem domain and into specifying the exact solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving React component changes, not configuration file edits."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

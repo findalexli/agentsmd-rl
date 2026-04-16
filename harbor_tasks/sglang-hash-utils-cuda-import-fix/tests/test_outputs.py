@@ -56,6 +56,7 @@ def test_syntax_check():
 
 
 def test_import_hash_utils_from_utils():
+    """Test that utils.py contains working hash functions."""
     utils_path = Path(REPO) / "python/sglang/srt/mem_cache/utils.py"
     get_hash_str = _extract_and_compile_function(utils_path, "get_hash_str")
     hash_str_to_int64 = _extract_and_compile_function(utils_path, "hash_str_to_int64")
@@ -66,11 +67,14 @@ def test_import_hash_utils_from_utils():
 
 
 def test_hash_functions_correctness():
+    """Test that get_hash_str and hash_str_to_int64 produce correct outputs."""
     utils_path = Path(REPO) / "python/sglang/srt/mem_cache/utils.py"
     get_hash_str = _extract_and_compile_function(utils_path, "get_hash_str")
     hash_str_to_int64 = _extract_and_compile_function(utils_path, "hash_str_to_int64")
     assert get_hash_str is not None, "get_hash_str not found in utils.py"
     assert hash_str_to_int64 is not None, "hash_str_to_int64 not found in utils.py"
+
+    # Test get_hash_str with tokens
     tokens = [1, 2, 3]
     result = get_hash_str(tokens)
     hasher = hashlib.sha256()
@@ -78,6 +82,8 @@ def test_hash_functions_correctness():
         hasher.update(t.to_bytes(4, byteorder="little", signed=False))
     expected = hasher.hexdigest()
     assert result == expected, f"Expected {expected}, got {result}"
+
+    # Test get_hash_str with prior_hash
     prior = result
     tokens2 = [4, 5]
     result2 = get_hash_str(tokens2, prior)
@@ -87,6 +93,8 @@ def test_hash_functions_correctness():
         hasher2.update(t.to_bytes(4, byteorder="little", signed=False))
     expected2 = hasher2.hexdigest()
     assert result2 == expected2, f"Expected {expected2}, got {result2}"
+
+    # Test hash_str_to_int64 with signed conversion
     test_hash = "aabbccdd11223344000000000000000000000000000000000000000000000000"
     int_result = hash_str_to_int64(test_hash)
     uint64_val = int("aabbccdd11223344", 16)
@@ -98,9 +106,11 @@ def test_hash_functions_correctness():
 
 
 def test_hash_bigram_mode():
+    """Test that get_hash_str handles bigram tuples correctly."""
     utils_path = Path(REPO) / "python/sglang/srt/mem_cache/utils.py"
     get_hash_str = _extract_and_compile_function(utils_path, "get_hash_str")
     assert get_hash_str is not None, "get_hash_str not found in utils.py"
+
     tokens = [(1, 2), (3, 4)]
     result = get_hash_str(tokens)
     hasher = hashlib.sha256()
@@ -114,24 +124,77 @@ def test_hash_bigram_mode():
     assert result == expected, f"Expected {expected}, got {result}"
 
 
-def test_import_sites_updated():
+def test_import_sites_use_utils_module():
+    """Test that radix_cache and cache_controller import from utils module.
+
+    This verifies the specific behavior requirement: functions must be imported
+    from the utils module. Alternative implementations that import from other
+    modules or define functions locally would fail this test.
+    """
     radix_cache_path = Path(REPO) / "python/sglang/srt/mem_cache/radix_cache.py"
-    content = radix_cache_path.read_text()
-    assert "from sglang.srt.mem_cache.utils import get_hash_str" in content, "radix_cache.py should import get_hash_str from utils module"
-    assert "from sglang.srt.mem_cache.utils import" in content and "hash_str_to_int64" in content, "radix_cache.py should import hash_str_to_int64 from utils module"
     cache_controller_path = Path(REPO) / "python/sglang/srt/managers/cache_controller.py"
+
+    radix_content = radix_cache_path.read_text()
     cc_content = cache_controller_path.read_text()
-    assert "from sglang.srt.mem_cache.utils import get_hash_str" in cc_content, "cache_controller.py should import get_hash_str from utils module"
+
+    # Check that both files import from utils module (behavioral requirement)
+    # Multiple correct patterns are accepted:
+    # - from sglang.srt.mem_cache.utils import X
+    # - from .utils import X (relative import)
+    # - import sglang.srt.mem_cache.utils; utils.X
+
+    def has_utils_import(content: str, func_name: str) -> bool:
+        """Check if content imports func_name from utils module."""
+        # Direct import from utils module
+        if f"from sglang.srt.mem_cache.utils import" in content and func_name in content:
+            return True
+        # Relative import from utils
+        if f"from .utils import" in content and func_name in content:
+            return True
+        # Module import with attribute access pattern
+        if "import sglang.srt.mem_cache.utils" in content and func_name in content:
+            return True
+        # Import utils with alias
+        if "from sglang.srt.mem_cache import utils" in content and func_name in content:
+            return True
+        return False
+
+    assert has_utils_import(radix_content, "get_hash_str"), \
+        "radix_cache.py must import get_hash_str from utils module"
+    assert has_utils_import(radix_content, "hash_str_to_int64"), \
+        "radix_cache.py must import hash_str_to_int64 from utils module"
+    assert has_utils_import(cc_content, "get_hash_str"), \
+        "cache_controller.py must import get_hash_str from utils module"
 
 
-def test_hicache_storage_functions_removed():
+def test_hash_functions_not_defined_in_hicache_storage():
+    """Test that hicache_storage.py does not define its own hash functions.
+
+    After the fix, these functions should be defined in utils.py and imported.
+    This test verifies the behavioral requirement that hicache_storage does not
+    contain its own implementation of these functions.
+    """
     hicache_path = Path(REPO) / "python/sglang/srt/mem_cache/hicache_storage.py"
     content = hicache_path.read_text()
-    assert "def get_hash_str(" not in content, "get_hash_str should be removed from hicache_storage.py"
-    assert "def hash_str_to_int64(" not in content, "hash_str_to_int64 should be removed from hicache_storage.py"
+
+    # Check that the functions are not DEFINED (implemented) in this file
+    # They could be imported (re-exported), but not defined
+
+    # Find all function definitions in the file
+    tree = ast.parse(content)
+    defined_functions = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            defined_functions.append(node.name)
+
+    assert "get_hash_str" not in defined_functions, \
+        "get_hash_str should not be defined (implemented) in hicache_storage.py - it should be imported from utils"
+    assert "hash_str_to_int64" not in defined_functions, \
+        "hash_str_to_int64 should not be defined (implemented) in hicache_storage.py - it should be imported from utils"
 
 
 def test_not_stub():
+    """Test that hash functions in utils.py have non-trivial implementations."""
     utils_path = Path(REPO) / "python/sglang/srt/mem_cache/utils.py"
     content = utils_path.read_text()
     tree = ast.parse(content)
@@ -190,6 +253,11 @@ def test_modified_files_lint():
 
 
 def test_hash_functions_work_on_base():
+    """Test that hash functions work regardless of where they're defined.
+
+    This test checks that the functions are available somewhere in the expected
+    locations and produce correct output.
+    """
     hicache_path = Path(REPO) / "python/sglang/srt/mem_cache/hicache_storage.py"
     get_hash_str = _extract_and_compile_function(hicache_path, "get_hash_str")
     hash_str_to_int64 = _extract_and_compile_function(hicache_path, "hash_str_to_int64")
@@ -199,6 +267,8 @@ def test_hash_functions_work_on_base():
         hash_str_to_int64 = _extract_and_compile_function(utils_path, "hash_str_to_int64")
     assert get_hash_str is not None, "get_hash_str not found in expected locations"
     assert hash_str_to_int64 is not None, "hash_str_to_int64 not found in expected locations"
+
+    # Test get_hash_str
     tokens = [1, 2, 3]
     result = get_hash_str(tokens)
     hasher = hashlib.sha256()
@@ -206,11 +276,15 @@ def test_hash_functions_work_on_base():
         hasher.update(t.to_bytes(4, byteorder="little", signed=False))
     expected = hasher.hexdigest()
     assert result == expected, f"get_hash_str failed: expected {expected}, got {result}"
+
+    # Test hash_str_to_int64
     test_hash = "aabbccdd11223344000000000000000000000000000000000000000000000000"
     int_result = hash_str_to_int64(test_hash)
     uint64_val = int("aabbccdd11223344", 16)
     expected_int = uint64_val - 2**64 if uint64_val >= 2**63 else uint64_val
     assert int_result == expected_int, f"hash_str_to_int64 failed: expected {expected_int}, got {int_result}"
+
+    # Test bigram mode
     tokens_bigram = [(1, 2), (3, 4)]
     result_bigram = get_hash_str(tokens_bigram)
     hasher2 = hashlib.sha256()

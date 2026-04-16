@@ -3,56 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (torch/_inductor/scheduler.py), the class (FusedMixOrderReductions), the methods (sub_node_can_fuse, fuse_with), MixOrderReduction.is_contiguous_node, and describes the contiguity invariant. All test assertions target sub_node_can_fuse behavior in FusedMixOrderReductions using MixOrderReduction.is_contiguous_node \u2014 all discoverable from the instruction."
+      "reason": "instruction.md names the file (torch/_inductor/scheduler.py), the class (FusedMixOrderReductions), the methods (sub_node_can_fuse, fuse_with), and MixOrderReduction.is_contiguous_node. The tests extract and call sub_node_can_fuse from FusedMixOrderReductions via AST, using MixOrderReduction.is_contiguous_node \u2014 all discoverable from the instruction. The mock structure (contiguous/non-contiguous nodes, scheduler.can_fuse) maps to described behavior."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (sub_node_can_fuse doesn't check contiguity) and the expected behavior (fusion should be rejected), but does not specify the exact code change, line number to modify, or the specific conditional expression to add."
+      "reason": "instruction.md describes the bug (missing contiguity check in sub_node_can_fuse) and expected behavior (fusion should be rejected before __init__), but does not specify the exact code change, line content, or implementation approach. A developer must still reason about how to add the guard."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests extract the method sub_node_can_fuse via AST from FusedMixOrderReductions and execute it against mocks. An alternative correct fix that adds the guard in fuse_with instead of sub_node_can_fuse, or restructures the method differently (e.g., adding validation in __init__ to reject rather than assert), would fail these tests because they specifically call sub_node_can_fuse and assert it returns False."
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (sub_node_can_fuse returns False for non-contiguous node2 when node1 is contiguous, and returns truthy for both-contiguous cases). They don't assert specific variable names, line positions, or helper function names. Any correct fix that makes sub_node_can_fuse reject non-contiguous fusions would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract sub_node_can_fuse via AST, compile it, and actually call it with mock objects in subprocesses, checking return values \u2014 they test behavior, not text patterns."
+      "reason": "Tests extract the method via AST, compile and execute it against mock objects in subprocesses, and assert on return values. They are behavioral tests, not text-matching tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests assert that sub_node_can_fuse returns False for non-contiguous node2 when node1 is contiguous. The original code (before the fix) would return True in these cases (since it passes the can_fuse and score checks). A stub returning None or True would fail. A stub returning False would fail the pass-to-pass tests (test_both_contiguous_fusion_allowed, test_scheduler_rejects_prevents_fusion)."
+      "reason": "On the unpatched code, sub_node_can_fuse lacks the contiguity check and would return truthy for non-contiguous node2 when node1 is contiguous. The fail_to_pass tests assert result is False in that scenario, so a stub or the original code would fail these tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction says fusion should be rejected when contiguity invariant would be violated. Tests verify this: non-contiguous pointwise rejected, non-contiguous reduction rejected, both-contiguous allowed, scheduler-rejects still work, cycle detection preserved."
+      "reason": "instruction.md says 'The fusion should be rejected before it reaches FusedMixOrderReductions.__init__, so that the contiguity invariant is never violated.' Tests verify exactly this: sub_node_can_fuse rejects non-contiguous fusions while still allowing valid contiguous fusions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_contiguity_guard_rejects_noncontiguous_pointwise, test_both_contiguous_fusion_allowed, etc.), docstrings, and clear sections separating pass-to-pass from fail-to-pass tests."
+      "reason": "Tests are clearly named and grouped with comments (e.g., 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', 'Pass-to-pass (pr_diff)'). Each test function has a descriptive docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code bug fix, not structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, method names, or variable names across instruction.md and test files."
+      "reason": "File paths, class names, method names, and variable names in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact method (sub_node_can_fuse around line 2140), the exact class (FusedMixOrderReductions), and the exact check missing (contiguity invariant not verified after fusion). It even says 'MixOrderReduction.is_contiguous_node (around line 379)' \u2014 this level of localization essentially tells the agent exactly where and what to change."
+      "reason": "instruction.md names the exact method ('sub_node_can_fuse (around line 2140)') and exact file with approximate line numbers. It also precisely describes what the fix should be: 'The fusion should be rejected before it reaches FusedMixOrderReductions.__init__' and that sub_node_can_fuse 'does not verify that the contiguity invariant is preserved after the fusion.' This significantly narrows the localization effort."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

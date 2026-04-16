@@ -93,13 +93,46 @@ rubric:
     commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
   evidence: Gold solution only modifies dataloader.py, not CLAUDE.md
   category: scope
-- rule: cli_args.py was not modified - handled via isinstance check in dataloader instead
+- rule: cli_args.py was not modified - handled via isinstance check in dataloader
+    instead
   source:
     path: areal/api/cli_args.py
     lines: 1
     commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
   evidence: Gold solution avoids modifying config structures per AGENTS.md guidance
   category: architecture
+- rule: Config dataclasses must follow the `XxxConfig` naming pattern.
+  source:
+    path: .claude/rules/code-style.md
+    lines: 50-52
+  source_text: '| Type             | Pattern       | Example                             |
+
+    | ---------------- | ------------- | ----------------------------------- |
+
+    | Config dataclass | `XxxConfig`   | `GRPOConfig`, `FSDPConfig`          |'
+  evidence: The diff imports and uses `ValidDatasetConfig`, which adheres to the `XxxConfig`
+    naming convention.
+  category: naming
+  verification: llm_judge
+- rule: Do not use wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 25-25
+  source_text: '- No wildcard imports (`from x import *`).'
+  evidence: The diff explicitly imports `ValidDatasetConfig` and `_DatasetConfig`
+    from `areal.api.cli_args` rather than using a wildcard import.
+  category: imports
+  verification: llm_judge
+- rule: Keep inheritance shallow (≤2 levels when possible).
+  source:
+    path: .claude/rules/code-style.md
+    lines: 11-11
+  source_text: '- Keep inheritance shallow (≤2 levels when possible)'
+  evidence: The newly created `EvalDistributedSampler` class inherits directly from
+    `DistributedSampler`, maintaining a shallow inheritance hierarchy of just one
+    level.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   collision_type: architecture_boundary
@@ -120,6 +153,42 @@ distractors:
   source:
     path: AGENTS.md
     lines: 31-31
+- rule: Process Group Management
+  source:
+    path: .claude/rules/distributed.md
+    lines: 10-14
+  source_text: '## Process Group Management
+
+
+    - **Never create global process group** in module-level code
+
+    - Always pass `process_group` explicitly, don''t rely on default
+
+    - Use `dist.get_rank(group)` not `dist.get_rank()` when group matters'
+  collision_type: scope_ambiguity
+  why_distracting: Because the code implements a custom `DistributedSampler` and handles
+    `rank` and `world_size`, an agent might try to apply these distributed rules by
+    requiring a `process_group` argument or replacing `rank` with `dist.get_rank(group)`.
+    However, this file is in `areal/utils/`, which is outside the rule's path scope
+    (`areal/engine/**`), and standard PyTorch samplers operate on `num_replicas` and
+    `rank` integers rather than process groups.
+  severity: medium
+- rule: Validation in __post_init__
+  source:
+    path: .claude/rules/api-config.md
+    lines: 35-43
+  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError`\
+    \ with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
+    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
+    )\n  ```"
+  collision_type: architecture_boundary
+  why_distracting: The code validates `dataset_config.batch_size` against `world_size`
+    and raises a `ValueError`. An agent reading the API config rules might try to
+    move this validation into the `__post_init__` of `_DatasetConfig` or `ValidDatasetConfig`.
+    This would be an architectural error because `world_size` is a runtime environment
+    variable passed to the dataloader, not a property of the dataset configuration
+    itself.
+  severity: high
 hierarchy_analysis: AGENTS.md and CLAUDE.md provide overlapping rules at the root
   level. The agent must synthesize the constraint against modifying `cli_args.py`
   to arrive at the `isinstance` check in `dataloader.py`, while ignoring the 'composition

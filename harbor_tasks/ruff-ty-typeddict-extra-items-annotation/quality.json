@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on the specific diagnostic string 'invalid-type-form' (e.g., test_required_rejected_in_extra_items checks `'invalid-type-form' in output`). While instruction.md does mention 'invalid-type-form' diagnostic, the tests also check specific types like ClassVar and Final individually, and the instruction does list these. However, the test test_readonly_extra_items_accepted checks that 'invalid-type-form' is NOT in output for ReadOnly and plain int \u2014 this specific negative check pattern is"
+      "outcome": "pass",
+      "reason": "Instruction names the diagnostic 'invalid-type-form', the qualifiers tested (Required/NotRequired/ClassVar/Final/ReadOnly), and the ty check command used by tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes what's broken and expected behavior but does not prescribe exact code changes like 'change line X to Y'. It names relevant files but that's guidance, not the solution itself."
+      "reason": "Instruction describes desired behavior, not implementation details like which file/function to modify."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for behavioral output ('invalid-type-form' in ty's diagnostic output) rather than specific implementation details like variable names or helper function names. Alternative implementations that produce the same diagnostic would pass."
+      "reason": "Tests only check for presence/absence of 'invalid-type-form' substring in ty output, which any correct implementation would produce."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute the ty binary via subprocess (_ty_check), compile code via cargo, and run unit/mdtests. They check actual tool behavior, not just source file contents."
+      "reason": "Tests build and invoke the ty binary via subprocess on real code samples."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_required_rejected_in_extra_items, test_not_required_rejected_in_extra_items, etc.) check that ty NOW produces 'invalid-type-form' errors where it previously didn't. A stub/no-op implementation would not produce these diagnostics, so these tests cannot be trivially satisfied."
+      "reason": "Each f2p test requires ty to actually emit invalid-type-form for the specific qualifier; a stub would fail test_readonly_extra_items_accepted (which requires no error) vs the fail_to_pass tests requiring errors."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md mentions forward references ('extra_items=\"Foo | None\"' should be resolved, self-referential forward references in stubs should work) and non-TypedDict classes should treat extra_items as regular expression. These behaviors are tested in the mdtest (test_ty_python_semantic_typed_dict_mdtest) but only indirectly \u2014 the mdtest must be updated by the agent. The InitVar case mentioned in instruction.md is not directly tested by any standalone test function."
+      "outcome": "pass",
+      "reason": "Tests cover Required, NotRequired, ClassVar, Final rejections and ReadOnly/plain acceptance as described; forward references not directly tested but mdtest covers via repo tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with docstrings, grouped by category (static/pass_to_pass gates, fail-to-pass behavioral tests, pass-to-pass validation), and have clear comments separating sections."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos detected in paths, commands, or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact files to modify: 'crates/ty_python_semantic/src/types/infer/builder/class.rs', 'crates/ty_python_semantic/src/types/infer/builder/typed_dict.rs', and the mdtest file. It even names the specific function 'infer_extra_items_kwarg'. This significantly narrows the search space beyond what the task domain alone would suggest."
+      "outcome": "pass",
+      "reason": "Instruction does not cite specific file or line to edit."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

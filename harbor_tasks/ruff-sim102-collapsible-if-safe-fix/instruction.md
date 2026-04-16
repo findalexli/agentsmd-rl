@@ -10,9 +10,16 @@ When users run `ruff check --fix --preview`, SIM102 fixes are not applied automa
 
 - When `--preview` is enabled, the SIM102 fix should have `Safe` applicability (so it gets applied with `--fix`).
 - When `--preview` is not enabled, the fix should remain `Unsafe` (preserving backward compatibility).
-- The fix safety should be gated by a function named `is_collapsible_if_fix_safe_enabled` in `preview.rs` that returns `true` when preview mode is enabled.
+- The fix safety should be gated by a preview-aware mechanism that determines whether the safe applicability can be used based on the current settings.
+
+## Constraints
+
+When implementing the fix, adhere to these coding standards (from AGENTS.md):
+
+- **Line 76**: Rust imports must be placed at the top of the file, not locally inside function bodies.
+- **Line 79**: Do not use `.unwrap()`, `panic!()`, or `unreachable!()` in new code. Use proper error handling instead.
 
 ## Files to Look At
 
-- `crates/ruff_linter/src/rules/flake8_simplify/rules/collapsible_if.rs` — contains the `nested_if_statements` function that generates the SIM102 diagnostic and fix
-- `crates/ruff_linter/src/preview.rs` — add a function `is_collapsible_if_fix_safe_enabled` to gate the fix safety
+- The SIM102 rule implementation is in the flake8_simplify rules module
+- Preview mode gating functions are typically defined in the preview module

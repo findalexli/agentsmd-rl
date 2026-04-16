@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions check for exact strings and patterns that are explicitly specified in instruction.md: the aria-disabled attribute pattern, onClick handler pattern, $disabled prop, cursor and opacity styling expressions, file path, and build/typecheck commands are all discoverable from the instruction."
+      "reason": "instruction.md names the file path, the aria-disabled literal semantics ('true'/undefined), the $disabled transient prop, and the cursor/opacity CSS expressions that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact code to write: 'aria-disabled={disabled || readOnly ? \\'true\\' : undefined}', 'onClick={disabled || readOnly ? undefined : handleClick}', '$disabled?: boolean;', exact cursor and opacity expressions. This is not describing what's broken \u2014 it's dictating the exact fix line by line."
+      "reason": "The instruction effectively dictates the exact code: it specifies aria-disabled set to 'true' when disabled||readOnly else undefined, the $disabled transient prop name, and exact cursor/opacity ternary logic matching the test's literal string assertions."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching (e.g., assert \"aria-disabled={disabled || readOnly ? 'true' : undefined}\" in content). An alternative correct fix like `aria-disabled={isDisabled ? 'true' : undefined}` where `const isDisabled = disabled || readOnly` would fail despite being functionally correct. Tests assert gold-specific implementation details, not behavior."
+      "reason": "Tests assert exact strings like \"aria-disabled={disabled || readOnly ? 'true' : undefined}\" and \"onClick={disabled || readOnly ? undefined : handleClick}\"; alternative valid implementations (e.g., extracting to a variable, reordering readOnly||disabled, using !!disabled) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_button_uses_aria_disabled, test_disabled_button_click_handler_blocked, test_styled_button_uses_transient_disabled_prop, test_styled_button_uses_disabled_prop_for_styling) all use `assert '...' in content` pattern \u2014 pure text matching on file contents with no execution, rendering, or behavioral verification. The p2p tests do run builds/typechecks but the core f2p tests are purely textual."
+      "outcome": "pass",
+      "reason": "While several tests are string-matches, test_repo_typecheck, test_button_compiles, test_core_check_package, and test_core_build_package execute subprocess builds."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original file (e.g., aria-disabled pattern, $disabled prop). A stub or no-op implementation would not contain these strings, so the tests would fail without implementing the fix."
+      "reason": "Each f2p test asserts a specific implementation string that a stub/no-op would not satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: aria-disabled attribute (test_button_uses_aria_disabled), click handler blocking (test_disabled_button_click_handler_blocked), transient $disabled prop (test_styled_button_uses_transient_disabled_prop), visual styling (test_styled_button_uses_disabled_prop_for_styling), TypeScript compilation (test_repo_typecheck, test_button_compiles), and formatting (test_repo_prettier_check)."
+      "reason": "Tests cover aria-disabled, click blocking, transient prop interface, and CSS styling as required by instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_button_uses_aria_disabled, test_disabled_button_click_handler_blocked, etc.), have docstrings explaining purpose, and include f2p/p2p annotations."
+      "reason": "Tests have descriptive names and docstrings labeling f2p vs pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a React component, not structured data output."
+      "reason": "Task modifies a React component, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "Paths and commands appear correct (code/core/src/components/components/Button/Button.tsx matches the solution patch)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (Button.tsx) and provides exact code patterns to implement, including precise ternary expressions for aria-disabled, onClick, cursor, and opacity. This goes beyond naming the buggy file \u2014 it provides the complete solution code."
+      "outcome": "pass",
+      "reason": "The instruction names the file but localization is part of the described task; the file is the natural scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a React component, not a config edit task."
+      "reason": "Code-only task, not an agentmd-edits config change."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

@@ -3,59 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The instruction mentions 'bundle resource data' and 'nested resource data' as example content, and mentions data.txt and asset.dat. However, the test test_copy_content_dirs_function_exists asserts exact strings like 'c.copyContentDirsForOutput(pagesBackedByFile)', '\"slices\"', and '\"github.com/gohugoio/hugo/common/hugio\"'. While the instruction does mention these in 'Required code structure' criteria #3, the exact call signature 'c.copyContentDirsForOutput(pagesBackedByFile)' with the specific pa"
+      "reason": "test_copy_content_dirs_function_exists asserts specific implementation details: the function name 'copyContentDirsForOutput', the exact import '\"slices\"', the import '\"github.com/gohugoio/hugo/common/hugio\"', and the exact call 'c.copyContentDirsForOutput(pagesBackedByFile)'. None of these are mentioned or discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md acceptance criteria #3 explicitly states: 'The implementation must include a method named copyContentDirsForOutput that is called as c.copyContentDirsForOutput(pagesBackedByFile)' and must import specific packages 'slices' and 'github.com/gohugoio/hugo/common/hugio'. This dictates the exact function name, call signature, and dependencies \u2014 essentially specifying HOW to implement the fix, not just WHAT is broken."
+      "outcome": "pass",
+      "reason": "instruction.md describes the broken behavior (non-content bundle files not copied) and acceptance criteria but does not specify exact code changes, line numbers, or function names to implement."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_copy_content_dirs_function_exists asserts exact function name 'copyContentDirsForOutput', exact call 'c.copyContentDirsForOutput(pagesBackedByFile)', exact import '\"slices\"', and exact import '\"github.com/gohugoio/hugo/common/hugio\"'. An alternative correct fix using a different function name (e.g., 'copyBundleResources'), different parameter name, or different utility packages (e.g., io/fs instead of hugio) would fail these tests despite being functionally correct."
+      "reason": "test_copy_content_dirs_function_exists asserts the exact function name 'copyContentDirsForOutput', the exact imports '\"slices\"' and '\"github.com/gohugoio/hugo/common/hugio\"', and the exact call string 'c.copyContentDirsForOutput(pagesBackedByFile)'. An alternative correct fix using different function names, different imports (e.g., 'sort' instead of 'slices', 'io' instead of 'hugio'), or different internal structure would fail this test."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_copy_content_dirs_function_exists is purely a text-matching test: it reads convert.go and asserts string presence with 'assert \"copyContentDirsForOutput\" in content' and similar. While other tests (test_bundle_files_preserved_during_convert, test_hugo_build_compiles) do execute subprocesses and verify behavior, this key fail_to_pass test only inspects source text."
+      "reason": "test_copy_content_dirs_function_exists is purely text-based: it reads convert.go and checks for string presence ('copyContentDirsForOutput', '\"slices\"', etc.) with no execution. While other tests do execute the binary, this test is purely textual assertion."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_bundle_files_preserved_during_convert creates a real Hugo project, runs hugo convert toJSON, and checks that non-content files exist with correct contents in the output. A stub or no-op implementation would not produce these files. test_copy_content_dirs_function_exists requires specific code additions. These cannot be satisfied by default/empty implementations."
+      "reason": "test_bundle_files_preserved_during_convert builds hugo, runs 'hugo convert toJSON -o outputdir', and checks that bundle resource files exist with correct content. A stub or no-op implementation would not produce these files. test_convert_output_inside_content_tree similarly requires actual functionality."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: bundle files preserved (tested by test_bundle_files_preserved_during_convert), output-inside-content handling (tested by test_convert_output_inside_content_tree), code structure requirements (tested by test_copy_content_dirs_function_exists), and code quality (tested by test_go_vet_passes, test_gofmt_check, test_go_mod_verify). All stated behaviors are tested."
+      "reason": "All three acceptance criteria (bundle files preserved, edge case output inside content tree, code quality checks) are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_bundle_files_preserved_during_convert, test_convert_output_inside_content_tree) and include docstrings with pass_to_pass/fail_to_pass annotations."
+      "reason": "Tests are well-named with descriptive docstrings and comments indicating fail_to_pass vs pass_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a CLI tool's file-copying behavior, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md explicitly names the exact method 'copyContentDirsForOutput', its exact call signature 'c.copyContentDirsForOutput(pagesBackedByFile)', and specific import packages. This goes far beyond identifying the buggy module \u2014 it specifies the implementation details of the fix."
+      "outcome": "pass",
+      "reason": "instruction.md does not name specific files, lines, or function names. It describes the problem at the feature/behavior level ('hugo convert command') which is appropriate for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Go source files, not a configuration editing task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

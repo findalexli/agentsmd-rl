@@ -129,6 +129,64 @@ distractors:
   source:
     path: AGENTS.md
     lines: 26-26
+- rule: Audit mbridge compatibility
+  source:
+    path: repo/.agents/skills/upgrade-megatron-core/SKILL.md
+    lines: 660-670
+  source_text: '### Step 2: Audit `mbridge` compatibility
+
+
+    mbridge wraps megatron.core and may also need updates. Cross-reference the cloned
+
+    `mbridge-src/` repo to verify each API AReaL depends on.
+
+
+    #### 2a. Public API (used directly by AReaL)
+
+
+    | AReaL Call Site                     | mbridge API                                                                           |
+    Source File to Check                                                                                      |
+
+    | ----------------------------------- | -------------------------------------------------------------------------------------
+    | ---------------------------------------------------------------------------------------------------------
+    |
+
+    | `megatron_engine.py:242`            | `AutoBridge.from_pretrained(path)`                                                    |
+    `mbridge-src/mbridge/core/auto_bridge.py` — `from_pretrained()` resolves model
+    type via `_MODEL_REGISTRY` |
+
+    | `registry.py:139`                   | `bridge.get_model(wrap_with_ddp=..., ddp_config=...,
+    use_torch_fsdp2=..., ...)`       | `mbridge-src/mbridge/core/bridge.py` — `get_model()`
+    passes kwargs to `get_model()` util                  |'
+  collision_type: meta_confusion
+  why_distracting: The gold diff modifies `megatron_engine.py` and exactly touches
+    the `mbridge.AutoBridge.from_pretrained` call mentioned in this table. An agent
+    might mistakenly think this PR's goal is to upgrade Megatron-Core or audit APIs,
+    when in reality it's just fixing a Python syntax error (duplicate keyword argument).
+  severity: high
+- rule: Distributed Code Rules
+  source:
+    path: repo/.claude/rules/distributed.md
+    lines: 8-15
+  source_text: '# Distributed Code Rules
+
+
+    ## Process Group Management
+
+
+    - **Never create global process group** in module-level code
+
+    - Always pass `process_group` explicitly, don''t rely on default
+
+    - Use `dist.get_rank(group)` not `dist.get_rank()` when group matters
+
+    - Clean up process groups in `__del__` or context manager'
+  collision_type: scope_ambiguity
+  why_distracting: The path `areal/engine/**` matches the modified file `megatron_engine.py`.
+    An agent might try to enforce distributed rules or look for process group usage,
+    but the PR is a simple syntax fix (removing duplicate kwargs) inside an initialization
+    method, completely unrelated to distributed logic.
+  severity: low
 hierarchy_analysis: The config hierarchy is flat, consisting of two root-level files
   (`AGENTS.md` and `CLAUDE.md`) that contain largely overlapping instructions. No
   deep traversal or conflict resolution between files is required.
@@ -137,11 +195,15 @@ rubric:
     existing structure.
   source:
     path: AGENTS.md
-    lines: "1-100"
-  evidence: No changes to AGENTS.md are needed for this syntax fix task. The agent should
-    focus on code changes only, without unnecessarily modifying configuration files.
+    lines: 1-100
+  evidence: No changes to AGENTS.md are needed for this syntax fix task. The agent
+    should focus on code changes only, without unnecessarily modifying configuration
+    files.
   category: tooling
-  reference: |
-    No modifications to AGENTS.md required for this task.
-    The fix is a pure code change (removing duplicate kwarg) that doesn't affect
+  reference: 'No modifications to AGENTS.md required for this task.
+
+    The fix is a pure code change (removing duplicate kwarg) that doesn''t affect
+
     agent configuration or require documentation updates.
+
+    '

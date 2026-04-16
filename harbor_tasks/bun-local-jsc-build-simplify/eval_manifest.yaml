@@ -69,7 +69,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Shell scripts must have valid bash syntax
-# Enriched pass-to-pass tests using real CI commands
 - id: test_git_repo_valid
   type: pass_to_pass
   origin: repo_tests
@@ -77,7 +76,8 @@ checks:
 - id: test_contributing_md_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: CONTRIBUTING.md must have valid markdown syntax with balanced code blocks
+  description: CONTRIBUTING.md must have valid markdown syntax with balanced code
+    blocks
 - id: test_contributing_mdx_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -158,6 +158,60 @@ distractors:
   source:
     path: AGENTS.md
     lines: 20-22
+- rule: Never use `bun test` or `bun <file>` directly
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: '200'
+  source_text: 1. **Never use `bun test` or `bun <file>` directly** - always use `bun
+    bd test` or `bun bd <command>`. `bun bd` compiles & runs the debug build.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might incorrectly change `bun run build:local` (which
+    is correct for building Bun itself via package.json scripts) to `bun bd build:local`,
+    misapplying this development loop command to the initial build setup instructions.
+  severity: medium
+- rule: All changes must be tested
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: '201'
+  source_text: 2. **All changes must be tested** - if you're not testing your changes,
+    you're not done.
+  collision_type: architecture_boundary
+  why_distracting: The gold diff modifies CMake configuration files which are not
+    tested via the standard `bun:test` runner. An agent might waste effort trying
+    to add an unnecessary `.test.ts` file for this build system logic.
+  severity: low
+- rule: Use absolute paths in file operations
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: '205'
+  source_text: 6. **Use absolute paths** - Always use absolute paths in file operations
+  collision_type: scope_ambiguity
+  why_distracting: An agent might incorrectly apply this to the markdown changes (where
+    relative paths like `./build/debug-local` are appropriate) instead of keeping
+    it scoped to Zig/TS runtime file I/O operations.
+  severity: low
+- rule: Avoid shell commands
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: '206'
+  source_text: 7. **Avoid shell commands** - Don't use `find` or `grep` in tests;
+    use Bun's Glob and built-in tools
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff uses `powershell` as a shell command within CMake
+    `execute_process`. An agent might think this violates the rule, not realizing
+    the rule is specifically scoped to JS tests.
+  severity: medium
+- rule: Run `bun run zig:check-all` on platform-specific changes
+  source:
+    path: /workspace/repo/CLAUDE.md
+    lines: '208'
+  source_text: 9. **Cross-platform** - Run `bun run zig:check-all` to compile the
+    Zig code on all platforms when making platform-specific changes
+  collision_type: scope_ambiguity
+  why_distracting: The diff adds Windows-specific logic (`if(WIN32)`) in CMake, which
+    is a platform-specific change. An agent might unnecessarily try to run `zig:check-all`,
+    which only applies to Zig source code, not CMake build configurations.
+  severity: low
 hierarchy_analysis: The config files provide general repository instructions (`bun
   bd`), but the PR is specifically about modifying the build system for a specialized
   local JSC build (`build:local`). The agent must recognize that the general build

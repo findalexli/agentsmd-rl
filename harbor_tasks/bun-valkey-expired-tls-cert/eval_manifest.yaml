@@ -156,6 +156,43 @@ distractors:
   source:
     path: test/CLAUDE.md
     lines: 14-15
+- rule: Never use hardcoded port numbers in tests.
+  source:
+    path: repo/test/CLAUDE.md
+    lines: '21'
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  collision_type: scope_ambiguity
+  why_distracting: Since the PR modifies files within the test/ directory, an agent
+    might assume testing conventions apply. However, this PR simply updates static
+    certificate (.crt) and key (.key) files without changing any test logic.
+  severity: medium
+- rule: 'Always use port: 0. Do not hardcode ports.'
+  source:
+    path: repo/CLAUDE.md
+    lines: '114'
+  source_text: '- Always use `port: 0`. Do not hardcode ports. Do not use your own
+    random port number function.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might believe it should validate or enforce test port
+    usage due to the 'test/' path, but the PR is entirely data/configuration changes
+    (TLS certificates).
+  severity: low
+- rule: Prefer concurrent tests over sequential tests.
+  source:
+    path: repo/test/CLAUDE.md
+    lines: '22'
+  source_text: '- **Prefer concurrent tests over sequential tests**: When multiple
+    tests in the same file spawn processes or write files, make them concurrent with
+    `test.concurrent` or `describe.concurrent` unless it''s very difficult to make
+    them concurrent.'
+  collision_type: scope_ambiguity
+  why_distracting: The file is located in test/js/, which might lead an agent to attempt
+    to verify or enforce test concurrency rules, when no tests are actually being
+    modified.
+  severity: low
 hierarchy_analysis: 'The config hierarchy provides extensive guidance on writing JS/TS
   tests and building Bun. However, the target files are static certificate and key
   files used for a docker-based test environment. The agent must recognize that the

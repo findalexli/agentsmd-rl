@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific patterns like `AUTOMATIONS_SERVICE_KEY = os.getenv('AUTOMATIONS_SERVICE_KEY'`, `'service_auth_configured': bool(AUTOMATIONS_SERVICE_KEY)`, `if not AUTOMATIONS_SERVICE_KEY:`, and exact log message strings. The instruction mentions these behaviors generally but doesn't specify the exact code patterns (e.g., the health endpoint dict key 'service_auth_configured', the exact `bool(AUTOMATIONS_SERVICE_KEY)` pattern, or the exact log message string). Also, the solution requires"
+      "reason": "Tests assert on specific patterns like 'AUTOMATIONS_SERVICE_API_KEY' (the old name) not being present, exact regex patterns like `AUTOMATIONS_SERVICE_KEY\\s*=\\s*os\\.getenv\\(['\"]AUTOMATIONS_SERVICE_KEY['\"]`, and exact string matches like \"Service authentication not configured (AUTOMATIONS_SERVICE_KEY not set)\". While instruction.md mentions AUTOMATIONS_SERVICE_KEY, it never mentions the old name AUTOMATIONS_SERVICE_API_KEY explicitly, which is critical for test_env_variable_name_in_code's assertio"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states what to change: 'The file should reference the AUTOMATIONS_SERVICE_KEY environment variable consistently throughout: The module-level constant name, The os.getenv() call, The authentication validation logic, The health check endpoint, The module docstring, Log messages.' This is effectively a complete specification of the fix, not just a description of what's broken."
+      "reason": "instruction.md explicitly states what to change: 'The module-level constant name', 'The os.getenv() call', 'The authentication validation logic', 'The health check endpoint', 'The module docstring', 'Log messages' \u2014 and specifies the exact target variable name AUTOMATIONS_SERVICE_KEY for each. It also says the file is in 'enterprise server routes that handles service authentication'. This essentially tells the agent exactly what to do rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_env_var_is_read_correctly assert exact patterns via regex (e.g., `AUTOMATIONS_SERVICE_KEY\\s*=\\s*os\\.getenv\\(['\"]AUTOMATIONS_SERVICE_KEY['\"]`), test_health_endpoint_uses_correct_variable asserts `'service_auth_configured':\\s*bool\\(\\s*AUTOMATIONS_SERVICE_KEY\\s*\\)`, and test_validate_function_uses_correct_variable asserts exact string `if not AUTOMATIONS_SERVICE_KEY:`. An alternative correct implementation that uses a different variable name pattern (e.g., `_SERVICE_KEY = os.getenv("
+      "reason": "Tests like test_env_var_is_read_correctly assert exact patterns like `AUTOMATIONS_SERVICE_KEY\\s*=\\s*os\\.getenv\\(['\"]AUTOMATIONS_SERVICE_KEY['\"]`. test_health_endpoint_uses_correct_variable asserts `'service_auth_configured':\\s*bool\\(\\s*AUTOMATIONS_SERVICE_KEY\\s*\\)`. test_validate_function_uses_correct_variable asserts exact strings like 'if not AUTOMATIONS_SERVICE_KEY:' and 'x_service_api_key != AUTOMATIONS_SERVICE_KEY'. An alternative correct fix using a different variable name pattern (e.g., `"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_env_variable_name_in_code, test_env_var_is_read_correctly, test_health_endpoint_uses_correct_variable, test_validate_function_uses_correct_variable, test_module_docstring_updated, and test_logic_correctness_simulation all exclusively use `open(SERVICE_PATH).read()` and string/regex matching with no code execution. While test_repo_enterprise_service_routes does run pytest, the majority of tests are pure text inspection."
+      "reason": "Tests test_env_variable_name_in_code, test_env_var_is_read_correctly, test_health_endpoint_uses_correct_variable, test_validate_function_uses_correct_variable, test_module_docstring_updated, and test_logic_correctness_simulation are ALL purely text-matching tests using `assert 'X' in content` or `re.search(pattern, content)`. While test_repo_enterprise_service_routes does run pytest, the majority of unique behavioral assertions are text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p test test_repo_enterprise_service_routes runs the actual enterprise unit test suite which would fail without the fix. A stub/no-op implementation would not pass these tests since the original code has AUTOMATIONS_SERVICE_API_KEY and the tests expect AUTOMATIONS_SERVICE_KEY."
+      "reason": "The text-matching tests would fail on the original code which uses AUTOMATIONS_SERVICE_API_KEY, and test_repo_enterprise_service_routes runs actual unit tests. A stub/no-op implementation would not pass these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md (os.getenv call, health endpoint, log messages, authentication validation, module docstring) are tested in the test suite."
+      "reason": "All behaviors described in instruction.md (env var reading, health endpoint, log messages, authentication validation, docstring) are tested via the various test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_env_variable_name_in_code, test_health_endpoint_uses_correct_variable, etc.) with docstrings explaining what each verifies."
+      "reason": "Tests are well-named (test_env_variable_name_in_code, test_health_endpoint_uses_correct_variable, etc.) with descriptive docstrings explaining what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,7 +39,7 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file location ('enterprise server routes that handles service authentication') and lists exactly which parts of the code to change (module-level constant, os.getenv call, validation logic, health check, docstring, log messages), essentially providing a complete checklist of the fix."
+      "reason": "instruction.md explicitly states 'Find and update the file in the enterprise server routes' and lists exact locations within the file to change (module-level constant, os.getenv() call, health check endpoint, etc.). This narrows localization significantly beyond what the task domain requires."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

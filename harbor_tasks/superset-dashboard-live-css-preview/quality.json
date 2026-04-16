@@ -3,59 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'dispatch(dashboardInfoChanged({ css }))' with specific spacing, 'onCustomCssChange={handleCustomCssChange}', etc. While instruction.md mentions useRef, useCallback, dashboardInfoChanged, and 500ms debounce, it does not specify the exact variable names 'originalCss', 'cssDebounceTimer', 'handleCustomCssChange', or the exact type annotat"
+      "reason": "Tests assert exact literal strings like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'const handleCustomCssChange = useCallback', 'dispatch(dashboardInfoChanged({ css }))' etc. The instruction.md never specifies these exact variable names (originalCss, cssDebounceTimer), exact type annotations (ReturnType<typeof setTimeout>), or the exact Redux action name (dashboardInfoChanged). A developer could not discover t"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction's Hints section essentially dictates the implementation: 'Use useRef to store the original CSS value and the debounce timer reference', 'Use useCallback for the CSS change handler', 'import dashboardInfoChanged from the dashboardInfo actions', 'create a wrapper handler' instead of directly passing setCustomCss. This goes beyond describing what's broken and prescribes the exact solution approach."
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (live CSS preview, debounce, cancel reverts, cleanup on unmount) without specifying exact code changes, variable names, or line numbers. It tells what to build, not how."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names ('originalCss', 'cssDebounceTimer', 'handleCustomCssChange'), exact type signatures ('useRef<string | null>(null)', 'useRef<ReturnType<typeof setTimeout> | null>(null)'), and exact code patterns ('dispatch(dashboardInfoChanged({ css }))' with specific spacing). A correct alternative using lodash.debounce, different variable names like 'savedCss'/'debounceRef', or different type annotations would fail."
+      "reason": "Tests assert exact variable names and patterns like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'cssDebounceTimer.current = setTimeout', 'dispatch(dashboardInfoChanged({ css }))', 'onCustomCssChange={handleCustomCssChange}'. An alternative correct implementation using different variable names (e.g., 'savedCss', 'debounceRef'), lodash debounce, or different spacing in dispatch calls would fail these string-match"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_original_css_ref_exists, test_handle_custom_css_change_exists, test_cancel_handler_restores_css, test_unmount_cleanup_exists, test_original_css_capture_on_open, test_no_explicit_any_types, and test_props_use_handler_not_setter are ALL purely string/regex matching on file content (assert '...' in content). While test_repo_jest_tests_pass and similar run subprocesses, the fail-to-pass tests are entirely text-based."
+      "reason": "The fail-to-pass tests (test_original_css_ref_exists, test_handle_custom_css_change_exists, test_cancel_handler_restores_css, test_unmount_cleanup_exists, test_original_css_capture_on_open, test_props_use_handler_not_setter, test_no_explicit_any_types, test_dashboard_info_changed_imported) all use `assert 'string' in open(file).read()` or regex on file content. They do not import, call, or execute the code. Only the pass-to-pass tests (jest, lint, typescript) actually execute code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that wouldn't exist in the base file (e.g., originalCss ref, handleCustomCssChange, debounce timer). A stub or no-op implementation wouldn't contain these strings, so the tests would fail."
+      "outcome": "fail",
+      "reason": "Since all fail-to-pass tests are pure string matching on file content, an agent could satisfy them by inserting dead/unreachable code blocks containing the expected strings without implementing actual functionality. For example, adding commented or unreachable code with 'const originalCss = useRef<string | null>(null)' and other patterns would pass the f2p tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All key behaviors from instruction.md are tested: live CSS preview via debounced dispatch (test_handle_custom_css_change_exists), cancel reverts (test_cancel_handler_restores_css), cleanup on unmount (test_unmount_cleanup_exists), capturing original CSS (test_original_css_capture_on_open), and existing tests passing (test_repo_jest_tests_pass)."
+      "reason": "All five requirements from instruction.md (live preview with debounce, cancel reverts, cleanup on unmount, capture original CSS once, no any types) have corresponding tests, plus existing tests/lint/type checks are verified."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, individually documented with docstrings explaining what they check, and logically grouped by concern (refs, handlers, cleanup, imports, type safety, integration)."
+      "reason": "Tests are well-named (test_original_css_ref_exists, test_handle_custom_css_change_exists, etc.), grouped logically, and have docstrings explaining what each verifies. The file header also lists the key behaviors being tested."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a React component; it does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves modifying a React component, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
       "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file path, specifies exact function/action names to import (dashboardInfoChanged), exact hooks to use (useRef, useCallback), and exact implementation patterns (wrapper handler for setCustomCss, 500ms debounce). This goes well beyond identifying the problem area."
+      "outcome": "pass",
+      "reason": "The instruction specifies only the single file to modify (PropertiesModal/index.tsx) which is appropriate for a single-file task. It doesn't mention specific line numbers or exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript component, not a config-edit task."
+      "reason": "This is a code-only task modifying a single TypeScript component file, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 4
 }

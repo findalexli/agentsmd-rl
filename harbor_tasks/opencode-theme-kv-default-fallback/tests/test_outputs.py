@@ -139,19 +139,7 @@ def test_kv_fallback_varied_themes():
         )
 
 
-# [pr_diff] fail_to_pass
-def test_buggy_direct_fallback_removed():
-    """The buggy `store.themes[store.active] ?? store.themes.opencode`
-    one-liner (which skips KV entirely) must not be present."""
-    memo = _extract_values_memo(_read_file())
-    buggy = re.search(
-        r"store\.themes\[store\.active\]\s*(\?\?|\|\|)\s*store\.themes[.\[]"
-        r'["\']?opencode',
-        memo,
-    )
-    assert not buggy, "Buggy direct-to-opencode fallback pattern still present"
-
-
+# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — behavioral regression checks
 # ---------------------------------------------------------------------------

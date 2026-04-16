@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (submit.ts, dependency.ts, Blocks.svelte, constants.ts), variable names (is_connection_error, connection_lost, BROKEN_CONNECTION_MSG, on_connection_lost_cb, handle_connection_lost, reconnect_interval), method names (dispatch, reconnect), and behavioral requirements that the tests check. Every assert target in the tests is discoverable from the instruction."
+      "reason": "The instruction names all file paths (submit.ts, dependency.ts, Blocks.svelte, constants.ts), variable names (is_connection_error, connection_lost, BROKEN_CONNECTION_MSG, on_connection_lost_cb, handle_connection_lost, reconnect_interval), method names (dispatch, reconnect), and behavioral requirements (broken flag, early return, setInterval, clearInterval, location.reload) that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates implementation details: exact variable names (is_connection_error, connection_lost, on_connection_lost_cb, reconnect_interval), exact property assignments (broken: is_connection_error), exact method modifications (short-circuit dispatch()), exact function definitions (handle_connection_lost), and exact patterns (setInterval, .reconnect(), location.reload()). This is essentially a step-by-step implementation guide, not a bug description."
+      "reason": "The instruction explicitly dictates the exact implementation: 'Track connection state using a property named connection_lost initialized to false', 'Check for result.broken in error handlers', 'Set this.connection_lost = true', 'Accept a callback parameter named on_connection_lost_cb', 'short-circuit the dispatch() method', 'Define a function named handle_connection_lost', etc. This is not describing what's broken \u2014 it's prescribing exactly what code to write, including variable names, method mo"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to check for specific variable names like 'is_connection_error', 'connection_lost', 'on_connection_lost_cb', 'reconnect_interval', 'handle_connection_lost', and specific patterns like 'broken: is_connection_error'. An alternative correct fix using different variable names (e.g., 'is_broken_connection', 'connectionLost', 'onConnectionLostCallback') would fail all tests despite being behaviorally correct."
+      "reason": "Tests assert on gold-specific variable names (is_connection_error, connection_lost, on_connection_lost_cb, handle_connection_lost, reconnect_interval), exact patterns like 'const|let|var is_connection_error =', 'broken : is_connection_error', 'this.connection_lost', regex for dispatch early return pattern. An alternative correct fix using different variable names (e.g., is_broken, server_disconnected, onDisconnect) would fail all tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests read source files and apply regex pattern matching (e.g., /connection_lost\\s*[=:]\\s*false/.test(content), /is_connection_error/.test(content)). test_submit_broken_flag_logic has a small behavioral simulation but it tests the comparison 'tc.error === BROKEN' in inline JS, not the actual code. No test imports, compiles, or executes the modified TypeScript/Svelte code."
+      "reason": "Almost all tests are pure text/regex matching on source files: test_submit_broken_flag_logic checks regex patterns like /const|let|var is_connection_error/, test_dispatch_short_circuits_on_connection_lost checks regex in source text, test_dependency_connection_lost_tracking checks regex patterns. The one behavioral simulation (comparing strings to BROKEN_CONNECTION_MSG) tests JavaScript string equality, not the actual code. No test imports, compiles, or executes the modified code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all tests are text-matching on source files, an agent could pass them by simply inserting the expected string patterns (e.g., adding 'const is_connection_error = x === BROKEN_CONNECTION_MSG' and 'connection_lost = false' as dead code comments) without implementing any actual behavioral fix."
+      "reason": "A stub that merely adds the text patterns the regex looks for (e.g., adding 'const is_connection_error = x === BROKEN_CONNECTION_MSG' as a comment or dead code, adding 'connection_lost = false' as a property) would pass the tests since they only do regex matching on source text without executing the code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in the instruction (broken flag, connection_lost tracking, dispatch short-circuit, callback wiring, reconnection handler, cleanup) are tested by the corresponding test functions."
+      "reason": "All behaviors listed in instruction.md (broken flag, connection_lost tracking, dispatch short-circuit, handle_connection_lost, setInterval/reconnect/reload, callback wiring, cleanup) are covered by the test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_submit_broken_flag_logic, test_dispatch_short_circuits_on_connection_lost, etc.) and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named (test_submit_broken_flag_logic, test_dispatch_short_circuits_on_connection_lost, etc.), each has a docstring, and they are logically grouped by the component they verify."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction are consistent with the test expectations and the actual repository structure."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact variable names (is_connection_error, connection_lost, on_connection_lost_cb, reconnect_interval), exact property patterns (broken: is_connection_error), and exact method modifications (short-circuit dispatch()). This goes far beyond naming the buggy module \u2014 it prescribes the exact implementation."
+      "reason": "The instruction names exact files, exact variable names, exact method modifications, and exact implementation patterns (e.g., 'short-circuit the dispatch() method', 'Accept a callback parameter named on_connection_lost_cb'). This goes far beyond identifying the buggy area \u2014 it prescribes the exact code structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

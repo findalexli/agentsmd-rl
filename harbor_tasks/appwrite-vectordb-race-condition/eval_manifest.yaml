@@ -60,9 +60,9 @@ rubric:
   source:
     path: AGENTS.md
     lines: 55-74
-  evidence: The gold solution implements the fix directly inside the  method
-    of the  class, preserving the required Action pattern structure and method
-    signature without altering how the endpoin
+  evidence: The gold solution implements the fix directly inside the  method of the  class,
+    preserving the required Action pattern structure and method signature without
+    altering how the endpoin
   category: architecture
 - rule: File names in Http directories must only be Get.php, Update.php, Create.php,
     Delete.php or XList.php.
@@ -70,23 +70,36 @@ rubric:
     path: src/Appwrite/Platform/AGENTS.md
     lines: 31-35
   evidence: The gold solution keeps the metadata initialization logic inline within
-     rather than creating a custom-named file like  or 
-    to handle the metadata creation.
+    rather than creating a custom-named file like  or to handle the metadata creation.
   category: naming
 - rule: 'Stack: PHP 8.3+'
   source:
     path: AGENTS.md
     lines: 14-15
-  evidence: The gold solution uses a non-capturing catch block  which is a modern PHP feature, aligning with the repository's PHP 8.3+ requirement.
+  evidence: The gold solution uses a non-capturing catch block  which is a modern
+    PHP feature, aligning with the repository's PHP 8.3+ requirement.
   category: style
-- rule: Action pattern (HTTP endpoints) where endpoint logic resides in the 
-    method
+- rule: Action pattern (HTTP endpoints) where endpoint logic resides in the method
   source:
     path: AGENTS.md
     lines: 53-73
-  evidence: The gold solution correctly applies the fix inside the  method
-    of the  class, preserving the Action pattern structure for HTTP endpoints.
+  evidence: The gold solution correctly applies the fix inside the  method of the  class,
+    preserving the Action pattern structure for HTTP endpoints.
   category: architecture
+- rule: Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 37-37
+  source_text: 3. Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`. We call it `XList`, because
+    `List` is a reserved keyword and PHP would not like that. Never use any other
+    words! Let's say you want a method to be `blockUser`, tempting to add `Users/Block.php`,
+    instead, think of the resource and property it affec
+  evidence: The modified file is named `Create.php` and is located in `src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/`,
+    adhering to the strict naming convention for HTTP endpoint actions.
+  category: naming
+  verification: llm_judge
 distractors:
 - rule: Think of the resource and property it affects... both resources and properties
     can be nested, and have separate directories.
@@ -96,8 +109,8 @@ distractors:
     trying to extract the metadata initialization into a separate `Metadata/Create.php`
     endpoint to separate concerns. However, the metadata bootstrap is designed to
     happen transparently during the main collection creation, and ensuring it happens
-    transparently during the main collection creation, and extracting it would
-    break the API contract.
+    transparently during the main collection creation, and extracting it would break
+    the API contract.
   severity: medium
   source:
     path: src/Appwrite/Platform/AGENTS.md

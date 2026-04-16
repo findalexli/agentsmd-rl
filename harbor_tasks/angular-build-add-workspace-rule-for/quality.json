@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key paths (.agent/rules/agents.md, AGENTS.md, .prettierignore, .pullapprove.yml), the required frontmatter (trigger: always_on), the glob pattern (.agent/**/{*,.*}), and the preserved sections (## Environment, pnpm). The symlink requirement is implied by 'content at that path should match the existing AGENTS.md file'. All assert targets in tests are discoverable from the instruction."
+      "reason": "All test specifics (.agent/rules/agents.md, AGENTS.md, trigger: always_on, .prettierignore, .pullapprove.yml with .agent/**/{*,.*}, ## Environment, pnpm) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what should exist (symlink, frontmatter, prettierignore entry, pullapprove glob) but does not prescribe exact implementation steps like 'ln -s ../../AGENTS.md' or 'insert before line X'. A developer must still reason about how to create the symlink, where to insert entries, etc."
+      "reason": "Instruction describes required outcomes without prescribing symlink vs copy or exact edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_symlink_exists_and_resolves checks os.path.islink() and fails if the path is not a symlink, but the instruction only says 'The content at that path should match the existing AGENTS.md file' \u2014 it never requires a symlink specifically. A correct alternative fix of copying the file would fail the test. This forces a gold-specific implementation detail (symlink vs copy)."
+      "outcome": "pass",
+      "reason": "Tests accept symlink/copy/hardlink for .agent/rules/agents.md (content equality), and use behavioral checks for prettier/pullapprove."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely textual checks: test_agents_md_has_frontmatter does regex on file content, test_prettierignore_has_agent_entry does 'assert string in content', test_pullapprove_has_agent_glob does 'assert string in content'. The repo_tests (tslint, pullapprove verify, etc.) do execute behavior, but those are pass-to-pass regression tests, not fail-to-pass. The core f2p tests are text-matching."
+      "outcome": "pass",
+      "reason": "Tests invoke prettier via npx, pnpm ng-dev pullapprove verify, and parse YAML via yaml.safe_load."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for content/files that don't exist in the base commit (no .agent/rules/agents.md, no frontmatter in AGENTS.md, no prettierignore entry, no pullapprove glob). A stub/no-op implementation would not create these artifacts, so the tests cannot be trivially passed."
+      "reason": "Each f2p requires specific behavior (matching content, parseable frontmatter, prettier ignoring file, pullapprove verify passing)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five explicit requirements from the instruction (workspace rule accessible, frontmatter present, prettier ignore configured, pullapprove coverage, existing content preserved) are tested by corresponding test functions."
+      "reason": "All five instruction requirements (workspace rule, frontmatter, prettier ignore, pullapprove pattern, preserved content) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (fail-to-pass vs pass-to-pass), descriptive function names, docstrings, and comments indicating test categories like [pr_diff] and [static]."
+      "reason": "Tests are grouped into sections with comment headers (fail_to_pass, pass_to_pass, repo_tests)."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "This task involves config file edits and symlink creation, not structured data output like JSON/CSV/API/DB."
+      "outcome": "pass",
+      "reason": "YAML frontmatter schema documented with example (trigger: always_on)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and patterns in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos detected in paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files that need to be modified but doesn't specify exact line numbers or precise insertion points. The files mentioned are all directly relevant to the task domain."
+      "reason": "Instruction names files to look at but doesn't specify exact line edits."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized: it adds frontmatter to AGENTS.md, creates a symlink, adds one line to .prettierignore, and adds one glob to .pullapprove.yml. These are small, bounded changes that don't contradict other files."
+      "reason": "Gold patch makes localized edits to .prettierignore, .pullapprove.yml, and AGENTS.md (adds frontmatter) without full rewrites."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 11,
+  "fail_count": 0
 }

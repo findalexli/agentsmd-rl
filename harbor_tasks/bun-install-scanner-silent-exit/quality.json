@@ -3,57 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md: test_regression_test_location checks exact path 'test/regression/issue/28193.test.ts' (mentioned), but test_error_printing_centralized checks that Output.errGeneric/pretty are NOT present before specific error returns in security_scanner.zig (the instruction says to use errGeneric but doesn't say to REMOVE existing Output calls from security_scanner.zig). test_error_variant_propagated checks for '.@\"error\" => |' or 'inline else "
+      "reason": "Tests assert specific patterns like `Output.errGeneric` vs `Output.pretty`, `@errorName`, `inline else => |e|`, specific error variant names (IPCPipeFailed, ProcessWatchFailed, SecurityScannerRetryFailed), and the exact catch pattern `performSecurityScanAfterResolution(...) catch |err| {`. While some of these are mentioned in instruction.md, several are not: e.g., `IPCPipeFailed`, `ProcessWatchFailed`, `SecurityScannerRetryFailed` are never mentioned in the instruction. The test `test_error_vari"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (silent exits) and requirements (use errGeneric, propagate errors, centralize printing) but does not give exact code changes or line numbers to modify."
+      "outcome": "fail",
+      "reason": "Instruction.md explicitly states the fix: use `Output.errGeneric` (not `Output.pretty` with `<red>` formatting), remove error printing from `security_scanner.zig` for specific variants, handle `.error` variant explicitly via `.error => |e|` or `inline else => |e|` pattern instead of `else => return error.SecurityScannerRetryFailed`. This describes exactly WHAT to change, not just what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are highly specific to the gold solution's approach. test_error_printing_centralized requires removing Output calls from security_scanner.zig for specific error variants. test_error_variant_propagated requires specific pattern '.@\"error\" => |' or 'inline else => |' in performSecurityScanAfterResolution. An alternative fix that adds error messages at the return sites in security_scanner.zig (rather than centralizing) would fail test_error_printing_centralized. An alternative that handles th"
+      "reason": "Tests assert very specific implementation patterns: regex for `else => |e|` capture pattern, `@errorName` usage, specific `Output.errGeneric` calls, exact switch structure in the catch block, `.@\"error\" => |err| return err` pattern. An alternative correct fix (e.g., using a helper function, logging via a different mechanism, or structuring the switch differently) would fail these pattern-matching tests even if behaviorally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test is text/pattern matching on source files (regex searches on .zig files and .test.ts files). No test compiles the code, runs bun install, or executes any behavioral check. All tests are variations of 'assert pattern in open(path).read()'."
+      "reason": "Every test in test_outputs.py uses `_read_file()` and regex pattern matching on source code text. No test compiles the code, runs a subprocess, or verifies actual runtime behavior. Tests like `test_catch_all_produces_output` and `test_error_variant_coverage` are pure text assertions (`re.search` on file contents), not behavioral checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns that don't exist in the base commit (e.g., the empty 'else => {}' must be replaced, Output calls must be added to multiple branches, Output calls must be removed from security_scanner.zig). A stub/no-op wouldn't pass these."
+      "reason": "The tests check for the absence of buggy patterns (empty `else => {}`, collapsing errors into `SecurityScannerRetryFailed`) and presence of fix patterns (Output calls, error capturing). A stub/no-op solution on the original codebase would fail because the original code has `else => {}` and `else => return error.SecurityScannerRetryFailed`."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requirement 1 says 'Every security scanner error path must print a descriptive error message to stderr before exiting' but no test actually runs bun install and checks stderr output. The tests only verify source code patterns."
+      "outcome": "pass",
+      "reason": "The instruction's requirements (error visibility, errGeneric usage, centralized printing, error propagation, regression test) are all tested: test_catch_all_produces_output, test_error_variant_coverage, test_error_printing_centralized, test_error_variant_propagated, and test_regression_test_file cover all stated requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into sections (fail-to-pass pr_diff, fail-to-pass agent_config, pass-to-pass) with clear comments."
+      "reason": "Tests are well-named (test_catch_all_produces_output, test_error_variant_coverage, etc.), have docstrings explaining what behavior they verify, and are grouped with comments like `# [pr_diff] fail_to_pass`."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names are consistent between instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names 'Output.errGeneric' as the required function (requirement 2), names 'SecurityScannerRetryFailed' as the error to avoid (requirement 3), and specifies that 'only SecurityScannerInWorkspace errors produce output' \u2014 these are implementation-level details that guide the agent to the exact solution pattern."
+      "reason": "Instruction.md names exact files (`install_with_manager.zig`, `security_scanner.zig`), exact function names, exact error variant names to handle, exact patterns to use (`Output.errGeneric`, `@errorName`, `.error => |e|`), and specifies which file should contain vs not contain error printing calls. This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

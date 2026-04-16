@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: `handleNonErrorEvent` helper function, `isBudgetError && !isAgentEvent` condition, `return; // Keep budget error visible` comment, `handleNonErrorEvent(event)` call sites (at least 2), removal of nested `isBudgetOrCreditError(event.error)` with `setErrorMessage(I18nKey.STATUS$ERROR_LLM_OUT_OF_CREDITS)`, `STATUS$ERROR_LLM_OUT_OF_CREDITS` i18n key, `event.source === \"agent\"`, and the requirement for typecheck/lint/build/tests to pass."
+      "reason": "Instruction explicitly names handleNonErrorEvent, isBudgetError && !isAgentEvent, the comment 'return; // Keep budget error visible', the 2+ call sites, and the AgentErrorEvent simplification."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'A helper function named handleNonErrorEvent must be present', 'The condition isBudgetError && !isAgentEvent must appear', 'The early return must include the comment return; // Keep budget error visible', and 'The handleNonErrorEvent(event) call must replace direct removeErrorMessage() calls'. This prescribes the exact solution rather than just describing what's broken."
+      "reason": "Instruction dictates exact implementation: helper name 'handleNonErrorEvent', exact condition 'isBudgetError && !isAgentEvent', and exact comment text 'return; // Keep budget error visible'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact helper function name `handleNonErrorEvent`, exact variable names `isBudgetError && !isAgentEvent`, exact comment text `return; // Keep budget error visible`, and exact call pattern `handleNonErrorEvent(event)`. An alternative correct fix (e.g., using a different function name like `clearErrorIfNotBudget`, or using inline logic, or a different condition structure) would fail these text-matching tests."
+      "reason": "Tests assert on gold-specific identifiers like 'handleNonErrorEvent', 'isBudgetError && !isAgentEvent', and the exact comment 'return; // Keep budget error visible'; alternative correct fixes with different names/structure would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests `test_budget_error_persistence_logic_exists`, `test_non_error_events_use_helper`, `test_legacy_error_clearing_removed`, and `test_agent_error_budget_check_removed` are purely text-matching tests using `assert 'string' in content` and regex on file contents. While some tests do run subprocesses (typecheck, lint, build), the core fail-to-pass tests only inspect source text, not behavior."
+      "outcome": "pass",
+      "reason": "Beyond string-inspection tests, the suite runs typecheck, lint, build, prettier, translation check, and actual Vitest test files (conversation-websocket-handler.test.tsx, error-message-banner.test.tsx)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass the f2p tests because they check for specific strings and patterns that don't exist in the original source file (e.g., `handleNonErrorEvent`, `isBudgetError && !isAgentEvent`), and the build/typecheck tests would fail if invalid code were added."
+      "reason": "The behavioral test files (conversation-websocket-handler.test.tsx) execute real code; a stub wouldn't pass them even if string checks might pass trivially."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Budget/credit errors must persist \u2014 they should NOT be cleared by non-error events' and 'Budget/credit errors SHOULD be cleared when an agent event arrives'. These behavioral requirements are only verified via text pattern matching, not by actually testing that the banner persists or clears correctly in a runtime scenario."
+      "outcome": "pass",
+      "reason": "Tests cover helper existence, budget persistence logic, call-site replacement, AgentErrorEvent simplification, and CI checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks and the before/after fix distinction (e.g., 'Fail-to-pass: The handleNonErrorEvent helper must exist...')."
+      "reason": "Tests have descriptive names and docstrings indicating fail-to-pass vs pass-to-pass intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers appear consistent with repo structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's Acceptance Criteria section explicitly names the exact helper function `handleNonErrorEvent`, the exact condition `isBudgetError && !isAgentEvent`, the exact comment `return; // Keep budget error visible`, and specifies exact call sites. This goes far beyond describing the bug and prescribes the exact implementation details."
+      "reason": "Instruction dictates internal helper name 'handleNonErrorEvent', exact condition literal 'isBudgetError && !isAgentEvent', and exact comment 'return; // Keep budget error visible', leaking the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

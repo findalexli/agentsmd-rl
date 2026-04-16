@@ -95,6 +95,28 @@ rubric:
     aligning with the architectural definition that infra code lives in `src/infra`.
   category: architecture
   verification: llm_judge
+- rule: Extract helpers instead of maintaining V2 copies
+  source:
+    path: AGENTS.md
+    lines: '164'
+  source_text: '- Keep files concise; extract helpers instead of “V2” copies. Use
+    existing patterns for CLI options and dependency injection via `createDefaultDeps`.'
+  evidence: The gold diff removes the duplicate `formatDurationCompact` helper function
+    from `src/shared/subagents-format.ts` and replaces it with an import of the canonical
+    implementation from `../infra/format-time/format-duration.ts`.
+  category: rubric
+  verification: llm_judge
+- rule: Use human-readable strings for CLI output, not branching
+  source:
+    path: AGENTS.md
+    lines: '151'
+  source_text: '- Keep human-readable strings for logs, CLI output, and UI; do not
+    use freeform strings as the source of truth for internal branching.'
+  evidence: The diff moves the human-readable string `"n/a"` directly to the CLI output
+    formatting boundary (`?? "n/a"`), rather than generating it deep within the duration
+    formatter where it could be confused as a sentinel or used for logic branching.
+  category: rubric
+  verification: llm_judge
 distractors:
 - rule: 'Import boundaries: extension production code should treat openclaw/plugin-sdk/*
     ... as the public surface. Do not import core src/** ... directly.'
@@ -119,6 +141,46 @@ distractors:
   source:
     path: AGENTS.md
     lines: 5-5
+- rule: Avoid magic-string sentinels that silently change runtime meaning
+  source:
+    path: AGENTS.md
+    lines: '152'
+  source_text: '- Avoid `?? 0`, empty-string, empty-object, or magic-string sentinels
+    when they can change runtime meaning silently.'
+  collision_type: rule_conflict
+  why_distracting: An agent might incorrectly think the use of `?? "n/a"` violates
+    this rule. However, `"n/a"` here is used purely for formatting the CLI text output
+    and does not change any runtime control flow logic silently.
+  severity: medium
+- rule: Extension package boundary guardrail against relative imports outside the
+    package
+  source:
+    path: AGENTS.md
+    lines: '158'
+  source_text: '- Extension package boundary guardrail: inside a bundled plugin package,
+    do not use relative imports/exports that resolve outside that same package root.
+    If shared code belongs in the plugin SDK, import `openclaw/plugin-sdk/<subpath>`
+    instead of reaching into `src/plugin-sdk/**` or other repo paths via `../`.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might mistake the relative import `../infra/format-time/format-duration.ts`
+    as violating this rule because it reaches outside the current folder. However,
+    `src/shared` is core code, not an extension/bundled plugin package, so this boundary
+    guardrail does not apply.
+  severity: medium
+- rule: Extension production code should not deep-import core src
+  source:
+    path: AGENTS.md
+    lines: '16'
+  source_text: '- Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
+    core `src/**`, `src/plugin-sdk-internal/**`, or another extension''s `src/**`
+    directly.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might think importing `../infra/format-time/format-duration.ts`
+    is an invalid core import. However, this rule only restricts 'extension production
+    code', whereas both the importer and the imported file in the diff are within
+    core (`src/`).
+  severity: medium
 hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
   files at the root level. There is no deep hierarchy or overriding behavior required;
   the rules are flat and apply globally.

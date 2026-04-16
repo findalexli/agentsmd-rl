@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (packages/element/src/distribute.ts, packages/excalidraw/actions/actionDistribute.tsx, packages/excalidraw/wysiwyg/textWysiwyg.tsx), function names (distributeElements, updateBoundElements, distributeSelectedElements), import sources (./binding, ./Scene), parameter names (scene: Scene), and specific patterns (simultaneouslyUpdated: group, scene.mutateElement, newElementWith removal) that the tests assert on."
+      "reason": "Instruction names distribute.ts, actionDistribute.tsx, textWysiwyg.tsx, updateBoundElements, Scene type, scene.mutateElement, simultaneouslyUpdated: group, and app.scene \u2014 all literals tested."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exactly what to do: 'Replace newElementWith with scene.mutateElement', 'Add a scene: Scene parameter', 'Import updateBoundElements from ./binding', 'call updateBoundElements(element, scene, { simultaneouslyUpdated: group })'. This is a step-by-step implementation guide, not a description of what's broken."
+      "reason": "Instruction essentially dictates the fix: 'Elements are mutated via scene.mutateElement instead of newElementWith', 'updateBoundElements(element, scene, { simultaneouslyUpdated: group })', 'updateBoundElements(container, app.scene)' after mutateElement \u2014 these are direct implementation prescriptions."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details like 'import type { Scene }' (test_distribute_imports_scene_type), exact call signature 'updateBoundElements(element, scene' (test_distribute_calls_update_bound_elements), 'simultaneouslyUpdated: group' (same test), 'newElementWith not in content' (test_distribute_uses_mutate_element), and exact pattern 'updateBoundElements(container, app.scene)' (test_wysiwyg_calls_update_bound_elements_on_overflow). Alternative correct fixes using different variable na"
+      "reason": "Tests assert specific strings like 'scene.mutateElement', 'updateBoundElements(element, scene', 'simultaneouslyUpdated: group', and regex on exact mutateElement+updateBoundElements sequence; an alternative valid fix (e.g., passing appState differently or using a helper) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests (test_distribute_imports_update_bound_elements, test_distribute_imports_scene_type, test_distribute_elements_accepts_scene_param, test_distribute_uses_mutate_element, test_distribute_calls_update_bound_elements, test_distribute_calls_update_bound_elements_twice, test_action_distribute_passes_scene, test_wysiwyg_imports_update_bound_elements, test_wysiwyg_calls_update_bound_elements_on_overflow, test_wysiwyg_calls_after_mutate_element) are purely text-based file reading with string/reg"
+      "outcome": "pass",
+      "reason": "Tests include subprocess execution of yarn test:typecheck, test:code, test:app running actual unit tests alongside text-grep tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code changes (imports, function signatures, method calls) that don't exist in the base commit. A stub or no-op wouldn't have 'updateBoundElements' in distribute.ts or 'scene.mutateElement' replacing 'newElementWith'. The pass-to-pass tests (typecheck, lint, existing unit tests) ensure the changes compile and don't break existing functionality."
+      "reason": "Repo test suites (distribute, binding, wysiwyg tests) execute real behavior and would fail with stub implementations."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: imports of updateBoundElements and Scene, scene parameter addition, replacement of newElementWith with scene.mutateElement, updateBoundElements calls in both code paths of distribute, passing app.scene in actionDistribute, and updateBoundElements calls after mutateElement in textWysiwyg."
+      "reason": "Every behavior in instruction (imports, signature, mutateElement usage, updateBoundElements calls, caller passes scene, wysiwyg calls) has corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, logically grouped by component (distribute tests, action tests, wysiwyg tests, pass-to-pass CI tests), and have clear section comments separating pass-to-pass tests."
+      "reason": "Tests have descriptive names and docstrings, with a commented section dividing pass-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications to TypeScript files, not structured data output like JSON/CSV/API/DB."
+      "reason": "Code task, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths and names match the repo conventions."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details including specific import statements ('Import updateBoundElements from \"./binding\"'), exact function signature changes ('Add a scene: Scene parameter'), and exact call patterns ('call updateBoundElements(element, scene, { simultaneouslyUpdated: group })'). This goes far beyond identifying the buggy area."
+      "reason": "Instruction names exact files (packages/element/src/binding.ts, actionDistribute.tsx), exact option keys ({ simultaneouslyUpdated: group }), and exact call signatures \u2014 localization is trivialized."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "Not an agentmd/config edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

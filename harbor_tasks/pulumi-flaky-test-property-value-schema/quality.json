@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (property-values.json, deployment_test.go), the signature key '4dabf18193072939515e22adb298388d', the float signature '8ad145fe-0d11-4827-bfd7-1abcbf086f5c', the hex values for NaN/Inf, the function name FloatObjectGenerator, the pattern for hex strings, the title 'Float property values' (implied by 'Add a Float property values entry'), and the ObjectValueGenerator registration. All specifics checked by the tests are discoverable from the instruction."
+      "reason": "Instruction names schema path, test file path, specific hex values (7ff8000000000001, 7ff0000000000000, fff0000000000000), signature UUID, pattern, and required fields."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction effectively specifies the exact fix: add a 'Float property values' entry with specific keys/values to the oneOf array, create a FloatObjectGenerator function with specific hex values, and register it in ObjectValueGenerator. This goes beyond describing what's broken \u2014 it prescribes the exact implementation including function names, schema structure, and hex constants."
+      "outcome": "pass",
+      "reason": "Instruction describes the broken behavior and what the schema/test must contain, not exact code diffs."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_float_object_generator_exists checks for exact function signature 'func FloatObjectGenerator()', test_generator_registered_in_object_value_generator checks for 'FloatObjectGenerator().AsAny()', and test_json_schema_has_float_definition checks for exact title 'Float property values'. An alternative correct fix using a different function name (e.g., SpecialFloatGenerator) or different schema title would fail."
+      "outcome": "pass",
+      "reason": "Tests check schema structure and runtime test behavior, not specific function names or line positions; alternative schemas satisfying the oneOf entry would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_float_object_generator_exists and test_generator_registered_in_object_value_generator are pure text-matching tests (reading file content and asserting on string patterns). While test_test_property_value_schema_passes and test_json_schema_has_float_definition do verify behavior/structure, the f2p tests include significant text-only assertions."
+      "outcome": "pass",
+      "reason": "Tests run go test subprocesses and validate JSON samples with jsonschema.validate."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stub implementations: test_json_schema_has_float_definition requires specific JSON schema structure with correct keys/values, test_float_object_generator_exists requires the function and hex values in source, test_generator_registered_in_object_value_generator requires registration, and test_test_property_value_schema_passes requires the actual Go test to pass 5 times."
+      "reason": "Tests assert the flaky go test passes reliably and validate actual float samples against the schema; stubs wouldn't satisfy this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: JSON schema update (test_json_schema_has_float_definition), FloatObjectGenerator creation (test_float_object_generator_exists), registration in ObjectValueGenerator (test_generator_registered_in_object_value_generator), and the actual test passing reliably (test_test_property_value_schema_passes)."
+      "reason": "Schema structure, generator integration (via go test execution), and pass-to-pass checks are all covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings indicating fail-to-pass vs pass-to-pass categories. They are logically grouped by concern (schema, generator, registration, compilation, formatting)."
+      "reason": "Tests have descriptive names and docstrings distinguishing f2p vs p2p."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The JSON schema structure is documented in instruction.md with specific keys, values, and patterns for the Float property values entry."
+      "reason": "JSON schema fields (signature key, const UUID, pattern) are explicitly documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or signature values across instruction.md and test files."
+      "reason": "Paths and identifiers appear consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact function names to create (FloatObjectGenerator), exact schema structure with specific keys/values/patterns, and exactly where to register it (ObjectValueGenerator). This goes well beyond pointing to the buggy area \u2014 it prescribes the exact implementation details."
+      "outcome": "pass",
+      "reason": "Instruction names the file being fixed but localization is part of the verification criteria, not a debugging hint."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch is localized: a small addition to the JSON schema oneOf array and a new function plus one-line registration in the test file. No full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "Code/schema task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

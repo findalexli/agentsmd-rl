@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (utils.ts, +page.svelte, ComponentEntry.svelte, guide .md), function signatures (needs_iframe, build_srcdoc, clickOutside), required behaviors (position:fixed detection, dark mode class, script escaping, head/CSS inclusion), and schema details (component object shape, props, dark boolean). All test-asserted specifics are discoverable from the instruction."
+      "reason": "Instruction names all file paths (utils.ts, +page.svelte, ComponentEntry.svelte, guide md), function signatures (needs_iframe, build_srcdoc, clickOutside), required literals ('Click Me', 'dark' class, '<\\/script' escape, 'huggingface-cli login', 'push_to_hub', 'head' parameter)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction provides exact function signatures ('needs_iframe(css_template: string | undefined): boolean'), exact implementation details ('escape </script by replacing it with <\\\\/script'), exact HTML structure requirements ('<!DOCTYPE html>', '<html> with class=\"dark\"'), and exact import paths. This goes well beyond describing what's broken \u2014 it prescribes exactly what code to write."
+      "outcome": "pass",
+      "reason": "Instruction describes requirements and signatures but doesn't prescribe exact implementation lines; the agent must design the template substitution and iframe wiring."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral outcomes (does needs_iframe return true/false for given inputs, does build_srcdoc produce HTML with certain properties) rather than asserting exact implementation details. Alternative implementations using different regex patterns, different HTML structures, or different escaping approaches would pass as long as behavior matches."
+      "reason": "Tests check behavioral outputs (HTML contains doctype, dark class, chartreuse CSS, escaped </script) rather than internal variable names; alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The behavioral tests use _run_node() to actually execute TypeScript code via Node.js, calling needs_iframe() and build_srcdoc() functions and checking their return values. Some tests (guide, svelte files) do use text matching, but the core function tests execute code. This is a mixed approach but the critical f2p tests execute code."
+      "reason": "Tests execute the utils.ts code via Node with --experimental-strip-types and call needs_iframe/build_srcdoc with assertions on return values."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub needs_iframe returning false would fail test_needs_iframe_detects_fixed_css (expects true for position:fixed). A stub build_srcdoc returning empty string would fail test_build_srcdoc_produces_valid_html (checks for DOCTYPE, html, head, body tags and rendered prop values). No default return satisfies all tests."
+      "reason": "Tests check bidirectional behavior (true vs false cases for needs_iframe), verify prop substitution across different inputs, and check multiple HTML structure markers \u2014 stubs returning defaults would fail."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires '@children' slot handling with BaseButton 'Click Me' in both Svelte components, but the visible test file (truncated) doesn't appear to test for children/slot behavior in the rendered components. Also, iframe sandbox='allow-scripts' attribute is required but not tested behaviorally."
+      "outcome": "pass",
+      "reason": "Tests cover needs_iframe detection, build_srcdoc structure/dark mode/script escaping/head+CSS, clickOutside preservation, and (truncated but implied) guide documentation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass needs_iframe, Fail-to-pass build_srcdoc, Pass-to-pass), descriptive function names (test_needs_iframe_detects_fixed_css, test_build_srcdoc_dark_mode), and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass needs_iframe, build_srcdoc, Pass-to-pass) and tagged [pr_diff]/[static]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces HTML/CSS/JS code and Svelte components, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task produces HTML/Svelte code, not structured data API output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction match those used in the tests. No typos detected in critical identifiers."
+      "reason": "Paths and function names are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact file paths, exact function signatures with parameter types, exact escape sequences ('<\\\\/script'), exact HTML elements to include, and exact import paths. This is excessive localization that removes the need for the agent to reason about where and what to change."
+      "outcome": "pass",
+      "reason": "Instruction names files to look at (appropriate since task describes a gallery bug) but doesn't specify line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "Code task, not agentmd-edits config."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

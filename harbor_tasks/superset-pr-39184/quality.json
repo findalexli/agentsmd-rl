@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four files to modify, the exact icon names (CaretUpOutlined, CaretDownOutlined, ColumnHeightOutlined), the source package (@ant-design/icons), the mapping from FaSort/FaSortUp/FaSortDown, the sort logic variables (isSortedDesc, sortingOrder[key] === 'asc'), and the function SortIcon. All test assertions reference specifics discoverable from the instruction."
+      "reason": "All file paths, icon names (FaSort/FaSortUp/FaSortDown, ColumnHeightOutlined/CaretUpOutlined/CaretDownOutlined), and logic conditions (isSortedDesc, sortingOrder[key] === 'asc') are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact replacement mapping (FaSort \u2192 ColumnHeightOutlined, FaSortUp \u2192 CaretUpOutlined, FaSortDown \u2192 CaretDownOutlined), the exact import source (@ant-design/icons), and describes precisely what to change in each file. This is a complete specification of the fix, not a description of what's broken."
+      "reason": "Instruction explicitly states the icon mapping (FaSort \u2192 ColumnHeightOutlined, FaSortUp \u2192 CaretUpOutlined, FaSortDown \u2192 CaretDownOutlined) and describes the exact conditional logic to use, leaving little reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_sort_icon_logic_table_chart uses regex `isSortedDesc\\s*\\?\\s*<CaretDownOutlined` and `:\\s*<CaretUpOutlined` which requires the exact ternary expression format. test_sort_icon_logic_pivot_table asserts exact regex `===\\s*'asc'\\s*\\?\\s*CaretUpOutlined\\s*:\\s*CaretDownOutlined` requiring a specific inline ternary pattern. An alternative correct fix using if/else blocks or different variable patterns would fail these regex-based tests."
+      "reason": "test_sort_icon_logic_pivot_table asserts regex `=== 'asc'\\s*\\?\\s*CaretUpOutlined\\s*:\\s*CaretDownOutlined` which forces a specific ternary order; an equivalent fix using `=== 'desc' ? CaretDownOutlined : CaretUpOutlined` would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_table_chart_uses_antd_icons, test_table_chart_no_react_icons, test_pivot_table_uses_antd_icons, test_pivot_table_no_react_icons, test_sort_icon_logic_*, test_*_package_no_react_icons_dep) are ALL text-matching via `assert 'X' in content` or regex on file contents. While there are some pass-to-pass subprocess tests (jest, oxlint), the core fail-to-pass tests are purely textual."
+      "outcome": "pass",
+      "reason": "Tests include subprocess calls to oxlint and jest (test_repo_oxlint_*, test_repo_jest_*) which execute the code, beyond just text assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the presence of new icon names and absence of old ones in the source files. A stub or no-op would leave the original react-icons imports in place and fail the 'no react-icons' assertions."
+      "reason": "Tests require specific icons present and old FaSort absent; a stub cannot satisfy both the presence of new icons and absence of react-icons in both files and package.json."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors in the instruction are tested: antd icon imports, removal of react-icons imports, correct sort logic in both files, and removal of react-icons from both package.json files."
+      "reason": "Tests cover all 4 files, both icon mappings, sort logic for both components, and package.json dependency removal."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (table chart vs pivot table, antd usage vs react-icons removal vs sort logic vs package.json), and clearly annotated with fail_to_pass/pass_to_pass markers."
+      "reason": "Tests have descriptive names, docstrings marking f2p/p2p, and a section header comment separating repo CI tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves source code edits, not structured data output."
+      "reason": "No structured data output produced by the task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, icon names, package names, and variable names in the instruction match the actual codebase and test expectations."
+      "reason": "File paths and icon names match between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact icon mappings, exact variable names (isSortedDesc, sortingOrder[key]), and the exact component name (SortIcon). This goes beyond identifying the problem area and specifies the complete implementation details."
+      "reason": "Instruction names exact files and exact icon name replacements (FaSort\u2192ColumnHeightOutlined etc.), which removes the localization/design work from the task."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The package.json edits are localized single-line removals of the react-icons dependency, not full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task; this is a code/dependency change."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 4
+  "fail_count": 3
 }

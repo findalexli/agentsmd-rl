@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not fully discoverable from instruction.md alone. For example, test_recommended_config_rules asserts that the 'recommended' config uses exactly the variable name 'allRuleConfigs' via regex matching. While instruction.md does mention 'allRuleConfigs', the test also checks the specific regex pattern of config map entries. More critically, test_repo_git_log asserts the specific commit SHA '9724e3e' which is nowhere in instruction.md. test_repo_no_pate"
+      "outcome": "pass",
+      "reason": "Instruction names index.ts, package.json, README.md, CHANGELOG.md, fixtures paths, the required configs (recommended, recommended-latest), removed configs, meta version field format, version >= 7.0.0, and the '9724e3e' commit SHA check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'this config must reference the variable named allRuleConfigs' \u2014 this tells the agent exactly what internal variable name to use in the implementation, which is an implementation detail leak rather than just describing desired behavior."
+      "outcome": "pass",
+      "reason": "Instruction describes what should be removed/added (presets, headers, version field) but doesn't prescribe specific code changes or variable names like 'allRuleConfigs'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_recommended_config_rules uses regex to extract config entries and asserts config_map['recommended'] == 'allRuleConfigs'. This forces the agent to use the exact variable name 'allRuleConfigs' in the rules field assignment. An alternative correct implementation that used a different variable name (e.g., 'compilerAndHooksRules' or inline object) containing identical rules would fail this test."
+      "reason": "test_recommended_config_rules asserts config_map['recommended'] == 'allRuleConfigs', a gold-specific variable name never mentioned in instruction.md; an alternative correct fix using a different variable name (e.g., 'recommendedRules') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are pure text inspection: test_recommended_config_rules does regex on file content, test_legacy_configs_not_in_configs_object does regex on file content, test_plugin_meta_version_field does regex on file content, test_package_json_version_bumped reads JSON. No test imports the TypeScript module, compiles it, or runs ESLint to verify actual behavior. The tests are essentially all 'assert pattern in open(path).read()' style."
+      "reason": "Tests rely on regex reading of file contents (INDEX_TS.read_text(), README_MD.read_text(), git subprocesses for status/log); no tests import or execute the plugin code itself to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for conditions not present in the base repo (e.g., 'recommended' using 'allRuleConfigs' instead of 'basicRuleConfigs', version >= 7.0.0, removal of legacy configs, meta version field). A stub or no-op would not satisfy these since the base code has different values."
+      "reason": "Tests check for specific substitutions (allRuleConfigs mapping, removed legacy configs, version bump) that a stub couldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md requires updating fixture files (eslint-v6/v7/v8), updating ReactVersions.js, updating README with specific rule names (config, error-boundaries, etc.), and consolidating installation sections. None of these are tested \u2014 no test checks fixture content, ReactVersions.js, README rule listings, or installation section consolidation."
+      "reason": "Instruction requires README custom config examples to include 17 specific compiler rules and a '## 7.0.0' CHANGELOG entry, but tests only check for '## Flat Config'/'## Legacy Config' headers and a generic version pattern, not '## 7.0.0' specifically or the rule list."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass', 'Pass-to-pass \u2014 regression checks', 'Pass-to-pass \u2014 Repo file structure checks', 'Pass-to-pass \u2014 Real CI commands'), descriptive function names, and docstrings."
+      "reason": "Tests are grouped with section comments ('Fail-to-pass', 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)')."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it modifies source code and documentation files."
+      "reason": "Task is a configuration/refactor task, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "Filenames and paths referenced (packages/eslint-plugin-react-hooks/src/index.ts, fixtures/eslint-v*/.eslintrc.json) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md explicitly names the internal variable 'allRuleConfigs' that the recommended config must reference, and specifies exact format 'version: X.Y.Z' for the meta object. These are implementation-level details that go beyond describing desired behavior."
+      "outcome": "pass",
+      "reason": "Instruction names the files to edit, which is appropriate since the task is about editing those specific files; no exact line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to specific files (index.ts configs, package.json version, README sections, CHANGELOG entry, fixture files) without full-file rewrites, and changes are consistent with the instruction."
+      "reason": "Gold diff is localized to relevant files (index.ts, README.md, CHANGELOG.md, package.json via ReactVersions.js, fixtures) without full-file rewrites."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 3
 }

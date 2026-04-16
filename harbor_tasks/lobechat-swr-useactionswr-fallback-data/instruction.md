@@ -2,15 +2,13 @@
 
 The `useActionSWR` hook in `src/libs/swr/index.ts` currently has two problems:
 
-1. **Auto-fetch on mount**: When the SWR cache is empty and a component mounts, the hook triggers an unwanted fetch request. This happens even when `revalidateOnMount: false` is set, because when the cache is empty, SWR still auto-fetches.
+1. **Unnecessary fetch on mount**: When the SWR cache is empty and a component mounts, the hook triggers an unwanted network request. This causes issues especially for actions like "create agent" where the button and header use the same key but shouldn't each trigger their own fetch.
 
-2. **No shared loading state**: The loading state is per-hook-instance, not shared globally by SWR key. This means multiple components using the same key (e.g., the "create agent" button and the "+" button in the header) don't share loading state.
+2. **No shared loading state**: The loading state is per-hook-instance, not shared globally by SWR key. This means multiple components using the same key don't share the same loading indicator.
 
 The fix must:
-- Prevent auto-fetch on mount while preserving shared loading state across components using the same key
-- Use the SWR configuration options `fallbackData` and `revalidateOnMount`
-- Not use `useSWRMutation` (the current approach)
-- Ensure all comments in the SWR module are written in English only (no Chinese characters)
+- Prevent unnecessary network requests when a component mounts with an empty cache, while still sharing loading state across components that use the same key
+- All comments in the SWR module must be written in English only (no Chinese characters)
 
 ---
 

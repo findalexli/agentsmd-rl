@@ -1,0 +1,92 @@
+source:
+  repo: TanStack/router
+  pr_number: 6963
+  pr_title: "ci: support semver breaking changes"
+  base_commit: cd7116b53b7ba3152129b5c656dfcaeb0d62c5b8
+  merge_commit: 1340197f636911b6ba4224704a6f3bd8b86a1db6
+  target_file: scripts/create-github-release.mjs
+
+checks:
+  # Fail-to-pass: Regex tests
+  - id: test_regex_matches_breaking_commit_with_exclamation
+    type: fail_to_pass
+    origin: pr_fix
+    description: "Regex should match breaking commits like 'feat!: message'"
+
+  - id: test_regex_matches_breaking_commit_with_scope
+    type: fail_to_pass
+    origin: pr_fix
+    description: "Regex should match scoped breaking commits like 'feat(api)!: message'"
+
+  - id: test_regex_captures_breaking_marker
+    type: fail_to_pass
+    origin: pr_fix
+    description: "Regex should capture the '!' marker in a group"
+
+  # Fail-to-pass: Grouping tests
+  - id: test_breaking_type_in_type_order
+    type: fail_to_pass
+    origin: pr_fix
+    description: "The 'breaking' type should be in typeOrder"
+
+  - id: test_breaking_type_in_type_labels
+    type: fail_to_pass
+    origin: pr_fix
+    description: "The 'breaking' type should have a label in typeLabels"
+
+  - id: test_is_breaking_variable_exists
+    type: fail_to_pass
+    origin: pr_fix
+    description: Script should have isBreaking variable
+
+  - id: test_bucket_uses_breaking_type
+    type: fail_to_pass
+    origin: pr_fix
+    description: "Script should group breaking commits under 'breaking' bucket"
+
+  # Fail-to-pass: Message extraction tests
+  - id: test_message_uses_correct_group_index
+    type: fail_to_pass
+    origin: pr_fix
+    description: Message should be extracted from correct regex group
+
+  - id: test_regular_commit_message_extraction
+    type: pass_to_pass
+    origin: pr_fix
+    description: Regular commits should still have message extracted correctly
+
+  - id: test_scoped_commit_message_extraction
+    type: pass_to_pass
+    origin: pr_fix
+    description: Scoped commits should have message extracted correctly
+
+  # Pass-to-pass: Repo CI tests
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ESLint check passes
+
+  - id: test_typescript_check_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo TypeScript check passes
+
+  - id: test_script_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on the release script
+
+  - id: test_script_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check passes on release script
+
+  - id: test_script_node_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Node.js syntax check passes on release script
+
+rubric:
+  - id: code_only_change
+    rule: "This change is code-only and does not require documentation updates"
+    weight: 1.0

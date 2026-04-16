@@ -1,0 +1,73 @@
+version: "1.0"
+
+source:
+  pr:
+    owner: expo
+    repo: expo
+    number: 44407
+    title: "fix(expo/winter): Remove `original*` global copies for globals with getters"
+    merge_commit: 0e8e44ea9a50365a967af15c1464ed17cabf590a
+    base_commit: b2a49055ba0c009e93829edd569fbe21dabcdd2c
+
+environment:
+  type: node
+  base_image: node:22-slim
+
+checks:
+  # Fail-to-pass tests (the actual bug fixes)
+  - id: test_no_backup_for_getter_properties
+    type: fail_to_pass
+    origin: agent_config
+    description: "Properties with getters should NOT have original* backups created"
+    source:
+      file: "packages/expo/src/winter/installGlobal.ts"
+      lines: [86, 89]
+
+  - id: test_backup_is_non_enumerable
+    type: fail_to_pass
+    origin: agent_config
+    description: "Backup copies should be non-enumerable to avoid dev/prod differences"
+    source:
+      file: "packages/expo/src/winter/installGlobal.ts"
+      lines: [89, 92]
+
+  # Pass-to-pass tests (regression checks)
+  - id: test_development_mode_check_present
+    type: pass_to_pass
+    origin: code_review
+    description: "The __DEV__ check should still be present for backup logic"
+
+  - id: test_backup_naming_convention
+    type: pass_to_pass
+    origin: code_review
+    description: "The backup naming convention should follow original{Name} pattern"
+
+  - id: test_installGlobal_still_exports
+    type: pass_to_pass
+    origin: code_review
+    description: "installGlobal function should still be exported"
+
+  - id: test_comments_explain_fix
+    type: pass_to_pass
+    origin: agent_config
+    description: "Comments should explain why the getter check is needed"
+
+  - id: test_repo_installGlobal_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "installGlobal.ts should have valid JavaScript/TypeScript syntax"
+
+  - id: test_repo_winter_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Winter module should have proper structure with runtime imports"
+
+  - id: test_repo_global_polyfill_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Global polyfill patterns should follow expected conventions"
+
+rubric: []
+  # No agent config files found in packages/expo directory that would apply to this PR
+  # The PR only changes packages/expo/src/winter/installGlobal.ts
+  # No CLAUDE.md, AGENTS.md, or other agent config files exist in packages/expo/

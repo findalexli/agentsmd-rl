@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file paths like 'frontend/src/utils/toast-duration.ts' and 'frontend/src/utils/custom-toast-handlers.tsx', and check for exact strings like 'if (!message)' and 'return minDuration' and 'error || i18n.t'. While the instruction mentions the patterns, it never explicitly names the file 'toast-duration.ts' or 'custom-toast-handlers.tsx'. The agent must discover these file paths on its own. Also, tests modify test files (use-handle-plan-click.test.tsx, use-sandbox-recovery.te"
+      "reason": "Tests assert specific file paths like 'frontend/src/utils/toast-duration.ts' and 'frontend/src/utils/custom-toast-handlers.tsx', and check for exact strings like 'if (!message)' and 'return minDuration' and 'error || i18n.t'. While instruction.md mentions these patterns, it does not mention the test file modifications needed for use-handle-plan-click.test.tsx and use-sandbox-recovery.test.tsx (initReactI18next mock), which are tested in test_frontend_unit_tests. Also, the exact file path 'src/ut"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix patterns: 'if (!message) followed by return minDuration', 'error || i18n.t(\"STATUS$ERROR\")', the exact type signature 'string | null | undefined', and the exact import '#/i18n'. This is essentially dictating the solution code, not just describing the bug."
+      "reason": "instruction.md explicitly states the exact fix: 'it should return the minimum duration immediately using a null check pattern like `if (!message)` followed by `return minDuration`', 'The fallback should be implemented using the `||` operator pattern: `error || i18n.t(\"STATUS$ERROR\")`', and 'The type signatures for affected functions should accept `string | null | undefined`'. These are exact implementation instructions, not just descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_displayErrorToast_type_signature and test_calculateToastDuration_type_signature use pure text matching: they assert exact strings like 'if (!message)' in content, 'return minDuration' in content, 'error: string | null | undefined' in content, 'error || i18n.t' in content. An alternative correct fix using e.g. 'message == null' or 'message ?? \"\"' or 'error ?? i18n.t(...)' would fail these tests despite being functionally correct."
+      "reason": "test_calculateToastDuration_type_signature and test_displayErrorToast_type_signature do pure text matching: they assert exact strings like 'message: string | null | undefined', 'if (!message)', 'return minDuration', 'error || i18n.t', and 'error: string | null | undefined' in source files. An alternative correct fix using e.g. 'message == null' or 'message ?? minDuration' or a ternary would fail these text-based assertions even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_displayErrorToast_type_signature and test_calculateToastDuration_type_signature are purely text-based: they open source files and assert substrings like 'if (!message)' and 'error || i18n.t' without any execution. While other tests (test_calculateToastDuration_null_handling, test_calculateToastDuration_normal_operation) do execute code, the type signature tests are entirely 'assert X in open(path).read()' style."
+      "reason": "test_displayErrorToast_type_signature and test_calculateToastDuration_type_signature are purely text-matching tests (assert 'if (!message)' in content, assert 'error || i18n.t' in content, etc.) with no execution. While test_calculateToastDuration_null_handling and test_calculateToastDuration_normal_operation do execute code, the type signature tests are entirely text-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests test_calculateToastDuration_null_handling actually calls the function with null/undefined and checks specific return values (4000). A stub returning a constant wouldn't pass unless it matched the expected minDuration parameter value, which varies across test cases (4000 and 3000). The function must actually implement the null-check logic."
+      "reason": "test_calculateToastDuration_null_handling calls calculateToastDuration(null, 4000, 8000) and asserts result === 4000. A stub returning a constant default wouldn't pass both this and test_calculateToastDuration_normal_operation which checks that long messages return values in range [3000, 10000]. The function must actually implement the logic."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'npm run build completes successfully' but there is no test_frontend_build test. Also, the gold patch modifies two test files (use-handle-plan-click.test.tsx, use-sandbox-recovery.test.tsx) adding initReactI18next mocks, which is required behavior not mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "instruction.md requires null check with if(!message)/return minDuration, fallback with error || i18n.t('STATUS$ERROR'), updated type signatures, and passing lint/test/build/typecheck/translation checks. All of these are tested: null handling behavior, type signatures, lint, typecheck, translation completeness, and unit tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_calculateToastDuration_null_handling, test_displayErrorToast_type_signature, etc.), grouped by concern, and have docstrings explaining fail-to-pass vs pass-to-pass classification."
+      "reason": "Tests are well-named (test_calculateToastDuration_null_handling, test_displayErrorToast_type_signature, etc.), have docstrings explaining fail-to-pass vs pass-to-pass designation, and are logically grouped by the component they test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
       "reason": "This task involves fixing a bug in toast notification handlers, not producing structured data output."
     },
     "no_typos": {
-      "outcome": "fail",
-      "reason": "In test_calculateToastDuration_null_handling, there is 'raise AssertionError' which should be 'raise AssertionError' \u2014 actually 'AssertionError' is a typo for 'AssertionError'... wait, checking: 'AssertionError' \u2014 Python's built-in is 'AssertionError'. Actually it's 'AssertionError' in the code. The correct spelling is 'AssertionError'. Let me re-check: the code says 'raise AssertionError' \u2014 Python's exception is 'AssertionError'. This is actually 'AssertionError' which IS a typo for 'AssertionE"
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation patterns: 'if (!message) followed by return minDuration', 'error || i18n.t(\"STATUS$ERROR\")', exact type signatures, and exact import path '#/i18n'. This goes beyond describing the bug and leaks the exact solution lines."
+      "reason": "instruction.md specifies exact implementation patterns: 'null check pattern like `if (!message)` followed by `return minDuration`', 'implemented using the `||` operator pattern: `error || i18n.t(\"STATUS$ERROR\")`', the exact import path '#/i18n', and exact type signature 'string | null | undefined'. This goes well beyond naming the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
@@ -54,10 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "no_typos",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -17,11 +17,9 @@ This blocks SFT workflows that use VLMs with default settings.
 ## Expected behavior
 
 The dtype validation for VLMs should only apply to RL training contexts, not SFT. Specifically:
-- RL training configs (`TrainerConfig`) must reject VLM models with non-bfloat16 dtypes, raising `ValueError` with "bfloat16" in the error message
+- RL training configs (`TrainerConfig`) must reject VLM models with non-bfloat16 dtypes, raising `ValueError` with "bfloat16" in the error message. This applies to VLM model names including `Qwen/Qwen3-VL-4B-Instruct`, `Qwen/Qwen3-VL-72B`, and `Qwen/Qwen3.5-VL-7B`.
 - `SFTConfig` with VLM models and default float32 dtypes should succeed without errors
 - `ModelConfig` with VLM names and default dtypes should succeed without errors
-
-The validation method on `TrainerConfig` must be named `vlms_require_bfloat16`.
 
 ## Reproduction
 

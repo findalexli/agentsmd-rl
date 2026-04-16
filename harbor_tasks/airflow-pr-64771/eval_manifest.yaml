@@ -1,0 +1,59 @@
+version: 1
+
+source:
+  repo: apache/airflow
+  pr_number: 64771
+  base_commit: fd1962fa027c8b937fc5d4b8ed0d43544bfa3d94
+  merge_commit: b2b3ce2607088ec5c11356ac5e271cb80fd8b6bb
+
+checks:
+  - id: test_dagversionselect_vitest
+    type: fail_to_pass
+    origin: pr_tests
+    description: Vitest tests verify DagVersionSelect filters versions based on selected DagRun
+
+  - id: test_typescript_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_component_imports_dag_run_hook
+    type: fail_to_pass
+    origin: behavioral
+    description: Component imports useDagRunServiceGetDagRun to fetch DagRun data
+
+  - id: test_component_extracts_runid
+    type: fail_to_pass
+    origin: behavioral
+    description: Component extracts runId from URL params to detect selected DagRun
+
+  - id: test_component_filters_versions
+    type: fail_to_pass
+    origin: behavioral
+    description: Component has version filtering logic using runData.dag_versions
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for the component file
+
+  - id: test_repo_prettier_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check passes for the UI
+
+  - id: test_repo_vite_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vite production build succeeds
+
+  - id: test_repo_components_vitest
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vitest passes for all component tests
+
+# Note: Rubric rules removed because this is a pure-code task with no config/documentation
+# file changes. The gold solution only modifies DagVersionSelect.tsx and adds tests.
+# The judge's rubric evaluation is designed for tasks requiring CLAUDE.md/AGENTS.md edits,
+# which is not applicable here. Code quality is validated by TypeScript/ESLint/Vitest checks.
+rubric: []

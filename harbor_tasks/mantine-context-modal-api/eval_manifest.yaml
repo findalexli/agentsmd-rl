@@ -1,0 +1,76 @@
+source_pr:
+  owner: mantinedev
+  repo: mantine
+  number: 8439
+  merge_commit: ddde2b0ce4b10f02ebb9fcbc02b18af04f2f2624
+  base_commit: c3a53eb0c345037d0b5406e925ef5a5e2926022b
+
+checks:
+  # Fail-to-pass tests
+  - id: test_typescript_syntax_valid
+    type: fail_to_pass
+    origin: behavioral
+    description: TypeScript files have valid syntax after API changes
+
+  - id: test_unit_test_file_updated
+    type: fail_to_pass
+    origin: behavioral
+    description: Unit test file is updated to use new API signatures
+
+  - id: test_close_all_modals_method_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: useModals hook returns closeAllModals instead of closeAll
+
+  - id: test_open_context_modal_uses_modal_key
+    type: fail_to_pass
+    origin: behavioral
+    description: openContextModal uses object parameter with modalKey
+
+  - id: test_close_context_modal_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: closeContextModal function is exported and properly typed
+
+  - id: test_update_context_modal_uses_modal_key
+    type: fail_to_pass
+    origin: behavioral
+    description: updateContextModal accepts modalKey parameter
+
+  - id: test_modals_provider_has_close_all_modals
+    type: fail_to_pass
+    origin: behavioral
+    description: ModalsProvider provides closeAllModals method
+
+  - id: test_context_modal_inner_props_type
+    type: fail_to_pass
+    origin: behavioral
+    description: ContextModalInnerProps type properly handles optional innerProps
+
+  - id: test_open_context_modal_event_signature
+    type: fail_to_pass
+    origin: behavioral
+    description: openContextModal event uses modalKey in payload
+
+  # Pass-to-pass tests
+  - id: test_typescript_types_valid
+    type: pass_to_pass
+    origin: behavioral
+    description: TypeScript types in modified files are syntactically valid
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo unit tests for modals package pass
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check on modified modals files passes
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check on modified modals files passes
+
+rubric: []

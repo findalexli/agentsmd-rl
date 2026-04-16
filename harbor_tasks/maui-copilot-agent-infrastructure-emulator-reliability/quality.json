@@ -3,51 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific function names like 'Write-Warn' (test_write_warn_executes), but instruction.md never specifies the function should be named 'Write-Warn' \u2014 it only says 'a consistent warning helper'. Tests also check for exact strings like 'Write-Warn' in BuildAndRunHostApp.ps1 (test_host_app_uses_write_warn), the specific timeout value '600' in android.cake, exact model string 'claude-opus-4.6', and exact cleanup commands in post-gate.md. While some are discoverable, the function name 'Wr"
+      "reason": "Tests assert specific function names like 'Write-Warn' (test_write_warn_executes) but instruction.md never specifies the function should be named 'Write-Warn' \u2014 it only says 'a consistent warning helper'. Tests also check for 'Write-Warn' usage in BuildAndRunHostApp.ps1 (test_host_app_uses_write_warn) and specific strings like 'claude-opus-4.6' replacements, 'git checkout HEAD -- .' in post-gate.md, 'git clean -fd --exclude=CustomAgentLogsTmp/' \u2014 while some of these are mentioned in instruction."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what is broken and what needs to change (e.g., 'timeout should be increased to at least 10 minutes', 'replace claude-opus-4.5 with claude-opus-4.6') but doesn't give exact line numbers or complete code patches. The agent must still figure out implementation details like function signatures and exact file modifications."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact fixes: 'replace claude-opus-4.5 with claude-opus-4.6', 'Running git checkout HEAD -- . to restore tracked files', 'Running git clean -fd --exclude=CustomAgentLogsTmp/', 'timeout should be increased to at least 10 minutes', and specifies exact stop rules text. These are not just describing what's broken but prescribing the exact solution content."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert the exact function name 'Write-Warn' (test_write_warn_executes calls Write-Warn specifically). An equally correct alternative like 'Write-Warning2', 'Write-WarningMsg', or 'Write-WarnMessage' would fail. The test_host_app_uses_write_warn checks for the literal string 'Write-Warn' in the file. These lock the solution to the gold patch's specific naming choice."
+      "reason": "Tests assert on gold-specific implementation details: test_write_warn_executes requires a function named exactly 'Write-Warn'; test_host_app_uses_write_warn checks for the literal string 'Write-Warn' in the file; test_review_pr_has_git_checkout checks for 'git checkout HEAD' in Review-PR.ps1; test_emulator_timeout_increased checks for specific timeout value >=600. An alternative valid implementation using 'Write-Warning-Custom' or a different cleanup mechanism would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many f2p tests are pure text searches: test_host_app_uses_write_warn checks 'Write-Warn' in file text, test_emulator_timeout_increased checks '600' in file text, test_model_updated_plan_template/test_model_updated_shared_rules check 'claude-opus-4.6' in text, test_postgate_cleanup_rules checks strings in text, test_tryfixskill_state_warning checks strings in text. Only test_write_warn_executes actually executes the function. The majority of f2p tests are `assert X in open(path).read()` pattern."
+      "reason": "Many f2p tests are pure text searches: test_host_app_uses_write_warn checks 'Write-Warn' in file text, test_review_pr_has_git_checkout checks 'git checkout HEAD' in file text, test_post_gate_has_cleanup_rules checks strings in file text, test_post_gate_env_blocker_rules checks strings in file text, test_try_fix_skill_state_warning checks string in file text, test_model_updated_plan/shared_rules check string replacement. Only test_write_warn_executes and test_emulator_timeout_increased actually e"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for content/behavior that doesn't exist in the base commit. For example, test_write_warn_executes requires a working Write-Warn function that produces output, test_emulator_timeout_increased requires '600' to appear in the cake file (currently '120'). These cannot be satisfied by stub/no-op implementations."
+      "reason": "The f2p tests check for specific content that doesn't exist in the base commit \u2014 e.g., Write-Warn function must be created and executable, specific text must be added to markdown files, timeout value must be changed. A stub/no-op would not pass these since the base files lack the required content."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction item 2 mentions Review-PR.ps1 needs working tree restoration between phases and fixing external pipe mechanism for log capture, but no f2p test verifies the Review-PR.ps1 log capture fix or working tree restoration behavior. The instruction also mentions BuildAndRunSandbox.ps1 warning helper issue but no test checks that file."
+      "reason": "instruction.md specifies Review-PR.ps1 needs working tree restoration between phases and removal of external pipe mechanism for log capture, but tests only check for 'git checkout HEAD' string presence \u2014 they don't verify the pipe mechanism was removed or that phase restoration actually works. The BuildAndRunSandbox.ps1 warning helper change mentioned in instruction.md is not tested at all."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments ('Pass-to-pass (static)', 'Pass-to-pass (repo_tests)', 'Fail-to-pass') and have descriptive docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped into 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)', and 'Fail-to-pass' sections with descriptive docstrings and meaningful function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves script hardening and documentation updates, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md appear correct and consistent with the test file references."
+      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies exact commands to add to post-gate.md ('git checkout HEAD -- .', 'git clean -fd --exclude=CustomAgentLogsTmp/'), exact model version to use ('claude-opus-4.6'), exact timeout value ('at least 10 minutes'), and exact stop-rule conditions. Combined with the specific file list, this significantly narrows the solution space beyond just describing what's broken."
+      "reason": "instruction.md names exact files, exact commands to add ('git checkout HEAD -- .', 'git clean -fd --exclude=CustomAgentLogsTmp/'), exact model version replacements ('claude-opus-4.5' to 'claude-opus-4.6'), and exact timeout value ('10 minutes'). This goes beyond describing what's broken and prescribes the solution implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized edits to markdown and script files \u2014 targeted insertions and string replacements, not full-file rewrites. The changes are consistent with what instruction.md describes."
+      "reason": "The gold patch shows localized, targeted edits to markdown and script files \u2014 line-level replacements and insertions, not full-file rewrites. The changes don't contradict other files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
@@ -56,6 +57,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

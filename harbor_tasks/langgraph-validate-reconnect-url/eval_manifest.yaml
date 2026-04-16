@@ -1,0 +1,116 @@
+source_pr:
+  owner: langchain-ai
+  repo: langgraph
+  number: 7434
+  title: "chore: validate reconnect url"
+  merge_commit: b2893bc7788389ab2e39e5cb7e4398c042a47bc0
+  base_commit: b8540449b477aeff563e8867378c3888516763b4
+
+# Checks correspond 1:1 with test functions in test_outputs.py
+checks:
+  # Fail-to-pass tests - core functionality
+  - id: test_cross_origin_reconnect_blocked
+    type: fail_to_pass
+    origin: regression
+    description: Cross-origin reconnect Location headers raise ValueError
+
+  - id: test_same_origin_reconnect_allowed
+    type: fail_to_pass
+    origin: regression
+    description: Same-origin reconnect Location headers are allowed
+
+  - id: test_relative_url_allowed
+    type: fail_to_pass
+    origin: regression
+    description: Relative reconnect URLs are allowed
+
+  - id: test_default_port_handling
+    type: fail_to_pass
+    origin: regression
+    description: Default ports (https=443, http=80) are handled correctly
+
+  - id: test_import_validation_function
+    type: fail_to_pass
+    origin: regression
+    description: _validate_reconnect_location function is importable
+
+  - id: test_version_updated
+    type: fail_to_pass
+    origin: regression
+    description: Version is updated to 0.3.13
+
+  # Pass-to-pass tests - repo CI/CD and agent config
+  - id: test_repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo code passes format check (make format)
+    source: CLAUDE.md lines 7-9
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo code passes lint check (make lint)
+    source: CLAUDE.md lines 7-9
+
+  - id: test_repo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo tests pass (make test)
+    source: CLAUDE.md lines 7-9
+
+  - id: test_repo_type
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo type checking passes (make type)
+    source: Makefile type target
+
+  - id: test_repo_stream_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo client stream tests pass (tests/test_client_stream.py)
+    source: Modified files include _async/http.py and _sync/http.py
+
+  - id: test_repo_error_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo error handling tests pass (tests/test_errors.py)
+    source: Modified files include error handling paths
+
+  - id: test_repo_client_export_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo client export tests pass (tests/test_client_exports.py)
+    source: Modified files include client module
+
+  - id: test_no_double_backticks
+    type: pass_to_pass
+    origin: agent_config
+    description: Do NOT use Sphinx-style double backtick formatting
+    source: CLAUDE.md line 35
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - id: run_format_before_pr
+    description: Run `make format` in the library directory before creating PR
+    weight: 1
+    source: CLAUDE.md lines 7-9
+
+  - id: run_lint_before_pr
+    description: Run `make lint` in the library directory before creating PR
+    weight: 1
+    source: CLAUDE.md lines 7-9
+
+  - id: run_tests_before_pr
+    description: Run `make test` in the library directory before creating PR
+    weight: 1
+    source: CLAUDE.md lines 7-9
+
+  - id: single_backtick_formatting
+    description: Use single backticks for inline code, NOT Sphinx-style double backticks
+    weight: 1
+    source: CLAUDE.md line 35
+
+  - id: modify_lib_subdirectory
+    description: When modifying code in any library, work in that library's subdirectory under libs/
+    weight: 1
+    source: CLAUDE.md lines 3-4

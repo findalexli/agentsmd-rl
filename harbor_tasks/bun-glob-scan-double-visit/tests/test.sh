@@ -13,6 +13,12 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
+# Install fast-glob for bun test dependencies (needed for glob scan tests)
+cd /workspace/bun
+if [ ! -d "node_modules/fast-glob" ]; then
+    bun add -d fast-glob 2>/dev/null
+fi
+
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then

@@ -2,34 +2,29 @@
 
 ## Problem
 
-In the OpenHands SaaS/Enterprise edition, conversations created via API key authentication are associated with the wrong organization. The bug manifests as follows:
+In the SaaS/Enterprise edition, conversations created via API key authentication are associated with the wrong organization. When a user creates an API key bound to Organization A, then switches their active organization to Organization B in the web UI, conversations created using that API key are incorrectly saved under Organization B instead of Organization A. This is a data isolation issue.
 
-1. A user creates an API key bound to Organization A
-2. The user switches their active organization to Organization B in the web UI (changing their `current_org_id`)
-3. When using the API key to create conversations, those conversations are incorrectly saved under Organization B instead of Organization A
+## Required Fix
 
-This is a data isolation issue — conversations end up in the wrong organization's scope.
+The fix must be implemented in the code that handles saving conversation metadata with organization association. The implementation must use these exact patterns:
 
-## Root Cause
+1. Create a variable named exactly `org_id` that defaults to `user.current_org_id`
+2. Check for API key authentication using: `if hasattr(self.user_context, 'user_auth'):`
+3. Inside that block, assign exactly: `user_auth = self.user_context.user_auth`
+4. Check for the org ID method using: `if hasattr(user_auth, 'get_api_key_org_id'):`
+5. Get the API key's org ID using exactly: `api_key_org_id = user_auth.get_api_key_org_id()`
+6. Check if it's not None using exactly: `if api_key_org_id is not None:`
+7. When not None, assign exactly: `org_id = api_key_org_id`
+8. Use `org_id=org_id` when creating the conversation metadata record with organization association
 
-The code that creates `StoredConversationMetadataSaas` records always uses `user.current_org_id` as the org association, regardless of whether the request was authenticated via an API key that carries its own org binding.
+## Required Behavior
 
-## Codebase Context
+The fix must handle three authentication scenarios:
 
-The enterprise edition has a conversation metadata service (`SaasSQLAppConversationInfoService`) with an async method `save_app_conversation_info()` that creates and stores `StoredConversationMetadataSaas` entries. The service is registered via `SaasAppConversationInfoServiceInjector`.
+1. **API key with org binding**: When `get_api_key_org_id()` returns a non-None UUID, the conversation's organization must be set to that API key's org ID
+2. **Legacy API key (no org binding)**: When `get_api_key_org_id()` returns `None`, fall back to `user.current_org_id`
+3. **Cookie/browser auth**: When there's no `user_auth` attribute on the context, use `user.current_org_id` — preserving existing behavior
 
-The authentication context available in this method provides:
-- `self.user_context` — the authenticated user's context. When API key auth is used, this object has a `user_auth` attribute. For cookie/browser auth, this attribute is absent.
-- When `user_auth` is present, it may expose `get_api_key_org_id()` which returns the UUID of the org bound to the API key, or `None` for legacy keys without org binding.
-
-## Requirements
-
-Fix the `save_app_conversation_info()` method so that:
-
-1. **API key with org binding**: The conversation's `StoredConversationMetadataSaas` org_id should come from the API key's bound organization
-2. **Legacy API key (no org binding, `get_api_key_org_id()` returns `None`)**: Fall back to `user.current_org_id`
-3. **Cookie/browser auth (no `user_auth` attribute on context)**: Use `user.current_org_id` — preserving existing behavior
-
-The `StoredConversationMetadataSaas` creation must use the correctly determined org_id rather than directly referencing `user.current_org_id`.
+## Constraints
 
 The modified code must pass ruff linting and formatting per the enterprise config at `enterprise/dev_config/python/ruff.toml`.

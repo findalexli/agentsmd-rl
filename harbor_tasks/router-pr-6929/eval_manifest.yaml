@@ -1,0 +1,56 @@
+source:
+  repo: TanStack/router
+  pr_number: 6929
+  base_commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+  merge_commit: 32fcba7b044b03f5901308b870f70b0b4910c220
+  title: "fix: Fix retained promise refs"
+
+checks:
+  - id: test_load_matches_prevLoadPromise_cleanup
+    type: fail_to_pass
+    origin: pr_fix
+    description: prevLoadPromise must be cleaned up (let + undefined) in executeBeforeLoad
+
+  - id: test_load_matches_loadPromise_cleanup_in_try_block
+    type: fail_to_pass
+    origin: pr_fix
+    description: loadPromise must be set to undefined in the try block cleanup
+
+  - id: test_load_matches_loadPromise_cleanup_after_sync_load
+    type: fail_to_pass
+    origin: pr_fix
+    description: loadPromise must be cleaned up after synchronous loader completion
+
+  - id: test_router_previousCommitPromise_cleanup
+    type: fail_to_pass
+    origin: pr_fix
+    description: previousCommitPromise must be cleaned up (let + undefined) in router.ts
+
+  - id: test_router_core_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: router-core package builds successfully
+
+  - id: test_router_core_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_router_core_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint linting passes
+
+  - id: test_router_core_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: router-core unit tests pass (includes load.test.ts)
+
+  - id: test_router_core_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package build quality checks pass (publint + attw)
+
+rubric:
+  - id: code_change_only
+    rule: This is a pure code fix that correctly does not require documentation or config file changes

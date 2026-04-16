@@ -1,0 +1,89 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6911
+  title: "fix(solid-router): restore MatchRoute reactivity"
+  merge_commit: 1a6c6cf83e0d4baf9232802f66e1a3b7ae760f3f
+  base_commit: 49d7cbb7768c085be2ce31b36ef3da272b0ebbdd
+
+task:
+  name: tanstack-router-matchroute-reactivity
+  title: Fix MatchRoute reactivity in Solid Router
+  description: |
+    The MatchRoute component in @tanstack/solid-router has a reactivity bug
+    where route changes do not properly update the rendered children. The
+    component gets stuck on the initial match result and doesn't react to:
+    1. Navigation changes (router.history.push)
+    2. Reactive param changes (via Solid signals)
+
+    The fix requires moving option destructuring inside Solid.createMemo callbacks
+    so that reactive inputs are properly tracked by Solid's reactivity system.
+
+  target_files:
+    - packages/solid-router/src/Matches.tsx
+
+  difficulty: medium
+  tags: ["solidjs", "reactivity", "router", "typescript", "bugfix"]
+
+  estimated_time:
+    min: 15
+    max: 45
+
+checks:
+  # Fail-to-pass tests
+  - id: test_usematchroute_opts_inside_memo
+    type: fail_to_pass
+    origin: task_specific
+    description: "useMatchRoute destructures opts inside createMemo callback"
+
+  - id: test_matchroute_uses_memo_for_children
+    type: fail_to_pass
+    origin: task_specific
+    description: "MatchRoute wraps children rendering in Solid.createMemo"
+
+  - id: test_matchroute_returns_jsx_fragment
+    type: fail_to_pass
+    origin: task_specific
+    description: "MatchRoute returns JSX fragment instead of function call"
+
+  # Pass-to-pass tests
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Solid Router unit tests pass"
+
+  - id: test_repo_type_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Solid Router type tests pass"
+
+  - id: test_solid_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Solid Router package builds successfully"
+
+  - id: test_repo_build_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Solid Router package validation passes (publint + attw)"
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Solid Router passes ESLint checks"
+
+  # Agent config derived checks
+  - id: agent_config_nx_commands
+    type: pass_to_pass
+    origin: agent_config
+    source: "AGENTS.md: CI=1 NX_DAEMON=false pnpm nx run <project>:<target> --outputStyle=stream --skipRemoteCache"
+    description: "Tests run with sandboxed Nx flags as per AGENTS.md"
+
+rubric:
+  - criterion: "Code fix follows SolidJS reactivity patterns (opts inside createMemo)"
+    weight: 5
+    source: "PR description"
+
+  - criterion: "MatchRoute properly wraps children in Solid.createMemo"
+    weight: 3
+    source: "PR description"

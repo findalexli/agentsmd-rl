@@ -72,6 +72,54 @@ rubric:
     the hooks re-run appropriately without causing stale closures.
   category: architecture
   verification: llm_judge
+- rule: Avoid unnecessary re-renders
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '420'
+  source_text: '- 避免不必要的重新渲染'
+  evidence: The diff prevents creating a new array `[]` on every render by using `mergedSelectedKeys
+    ?? EMPTY_LIST`. This keeps the array reference stable, preventing unnecessary
+    downstream re-renders or re-evaluations in `useMemo` hooks.
+  category: performance
+  verification: llm_judge
+- rule: Pass all ESLint and TypeScript checks
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '416'
+  source_text: '- 通过所有 ESLint 和 TypeScript 检查'
+  evidence: The diff fixes a likely `react-hooks/exhaustive-deps` ESLint warning by
+    appropriately adding `updatePreserveRecordsCache` to the `useEffect` dependency
+    array.
+  category: linting
+  verification: llm_judge
+- rule: Optimize for minimal re-renders
+  source:
+    path: /workspace/repo/.github/copilot-instructions.md
+    lines: '72'
+  source_text: '- Optimize for minimal re-renders'
+  evidence: The PR optimizes rendering by preventing new array allocation (replacing
+    `|| []` with `?? EMPTY_LIST`), keeping the reference stable.
+  category: performance
+  verification: llm_judge
+- rule: Pass all ESLint and TypeScript checks
+  source:
+    path: /workspace/repo/.github/copilot-instructions.md
+    lines: '117'
+  source_text: '- Pass all ESLint and TypeScript checks'
+  evidence: The PR explicitly fixes an ESLint missing dependency warning by adding
+    `updatePreserveRecordsCache` to the `useEffect` hook's dependencies.
+  category: linting
+  verification: llm_judge
+- rule: Apply performance optimizations
+  source:
+    path: /workspace/repo/.github/copilot-instructions.md
+    lines: '27'
+  source_text: '- Apply performance optimizations with React.memo, useMemo, useCallback
+    appropriately'
+  evidence: The diff refines what is passed into `useMemo` by providing a stable reference
+    (`mergedSelectedKeyList`) rather than dynamically creating new array objects.
+  category: performance
+  verification: llm_judge
 distractors:
 - rule: 测试覆盖率要求 100% (Test coverage requirement 100%)
   collision_type: rule_conflict
@@ -103,6 +151,50 @@ distractors:
   source:
     path: AGENTS.md
     lines: 24-24
+- rule: Avoid using any type
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '122'
+  source_text: '- 避免使用 `any` 类型，尽可能精确地定义类型'
+  collision_type: scope_ambiguity
+  why_distracting: The code modified in the diff includes arguments `keyEntities as
+    any` and `isCheckboxDisabled as any` that are left untouched. An agent attempting
+    to enforce this rule would expand the scope of the PR to fix legacy type assertions,
+    potentially introducing type errors or wasting effort on unrelated refactoring.
+  severity: medium
+- rule: Never use any type
+  source:
+    path: /workspace/repo/.github/copilot-instructions.md
+    lines: '17'
+  source_text: '- Never use `any` type - define precise types instead'
+  collision_type: scope_ambiguity
+  why_distracting: The diff passes `keyEntities as any` and `isCheckboxDisabled as
+    any` without modifying them. A strict adherence to this rule might lead an agent
+    to unnecessarily refactor these legacy types, leading to a rabbit hole outside
+    the core scope of the fix.
+  severity: medium
+- rule: Target 100% test coverage
+  source:
+    path: /workspace/repo/.github/copilot-instructions.md
+    lines: '76'
+  source_text: '- Target 100% test coverage'
+  collision_type: scope_ambiguity
+  why_distracting: The PR consists of an internal optimization and ESLint warning
+    fix that doesn't change the public API behavior. An agent following this rule
+    might incorrectly assume it needs to create new test files or aggressively update
+    test coverage for this specific internal hook optimization, wasting effort and
+    expanding the scope unnecessarily.
+  severity: medium
+- rule: Test coverage 100%
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '197'
+  source_text: '- 测试覆盖率要求 100%'
+  collision_type: scope_ambiguity
+  why_distracting: Similar to the English rule, an agent might be distracted into
+    writing tests for a purely internal memoization optimization, which is typically
+    covered implicitly by existing behavioral tests.
+  severity: medium
 hierarchy_analysis: The configuration is provided in a single root-level `AGENTS.md`
   file. The primary challenge is resolving conflicts between the general repository
   guidelines in the config (e.g., writing tests, avoiding `any`) and the specific,

@@ -111,6 +111,35 @@ distractors:
   source:
     path: AGENTS.md
     lines: 20-20
+- rule: Use the `cancels` parameter in event listeners to configure event cancellation.
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 216-244
+  source_text: "All event listeners share the same signature:\n\n```python\ncomponent.event_name(\n\
+    \    fn: Callable | None | Literal[\"decorator\"] = \"decorator\",\n    inputs:\
+    \ Component | Sequence[Component] | set[Component] | None = None,\n    outputs:\
+    \ Component | Sequence[Component] | set[Component] | None = None,\n    api_name:\
+    \ str | None = None,\n    api_description: str | None | Literal[False] = None,\n\
+    \    scroll_to_output: bool = False,\n    show_progress: Literal[\"full\", \"\
+    minimal\", \"hidden\"] = \"full\",\n    show_progress_on: Component | Sequence[Component]\
+    \ | None = None,\n    queue: bool = True,\n    batch: bool = False,\n    max_batch_size:\
+    \ int = 4,\n    preprocess: bool = True,\n    postprocess: bool = True,\n    cancels:\
+    \ dict[str, Any] | list[dict[str, Any]] | None = None,\n    trigger_mode: Literal[\"\
+    once\", \"multiple\", \"always_last\"] | None = None,\n    js: str | Literal[True]\
+    \ | None = None,\n    concurrency_limit: int | None | Literal[\"default\"] = \"\
+    default\",\n    concurrency_id: str | None = None,\n    api_visibility: Literal[\"\
+    public\", \"private\", \"undocumented\"] = \"public\",\n    time_limit: int |\
+    \ None = None,\n    stream_every: float = 0.5,\n    key: int | str | tuple[int\
+    \ | str, ...] | None = None,\n    validator: Callable | None = None,\n) -> Dependency\n\
+    ```"
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with fixing an 'async task cancellation leak' in
+    Gradio might search for 'cancel' and mistakenly attempt to use the user-facing
+    Gradio `cancels` event listener parameter. However, the leak is inside the internal
+    FastAPI streaming implementation (`routes.py`), which requires directly cancelling
+    the Python `asyncio` task (`heartbeat_task.cancel()`) rather than invoking the
+    Gradio application-level API.
+  severity: high
 hierarchy_analysis: The repository has a single flat config file (`AGENTS.md`) at
   the root level. There is no complex hierarchy to traverse, but the agent must filter
   out PR-related meta-instructions to focus on the code fix.

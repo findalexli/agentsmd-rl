@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details not mentioned in instruction.md: exact variable name 'const isBreaking' (test_conventional_commit_regex_breaking), exact expression 'const bucket = isBreaking ? \"breaking\" : type' (test_bucket_logic_for_breaking_changes), exact match group indices 'conventionalMatch[3]' and 'conventionalMatch[4]' (test_conventional_commit_regex_breaking, test_regex_index_updated_for_message), exact string '(!)?' in regex (test_conventional_commit_regex_breakin"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'const isBreaking' (test_conventional_commit_regex_breaking), 'conventionalMatch[3]' and 'conventionalMatch[4]' (test_conventional_commit_regex_breaking, test_regex_index_updated_for_message), exact string \"const bucket = isBreaking ? 'breaking' : type\" (test_bucket_logic_for_breaking_changes), 'groups[bucket]' (test_bucket_logic_for_breaking_changes). The instruction never specifies these variable na"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially describes the exact fix: 'The conventional commit regex should be updated to parse the optional `!` marker before the colon', 'Breaking changes (commits with `!`) should be categorized in a dedicated \"\u26a0\ufe0f Breaking Changes\" section', 'The regex for parsing needs to handle the `!` marker, and there should be logic to bucket breaking changes separately from regular changes.' It also says to look at 'the type ordering/type labels arrays' and 'conventional commit parsing log"
+      "reason": "instruction.md explicitly says 'The regex for parsing needs to handle the `!` marker' and 'there should be logic to bucket breaking changes separately from regular changes,' and tells you to look at 'the conventional commit parsing logic and the type ordering/type labels arrays.' It also specifies the exact section name '\u26a0\ufe0f Breaking Changes' and that it should appear first. This is very close to dictating the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation strings like 'const bucket = isBreaking ? \"breaking\" : type', 'const isBreaking', 'conventionalMatch[3]', 'conventionalMatch[4]', 'groups[bucket]', and '(!)?' via text matching. An alternative correct implementation using different variable names (e.g., 'isBreakingChange'), different conditional logic (e.g., an if/else block instead of ternary), or a different regex structure would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact implementation strings like \"const bucket = isBreaking ? 'breaking' : type\", 'const isBreaking', 'conventionalMatch[3]', 'conventionalMatch[4]', 'groups[bucket]'. An alternative correct implementation using different variable names (e.g., 'isBreakingChange', 'category' instead of 'bucket') or different regex group ordering would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_type_labels_includes_breaking, test_bucket_logic_for_breaking_changes, and test_regex_index_updated_for_message all exclusively use 'assert X in content' pattern reading the file as text. Only test_breaking_change_parsing_simulation actually executes code (a standalone Node script, not the actual module). The majority of f2p tests are pure text matching."
+      "reason": "Tests test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_type_labels_includes_breaking, test_bucket_logic_for_breaking_changes, and test_regex_index_updated_for_message all exclusively use string-in-file checks (e.g., assert '(!)?' in content, assert 'const isBreaking' in content). Only test_breaking_change_parsing_simulation actually executes code, and it runs a self-contained Node script unrelated to the actual modified file."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Most f2p tests (test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_type_labels_includes_breaking, test_bucket_logic_for_breaking_changes, test_regex_index_updated_for_message) are pure string-matching against the source file. An agent could simply add comment lines containing the expected strings (e.g., '// const bucket = isBreaking ? \"breaking\" : type') without implementing any actual logic change, and these tests would pass."
+      "reason": "Most f2p tests (test_conventional_commit_regex_breaking, test_bucket_logic_for_breaking_changes, test_regex_index_updated_for_message, etc.) just check for literal strings in the file. An agent could add dead-code comments containing the expected strings (e.g., '// const bucket = isBreaking ? \"breaking\" : type') and pass these tests without actually implementing the feature correctly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four expected behaviors from the instruction are tested: regex update (test_conventional_commit_regex_breaking), breaking changes section (test_type_labels_includes_breaking), ordering (test_type_order_includes_breaking), and non-breaking commits continuing to work (test_breaking_change_parsing_simulation checks both breaking and non-breaking buckets)."
+      "reason": "The instruction describes: regex update for !, breaking changes section, section ordering, and non-breaking categorization. Tests cover regex capture group, typeOrder/typeLabels, bucket logic, and a simulation test. All major behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. They are logically grouped by aspect of the feature being tested."
+      "reason": "Tests are well-named individual functions with descriptive docstrings (e.g., test_conventional_commit_regex_breaking, test_type_order_includes_breaking, test_breaking_change_parsing_simulation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task produces release notes as markdown text, not structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names 'the conventional commit parsing logic and the type ordering/type labels arrays' and specifies 'The regex for parsing needs to handle the `!` marker, and there should be logic to bucket breaking changes separately from regular changes.' This goes beyond identifying the file and describes the exact internal structures to modify."
+      "reason": "instruction.md names the exact file ('scripts/create-github-release.mjs') and tells the agent exactly where to look: 'the conventional commit parsing logic and the type ordering/type labels arrays' and 'The regex for parsing needs to handle the `!` marker.' This narrows the localization to specific code constructs."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task modifying a JavaScript script, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -125,6 +125,33 @@ rubric:
     following the instruction to put Web API tests in `test/js/web/`.
   reference: test/js/web/streams/pipeTo-signal-leak.test.ts
   category: testing
+- rule: Use bun:test for test files
+  source:
+    path: test/AGENTS.md
+    lines: 19-19
+  source_text: Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`.
+    If it's a test/js/node/test/{parallel,sequential}/\*.js without a .test.extension,
+    use `bun bd <file>` instead of `bun bd test <file>` since those expect exit code
+    0 and don't use bun's test runner.
+  evidence: The new test file is named `pipeTo-signal-leak.test.ts` and imports `describe,
+    expect, test` from `bun:test`.
+  category: testing patterns
+  verification: llm_judge
+- rule: Avoid dynamic import and require in tests
+  source:
+    path: test/AGENTS.md
+    lines: 218-220
+  source_text: '### Avoid dynamic import & require
+
+
+    **Only** use dynamic import or require when the test is specifically testing something
+    relataed to dynamic import or require. Otherwise, **always use module-scope import
+    statements**.'
+  evidence: The test `pipeTo-signal-leak.test.ts` uses static module-scope ES imports
+    like `import { heapStats } from "bun:jsc";` and `import { expectMaxObjectTypeCount
+    } from "harness";` rather than dynamic imports.
+  category: testing patterns
+  verification: llm_judge
 distractors:
 - rule: Prefer concurrent tests over sequential tests
   collision_type: would_cause_bug
@@ -145,6 +172,70 @@ distractors:
   source:
     path: test/AGENTS.md
     lines: 43-60
+- rule: Always use bun.* APIs instead of std.*
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+  source_text: '## Prefer Bun APIs over `std`
+
+
+    **Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace (`@import("bun")`)
+    provides cross-platform wrappers that preserve OS error info and never use `unreachable`.
+    Using `std.fs`, `std.posix`, or `std.os` directly is wrong in this codebase.'
+  collision_type: meta_confusion
+  why_distracting: This rule applies to Zig code, but the agent is writing C++. The
+    agent might incorrectly try to avoid C++ `std::` types like `std::pair` or `std::exchange`,
+    which are heavily and correctly used in the PR.
+  severity: high
+- rule: Create 3 JSC classes for new structures
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 8-14
+  source_text: '## Class Structure
+
+
+    For publicly accessible Constructor and Prototype, create 3 classes:
+
+
+    1. **`class Foo : public JSC::DestructibleObject`** - if C++ fields exist; otherwise
+    use `JSC::constructEmptyObject` with `putDirectOffset`
+
+    2. **`class FooPrototype : public JSC::JSNonFinalObject`**
+
+    3. **`class FooConstructor : public JSC::InternalFunction`**'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies existing WebCore bindings (`AbortSignal`, `JSAbortAlgorithm`)
+    which use a custom wrapping architecture. An agent might think it needs to refactor
+    `AbortAlgorithm` into this standalone 3-class JSC pattern, breaking the WebCore
+    integration.
+  severity: high
+- rule: Use .$call instead of .call
+  source:
+    path: src/js/CLAUDE.md
+    lines: 54-56
+  source_text: '## $ Globals and Special Syntax
+
+
+    **CRITICAL**: Use `.$call` and `.$apply`, never `.call` or `.apply`:'
+  collision_type: scope_ambiguity
+  why_distracting: This rule is specific to JS builtins to prevent prototype tampering.
+    The PR deals with C++ callback execution (`handleEvent`). An agent might incorrectly
+    try to use `.$call` in C++ or the integration test.
+  severity: medium
+- rule: Never wait for time to pass in tests
+  source:
+    path: test/AGENTS.md
+    lines: 21-21
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  collision_type: would_cause_bug
+  why_distracting: The test uses `await Bun.sleep(0)` specifically to yield to the
+    event loop so microtasks can settle before GC. An agent blindly following this
+    rule might remove it or replace it with complex polling, causing the memory leak
+    test to be flaky or fail.
+  severity: high
 hierarchy_analysis: The config hierarchy has root-level `AGENTS.md` defining general
   test placement, while `test/AGENTS.md` provides specific testing style rules. The
   agent must synthesize the test placement rule from the root with the testing style

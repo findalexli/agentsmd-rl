@@ -8,27 +8,38 @@ There is no mechanism to persist snapshot test failures from CI as downloadable 
 
 ## What Needs to Change
 
-1. **CI workflow** (`.github/workflows/test.yml`): Configure the test jobs to write pending insta snapshots to a separate directory and upload them as artifacts when tests fail.
+### 1. CI Workflow Changes
 
-   The relevant jobs are `cargo-test-linux` and `cargo-test-windows`. In each job's nextest step, set these env vars:
-   - `INSTA_UPDATE`: `new`
-   - `INSTA_PENDING_DIR`: a path relative to the workspace (e.g., `${{ github.workspace }}/pending-snapshots`)
+Modify `.github/workflows/test.yml` so that the `cargo-test-linux` and `cargo-test-windows` jobs capture pending insta snapshots when tests fail.
 
-   Add an upload-artifact step that runs only on `failure()`. The artifact name must contain `pending-snapshots` (e.g., `pending-snapshots-linux`, `pending-snapshots-windows`).
+For the nextest run steps in each of these jobs, the following environment variables must be set:
+- `INSTA_UPDATE` set to the value `new`
+- `INSTA_PENDING_DIR` set to a directory path where pending snapshots will be written
 
-2. **Local apply script**: Create a bash script at `scripts/apply-ci-snapshots.sh` that:
-   - Downloads pending snapshot artifacts from a CI run (auto-detecting the PR for the current branch, or accepting a run ID as argument)
-   - Merges snapshots from multiple platform artifacts
-   - Applies them locally using `cargo-insta`
-   - Supports both `accept` and `review` modes
-   - Requires `gh`, `cargo-insta`, and `git`
-   - Exits non-zero with an error message that mentions both `accept` and `review` when given an invalid action argument
+Each of these jobs must also include a step that uploads the pending snapshots as a build artifact when tests fail:
+- Use `actions/upload-artifact`
+- The artifact name must contain the string `pending-snapshots`
+- The upload step must only execute on `failure()`
 
-3. **Documentation**: After implementing the above, update the relevant project documentation to inform contributors about this new workflow for updating snapshots from CI failures.
+Note: All workflow YAML must remain valid and properly formatted (the project enforces `prettier` formatting on workflow files).
+
+### 2. Local Apply Script
+
+Create a new bash script at `scripts/apply-ci-snapshots.sh` that downloads and applies pending insta snapshots from a CI run.
+
+The script must:
+- Accept an optional run ID as the first argument, and an optional action (`accept` or `review`) as the second argument
+- **Validate required tools**: Check that `gh`, `cargo-insta`, and `git` are available. If any tool is missing, exit with a non-zero status and print an error message that contains `required` or `not found` (case-insensitive)
+- **Validate the action argument**: If the action is not `accept` or `review`, exit with a non-zero status and print an error message that mentions both `accept` and `review` as the valid options
+
+The script must pass `shellcheck` analysis at **style** severity (`shellcheck --severity style`). All `.sh` files in the repository are checked at this level.
+
+### 3. Dependency Update
+
+The `insta` crate version in the workspace `Cargo.toml` may need to be updated to support the `INSTA_PENDING_DIR` feature. Check the current version and update if necessary.
 
 ## Files to Look At
 
-- `.github/workflows/test.yml` — CI test workflow with Linux, macOS, and Windows jobs
+- `.github/workflows/test.yml` — CI test workflow containing the `cargo-test-linux` and `cargo-test-windows` jobs
 - `Cargo.toml` — workspace dependency versions (check the `insta` version)
 - `scripts/` — existing project scripts
-- `CONTRIBUTING.md` — contributor documentation, especially the snapshot testing section

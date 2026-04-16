@@ -2,28 +2,28 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_fix_comment_present asserts the exact string 'Renumber part_index_in_query to be contiguous starting from added_parts' which is not present verbatim in instruction.md. test_contiguous_index_assignment asserts the exact loop signature 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx' - while instruction.md mentions local_idx and the assignment pattern, the exact comment string is not fully spec"
+      "outcome": "pass",
+      "reason": "The instruction names the file path (src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp), the exact comment text ('Renumber part_index_in_query to be contiguous starting from added_parts'), the loop pattern with local_idx, the assignment 'part_index_in_query = added_parts + local_idx', the reference to filterPartsByQueryConditionCache, and all key variables (added_parts, all_parts, analysis_result). All assert'd specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'Change the loop to use an index-based iteration with local_idx', 'Assign part_index_in_query = added_parts + local_idx', and even shows the before/after code pattern. This leaves no reasoning for the agent - it's a direct specification of exactly what to change."
+      "reason": "The instruction explicitly states the fix: 'Change the loop to use an index-based iteration with local_idx' and 'Assign part_index_in_query = added_parts + local_idx (contiguous)'. It even shows the before/after code pattern. This leaves no reasoning for the agent to do about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_contiguous_index_assignment asserts the exact string 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx'. An alternative correct fix using a different variable name (e.g., 'i' or 'idx') or a range-based for with a separate counter would fail these tests. test_fix_comment_present requires the exact comment string 'Renumber part_index_in_query to be contiguous starting from added_parts'."
+      "reason": "test_contiguous_index_assignment asserts the exact string 'for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)' and 'part_index_in_query = added_parts + local_idx'. An alternative correct fix using a different variable name (e.g., 'i' or 'idx'), or using a range-based for with a separate counter, or using std::iota, would fail these tests despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_fix_comment_present and test_contiguous_index_assignment) are purely text-matching: they read the file and assert specific strings are present/absent. No code is compiled, executed, or behaviorally tested. All tests are essentially 'assert string in open(path).read()' pattern."
+      "reason": "The fail-to-pass tests (test_fix_comment_present, test_contiguous_index_assignment) only check for specific strings in the source file using 'assert X in content'. No test compiles, executes, or calls any code. All verification is purely textual pattern matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_fix_comment_present and test_contiguous_index_assignment) check for specific text patterns in the source file. An agent could satisfy them by simply inserting the exact expected comment and loop pattern as dead code or in a comment block, without actually fixing any bug or understanding the logic."
+      "reason": "The f2p tests check for specific strings in a file. A 'stub' that simply inserts the expected comment and loop text into the file (without understanding the bug) would pass. There's no behavioral execution to verify the fix actually works."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: modifying the loop, adding a comment about filterPartsByQueryConditionCache, and using contiguous index assignment. All three are tested (test_fix_comment_present, test_contiguous_index_assignment check these requirements)."
+      "reason": "The instruction requires: (1) index-based iteration with local_idx, (2) contiguous index assignment, (3) explanatory comment referencing filterPartsByQueryConditionCache, (4) ClickHouse code style. Tests cover items 1-3 and check style aspects (whitespace, tabs). The behavioral correctness is not tested via execution, but the stated requirements are covered textually."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,23 +31,22 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in instruction.md and tests appear correct and consistent with the actual codebase."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (optimizeJoinByShards.cpp), the exact function (apply()), the exact variable names (added_parts, local_idx, part_index_in_query), and shows the before/after code changes. This goes far beyond describing what's broken."
+      "reason": "The instruction names the exact file, exact function (apply()), exact variable names (added_parts, local_idx), and shows the exact before/after code. It even specifies 'Change the loop to use an index-based iteration with local_idx' \u2014 this is extreme localization leakage beyond what's needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -57,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

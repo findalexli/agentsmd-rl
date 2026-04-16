@@ -3,56 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all four files modified/tested (api.v1.projects.$projectRef.$env.ts, buildImage.ts, CONTRIBUTING.md, supervisor/README.md), describes the API_ORIGIN vs APP_ORIGIN issue, the localhost/Docker issue on macOS, and the incomplete build instructions. The test assertions check for concepts (apiUrl preferring API_ORIGIN, localhost\u2192host.docker.internal on darwin, file structure) all discoverable from the instruction."
+      "reason": "The instruction names both file paths (api.v1.projects.$projectRef.$env.ts and buildImage.ts), the field name apiUrl, the env vars API_ORIGIN/APP_ORIGIN, the function name normalizeApiUrlForBuild, the build arg TRIGGER_API_URL, the platform check (Darwin/macOS vs Linux), and the host.docker.internal replacement. All assert targets in the tests (file paths, function names, string literals like 'host.docker.internal', 'localhost', env var names) are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the problems (no separate API origin config, localhost unreachable in Docker on macOS, incomplete build docs) but does not specify exact code changes, line numbers, or replacement strings. A developer must reason about what to change."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'apiUrl value should prefer API_ORIGIN when available, falling back to APP_ORIGIN' and 'a function named normalizeApiUrlForBuild should normalize the API URL... should replace localhost with host.docker.internal'. This tells the agent exactly WHAT to change and HOW, including the specific function name and logic."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_normalize_localhost_darwin extracts a function named exactly 'normalizeApiUrlForBuild' via regex match on 'function normalizeApiUrlForBuild'. An alternative correct fix (e.g., inline replacement, a differently-named helper, or a URL transformation done elsewhere) would fail this test. The test also assumes the function body can be extracted with a specific regex pattern and executed standalone via `new Function('apiUrl', body)`, which constrains implementation to a very specific structure."
+      "reason": "The tests in _NORMALIZE_HELPER extract functions by name pattern and look for specific template expressions like TRIGGER_API_URL=${...}. The test_api_origin_preferred_over_app_origin test uses regex to match 'apiUrl: <expr>,' and evaluates it with eval(), requiring the expression to use exactly 'env.API_ORIGIN' and 'env.APP_ORIGIN' pattern. An alternative like using a helper function getApiUrl() or a different expression structure would fail. The normalizeApiUrlForBuild function name is hardcode"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests extract code and execute it via Node.js subprocess calls (eval expressions, construct functions from extracted bodies, run them with mock data). The pass-to-pass tests also execute Node.js to check syntax/structure. They go beyond simple text matching."
+      "reason": "The fail-to-pass tests execute Node.js code that evaluates extracted expressions and function logic, checking actual runtime behavior (e.g., evaluating the apiUrl expression with different env values, calling normalizeApiUrlForBuild with different platforms). This goes beyond simple text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_api_origin_preferred_over_app_origin evaluates the actual apiUrl expression with mock env variables and checks specific output values. test_normalize_localhost_darwin executes the extracted function and checks that localhost is replaced with host.docker.internal. A stub/no-op would not produce these outputs."
+      "reason": "test_api_origin_preferred_over_app_origin requires the expression to return 'https://api.test' when API_ORIGIN is set and 'https://app.test' as fallback - a stub/default would not produce these. test_normalize_localhost_darwin requires 'host.docker.internal' in the output for localhost URLs on darwin. test_normalize_preserves_localhost_linux explicitly checks that darwin normalization exists before testing linux, preventing a pass-through stub."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly requires CONTRIBUTING.md updates (build instructions) and supervisor/README.md changes, but no test validates these documentation changes. The test file has a commented-out placeholder '# [config_edit] fail_to_pass' with no actual test function for CONTRIBUTING.md or supervisor/README.md edits."
+      "outcome": "pass",
+      "reason": "The instruction specifies three behaviors: (1) API_ORIGIN preferred over APP_ORIGIN - tested by test_api_origin_preferred_over_app_origin, (2) localhost replaced with host.docker.internal on macOS - tested by test_normalize_localhost_darwin, (3) URL preserved on Linux - tested by test_normalize_preserves_localhost_linux. All explicit requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized with clear section comments (fail-to-pass pr_diff, fail-to-pass config_edit, pass-to-pass static, pass-to-pass repo_tests), each function has a descriptive name and docstring, and tags like [pr_diff] and [static] are used."
+      "reason": "Tests are well-organized with section comments (e.g., 'Fail-to-pass (pr_diff) -- API_ORIGIN fallback', 'Pass-to-pass (static)'), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code/config edits, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task involves modifying TypeScript source files, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths, variable names, environment variable names, and commands in the instruction are all correctly spelled and match the actual repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md names files relevant to the problem domain (route endpoint, build logic, docs) but doesn't specify exact line numbers or exact code to write. The file mentions are appropriate for guiding the developer to the right area."
+      "outcome": "fail",
+      "reason": "The instruction names the exact files, the exact field (apiUrl), the exact environment variables (API_ORIGIN, APP_ORIGIN), and even the exact function name to create (normalizeApiUrlForBuild). It describes that the loader returns json() with apiUrl set from APP_ORIGIN and that TRIGGER_API_URL build argument is used. This level of specificity removes most of the localization and design reasoning from the task."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold config/doc edits (CONTRIBUTING.md line 71/73, supervisor/README.md line 39) are localized single-line changes, not full-file rewrites, and don't contradict other files."
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code-editing task, not a config-edit task. The CONTRIBUTING.md edit in the solution is not mentioned in instruction.md or tested."
     }
   },
   "tier_a_fails": [
+    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 6,
+  "fail_count": 3
 }

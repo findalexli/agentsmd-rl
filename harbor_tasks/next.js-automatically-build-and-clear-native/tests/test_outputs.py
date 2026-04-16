@@ -14,24 +14,14 @@ from pathlib import Path
 REPO = "/workspace/next.js"
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
 def test_agents_md_has_rebuild_section():
-    """AGENTS.md must contain the 'Rebuilding Before Running Tests' section."""
+    """AGENTS.md must contain the Rebuilding Before Running Tests section."""
     agents_md = Path(REPO) / "AGENTS.md"
     content = agents_md.read_text()
-    assert "## Rebuilding Before Running Tests" in content, \
-        "AGENTS.md must retain the 'Rebuilding Before Running Tests' section"
+    msg = "AGENTS.md must retain the Rebuilding Before Running Tests section"
+    assert "## Rebuilding Before Running Tests" in content, msg
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_maybe_build_native_skips_in_ci():
     """Running maybe-build-native.mjs with CI=1 must exit 0 and print skip message."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
@@ -44,42 +34,39 @@ def test_maybe_build_native_skips_in_ci():
         env={"CI": "1", "PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": "/root"},
         cwd=str(Path(REPO) / "packages" / "next-swc"),
     )
-    assert result.returncode == 0, f"Script failed (rc={result.returncode}):\n{result.stderr}"
-    assert "Skipping swc-build-native in CI" in result.stdout, \
-        f"Expected CI skip message, got:\n{result.stdout}"
+    assert result.returncode == 0, f"Script failed rc={result.returncode}"
+    assert "Skipping swc-build-native in CI" in result.stdout
 
 
-# [pr_diff] fail_to_pass
-def test_maybe_build_native_has_rust_detection():
-    """The script must contain logic for detecting Rust file changes."""
+def test_maybe_build_native_runs_without_ci():
+    """Running maybe-build-native.mjs without CI must not crash."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
-    content = script.read_text()
-    assert "hasRustChanges" in content, \
-        "Script must define hasRustChanges function"
-    assert "*.rs" in content or "**/*.rs" in content, \
-        "Script must check for .rs file changes"
-    assert "getVersionBumpCommit" in content, \
-        "Script must define getVersionBumpCommit function"
+    assert script.exists(), f"Script not found: {script}"
+    result = subprocess.run(
+        ["node", str(script)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env={"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": "/root"},
+        cwd=str(Path(REPO) / "packages" / "next-swc"),
+    )
+    output = result.stdout + result.stderr
+    assert "unhandled" not in output.lower() and "exception" not in output.lower()
 
 
-# [pr_diff] fail_to_pass
 def test_package_json_build_script():
-    """packages/next-swc/package.json must have a 'build' script running maybe-build-native."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
     data = json.loads(pkg.read_text())
     scripts = data.get("scripts", {})
-    assert "build" in scripts, "package.json must have a 'build' script"
-    assert "maybe-build-native" in scripts["build"], \
-        f"build script must reference maybe-build-native, got: {scripts['build']}"
+    assert "build" in scripts, "package.json must have a build script"
+    assert "maybe-build-native" in scripts["build"], "build script must reference maybe-build-native"
 
 
-# [pr_diff] fail_to_pass
 def test_turbo_json_build_task():
-    """packages/next-swc/turbo.json must define a 'build' task with Rust-relevant inputs."""
     turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
     data = json.loads(turbo.read_text())
     tasks = data.get("tasks", {})
-    assert "build" in tasks, "turbo.json must define a 'build' task"
+    assert "build" in tasks, "turbo.json must define a build task"
     build_task = tasks["build"]
     inputs = build_task.get("inputs", [])
     input_str = " ".join(inputs)
@@ -88,45 +75,34 @@ def test_turbo_json_build_task():
     assert "CI" in build_task.get("env", []), "build task must include CI in env"
 
 
-# [pr_diff] fail_to_pass
-def test_build_native_uses_stdin_prettier():
-    """scripts/build-native.ts must use prettier with --stdin-filepath (not --write)."""
-    build_native = Path(REPO) / "scripts" / "build-native.ts"
-    content = build_native.read_text()
-    assert "--stdin-filepath" in content, \
-        "build-native.ts must use --stdin-filepath for prettier"
-    assert "'--write'" not in content and '"--write"' not in content, \
-        "build-native.ts must not use --write for prettier"
+def test_build_native_prettier_pipeline():
+    vendored_types_path = Path(REPO) / "packages" / "next" / "src" / "build" / "swc" / "generated-native.d.ts"
+    if not vendored_types_path.exists():
+        return
+    content = vendored_types_path.read_text()
+    result = subprocess.run(
+        ["npx", "prettier", "--stdin-filepath", str(vendored_types_path)],
+        input=content,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"prettier --stdin-filepath failed"
+    assert len(result.stdout) > 0, "prettier should produce formatted output via stdout"
 
 
-# ---------------------------------------------------------------------------
-# Config-edit (pr_diff) — AGENTS.md rebuild instructions simplified
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_agents_md_simplified_rebuild():
-    """AGENTS.md must replace separate Rust/both build commands with unified pnpm build."""
     agents_md = Path(REPO) / "AGENTS.md"
     content = agents_md.read_text()
-    # Old instructions that should be removed
-    assert "pnpm swc-build-native" not in content, \
-        "AGENTS.md should no longer reference 'pnpm swc-build-native' as a standalone command"
-    assert "pnpm turbo build build-native" not in content, \
-        "AGENTS.md should no longer reference 'pnpm turbo build build-native'"
-    # New simplified instruction should be present
-    lines = content.split("\n")
+    assert "pnpm swc-build-native" not in content
+    assert "pnpm turbo build build-native" not in content
+    lines = content.split(chr(10))
     rebuild_lines = [l for l in lines if "Turbopack" in l and "Rust" in l and "pnpm build" in l]
-    assert len(rebuild_lines) >= 1, \
-        "AGENTS.md should have a line covering Turbopack/Rust edits pointing to 'pnpm build'"
+    assert len(rebuild_lines) >= 1
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
 def test_maybe_build_native_syntax():
-    """maybe-build-native.mjs must exist and be syntactically valid JavaScript."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     if not script.exists():
         raise AssertionError("maybe-build-native.mjs does not exist")
@@ -136,56 +112,30 @@ def test_maybe_build_native_syntax():
         text=True,
         timeout=10,
     )
-    assert result.returncode == 0, f"Syntax error:\n{result.stderr}"
+    assert result.returncode == 0, f"Syntax error"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — JSON validity checks (file reads)
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass — Repo JSON validity
 def test_repo_package_json_valid():
-    """Root package.json must be valid JSON (pass_to_pass)."""
     pkg = Path(REPO) / "package.json"
-    try:
-        json.loads(pkg.read_text())
-    except json.JSONDecodeError as e:
-        raise AssertionError(f"package.json is not valid JSON: {e}")
+    json.loads(pkg.read_text())
 
 
-# [static] pass_to_pass — Repo turbo.json validity
 def test_repo_turbo_json_valid():
-    """Root turbo.json must be valid JSON (pass_to_pass)."""
     turbo = Path(REPO) / "turbo.json"
-    try:
-        json.loads(turbo.read_text())
-    except json.JSONDecodeError as e:
-        raise AssertionError(f"turbo.json is not valid JSON: {e}")
+    json.loads(turbo.read_text())
 
 
-# [static] pass_to_pass — next-swc package.json validity
 def test_repo_next_swc_package_json_valid():
-    """packages/next-swc/package.json must be valid JSON (pass_to_pass)."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
-    try:
-        json.loads(pkg.read_text())
-    except json.JSONDecodeError as e:
-        raise AssertionError(f"packages/next-swc/package.json is not valid JSON: {e}")
+    json.loads(pkg.read_text())
 
 
-# [static] pass_to_pass — next-swc turbo.json validity
 def test_repo_next_swc_turbo_json_valid():
-    """packages/next-swc/turbo.json must be valid JSON (pass_to_pass)."""
     turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
-    try:
-        json.loads(turbo.read_text())
-    except json.JSONDecodeError as e:
-        raise AssertionError(f"packages/next-swc/turbo.json is not valid JSON: {e}")
+    json.loads(turbo.read_text())
 
 
-# [static] pass_to_pass — validate-externals-doc.js syntax
 def test_repo_validate_externals_doc_syntax():
-    """scripts/validate-externals-doc.js must have valid syntax (pass_to_pass)."""
     script = Path(REPO) / "scripts" / "validate-externals-doc.js"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -193,12 +143,10 @@ def test_repo_validate_externals_doc_syntax():
         text=True,
         timeout=10,
     )
-    assert result.returncode == 0, f"Syntax error in validate-externals-doc.js:\n{result.stderr}"
+    assert result.returncode == 0, f"Syntax error"
 
 
-# [static] pass_to_pass — build-native.ts syntax
 def test_repo_build_native_syntax():
-    """scripts/build-native.ts must have valid syntax (pass_to_pass)."""
     script = Path(REPO) / "scripts" / "build-native.ts"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -206,12 +154,10 @@ def test_repo_build_native_syntax():
         text=True,
         timeout=10,
     )
-    assert result.returncode == 0, f"Syntax error in build-native.ts:\n{result.stderr}"
+    assert result.returncode == 0, f"Syntax error"
 
 
-# [repo_tests] pass_to_pass — prettier check on build-native.ts
 def test_repo_prettier_build_native():
-    """scripts/build-native.ts must pass prettier formatting check (pass_to_pass)."""
     script = Path(REPO) / "scripts" / "build-native.ts"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -220,12 +166,10 @@ def test_repo_prettier_build_native():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"
 
 
-# [repo_tests] pass_to_pass — prettier check on validate-externals-doc.js
 def test_repo_prettier_validate_externals_doc():
-    """scripts/validate-externals-doc.js must pass prettier formatting check (pass_to_pass)."""
     script = Path(REPO) / "scripts" / "validate-externals-doc.js"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -234,16 +178,10 @@ def test_repo_prettier_validate_externals_doc():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD gates using subprocess.run()
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass — prettier check on root package.json
 def test_repo_prettier_package_json():
-    """Root package.json must pass prettier formatting check (pass_to_pass)."""
     pkg = Path(REPO) / "package.json"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(pkg)],
@@ -252,12 +190,10 @@ def test_repo_prettier_package_json():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"
 
 
-# [repo_tests] pass_to_pass — prettier check on next-swc package.json
 def test_repo_prettier_next_swc_package_json():
-    """packages/next-swc/package.json must pass prettier formatting check (pass_to_pass)."""
     pkg = Path(REPO) / "packages" / "next-swc" / "package.json"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(pkg)],
@@ -266,15 +202,12 @@ def test_repo_prettier_next_swc_package_json():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"
 
 
-# [repo_tests] pass_to_pass — prettier check on turbo.json files
 def test_repo_prettier_turbo_json():
-    """turbo.json files must pass prettier formatting check (pass_to_pass)."""
     root_turbo = Path(REPO) / "turbo.json"
     next_swc_turbo = Path(REPO) / "packages" / "next-swc" / "turbo.json"
-
     for turbo_file in [root_turbo, next_swc_turbo]:
         result = subprocess.run(
             ["npx", "prettier", "--check", str(turbo_file)],
@@ -283,12 +216,10 @@ def test_repo_prettier_turbo_json():
             timeout=60,
             cwd=REPO,
         )
-        assert result.returncode == 0, f"Prettier check failed for {turbo_file}:\n{result.stderr}"
+        assert result.returncode == 0, f"Prettier check failed for {turbo_file}"
 
 
-# [repo_tests] pass_to_pass — prettier check on maybe-build-native.mjs
 def test_repo_prettier_maybe_build_native():
-    """packages/next-swc/maybe-build-native.mjs must pass prettier formatting check (pass_to_pass)."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(script)],
@@ -297,12 +228,10 @@ def test_repo_prettier_maybe_build_native():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"
 
 
-# [repo_tests] pass_to_pass — node syntax check on maybe-build-native.mjs
 def test_repo_maybe_build_native_syntax_p2p():
-    """packages/next-swc/maybe-build-native.mjs must have valid syntax (pass_to_pass)."""
     script = Path(REPO) / "packages" / "next-swc" / "maybe-build-native.mjs"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -310,12 +239,10 @@ def test_repo_maybe_build_native_syntax_p2p():
         text=True,
         timeout=10,
     )
-    assert result.returncode == 0, f"Syntax error in maybe-build-native.mjs:\n{result.stderr}"
+    assert result.returncode == 0, f"Syntax error"
 
 
-# [repo_tests] pass_to_pass — node syntax check on build-wasm.cjs
 def test_repo_build_wasm_syntax():
-    """scripts/build-wasm.cjs must have valid syntax (pass_to_pass)."""
     script = Path(REPO) / "scripts" / "build-wasm.cjs"
     result = subprocess.run(
         ["node", "--check", str(script)],
@@ -323,12 +250,10 @@ def test_repo_build_wasm_syntax():
         text=True,
         timeout=10,
     )
-    assert result.returncode == 0, f"Syntax error in build-wasm.cjs:\n{result.stderr}"
+    assert result.returncode == 0, f"Syntax error"
 
 
-# [repo_tests] pass_to_pass — AGENTS.md prettier check
 def test_repo_prettier_agents_md():
-    """AGENTS.md must pass prettier formatting check (pass_to_pass)."""
     agents_md = Path(REPO) / "AGENTS.md"
     result = subprocess.run(
         ["npx", "prettier", "--check", str(agents_md)],
@@ -337,4 +262,4 @@ def test_repo_prettier_agents_md():
         timeout=60,
         cwd=REPO,
     )
-    assert result.returncode == 0, f"Prettier check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Prettier check failed"

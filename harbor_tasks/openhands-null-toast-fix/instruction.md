@@ -25,14 +25,14 @@ This error occurs when `calculateToastDuration()` is called with a null or undef
 The `calculateToastDuration` function must:
 1. Accept `string | null | undefined` as the message type parameter
 2. Return `minDuration` (default 5000ms) immediately when the message is null, undefined, or empty
-3. The implementation should check `if (!message)` and return `minDuration` on the next line
+3. Add a guard clause that returns `minDuration` before attempting any string operations on the message
 
 ### In `custom-toast-handlers.tsx`:
 
 The `displayErrorToast` function must:
 1. Accept `string | null | undefined` as the error type parameter
 2. Provide a fallback error message using i18n (the key `STATUS$ERROR` should be used) when the error is null or undefined
-3. The implementation should use the pattern `error || i18n.t("STATUS$ERROR")` or similar fallback logic
+3. Use fallback logic to ensure a user-facing error message is always displayed
 
 ### In hook test files:
 

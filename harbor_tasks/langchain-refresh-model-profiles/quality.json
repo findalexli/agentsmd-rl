@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific file paths like 'libs/partners/mistralai/langchain_mistralai/data/_profiles.py' and the variable name '_PROFILES' declared as an annotated assignment (ast.AnnAssign). The instruction mentions '_profiles.py' files and '_PROFILES' dictionary but doesn't specify the exact full paths. More critically, the tests check that _PROFILES is defined via ast.AnnAssign (type-annotated assignment like `_PROFILES: dict[str, dict[str, Any]] = {...}`), which is not mentioned in the instr"
+      "outcome": "pass",
+      "reason": "All model IDs, display names, spec keys/values, and file locations referenced in tests are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact changes: add 'mistral-small-2603' with specific field values, update 'mistral-small-latest' fields to specific values (256000, True, etc.), add 'gpt-5.3-chat-latest' with specific values, and change the key from hyphen to colon. This is essentially telling the agent exactly what to write, not just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required values but doesn't give line numbers or code snippets to paste."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for the presence of model IDs as dictionary keys in _PROFILES and verify specific field values using AST parsing. Any correct implementation that adds the entries with the right specs to the _PROFILES dict would pass, regardless of ordering, formatting, or surrounding entries. The tests don't assert on line positions or specific helper functions."
+      "reason": "Tests parse AST and check specific spec values, not ordering or variable names; alternative valid fixes would still pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests use a combination of string matching ('assert '\"mistral-small-2603\":' in content') and AST parsing, but don't actually import or execute the modules. test_openrouter_nemotron_model_id_fixed is purely text-based (string in/not in content). The syntax tests use py_compile which is behavioral. The import tests do actually import the module. So it's a mix, but several core f2p tests (like test_openrouter_nemotron_model_id_fixed) are purely text-matching."
+      "outcome": "pass",
+      "reason": "Tests parse AST of the profiles files and run py_compile subprocess, which is behavioral inspection of Python structure."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific model IDs and specific field values that don't exist in the base commit. A stub or no-op implementation would not add these entries, so the tests would fail."
+      "reason": "Each f2p test checks specific spec values that require actually implementing the described changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five explicit requirements from the instruction are tested: adding mistral-small-2603, updating mistral-small-latest, adding gpt-5.3-chat-latest, fixing the OpenRouter model ID, and maintaining valid Python syntax/importability."
+      "reason": "Tests cover the missing mistral model, updated mistral-small-latest, missing OpenAI model, and OpenRouter ID fix."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_mistralai_model_small_2603_exists, test_openrouter_nemotron_model_id_fixed) and have docstrings indicating fail-to-pass vs pass-to-pass classification."
+      "reason": "Tests have descriptive names and docstrings indicating fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema of model profile entries including all field names and types in a code block."
+      "reason": "Schema of profile dict entries is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, model IDs, or variable names in the instruction or tests."
+      "reason": "Paths and model IDs appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact files (_profiles.py in each partner package), the exact dictionary name (_PROFILES), the exact model IDs to add/modify, and the exact field values to set. For a data-editing task this is somewhat expected, but the level of specificity (e.g., 'change nvidia/nemotron-3-super-120b-a12b-free to nvidia/nemotron-3-super-120b-a12b:free') removes all localization challenge."
+      "outcome": "pass",
+      "reason": "Instruction names the file type (_profiles.py) but localization within the data directory is appropriate for this domain task."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch is localized \u2014 it adds entries and modifies specific fields in three files without full-file rewrites, and doesn't contradict any other files."
+      "outcome": "not_applicable",
+      "reason": "This is a code/data edit task, not an agentmd config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

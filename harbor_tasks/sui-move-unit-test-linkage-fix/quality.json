@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'from_module_for_testing_with_linkage' (test_from_module_for_testing_with_linkage_used), 'LinkageContext::new' (test_linkage_context_import_present), 'linkage_table' variable name (test_linkage_table_creation), 'packages.keys()' (test_linkage_table_creation). The instruction mentions 'linkage context' generically but never names these specific function names, variable names, or expressions."
+      "reason": "Tests assert specific identifiers not mentioned in instruction.md: 'from_module_for_testing_with_linkage' (test_from_module_for_testing_with_linkage_used), 'LinkageContext::new' (test_linkage_context_import_present), 'linkage_table' and 'packages.keys()' (test_linkage_table_creation). The instruction mentions 'linkage context' generally but never names these specific function names, variable names, or method calls."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction says 'The move_vm_runtime crate provides linkage context functionality through its shared module' and 'Linkage context needs to map package addresses appropriately for proper module resolution', which strongly hints at importing from shared::linkage_context and building a map from package addresses. While not giving exact code, it narrows the solution space significantly. However, it doesn't specify exact function names like 'from_module_for_testing_with_linkage', so this is bord"
+      "reason": "The instruction says 'The move_vm_runtime crate provides linkage context functionality through its shared module' and 'Linkage context needs to map package addresses appropriately for proper module resolution', which strongly hints at the exact import path (move_vm_runtime::shared::linkage_context) and the mapping pattern. However, it doesn't explicitly state the exact replacement function name or variable names, so it's borderline. But combined with 'The StoredPackage API which now requires lin"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_from_module_for_testing_with_linkage_used requires the exact function name 'from_module_for_testing_with_linkage' and forbids 'from_modules_for_testing('; test_linkage_table_creation requires a variable named 'linkage_table' and the exact expression 'packages.keys()'; test_linkage_context_import_present requires 'LinkageContext::new'. An alternative correct fix using different variable names or different construction patterns would fail the"
+      "reason": "Tests assert gold-specific implementation details: test_from_module_for_testing_with_linkage_used checks for exact function name 'from_module_for_testing_with_linkage', test_linkage_table_creation checks for exact variable name 'linkage_table' and exact expression 'packages.keys()', test_linkage_context_import_present checks for 'LinkageContext::new'. An alternative correct fix using different variable names (e.g., 'link_ctx_table') or different construction patterns would fail these text-matchi"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_linkage_context_import_present, test_from_module_for_testing_with_linkage_used, and test_linkage_table_creation are purely text-matching (assert 'X' in open(path).read()). While test_compilation_move_unit_test and others do execute cargo check/test, the FAIL_TO_PASS tests include multiple purely textual checks that don't verify behavior."
+      "reason": "Tests test_linkage_context_import_present, test_from_module_for_testing_with_linkage_used, and test_linkage_table_creation are purely text-matching (assert 'X' in open(path).read()). While test_compilation_move_unit_test and others do run cargo check/test/clippy, 4 of the FAIL_TO_PASS tests are text-only assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The FAIL_TO_PASS tests include test_compilation_move_unit_test which runs 'cargo check -p move-unit-test' and asserts returncode==0. A stub or no-op change wouldn't fix the compilation error, so this test requires the actual bug fix. The string-matching tests also can't be satisfied without modifying the file."
+      "reason": "test_compilation_move_unit_test (FAIL_TO_PASS) runs cargo check, which will fail on the broken code and only pass with a real fix. A stub/no-op change wouldn't make the crate compile."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) compilation with cargo check -p move-unit-test (tested), (2) proper linkage context handling (tested via string checks and compilation), (3) cargo test -p move-unit-test passing (tested). All explicitly required behaviors are covered."
+      "reason": "instruction.md requires: (1) compilation via cargo check -p move-unit-test, (2) proper linkage context handling, (3) cargo test -p move-unit-test passing. All three are tested by test_compilation_move_unit_test, test_linkage_context_import_present/test_linkage_table_creation, and test_repo_cargo_test respectively."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, categorized as FAIL_TO_PASS and PASS_TO_PASS, and each test has a clear purpose explained in its docstring."
+      "reason": "Tests are well-named with descriptive docstrings, clearly labeled as FAIL_TO_PASS or PASS_TO_PASS, and each test function has a focused purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Rust code compilation, not producing structured data output."
+      "reason": "The task involves fixing Rust code compilation, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify (test_runner.rs), mentions 'StoredPackage' API, and says 'The move_vm_runtime crate provides linkage context functionality through its shared module'\u2014this is quite specific localization that narrows the solution space beyond what's needed for task description."
+      "reason": "instruction.md explicitly names the exact file to modify ('external-crates/move/crates/move-unit-test/src/test_runner.rs'), mentions the specific API ('StoredPackage::from_modules_for_testing'), and points to the exact module providing the fix ('move_vm_runtime crate provides linkage context functionality through its shared module'). This goes beyond describing what's broken and localizes the fix precisely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

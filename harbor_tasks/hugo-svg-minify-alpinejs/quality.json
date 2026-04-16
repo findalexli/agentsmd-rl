@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_minifiers_config_has_keep_namespaces checks for 'KeepNamespaces' in config.go specifically, and test_upstream_minify_version checks for the exact string 'github.com/tdewolff/minify/v2 v2.24.11' in go.mod. While instruction.md mentions v2.24.11 and the KeepNamespaces concept, it also mentions 'v2.24.11 or later' while the test requires exactly v2.24.11. Additionally, the tests referenc"
+      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md alone. For example, test_minifiers_config_has_keep_namespaces checks for 'KeepNamespaces' in 'config.go' specifically, and test_upstream_minify_version asserts the exact string 'github.com/tdewolff/minify/v2 v2.24.11' in go.mod. While instruction.md mentions v2.24.11 and the KeepNamespaces concept, it doesn't name the specific file 'minifiers/config.go' where KeepNamespaces must appear. Also, test_repo_gofmt,"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly WHAT to change: (1) update the dependency to v2.24.11, (2) configure the SVG minifier to keep both '' and 'x-bind' namespaces. It also says 'Hugo project uses this library for SVG minification in the minifiers/ package'. This is essentially the complete solution \u2014 specifying the exact dependency version, the exact config field (KeepNamespaces), and the exact values to set."
+      "reason": "instruction.md explicitly states: 'Configure the SVG minifier in Hugo to keep both \"\" and \"x-bind\" namespaces' and 'Update the github.com/tdewolff/minify/v2 dependency to version v2.24.11 or later'. It also says the library 'added support for preserving custom XML namespaces in SVG via a new configuration option that accepts a list of namespace strings to keep.' This tells the agent exactly what to change (the SVG minifier config) and exactly what values to set, leaving minimal reasoning require"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_upstream_minify_version asserts the exact string 'github.com/tdewolff/minify/v2 v2.24.11' in go.mod, meaning updating to v2.24.12 or later (which would also be correct) would fail. test_minifiers_config_has_keep_namespaces checks for literal strings 'KeepNamespaces', '\"\"', and '\"x-bind\"' in config.go, which constrains the implementation to one specific approach."
+      "reason": "test_upstream_minify_version asserts the exact string 'github.com/tdewolff/minify/v2 v2.24.11' in go.mod, which would fail for v2.24.12 or later versions that also fix the issue. test_minifiers_config_has_keep_namespaces checks for exact strings 'KeepNamespaces', '\"\"', and '\"x-bind\"' in config.go, which constrains the implementation to one specific approach. An alternative correct fix (e.g., using a different version or a wrapper approach) would fail these text-based checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests (test_svg_minifier_preserves_alpine_x_bind, test_svg_minifier_preserves_alpine_shorthand, test_alpine_variations_preserved, test_compilation_passes, test_repo_tests_minifiers, etc.) actually compile and run Go code or execute subprocesses to test behavior. While test_minifiers_config_has_keep_namespaces and test_upstream_minify_version are text-only checks, they are not the only tests \u2014 the majority verify actual runtime behavior."
+      "reason": "The core fail-to-pass tests (test_svg_minifier_preserves_alpine_x_bind, test_svg_minifier_preserves_alpine_shorthand, test_alpine_variations_preserved) actually compile and run Go code that exercises the minifier, checking behavioral output. While some tests (test_minifiers_config_has_keep_namespaces, test_upstream_minify_version) are text-based, the majority of tests execute the actual code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_svg_minifier_preserves_alpine_x_bind, test_svg_minifier_preserves_alpine_shorthand, test_alpine_variations_preserved) compile and run actual Go code that creates a minifier and checks that SVG input with Alpine.js directives is preserved unchanged. A stub or no-op implementation would not pass these since they require the actual minifier to work correctly with the new configuration."
+      "reason": "The fail-to-pass tests (test_svg_minifier_preserves_alpine_x_bind, test_svg_minifier_preserves_alpine_shorthand, test_alpine_variations_preserved) actually run the Hugo minifier on SVG input containing Alpine.js directives and verify the output matches the input. A stub or default implementation would strip these attributes, causing the tests to fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md's Verification section are tested: the four Alpine.js directive patterns are checked, compilation is verified, and existing minifier tests are confirmed to pass."
+      "reason": "All four verification cases from instruction.md (x-bind:href, :href, x-bind:r, :cx) are tested in test_alpine_variations_preserved. Compilation is tested in test_compilation_passes and test_repo_build. Existing minifier tests are verified in test_repo_tests_minifiers."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Fail-to-pass: SVG minifier must preserve x-bind:href directives'), grouped logically by concern (behavior tests, config checks, compilation checks, code quality checks)."
+      "reason": "Tests are well-named with descriptive docstrings indicating their purpose (e.g., 'Fail-to-pass: SVG minifier must preserve x-bind:href directives'). Tests are logically grouped by concern (behavioral tests, config checks, compilation checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact package ('minifiers/'), the exact configuration field ('KeepNamespaces'), the exact values to set (['\"\"', '\"x-bind\"']), and the exact dependency version ('v2.24.11'). This goes far beyond describing the bug and essentially provides a step-by-step implementation guide."
+      "reason": "instruction.md explicitly names the package ('minifiers/'), the specific configuration option ('KeepNamespaces'), the exact namespace values to set ('\"\"' and '\"x-bind\"'), and the exact library version to update to ('v2.24.11'). This goes beyond describing what's broken and essentially provides the complete solution recipe."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch is localized: it changes version strings in go.mod and adds one field to the SVG minifier config in minifiers/config.go. The diff is minimal and doesn't contradict other files."
+      "reason": "The gold patch is localized: it modifies only go.mod (version bump for two dependencies) and minifiers/config.go (adding one field to the SVG config struct). These are small, focused changes that don't contradict other files."
     }
   },
   "tier_a_fails": [

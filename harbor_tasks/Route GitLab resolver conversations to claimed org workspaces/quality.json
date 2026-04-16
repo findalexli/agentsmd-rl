@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: resolve_org_for_repo from integrations.resolver_org_router, SaasConversationStore from storage.saas_conversation_store, provider='gitlab', full_repo_name=self.full_repo_name, keycloak_user_id=self.user_info.keycloak_user_id, self.resolved_org_id, ResolverUserContext with resolver_org_id, uuid4().hex, ConversationMetadata construction, get_default_conversation_title from openhands.utils.conversation_summary, store.save_metadata, removal of initializ"
+      "reason": "Instruction names all key symbols: resolve_org_for_repo, SaasConversationStore, ResolverUserContext, ConversationMetadata, ConversationTrigger.RESOLVER, ProviderType.GITLAB, get_default_conversation_title, uuid4().hex, and the parameter rename for should_request_summary is implied by describing the mismatch."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details like 'conversation ID must be generated as a hex string via uuid4().hex', 'store.save_metadata(conversation_metadata)', 'self.resolved_org_id', exact keyword argument names and values for resolve_org_for_repo, and the precise ConversationMetadata fields. This goes far beyond describing what's broken \u2014 it prescribes the exact fix."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required behavior without specifying line numbers or exact code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like 'uuid4().hex', 'store.save_metadata(conversation_metadata)', 'resolver_org_id=self.resolved_org_id', 'self.resolved_org_id', \"provider='gitlab'\", 'SaasConversationStore.get_resolver_instance'. An alternative correct fix using e.g. str(uuid4()).replace('-','') or a different variable name like self.org_id or saving metadata differently would fail despite being functionally correct."
+      "reason": "Tests assert on exact strings like \"provider='gitlab'\" (single quotes), \"full_repo_name=self.full_repo_name\", \"self.resolved_org_id\" (specific attribute name), \"resolver_org_id=self.resolved_org_id\", \"store.save_metadata(conversation_metadata)\", and \"should_request_summary=self.send_summary_instruction\" \u2014 alternative correct implementations using double quotes, different local var names, or different attribute names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads source files and checks for string patterns via AST inspection or string matching (e.g., \"assert 'resolve_org_for_repo' in method_source\", \"assert 'uuid4().hex' in method_source\"). No test imports or executes the actual code, runs the server, or verifies runtime behavior."
+      "reason": "Tests use AST inspection and string matching on method source (e.g., `'resolve_org_for_repo' in method_source`, `\"provider='gitlab'\" in method_source`) rather than importing and calling the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific code patterns that don't exist in the base commit (e.g., resolve_org_for_repo import/call, SaasConversationStore usage, absence of initialize_conversation import). A stub or no-op implementation wouldn't contain these patterns in the source file, so the tests would fail."
+      "reason": "Each test checks for specific imports, calls, and parameter usages that a stub wouldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from instruction.md are tested: org resolution import/call with correct args, SaasConversationStore usage, removal of initialize_conversation, self.resolved_org_id storage, V1 ResolverUserContext org_id, GitHub parameter rename, metadata creation, uuid generation, save_metadata call, and get_default_conversation_title import."
+      "reason": "Tests cover org resolution, SaasConversationStore usage, ResolverUserContext org_id passing, and GitHub callback rename \u2014 all described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, grouped by concern (V0 path, V1 path, GitHub callback, pass-to-pass structural tests), and include a docstring at the module level explaining the test categories."
+      "reason": "Tests are grouped with comments like '# Fail-to-pass tests', '# V1 path tests', '# GitHub callback processor tests', '# Pass-to-pass tests'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to Python source files, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task produces no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and module paths in the instruction match those used in the tests and solution without typos."
+      "reason": "Paths and names appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file paths (enterprise/integrations/gitlab/gitlab_view.py, enterprise/integrations/github/github_view.py), exact function names to modify (initialize_new_conversation, _create_v1_conversation, _create_github_v1_callback_processor), exact import sources, and exact parameter names. This eliminates any localization challenge."
+      "outcome": "pass",
+      "reason": "Instruction references modules by domain (GitLab integration, GitHub callback processor) without pinpointing line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration editing task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

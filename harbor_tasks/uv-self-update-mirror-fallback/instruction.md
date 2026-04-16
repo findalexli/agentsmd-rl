@@ -4,18 +4,22 @@
 
 When running `uv self update`, uv fetches the version manifest only from GitHub's raw content CDN. However, the `ruff` binary (also managed by uv) already fetches from the Astral releases mirror first and falls back to GitHub if that fails. The `uv` binary should follow the same pattern for consistency and resilience.
 
-Additionally, there is a related resilience issue in the URL fallback logic. When fetching manifests, if a mirror returns a malformed response (such as corrupted data or encoding issues), the error recovery code does not recognize this as a reason to try alternative URLs. It should — a bad response from one source should not prevent trying another.
-
-## Relevant Code
-
-- `crates/uv-bin-install/src/lib.rs`
-  - The `Binary` enum has a `manifest_urls` method that returns a list of URLs to try for each binary variant.
-  - The `should_try_next_url` method on the `Error` type determines which errors trigger trying the next URL in the fallback chain.
+Additionally, there is a related resilience issue in the URL fallback logic. When fetching manifests, if a mirror returns a malformed response (such as corrupted data or encoding issues), the error recovery code does not recognize this as a reason to try alternative URLs. A bad response from one source should not prevent trying another.
 
 ## Expected Behavior
 
-1. The `uv` binary variant in `manifest_urls` should try the same mirror endpoint that the `ruff` binary uses, before falling back to GitHub.
-   - The URL list for `uv` should include the mirror URL first, then the canonical GitHub URL as a fallback.
+1. When `uv self update` runs, it should attempt to fetch the version manifest from the Astral mirror endpoint first. If that fails, it should fall back to the canonical GitHub URL. This mirror-first-then-Github fallback behavior is already implemented for the `ruff` binary and should be replicated for `uv`.
+
    - The mirror URL is constructed using the `VERSIONS_MANIFEST_MIRROR` constant; the fallback uses `VERSIONS_MANIFEST_URL`.
 
-2. Errors that indicate a malformed manifest response — specifically `ManifestParse` and `ManifestUtf8` variants — should trigger a fallback to alternative URLs. Currently, only `Download`, `ManifestFetch`, and `Stream` errors trigger fallback; parse and encoding errors do not.
+2. Errors that indicate a malformed manifest response should trigger the fallback mechanism to try alternative URLs. Specifically:
+   - When a manifest cannot be parsed (corrupted data), the fallback should be attempted
+   - When a manifest has invalid UTF-8 encoding, the fallback should be attempted
+
+   Currently, only network-level errors like download failures, manifest fetch failures, and stream errors trigger the fallback; parse and encoding errors do not.
+
+## Symptoms
+
+- `uv self update` relies solely on GitHub's CDN and does not attempt the Astral mirror first
+- When a mirror returns a malformed or corrupted manifest, the update fails immediately instead of trying the next available URL
+- The `ruff` binary handles both these cases correctly, but `uv` does not

@@ -1,10 +1,10 @@
-# Fix Identity comparability and evalf recursion in Inductor
+# Fix RecursionError when comparing Identity-wrapped values
 
 ## Bug Description
 
-The `Identity` SymPy function in `torch/utils/_sympy/functions.py` lacks proper comparison operators and `evalf` support. This causes infinite recursion and comparison failures when `Identity`-wrapped values are used in SymPy expressions like `Max(0, Identity(-6))`.
+The `Identity` class in `torch/utils/_sympy/functions.py` causes `RecursionError` when `Identity`-wrapped numeric values are used with comparison operators (`>=`, `>`, `<=`, `<`) or with SymPy's `Max`/`Min` functions.
 
-The root cause is that SymPy's `Max`/`Min` functions need to compare their arguments numerically. When one argument is `Identity(-6)`, SymPy calls comparison operators (`__ge__`, `__le__`, etc.) which delegate back to SymPy's default symbolic comparison path. For `Identity`-wrapped numeric atoms, this leads to infinite recursion because SymPy keeps trying to evaluate the `Identity` wrapper without being able to extract the underlying numeric value.
+The issue occurs because SymPy's `Max`/`Min` internally need to compare arguments numerically. When an argument is wrapped in `Identity`, SymPy's default symbolic comparison path cannot extract the underlying numeric value, leading to infinite recursion.
 
 ## Reproduction
 
@@ -12,26 +12,41 @@ The root cause is that SymPy's `Max`/`Min` functions need to compare their argum
 import sympy
 from torch.utils._sympy.functions import Identity
 
-# This causes infinite recursion / RecursionError:
-expr = Identity(sympy.sympify("-6"))
-result = sympy.Max(0, expr)  # RecursionError
+# All four comparison operators cause RecursionError:
+Identity(sympy.Integer(0)) >= 0       # RecursionError
+Identity(sympy.Integer(5)) > 3        # RecursionError
+Identity(sympy.Integer(-3)) <= 0      # RecursionError
+Identity(sympy.Integer(-1)) < 0       # RecursionError
 
-# Simple comparisons also fail:
-Identity(sympy.sympify("0")) >= 0  # RecursionError
+# Rational values also cause RecursionError:
+Identity(sympy.Rational(1, 7)) >= 0   # RecursionError
+Identity(sympy.Rational(-3, 4)) >= 0  # RecursionError
+
+# Max and Min fail the same way:
+sympy.Max(0, Identity(sympy.Integer(-6)))  # RecursionError (should be 0)
+sympy.Min(0, Identity(sympy.Integer(3)))   # RecursionError (should be 0)
 ```
 
-## Required Changes
+## Expected Behavior
 
-The `Identity` class in `torch/utils/_sympy/functions.py` needs:
+All four comparison operators (`>=`, `>`, `<=`, `<`) should work correctly on `Identity`-wrapped numeric values, comparing based on the underlying wrapped value:
 
-1. **Four comparison operators** named exactly `__ge__`, `__gt__`, `__le__`, `__lt__` — each should compare the wrapped numeric value directly for atomic arguments and fall back to the default SymPy behavior for non-atomic or non-numeric arguments.
+- `Identity(sympy.Integer(0)) >= 0` → `True`
+- `Identity(sympy.Integer(-6)) >= 0` → `False`
+- `Identity(sympy.Integer(5)) > 3` → `True`
+- `Identity(sympy.Integer(-3)) < -5` → `False`
+- `Identity(sympy.Rational(1, 7)) >= 0` → `True`
+- `Identity(sympy.Rational(-3, 4)) >= 0` → `False`
 
-2. **A helper method** (any name is acceptable) that provides a fast path for comparing wrapped numeric atoms against other numeric values, returning the comparison result as a SymPy boolean.
+`Max` and `Min` should evaluate correctly:
 
-3. **Preserve all existing methods**: `__int__`, `__float__`, `_eval_expand_identity`. Do not remove or rename these.
+- `sympy.Max(0, Identity(sympy.Integer(-6)))` → `0`
+- `sympy.Max(0, Identity(sympy.Integer(3)))` → `3`
+- `sympy.Min(0, Identity(sympy.Integer(-6)))` → `-6`
+- `sympy.Min(0, Identity(sympy.Integer(3)))` → `0`
 
-4. **Do not use dynamic attribute access** (`setattr`/`getattr`) for state management.
+## Constraints
 
-## Files to Modify
-
-- `torch/utils/_sympy/functions.py`
+- All existing methods on the `Identity` class (such as `__int__`, `__float__`, `_eval_expand_identity`) must be preserved.
+- Do not use dynamic attribute access (`setattr`/`getattr`) for state management.
+- Only modify `torch/utils/_sympy/functions.py`.

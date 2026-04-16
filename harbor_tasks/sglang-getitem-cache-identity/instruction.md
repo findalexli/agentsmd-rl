@@ -14,6 +14,16 @@ A specific case occurs in the LoRA path resolution: when `_resolve_lora_path` as
 2. The cache should be stored in a way that survives across multiple accesses
 3. When `lora_id` is assigned after sub-objects have been accessed, those cached sub-objects should reflect the update
 
+## Implementation Requirements
+
+To fix the identity instability:
+
+1. In `GenerateReqInput.__getitem__` and `EmbeddingReqInput.__getitem__`, use a cache stored as `_sub_obj_cache` on the instance
+2. Initialize the cache using `setdefault` on the instance's `__dict__`
+3. Check the cache for existing sub-objects before creating new ones
+4. Store newly created sub-objects in `cache[i]` before returning them
+5. In `_resolve_lora_path`, propagate `lora_id` to any cached sub-objects by iterating over `_sub_obj_cache`
+
 ## Files to Look At
 
 - `python/sglang/srt/managers/io_struct.py` — Contains `GenerateReqInput` and `EmbeddingReqInput` classes with `__getitem__` methods

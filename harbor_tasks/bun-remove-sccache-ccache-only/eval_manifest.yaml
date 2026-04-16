@@ -1,0 +1,160 @@
+version: "2.0"
+
+source:
+  repo: "oven-sh/bun"
+  pr: 25682
+  base_commit: "08e03814e56a493571da07e5d5160280e89856cd"
+  merge_commit: "81b4a40fbdcce6d5ac08ca68c179c854b2393286"
+
+# Track 2: Config edits (gold config changes extracted from solve.sh)
+config_edits:
+  - path: "cmake/tools/SetupSccache.cmake"
+    tier: 1
+    gold_added: ""
+    gold_removed: "{entire file}"
+
+  - path: "cmake/tools/SetupCcache.cmake"
+    tier: 1
+    gold_added: "Simplified version without REQUIRED flag"
+    gold_removed: "REQUIRED flag in find_command()"
+
+  - path: "scripts/build-cache/"
+    tier: 2
+    gold_added: ""
+    gold_removed: "{entire directory}"
+
+  - path: "CONTRIBUTING.md"
+    tier: 2
+    gold_added: "ccache installation instructions, no AWS section"
+    gold_removed: "sccache installation, AWS credentials section"
+
+  - path: "docs/project/contributing.mdx"
+    tier: 2
+    gold_added: "ccache documentation"
+    gold_removed: "sccache documentation, AWS/S3 references"
+
+  - path: "docs/project/building-windows.mdx"
+    tier: 2
+    gold_added: "ccache in scoop install"
+    gold_removed: "sccache in scoop install"
+
+# Track 1 & 3: Checks (programmatic verification)
+checks:
+  # Fail-to-pass: Code changes
+  - id: setup_sccache_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupSccache.cmake should be removed entirely"
+
+  - id: setup_ccache_simplified
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SetupCcache.cmake should not require ccache (optional)"
+
+  - id: build_cache_directory_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "scripts/build-cache directory should be removed"
+
+  # Fail-to-pass: Documentation updates
+  - id: contributing_md_uses_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md should reference ccache, not sccache"
+
+  - id: contributing_md_ccache_instructions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md should have ccache install instructions for all platforms"
+
+  - id: contributing_md_no_aws
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CONTRIBUTING.md should not have AWS credentials section"
+
+  - id: docs_contributing_mdx_uses_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/contributing.mdx should reference ccache, not sccache"
+
+  - id: docs_contributing_mdx_macos_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/contributing.mdx macOS section should include ccache"
+
+  - id: building_windows_mdx_uses_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/building-windows.mdx should reference ccache, not sccache"
+
+  - id: building_windows_scoop_ccache
+    type: fail_to_pass
+    origin: pr_diff
+    description: "building-windows.mdx scoop install should include ccache"
+
+# Track 3: Positive rubric rules from agent config files
+rubric:
+  - rule: "Build system changes should not break builds when optional tools are missing"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-20"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    evidence: "ccache is optional - build continues without it"
+    category: "build_system"
+    verification: "programmatic"
+
+  - rule: "Documentation should stay in sync with build system changes"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-20"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    evidence: "CONTRIBUTING.md, contributing.mdx, building-windows.mdx all updated together"
+    category: "documentation"
+    verification: "programmatic"
+
+  - rule: "Remove dead code and unused configuration files"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-20"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    evidence: "SetupSccache.cmake and scripts/build-cache/ removed entirely"
+    category: "code_quality"
+    verification: "programmatic"
+
+  - rule: "Simplify build configuration - prefer one tool over multiple options"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-20"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    evidence: "Only ccache, no sccache option"
+    category: "build_system"
+    verification: "programmatic"
+
+# Track 4: Distractors - conventions that shouldn't apply here
+distractors:
+  - rule: "Always support multiple caching backends for flexibility"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    collision_type: "rule_conflict"
+    why_distracting: "Conflicts with simplification goal - PR explicitly removes alternative backend"
+    severity: "medium"
+
+  - rule: "Keep AWS credentials documentation for core developers"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    collision_type: "scope_ambiguity"
+    why_distracting: "AWS section was for sccache S3 which is being removed - should NOT be kept"
+    severity: "high"
+
+  - rule: "Add backward compatibility shims during transitions"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-10"
+      commit: "08e03814e56a493571da07e5d5160280e89856cd"
+    collision_type: "architecture_boundary"
+    why_distracting: "PR is clean removal, not gradual transition - no shims needed"
+    severity: "low"

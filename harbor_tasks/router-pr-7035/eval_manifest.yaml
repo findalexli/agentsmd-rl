@@ -1,0 +1,93 @@
+version: "1.0"
+
+source:
+  type: github_pr
+  repo: TanStack/router
+  pr_number: 7035
+  base_commit: 749e88b68e920b90cf034859c51e82609b3f891f
+  merge_commit: 5016e4e4c7387a1c0342e474e3e83bdf664e2f1d
+
+checks:
+  - id: test_react_start_server_entry_dts_path
+    type: fail_to_pass
+    origin: patch_behavior
+    description: Build react-start and verify server.d.ts is at dist/default-entry/esm/server.d.ts, not nested in src/
+
+  - id: test_solid_start_server_entry_dts_path
+    type: fail_to_pass
+    origin: patch_behavior
+    description: Build solid-start and verify server.d.ts is at dist/default-entry/esm/server.d.ts, not nested in src/
+
+  - id: test_vue_start_server_entry_dts_path
+    type: fail_to_pass
+    origin: patch_behavior
+    description: Build vue-start and verify server.d.ts is at dist/default-entry/esm/server.d.ts, not nested in src/
+
+  - id: test_tsconfig_server_entry_exists_react
+    type: fail_to_pass
+    origin: patch_behavior
+    description: tsconfig.server-entry.json exists in react-start with rootDir configuration
+
+  - id: test_tsconfig_server_entry_exists_solid
+    type: fail_to_pass
+    origin: patch_behavior
+    description: tsconfig.server-entry.json exists in solid-start with rootDir configuration
+
+  - id: test_tsconfig_server_entry_exists_vue
+    type: fail_to_pass
+    origin: patch_behavior
+    description: tsconfig.server-entry.json exists in vue-start with rootDir configuration
+
+  - id: test_vite_config_references_tsconfig_react
+    type: fail_to_pass
+    origin: patch_behavior
+    description: vite.config.server-entry.ts references tsconfig.server-entry.json in react-start
+
+  - id: test_vite_config_references_tsconfig_solid
+    type: fail_to_pass
+    origin: patch_behavior
+    description: vite.config.server-entry.ts references tsconfig.server-entry.json in solid-start
+
+  - id: test_vite_config_references_tsconfig_vue
+    type: fail_to_pass
+    origin: patch_behavior
+    description: vite.config.server-entry.ts references tsconfig.server-entry.json in vue-start
+
+  - id: test_repo_router_core_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes for router-core
+
+  - id: test_repo_history_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests pass for history package
+
+  - id: test_repo_router_core_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests pass for router-core package
+
+  - id: test_repo_router_core_build_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Build validation (publint + attw) passes for router-core
+
+  - id: test_repo_history_build_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Build validation (publint + attw) passes for history package
+
+rubric:
+  - id: no_doc_changes_needed
+    rule: This is a build configuration fix that does not require CLAUDE.md, AGENTS.md, or README.md updates. The fix only adds tsconfig files and modifies vite.config files. No documentation changes should be expected or required.
+    description: Build configuration fixes that only modify tsconfig and vite.config files do not require documentation updates
+    points: 1
+    reference: |
+      This PR adds tsconfig.server-entry.json files with rootDir configuration to fix TypeScript declaration file paths.
+      No documentation files (CLAUDE.md, AGENTS.md, README.md) need to be modified for this build fix.
+      The agent correctly makes no documentation changes for this type of PR.
+    source:
+      file: packages/react-start/tsconfig.server-entry.json
+      lines: "1-7"
+      commit: 749e88b68e920b90cf034859c51e82609b3f891f

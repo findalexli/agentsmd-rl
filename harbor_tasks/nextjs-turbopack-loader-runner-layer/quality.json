@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: 'webpack_loaders', 'turbopack_use_loaders', 'externals-tracing', 'Layer::new(rcstr!(...))', 'process_default_internal', 'WebpackLoaderItem', 'WebpackLoaders', 'loader_runner_package', 'SourceTransforms', and the file paths are discoverable from the described codebase structure. The test for mod.rs cross-file consistency is implicitly covered by the instruction stating 'Both code paths must use webpack_loaders' across different code paths."
+      "reason": "The instruction names the specific files (lib.rs, mod.rs via mention of config-based and import-assertion paths), function names (process_default_internal, node_evaluate_asset_context, WebpackLoaderItem, etc.), layer names ('webpack_loaders', 'turbopack_use_loaders', 'externals-tracing'), and the Layer::new(rcstr!(...)) syntax. The test for MOD_FILE (module_options/mod.rs) checks for 'webpack_loaders' there too, and the instruction mentions both code paths need the same name. The git SHA is impl"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'The correct layer name that should be used in both places is \"webpack_loaders\". The buggy layer name that must be removed is \"turbopack_use_loaders\".' and 'Both code paths must use \"webpack_loaders\" as the layer name'. This tells the agent exactly WHAT to change (replace 'turbopack_use_loaders' with 'webpack_loaders'), leaving no reasoning required."
+      "reason": "The instruction explicitly states: 'The correct layer name that should be used in both places is \"webpack_loaders\". The buggy layer name that must be removed is \"turbopack_use_loaders\".' and 'Both code paths must use \"webpack_loaders\" as the layer name'. This directly tells the agent exactly what string to change and what to change it to, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "The tests assert the exact string 'webpack_loaders' must appear and 'turbopack_use_loaders' must not. An alternative correct fix could use a different shared layer name (e.g., 'loader_context' or 'shared_loaders') that would resolve the conflict but would fail the tests. The tests enforce the gold-specific string literal rather than testing behavior."
+      "outcome": "pass",
+      "reason": "The fix is inherently unique: the only correct change is replacing 'turbopack_use_loaders' with 'webpack_loaders' in the Layer::new call within process_default_internal in lib.rs. The mod.rs file already has 'webpack_loaders'. There's essentially one correct fix, and the tests check for it appropriately."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency) all use regex/string matching on file contents: 'assert \"webpack_loaders\" in matches', 'if \"turbopack_use_loaders\" in src'. No test compiles the Rust code or executes it. All tests are text-inspection based."
+      "reason": "The core fail-to-pass tests (test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency, test_loader_pipeline_preserved, test_other_layers_untouched, test_layer_new_call_syntax) all exclusively use string/regex matching on file contents (e.g., 'assert \"webpack_loaders\" in matches', 'if \"turbopack_use_loaders\" in src'). No test compiles the Rust code, runs a subprocess that exercises the loader pipeline, or verifies any runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that 'turbopack_use_loaders' is replaced with 'webpack_loaders' in specific files. A stub or no-op would leave the original 'turbopack_use_loaders' in place (confirmed by test_repo_turbopack_use_loaders_in_base which verifies the buggy name exists at HEAD), causing test_buggy_name_removed and test_cross_file_consistency to fail."
+      "reason": "The fail-to-pass tests like test_layer_name_fixed check that 'webpack_loaders' appears in Layer::new calls within process_default_internal, and test_buggy_name_removed checks 'turbopack_use_loaders' is absent. At the base commit, lib.rs contains 'turbopack_use_loaders', so these tests would fail without making the actual change. A stub/no-op would not pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: both code paths use 'webpack_loaders' (test_cross_file_consistency), 'turbopack_use_loaders' is removed (test_buggy_name_removed), 'externals-tracing' is unchanged (test_other_layers_untouched), Layer::new(rcstr!(...)) syntax preserved (test_layer_new_call_syntax), and required identifiers exist (test_loader_pipeline_preserved)."
+      "reason": "The instruction requires: both paths use 'webpack_loaders', 'turbopack_use_loaders' removed, 'externals-tracing' untouched, Layer::new(rcstr!(...)) syntax preserved, specific functions preserved. All of these are tested by the corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names like test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency, test_loader_pipeline_preserved, test_other_layers_untouched, and grouped logically (fix validation, preservation checks, repo validation)."
+      "reason": "Tests are well-named (test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency, etc.), grouped by purpose (fix verification, repo integrity pass-to-pass), and have docstrings/comments explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,26 +35,25 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, function names, or string literals in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names both the buggy value ('turbopack_use_loaders') and the correct value ('webpack_loaders'), the exact syntax ('Layer::new(rcstr!(\"...\"))'), and the exact function ('process_default_internal'). This provides the precise location and fix, eliminating the localization challenge."
+      "reason": "The instruction explicitly names the exact buggy string ('turbopack_use_loaders'), the exact fix string ('webpack_loaders'), and even specifies it's in a Layer::new(rcstr!(...)) call within process_default_internal. This is extreme localization leakage \u2014 the agent doesn't need to diagnose anything."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving a single-line change in a Rust source file, not a config/agentmd edit task."
+      "reason": "This is a code-only task (editing Rust source), not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -63,6 +63,40 @@ rubric:
     path: AGENTS.md
     lines: 23-32
     commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+- rule: Prefer let for local variables
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 26-26
+  source_text: '- **Variables**: Prefer `let` for locals, `const` only at module scope;
+    never use `var`'
+  evidence: The script `close_superseded_pr.ts` uses `let` exclusively for all local
+    variables (e.g. `let parsed = parseArgs...`, `let oldState = ...`).
+  category: rubric_rules
+  verification: llm_judge
+- rule: Use regular function declarations
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 27-27
+  source_text: '- **Functions**: Use regular function declarations/expressions by
+    default. For callback-based APIs (array methods, Promise callbacks, test callbacks,
+    transaction callbacks, etc.), prefer arrow functions over `function` expressions.
+    When an arrow callback only returns a single expression, use a concise body (`value
+    => expression`) instead of braces/`return`'
+  evidence: 'The script `close_superseded_pr.ts` defines all its functions using regular
+    declarations like `function main(): void` and `function parseArgs(argv: string[]):
+    ParsedArgs`.'
+  category: rubric_rules
+  verification: llm_judge
+- rule: Formatting with single quotes and no semicolons
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 30-30
+  source_text: '- **Formatting**: Prettier (printWidth: 100, no semicolons, single
+    quotes, spaces not tabs)'
+  evidence: The script `close_superseded_pr.ts` consistently omits semicolons at the
+    ends of statements and uses single quotes for strings like `'OPEN'` and `'node:child_process'`.
+  category: rubric_rules
+  verification: llm_judge
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -259,6 +293,33 @@ distractors:
   source:
     path: AGENTS.md
     lines: 21-22
+- rule: Use Web APIs over Node.js APIs
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 20-20
+  source_text: '- **Philosophy**: Web standards-first, runtime-agnostic (Node.js,
+    Bun, Deno, Cloudflare Workers). Use Web Streams API, Uint8Array, Web Crypto API,
+    Blob/File instead of Node.js APIs'
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff introduces a CLI script meant to run directly in
+    Node (`#!/usr/bin/env node`), which requires importing Node built-ins like `node:child_process`
+    to execute shell commands (`gh pr close`). An agent might mistakenly avoid these
+    required Node APIs to follow this rule, which is meant for the workspace's packages,
+    not its tooling scripts.
+  severity: high
+- rule: TypeScript compiler settings (ES2022 modules, bundler resolution)
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 31-31
+  source_text: '- **TypeScript**: Strict mode, ESNext target, ES2022 modules, bundler
+    resolution, verbatimModuleSyntax'
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds a new `tsconfig.json` for a Node CLI script. Following
+    this rule would lead an agent to specify 'bundler' module resolution and 'ES2022'
+    modules. However, the PR correctly configures the script with 'NodeNext' for both
+    `module` and `moduleResolution` to ensure it works natively in Node.js without
+    a bundler step.
+  severity: medium
 hierarchy_analysis: The AGENTS.md file contains rules primarily targeted at the core
   packages in the `packages/` directory (e.g., runtime-agnostic philosophy, changesets).
   When creating internal repository tooling like skills and scripts, these package-centric

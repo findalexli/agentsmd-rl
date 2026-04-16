@@ -1,0 +1,28 @@
+[task]
+name = "superset-mcp-certification-fields"
+title = "Add certification fields to MCP list tool default columns"
+description = """
+Add certified_by, certification_details, and description fields to the default
+columns returned by list_charts, list_dashboards, and list_datasets MCP tools.
+Update Pydantic schemas and serializers to include certification fields.
+"""
+difficulty = "medium"
+time_estimate_minutes = 45
+tags = ["python", "pydantic", "mcp", "api", "superset"]
+
+[source]
+repo = "apache/superset"
+pr_number = 39017
+base_commit = "83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21"
+merge_commit = "7be2acb2f3ce44d02a3bd1bc6ccf0f539fadf09f"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+build_timeout_seconds = 600
+
+[solution]
+solve_script = "solution/solve.sh"
+
+[tests]
+test_script = "tests/test.sh"
+test_timeout_seconds = 120

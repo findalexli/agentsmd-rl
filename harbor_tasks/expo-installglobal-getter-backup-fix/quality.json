@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `packages/expo/src/winter/installGlobal.ts`, the function `installGlobal`, the `!descriptor.get` check, the `{ ...descriptor, enumerable: false }` pattern, `__DEV__`, `export function installGlobal`, the `original{Name}` naming convention, and the requirement for explanatory comments. All specific strings and patterns tested are mentioned or derivable from the instruction."
+      "reason": "Instruction names the file path, function name, __DEV__, original* prefix pattern, and non-enumerable requirement that tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact code patterns to use: 'the string `!descriptor.get` should appear in the condition', 'using the spread pattern `{ ...descriptor, enumerable: false }`'. These are not descriptions of what's broken but exact implementation details of the fix."
+      "outcome": "pass",
+      "reason": "Instruction describes what behavior to achieve (skip getters, make non-enumerable) without giving exact code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literal strings like `!descriptor.get`, `{ ...descriptor, enumerable: false }`, and specific comment patterns. An alternative correct fix using e.g. `!('get' in descriptor)` or `Object.defineProperty(object, backupName, Object.assign({}, descriptor, {enumerable: false}))` would fail despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check behavior (no backup for getters, non-enumerable descriptor, backup exists for normal props) which any correct fix should satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_no_backup_for_getter_properties, test_backup_is_non_enumerable) only do `assert '!descriptor.get' in content` and `assert '{ ...descriptor, enumerable: false }' in content` \u2014 pure string matching on file contents with no execution or behavioral verification of the actual fix."
+      "outcome": "pass",
+      "reason": "Tests execute tsx subprocesses that import and call installGlobal, checking runtime behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests check for literal strings in the source file. An agent could simply append a comment like `// !descriptor.get { ...descriptor, enumerable: false }` to the file without actually fixing the bug, and both f2p tests would pass."
+      "outcome": "pass",
+      "reason": "test_backup_created_for_normal_properties and test_backup_preserves_original_value require a real backup to be created, so a stub cannot pass all f2p tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three requirements from the instruction (skip getters, make non-enumerable, add comments) are tested, plus the preservation of __DEV__ check, export, naming convention, and syntax validity."
+      "reason": "Tests cover getter skipping, non-enumerability, normal backup creation, and __DEV__ check behaviors described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_no_backup_for_getter_properties, test_backup_is_non_enumerable), have docstrings explaining the bug and fix, and are logically grouped by concern."
+      "reason": "Tests are separate named functions with docstrings explaining fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a TypeScript source file, not producing structured data output."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction's 'Testing Requirements' section explicitly specifies the exact code strings: '`!descriptor.get` should appear in the condition' and '`{ ...descriptor, enumerable: false }`'. This goes beyond naming the buggy file and directly leaks the implementation of the fix."
+      "outcome": "pass",
+      "reason": "Instruction names the file (required context) but doesn't pin specific line numbers or exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config task."
+      "reason": "Not a config edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

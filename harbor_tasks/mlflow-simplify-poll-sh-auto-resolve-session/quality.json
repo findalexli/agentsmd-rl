@@ -2,58 +2,55 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the file paths (.claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md), the variable names (repo=\"$1\", pr_number=\"$2\", session_id=\"$1\" to remove), the gh agent-task list command, the jq fields (repository, pullRequestNumber, createdAt, sort_by), the allowed-tools entry (gh agent-task list:*), the session_url= pattern to remove, the 'automatic'/'auto' wording, the shebang/set options, the while true loop, gh pr ready, and gh agent-task vie"
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_copilot_files_exist checks for exact strings '#!/usr/bin/env bash' and 'set -euo pipefail' and 'name: copilot'; test_skill_yaml_frontmatter checks for specific YAML keys 'name', 'description', 'allowed-tools'; test_poll_sh_shellcheck requires shellcheck compliance; the instruction never mentions these specifics. Also, test_skill_allowed_tools_has_agent_task_list checks for a specific pattern in allowed-tools match"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: 'The first argument ($1) should be assigned to a variable repo= and the second argument ($2) to a variable pr_number=', 'Add a session resolution block that calls gh agent-task list, filters by repository and pullRequestNumber using jq, sorts by createdAt, and extracts the session id', 'Add gh agent-task list:* to the allowed-tools list'. This leaves virtually no reasoning for the developer \u2014 it describes "
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (2-arg interface, auto-resolve session via gh agent-task list, update SKILL.md allowed-tools and docs) but does not specify exact code changes, line numbers, or the precise implementation. The developer still must reason about how to implement the jq filter, argument parsing, etc."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for reasonable behavioral markers (presence of 'gh agent-task list', 'repository', 'pullRequestNumber', 'sort_by' or 'createdAt', variable assignments with repo=$1 and pr_number=$2) that any correct implementation would share. They don't assert exact line positions, specific helper function names, or gold-specific formatting. Alternative correct implementations (e.g., different jq syntax, different variable ordering) would still pass."
+      "reason": "The behavioral tests check that poll.sh accepts 2 args, calls 'gh agent-task list', uses the resolved session ID in 'agent-task view', and that SKILL.md contains 'agent-task list' in allowed-tools. These are behavioral requirements, not gold-specific implementation details. Alternative implementations (different jq filters, different variable names, different sorting approaches) would all pass as long as they achieve the correct behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_poll_two_arg_interface, test_poll_auto_resolves_session, test_skill_allowed_tools_has_agent_task_list, test_skill_polling_simplified) are ALL pure text/string matching: they read file contents and check for substrings like 'session_id=\"$1\"' not in content, 'gh agent-task list' in content, etc. No test actually executes poll.sh or tests its runtime behavior. The pass-to-pass tests do run bash -n and shellcheck, but the core behavioral tests are purely textual."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_poll_two_arg_interface, test_poll_auto_resolves_session) actually execute poll.sh as a subprocess with a mock gh CLI and inspect the call log for behavioral evidence. While some tests do text-check files (test_poll_retains_core_loop, test_skill_allowed_tools_has_agent_task_list), the key behavioral tests execute the script and verify its runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty implementation would fail: test_poll_two_arg_interface requires repo=$1 and pr_number=$2 assignments, test_poll_auto_resolves_session requires 'gh agent-task list' and 'repository' and 'pullRequestNumber' strings, test_copilot_files_exist checks for shebang and set -euo pipefail. An empty file or pass-through would not satisfy these."
+      "reason": "A stub poll.sh that does nothing would fail test_poll_two_arg_interface (which checks the call log is non-empty and that gh commands were invoked) and test_poll_auto_resolves_session (which checks 'agent-task list' appears in calls and 'mock-session-abc' is used in view calls). These require actual implementation logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: 2-arg interface (test_poll_two_arg_interface), auto-resolution via gh agent-task list (test_poll_auto_resolves_session), allowed-tools update (test_skill_allowed_tools_has_agent_task_list), simplified SKILL.md documentation (test_skill_polling_simplified), retained polling loop (test_poll_retains_core_loop), syntax validity (test_poll_sh_syntax), and structural integrity (test_copilot_files_exist)."
+      "reason": "The instruction requires: 2-arg interface (tested by test_poll_two_arg_interface), auto-resolve session via gh agent-task list (tested by test_poll_auto_resolves_session), preserve polling loop (tested by test_poll_retains_core_loop), update SKILL.md allowed-tools (tested by test_skill_allowed_tools_has_agent_task_list), update documentation (tested by test_skill_md_no_session_url_boilerplate and test_skill_md_documents_auto_resolve). All key behaviors from the instruction are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass gates, Fail-to-pass), descriptive function names, docstrings explaining each test's purpose, and comments indicating test categories [static], [repo_tests], [pr_diff]."
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass behavioral, Fail-to-pass config/documentation), descriptive function names, and docstrings explaining what each test verifies and whether it's pass_to_pass or fail_to_pass."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "This task modifies shell scripts and markdown documentation, not structured data formats like JSON/CSV/API/DB schemas."
+      "outcome": "pass",
+      "reason": "The instruction documents the JSON schema returned by 'gh agent-task list': 'objects with fields including id, repository, pullRequestNumber, and createdAt'. This matches what the tests mock and expect."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md, tests, and solution files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md. All references to .claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md, gh agent-task list/view/create, owner/repo format, etc. are correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact variable assignments to use ('repo=\"$1\"', 'pr_number=\"$2\"'), the exact pattern to remove ('session_id=\"$1\"'), the exact jq fields and operations (sort_by(.createdAt), filter by repository and pullRequestNumber), and the exact allowed-tools entry to add. This goes well beyond identifying the buggy file \u2014 it specifies the exact code changes."
+      "outcome": "pass",
+      "reason": "The instruction names the files to modify (.claude/skills/copilot/poll.sh and .claude/skills/copilot/SKILL.md) which is appropriate since this is a targeted feature change task. It doesn't specify exact line numbers or exact code to write, just the behavioral requirements."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold diff is localized: it adds one line to allowed-tools in SKILL.md, simplifies the polling documentation section, and modifies the argument handling in poll.sh. These are targeted, bounded edits that don't contradict other files."
+      "reason": "The gold patch makes localized changes to SKILL.md (adding one allowed-tools entry, simplifying one documentation section) and poll.sh (changing argument parsing, adding session resolution block). These are bounded, targeted edits consistent with the instruction."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
+    "behavior_in_task_description"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
 }

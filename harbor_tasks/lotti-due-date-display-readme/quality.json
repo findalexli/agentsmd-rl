@@ -3,60 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check specific implementation details like the `hasDueDate` variable name gated by `!isCompleted`, `_buildDateRow` method containing `TaskDone`/`TaskRejected` references, and specific patterns like `!isCompleted && status.isUrgent` \u2014 while instruction.md does mention these patterns, the tests also check things like `pubspec.yaml` having `name: lotti`, `analysis_options.yaml` validity, and the exact `app-id: com.matthiasn.lotti` in source.yml. Most are discoverable but the specific regex pa"
+      "reason": "The tests check very specific implementation details not mentioned in instruction.md. For example, test_card_hides_due_date_for_completed uses _ANALYZE_CARD script that checks for a method named '_buildDateRow' and looks for specific patterns like 'isCompleted' variable name and 'hasDueDate' being gated by '!isCompleted'. The instruction never mentions _buildDateRow, isCompleted, or hasDueDate variable names. Similarly, _ANALYZE_WRAPPER checks for specific pattern like 'isCompleted' variable and"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md specifies exact implementation patterns: 'hasDueDate variable assignment must be gated by completion status (check !isCompleted or equivalent)', 'isUrgent must be gated by completion status (e.g., !isCompleted && status.isUrgent pattern)', 'urgentColor must be null for completed/rejected tasks (ternary check for isCompleted)'. These are not descriptions of what's broken but explicit instructions on HOW to fix it, including specific variable names and code patterns."
+      "reason": "Instruction.md specifies exactly what to do: 'importing lib/classes/task.dart to access the task status types and gating the due date display behind a completion status check' for the card, and 'checking the task's completion status before applying urgency styling' for the wrapper. It tells you to check for TaskDone/TaskRejected, to hide the chip entirely on cards, and to gray out styling in the detail view. This is essentially the fix description, not just a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The truncated test `_ANALYZE_CARD` uses regex to find `_buildDateRow` method body and checks for specific patterns: `hasDueDate` variable assignment gated by `!isCompleted`, and `TaskDone`/`TaskRejected` references within the method body. An alternative correct fix that uses a different variable name, restructures the logic differently (e.g., early return instead of gating hasDueDate), or checks completion status in a wrapper widget would fail these regex-based tests."
+      "reason": "The _ANALYZE_CARD script checks for very specific patterns: it looks for 'isCompleted' variable name in hasDueDate gating or as an early return condition. An alternative correct fix using a differently-named variable (e.g., 'isDone', 'taskFinished') or a different control flow pattern would fail. Similarly, _ANALYZE_WRAPPER checks for 'isCompleted' and specific color patterns like 'Colors.grey' \u2014 an alternative using Colors.blueGrey or a different neutral color approach would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (`_ANALYZE_CARD` and presumably `_ANALYZE_WRAPPER`) use regex to inspect source code text patterns rather than executing the Dart code or testing widget behavior. They check for string patterns like `TaskDone|TaskRejected` in method bodies and `hasDueDate` assignment patterns. The pass-to-pass tests do execute subprocesses (flake8, pytest) and check file structure, but the core behavioral tests are text-matching."
+      "reason": "The fail-to-pass tests (test_card_hides_due_date_for_completed, test_wrapper_neutral_style_for_completed) use regex-based source code analysis (_ANALYZE_CARD and _ANALYZE_WRAPPER scripts) that read the file and pattern-match against source text. They do NOT import, compile, or execute the Dart code. They are essentially 'assert pattern in open(path).read()' style checks wrapped in Python regex analysis."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns (TaskDone/TaskRejected references in _buildDateRow, hasDueDate gated by isCompleted) that don't exist in the base commit. A stub or no-op implementation wouldn't add these patterns to the existing source files."
+      "outcome": "fail",
+      "reason": "The f2p tests check for specific source code patterns (isCompleted variable, hasDueDate gating, Colors.grey usage). A stub implementation that simply adds 'final isCompleted = false;' and 'final hasDueDate = true && !isCompleted;' without actually implementing the real logic could potentially pass the regex checks. The tests don't verify runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that due dates are 'completely hidden' for completed/rejected tasks on task cards and use 'grayed-out/neutral styling' in detail view. Tests only check source code text patterns (regex for variable names and type references) rather than verifying the actual rendering behavior \u2014 they don't test that the widget actually hides the due date or changes styling."
+      "reason": "The instruction requires that completed/rejected tasks show 'neutral, grayed-out style instead of urgency styling' in the detail view, but the test only checks for the presence of 'isCompleted' and grey color patterns in source text, not that urgency styling (red/orange) is actually removed or that the visual behavior changes correctly."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into clear sections (pass_to_pass and fail_to_pass), each function has a descriptive docstring explaining what it checks, and helper functions are well-named (_analyze_dart, _ensure_yaml)."
+      "reason": "Tests are grouped with clear section comments (pass_to_pass vs fail_to_pass), have descriptive docstrings, and function names clearly indicate what they verify."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task specifies exact schema requirements for structured data files: XML must have root <component> with <id>com.matthiasn.lotti</id>, YAML must have app-id: com.matthiasn.lotti. These are documented in instruction.md."
+      "reason": "The task specifies exact schema requirements for structured data: XML must have root <component> with <id>com.matthiasn.lotti</id>, YAML must have app-id: com.matthiasn.lotti, and these are tested."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and other identifiers in instruction.md appear correct and consistent with the repository structure."
+      "reason": "File paths, commands, variable names, and URLs in instruction.md appear correct and consistent with the test files and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names exact methods (_buildDateRow), exact variable names (hasDueDate, isUrgent, urgentColor, isCompleted), exact code patterns ('!isCompleted && status.isUrgent'), and exact files with specific modification instructions. This goes well beyond naming the buggy module \u2014 it specifies the exact implementation approach."
+      "reason": "Instruction.md names the exact files to modify, specifies exactly what imports to add ('importing lib/classes/task.dart'), names the exact status types to check (TaskDone, TaskRejected), and describes the exact control flow changes needed. This goes well beyond identifying the problem domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not an agent config-edit task."
+      "reason": "This is primarily a code-editing task, not an agentmd-edits/config-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

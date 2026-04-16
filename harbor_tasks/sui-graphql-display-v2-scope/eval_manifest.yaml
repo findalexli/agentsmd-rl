@@ -72,6 +72,19 @@ distractors:
     for this GraphQL API bug, which is unnecessary, time-consuming, and outside the
     scope of the requested fix.
   severity: medium
+- rule: Never modify settings for a version that exists in a release branch
+  source:
+    path: repo/.claude/skills/protocol-config/SKILL.md
+    lines: 153-153
+  source_text: '- **Never modify settings for a version that exists in a release branch**
+    - this will break consensus'
+  collision_type: scope_ambiguity
+  why_distracting: The diff mentions ignoring 'root-version bound inherited from the
+    value so a newer Display v2 object can still be resolved for older objects'. An
+    agent might see the word 'version' and 'older objects' and mistakenly think this
+    violates the rule against modifying version settings, confusing GraphQL object
+    versions with protocol versioning.
+  severity: high
 hierarchy_analysis: The hierarchy is flat (only root-level AGENTS.md and CLAUDE.md
   are present). The rules provided are generic repository guidelines that do not interact
   deeply with the specific GraphQL scoping bug.
@@ -89,4 +102,29 @@ rubric:
   evidence: The task instruction and standard workflow align with using `cargo check`
     for validation rather than a full build, as preferred by the config.
   category: tooling
+  verification: llm_judge
+- rule: Comment non-obvious algorithms, business logic, and assumptions about external
+    state.
+  source:
+    path: repo/CLAUDE.md
+    lines: 118-124
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions'
+  evidence: The diff adds a comment `// Display registry objects are global objects,
+    not children of the value being rendered...` which explains the external assumptions
+    and 'why' the `without_root_bound()` is called, rather than just repeating what
+    it does.
+  category: style
   verification: llm_judge

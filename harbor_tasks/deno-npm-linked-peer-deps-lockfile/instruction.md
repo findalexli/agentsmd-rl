@@ -8,7 +8,7 @@ When a workspace has linked npm packages that have peer dependencies, running De
 2. That linked package has peer dependencies
 3. A `deno.lock` file exists
 
-Without a lockfile, everything works fine. The issue is in how the lockfile snapshot resolution identifies which packages are linked (and thus shouldn't have dist/tarball info fetched).
+Without a lockfile, everything works fine.
 
 ## Expected Behavior
 
@@ -16,17 +16,15 @@ Linked packages should be correctly identified during lockfile snapshot resoluti
 
 ## File to Look At
 
-- `libs/npm/resolution/snapshot.rs` — contains the `snapshot_from_lockfile` function that builds the npm resolution snapshot from a lockfile. The link package identification logic is in this function.
+- `libs/npm/resolution/snapshot.rs` — contains the `snapshot_from_lockfile` function that builds the npm resolution snapshot from a lockfile.
 
 ## Lockfile Key Format for Peer Dependencies
 
 When a linked package has peer dependencies, its serialized lockfile key includes a peer-dep suffix. For example, `@myorg/shared@1.0.0` with a peer dependency on `zod@4.3.6` appears in the lockfile as `@myorg/shared@1.0.0_zod@4.3.6`. This is the **raw serialized key** stored in the lockfile.
 
-## What Must Be Fixed
+## Symptom Description
 
-The link-package lookup in `snapshot_from_lockfile` compares the raw serialized lockfile key (which includes peer-dep suffixes like `_zod@4.3.6`) against plain `name@version` strings. This format mismatch means linked packages with peer deps are never recognized as linked.
-
-Correctly identify linked packages by comparing against the parsed `name` and `version` fields (`id.nv`) rather than the raw serialized key that includes peer-dep suffixes.
+The function iterates over lockfile entries using raw serialized keys. For linked packages with peer dependencies, the key includes a peer-dep suffix (e.g. `_zod@4.3.6`). During the lookup that determines whether a package is linked, this suffix causes linked packages with peer deps to not be recognized as linked — the resolver then incorrectly attempts to fetch their tarball, which fails for locally-linked packages. Linked packages without peer deps work correctly because their raw key has no suffix.
 
 ## Unit Test Requirement
 
@@ -36,7 +34,3 @@ You must add a unit test named `test_snapshot_from_lockfile_v5_with_linked_packa
 - The lockfile key for `@myorg/shared@1.0.0` in this case will be `@myorg/shared@1.0.0_zod@4.3.6`
 - Assert that the linked package (`@myorg/shared`) has `dist: None` in the resulting snapshot
 - Assert that the non-linked peer dep (`zod`) has `dist: Some(...)`
-
-## Symptom Description
-
-The bug manifests as a mismatch: the lookup key contains a peer-dep suffix (e.g. `@myorg/shared@1.0.0_zod@4.3.6`), but the link-package comparison set only stores plain `name@version` strings (e.g. `@myorg/shared@1.0.0`). Because the raw key never matches the comparison set, linked packages with peer deps are incorrectly treated as remote packages and the resolver attempts to fetch their tarball — which fails for locally-linked packages.

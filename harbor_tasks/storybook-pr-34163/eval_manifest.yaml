@@ -1,0 +1,64 @@
+source:
+  pr:
+    owner: storybookjs
+    repo: storybook
+    number: 34163
+    title: "UI: Ensure Link without href is keyboard-reachable"
+    merge_commit: d3073e793723700d35bac25e0121391ba4398bf7
+    base_commit: 5f74cba8c083b6166bdd5d5394ab650fc8f29051
+
+checks:
+  # Fail-to-pass tests (core behavioral fixes)
+  - id: test_link_renders_as_button_without_href
+    type: fail_to_pass
+    origin: task_requirement
+    description: Link component renders as button element when no href provided
+    points: 1
+
+  - id: test_link_renders_as_anchor_with_href
+    type: fail_to_pass
+    origin: task_requirement
+    description: Link component continues to render as anchor when href provided
+    points: 1
+
+  - id: test_button_focus_styles_applied
+    type: fail_to_pass
+    origin: task_requirement
+    description: Button-styled links have visible focus indicators for keyboard navigation
+    points: 1
+
+  - id: test_isbutton_prop_deprecated
+    type: fail_to_pass
+    origin: task_requirement
+    description: Using isButton prop triggers deprecation warning
+    points: 1
+
+  - id: test_isbutton_default_changed
+    type: fail_to_pass
+    origin: task_requirement
+    description: isButton prop defaults to undefined (not false) to detect explicit usage
+    points: 1
+
+  # Pass-to-pass tests (regression prevention / repo quality)
+  - id: test_component_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Components package compiles successfully
+    points: 0
+
+  - id: test_typescript_compilation
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+    points: 0
+
+  - id: test_repo_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code formatting passes on modified files
+    points: 0
+
+
+# Note: Rubric checks are not applicable for this task as it involves only code changes.
+# The P2P tests (test_component_compiles, test_typescript_compilation, test_repo_formatting)
+# already verify code quality and convention compliance.

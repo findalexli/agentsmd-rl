@@ -2,57 +2,57 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key file paths (components/image/index.tsx, components/image/PreviewGroup.tsx, components/image/hooks/useMergedPreviewConfig.ts), the specific variable names (mergedMaskClosable, maskClosable), the type patterns (Omit, maskClosable), the hook name (useMergedMask, useMergedPreviewConfig), and the return type signatures that the tests check. The tests import from paths like components/_util/hooks/useMergedMask and components/image/hooks/useMergedPreviewConfig which are di"
+      "outcome": "fail",
+      "reason": "Tests assert on specific internal implementation details not mentioned in instruction.md: useMergedMask hook returning a 3-element tuple (test_useMergedMask_returns_third_value), useMergedPreviewConfig hook returning maskClosable property (test_useMergedPreviewConfig_returns_maskClosable), Omit pattern for OriginPreviewConfig type (test_Image_types_use_omit_pattern, test_PreviewGroup_types_use_omit_pattern). The instruction never mentions these hooks, the Omit pattern, or maskClosable as a top-l"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details: 'The file must contain \"maskClosable?: boolean\" in the return type', 'The file must contain \"mergedMaskClosable\" as the variable name', 'The file must contain the pattern maskClosable: mergedMaskClosable', and specifies the exact Omit pattern to use. It also says 'The string \"maskClosable\" must appear in the type definitions (as an excluded property)'. This tells the agent exactly what code to write rather than describing behavior."
+      "outcome": "pass",
+      "reason": "The instruction describes the desired feature (mask.closable) and acceptance criteria but does not specify exact code changes, line numbers, or implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The instruction mandates specific variable names like 'mergedMaskClosable' and specific patterns like 'maskClosable: mergedMaskClosable'. The tests (truncated but visible from test_useMergedMask_returns_third_value and test_useMergedPreviewConfig_returns_maskClosable) check TypeScript compilation of code that accesses specific APIs. However, a correct alternative that uses a different variable name (e.g., 'maskClosableValue') or a different internal structure would still work behaviorally but mi"
+      "reason": "Tests assert on gold-specific implementation details: useMergedMask returning exactly 3 elements with the 3rd being maskClosable, useMergedPreviewConfig returning an object with maskClosable property, and OriginPreviewConfig using an Omit pattern. An alternative correct implementation (e.g., handling closable differently without modifying useMergedMask's return tuple) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The visible tests (test_useMergedMask_returns_third_value, test_useMergedPreviewConfig_returns_maskClosable, test_Image_types_use_omit_pattern, test_PreviewGroup_types_use_omit_pattern) all create TypeScript files that import and use the actual code, then run the TypeScript compiler (npx tsc) to verify type correctness. They test behavior through compilation, not just text matching."
+      "reason": "Tests run TypeScript compilation via subprocess (npx tsc) to verify type correctness, and the truncated test file likely includes Jest test execution. They execute code rather than just checking file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests write TypeScript code that destructures 3 elements from useMergedMask and accesses maskClosable from useMergedPreviewConfig's return type. A stub that returns the wrong number of elements or doesn't include maskClosable in the return type would fail TypeScript compilation. The pre-fix code returns only 2 elements from useMergedMask and doesn't include maskClosable in the return type, so these tests would fail before the fix."
+      "reason": "The F2P tests check that useMergedMask returns a 3-element tuple and useMergedPreviewConfig includes maskClosable - these would fail against the unmodified codebase where useMergedMask returns 2 elements and maskClosable doesn't exist in the return type."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires: (1) useMergedMask returns 3 values - tested by test_useMergedMask_returns_third_value, (2) useMergedPreviewConfig returns maskClosable - tested by test_useMergedPreviewConfig_returns_maskClosable, (3) Image types use Omit pattern - tested by test_Image_types_use_omit_pattern, (4) PreviewGroup types use Omit - tested by test_PreviewGroup_types_use_omit_pattern. All major requirements are tested."
+      "outcome": "fail",
+      "reason": "The instruction requires ConfigProvider support for global image.preview.mask.closable configuration, but no test verifies ConfigProvider integration. Also, no test verifies the actual runtime behavior of mask click-to-close being prevented when closable is false."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_useMergedMask_returns_third_value, test_useMergedPreviewConfig_returns_maskClosable, etc.), have docstrings explaining what they check including 'F2P check' sections describing before/after states."
+      "reason": "Tests are well-named (test_useMergedMask_returns_third_value, test_useMergedPreviewConfig_returns_maskClosable, etc.) with docstrings explaining F2P checks including before/after descriptions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves TypeScript code changes, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "This task involves UI component feature addition, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction appear correct and consistent with the codebase structure shown in the solution."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files (components/image/hooks/useMergedPreviewConfig.ts), exact variable names ('mergedMaskClosable'), exact type patterns ('maskClosable?: boolean' in return type), and exact code patterns ('maskClosable: mergedMaskClosable'). This goes far beyond describing the problem and essentially provides the implementation."
+      "outcome": "pass",
+      "reason": "The instruction describes the feature at a high level without naming specific files, hooks, or line numbers. It doesn't mention useMergedMask, useMergedPreviewConfig, or the Omit pattern."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 6,
   "fail_count": 3

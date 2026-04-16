@@ -20,33 +20,44 @@ The type checker cannot find `__enter__`/`__exit__` on the aliased union type be
 
 All three forms of type alias (`TypeAlias`, `type` statement, `TypeAliasType`) should correctly resolve context manager protocol methods when used in `with` statements. The `__enter__` return type should be inferred as the union of the constituent types.
 
-## Required Source Code Changes
+## Requirements
 
-The fix must be made in `crates/ty_python_semantic/src/types.rs`. The code must satisfy these structural requirements:
+### Code Requirements in `crates/ty_python_semantic/src/types.rs`
 
-1. Member lookup dispatch for type system variants must handle `Type::TypeAlias(alias)` **before** the descriptor protocol fallback (identified by `no_instance_fallback()`).
+The `member_lookup_with_policy` function must satisfy these behavioral requirements:
 
-2. When processing a `Type::TypeAlias` variant, the implementation must unwrap the alias by accessing its `value_type(db)` and recursively perform member lookup via `member_lookup_with_policy()` on the resulting underlying type.
+1. When performing member lookup dispatch for a `Type::TypeAlias` variant, the implementation must call `value_type(db)` on the alias and recursively invoke `member_lookup_with_policy` on the underlying type to properly unwrap the alias.
 
-## Required Test Additions
+2. The match arm for `Type::TypeAlias(alias)` must execute before the descriptor protocol fallback (identified by `policy.no_instance_fallback()`) is invoked. This ensures type aliases are unwrapped before the fallback short-circuits member lookup.
 
-Add a new test section to `crates/ty_python_semantic/resources/mdtest/with/sync.md` with these exact requirements:
+3. The implementation must preserve existing functionality: the `no_instance_fallback` check and `invoke_descriptor_protocol` code path must still exist and be reachable for other type variants.
 
-1. Section header must be: `## Type aliases preserve context manager behavior`
+### Test Requirements in `crates/ty_python_semantic/resources/mdtest/with/sync.md`
 
-2. Must include this environment configuration:
+Add a new test section with these exact specifications:
+
+1. Section header: `## Type aliases preserve context manager behavior`
+
+2. Environment configuration:
    ```toml
    [environment]
    python-version = "3.12"
    ```
 
-3. Must test all three forms of type alias:
-   - `TypeAlias` annotation (e.g., `UnionAB1: TypeAlias = A | B`)
-   - PEP 695 `type` statement (e.g., `type UnionAB2 = A | B`)
-   - `TypeAliasType` call (e.g., `UnionAB3 = TypeAliasType("UnionAB3", A | B)`)
+3. Must test all three forms of type alias with context manager classes:
+   - `TypeAlias` annotation: `UnionAB1: TypeAlias = A | B`
+   - PEP 695 `type` statement: `type UnionAB2 = A | B`
+   - `TypeAliasType` call: `UnionAB3 = TypeAliasType("UnionAB3", A | B)`
 
-4. Must include `with x as y:` statement usage for each alias type.
+4. Test classes `A` and `B` must be context managers with `__enter__` methods that return `Self`.
 
-5. Must include `reveal_type(y)` assertions showing the inferred type is `A | B`.
+5. Each type alias must be used in a `with x as y:` statement.
 
-6. Test classes `A` and `B` should be context managers with `__enter__` methods that return `Self`.
+6. Must include `reveal_type(y)` assertions showing the inferred type is `A | B`.
+
+## Verification
+
+The implementation must pass:
+- `cargo check -p ty_python_semantic`
+- `cargo test -p ty_python_semantic --test mdtest with/sync`
+- `cargo clippy -p ty_python_semantic -- -D warnings`

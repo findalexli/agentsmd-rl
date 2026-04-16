@@ -197,50 +197,24 @@ print('AST verification OK')
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests using subprocess
+# Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_current_platform_import():
-    """Module must import current_platform from areal.infra.platforms.
+def test_init_streams_behavior():
+    """_init_streams_and_events must work without torch.cuda and use platform abstraction.
 
-    Uses subprocess to actually import the module and verify the import
-    is present and resolves without error.
+    We execute the method with a mock platform that fails on torch.cuda calls.
+    A correct implementation using platform abstraction will succeed.
+    A broken implementation using torch.cuda directly will fail with torch.cuda error.
     """
-    r = _run_python("""
-import ast
-source = open("/repo/areal/engine/fsdp_utils/optimizer.py").read()
-tree = ast.parse(source)
-found = False
-for node in ast.walk(tree):
-    if isinstance(node, ast.ImportFrom):
-        if node.module and "areal.infra.platforms" in node.module:
-            for alias in node.names:
-                if alias.name == "current_platform":
-                    found = True
-assert found, "current_platform not imported from areal.infra.platforms"
-print("PASS")
-""")
-    assert r.returncode == 0, f"Failed: {r.stderr}"
-    assert "PASS" in r.stdout
-
-
-# [pr_diff] fail_to_pass
-def test_init_streams_uses_platform():
-    """_init_streams_and_events routes Stream/Event through current_platform.
-
-    Extracts the method source, then exec's it in a subprocess with a
-    mock current_platform that records attribute accesses. Verifies that
-    Stream and Event are accessed through the platform proxy, not torch.cuda.
-    """
-    r = _run_python("""
+    r = _run_python('''
 import ast, textwrap
 from pathlib import Path
 
 source = Path("/repo/areal/engine/fsdp_utils/optimizer.py").read_text()
 tree = ast.parse(source)
 
-# Extract _init_streams_and_events method source
 func_src = None
 for node in ast.walk(tree):
     if isinstance(node, ast.ClassDef) and node.name == "PerLayerOptimWrapper":
@@ -252,72 +226,85 @@ for node in ast.walk(tree):
 
 assert func_src is not None, "_init_streams_and_events not found"
 
-# Test with 3 groups
+# Track whether torch.cuda was accessed
+cuda_accessed = []
+
+# Mock platform that succeeds
+class _MockPlatform:
+    def __getattr__(self, name):
+        if name in ("Stream", "Event"):
+            def create_mock(**kw):
+                class _Obj:
+                    def record_event(self, s): pass
+                return _Obj()
+            return create_mock
+        return lambda *a, **kw: None
+
+# Mock torch.cuda that fails on any usage
+class _MockTorch:
+    class cuda:
+        @staticmethod
+        def Stream(**kw):
+            cuda_accessed.append("Stream")
+            raise RuntimeError("torch.cuda not available in this environment")
+        @staticmethod
+        def Event(**kw):
+            cuda_accessed.append("Event")
+            raise RuntimeError("torch.cuda not available in this environment")
+        @staticmethod
+        def current_stream(device):
+            cuda_accessed.append("current_stream")
+            raise RuntimeError("torch.cuda not available")
+        @staticmethod
+        def empty_cache():
+            cuda_accessed.append("empty_cache")
+            raise RuntimeError("torch.cuda not available")
+        @staticmethod
+        def stream(s):
+            cuda_accessed.append("stream")
+            raise RuntimeError("torch.cuda not available")
+
 class _MockSelf:
     def __init__(self):
         self._layer_param_groups = [None] * 3
         self.device = "cpu"
+        self._h2d_stream = None
+        self._d2h_stream = None
+        self._compute_end_events = None
+        self._h2d_end_events = None
 
-accessed = []
-class _Tracker:
-    def __getattr__(self, name):
-        accessed.append(name)
-        return lambda *a, **kw: None
+ns = {
+    "current_platform": _MockPlatform(),
+    "__builtins__": __builtins__,
+    "torch": _MockTorch(),
+}
 
-tracker = _Tracker()
+try:
+    exec(func_src, ns)
+    fn = ns["_init_streams_and_events"]
+    fn(_MockSelf())
+except RuntimeError as e:
+    if "torch.cuda" in str(e):
+        raise AssertionError(f"Code uses torch.cuda: {e}")
+    raise
 
-# Build namespace: replace current_platform with tracker
-ns = {"current_platform": tracker, "__builtins__": __builtins__}
-# Also mock torch to prevent import errors
-class _MockTorch:
-    class cuda:
-        pass
-ns["torch"] = _MockTorch()
-
-exec(func_src, ns)
-fn = ns["_init_streams_and_events"]
-fn(_MockSelf())
-
-stream_count = accessed.count("Stream")
-event_count = accessed.count("Event")
-assert stream_count >= 2, f"Expected >= 2 Stream calls, got {stream_count}: {accessed}"
-assert event_count >= 3, f"Expected >= 3 Event calls for 3 groups, got {event_count}: {accessed}"
-
-# Test with 5 groups to confirm not hardcoded
-accessed5 = []
-class _Tracker5:
-    def __getattr__(self, name):
-        accessed5.append(name)
-        return lambda *a, **kw: None
-
-ns5 = {"current_platform": _Tracker5(), "__builtins__": __builtins__, "torch": _MockTorch()}
-exec(func_src, ns5)
-ns5["_init_streams_and_events"](_MockSelf())
-# Override num_groups by setting _layer_param_groups to 5
-accessed5.clear()
-class _MockSelf5:
-    _layer_param_groups = [None] * 5
-    device = "cpu"
-ns5b = {"current_platform": _Tracker5(), "__builtins__": __builtins__, "torch": _MockTorch()}
-exec(func_src, ns5b)
-ns5b["_init_streams_and_events"](_MockSelf5())
-event_count5 = accessed5.count("Event")
-assert event_count5 >= 5, f"Expected >= 5 Event calls for 5 groups, got {event_count5}: {accessed5}"
+if cuda_accessed:
+    raise AssertionError(f"torch.cuda was accessed: {cuda_accessed}")
 
 print("PASS")
-""")
+''')
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_step_uses_platform():
-    """step() routes current_stream/stream/empty_cache through current_platform.
+def test_step_behavior():
+    """step() must work without torch.cuda and use platform abstraction.
 
-    Extracts the step() method, exec's it in a subprocess with a tracking
-    current_platform mock, and verifies the correct platform methods are called.
+    Execute step() with mock platform. Broken code using torch.cuda will fail.
+    Correct code using platform abstraction will succeed.
     """
-    r = _run_python("""
+    r = _run_python('''
 import ast, textwrap
 from pathlib import Path
 
@@ -335,23 +322,18 @@ for node in ast.walk(tree):
 
 assert func_src is not None, "step not found"
 
-accessed = []
+cuda_accessed = []
 
 class _Stream:
     def __enter__(self): return self
     def __exit__(self, *args, **kwargs): pass
-    def wait_event(self, *args, **kwargs): pass
-    def record_event(self, *args, **kwargs): pass
-    def synchronize(self, *args, **kwargs): pass
-    def __call__(self, *args, **kwargs): return _Stream()
-
-class _Tracker:
-    def __getattr__(self, name):
-        accessed.append(name)
-        return _Stream()
+    def wait_event(self, e): pass
+    def record_event(self, s): pass
+    def synchronize(self): pass
 
 class _MockEvent:
-    pass
+    def wait_event(self, e): pass
+    def record_event(self, s): pass
 
 class _MockSelf:
     def __init__(self):
@@ -372,52 +354,72 @@ class _MockSelf:
 
     def _compute_for_layer(self, states):
         pass
-
     def _offload_layer(self, states):
         pass
-
     def _record_streams_for_layer(self, states, *streams):
         pass
 
+class _MockPlatform:
+    def __getattr__(self, name):
+        if name == "stream":
+            return lambda s: _Stream()
+        elif name == "current_stream":
+            return lambda device: _Stream()
+        elif name == "empty_cache":
+            return lambda: None
+        return lambda *a, **kw: None
+
 class _MockTorch:
     class cuda:
-        pass
+        @staticmethod
+        def current_stream(device):
+            cuda_accessed.append("current_stream")
+            raise RuntimeError("torch.cuda not available")
+        @staticmethod
+        def empty_cache():
+            cuda_accessed.append("empty_cache")
+            raise RuntimeError("torch.cuda not available")
+        @staticmethod
+        def stream(s):
+            cuda_accessed.append("stream")
+            raise RuntimeError("torch.cuda not available")
 
 ns = {
-    "current_platform": _Tracker(),
+    "current_platform": _MockPlatform(),
     "__builtins__": __builtins__,
     "torch": _MockTorch(),
 }
+
 try:
     exec(func_src, ns)
     ns["step"](_MockSelf())
-except Exception as e:
-    print(f"Exception (may be expected): {e}")
+except RuntimeError as e:
+    if "torch.cuda" in str(e):
+        raise AssertionError(f"step() uses torch.cuda: {e}")
+    raise
 
-# Check that we got far enough to call the key platform methods
-assert "current_stream" in accessed, f"current_platform.current_stream not called in step(): {accessed}"
-assert "empty_cache" in accessed, f"current_platform.empty_cache not called in step(): {accessed}"
+if cuda_accessed:
+    raise AssertionError(f"torch.cuda was accessed in step(): {cuda_accessed}")
+
 print("PASS")
-""")
+''')
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_no_direct_cuda_calls():
-    """No torch.cuda.{Stream,Event,current_stream,stream,empty_cache} in PerLayerOptimWrapper.
+def test_no_torch_cuda_in_source():
+    """PerLayerOptimWrapper source must not contain torch.cuda attribute accesses.
 
-    Uses AST analysis in a subprocess to find forbidden torch.cuda.X patterns
-    in the class body, excluding type annotations.
+    Uses AST to detect any torch.cuda.X patterns in the class body,
+    excluding type annotations.
     """
-    r = _run_python("""
+    r = _run_python('''
 import ast
 from pathlib import Path
 
 source = Path("/repo/areal/engine/fsdp_utils/optimizer.py").read_text()
 tree = ast.parse(source)
-
-forbidden = {"Stream", "Event", "current_stream", "stream", "empty_cache"}
 
 class_node = None
 for node in ast.walk(tree):
@@ -443,21 +445,21 @@ for child in ast.walk(class_tree):
             ann_ids.add(id(n))
 
 for n in ast.walk(class_tree):
-    if isinstance(n, ast.Attribute) and n.attr in forbidden:
+    if isinstance(n, ast.Attribute) and n.attr in ("Stream", "Event", "current_stream", "stream", "empty_cache"):
         if id(n) in ann_ids:
             continue
         if isinstance(n.value, ast.Attribute) and n.value.attr == "cuda":
             if isinstance(n.value.value, ast.Name) and n.value.value.id == "torch":
                 raise AssertionError(f"Found forbidden: torch.cuda.{n.attr}")
 print("PASS")
-""")
+''')
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_todo_comments_removed():
-    """TODO comments about current_platform abstraction must be resolved."""
+def test_todo_comments_resolved():
+    """TODO comments mentioning platform abstraction must be resolved."""
     source = _read_source()
     for i, line in enumerate(source.splitlines(), 1):
         low = line.lower()

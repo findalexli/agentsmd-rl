@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check many specifics not explicitly stated in instruction.md: test_p2p_java_version asserts 'OpenJDK 21', test_p2p_git_repo_clean runs git status, test_p2p_swift_imports_kotlin_runtime checks for 'import KotlinRuntimeSupport', test_f2p_header_callback_has_bool_parameter checks for 'bool' in the callback signature, test_f2p_kotlin_value_wrapper_class checks for 'inner class Value' or 'class Value', test_f2p_kotlin_next_returns_value_wrapper checks return type 'Value?'. While instruction.md "
+      "reason": "Tests check for specific details not fully discoverable from instruction.md alone. For example, test_p2p_java_version asserts 'OpenJDK 21', test_p2p_shell_... (truncated) likely checks shell availability, test_p2p_git_repo_clean runs git status, and test_p2p_header_swift_callback_signature_exists checks for 'continuation' in the header. While some of these are implied, the Java version requirement and shell checks are not mentioned in instruction.md. Also, f2p tests check for specific implementa"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (null ambiguity between emitted null and flow completion) and what behavior is expected, but does not prescribe the exact fix mechanism (e.g., adding a bool parameter or Value wrapper class). The developer must still reason about the approach."
+      "outcome": "fail",
+      "reason": "The instruction describes the exact mechanism of the bug ('callback with null means completion vs null element') and states 'All three interop files (.h, .kt, .swift) participate in this callback protocol and must be updated.' The Symptom section essentially describes the fix approach: adding a way to distinguish emitted nulls from completion nulls. While it doesn't give exact code, it narrows the solution space significantly by explaining the protocol-level issue and naming all three files."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The f2p tests assert gold-specific implementation details: test_f2p_header_callback_has_bool_parameter requires 'bool' in the callback signature, test_f2p_kotlin_value_wrapper_class requires a class named 'Value' with a 'val value' property, test_f2p_kotlin_next_returns_value_wrapper requires 'Value?' return type. Alternative correct fixes (e.g., using a sentinel object, a separate 'hasValue' callback, or an enum/sealed class with a different name) would fail these tests."
+      "reason": "The truncated tests likely include checks for specific implementation details from the gold patch. The gold solution uses a specific approach: adding an inner class 'Value' wrapper and changing the callback signature to include a 'bool' parameter. Alternative valid fixes (e.g., using a sentinel object, using an Optional wrapper, using a separate 'hasValue' callback) would likely fail tests that check for the specific 'bool' parameter in the header signature or specific wrapper class patterns in "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests are almost entirely text-matching: e.g., test_f2p_header_callback_has_bool_parameter does `assert 'bool' in content`, test_f2p_kotlin_value_wrapper_class checks for string patterns in source code, test_f2p_swift_next_handles_optional checks for 'as?' in Swift source. No test actually compiles, runs, or executes the code to verify behavior."
+      "reason": "The visible tests are almost entirely text-based assertions: they open files and check for string presence (e.g., `assert 'class SwiftFlowIterator<T>' in content`, `assert 'AsyncIteratorProtocol' in content`). None of the visible tests compile or execute the code. They are all `assert X in open(path).read()` style checks with no behavioral execution."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests check for textual presence of patterns like 'bool' in header, 'class Value' in Kotlin, 'testNullable' in test files. An agent could simply add these strings as comments or dead code without actually implementing the fix, and all f2p tests would pass since they only do string matching."
+      "reason": "The f2p (fail-to-pass) tests are truncated, but based on the visible test structure, many are text-matching tests. A solution that simply adds the testNullable function signature to the test files and adds 'bool' to the header string without actually implementing the fix correctly could pass text-matching tests. The tests don't compile or run the code, so a syntactically-present but semantically-wrong implementation could pass."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'iterating flowOf(Element1, null, Element2, null, Element3) from Swift should yield five expected elements', but no test actually verifies this runtime behavior. Tests only check source code text patterns."
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) adding testNullable() to sequences.kt returning Flow<Elem?>, (2) adding testNullable() to sequences.swift with @Test/@MainActor, (3) updating the three interop files. The tests (both p2p and f2p) check for these additions in the respective files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear naming conventions (test_p2p_ for pass-to-pass, test_f2p_ for fail-to-pass), descriptive docstrings, and logical grouping by component (header, Kotlin, Swift, test data)."
+      "reason": "Tests are well-named with clear prefixes (test_p2p_ for pass-to-pass) and descriptive names like test_p2p_kotlin_has_swift_flow_iterator_class. Comments explain the purpose of test groups."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,27 +35,28 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests appear consistent and correctly spelled."
+      "reason": "No typos detected in filenames, paths, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction identifies the three interop files that need changes (which is appropriate given the task domain) but does not specify exact lines or the specific fix mechanism (bool parameter, Value wrapper, etc.)."
+      "outcome": "fail",
+      "reason": "The instruction explicitly names all three files that need changes and describes the exact nature of the protocol issue (null ambiguity in callback). The 'Symptom' section essentially describes the fix approach needed. While the files are domain-relevant, the instruction goes beyond describing what's broken by explaining the internal callback protocol mechanism in detail."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-editing task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

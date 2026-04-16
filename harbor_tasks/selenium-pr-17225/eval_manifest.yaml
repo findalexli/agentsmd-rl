@@ -1,0 +1,70 @@
+source:
+  type: github_pr
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17225
+  base_commit: 1303596bccafc9f39708d8ac61b52424c7d00394
+  merge_commit: 7e9d2f7c7eaaf20cf6ff24bb383369b55a141613
+  title: "[java] Add field names to JsonException 'Duplicate JSON field name...'"
+
+checks:
+  - id: test_java_compiles
+    type: pass_to_pass
+    origin: task_design
+    description: The Java code compiles without errors
+
+  - id: test_exception_message_contains_field_names
+    type: fail_to_pass
+    origin: task_design
+    description: Exception message includes field names in 'FieldWriter(ClassName.fieldName)' format
+
+  - id: test_exception_message_contains_field_names_variation
+    type: fail_to_pass
+    origin: task_design
+    description: Exception message includes field names with different field/class names
+
+  - id: test_parent_class_parsing_still_works
+    type: pass_to_pass
+    origin: task_design
+    description: Parent class without duplicate fields still parses correctly
+
+  - id: test_fieldwriter_class_exists
+    type: fail_to_pass
+    origin: task_design
+    description: FieldWriter inner class exists with a toString method
+
+  - id: test_simple_property_descriptor_has_tostring
+    type: fail_to_pass
+    origin: task_design
+    description: SimplePropertyDescriptor has a toString method
+
+  - id: test_simple_property_descriptor_constructor_takes_class
+    type: fail_to_pass
+    origin: task_design
+    description: SimplePropertyDescriptor constructor accepts Class<?> parameter
+
+  - id: test_json_module_compiles_standalone
+    type: pass_to_pass
+    origin: repo_tests
+    description: JSON module compiles as standalone unit without test dependencies
+
+  - id: test_modified_files_have_valid_java_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified files (InstanceCoercer, SimplePropertyDescriptor) compile successfully
+
+  - id: test_json_files_use_lf_line_endings
+    type: pass_to_pass
+    origin: static
+    description: All Java files in JSON module use LF line endings
+
+  - id: test_json_files_have_final_newline
+    type: pass_to_pass
+    origin: static
+    description: All Java files in JSON module end with newline
+
+rubric:
+  - id: code_only_no_doc_changes_needed
+    rule: This is a pure code fix that improves error messages - no documentation changes are required since the public API remains unchanged
+    reference: |
+      No AGENTS.md or CLAUDE.md changes needed - the fix only modifies internal Java implementation to include field names in JsonException messages

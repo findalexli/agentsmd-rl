@@ -2,58 +2,58 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md: test_cache_disable_applies_to_all_inspector_modes checks that the cache disable is NOT inside a 'mode != .connect' block (the instruction never mentions '.connect' mode or this conditional structure); test_not_stub checks for >= 3 code changes; test_no_inline_import_in_changes, test_no_std_api_in_changes, etc. reference CLAUDE.md coding standards not mentioned in instruction.md; test_cache_disabled_in_configure_debugger checks f"
+      "outcome": "pass",
+      "reason": "The instruction names VirtualMachine.zig, Arguments.zig, configureDebugger function, RuntimeTranspilerCache, isInspectorEnabled, BUN_INSPECT, the CLI flags, and the behavior of disabling the cache. All file paths, function names, and key identifiers referenced in test assertions (e.g., RuntimeTranspilerCache, is_disabled, isInspectorEnabled, configureDebugger, mode != .connect) are mentioned or discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md essentially describes the exact fix: 'The fix must disable RuntimeTranspilerCache by setting is_disabled = true on it', 'The cache disable must apply universally for all debugger modes', 'check for the debugger being enabled via isInspectorEnabled()', and lists exact settings (minify_identifiers, minify_syntax, minify_whitespace, debugger=true). This is not just describing what's broken \u2014 it prescribes the exact implementation approach including the specific field name and method "
+      "reason": "The instruction explicitly states the fix: 'When the debugger is activated via the BUN_INSPECT environment variable, the cache is not disabled \u2014 this is the bug' and 'the runtime transpiler cache must be disabled so that inline source maps are always generated.' It further specifies the exact mechanism (configureDebugger function) and contrasts it with how CLI flags already work. Combined with naming the exact function and the exact field (RuntimeTranspilerCache), this essentially tells the agen"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_cache_disabled_in_configure_debugger requires the RuntimeTranspilerCache disable to be specifically inside the configureDebugger function, using either '.is_disabled = true' or '.disable(' pattern. An alternative correct fix that disables the cache elsewhere (e.g., in the inspector initialization code, or in the transpiler cache lookup itself) would fail. Also test_cache_disable_applies_to_all_inspector_modes requires the disable NOT be inside a 'mode != .connect' conditional, which is gold"
+      "reason": "Tests assert very specific implementation details: regex patterns like 'RuntimeTranspilerCache.*is_disabled\\s*=' or 'TranspilerCache.*disable\\s*(' require a particular naming convention. An alternative correct fix that, say, calls a helper function like 'disableTranspilerCacheForDebugger()' or sets a different field like 'cache_enabled = false' would fail. The test also checks line ordering between inspector check and cache disable, which is gold-patch-specific."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads source files and checks for string patterns (regex matches on source code text). No test compiles the Zig code, runs the debugger, or verifies actual runtime behavior. Tests like test_cache_disabled_in_configure_debugger use regex to find 'RuntimeTranspilerCache' in source text. This is purely textual inspection, not behavioral verification."
+      "reason": "Every test uses regex pattern matching on source code text (e.g., re.search on file contents, git diff output). No test compiles, runs, or executes the code. They are essentially 'assert pattern in open(path).read()' tests dressed up with git subprocess calls for diffing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_cache_disabled_in_configure_debugger, test_cache_disable_applies_to_all_inspector_modes, test_not_stub) cannot be satisfied by a stub/no-op since the base commit doesn't have RuntimeTranspilerCache.is_disabled in configureDebugger, and test_not_stub requires >= 3 real code changes."
+      "reason": "A stub or no-op change would fail: test_not_stub requires at least 2 added lines in the diff, test_cache_disabled_in_configure_debugger requires RuntimeTranspilerCache disable statements inside configureDebugger, and test_arguments_zig_cache_lines_removed requires removal of cache disable lines from Arguments.zig. The base commit doesn't satisfy these."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All five required behaviors listed in instruction.md are tested: (1) RuntimeTranspilerCache disable, (2) universal application across debugger modes, (3) isInspectorEnabled check, (4) minify/debugger settings, (5) CLI flags in Arguments.zig."
+      "outcome": "fail",
+      "reason": "The instruction says 'The existing --inspect, --inspect-wait, and --inspect-brk CLI flags must continue to be handled' and that existing debugger settings must be preserved, but no test verifies these CLI flags still work or that minify settings are preserved. Also, the actual runtime behavior (cache not populated when inspector active) is never tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with section headers (fail_to_pass, pass_to_pass, anti-stub, config-derived, repo_tests), each test has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are well-named (test_cache_disabled_in_configure_debugger, test_cache_disable_applies_to_all_inspector_modes, etc.), have docstrings explaining what they verify, and are grouped into logical sections (fail-to-pass behavioral, fail-to-pass static, anti-regression)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves source code modifications, not structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths (src/bun.js/VirtualMachine.zig, src/cli/Arguments.zig), function names (configureDebugger, isInspectorEnabled), and variable names (RuntimeTranspilerCache, is_disabled) are all correctly spelled and match the actual codebase."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names the exact function 'configureDebugger' and 'isInspectorEnabled()' in VirtualMachine.zig, and specifies the exact field 'is_disabled = true' on RuntimeTranspilerCache. It also names the exact settings (minify_identifiers, minify_syntax, minify_whitespace, debugger). This goes well beyond identifying the buggy module \u2014 it identifies exact functions, fields, and values."
+      "reason": "The instruction names the exact function (configureDebugger), exact file (VirtualMachine.zig), and the exact mechanism (RuntimeTranspilerCache is not disabled when BUN_INSPECT is used). It also names Arguments.zig where CLI flags disable the cache. This is excessive localization \u2014 it tells the agent exactly where the bug is and what needs to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not an agentmd-edits or config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

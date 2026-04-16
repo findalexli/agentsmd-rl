@@ -2,41 +2,45 @@
 
 ## Problem
 
-Bun's shell implementation uses an internal sentinel byte (`\x08`) to mark JavaScript object and string references in shell command templates. When user-supplied strings containing this sentinel byte are passed to shell commands, the current implementation fails to properly escape them, leading to:
-
-1. **Lex errors**: Strings containing `\x08__bun_` or `\x08__bunstr_` prefixes are misinterpreted as malformed internal object references, causing the shell lexer to fail.
-
-2. **Potential out-of-bounds access**: When `\x08__bun_NNNN` patterns (where NNNN is a number) are injected via `{ raw: ... }`, the `validateJSObjRefIdx` function only checked if the index exceeded `maxInt(u32)` rather than the actual array length. This could lead to accessing `jsobjs[9999]` on an empty array.
-
-3. **Incorrect stdio indices**: The redirection code in `Cmd.zig` incorrectly used `stdin_no` when extracting blobs for stdout and stderr redirects.
+Bun's shell implementation uses an internal sentinel byte (`0x08`, backspace character) to mark JavaScript object and string references in shell command templates. When user-supplied strings containing this sentinel byte are passed to shell commands, the implementation fails to properly handle them.
 
 ## Symptoms
 
-- Passing strings with the byte sequence `\x08__bun_abc` to shell interpolation causes lex errors
-- Using `{ raw: sentinel_pattern }` with out-of-bounds indices could cause crashes
-- Shell commands with certain string arguments fail unexpectedly
+1. Passing strings containing the sentinel byte followed by `__bun_` or `__bunstr_` prefixes to shell interpolation causes lex errors
+2. Using raw sentinel patterns with certain index values causes crashes instead of graceful errors
+3. Shell commands with certain string arguments fail unexpectedly
 
 ## Expected Behavior
 
-- All user-supplied strings, including those containing the internal sentinel byte, should round-trip through shell interpolation correctly
-- Out-of-bounds object references should be caught early and throw a proper JavaScript error: `"Invalid JS object reference in shell"`
+- Strings containing the sentinel byte should round-trip through shell interpolation correctly
+- Out-of-bounds object references should throw error: `Invalid JS object reference in shell`
 - Stdio redirections should use the correct file descriptor indices
 
-## Files to Look At
+## Files to Modify
 
-- `src/shell/shell.zig` — The shell lexer and `SPECIAL_CHARS` table. Look for `validateJSObjRefIdx` and the `NewLexer` struct.
+The relevant source files are in `src/shell/`:
+- `src/shell/shell.zig` — Shell lexer implementation
+- `src/shell/interpreter.zig` — Shell interpreter
+- `src/shell/states/Cmd.zig` — Command state handling
+- `src/shell/Builtin.zig` — Builtin command handling
 
-- `src/shell/interpreter.zig` — Shell interpreter that creates lexers. Check how `LexerAscii` and `LexerUnicode` are instantiated.
+## Technical Context
 
-- `src/shell/states/Cmd.zig` — Command state handling redirections. Look for `initRedirections` function.
+The sentinel byte is `0x08` (backspace character). The internal reference patterns are:
+- `\x08__bun_NNNN` for object references
+- `\x08__bunstr_NNNN` for string references
 
-- `src/shell/Builtin.zig` — Builtin command handling. Look for redirection handling in builtin commands.
+The lexer must be able to handle user strings that accidentally contain these patterns without causing lex failures.
 
-## Key Technical Details
+## Validation Required
 
-- The sentinel byte is `0x08` (backspace character), defined as `SPECIAL_JS_CHAR` in the shell code
-- The internal reference patterns are `\x08__bun_NNNN` for objects and `\x08__bunstr_NNNN` for strings
-- The `SPECIAL_CHARS` table determines which characters get escaped in shell strings
-- The `jsobjs` array holds JavaScript object references passed to the shell
+Write tests to verify:
+1. Strings containing the sentinel byte round-trip correctly through shell interpolation
+2. Out-of-bounds references are caught and throw a JavaScript error
+3. Shell operates without crashes or lex errors when processing such strings
 
-Write tests to verify that strings containing the sentinel byte round-trip correctly, out-of-bounds references are handled safely, and the shell operates without crashes or lex errors.
+## Implementation Notes
+
+- The lexer needs to know the number of JS object references for proper bounds checking
+- Redirection handling must use correct file descriptor indices
+- Builtin commands and Cmd state must validate object reference indices before use

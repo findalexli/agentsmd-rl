@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path (packages/excalidraw/wysiwyg/textWysiwyg.tsx), variable names (LAST_THEME, unsubOnChange), API calls (app.onChangeEmitter.on, app.state.theme !== LAST_THEME), and the exact FIXME comment string. All asserted specifics in tests are discoverable from instruction.md."
+      "reason": "All test-asserted specifics \u2014 variable name LAST_THEME, exact string 'let LAST_THEME = app.state.theme', 'app.onChangeEmitter.on', 'app.state.theme !== LAST_THEME', 'unsubOnChange()', the FIXME comment text, file path, and commands like 'yarn test' \u2014 are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'Declare a module-level variable: let LAST_THEME = app.state.theme', 'Use app.onChangeEmitter.on(...)', 'Store the unsubscribe function in a variable named unsubOnChange', and 'Include the comment FIXME after we start emitting updates from Store for appState.theme'. This is a complete specification of the fix, not just a description of what's broken."
+      "reason": "instruction.md prescribes the exact implementation: declare 'let LAST_THEME = app.state.theme', update it at beginning of updateWysiwygStyle(), use 'app.onChangeEmitter.on(...)' with 'app.state.theme !== LAST_THEME', name the variable 'unsubOnChange', call 'unsubOnChange()' in cleanup, and include a specific FIXME comment. This is a complete solution specification, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'let LAST_THEME = app.state.theme', 'app.onChangeEmitter.on', 'app.state.theme !== LAST_THEME', 'unsubOnChange()', and the exact FIXME comment. An alternative correct fix using different variable names (e.g., 'previousTheme'), different subscription mechanisms, or different comment text would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact strings like 'let LAST_THEME = app.state.theme', 'app.onChangeEmitter.on', 'app.state.theme !== LAST_THEME', 'unsubOnChange()', and the exact FIXME comment. An alternative correct fix using different variable names (e.g., 'previousTheme'), different subscription mechanisms, or different comment text would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_last_theme_variable_exists, test_last_theme_updated_in_style_function, test_onchange_emitter_subscription_exists, test_unsub_onchange_cleanup_exists, test_fixme_comment_present) are ALL pure string-in-file checks using 'assert X in content'. They do not import, call, or execute the code to verify behavior. The pass-to-pass tests do run subprocesses but the f2p tests are entirely textual."
+      "reason": "5 of 10 tests (test_last_theme_variable_exists, test_last_theme_updated_in_style_function, test_onchange_emitter_subscription_exists, test_unsub_onchange_cleanup_exists, test_fixme_comment_present) are purely string-matching via 'assert X in content' with no code execution. These fail-to-pass tests exclusively check text presence, not behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests check for literal strings in the source file. An agent could pass all f2p tests by simply appending a comment block containing all the required strings (e.g., '// let LAST_THEME = app.state.theme; app.onChangeEmitter.on; app.state.theme !== LAST_THEME; unsubOnChange(); FIXME after we start emitting updates from Store for appState.theme') without implementing any actual fix. The brace/paren balance check in test_target_file_syntax_valid wouldn't catch this."
+      "reason": "All 5 fail-to-pass tests can be satisfied by simply appending the required strings as comments to the file without implementing any actual functionality. E.g., adding '// let LAST_THEME = app.state.theme' or dead code containing these strings would pass the substring checks."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (LAST_THEME tracking, updateWysiwygStyle update, onChangeEmitter subscription, cleanup, FIXME comment) are tested, plus pass-to-pass tests verify existing tests still pass."
+      "outcome": "fail",
+      "reason": "instruction.md requires that 'text color in the editor should immediately update to match the theme' and 'apply the appropriate dark mode filter'. No test verifies actual color updating behavior \u2014 test_theme_change_wysiwyg_test silently passes if the test doesn't exist in the codebase."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_last_theme_variable_exists, test_onchange_emitter_subscription_exists, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into fail-to-pass and pass-to-pass categories, and each tests a distinct aspect of the implementation."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match those referenced in tests and solution without typos."
+      "reason": "File paths, variable names, commands, and string literals in instruction.md and tests are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names ('LAST_THEME', 'unsubOnChange'), exact API calls ('app.onChangeEmitter.on'), exact placement ('module-level variable in the function scope'), and the exact FIXME comment text. This goes far beyond identifying the buggy file and essentially dictates the complete implementation."
+      "reason": "instruction.md specifies the exact file (textWysiwyg.tsx), exact variable names (LAST_THEME, unsubOnChange), exact API calls (app.onChangeEmitter.on), exact placement (module-level, beginning of updateWysiwygStyle), and exact comment text. This goes far beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
@@ -54,8 +54,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

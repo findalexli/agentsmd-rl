@@ -160,21 +160,40 @@ def test_config_without_rope_kwargs():
 
 # [static] pass_to_pass
 def test_not_stub():
-    """The __post_init__ method must have real logic handling the elif branch."""
-    import ast
+    """The fix must perform substantive conversion — a stub (just pass or only the
+    hasattr branch) cannot satisfy these checks on a config lacking rope_parameters."""
+    sys.path.insert(0, REPO)
+    from dataclasses import dataclass
 
-    src = Path(TARGET).read_text()
-    tree = ast.parse(src)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "__post_init__":
-            body_stmts = [
-                s for s in node.body if not isinstance(s, (ast.Pass, ast.Expr))
-            ]
-            assert len(body_stmts) >= 5, (
-                f"__post_init__ body too short ({len(body_stmts)} statements) — looks like a stub"
-            )
-            return
-    raise AssertionError("__post_init__ method not found")
+    from transformers.configuration_utils import PreTrainedConfig
+
+    @dataclass
+    class StubGuardConfig(PreTrainedConfig):
+        model_type = "test_stub_guard"
+        hidden_size: int = 128
+        num_attention_heads: int = 4
+        num_hidden_layers: int = 2
+        vocab_size: int = 1000
+
+    # A minimal stub that only handles the hasattr(self, "rope_parameters") branch
+    # would NOT convert kwargs on configs that lack the rope_parameters attribute.
+    # Verify substantive logic across multiple parameter combinations.
+    cases = [
+        ({"type": "linear", "factor": 2.0}, 10000.0),
+        ({"type": "dynamic", "factor": 4.0}, 50000.0),
+        ({"type": "linear", "factor": 8.0}, 25000.0),
+    ]
+    for scaling, theta in cases:
+        config = StubGuardConfig(rope_scaling=scaling, rope_theta=theta)
+        assert hasattr(config, "rope_parameters") and config.rope_parameters is not None, (
+            f"Missing rope_parameters for theta={theta}"
+        )
+        assert config.rope_parameters.get("rope_theta") == theta, (
+            f"rope_theta mismatch: expected {theta}, got {config.rope_parameters.get('rope_theta')}"
+        )
+        assert config.rope_parameters.get("factor") == scaling["factor"], (
+            f"factor mismatch: expected {scaling['factor']}, got {config.rope_parameters.get('factor')}"
+        )
 
 
 # ---------------------------------------------------------------------------

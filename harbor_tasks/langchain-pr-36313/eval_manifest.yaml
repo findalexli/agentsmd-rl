@@ -1,0 +1,57 @@
+checks:
+  # Fail-to-pass tests - these verify the fix is applied
+  - id: test_awrite_todos_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: _awrite_todos async function must exist in todo module
+
+  - id: test_awrite_todos_has_correct_signature
+    type: fail_to_pass
+    origin: agent_config
+    description: _awrite_todos must have correct type hints and signature
+
+  - id: test_todo_middleware_tool_has_coroutine
+    type: fail_to_pass
+    origin: agent_config
+    description: TodoListMiddleware tool must have coroutine registered for async support
+
+  - id: test_awrite_todos_docstring
+    type: fail_to_pass
+    origin: agent_config
+    description: _awrite_todos must have appropriate docstring
+
+  - id: test_awrite_todos_functional_behavior
+    type: fail_to_pass
+    origin: agent_config
+    description: _awrite_todos must correctly delegate to _write_todos
+
+  # Pass-to-pass tests - these verify existing repo CI still passes
+  - id: test_upstream_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Upstream unit tests for todo middleware pass
+
+  - id: test_ruff_linting
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes on modified code
+
+  - id: test_mypy_type_checking
+    type: pass_to_pass
+    origin: repo_tests
+    description: MyPy type checking passes on modified code
+
+  - id: test_ruff_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff formatting check passes on modified code
+
+  - id: test_all_middleware_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: All agent middleware unit tests pass
+
+  - id: test_todo_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Todo module imports work correctly

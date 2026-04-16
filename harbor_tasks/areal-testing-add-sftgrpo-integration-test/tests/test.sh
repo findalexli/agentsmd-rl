@@ -3,7 +3,7 @@
 # All test logic lives in test_outputs.py.
 set +e
 
-# Ensure python3 + pip + pytest are available on any base image
+# Ensure python3 + pip + pytest + yaml are available on any base image
 if ! python3 -c "import pytest" 2>/dev/null; then
     # Install python3 + pip if missing (node:slim, rust:slim)
     if ! command -v pip3 &>/dev/null; then
@@ -12,6 +12,10 @@ if ! python3 -c "import pytest" 2>/dev/null; then
     python3 -m pip install -q pytest pytest-json-ctrf 2>/dev/null || \
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
+
+# Install pyyaml and sh (required by test files under /workspace/AReaL)
+python3 -m pip install -q pyyaml sh 2>/dev/null || \
+    pip3 install -q --break-system-packages pyyaml sh 2>/dev/null
 
 python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
 

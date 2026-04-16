@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_effect_handles_all_value_branches checks for 'choices_values.includes', 'Array.isArray(value)', and requires >=3 assignments of input_text and selected_index in $effect branches. test_selected_indices_is_derived requires a $derived declaration for selected_indices. test_template_uses_selected_indices_variable checks for {selected_indices} shorthand in template. The instruction mentions selected_indices should be s"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_effect_handles_all_value_branches requires specific patterns like 'choices_values.includes', 'Array.isArray(value)', 'allow_custom_value' in an $effect block with >=3 assignments each to input_text and selected_index. test_selected_indices_is_derived requires a $derived declaration for selected_indices. test_template_uses_selected_indices_variable requires {selected_indices} shorthand in template. The instruc"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the fix: 'restructuring how these variables are declared' from array destructuring to standalone variables, making input_text and selected_index standalone $state, and pre-computing selected_indices instead of inline ternary. It even states 'The current implementation uses a pattern that combines input_text and selected_index in a single derivation' and 'computes selected_indices inline as selected_index === null ? [] : [selected_index]'. This tells the agent"
+      "reason": "The instruction explicitly states the fix: 'The fix requires restructuring how these variables are declared and updated to avoid this cascade' and describes the exact current buggy pattern ('combines input_text and selected_index in a single derivation') and the exact inline ternary to remove ('selected_index === null ? [] : [selected_index]'). It also says variables should be declared to 'avoid triggering redundant re-derivations when accessed' and 'use stable references instead of creating new"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation: test_input_text_standalone_state requires 'let input_text = $state', test_selected_index_standalone_state requires 'let selected_index = $state', test_selected_indices_is_derived requires 'let selected_indices = $derived', test_effect_handles_all_value_branches requires exactly the gold patch's $effect structure with specific regex patterns like 'choices_values.includes' and 'allow_custom_value'. An alternative correct fix (e.g., using $derived.by for "
+      "reason": "Tests enforce very specific implementation choices: test_input_text_standalone_state requires `let input_text = $state`, test_selected_index_standalone_state requires `let selected_index = $state`, test_selected_indices_is_derived requires `let selected_indices = $derived`, test_effect_handles_all_value_branches requires a specific $effect structure. An alternative correct fix (e.g., using separate $derived.by for each variable instead of $state+$effect, or using a different reactive pattern) wo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test uses regex pattern matching on file content (re.search on source text). No test executes the Svelte component, renders it, or tests runtime behavior. For example, test_no_array_destructure_from_derived just checks if a regex pattern exists in the file text. test_effect_handles_all_value_branches counts string occurrences of 'input_text =' in the source."
+      "reason": "Every fail-to-pass test reads the file as text and uses regex matching (re.search) to check for specific code patterns. No test actually runs the Svelte component, renders a dropdown, or measures performance. For example, test_no_array_destructure_from_derived just checks if a regex pattern exists in the source text. All tests are purely textual/structural analysis."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty file or minimal skeleton) would fail these tests because they check for specific patterns like $state declarations, $effect blocks with specific branches, and $derived for selected_indices. The original buggy code also fails the tests. The tests do require non-trivial changes to pass."
+      "reason": "A stub or empty file would not pass the tests. The tests check for specific patterns that must be present (e.g., $state declarations, $effect blocks with specific branch logic, $derived for selected_indices) and specific patterns that must be absent (destructured $derived, inline ternary). A default/empty implementation wouldn't satisfy both the presence and absence requirements simultaneously."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction describes: removing array destructuring, making input_text and selected_index standalone state, and making selected_indices a stable reference. All of these are tested (test_no_array_destructure_from_derived, test_input_text_standalone_state, test_selected_index_standalone_state, test_selected_indices_is_derived, test_template_no_inline_selected_indices, test_template_uses_selected_indices_variable)."
+      "outcome": "fail",
+      "reason": "The instruction says 'Dropdown with hundreds of elements should open instantly without freezing' but no test verifies performance. The tests only check code structure/patterns, not the actual behavioral requirement of fast dropdown opening."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail_to_pass vs pass_to_pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive names (test_no_array_destructure_from_derived, test_input_text_standalone_state, etc.), grouped into 'fail-to-pass' and 'pass-to-pass' sections with clear comments, and each has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Svelte component, not producing structured data output."
+      "reason": "This task involves fixing a Svelte component's reactive variable declarations, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (js/dropdown/shared/Dropdown.svelte), the exact variable names (input_text, selected_index, selected_indices), the exact buggy pattern ('let [input_text, selected_index] = $derived.by(...)'), and even the exact inline ternary expression ('selected_index === null ? [] : [selected_index]'). This goes well beyond identifying the problem area."
+      "reason": "The instruction names the exact file (js/dropdown/shared/Dropdown.svelte), the exact variables (input_text, selected_index, selected_indices), describes the exact buggy pattern ('combines input_text and selected_index in a single derivation'), and the exact inline ternary expression ('selected_index === null ? [] : [selected_index]'). It also describes the exact fix approach ('restructuring how these variables are declared')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Svelte component, not a config edit task."
+      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
     }
   },
   "tier_a_fails": [
@@ -54,8 +54,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

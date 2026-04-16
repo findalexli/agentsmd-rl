@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: tool names (browser_route, browser_route_list, browser_unroute), schema fields (pattern, status, body, contentType, headers, removeHeaders), file paths (context.ts, tools.ts, command.ts, commands.ts, helpGenerator.ts, SKILL.md), RouteEntry type, addRoute/removeRoute/routes methods, defineTool usage, export default, 'No active routes' string, 'network' category, CLI command names (route, route-list, unroute), and the SKILL.md corrections (flint:mcp "
+      "reason": "instruction.md names the tool names (browser_route, browser_route_list, browser_unroute), schema fields (pattern, status, body, contentType, headers, removeHeaders), literal strings ('No active routes', 'Removed'), CLI commands, category 'network', title 'Network', and SKILL.md edits that tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact file locations, exact method names (addRoute, removeRoute, routes), exact type name (RouteEntry), exact tool names, exact schema fields, exact string literals ('No active routes'), exact CLI command names, exact category name ('network'), and even that tools.ts must 'import and spread the route module'. It also dictates the exact SKILL.md fix ('fix the lint command from npm run flint:mcp to npm run flint'). This leaves almost no reas"
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior and structure (tools, state management, registration) but does not dictate exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_route_fulfill_and_continue checks for literal '.fulfill(' and '.continue(' strings in the handler body; test_context_route_management checks for 'browserContext.route(' and '.unroute(' as specific internal delegation patterns; test_route_tools_registered checks for exact '...route' spread syntax. An alternative correct implementation (e.g., using a different routing delegation pattern, or using a wrapper function name) would fail these t"
+      "reason": "Tests assert implementation specifics: routes() method name with parentheses, addRoute/removeRoute naming, RouteEntry type export name, 'export default', '...route' spread syntax, file path tools/route.ts \u2014 a correct alternative using different names (e.g., routeList(), registerRoute) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single fail-to-pass test reads source files as text and checks for string patterns (e.g., src.includes('.fulfill('), src.includes('addRoute'), src.match(/import\\s+route/)). No test imports the modules, instantiates objects, calls functions, or verifies runtime behavior. This is purely textual/syntactic checking."
+      "reason": "All shown tests use fs.readFileSync and string includes/regex matching (e.g., src.includes('.fulfill('), src.includes('...route')) rather than executing the MCP tools or CLI commands."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While tests are text-based, they require non-trivial content: a stub empty file wouldn't contain 'browser_route', '.fulfill(', '.continue(', 'RouteEntry', 'addRoute', etc. The agent must write substantive code with specific patterns to pass."
+      "reason": "Tests require multiple specific strings and structural elements (fulfill, continue, body, status checks, export default, RouteEntry type) that a trivial stub couldn't satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that 'When a body or status is provided, the route should fulfill with a mock response' and 'When only headers are specified, the route should modify headers and continue the request' \u2014 these runtime behaviors are only checked via string matching (.fulfill(, .continue(). The instruction also requires CLI commands map to MCP tools, but test_cli_commands only checks string presence in commands.ts, not actual CLI execution."
+      "outcome": "pass",
+      "reason": "Instruction requirements (three tools, empty state message, removal count, Network category, SKILL.md fix) map to corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_route_tool_definition, test_route_fulfill_and_continue, etc.), docstrings explaining what each tests, and section comments grouping them into Gates, agent_config, and pr_diff categories."
+      "reason": "Tests have docstrings, section comment headers (Gates, Fail-to-pass pr_diff, agent_config), and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for the browser_route tool input (pattern: string required, status: number optional, body: string optional, contentType: string optional, headers: array of strings optional, removeHeaders: string optional)."
+      "reason": "Schema for browser_route input fields is explicitly documented in instruction.md with types and required/optional markers."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md. The intentional typo 'flint:mcp' is the bug being fixed, not an instruction error."
+      "reason": "Paths and command names appear consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact files to modify, exact method signatures, exact type definitions, and even specifies 'tools.ts must import and spread the route module' \u2014 this is implementation-level guidance beyond what's needed for task domain context. It also specifies the exact SKILL.md line fix (flint:mcp \u2192 flint)."
+      "outcome": "pass",
+      "reason": "Instruction points at directories ('packages/playwright/src/mcp/browser/') without naming specific lines; SKILL.md fix is explicit but that's the stated task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The SKILL.md edit in the gold patch is localized: adding Building sections, fixing the lint command, and adding 'do not run test --debug' lines. It doesn't rewrite the entire file or contradict other tier-1 files."
+      "reason": "SKILL.md diff in gold is localized to a few lines adding Building section and fixing lint command, not a rewrite."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 2
 }

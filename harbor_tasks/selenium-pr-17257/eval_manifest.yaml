@@ -1,0 +1,83 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17257
+  base_commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+  merge_commit: 5d23d81b3f04954eca5a6319ba2ac5a15cc05a33
+  title: "[java] fix loading 'isDisplayed.js' and other resources in OSGI environment"
+
+checks:
+  # Structural tests - verify correct code patterns
+  - id: test_new_method_signature_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: Read.java has the new resourceAsString(Class<?>, String) method signature
+
+  - id: test_old_method_deprecated
+    type: fail_to_pass
+    origin: pr_diff
+    description: Old resourceAsString(String) method is marked @Deprecated
+
+  - id: test_old_method_delegates_to_new
+    type: fail_to_pass
+    origin: pr_diff
+    description: Old method delegates to new method with Read.class
+
+  - id: test_cdp_event_types_uses_class_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: CdpEventTypes.java uses new two-argument resourceAsString with CdpEventTypes.class
+
+  - id: test_remote_script_uses_class_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: RemoteScript.java uses new two-argument resourceAsString with getClass()
+
+  - id: test_w3c_codec_uses_class_parameter
+    type: fail_to_pass
+    origin: pr_diff
+    description: W3CHttpCommandCodec.java uses new two-argument resourceAsString with getClass()
+
+  - id: test_read_test_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: ReadTest.java uses the new two-argument resourceAsString method
+
+  # Pass-to-pass gates - syntax validation that must pass before and after
+  - id: test_java_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Read.java has valid Java syntax (brace balance check)
+
+  - id: test_cdp_event_types_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: CdpEventTypes.java has valid Java syntax (brace balance check)
+
+rubric:
+  - id: deprecation_policy
+    description: "Mark deprecated methods properly: use @Deprecated annotation with message pointing to alternative"
+    source:
+      file: AGENTS.md
+      lines: "31"
+      commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+
+  - id: javadoc_for_public_apis
+    description: "Use Javadoc for public APIs with brief description and @param/@return/@throws tags"
+    source:
+      file: java/AGENTS.md
+      lines: "22-30"
+      commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+
+  - id: api_compatibility
+    description: "Maintain API/ABI compatibility - users upgrade by changing only version number"
+    source:
+      file: AGENTS.md
+      lines: "12"
+      commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+
+  - id: small_reversible_diffs
+    description: "Avoid repo-wide refactors/formatting; prefer small, reversible diffs"
+    source:
+      file: AGENTS.md
+      lines: "13"
+      commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1

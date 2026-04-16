@@ -1,0 +1,105 @@
+task: excalidraw-bound-arrow-updates
+source_pr: excalidraw/excalidraw#10702
+base_commit: 60759d314d3d4545b22d8c6f35f5afa24efa14e4
+merge_commit: 28691e14b1199d9e2890fa6410f26c61e62c021e
+description: |
+  Fix bound arrow elements to update correctly during distribute action
+  and when bound text exceeds container height in WYSIWYG editor.
+
+checks:
+  # Pass-to-pass tests (repo health)
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  # Fail-to-pass tests (the actual fix)
+  - id: test_distribute_imports_update_bound_elements
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      section: Architecture Notes
+    description: distribute.ts imports updateBoundElements from binding module
+
+  - id: test_distribute_imports_scene_type
+    type: fail_to_pass
+    origin: code_fix
+    description: distribute.ts imports Scene type
+
+  - id: test_distribute_elements_accepts_scene_param
+    type: fail_to_pass
+    origin: code_fix
+    description: distributeElements function accepts scene parameter
+
+  - id: test_distribute_uses_mutate_element
+    type: fail_to_pass
+    origin: code_fix
+    description: distributeElements uses scene.mutateElement instead of newElementWith
+
+  - id: test_distribute_calls_update_bound_elements
+    type: fail_to_pass
+    origin: code_fix
+    description: distributeElements calls updateBoundElements after mutation
+
+  - id: test_distribute_calls_update_bound_elements_twice
+    type: fail_to_pass
+    origin: code_fix
+    description: distributeElements calls updateBoundElements in both code paths
+
+  - id: test_action_distribute_passes_scene
+    type: fail_to_pass
+    origin: code_fix
+    description: actionDistribute.tsx passes app.scene to distributeElements
+
+  - id: test_wysiwyg_imports_update_bound_elements
+    type: fail_to_pass
+    origin: code_fix
+    description: textWysiwyg.tsx imports updateBoundElements
+
+  - id: test_wysiwyg_calls_update_bound_elements_on_overflow
+    type: fail_to_pass
+    origin: code_fix
+    description: textWysiwyg calls updateBoundElements when text overflows container
+
+  - id: test_wysiwyg_calls_after_mutate_element
+    type: fail_to_pass
+    origin: code_fix
+    description: updateBoundElements called after mutateElement in overflow handling
+
+rubric:
+  - id: use_typescript
+    text: "Use TypeScript for all new code"
+    source:
+      file: .github/copilot-instructions.md
+      section: TypeScript Guidelines
+
+  - id: prefer_performant_solutions
+    text: "Opt for more performant solutions and trade RAM usage for less CPU cycles"
+    source:
+      file: .github/copilot-instructions.md
+      section: TypeScript Guidelines
+
+  - id: prefer_immutable_data
+    text: "Prefer immutable data (const, readonly)"
+    source:
+      file: .github/copilot-instructions.md
+      section: TypeScript Guidelines
+
+  - id: use_pascal_case_components
+    text: "Use PascalCase for component names, interfaces, and type aliases"
+    source:
+      file: .github/copilot-instructions.md
+      section: Naming Conventions
+
+  - id: use_camel_case_variables
+    text: "Use camelCase for variables, functions, and methods"
+    source:
+      file: .github/copilot-instructions.md
+      section: Naming Conventions
+
+  - id: run_tests_before_commit
+    text: "Always run yarn test:update before committing"
+    source:
+      file: CLAUDE.md
+      section: Development Workflow

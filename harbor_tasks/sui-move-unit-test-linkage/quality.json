@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file path (external-crates/move/crates/move-unit-test/src/test_runner.rs), the specific import pattern (shared::{gas::GasMeter, linkage_context}), variable name (linkage_table), method name (from_module_for_testing_with_linkage), and clone pattern (linkage_context.clone()). All strings asserted in tests are discoverable from the instruction."
+      "reason": "The instruction names the target file path (external-crates/move/crates/move-unit-test/src/test_runner.rs), the specific import pattern (shared::{gas::GasMeter, linkage_context}), variable names (linkage_table), method names (from_module_for_testing_with_linkage, linkage_context.clone()), and packages.keys().copied() \u2014 all of which are asserted in tests. The cargo commands (check, build) are also listed in the Verification section."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use 'from_module_for_testing_with_linkage' instead of 'from_modules_for_testing', create a variable named 'linkage_table' using 'packages.keys().copied()', import 'shared::{gas::GasMeter, linkage_context}', and pass 'linkage_context.clone()'. This is a complete specification of the solution, not a description of what's broken."
+      "reason": "The instruction explicitly states the exact fix: change 'from_modules_for_testing' to 'from_module_for_testing_with_linkage', create a variable named 'linkage_table' with a specific expression, use 'linkage_context.clone()', and use a specific import pattern. This is effectively giving the complete solution line-by-line, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact import string 'shared::{gas::GasMeter, linkage_context}', variable name 'linkage_table', method name 'from_module_for_testing_with_linkage', and 'linkage_context.clone()'. An alternative correct fix using different variable names, a different import style, or inline construction would fail these text-matching tests."
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'linkage_table' (test_linkage_table_creation_exists), exact string 'shared::{gas::GasMeter, linkage_context}' (test_linkage_context_import_exists), exact method name 'from_module_for_testing_with_linkage' (test_stored_package_with_linkage_exists), and exact expression 'linkage_context.clone()' (test_linkage_context_passed_to_package). An alternative correct fix using different variable names or import styles would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The first four fail-to-pass tests (test_linkage_context_import_exists, test_linkage_table_creation_exists, test_stored_package_with_linkage_exists, test_linkage_context_passed_to_package) are purely text-matching via grep/string-in-file checks. While later tests do cargo build/check/test, the f2p tests are entirely text-based."
+      "reason": "The fail-to-pass tests (test_linkage_context_import_exists, test_linkage_table_creation_exists, test_stored_package_with_linkage_exists, test_linkage_context_passed_to_package) are purely text-matching: they grep for specific strings in the source file. While pass-to-pass tests do execute cargo commands, the core f2p tests are all 'assert string in open(path).read()' style."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original file (e.g., 'from_module_for_testing_with_linkage', 'linkage_table'). A stub or no-op change wouldn't add these strings. Additionally, cargo check/build tests would fail without a compilable change."
+      "reason": "The f2p tests check for specific strings that do not exist in the unpatched file (e.g., 'from_module_for_testing_with_linkage', 'linkage_table', 'linkage_context.clone()'). A stub or no-op change would not introduce these strings, so the tests cannot be trivially satisfied."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md (import pattern, linkage_table creation, method change, linkage_context passing, cargo check, cargo build) are tested by corresponding test functions."
+      "reason": "All explicitly required behaviors from instruction.md are tested: the import pattern, linkage_table creation, the method name change, linkage_context.clone() usage, and cargo check/build verification."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings indicating 'Fail-to-pass' vs 'Pass-to-pass' categories. Each test has a clear purpose comment."
+      "reason": "Tests are well-named with descriptive docstrings indicating 'Fail-to-pass' vs 'Pass-to-pass' categories, and each test has a clear purpose described in its name and docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing Rust source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task produces code changes, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, method names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "All file paths, function names, variable names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (test_runner.rs), the exact function (setup_test_storage), the exact method to replace (from_modules_for_testing \u2192 from_module_for_testing_with_linkage), and exact variable names (linkage_table). This goes far beyond identifying the buggy module."
+      "reason": "The instruction explicitly names the exact file (test_runner.rs), the exact function (setup_test_storage), exact variable names (linkage_table), exact method names to use (from_module_for_testing_with_linkage), and exact import patterns. This goes far beyond describing the bug \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Rust source file, not a config edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

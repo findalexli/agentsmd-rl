@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all files to modify (registers.php, Mails.php, Doctor.php, Usage.php, composer.json), all class/import paths (Utopia\\Messaging\\Adapter\\Email\\SMTP, EmailAdapter, EmailMessage, Attachment), named parameters (host, port, keepAlive, timelimit), version strings (0.22.*), method removals (getMailer), and the final/static change. Every assert'd literal in the tests is discoverable from the instruction."
+      "reason": "The instruction.md explicitly names all file paths (app/init/registers.php, src/Appwrite/Platform/Workers/Mails.php, src/Appwrite/Platform/Tasks/Doctor.php, src/Appwrite/Event/Message/Usage.php, composer.json), all required import strings (Utopia\\Messaging\\Adapter\\Email as EmailAdapter, etc.), all PHPMailer patterns to remove, the version string '0.22.*', named parameters like 'host:', 'port:', 'keepAlive:', 'timelimit:', the requirement for 'new EmailMessage(', '$adapter->send($emailMessage)', "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exactly what to do: 'Replace the PHPMailer instantiation with new SMTP(...) using named parameters', 'Remove the getMailer() protected method entirely', 'Replace all PHPMailer state manipulation with construction of an EmailMessage object', 'Change new self(...) to new static(...)'. These are direct implementation instructions, not just descriptions of what's broken."
+      "reason": "The instruction essentially provides the complete solution: it specifies exact class names to import with exact aliases (e.g., 'Email aliased as EmailAdapter'), exact constructor parameter names ('host', 'port', 'keepAlive', 'timelimit'), exact method calls ('$adapter->send($emailMessage)'), exact patterns to use ('new static()' instead of 'new self()'), and exact version strings. This leaves virtually no reasoning for the agent - it's a step-by-step recipe rather than a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific strings like '$adapter->send($emailMessage)' (exact variable name), '$smtp->send($emailMessage)' (exact variable name), 'use Utopia\\Messaging\\Adapter\\Email as EmailAdapter;' (exact alias), 'new EmailMessage(' (exact class name usage), '@var EmailAdapter $adapter' or 'EmailAdapter $adapter'. An alternative correct implementation using different variable names (e.g., $message instead of $emailMessage, $mailer instead of $adapter) would fail these tests."
+      "reason": "Tests assert exact string matches like '$adapter->send($emailMessage)' (test_mails_worker_refactored), '$smtp->send($emailMessage)' (test_doctor_task_refactored), 'use Utopia\\Messaging\\Adapter\\Email as EmailAdapter;' (exact alias). An alternative correct fix could use different variable names (e.g., '$message' instead of '$emailMessage', or '$mail' instead of '$adapter'), different alias names, or call send() differently, but would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests are pure text-matching: 'assert \"string\" in content' or 'assert \"string\" not in content' on file reads. While there are PHP syntax checks (php -l) and composer validate, the core behavioral tests (test_smtp_register_returns_adapter, test_mails_worker_refactored, test_doctor_task_refactored, etc.) are all string-in-file assertions with no code execution or import."
+      "reason": "Nearly all tests are purely text-matching: they read file contents and check for string presence/absence (e.g., 'assert \"use Utopia\\\\Messaging\\\\Adapter\\\\Email\\\\SMTP;\" in content'). The only behavioral tests are PHP syntax checks (php -l) and composer validate. No test actually imports, instantiates, or calls any of the refactored code to verify it works correctly."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_composer_validate, test_composer_autoload_valid) run actual composer commands that would fail on a stub/empty implementation. test_php_syntax_* tests run php -l which verifies syntactic validity. These cannot be trivially satisfied."
+      "reason": "The f2p tests (test_composer_validate, test_composer_autoload_valid) run actual composer commands that verify structural validity. A stub or empty file would fail composer validate. These tests ensure the base repo state is maintained through the changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five file modifications described in the instruction are tested: registers.php (SMTP adapter), Mails.php (EmailAdapter/EmailMessage/no PHPMailer/no getMailer), Doctor.php (EmailAdapter/EmailMessage), Usage.php (not final, new static), and composer.json (version 0.22.*)."
+      "reason": "All behaviors described in instruction.md are tested: PHPMailer removal from all files, SMTP adapter usage with named parameters, EmailAdapter/EmailMessage imports, Usage class not final with new static(), composer.json version update, and PHP syntax validity for all modified files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_composer_dependency_updated, test_smtp_register_returns_adapter, etc.), docstrings explaining each test's purpose, and logical grouping by file/concern. A 'PASS-TO-PASS TESTS' section is clearly labeled."
+      "reason": "Tests are well-organized with descriptive names (test_smtp_register_returns_adapter, test_mails_worker_no_phpmailer_cleanup, etc.), grouped by file/concern, and have docstrings explaining what each test verifies. Pass-to-pass tests are clearly separated with a comment header."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves PHP code refactoring, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "This task involves refactoring PHP source code, not producing structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, class names, method names, and variable names in the instruction all match those in the tests and solution without typos."
+      "reason": "All file paths, class names, method names, parameter names, and version strings in the instruction match those used in the tests and solution. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact methods to remove (getMailer()), exact import statements to add (e.g., 'EmailAdapter', 'SMTP', 'EmailMessage', 'Attachment' from utopia-php/messaging), exact constructor parameter names, and exact code changes like 'Change new self(...) to new static(...)'. This goes beyond identifying buggy files into specifying the exact solution."
+      "reason": "The instruction names exact methods to remove ('clearAddresses()', 'addAddress()', etc.), exact properties ('$mail->SMTPAuth', '$mail->Username'), exact constructor parameters to use ('host:', 'port:', 'keepAlive:', 'timelimit:'), and exact replacement patterns ('$adapter->send($emailMessage)'). It also specifies 'getMailer()' protected method should be removed. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The composer.json change is a single version string update (0.20.* to 0.22.*), which is localized. The gold patch shows targeted diffs in each file, not full rewrites."
+      "reason": "The composer.json change is a single version string update (0.20.* to 0.22.*), and composer.lock auto-updates accordingly. The gold diff shows localized changes in each file, not full-file rewrites."
     }
   },
   "tier_a_fails": [

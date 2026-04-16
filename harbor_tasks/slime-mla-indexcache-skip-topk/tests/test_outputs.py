@@ -29,14 +29,15 @@ PATCH_FILE = Path(REPO) / "docker/patch/latest/sglang.patch"
 # ---------------------------------------------------------------------------
 
 UNCONDITIONAL_INIT_CHECK = r'''
-"""Verify self.<attr> is initialized unconditionally in sglang.patch.
+"""Verify self.<attr> is initialized outside use_nsa/is_nextn conditionals.
 
 Parses the deepseek_v2.py hunks from the patch and traces control flow
-scope to ensure the assignment is NOT nested inside `if self.use_nsa:`
-or `if is_nextn:` conditional blocks.
+scope to ensure the assignment is NOT exclusively nested inside
+`if self.use_nsa:` or `if is_nextn:` conditional blocks.
 
-The fix requires the initialization to be at method-body level (indent <= 8),
-which means it's outside the `if self.use_nsa:` block entirely.
+The bug: skip_topk/next_skip_topk are only set inside conditional branches
+that depend on use_nsa/is_nextn, causing AttributeError for non-NSA models.
+A correct fix ensures the attribute has a default on all code paths.
 """
 import sys
 from pathlib import Path
@@ -54,7 +55,7 @@ if not dsv2:
     print("FAIL: deepseek_v2.py not found in patch")
     sys.exit(1)
 
-# Parse into individual hunks — each hunk is a contiguous code region
+# Parse hunks — context and added lines (skip removed lines)
 hunks = []
 current = []
 for line in dsv2.split("\n"):
@@ -66,7 +67,7 @@ for line in dsv2.split("\n"):
     if line.startswith(("diff ", "index ", "--- ", "+++ ")):
         continue
     if line.startswith("-") and not line.startswith("---"):
-        continue  # removed lines not in final code
+        continue
     if line.startswith("+") and not line.startswith("+++"):
         current.append(("added", line[1:]))
     elif line.startswith(" "):
@@ -74,27 +75,75 @@ for line in dsv2.split("\n"):
 if current:
     hunks.append(current)
 
-# Search each hunk for self.ATTR = ... in added lines at method-body level
+
+def is_inside_nsa_conditional(hunk, target_idx, target_indent):
+    """Check if the line at target_idx is enclosed by a use_nsa/is_nextn block.
+
+    Walks backward through the hunk tracking indent-based scope.  When an
+    else/elif is encountered, it looks further back for the matching if
+    to check whether the entire if/else construct conditions on use_nsa
+    or is_nextn.
+    """
+    scope_indent = target_indent
+    looking_for_if = False
+    match_indent = None
+
+    for j in range(target_idx - 1, -1, -1):
+        _, text = hunk[j]
+        stripped = text.strip()
+        if not stripped:
+            continue
+        indent = len(text) - len(text.lstrip())
+
+        # Looking for the 'if' that matches an else/elif we found earlier
+        if looking_for_if and indent == match_indent:
+            if stripped.startswith(("if ", "elif ")):
+                if "use_nsa" in stripped or "is_nextn" in stripped:
+                    return True
+                looking_for_if = False
+                scope_indent = indent
+            elif stripped == "else:" or stripped.startswith("elif "):
+                continue  # another else/elif at same level, keep looking
+            else:
+                looking_for_if = False
+                scope_indent = indent
+            continue
+
+        if indent < scope_indent:
+            if stripped.startswith(("if ", "elif ")):
+                if "use_nsa" in stripped or "is_nextn" in stripped:
+                    return True
+                scope_indent = indent
+            elif stripped == "else:" or stripped.startswith("elif "):
+                looking_for_if = True
+                match_indent = indent
+                scope_indent = indent
+            else:
+                scope_indent = indent
+
+    return False
+
+
+# Find self.ATTR assignments in added lines outside nsa conditionals
+found_any = False
 for hunk in hunks:
-    for idx, (tag, line) in enumerate(hunk):
-        stripped = line.strip()
+    for idx, (tag, text) in enumerate(hunk):
+        stripped = text.strip()
         if (tag == "added"
             and f"self.{ATTR}" in stripped
             and "=" in stripped
             and "==" not in stripped
             and "offset" not in stripped):
-
-            indent = len(line) - len(line.lstrip())
-
-            # At method-body level (indent <= 8), guaranteed unconditional
-            # This means outside the `if self.use_nsa:` block entirely
-            if indent <= 8:
-                print(f"PASS: self.{ATTR} at indent {indent} — method-body level (unconditional)")
+            found_any = True
+            indent = len(text) - len(text.lstrip())
+            if not is_inside_nsa_conditional(hunk, idx, indent):
+                print(f"PASS: self.{ATTR} initialized outside use_nsa/is_nextn conditionals")
                 sys.exit(0)
 
-# If we didn't find any method-body level initialization, FAIL
-print(f"FAIL: self.{ATTR} not initialized at method-body level (indent <= 8)")
-print(f"       It may be inside `if self.use_nsa:` or `if is_nextn:` conditionals.")
+if not found_any:
+    print(f"FAIL: self.{ATTR} not found in any added lines of the patch")
+else:
+    print(f"FAIL: self.{ATTR} only assigned inside use_nsa/is_nextn conditional blocks")
 sys.exit(1)
 '''
 
@@ -163,26 +212,26 @@ def test_patch_targets_deepseek_v2():
 
 # [pr_diff] fail_to_pass
 def test_skip_topk_init_unconditional():
-    """self.skip_topk must be initialized unconditionally, not only inside use_nsa/is_nextn.
+    """self.skip_topk must be accessible on MLA models without NSA enabled.
 
     Runs a subprocess that parses the patch hunks and traces the control flow
-    scope of the assignment. On the base commit, skip_topk is inside
-    `if is_nextn:` (inside `if self.use_nsa:`) at indent 16 — this test fails.
-    After the fix, it's at method-body level (indent 8) — this test passes.
+    scope of the assignment. The assignment must NOT be exclusively nested
+    inside `if self.use_nsa:` or `if is_nextn:` conditional blocks,
+    otherwise non-NSA MLA models raise AttributeError.
     """
     r = subprocess.run(
         ["python3", "-c", UNCONDITIONAL_INIT_CHECK, "skip_topk"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert "PASS" in r.stdout, (
-        f"self.skip_topk not initialized unconditionally — non-NSA MLA models "
-        f"will raise AttributeError.\nstdout: {r.stdout.strip()}\nstderr: {r.stderr.strip()}"
+    assert r.returncode == 0, (
+        f"self.skip_topk not initialized on all code paths — non-NSA MLA models "
+        f"will raise AttributeError.\n{r.stdout.strip()}\n{r.stderr.strip()}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_next_skip_topk_init_unconditional():
-    """self.next_skip_topk must be initialized unconditionally.
+    """self.next_skip_topk must be accessible on MLA models without NSA enabled.
 
     Same bug as skip_topk: only set inside `if is_nextn:` (inside `if self.use_nsa:`),
     so non-NSA MLA models raise AttributeError in forward_absorb_prepare.
@@ -191,9 +240,9 @@ def test_next_skip_topk_init_unconditional():
         ["python3", "-c", UNCONDITIONAL_INIT_CHECK, "next_skip_topk"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert "PASS" in r.stdout, (
-        f"self.next_skip_topk not initialized unconditionally — non-NSA MLA models "
-        f"will raise AttributeError.\nstdout: {r.stdout.strip()}\nstderr: {r.stderr.strip()}"
+    assert r.returncode == 0, (
+        f"self.next_skip_topk not initialized on all code paths — non-NSA MLA models "
+        f"will raise AttributeError.\n{r.stdout.strip()}\n{r.stderr.strip()}"
     )
 
 

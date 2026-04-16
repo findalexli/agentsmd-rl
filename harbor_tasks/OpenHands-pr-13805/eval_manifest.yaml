@@ -1,0 +1,104 @@
+source_pr:
+  owner: OpenHands
+  repo: OpenHands
+  number: 13805
+  base_commit: d6a0dd7fe4a7002e77947a23a61656b9dab6eceb
+  merge_commit: f271346724e5dfa9bac7f3d10d189d6ab0d1f9db
+
+name: openhands-jira-resolver-org-routing
+title: Route Jira resolver conversations to claimed org workspaces
+difficulty: medium
+tags: [python, enterprise, routing, async]
+estimated_time: 30
+
+files_to_modify:
+  - enterprise/integrations/jira/jira_view.py
+
+checks:
+  # Fail-to-pass tests (verify the fix)
+  - id: test_imports_resolve_org_router
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - use resolve_org_for_repo for routing
+    description: Imports resolve_org_for_repo from resolver_org_router
+
+  - id: test_imports_saas_conversation_store
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - use SaasConversationStore for org routing
+    description: Imports SaasConversationStore for resolver instance creation
+
+  - id: test_imports_conversation_metadata
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - create ConversationMetadata with routing info
+    description: Imports ConversationMetadata class for metadata creation
+
+  - id: test_uses_start_conversation_not_create_new
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - use start_conversation API
+    description: Uses start_conversation instead of deprecated create_new_conversation
+
+  - id: test_calls_resolve_org_for_repo
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - resolve target org based on claimed git orgs
+    description: Calls resolve_org_for_repo to determine target organization
+
+  - id: test_calls_get_resolver_instance
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - create conversation store with resolver org routing
+    description: Calls SaasConversationStore.get_resolver_instance with resolved org
+
+  - id: test_creates_conversation_metadata
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - include git_provider in metadata
+    description: Creates ConversationMetadata with git_provider field populated
+
+  - id: test_generates_uuid_conversation_id
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - generate conversation ID with uuid4
+    description: Generates conversation_id using uuid4().hex
+
+  - id: test_calls_start_conversation
+    type: fail_to_pass
+    origin: agent_config
+    source: PR description requirement - call start_conversation with metadata
+    description: Calls start_conversation with the new conversation_id and metadata
+
+  # Pass-to-pass tests (repo's own tests)
+  - id: test_repo_lint_jira_view
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified jira_view.py passes ruff lint check
+
+  - id: test_repo_syntax_jira_view
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified jira_view.py has valid Python syntax
+
+  - id: test_test_file_has_routing_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Test file contains routing-specific tests (TestJiraV0ConversationRouting)
+
+  - id: test_test_file_imports_provider_type
+    type: pass_to_pass
+    origin: repo_tests
+    description: Test file imports ProviderType for routing tests
+
+  - id: test_test_file_uses_async_mocks
+    type: pass_to_pass
+    origin: repo_tests
+    description: Test file patches new dependencies with AsyncMock
+
+  - id: test_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Both modified files have valid Python syntax
+
+rubric: []

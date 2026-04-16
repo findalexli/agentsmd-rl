@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+
+task_id: airflow-searchbar-debounce-cancel
+title: "SearchBar debounce callback not cancelled on clear"
+
+source:
+  repo: apache/airflow
+  pr_number: 64893
+  base_commit: bdc2747cc41b18af1fb42ab80159556a93d79ff3
+  merge_commit: 4d75f0ad93bb7a8f23dd4030d43f9d95af33a5c9
+  target_files:
+    - airflow-core/src/airflow/ui/src/components/SearchBar.tsx
+
+checks:
+  - id: test_searchbar_debounce_cancel_on_clear
+    type: fail_to_pass
+    origin: pr_tests
+    description: >
+      Verify clearing SearchBar cancels pending debounced onChange callbacks.
+      Without the fix, the debounced handler fires after clear, reverting the input.
+
+  - id: test_searchbar_clear_button_works
+    type: pass_to_pass
+    origin: pr_tests
+    description: Clear button resets input value and calls onChange("")
+
+  - id: test_searchbar_all_tests_pass
+    type: fail_to_pass
+    origin: pr_tests
+    description: All SearchBar component tests pass (includes regression test)
+
+  - id: test_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint and TypeScript type checking pass
+
+  - id: test_prettier_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier code formatting is consistent
+
+rubric:
+  - id: code_only_fix
+    weight: 1
+    rule: >
+      This is a code-only bug fix to SearchBar.tsx. The fix adds a clearSearch
+      function that cancels the debounced callback before clearing the value.
+      No documentation or config file changes are required for this fix.
+      PASS if no config/documentation files were modified (code-only change).

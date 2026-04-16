@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md names all file paths (ComposableFunInterfaceLowering.kt, ComposableTypeRemapper.kt, ComposerParamTransformer.kt), all key strings asserted in tests (isNative(), IrRichCallableReferencesInKlibs, selectSAMOverriddenFunction().symbol, IrRichFunctionReferenceImpl, visitRichFunctionReference, needsComposableRemapping(), overriddenFunctionSymbol.owner.transform(this, null), withComposerParamIfNeeded().symbol), the commit SHA 56dd547 is implied by the repo setup, and the Verification"
+      "outcome": "fail",
+      "reason": "Tests assert very specific strings like 'selectSAMOverriddenFunction().symbol', 'IrRichFunctionReferenceImpl(', 'expression.overriddenFunctionSymbol.owner.withComposerParamIfNeeded().symbol', 'context.platform.isJvm() || (context.platform.isNative()', 'expression.overriddenFunctionSymbol.owner.needsComposableRemapping()', and specific import statements like 'import org.jetbrains.kotlin.ir.util.selectSAMOverriddenFunction'. These exact method names, import paths, and expression patterns are not m"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md essentially provides the complete solution. Section 'Required Changes' specifies exact method signatures ('visitRichFunctionReference(expression: IrRichFunctionReference)'), exact code patterns ('expression.overriddenFunctionSymbol.owner.withComposerParamIfNeeded().symbol'), exact conditional logic ('context.platform.isNative() AND IrRichCallableReferencesInKlibs'), and the 'Verification Criteria' section literally lists the exact strings that must appear. This is not describi"
+      "reason": "The instruction explicitly states implementation details like 'Type remapping is not applied to the overriddenFunctionSymbol within rich function references', 'Composer parameters are not added to functions accessed through rich function references', and 'SAM conversion lowering only runs on JVM platforms and lacks support for non-JVM platforms'. Combined with naming the exact three files and the exact methods to override (visitRichFunctionReference), this essentially tells the agent exactly wha"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'context.platform.isJvm() || (context.platform.isNative()' (test_fun_interface_lowering_has_native_check), exact import statements like 'import org.jetbrains.kotlin.ir.expressions.impl.IrRichFunctionReferenceImpl', and exact assignment patterns like 'expression.overriddenFunctionSymbol = expression.overriddenFunctionSymbol.owner.withComposerParamIfNeeded().symbol'. An alternative correct implementation using different variable names, different code structu"
+      "reason": "Tests assert exact implementation-specific strings like 'selectSAMOverriddenFunction().symbol', 'IrRichFunctionReferenceImpl(', 'expression.overriddenFunctionSymbol.owner.withComposerParamIfNeeded().symbol', and 'context.platform.isJvm() || (context.platform.isNative()'. An alternative correct fix using different helper methods, different variable naming, or different conditional structure would fail these tests even if functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every functional test (test_fun_interface_lowering_has_native_check, test_fun_interface_lowering_uses_ir_rich_impl, test_type_remapper_handles_rich_function_reference, test_composer_param_handles_rich_function_reference, test_type_remapper_method_body, test_composer_param_method_body) exclusively uses 'assert \"string\" in file.read_text()' pattern. No test compiles, executes, or behaviorally verifies the code. The pass-to-pass tests only check environment availability (kotlinc version, java versi"
+      "reason": "The core f2p tests (test_fun_interface_lowering_has_native_check, test_fun_interface_lowering_uses_ir_rich_impl, test_type_remapper_handles_rich_function_reference, test_composer_param_handles_rich_function_reference, etc.) are all pure text-matching assertions using 'assert X in content' on file contents. No tests compile or execute the modified code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The base commit (56dd547) does not contain the required strings (e.g., IrRichFunctionReferenceImpl, isNative(), visitRichFunctionReference in those files). A stub or no-op implementation would not add these strings to the source files, so the tests would fail without actual code changes."
+      "reason": "The f2p tests check for strings that are not present in the original source files (e.g., 'IrRichFunctionReferenceImpl', 'isNative()', 'visitRichFunctionReference', 'withComposerParamIfNeeded'), so a stub or unmodified file would fail these tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in the instruction's Required Changes and Verification Criteria sections are tested: Native platform check, IrRichFunctionReferenceImpl usage, visitRichFunctionReference in both ComposableTypeRemapper and ComposerParamTransformer, needsComposableRemapping check, and super calls."
+      "reason": "The instruction specifies three requirements (Native platform SAM conversion support, type remapping of overriddenFunctionSymbol, composer parameter addition for rich function references), and tests cover all three via the corresponding test functions for each lowering pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear section comments (functional tests vs pass-to-pass tests vs static tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear docstrings, grouped by component (fun_interface_lowering, type_remapper, composer_param), and include section comments separating pass-to-pass tests from functional tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Kotlin source code, not producing structured data output."
+      "reason": "This task involves modifying Kotlin source files, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, class names, and string patterns in the instruction match those used in tests and the actual codebase consistently."
+      "reason": "File paths, class names, method names, and feature names are consistently spelled correctly throughout the instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files (ComposableFunInterfaceLowering.kt, ComposableTypeRemapper.kt, ComposerParamTransformer.kt), exact method signatures to add, exact code patterns to use, and even the exact conditional expressions. The Verification Criteria section is essentially a test specification that leaks the complete solution structure."
+      "reason": "The instruction names the exact three files to modify (ComposableFunInterfaceLowering.kt, ComposableTypeRemapper.kt, ComposerParamTransformer.kt) and describes precisely what method overrides are needed (visitRichFunctionReference), what symbols to transform (overriddenFunctionSymbol), and what platform checks to add (Native alongside JVM). This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "This is a code-only task, not a configuration editing task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

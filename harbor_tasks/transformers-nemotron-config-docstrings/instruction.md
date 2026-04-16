@@ -2,27 +2,18 @@
 
 ## Bug Description
 
-The `NemotronHConfig` class in `src/transformers/models/nemotron_h/configuration_nemotron_h.py` has a docstring that documents parameters which don't match the actual class attributes.
-
-The docstring currently documents these deprecated parameter names:
-- `mamba_dt_min`
-- `mamba_dt_max`
-- `mamba_dt_limit`
-- `mamba_dt_init_floor`
-
-These are backward-compatibility aliases that only exist in `__post_init__` handling. The actual class attributes with annotations are:
-- `n_groups` (default: 8)
-- `expand` (default: 2)
-- `use_conv_bias` (default: True)
-- `chunk_size` (default: 128)
-
-This causes `check_docstrings` (run by `make check-repo`) to fail, reporting that documented parameters don't match the class signature.
+The `NemotronHConfig` class in `src/transformers/models/nemotron_h/configuration_nemotron_h.py` has a docstring that is out of sync with the class's actual annotated attributes. Running `make check-repo` (specifically the `check_docstrings` utility) reports that some documented parameter names don't correspond to any class-level annotation, while some actual annotated attributes are missing from the docstring entirely.
 
 ## What to Fix
 
-Update the docstring of `NemotronHConfig` so that the documented parameter names match the actual class attributes. The four deprecated names (`mamba_dt_min`, `mamba_dt_max`, `mamba_dt_limit`, `mamba_dt_init_floor`) must be removed from the docstring and replaced with documentation for the four actual attributes (`n_groups`, `expand`, `use_conv_bias`, `chunk_size`).
+Investigate the `NemotronHConfig` class and compare the parameter names listed in its docstring against the class-level annotated attributes defined in the class body. You will find that some parameters documented in the docstring are not real class annotations — they are only backward-compatibility aliases handled in `__post_init__`. Meanwhile, the actual class annotations those aliases map to are not documented.
 
-Look at the class body annotations to see the correct parameter names and their default values. Ensure all other existing documented parameters remain intact.
+Fix the docstring so that:
+- Every documented parameter name corresponds to an actual class-level annotated attribute
+- Any annotated attributes that are currently missing from the docstring are added with appropriate descriptions
+- All existing correctly-documented parameters remain intact
+- The backward-compatibility alias handling in `__post_init__` must not be removed — those aliases need to continue working at runtime, they just should not be documented as primary parameters in the docstring
+- The file must continue to pass `ruff format` and `ruff check`
 
 ## Relevant Files
 

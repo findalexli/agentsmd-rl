@@ -1,0 +1,90 @@
+source:
+  type: github_pr
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17212
+  base_commit: 1dc4a61843346508c0464bab596b867e7e389966
+  merge_commit: 51be94c0efaa27a235e472072803c9872a3c4979
+
+checks:
+  - id: test_dotnet_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: The .NET WebDriver project compiles without errors
+
+  - id: test_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format whitespace check
+
+  - id: test_dotnet_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format style check
+
+  - id: test_dotnet_format_analyzers
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format analyzers check
+
+  - id: test_try_get_json_type_info_method_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: EventDispatcher has TryGetJsonTypeInfo public method
+
+  - id: test_deserialization_moved_to_broker
+    type: fail_to_pass
+    origin: pr_behavior
+    description: JsonSerializer.Deserialize is called in Broker, not EventDispatcher
+
+  - id: test_enqueue_event_accepts_event_args
+    type: fail_to_pass
+    origin: pr_behavior
+    description: EnqueueEvent takes EventArgs parameter instead of raw bytes
+
+  - id: test_pending_event_struct_simplified
+    type: fail_to_pass
+    origin: pr_behavior
+    description: PendingEvent record stores EventArgs directly
+
+  - id: test_event_registrations_field_renamed
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Internal field renamed from _events to _eventRegistrations
+
+  - id: test_broker_validates_event_type_before_deserialize
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Broker checks TryGetJsonTypeInfo before attempting deserialization
+
+  - id: test_params_reader_snapshot_pattern
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Broker captures Utf8JsonReader snapshot for params
+
+  - id: test_diagnostics_code_analysis_import
+    type: fail_to_pass
+    origin: pr_behavior
+    description: EventDispatcher uses System.Diagnostics.CodeAnalysis for NotNullWhen
+
+rubric:
+  - id: logging_conventions
+    rule: The code uses Warn level for the warning log about missing event type mapping, which is appropriate for actionable items
+    weight: 1.0
+    source:
+      path: dotnet/src/webdriver/BiDi/Broker.cs
+    reference: "if (_logger.IsEnabled(LogEventLevel.Warn))"
+
+  - id: scoped_changes
+    rule: Changes are scoped to only the necessary files without repo-wide refactoring
+    weight: 0.8
+    source:
+      path: dotnet/src/webdriver/BiDi/Broker.cs
+    reference: "paramsReader = reader"
+
+  - id: field_renamed
+    rule: The internal events dictionary is renamed from _events to _eventRegistrations for clarity
+    weight: 1.0
+    source:
+      path: dotnet/src/webdriver/BiDi/EventDispatcher.cs
+    reference: "_eventRegistrations"

@@ -1,0 +1,89 @@
+version: 1.0
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13786
+  title: "fix(frontend): prevent budget/credit error banner from disappearing immediately"
+  base_commit: 8ce3089a68018c507025c7410ee3ba25856b23fd
+  merge_commit: 69d281c6be58f07510a3c9c795c8cc83ec69e0ed
+
+checks:
+  # Fail-to-pass tests
+  - id: test_budget_error_persistence_logic_exists
+    type: fail_to_pass
+    origin: regression_test
+    description: handleNonErrorEvent helper exists with budget error checks
+
+  - id: test_non_error_events_use_helper
+    type: fail_to_pass
+    origin: regression_test
+    description: handleMainMessage and handlePlanningMessage use handleNonErrorEvent helper
+
+  - id: test_legacy_error_clearing_removed
+    type: fail_to_pass
+    origin: agent_config
+    description: Legacy direct removeErrorMessage calls removed from else blocks
+    source:
+      file: AGENTS.md
+      lines: "55-60"
+
+  - id: test_agent_error_budget_check_removed
+    type: fail_to_pass
+    origin: regression_test
+    description: AgentErrorEvent handling simplified - nested budget check removed
+
+  # Pass-to-pass tests
+  - id: test_frontend_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_frontend_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linting passes
+
+  - id: test_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend build passes
+
+  - id: test_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation completeness check passes
+
+  - id: test_frontend_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend code formatting (prettier) check passes
+
+  - id: test_conversation_websocket_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Conversation websocket handler tests pass (covers modified file)
+
+  - id: test_error_message_banner_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Error message banner tests pass (related to budget/credit fix)
+
+rubric:
+  - rule: "Before pushing changes, lint and typecheck must pass"
+    source: "AGENTS.md lines 55-60"
+    weight: medium
+
+  - rule: "Frontend changes require npm run lint:fix and npm run build to pass"
+    source: "AGENTS.md lines 58-60"
+    weight: high
+
+  - rule: "Pre-commit hooks must pass successfully before pushing"
+    source: "AGENTS.md lines 55-60"
+    weight: high
+
+  - rule: "When making frontend changes, test with npm run test"
+    source: "AGENTS.md Frontend Testing section"
+    weight: medium
+
+  - rule: "Error handling should be robust and not clear errors prematurely"
+    weight: high

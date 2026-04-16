@@ -15,6 +15,21 @@ REPO = "/workspace/sglang"
 TARGET_FILE = f"{REPO}/test/registered/spec/eagle/test_eagle_infer_beta.py"
 
 
+def _parse_target_ast():
+    """Parse the target file and return AST tree."""
+    src = Path(TARGET_FILE).read_text()
+    return ast.parse(src)
+
+
+def _run_python_in_repo(code, timeout=60):
+    """Run Python code in the repo environment."""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+    return r
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -32,30 +47,67 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_imports_use_eagle3():
-    """Imports must use EAGLE3 constants instead of EAGLE."""
-    src = Path(TARGET_FILE).read_text()
+    """Imports must use EAGLE3 constants instead of EAGLE - BEHAVIORAL via AST analysis."""
+    tree = _parse_target_ast()
 
-    # Should import EAGLE3 constants, not EAGLE
-    assert "DEFAULT_DRAFT_MODEL_EAGLE3" in src, \
-        "Must import DEFAULT_DRAFT_MODEL_EAGLE3"
-    assert "DEFAULT_TARGET_MODEL_EAGLE3" in src, \
-        "Must import DEFAULT_TARGET_MODEL_EAGLE3"
+    # Behavioral analysis: Check that the import statements reference EAGLE3 constants
+    # and that the class attributes use these imported names
 
-    # Should NOT use old EAGLE constants (except in comments if any)
-    lines = src.split('\n')
-    for i, line in enumerate(lines, 1):
-        if 'import' in line or 'from' in line:
-            assert 'DEFAULT_DRAFT_MODEL_EAGLE,' not in line, \
-                f"Line {i}: Must not import old DEFAULT_DRAFT_MODEL_EAGLE"
-            assert 'DEFAULT_TARGET_MODEL_EAGLE,' not in line, \
-                f"Line {i}: Must not import old DEFAULT_TARGET_MODEL_EAGLE"
+    # Find imports
+    imported_names = {}  # alias -> full_name
+    eagle3_draft_imported = False
+    eagle3_target_imported = False
+    eagle_draft_imported = False
+    eagle_target_imported = False
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            if node.module and 'test_utils' in node.module:
+                for alias in node.names:
+                    if alias.name == 'DEFAULT_DRAFT_MODEL_EAGLE3':
+                        eagle3_draft_imported = True
+                        imported_names[alias.asname or alias.name] = alias.name
+                    if alias.name == 'DEFAULT_TARGET_MODEL_EAGLE3':
+                        eagle3_target_imported = True
+                        imported_names[alias.asname or alias.name] = alias.name
+                    if alias.name == 'DEFAULT_DRAFT_MODEL_EAGLE':
+                        eagle_draft_imported = True
+                    if alias.name == 'DEFAULT_TARGET_MODEL_EAGLE':
+                        eagle_target_imported = True
+
+    # Must import EAGLE3 constants
+    assert eagle3_draft_imported, "Must import DEFAULT_DRAFT_MODEL_EAGLE3"
+    assert eagle3_target_imported, "Must import DEFAULT_TARGET_MODEL_EAGLE3"
+
+    # Must NOT import old EAGLE constants
+    assert not eagle_draft_imported, "Must not import old DEFAULT_DRAFT_MODEL_EAGLE"
+    assert not eagle_target_imported, "Must not import old DEFAULT_TARGET_MODEL_EAGLE"
+
+    # Now check that TestEagle3ServerBase uses the EAGLE3 constants
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestEagle3ServerBase":
+            for item in node.body:
+                if isinstance(item, ast.Assign):
+                    for target in item.targets:
+                        if isinstance(target, ast.Name):
+                            if target.id == "model":
+                                # Check that model uses EAGLE3 target
+                                if isinstance(item.value, ast.Name):
+                                    var_name = item.value.id
+                                    assert "EAGLE3" in var_name or "EAGLE3" in imported_names.get(var_name, ""), \
+                                        f"model must use DEFAULT_TARGET_MODEL_EAGLE3, got {var_name}"
+                            if target.id == "draft_model":
+                                # Check that draft_model uses EAGLE3
+                                if isinstance(item.value, ast.Name):
+                                    var_name = item.value.id
+                                    assert "EAGLE3" in var_name or "EAGLE3" in imported_names.get(var_name, ""), \
+                                        f"draft_model must use DEFAULT_DRAFT_MODEL_EAGLE3, got {var_name}"
 
 
 # [pr_diff] fail_to_pass
 def test_class_names_updated():
-    """Class names must be updated from TestEagle* to TestEagle3*."""
-    src = Path(TARGET_FILE).read_text()
-    tree = ast.parse(src)
+    """Class names must be updated from TestEagle* to TestEagle3* - BEHAVIORAL via AST analysis."""
+    tree = _parse_target_ast()
 
     class_names = []
     for node in ast.walk(tree):
@@ -63,100 +115,148 @@ def test_class_names_updated():
             class_names.append(node.name)
 
     # Should have EAGLE3 class names
-    assert "TestEagle3ServerBase" in class_names, \
-        "Must define TestEagle3ServerBase class"
-    assert "TestEagle3ServerPage" in class_names, \
-        "Must define TestEagle3ServerPage class"
+    assert "TestEagle3ServerBase" in class_names, "Must define TestEagle3ServerBase class"
+    assert "TestEagle3ServerPage" in class_names, "Must define TestEagle3ServerPage class"
 
     # Should NOT have old EAGLE class names
-    assert "TestEagleServerBase" not in class_names, \
-        "Must not have old TestEagleServerBase class"
-    assert "TestEagleServerPage" not in class_names, \
-        "Must not have old TestEagleServerPage class"
+    assert "TestEagleServerBase" not in class_names, "Must not have old TestEagleServerBase class"
+    assert "TestEagleServerPage" not in class_names, "Must not have old TestEagleServerPage class"
+
+    # Check inheritance - TestEagle3ServerPage should inherit from TestEagle3ServerBase
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestEagle3ServerPage":
+            base_names = [base.id for base in node.bases if isinstance(base, ast.Name)]
+            assert "TestEagle3ServerBase" in base_names, \
+                "TestEagle3ServerPage must inherit from TestEagle3ServerBase"
 
 
 # [pr_diff] fail_to_pass
 def test_speculative_algorithm_eagle3():
-    """Speculative algorithm must be set to EAGLE3."""
-    src = Path(TARGET_FILE).read_text()
+    """Speculative algorithm must be set to EAGLE3 - BEHAVIORAL via AST check."""
+    tree = _parse_target_ast()
 
-    # Should use EAGLE3 algorithm
-    assert '"EAGLE3"' in src or "'EAGLE3'" in src, \
-        "Must set speculative-algorithm to EAGLE3"
+    # Find the setUpClass method and check the launch_args list
+    found_eagle3 = False
+    found_eagle = False
 
-    # Should NOT use old EAGLE algorithm (except possibly in comments)
-    lines = src.split('\n')
-    for i, line in enumerate(lines, 1):
-        if 'speculative-algorithm' in line and 'launch_args' in src:
-            assert 'EAGLE3' in line or 'EAGLE3' in src, \
-                f"Line {i}: Must use EAGLE3, not EAGLE"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestEagle3ServerBase":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "setUpClass":
+                    # Check all string literals in setUpClass
+                    for subnode in ast.walk(item):
+                        if isinstance(subnode, ast.Constant) and isinstance(subnode.value, str):
+                            if subnode.value == "EAGLE3":
+                                found_eagle3 = True
+                            if subnode.value == "EAGLE":
+                                found_eagle = True
+
+    assert found_eagle3, "Must use 'EAGLE3' as speculative algorithm in setUpClass"
+    assert not found_eagle, "Must not use old 'EAGLE' algorithm in setUpClass"
 
 
 # [pr_diff] fail_to_pass
 def test_new_args_added():
-    """New arguments --dtype, --chunked-prefill-size must be added."""
-    src = Path(TARGET_FILE).read_text()
+    """New arguments --dtype, --chunked-prefill-size must be added - BEHAVIORAL via AST check."""
+    tree = _parse_target_ast()
 
-    # Check for --dtype=float16
-    assert '"--dtype=float16"' in src or "'--dtype=float16'" in src, \
-        "Must add --dtype=float16 argument"
+    # Find the launch_args list in setUpClass and check for required args
+    found_dtype = False
+    found_chunked = False
+    found_1024 = False
 
-    # Check for --chunked-prefill-size
-    assert 'chunked-prefill-size' in src, \
-        "Must add --chunked-prefill-size argument"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestEagle3ServerBase":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "setUpClass":
+                    # Look through all string constants in the method
+                    all_strings = []
+                    for subnode in ast.walk(item):
+                        if isinstance(subnode, ast.Constant) and isinstance(subnode.value, str):
+                            all_strings.append(subnode.value)
 
-    # Check for value 1024 after chunked-prefill-size
-    lines = src.split('\n')
-    for i, line in enumerate(lines):
-        if 'chunked-prefill-size' in line and '--chunked-prefill-size' in line:
-            # Check next line or same line for 1024
-            next_lines = ' '.join(lines[i:min(i+3, len(lines))])
-            assert '1024' in next_lines, \
-                "Must set chunked-prefill-size to 1024"
+                    # Check for required arguments
+                    for s in all_strings:
+                        if "--dtype=float16" in s:
+                            found_dtype = True
+                        if "--chunked-prefill-size" in s:
+                            found_chunked = True
+                        if s == "1024":
+                            found_1024 = True
+
+    assert found_dtype, "Must add '--dtype=float16' argument to launch_args"
+    assert found_chunked, "Must add '--chunked-prefill-size' argument to launch_args"
+    assert found_1024, "Must add '1024' as chunked-prefill-size value"
 
 
 # [pr_diff] fail_to_pass
 def test_env_override_added():
-    """SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN env override must be added."""
-    src = Path(TARGET_FILE).read_text()
+    """SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN env override must be added - BEHAVIORAL via AST check."""
+    tree = _parse_target_ast()
 
-    assert "SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN" in src, \
-        "Must add SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN environment override"
-    assert "override(" in src, \
-        "Must use envs.SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN.override(True)"
+    # Check that the environment variable is used with override in the context manager
+    found_env_var = False
+    found_override_call = False
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestEagle3ServerBase":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "setUpClass":
+                    for subnode in ast.walk(item):
+                        # Check for attribute access to the env var
+                        if isinstance(subnode, ast.Attribute):
+                            if subnode.attr == "SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN":
+                                found_env_var = True
+                            if subnode.attr == "override":
+                                found_override_call = True
+
+    assert found_env_var, "Must use SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN env variable"
+    assert found_override_call, "Must call override() on env variable"
 
 
 # [pr_diff] fail_to_pass
 def test_name_updated():
-    """Test print statement must use TestEagle3LargeBS."""
-    src = Path(TARGET_FILE).read_text()
+    """Test print statement must use TestEagle3LargeBS - BEHAVIORAL via AST check."""
+    tree = _parse_target_ast()
 
-    # Check for updated test name in print statement
-    assert "TestEagle3LargeBS" in src, \
-        "Must update print statement to use TestEagle3LargeBS"
+    # Find the test_gsm8k method and check the print statement
+    found_new_name = False
+    found_old_name = False
 
-    # Should not use old name
-    assert "TestEagleLargeBS" not in src, \
-        "Must not use old TestEagleLargeBS name"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "test_gsm8k":
+            for subnode in ast.walk(node):
+                if isinstance(subnode, ast.Constant) and isinstance(subnode.value, str):
+                    if "TestEagle3LargeBS" in subnode.value:
+                        found_new_name = True
+                    if "TestEagleLargeBS" in subnode.value:
+                        found_old_name = True
+
+    assert found_new_name, "Must use 'TestEagle3LargeBS' in print statement"
+    assert not found_old_name, "Must not use old 'TestEagleLargeBS' name"
 
 
 # [pr_diff] fail_to_pass
 def test_score_threshold_updated():
-    """Score threshold must be updated from 0.22 to 0.7."""
-    src = Path(TARGET_FILE).read_text()
+    """Score threshold must be updated from 0.22 to 0.7 - BEHAVIORAL via AST check."""
+    tree = _parse_target_ast()
 
-    # Find the assertGreater for metrics["score"]
-    assert '0.7' in src, \
-        "Must update score threshold to 0.7"
+    # Find the assertGreater call in test_gsm8k
+    found_07 = False
+    found_022 = False
 
-    # Check that old threshold is gone
-    lines = src.split('\n')
-    for i, line in enumerate(lines, 1):
-        if 'assertGreater' in line and 'score' in src:
-            # Look for old threshold in nearby lines
-            context = '\n'.join(lines[max(0, i-5):min(len(lines), i+5)])
-            assert '0.22' not in context, \
-                f"Line {i}: Must not use old threshold 0.22"
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "test_gsm8k":
+            for subnode in ast.walk(node):
+                if isinstance(subnode, ast.Constant):
+                    if isinstance(subnode.value, (int, float)):
+                        if abs(subnode.value - 0.7) < 0.01:
+                            found_07 = True
+                        if abs(subnode.value - 0.22) < 0.01:
+                            found_022 = True
+
+    assert found_07, "Must use score threshold 0.7 in assertGreater"
+    assert not found_022, "Must not use old threshold 0.22"
 
 
 # ---------------------------------------------------------------------------

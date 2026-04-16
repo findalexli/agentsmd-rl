@@ -1,0 +1,61 @@
+# Evaluation manifest for airflow-comms-decoder-thread-safety task
+source:
+  repo: apache/airflow
+  pr_number: 64894
+  pr_title: "Fix read out of order issue with send method in CommsDecoder"
+  base_commit: 6fd0142229eab87f23f95e5268aa80db1df8f9f3
+  merge_commit: 3ac0d74db71ad358794cfbfd20665d0bcf1f0132
+  target_file: task-sdk/src/airflow/sdk/execution_time/comms.py
+
+checks:
+  - id: test_get_response_inside_lock_block
+    type: fail_to_pass
+    origin: pr_description
+    description: Verify _get_response() is indented inside the thread lock context
+
+  - id: test_lock_context_spans_get_response
+    type: fail_to_pass
+    origin: pr_description
+    description: Alternative structural check for lock context indentation
+
+  - id: test_single_send_receive
+    type: pass_to_pass
+    origin: pr_description
+    description: Single send/receive operation works correctly
+
+  - id: test_multiple_sequential_sends
+    type: pass_to_pass
+    origin: pr_description
+    description: Multiple sequential sends work correctly with varying inputs
+
+  - id: test_comms_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: The comms module imports without errors
+
+  - id: test_comms_decoder_instantiation
+    type: pass_to_pass
+    origin: repo_tests
+    description: CommsDecoder can be instantiated with basic attributes
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes on comms.py
+
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff format check passes on comms.py
+
+  - id: test_repo_comms_models_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's own TestCommsModels tests pass
+
+  - id: test_repo_comms_decoder_huge_payload_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's huge payload handling test passes
+
+# rubric: (not applicable - this is a pure code indentation fix with no config/doc changes)

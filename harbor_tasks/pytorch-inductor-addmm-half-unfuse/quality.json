@@ -2,56 +2,57 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific file path '/workspace/torch/_inductor/fx_passes/post_grad.py', function name 'unfuse_bias_add_to_pointwise', and specific behavior (returning None for bf16/fp16, proceeding for float32/float64). The instruction.md never names the file 'post_grad.py' or the function 'unfuse_bias_add_to_pointwise'. It only vaguely describes 'post-grad FX passes' and 'pattern-matching optimization'. The agent would need to discover these specifics on its own."
+      "outcome": "pass",
+      "reason": "The instruction names the file path (torch/_inductor/fx_passes/post_grad.py), the function (unfuse_bias_add_to_pointwise), the relevant dtypes (bfloat16, float16, float32, float64), the parameter (inp) and its metadata access pattern (inp.meta['val'].dtype). The tests for agent config rules (test_no_trivial_single_use_helpers, test_python310_compat, test_no_dynamic_attr_access) check coding style constraints that are standard conventions rather than task-specific secrets. All behavioral assertio"
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (splitting addmm causes precision loss for half dtypes) and expected behavior (fix the regression for bf16/fp16 while preserving float32/float64), but does not state the exact fix (e.g., adding an early return guard checking dtype). The agent must reason about what to change."
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'The input dtype can be determined from the `inp` parameter's metadata (`inp.meta[\"val\"].dtype`)' and 'should not apply the optimization for bfloat16 or float16 inputs'. Combined with naming the exact function and file, this essentially prescribes the fix: add a dtype check using inp.meta['val'].dtype at the top of unfuse_bias_add_to_pointwise. The agent barely needs to reason about what to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests extract the function 'unfuse_bias_add_to_pointwise' by name via AST, then execute it with mocks expecting match.replaced==False and result==None for half dtypes. An alternative correct fix that modifies 'should_prefer_unfused_addmm' (the extra_check function) to return False for half dtypes would also be correct but would fail these tests since the function body itself wouldn't contain the guard. Similarly, a fix in the caller or at a different level would fail."
+      "outcome": "pass",
+      "reason": "The tests check behavioral outcomes (whether replacement occurred, return value) via subprocess execution with mocks, not specific implementation details like variable names or line positions. An agent could check dtype with `if dtype in (torch.bfloat16, torch.float16)`, or `if dtype == torch.bfloat16 or dtype == torch.float16`, or use `is` comparisons, etc. \u2014 all would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the function via AST, execute it with mocks in a subprocess, and check behavioral outcomes (replaced flag, return value). This is behavioral testing, not just text matching."
+      "reason": "Tests extract the function via AST, execute it in a subprocess with mocks (MockMatch, MockInp), and check whether replacement was attempted and what the return value was. This is genuine behavioral testing, not text/string matching on source code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_bfloat16_not_unfused, test_float16_not_unfused, test_guard_returns_early) check that the function returns None without calling replace_by_example for half dtypes. The unpatched code would proceed with replacement for all dtypes, so a stub or the original code would fail these tests. Additionally, test_float32_still_unfused and test_float64_still_unfused ensure a simple 'always return None' stub would fail."
+      "reason": "The f2p tests (test_bfloat16_not_unfused, test_float16_not_unfused, test_guard_returns_early) check that replacement is False and result is None for half-precision dtypes. A stub that just returns None would fail test_float32_still_unfused and test_float64_still_unfused (which expect replaced=True). The combination of tests requires actual conditional logic, not a trivial stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) bf16/fp16 should not have accuracy regression (tested by not-unfused checks), (2) float32/float64 should continue working (tested by still-unfused checks). Both core behaviors are tested."
+      "reason": "The instruction requires: (1) no optimization for bf16/fp16 \u2014 tested by test_bfloat16_not_unfused, test_float16_not_unfused, test_guard_returns_early; (2) optimization still applies for float32/float64 \u2014 tested by test_float32_still_unfused, test_float64_still_unfused. All explicitly required behaviors are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ([static] pass_to_pass, [pr_diff] fail_to_pass, [pr_diff] pass_to_pass, [agent_config] pass_to_pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with clear section comments ([static] pass_to_pass, [pr_diff] fail_to_pass, [pr_diff] pass_to_pass, [agent_config] pass_to_pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
+      "reason": "This task modifies Python source code behavior; it does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+      "reason": "File paths, function names, dtype names, and variable names are all correctly spelled and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction.md describes the problem at a conceptual level (addmm optimization in post-grad FX passes) without naming the specific file or function. The agent must locate these themselves."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file (torch/_inductor/fx_passes/post_grad.py), exact function (unfuse_bias_add_to_pointwise), and even tells the agent the exact mechanism to use: 'The input dtype can be determined from the `inp` parameter's metadata (`inp.meta[\"val\"].dtype`)'. This goes beyond describing what's broken and essentially localizes the fix to a specific insertion point with specific code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agent config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
   "pass_count": 7,
   "fail_count": 2
 }

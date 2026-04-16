@@ -1,39 +1,25 @@
-# Cache gfx95 quant format detection in DeepseekV2DecoderLayer
+# Redundant quant format computation in DeepseekV2DecoderLayer
 
 ## Problem
 
-The `DeepseekV2DecoderLayer.forward()` method in `python/sglang/srt/models/deepseek_v2.py` recomputes quant_format detection logic on every forward call. This is wasteful because the value depends only on static properties that never change between calls:
+In the `sglang` repository, the `DeepseekV2DecoderLayer` class in `python/sglang/srt/models/deepseek_v2.py` has a performance issue: its `forward()` method recomputes a quant format string on every call. This value depends only on static properties of the model instance — hardware support flags and weight dtypes — that never change after the layer is constructed.
 
-- Whether gfx95 is supported (via the module-level `_is_gfx95_supported` flag)
-- The existence and dtype of `self_attn.fused_qkv_a_proj_with_mqa.weight`
-- The weight dtype is one of `torch.uint8`, `torch.float8_e4m3fn`, or something else
+The detection logic determines one of three format strings based on the dtype of an attention weight:
 
-The current inline logic evaluates a nested conditional to determine one of three values:
+| Weight dtype | Quant format |
+|---|---|
+| `torch.uint8` | `"mxfp4"` |
+| `torch.float8_e4m3fn` | `"fp8"` |
+| anything else | `""` |
 
-- `"mxfp4"` when the weight dtype is `torch.uint8`
-- `"fp8"` when the weight dtype is `torch.float8_e4m3fn`
-- `""` (empty string) otherwise
+Because the result is constant for any given model instance, recomputing this nested conditional on every forward pass is wasteful.
 
-This conditional block runs on every forward pass even though the result is constant for a given model instance.
+## Task
 
-## Expected Behavior
+Fix the performance issue so that the quant format value is determined once during layer construction and reused on subsequent forward calls, rather than being recalculated inline every time `forward()` is invoked. The detection logic must correctly handle all three dtype cases listed above.
 
-The quant_format value is recomputed identically on every forward call. It should instead be computed once and reused. Specifically:
+## Constraints
 
-1. The detection logic should be a named method on `DeepseekV2DecoderLayer` with a `str` return type annotation
-2. The result should be stored as an instance attribute in `__init__`
-3. `forward()` should reference the stored value instead of recomputing it
-
-The detection method must contain real logic (not a stub) that handles the dtype cases described above.
-
-## Files
-
-- `python/sglang/srt/models/deepseek_v2.py` — Contains the `DeepseekV2DecoderLayer` class with `forward()` and `__init__` methods
-
-## What to Look For
-
-The tests check that:
-
-- `DeepseekV2DecoderLayer` has a method that returns `str` and is called from `__init__` to populate an attribute
-- `forward()` uses the cached attribute rather than inline computation
-- The detection method body contains checks for `torch.uint8`, `float8_e4m3fn`, `mxfp4`, and `fp8`
+- Only modify `python/sglang/srt/models/deepseek_v2.py`.
+- The `DeepseekV2DecoderLayer` class must retain its `__init__` and `forward` methods.
+- The modified code must pass `ruff`, `black`, `isort`, and `codespell` checks.

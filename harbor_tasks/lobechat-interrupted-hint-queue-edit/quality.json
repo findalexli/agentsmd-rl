@@ -3,58 +3,60 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names every file path, component name (InterruptedHint), field name (isInterrupted: boolean), selector name (isMessageInterrupted), i18n keys (messageAction.interrupted, messageAction.interruptedHint), icon (Pencil), callback name (handleEdit), function calls (setDocument, removeQueuedMessage), locale strings, and skill file paths that the tests assert on."
+      "reason": "The instruction names all file paths, component names (InterruptedHint), field names (isInterrupted: boolean), selector names (isMessageInterrupted), i18n keys (messageAction.interrupted, messageAction.interruptedHint), icon imports (Pencil from lucide-react), function names (useCallback, memo), locale strings, script names (record-electron-demo.sh), and variable names (CDP_PORT, start_recording, stop_recording) that the tests check for. All test-asserted specifics are discoverable from instruct"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives exact implementation details like 'Find the latest runtime operation by reversing the operation list', 'Set isInterrupted to true only when no operations are running AND the latest runtime operation has status cancelled', 'editor.setDocument(\"markdown\", content)', and the exact display format '{t(\"messageAction.interrupted\")} \u00b7 {t(\"messageAction.interruptedHint\")}'. This tells the agent exactly WHAT to write, not just what's broken."
+      "reason": "The instruction specifies exact implementation details: use `memo` from React, exact i18n key names, exact field name and type `isInterrupted: boolean`, exact default value `false`, exact component file path, exact variable names like `CDP_PORT`, exact function names `start_recording`/`stop_recording`. It also describes the exact computation logic ('checking whether the latest AI runtime operation was cancelled, while no operations are currently running'). This goes well beyond describing what's"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names like 'handleEdit' (test_queue_tray_edit_button), 'const isMessageInterrupted' (test_interrupted_selector_exists), exact string 'isInterrupted: boolean' and 'isInterrupted: false' (test_operation_state_has_interrupted). An alternative correct implementation using different variable names (e.g., 'editHandler', 'selectInterruptedMessage') or different type syntax would fail."
+      "reason": "Tests like test_interrupted_hint_component assert on exact string matches like `content.includes('memo')`, `content.includes('export default')`, `content.includes('messageAction.interrupted')`. test_queue_tray_edit_button checks for exact imports like 'Pencil' and 'useCallback'. test_operation_state_has_interrupted checks for exact string `isInterrupted: boolean` and `isInterrupted: false`. An alternative correct implementation using e.g. `React.memo` without bare `memo` import, or naming the bo"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail_to_pass test is purely text-matching: test_operation_state_has_interrupted checks 'isInterrupted: boolean' in file text, test_interrupted_selector_exists checks 'const isMessageInterrupted' in file text, test_interrupted_hint_component checks string presence, test_queue_tray_edit_button checks 'Pencil' and 'handleEdit' in text, test_locale_interrupted_keys checks string literals. Only test_interrupted_computation_logic and test_complete_operation_preserves_cancelled run Node.js"
+      "reason": "Most fail-to-pass tests are pure text/string checks: test_operation_state_has_interrupted checks `content.includes('isInterrupted: boolean')`, test_interrupted_hint_component checks `content.includes('memo')` and `content.includes('export default')`, test_interrupted_selector_exists checks `content.includes('const isMessageInterrupted')`. Only test_interrupted_computation_logic and test_complete_operation_preserves_cancelled execute behavioral logic, but they test standalone JS logic unrelated t"
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "While many tests are text-based, they check for specific strings that don't exist in the base repo (e.g., 'isInterrupted', 'InterruptedHint.tsx' file existence, 'handleEdit' in QueueTray). A stub/empty file would not contain these strings, so the agent must actually write meaningful content."
+      "outcome": "fail",
+      "reason": "test_operation_state_has_interrupted can be passed by simply adding `isInterrupted: boolean` to the interface and `isInterrupted: false` to the default \u2014 a trivial stub with no actual computation. test_interrupted_hint_component can be passed by creating a file with the right string literals without any actual rendering logic. test_interrupted_selector_exists just checks for string presence of `const isMessageInterrupted` \u2014 a stub `const isMessageInterrupted = () => false` would pass."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All major behaviors from instruction.md are tested: InterruptedHint component existence and i18n keys, isInterrupted field in operation state, isMessageInterrupted selector, queue tray edit button with Pencil/handleEdit/removeQueuedMessage/setDocument, locale files, skill documentation, and recording script."
+      "outcome": "fail",
+      "reason": "The instruction requires InterruptedHint to appear for both AssistantMessage and AssistantGroup message types, but no test verifies that these parent components actually render or reference InterruptedHint. The instruction requires the edit button to 'remove the message from the queue and restore its content to the input editor' but the test only checks for string presence of Pencil import and useCallback, not actual queue manipulation behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with clear section comments (Gates, Fail-to-pass, Config-derived), descriptive function names (test_interrupted_computation_logic, test_queue_tray_edit_button), and docstrings explaining each test's purpose."
+      "reason": "Tests are well-named (test_interrupted_computation_logic, test_complete_operation_preserves_cancelled, etc.), grouped by gate type (static vs pr_diff), and each has a docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task produces UI components and TypeScript code, not structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, i18n keys, and commands in instruction.md are consistent with what the tests check. No typos detected."
+      "reason": "File paths, variable names, and commands in instruction.md are consistent and correctly spelled when cross-referenced with the test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'must be defined as const isMessageInterrupted = (id: string) => (s: State) => ...', 'Use editor.setDocument(\"markdown\", content)', 'Find the latest runtime operation by reversing the operation list', specific field types 'isInterrupted: boolean', and exact default values. This goes well beyond describing the problem."
+      "reason": "The instruction specifies exact file paths to create/modify, exact field names and types (`isInterrupted: boolean`), exact default values (`false`), exact selector names (`isMessageInterrupted`), exact component structure (use `memo`, `export default`), and exact computation logic. This goes far beyond naming the buggy module \u2014 it prescribes the complete solution structure."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The skill documentation changes are localized additions (new section in SKILL.md, new script file) and don't contradict other tier-1 files."
+      "outcome": "not_applicable",
+      "reason": "This is primarily a code task, not an agentmd-edits task focused on config changes."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

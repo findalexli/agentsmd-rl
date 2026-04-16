@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-specific details are discoverable from instruction.md: function name `process_file`, file `main.py`, custom exception `FileProcessingError` subclassing `Exception`, `pathlib.Path` usage with `read_text()`, type hints (`Path` parameter, `str` return), docstring with `Args:` and `Returns:` sections, handling `FileNotFoundError` and `IOError`, and no bare `except:` clauses are all explicitly mentioned in the instructions."
+      "reason": "All test-asserted specifics are discoverable from instruction.md: the function name `process_file`, the class `FileProcessingError` subclassing `Exception`, `pathlib.Path` parameter type with `read_text()`, `str` return type, `Args:` and `Returns:` docstring sections, handling `FileNotFoundError` and `IOError`, no bare `except:`, uppercase return behavior, and the file `main.py` are all explicitly mentioned in the instructions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states each exact change to make: 'Use pathlib.Path', 'use the read_text() method', 'Annotate the filepath parameter as Path and the return type as str', 'Replace the bare except: clause with explicit handling of FileNotFoundError and IOError', 'Create a class named FileProcessingError (subclassing Exception)'. This is essentially a step-by-step implementation guide rather than a description of what's broken, leaving minimal reasoning for the agent."
+      "reason": "The instruction explicitly prescribes the exact implementation changes: 'Use pathlib.Path', 'use the read_text() method', 'Annotate the filepath parameter as Path and the return type as str', 'Replace the bare except: clause with explicit handling of FileNotFoundError and IOError', 'Create a class named FileProcessingError (subclassing Exception)'. These are step-by-step fix instructions, not just descriptions of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_uses_pathlib_read_text checks for the literal string 'read_text()' in source code, and test_handles_specific_exceptions checks for literal strings 'FileNotFoundError' and 'IOError' in source. A correct alternative that uses, e.g., `OSError` instead of `IOError` (they're the same in Python 3) or uses `filepath.open()` from pathlib instead of `read_text()` would fail these text-based checks despite being correct."
+      "reason": "Tests `test_uses_pathlib_read_text` and `test_handles_specific_exceptions` do raw text searches (`'read_text()' in source`, `'FileNotFoundError' not in source or 'IOError' not in source`). A correct alternative using `OSError` instead of `IOError` (since `IOError` is an alias for `OSError` in Python 3) would fail `test_handles_specific_exceptions`. Similarly, using `filepath.read_text()` with any variable name other than producing the literal substring `read_text()` wouldn't matter, but these te"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "While some tests do source-level text checks (test_uses_pathlib_read_text, test_handles_specific_exceptions, test_no_bare_except_clause), the majority of tests actually import and call the code: test_process_file_returns_uppercase_content, test_process_file_uses_custom_exception, test_process_file_has_type_hints, etc. Not every test is pure text matching."
+      "outcome": "fail",
+      "reason": "Tests `test_uses_pathlib_read_text`, `test_handles_specific_exceptions`, and `test_no_bare_except_clause` are purely source-text inspections (checking for string presence like `'read_text()' in source`, `'FileNotFoundError' not in source`) without executing the relevant code paths. While some tests do execute the function, these three critical tests are text-matching only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests would not pass with a stub. For example, test_process_file_returns_uppercase_content checks the output contains 'HELLO WORLD', test_process_file_uses_custom_exception checks that FileProcessingError is raised (not None returned), test_process_file_has_type_hints checks actual annotation objects. A stub returning None or pass would fail these."
+      "reason": "The f2p tests (test_python_syntax_valid, test_repo_import_main, test_repo_process_file_runs, test_repo_pytest_self) would mostly pass with the original buggy code. However, test_repo_process_file_runs requires passing a Path object and getting a non-None result, which the original code does handle. But the fail-to-pass tests like test_process_file_uses_custom_exception, test_fileprocessingerror_class_exists, test_process_file_has_type_hints, etc. would not pass with stub implementations \u2014 they r"
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: pathlib.Path usage, read_text(), type hints, docstring with Args/Returns, FileNotFoundError/IOError handling, FileProcessingError custom exception, no bare except, and uppercase return behavior."
+      "reason": "All behaviors from instruction.md are tested: pathlib.Path usage, read_text(), type hints, docstring with Args/Returns, FileNotFoundError and IOError handling, custom FileProcessingError, no bare except, and uppercase return."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_process_file_returns_uppercase_content, test_no_bare_except_clause) and each has a docstring explaining what it checks."
+      "reason": "Tests are well-named (e.g., test_process_file_returns_uppercase_content, test_process_file_uses_pathlib) and each has a docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON, CSV, API responses, or database schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the file `main.py` and function `process_file`, which is appropriate since this is a single-file refactoring task. It doesn't reference specific line numbers."
+      "reason": "The instruction mentions `main.py` which is the only file in the repo and obvious from the task domain. It doesn't reference specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -48,10 +48,11 @@
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 6,
+  "fail_count": 3
 }

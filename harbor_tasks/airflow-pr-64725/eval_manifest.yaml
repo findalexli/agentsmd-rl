@@ -1,0 +1,150 @@
+source:
+  repo: apache/airflow
+  pr_number: 64725
+  pr_title: "Install rustup and cargo in CI and prod build images"
+  base_commit: c4a209ba0ec1749ce0d0ac561fb22feba5bad567
+  merge_commit: 1b2893300d8b6c3ae656b8e7d9a44138b663d633
+
+checks:
+  # Fail-to-pass: install_rustup function exists
+  - id: test_dockerfile_has_install_rustup_function
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile defines install_rustup function with SHA256 verification
+
+  - id: test_dockerfile_ci_has_install_rustup_function
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile.ci defines install_rustup function with SHA256 verification
+
+  - id: test_install_script_has_install_rustup_function
+    type: fail_to_pass
+    origin: pr_requirements
+    description: install_os_dependencies.sh defines install_rustup function
+
+  # Fail-to-pass: SHA256 checksums are correct
+  - id: test_dockerfile_sha256_checksums_correct
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile has correct SHA256 checksums for rustup-init 1.29.0
+
+  - id: test_dockerfile_ci_sha256_checksums_correct
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile.ci has correct SHA256 checksums for rustup-init 1.29.0
+
+  - id: test_install_script_sha256_checksums_correct
+    type: fail_to_pass
+    origin: pr_requirements
+    description: install_os_dependencies.sh has correct SHA256 checksums
+
+  # Fail-to-pass: Architecture mapping
+  - id: test_dockerfile_architecture_mapping
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile has correct architecture to Rust target mapping
+
+  # Fail-to-pass: Function is called
+  - id: test_dockerfile_calls_install_rustup
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile calls install_rustup in dev installation flow
+
+  - id: test_dockerfile_ci_calls_install_rustup
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile.ci calls install_rustup in dev installation flow
+
+  - id: test_install_script_calls_install_rustup
+    type: fail_to_pass
+    origin: pr_requirements
+    description: install_os_dependencies.sh calls install_rustup
+
+  # Fail-to-pass: Environment variables
+  - id: test_dockerfile_sets_rustup_env_vars
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile sets RUSTUP_HOME and CARGO_HOME environment variables
+
+  - id: test_dockerfile_ci_sets_rustup_env_vars
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile.ci sets RUSTUP_HOME and CARGO_HOME environment variables
+
+  # Fail-to-pass: Version pinning
+  - id: test_dockerfile_version_pinned
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile pins RUSTUP_VERSION to 1.29.0
+
+  - id: test_dockerfile_ci_version_pinned
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile.ci pins RUSTUP_VERSION to 1.29.0
+
+  # Fail-to-pass: Security
+  - id: test_dockerfile_uses_https_tlsv12
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Dockerfile downloads rustup-init using secure HTTPS with TLS 1.2+
+
+  # Fail-to-pass: CI workflow
+  - id: test_ci_workflow_timeout_updated
+    type: fail_to_pass
+    origin: pr_requirements
+    description: CI workflow timeout increased for rustup installation
+
+  # Pass-to-pass: File existence (static checks)
+  - id: test_dockerfile_exists
+    type: pass_to_pass
+    origin: static
+    description: Dockerfile exists in repository
+
+  - id: test_dockerfile_ci_exists
+    type: pass_to_pass
+    origin: static
+    description: Dockerfile.ci exists in repository
+
+  - id: test_install_script_exists
+    type: pass_to_pass
+    origin: static
+    description: install_os_dependencies.sh exists
+
+  - id: test_ci_workflow_exists
+    type: pass_to_pass
+    origin: static
+    description: CI workflow file exists
+
+  - id: test_dockerfile_has_install_golang
+    type: pass_to_pass
+    origin: static
+    description: Dockerfile has install_golang function (existing)
+
+  - id: test_dockerfile_ci_has_golang_version
+    type: pass_to_pass
+    origin: static
+    description: Dockerfile.ci has GOLANG_MAJOR_MINOR_VERSION defined
+
+  # Real CI command tests (subprocess-based)
+  - id: test_repo_shellcheck_install_script
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's shellcheck passes on install_os_dependencies.sh
+
+  - id: test_repo_yamllint_workflow
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's yamllint passes on additional-ci-image-checks.yml
+
+  - id: test_repo_bash_syntax_install_script
+    type: pass_to_pass
+    origin: repo_tests
+    description: Bash syntax check passes on install_os_dependencies.sh
+
+# Rubric: Not applicable for this task.
+# The rubric judge evaluates changes to agent instruction files (CLAUDE.md, AGENTS.md, etc.).
+# This task only modifies Dockerfiles and shell scripts with no documentation updates expected.
+# Code quality is validated by pass-to-pass tests: shellcheck, yamllint, bash syntax.
+# Original Python-specific rules (mocking, assert, time.monotonic, imports) were inapplicable
+# to this shell/Docker task.
+rubric: ~

@@ -1,0 +1,105 @@
+source:
+  pr:
+    owner: shadcn-ui
+    repo: ui
+    number: 10202
+    title: "fix: packageManager in package.json"
+    merge_commit: 12b49c986fcf7e6db9be7f515df6142f822f2236
+    base_commit: 64c8cd99eee94cc3b76c063a8e62bc66fbede62f
+
+  files_changed:
+    - packages/shadcn/src/templates/create-template.ts
+    - packages/shadcn/src/utils/scaffold.test.ts
+    - packages/tests/src/tests/init.test.ts
+    - .changeset/new-games-teach.md
+
+# Reward is binary: 1 if all checks pass, 0 otherwise
+reward: binary
+
+checks:
+  # ---------------------------------------------------------------------------
+  # FAIL-TO-PASS: Core behavioral changes (reward 0 on base, 1 on fix)
+  # ---------------------------------------------------------------------------
+  - id: test_monorepo_sets_packagemanager_for_bun
+    type: fail_to_pass
+    origin: task_spec
+    description: Monorepo with bun should set packageManager to detected version
+
+  - id: test_getpackagemanagerversion_function_exists
+    type: fail_to_pass
+    origin: task_spec
+    description: getPackageManagerVersion helper function should exist in create-template.ts
+
+  - id: test_monorepo_condition_checks_is_monorepo
+    type: fail_to_pass
+    origin: task_spec
+    description: Should check isMonorepo before deciding to keep or delete packageManager
+
+  - id: test_monorepo_preserves_packagemanager_field
+    type: fail_to_pass
+    origin: task_spec
+    description: For monorepos, packageManager should be preserved (set to detected version)
+
+  - id: test_packagemanager_version_detection_uses_execa
+    type: fail_to_pass
+    origin: task_spec
+    description: Should use execa to detect package manager version
+
+  - id: test_version_format_includes_at_symbol
+    type: fail_to_pass
+    origin: task_spec
+    description: Should format packageManager with @ symbol (e.g., bun@1.2.0)
+
+  - id: test_fallback_to_wildcard_on_failure
+    type: fail_to_pass
+    origin: task_spec
+    description: Should fallback to wildcard version when version detection fails
+
+  # ---------------------------------------------------------------------------
+  # PASS-TO-PASS: Repo CI/CD tests (should pass on both base and fix)
+  # ---------------------------------------------------------------------------
+  - id: test_repo_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation should pass
+
+  - id: test_repo_shadcn_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: pnpm typecheck for shadcn package passes
+
+  - id: test_repo_shadcn_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: pnpm build for shadcn package passes
+
+  - id: test_repo_shadcn_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for shadcn package pass (1227 tests)
+
+  - id: test_repo_shadcn_scaffold_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Scaffold tests for shadcn package pass (14 tests)
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository's linter passes
+
+  # ---------------------------------------------------------------------------
+  # STRUCTURAL: Implementation details (gated by behavioral tests)
+  # ---------------------------------------------------------------------------
+  - id: test_implementation_order_logic_correct
+    type: fail_to_pass
+    origin: task_spec
+    description: Logic order should be correct (set for monorepo, delete otherwise)
+
+  - id: test_comment_updated
+    type: fail_to_pass
+    origin: task_spec
+    description: Comment should reflect new behavior (update instead of strip)
+
+# Rubric for evaluating agent output quality
+rubric: []

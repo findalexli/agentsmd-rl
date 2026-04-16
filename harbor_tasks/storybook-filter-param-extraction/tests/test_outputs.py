@@ -234,40 +234,82 @@ def test_filter_param_empty_and_edge_cases():
 
 # [pr_diff] fail_to_pass
 def test_tags_uses_shared_helper():
-    """tags.ts must import parseFilterParam and remove inline parsing logic."""
-    import re
-    fp = Path(REPO) / "code/core/src/manager-api/modules/tags.ts"
-    content = fp.read_text()
+    """parseTagsParam delegates to shared parseFilterParam and produces correct results."""
+    script = textwrap.dedent("""\
+        import assert from 'node:assert';
+        import { parseFilterParam } from './code/core/src/manager-api/lib/filter-param.ts';
+        import { parseTagsParam } from './code/core/src/manager-api/modules/tags.ts';
 
-    # Must import the shared helper
-    assert re.search(r"import\s*\{[^}]*parseFilterParam[^}]*\}", content), (
-        "tags.ts must import parseFilterParam from the shared module"
-    )
+        // Verify parseTagsParam handles standard filter param syntax correctly
+        assert.deepStrictEqual(parseTagsParam(undefined), { included: [], excluded: [] });
+        assert.deepStrictEqual(parseTagsParam(''), { included: [], excluded: [] });
+        assert.deepStrictEqual(parseTagsParam('alpha'), { included: ['alpha'], excluded: [] });
+        assert.deepStrictEqual(parseTagsParam('alpha;!beta'), { included: ['alpha'], excluded: ['beta'] });
+        assert.deepStrictEqual(parseTagsParam('a;b;!c'), { included: ['a', 'b'], excluded: ['c'] });
+        assert.deepStrictEqual(parseTagsParam('a;;!b;;;'), { included: ['a'], excluded: ['b'] });
+        assert.deepStrictEqual(parseTagsParam('!x;!y'), { included: [], excluded: ['x', 'y'] });
 
-    # Inline parsing logic (split+forEach pattern) must be removed
-    assert "split(';').forEach" not in content, (
-        "tags.ts still has inline split(';').forEach — "
-        "should delegate to shared parseFilterParam"
-    )
+        // Verify built-in tag mapping: $docs -> _docs, $play -> _play, $test -> _test
+        assert.deepStrictEqual(parseTagsParam('$docs'), { included: ['_docs'], excluded: [] });
+        assert.deepStrictEqual(parseTagsParam('!$play'), { included: [], excluded: ['_play'] });
+        assert.deepStrictEqual(parseTagsParam('$test;custom'), { included: ['_test', 'custom'], excluded: [] });
+
+        // Verify behavioral consistency: parseTagsParam matches parseFilterParam
+        // with the same transform for plain (non-mapped) values
+        assert.deepStrictEqual(
+          parseTagsParam('foo;!bar'),
+          parseFilterParam('foo;!bar', (x) => x)
+        );
+    """)
+    r = _run_tsx(script)
+    assert r.returncode == 0, f"Failed:\n{r.stderr.decode()}"
 
 
 # [pr_diff] fail_to_pass
 def test_statuses_uses_shared_helper():
-    """statuses.ts must import parseFilterParam and remove inline parsing logic."""
-    import re
-    fp = Path(REPO) / "code/core/src/manager-api/modules/statuses.ts"
-    content = fp.read_text()
+    """Shared parseFilterParam works with toStatusValue transform (statuses refactoring)."""
+    script = textwrap.dedent("""\
+        import assert from 'node:assert';
+        import { parseFilterParam } from './code/core/src/manager-api/lib/filter-param.ts';
+        import { toStatusValue } from './code/core/src/shared/status-store/index.ts';
 
-    # Must import the shared helper
-    assert re.search(r"import\s*\{[^}]*parseFilterParam[^}]*\}", content), (
-        "statuses.ts must import parseFilterParam from the shared module"
-    )
+        // Verify parseFilterParam with toStatusValue handles empty / undefined input
+        assert.deepStrictEqual(parseFilterParam(undefined, toStatusValue), { included: [], excluded: [] });
+        assert.deepStrictEqual(parseFilterParam('', toStatusValue), { included: [], excluded: [] });
 
-    # Inline parsing logic (split+forEach pattern) must be removed
-    assert "split(';').forEach" not in content, (
-        "statuses.ts still has inline split(';').forEach — "
-        "should delegate to shared parseFilterParam"
-    )
+        // Verify known status short names are resolved correctly
+        // toStatusValue('error') => 'status-value:error'
+        const r1 = parseFilterParam('error', toStatusValue);
+        assert.deepStrictEqual(r1, { included: ['status-value:error'], excluded: [] });
+
+        // Verify exclusion with known status
+        const r2 = parseFilterParam('!warning', toStatusValue);
+        assert.deepStrictEqual(r2, { included: [], excluded: ['status-value:warning'] });
+
+        // Verify mixed include/exclude with known statuses
+        const r3 = parseFilterParam('success;!error;pending', toStatusValue);
+        assert.deepStrictEqual(r3, {
+          included: ['status-value:success', 'status-value:pending'],
+          excluded: ['status-value:error']
+        });
+
+        // Verify unknown values are silently skipped (toStatusValue returns undefined)
+        assert.deepStrictEqual(parseFilterParam('unknown-status', toStatusValue), { included: [], excluded: [] });
+        assert.deepStrictEqual(parseFilterParam('error;invalid;success', toStatusValue), {
+          included: ['status-value:error', 'status-value:success'],
+          excluded: []
+        });
+
+        // Verify exclusion with unknown values
+        const r4 = parseFilterParam('!unknown-val', toStatusValue);
+        assert.deepStrictEqual(r4, { included: [], excluded: [] });
+
+        // Verify edge cases: trailing semicolons with status values
+        const r5 = parseFilterParam('error;;warning;', toStatusValue);
+        assert.deepStrictEqual(r5, { included: ['status-value:error', 'status-value:warning'], excluded: [] });
+    """)
+    r = _run_tsx(script)
+    assert r.returncode == 0, f"Failed:\n{r.stderr.decode()}"
 
 
 # ---------------------------------------------------------------------------

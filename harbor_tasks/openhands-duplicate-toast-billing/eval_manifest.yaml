@@ -1,0 +1,82 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr_number: 13649
+  title: "fix(frontend): prevent duplicate payment successful toast after Stripe checkout"
+  base_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  merge_commit: b75c83d92abfcbbb63b7b82e0fdd0e981f69a66f
+  task_name: openhands-duplicate-toast-billing
+
+checks:
+  # Fail-to-pass tests (core behavior)
+  - id: test_useeffect_dependency_structure
+    type: fail_to_pass
+    origin: agent_config
+    description: useEffect dependencies use primitive values, not searchParams object
+
+  - id: test_no_searchparams_in_dependencies
+    type: fail_to_pass
+    origin: agent_config
+    description: useEffect should not depend on searchParams object directly
+
+  - id: test_checkout_success_toast_once
+    type: fail_to_pass
+    origin: functional_test
+    description: Success toast displays exactly once on checkout success
+
+  - id: test_checkout_cancel_toast_once
+    type: fail_to_pass
+    origin: functional_test
+    description: Error toast displays exactly once on checkout cancel
+
+  - id: test_track_credits_called_once
+    type: fail_to_pass
+    origin: functional_test
+    description: Credits tracking only fires once on checkout success
+
+  # Pass-to-pass tests (repo health)
+  - id: test_npm_install
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dependencies are installed
+
+  - id: test_billing_component_renders
+    type: pass_to_pass
+    origin: repo_tests
+    description: Billing component renders without crashing
+
+  - id: test_frontend_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linting passes
+
+  - id: test_frontend_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend builds successfully
+
+  - id: test_frontend_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend TypeScript typecheck passes
+
+  - id: test_frontend_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend translation completeness check passes
+
+  - id: test_repo_toast_handlers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Toast handler unit tests pass
+
+  - id: test_repo_billing_visibility
+    type: pass_to_pass
+    origin: repo_tests
+    description: Billing visibility unit tests pass
+
+  - id: test_repo_plan_click_hook
+    type: pass_to_pass
+    origin: repo_tests
+    description: Plan click hook unit tests pass
+
+rubric: []

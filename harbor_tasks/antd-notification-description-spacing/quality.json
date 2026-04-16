@@ -2,59 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the relevant files (PurePanel.tsx, style/index.ts), the CSS pattern (&:first-child with marginInlineEnd: token.marginSM), and the conditional rendering pattern (title && (<div>...</div>)). All test-asserted specifics (file paths, regex patterns, token names) are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific regex patterns like `r\"['\"]&:first-child['\"]:\\s*\\{[^}]*marginInlineEnd:\\s*token\\.marginSM\"` and `r\"\\{\\s*title\\s*&&\\s*\\(\"` which encode exact implementation details (e.g., `token.marginSM`, the `&:first-child` selector, the `title &&` conditional pattern). The instruction.md mentions 'right-side margin/padding using logical properties' and 'conditionally rendered' but never specifies `marginInlineEnd`, `token.marginSM`, `&:first-child`, or the exact `{title && (` pattern. Th"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use '{title && (<div>...</div>)}' conditional pattern and add '&:first-child' CSS selector with 'marginInlineEnd: token.marginSM'. This leaves no reasoning for the agent \u2014 it's a direct implementation specification, not a bug description."
+      "reason": "Instruction.md requirement #2 explicitly states 'The description styling should include appropriate right-side margin/padding (using logical properties for RTL support) when it is the first child (no title present before it) to reserve space for the close button.' This tells the developer exactly WHAT to change: add a CSS `&:first-child` rule with logical margin/padding. Requirement #1 similarly prescribes the exact fix: 'The title block in PureContent should only be rendered when a title prop i"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_css_description_first_child_spacing uses regex requiring exact pattern '&:first-child' with 'marginInlineEnd: token.marginSM', and test_pure_content_conditional_title_rendering requires exact pattern '{title && ('. Alternative correct fixes (e.g., using a ternary, using a CSS class-based approach, using paddingInlineEnd, or applying styles inline in TSX) would fail these regex tests."
+      "reason": "test_css_description_first_child_spacing asserts a specific regex requiring `&:first-child` with `marginInlineEnd: token.marginSM`. An alternative valid fix could use `paddingInlineEnd` instead of `marginInlineEnd`, or use a different token value, or use a CSS class-based approach rather than `&:first-child`. test_pure_content_conditional_title_rendering requires the exact pattern `{title && (` \u2014 an alternative using ternary `{title ? (...) : null}` would fail despite being functionally equivale"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering) are purely text-matching with regex on source files \u2014 they do not execute code, render components, or check runtime behavior. They are literally 'assert pattern in open(path).read()' style tests."
+      "reason": "The two fail-to-pass tests (test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering) are purely text-matching: they open files and regex-search for specific string patterns. They do not import, call, render, or execute any code to verify the actual behavior. The pass-to-pass tests do run subprocesses (jest, eslint, biome), but the core fail-to-pass tests are entirely `assert pattern in open(path).read()` style."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the original codebase. A stub or no-op implementation wouldn't add the required regex-matched patterns to the source files, so the tests would fail without actual changes."
+      "outcome": "fail",
+      "reason": "The fail-to-pass tests only check for text patterns in source files. Simply adding the exact string `'&:first-child': { marginInlineEnd: token.marginSM` to the style file and `{ title && (` to PurePanel.tsx (even as dead code or comments) would pass these tests without actually fixing the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires two specific changes (CSS first-child rule and conditional title rendering), both of which are tested. Additional pass-to-pass tests verify no regressions."
+      "reason": "The instruction requires: (1) conditional title rendering, (2) description first-child spacing, (3) existing tests still pass. All three are covered by the test suite (tests 1-2 for the fixes, tests 3-7 for regression)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_css_description_first_child_spacing, test_pure_content_conditional_title_rendering, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+      "reason": "Tests are well-named with descriptive function names and docstrings that clearly indicate FAIL-TO-PASS vs PASS-TO-PASS and explain what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves UI component code fixes, not structured data output."
+      "reason": "This task involves fixing a UI component bug, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands appear correct and consistent across instruction, tests, and solution."
+      "reason": "File paths, variable names, and commands in the task files are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact CSS selector ('&:first-child'), exact property (marginInlineEnd: token.marginSM), and exact JSX pattern ('{title && (<div>...</div>)}'), which amounts to giving the exact code changes needed rather than just describing the bug."
+      "reason": "The instruction explicitly names both files to edit (PurePanel.tsx and style/index.ts) and describes the exact nature of the fix needed in each (conditional rendering pattern for title, first-child CSS rule for description). While naming the component directory is reasonable, specifying both exact files AND the exact approach to fix them is excessive leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 3,
+  "fail_count": 6
 }

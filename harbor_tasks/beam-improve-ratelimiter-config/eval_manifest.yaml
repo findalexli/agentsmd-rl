@@ -161,3 +161,15 @@ config_edits:
 
     |enable_metrics         |Deploy statsd-exporter sidecar                       |false                            |'
   gold_removed: 'Example Beam Pipelines using it:'
+distractors:
+- rule: Add unit tests for your changes
+  source:
+    path: .agent/skills/contributing/SKILL.md
+    lines: 68-68
+  source_text: '- Add unit tests for your changes'
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies Terraform deployment files for an example. There
+    is no unit testing framework setup for these Terraform examples in this repository,
+    so attempting to write unit tests for these .tf changes would be out of scope
+    and cause errors.
+  severity: medium

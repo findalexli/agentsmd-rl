@@ -1,0 +1,25 @@
+name = "clickhouse-zookeeper-stale-session-udf"
+title = "Fix stale ZooKeeper session in UDF retry loop"
+difficulty = "medium"
+estimated_time = "45m"
+tags = ["c++", "zookeeper", "concurrency", "distributed-systems", "lifetime-safety"]
+
+[description]
+brief = "Fix a crash caused by using a stale ZooKeeper session handle in the UDF refresh retry loop"
+detail = """
+The UserDefinedSQLObjectsZooKeeperStorage::refreshObjects method had a bug where
+the ZooKeeper session handle could become stale during retries. When a Keeper error
+occurred and the retry loop was entered, the code continued using the original
+zookeeper parameter instead of obtaining a fresh session. This could lead to crashes
+or undefined behavior when the session expired between retry attempts.
+
+The fix ensures that:
+1. On retry, a fresh ZooKeeper session is obtained via zookeeper_getter.getZooKeeper().first
+2. The object list is re-fetched with the new session (so watches are set on the live session)
+3. All operations inside the retry loop use current_zookeeper, not the stale parameter
+"""
+
+[requirements]
+build = ["cmake", "ninja", "clang-15"]
+test = ["python3", "pytest"]
+runtime = []

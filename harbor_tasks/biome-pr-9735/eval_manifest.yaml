@@ -1,0 +1,98 @@
+# Evaluation manifest for biomejs/biome#9735
+# Fix markdown parser panic on multi-byte characters in emphasis context
+
+task:
+  name: biome-markdown-multibyte-panic
+  repo: biomejs/biome
+  pr_number: 9735
+  base_commit: 2d3f14390706b93b49469851081fd1e5ffaf45df
+  merge_commit: 8837bf3982aa6baada804526f9e908c44e748f2d
+
+source:
+  pr_title: "fix(markdown): fix panic on multi-byte characters in emphasis context"
+  pr_body_hash: "f4a56e3b8c1d9e7f2a4b8c1d9e7f2a4b8c1d9e7f2"
+  files_changed:
+    - crates/biome_markdown_parser/src/syntax/mod.rs
+    - crates/biome_markdown_parser/tests/spec_test.rs
+  lines_changed: 19
+
+checks:
+  - id: test_cargo_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code compiles without errors
+    command: cargo check -p biome_markdown_parser
+
+  - id: test_markdown_parser_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Markdown parser spec tests pass
+    command: cargo test -p biome_markdown_parser -- spec_test
+
+  - id: test_markdown_formatter_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Markdown formatter crate compiles without errors
+    command: cargo check -p biome_markdown_formatter
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Rust files are formatted correctly
+    command: cargo fmt --all -- --check
+
+  - id: test_cargo_clippy_markdown_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: Clippy passes on biome_markdown_parser crate
+    command: cargo clippy --package biome_markdown_parser -- -D warnings
+
+  - id: test_multibyte_test_case_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md:179-205
+    description: Test case for issue #9727 exists in spec_test.rs
+    details: |
+      The fix adds a test case for issue #9727 (multi-byte characters in
+      emphasis context). This test case must be present after the fix.
+
+  - id: test_fix_pattern_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md:179-205
+    description: Fix pattern exists in syntax/mod.rs
+    details: |
+      The fix changes inline_list_source_len to use source positions
+      (end.saturating_sub(start)) instead of accumulated token lengths.
+
+rubric:
+  - id: must_include_tests
+    source: CLAUDE.md:179-205
+    description: All code changes MUST include tests - bug fixes should have test that reproduces the bug and validates the fix
+    weight: 2
+    criteria:
+      - The agent adds a test case for issue #9727
+      - The test validates the fix works
+
+  - id: use_concise_pr_summaries
+    source: AGENTS.md:21-30
+    description: Use concise, precise wording - don't overload reviewers with unnecessary information. For bug fixes, often just referencing the issue is enough (tests prove the fix works)
+    weight: 1
+    criteria:
+      - The agent writes a brief description focused on the symptom
+      - Does not write verbose explanations of the fix
+
+  - id: fix_closes_issue
+    source: AGENTS.md:37-49
+    description: When fixing an existing issue, start with GitHub magic comment to auto-close the issue (Fixes #9727)
+    weight: 1
+    criteria:
+      - The PR description references issue #9727
+
+  - id: verify_before_commit
+    source: CLAUDE.md:340-355
+    description: Before opening a PR, verify tests added and passing, code formatted and linted
+    weight: 2
+    criteria:
+      - The agent runs cargo test to verify the fix
+      - The agent verifies cargo check passes

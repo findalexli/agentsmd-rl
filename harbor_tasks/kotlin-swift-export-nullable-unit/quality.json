@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names every specific string, object name, expression, file path, and pattern that the tests check for, including AsOptionalVoid, exact conversion expressions, bridge selection logic patterns, NS collection bridging patterns, and error messages."
+      "reason": "The instruction.md explicitly names every exact string, object name, function name, file path, and literal expression that the tests check for, including AsOptionalVoid, all conversion expressions, bridge selection logic patterns, NS collection bridging patterns, and error messages."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives the complete solution: exact object definition name (AsOptionalVoid), exact Swift/Kotlin/C types, exact conversion expressions, exact bridge selection mapping ('is AsVoid -> AsOptionalVoid'), exact error messages, and exact NS collection handling. A developer reading this doesn't need to reason about what to change \u2014 they just need to type it in."
+      "reason": "The instruction.md gives the complete solution: exact object name 'AsOptionalVoid', exact field values (KotlinType.Boolean, CType.Bool), exact Swift type expression, exact conversion expressions for all four methods, exact bridge selection logic ('is AsVoid -> AsOptionalVoid'), exact NS collection handling, and exact error messages. A developer doesn't need to reason about what to change \u2014 they just transcribe the instruction."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching (e.g., 'is AsVoid -> AsOptionalVoid' in content, exact conversion expressions like '(if ($valueExpression) Unit else null)'). Any alternative correct implementation that uses different variable names, formatting, or expression structure would fail. The tests assert on gold-specific implementation details rather than behavior."
+      "reason": "Tests are pure text-matching (e.g., checking 'object AsOptionalVoid' in content, exact string matches for conversion expressions). Any alternative correct implementation that used different naming, different conversion logic, or different structure would fail. For example, using a class instead of object, or naming it 'OptionalVoidBridge', or using a different but functionally equivalent conversion expression would all fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test ultimately checks for exact string presence in the source file using patterns like '\"object AsOptionalVoid\" in content', '\"is AsVoid -> AsOptionalVoid\" not in optional_section'. Despite using subprocess, the subprocess just reads the file and checks string containment \u2014 no code is compiled or executed."
+      "reason": "Every test ultimately checks for exact string presence in the file content (e.g., '\"object AsOptionalVoid\" in content', '\"(if ($valueExpression) Unit else null)\" in content'). The subprocess calls just re-invoke the same string-matching functions. No code is compiled, executed, or behaviorally tested."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "An agent could pass all tests by simply inserting the exact literal strings from the instruction into TypeBridging.kt without understanding the bug. The tests only check string presence, not actual compilation or runtime behavior of the type bridging system."
+      "reason": "A stub that simply appends the required strings to TypeBridging.kt (without any functional code) would pass all tests, since tests only check for string presence in the file content, not compilation or execution."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (new bridge type, value conversions, bridge selection logic, NS collection bridging, error messages, removal from TODO list) are tested."
+      "reason": "All behaviors described in instruction.md (bridge definition, value conversions, bridge selection logic, NS collection bridging, error messages, TODO list removal) are covered by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_asoptional_void_bridge_exists, test_asoptional_void_value_conversions, etc.), docstrings explaining each test's purpose, and helper functions grouped by validation category."
+      "reason": "Tests are well-structured with descriptive function names (test_asoptional_void_bridge_exists, test_asoptional_void_value_conversions, etc.), docstrings, and helper functions organized by validation concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "The task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, variable names, and string literals in instruction.md and tests are consistent and free of typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (TypeBridging.kt), exact function names (bridgeNominalType, bridgeAsNSCollectionElement), exact class name (AsOptionalWrapper), and the exact code patterns to add, effectively giving the complete solution rather than just describing the bug."
+      "reason": "The instruction names the exact file (TypeBridging.kt), exact function names (bridgeNominalType, bridgeAsNSCollectionElement), exact object name (AsOptionalVoid), exact field values, and exact code patterns to insert. This goes far beyond describing what's broken \u2014 it specifies the complete implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

@@ -2,60 +2,61 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact variable names like 'user_auth = self.user_context.user_auth', 'api_key_org_id', exact string patterns like 'if api_key_org_id is not None:', 'org_id = api_key_org_id', and 'org_id=org_id'. The instruction describes the behavior but does not specify these exact variable names or code patterns that the tests check via string matching."
+      "outcome": "pass",
+      "reason": "The instruction.md specifies all exact variable names (org_id, user_auth, api_key_org_id), exact method names (get_api_key_org_id), exact hasattr checks, and exact patterns that the tests assert on. The tests check for these exact strings in the source code, and all are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the bug (wrong org_id used), the root cause, and the desired behavior, but does not specify exact code changes, line numbers, or literal replacement strings. A developer must still reason about how to implement the fix."
+      "outcome": "fail",
+      "reason": "instruction.md provides the complete solution step-by-step: exact variable names, exact conditional checks, exact assignment statements, and exact ordering. Steps 1-8 in 'Required Fix' are literally the code to write, leaving no reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use string matching for exact variable names and patterns: 'user_auth = self.user_context.user_auth', 'api_key_org_id = user_auth.get_api_key_org_id()', 'if api_key_org_id is not None:', 'org_id = api_key_org_id', 'org_id=org_id'. An alternative correct fix using different variable names (e.g., 'target_org_id', 'key_org') or different code structure (e.g., inline ternary, getattr with default) would fail these tests despite being functionally correct."
+      "reason": "Tests do raw string matching on exact variable names and patterns like 'org_id = user.current_org_id', 'user_auth = self.user_context.user_auth', 'api_key_org_id is not None', and 'org_id = api_key_org_id'. An alternative correct fix using different variable names (e.g., 'target_org_id') or different control flow would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org, test_code_imports_and_syntax) primarily use string matching on source code content (e.g., \"assert 'org_id = user.current_org_id' in source_code\"). They do not import, instantiate, or call the actual service class to verify behavior. This is textual pattern matching, not behavioral testing."
+      "reason": "The fail-to-pass tests (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org, test_code_imports_and_syntax) all use load_source_file() and check_api_key_org_logic() which just do string matching on source code text (e.g., \"'org_id = user.current_org_id' in source_code\"). None of the f2p tests import, instantiate, or call the actual code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The original source file does not contain the required patterns (like 'hasattr(self.user_context, \"user_auth\")', 'api_key_org_id', 'org_id=org_id'), so a stub/no-op implementation would fail these string-matching tests. The agent must actually add the specific code patterns."
+      "outcome": "fail",
+      "reason": "The tests only check for the presence of specific strings in the source file. A developer could simply add a dead-code comment block containing all the required strings (e.g., in a docstring or unreachable code block) without actually fixing the bug, and all f2p tests would pass."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md requires the fix to pass ruff linting ('The modified code must pass ruff linting and formatting per the enterprise config'). While there appears to be a ruff test in the truncated test file, the core behavioral requirements (API key org used for conversations, legacy fallback, cookie auth fallback) are only tested via string matching, not by actually running the code with mock contexts to verify correct org_id assignment."
+      "reason": "instruction.md requires three authentication scenarios to work correctly at runtime, but the tests only check for string patterns in source code. The actual runtime behavior (API key with org binding uses that org, legacy falls back, cookie auth preserves existing behavior) is never executed or verified."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, descriptive function names (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org), and section comments ('Fail-to-Pass Tests'). Mock classes are clearly defined."
+      "reason": "Tests are well-named (test_api_key_org_id_used_when_available, test_legacy_api_key_falls_back_to_user_org, etc.), include docstrings explaining each scenario, and are organized with clear mock classes and helper functions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a bug in a Python method, not producing structured data output like JSON/CSV/API responses."
+      "reason": "The task involves modifying Python code logic, not producing structured data output like JSON/CSV/API responses."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact method ('save_app_conversation_info()'), exact class ('SaasSQLAppConversationInfoService'), exact model ('StoredConversationMetadataSaas'), and exact attributes ('user_auth', 'get_api_key_org_id()') to use. While it doesn't give line numbers, it provides enough specificity that localization is essentially eliminated as a challenge."
+      "reason": "instruction.md doesn't name the exact file, but the solution patch reveals it's enterprise/server/utils/saas_app_conversation_info_injector.py. However, instruction.md provides the complete code to write (exact variable names, exact conditionals, exact ordering), which is worse than naming the file\u2014it provides the entire implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 3,
+  "fail_count": 6
 }

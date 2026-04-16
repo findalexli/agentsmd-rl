@@ -1,0 +1,85 @@
+source:
+  pr:
+    owner: lancedb
+    repo: lancedb
+    number: 3104
+    title: "feat: upgrade Lance to 3.0.0-rc.3"
+    base_commit: 4be85444f0c00279920c0fe6ecbee0b6918e38c1
+    merge_commit: 5c3bd68e5879c0add175706909d0f08539a53b54
+  notes: >
+    This PR upgrades the Lance dependency from 3.0.0-rc.2 to 3.0.0-rc.3.
+    The new version has breaking API changes in error handling:
+    - lance_core::Error::io() now takes only a message string
+    - lance_core::Error::IO struct variant replaced with helper methods
+    - snafu 0.9.0 removes automatic location tracking
+
+version: 1.0.0
+checks:
+  # Fail-to-pass tests (primary)
+  - id: test_cargo_check_passes
+    type: fail_to_pass
+    origin: gold_patch
+    description: "cargo check passes after fixing API changes"
+
+  # Structural verification tests
+  - id: test_cargo_toml_version
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Cargo.toml uses Lance version 3.0.0-rc.3"
+
+  - id: test_cargo_lock_version
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Cargo.lock references Lance version 3.0.0-rc.3"
+
+  - id: test_python_namespace_error_api
+    type: fail_to_pass
+    origin: gold_patch
+    description: "python/src/namespace.rs uses new Error::io() API"
+
+  - id: test_storage_options_error_api
+    type: fail_to_pass
+    origin: gold_patch
+    description: "python/src/storage_options.rs uses new error constructors"
+
+  - id: test_rust_namespace_error_propagation
+    type: fail_to_pass
+    origin: gold_patch
+    description: "rust/lancedb/src/database/namespace.rs uses ? operator"
+
+  - id: test_no_old_error_patterns_in_namespace
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Old Error::io(..., Default::default()) patterns removed"
+
+  - id: test_snafu_location_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: "snafu::location!() calls removed from storage_options.rs"
+
+  - id: test_cargo_toml_dependencies_updated
+    type: fail_to_pass
+    origin: gold_patch
+    description: "All lance dependencies updated to rc.3"
+
+  # Pass-to-pass tests (CI gates - must pass on base commit before fix)
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust code passes cargo fmt --check"
+
+  - id: test_repo_cargo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust code passes cargo clippy lints"
+
+  - id: test_repo_cargo_check_workspace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust workspace compiles with cargo check"
+
+rubric:
+  - rule: "Code changes successfully migrate from Lance 3.0.0-rc.2 to 3.0.0-rc.3 with all API breaking changes resolved"
+    source: "AGENTS.md"
+    type: process
+    reference: "Dependency upgrade and API migration complete"

@@ -1,0 +1,64 @@
+# Evaluation manifest for airflow-external-link-security task
+
+source:
+  type: github_pr
+  owner: apache
+  repo: airflow
+  pr_number: 64772
+  url: https://github.com/apache/airflow/pull/64772
+  title: "fix(ui): correct external link target and add rel attributes"
+  base_commit: b2b3ce2607088ec5c11356ac5e271cb80fd8b6bb
+  merge_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+
+checks:
+  - id: test_link_has_correct_target_attribute
+    type: fail_to_pass
+    origin: behavior
+    description: >
+      Link component uses target="_blank" (not target="blank").
+      The original code had an incorrect HTML attribute value.
+
+  - id: test_link_has_rel_noopener_noreferrer
+    type: fail_to_pass
+    origin: behavior
+    description: >
+      Link component has rel="noopener noreferrer" for security.
+      Prevents opened pages from accessing window.opener.
+
+  - id: test_link_attributes_combined
+    type: fail_to_pass
+    origin: behavior
+    description: >
+      Both security attributes present on the same Link element.
+      Tests multiple attribute variations.
+
+  - id: test_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Lint (ESLint + TypeScript) passes on the codebase
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Airflow UI unit tests pass (vitest)
+
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code formatting check passes (Prettier)
+
+  - id: test_component_file_exists
+    type: pass_to_pass
+    origin: sanity
+    description: Target component file exists and contains expected content
+
+rubric:
+  - id: code_only_fix
+    rule: >
+      This is a code-only fix that corrects external link attributes in the UI.
+      No documentation updates (CLAUDE.md, AGENTS.md, README.md, etc.) are required
+      for this type of simple attribute correction. The fix should modify only
+      the NothingFoundInfo.tsx file to add security attributes (rel="noopener noreferrer"
+      and target="_blank"). PASS if no documentation files were modified, as none
+      were required.
+    weight: 1

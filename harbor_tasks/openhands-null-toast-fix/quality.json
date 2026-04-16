@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (toast-duration.ts, custom-toast-handlers.tsx, the two hook test files), the function names (calculateToastDuration, displayErrorToast), the type signature 'string | null | undefined', the pattern 'if (!message)' / 'return minDuration', the fallback pattern 'error || i18n.t(\"STATUS$ERROR\")', the i18n import from '#/i18n', and the initReactI18next mock requirement. All assert'd specifics in the tests are discoverable from the instruction."
+      "reason": "All test-referenced paths (toast-duration.ts, custom-toast-handlers.tsx, hook test files) and commands (lint, typecheck, build, test) are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'check if (!message) and return minDuration on the next line', 'use the pattern error || i18n.t(\"STATUS$ERROR\")', and 'add appropriate initReactI18next mocks'. This tells the agent exactly WHAT to change rather than just describing the broken behavior."
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior (null/undefined guard, fallback via STATUS$ERROR key) without giving exact code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact syntax like 'if (!message)' in content and 'return minDuration' on the next line (test_calculateToastDuration_various_inputs checks consecutive lines). An alternative like 'if (message == null || message === \"\")' or 'if (typeof message !== \"string\" || !message.length)' with 'return minDuration;' would fail the 'if (!message)' string check. Similarly, 'error: string | null | undefined' is checked as an exact string match."
+      "outcome": "pass",
+      "reason": "Tests check runtime behavior (returns 5000, doesn't throw .length error) rather than specific implementation details; alternative correct fixes would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_calculateToastDuration_null_handling, test_calculateToastDuration_various_inputs, test_displayErrorToast_accepts_null) exclusively use string matching on file contents ('assert \"if (!message)\" in content', 'assert \"string | null | undefined\" in content') with no execution of the actual functions. The p2p tests do run subprocesses (lint, build, unit tests), but the f2p tests are purely textual."
+      "outcome": "pass",
+      "reason": "Tests execute Node subprocess calling the actual functions and run npm test/lint/build."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string patterns in source files (e.g., 'if (!message)' in content, 'string | null | undefined' in content). An agent could simply add a dead-code comment containing these exact strings without actually implementing the fix, and the f2p tests would pass. No behavioral execution validates that null inputs actually return minDuration."
+      "outcome": "pass",
+      "reason": "Tests invoke calculateToastDuration with null/undefined/empty and assert returning 5000 rather than throwing, requiring actual fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: null handling in calculateToastDuration, null handling in displayErrorToast, lint/typecheck/build passing, translation completeness, i18n generation, and unit tests for the modified files and hooks."
+      "reason": "Tests cover null/undefined handling for both functions, plus lint/typecheck/build/i18n/translation requirements stated in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'calculateToastDuration must return minDuration for null/undefined (f2p)') and logically grouped by concern (null handling, lint, build, unit tests, translation)."
+      "reason": "Tests have descriptive names and docstrings distinguishing f2p from p2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing TypeScript source files, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, command names, function names, and variable names in the instruction match the actual repository structure and test expectations."
+      "reason": "Paths and commands match repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'The implementation should check if (!message) and return minDuration on the next line' and 'use the pattern error || i18n.t(\"STATUS$ERROR\")'. This goes beyond naming the buggy file/function and prescribes the exact code pattern."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify as expected scope but doesn't leak exact line numbers or code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: (1) test_nshandle_function_exists checks for exact function signature 'func NsHandle() netns.NsHandle' and that it contains 'ns, _ := initNamespace()' \u2014 the instruction never specifies this function name or that initNamespace should return two values unpacked this way. (2) test_sync_oncevalues_used checks for 'sync.OnceValues' and 'initNamespace' variable name \u2014 instruction says 'eliminate global mutable state' bu"
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: (1) test_nshandle_function_exists checks for exact function signature 'func NsHandle() netns.NsHandle' and that it calls 'initNamespace()' with 'ns, _ := initNamespace()' \u2014 the instruction never names 'NsHandle' as the replacement function or 'initNamespace' as the variable name. (2) test_sync_oncevalues_used checks for 'sync.OnceValues' and 'initNamespace' \u2014 instruction says 'eliminate global mutable state' but n"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md effectively describes the fix: 'NetlinkSocketsTimeout should be a constant', 'ParseHandlerInt() returns int but callers need netns.NsHandle type directly', 'Error logging should use WithError instead of Errorf with %v', 'syscall.Close() return values are silently ignored', 'Windows stub should be removed'. These are prescriptive fixes, not just problem descriptions."
+      "reason": "The instruction explicitly states specific fixes: 'NetlinkSocketsTimeout should be a constant', 'ParseHandlerInt() returns an int... callers actually need the netns.NsHandle type directly', 'Error logging uses... Errorf with %v... instead of structured logging API (WithError)', 'syscall.Close() return values are silently ignored'. These describe exactly what to change rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_nshandle_function_exists requires exact string 'ns, _ := initNamespace()' in the function body; test_sync_oncevalues_used requires exact string 'sync.OnceValues' and variable name 'initNamespace'; test_error_handling_with_error requires exact string 'WithError(err)'. An alternative correct fix using e.g. sync.Mutex, a different variable name, or different error handling pattern would fail these tests."
+      "reason": "Tests assert gold-specific implementation details: test_nshandle_function_exists requires exact function name 'NsHandle', exact variable name 'initNamespace', and exact pattern 'ns, _ := initNamespace()'. test_sync_oncevalues_used requires literal 'sync.OnceValues' and 'initNamespace'. An alternative correct fix using e.g. sync.Mutex, or naming the function GetNsHandle(), or using a different variable name, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests (test_nshandle_function_exists, test_parsehandlerint_removed, test_sync_oncevalues_used, test_netlink_socket_timeout_is_const, test_error_handling_with_error, test_windows_stub_removed, test_interface_uses_nshandle) are purely text-matching via 'assert X in open(path).read()'. While compilation/vet tests do execute code, the core behavioral assertions are all string searches in source files."
+      "reason": "Most tests are pure text-matching: test_nshandle_function_exists, test_parsehandlerint_removed, test_sync_oncevalues_used, test_netlink_socket_timeout_is_const, test_error_handling_with_error, test_windows_stub_removed, test_interface_uses_nshandle all use 'assert X in open(path).read()' patterns. While test_code_compiles, test_go_vet_passes, test_package_tests_pass, and test_osl_package_compiles do execute subprocesses, the majority of f2p tests are text-only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The compilation tests (test_code_compiles, test_osl_package_compiles) and test_package_tests_pass would fail on a stub implementation. The text-matching tests also require actual code changes from the base commit. A no-op solution would fail test_parsehandlerint_removed and test_windows_stub_removed."
+      "reason": "The f2p tests check for specific code changes (sync.OnceValues, NsHandle function, const declaration, removal of ParseHandlerInt, removal of windows stub) that cannot be satisfied by a stub/no-op implementation. The compilation tests also verify structural correctness."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: const NetlinkSocketsTimeout, removal of ParseHandlerInt, elimination of global mutable state (via sync.OnceValues check), structured error logging, Windows stub removal, interface_linux.go update, and compilation/vet verification."
+      "reason": "The instruction mentions: const for NetlinkSocketsTimeout (tested), remove ParseHandlerInt (tested), use structured logging WithError (tested), remove Windows stub (tested), handle syscall.Close return values (implicitly tested via go vet/compile), update osl callers (tested), and verification commands (tested). All major behaviors are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies (e.g., test_nshandle_function_exists, test_netlink_socket_timeout_is_const, test_windows_stub_removed)."
+      "reason": "Tests are well-named individual functions with clear docstrings explaining what each test verifies (e.g., test_nshandle_function_exists, test_parsehandlerint_removed, test_sync_oncevalues_used)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves Go source code refactoring, not structured data output."
+      "reason": "This task involves Go source code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands in instruction.md and tests are consistent and correct."
+      "reason": "File paths, function names, and commands in the instruction and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names specific files (init_linux.go, init_windows.go, interface_linux.go) and variables, but these are the natural scope of the task domain \u2014 the task is explicitly about refactoring a specific package, so naming the files is expected."
+      "reason": "The instruction names specific files (daemon/libnetwork/ns/init_linux.go, etc.) but these are the obvious files given the task domain. It describes what's wrong conceptually without giving exact line numbers or the precise replacement code (e.g., it doesn't say 'use sync.OnceValues' or 'name it initNamespace')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code-only refactoring task, not a config edit task."
     }
   },
   "tier_a_fails": [

@@ -1,0 +1,107 @@
+eval_id: superset-mcp-max-page-size
+description: Enforce MAX_PAGE_SIZE limit in MCP list endpoints
+source_pr: apache/superset#38959
+base_commit: 38fdfb4ca2e4fbca5c308898d9c1d5f58e2e7302
+merge_commit: 2c9cf0bd558449805e458e02374c565f6c8270da
+checks:
+  # Fail-to-pass checks (original requirements)
+  - id: test_constants_defined
+    type: fail_to_pass
+    origin: static
+    description: MAX_PAGE_SIZE and DEFAULT_PAGE_SIZE constants must be defined
+
+  - id: test_constants_file_has_expected_values
+    type: fail_to_pass
+    origin: static
+    description: constants.py must have correct pagination constant values
+
+  - id: test_schemas_import_constants
+    type: fail_to_pass
+    origin: static
+    description: Schema files must import pagination constants
+
+  - id: test_chart_schema_page_size_validation
+    type: fail_to_pass
+    origin: static
+    description: Chart schema must have page_size validation with MAX_PAGE_SIZE
+
+  - id: test_dashboard_schema_page_size_validation
+    type: fail_to_pass
+    origin: static
+    description: Dashboard schema must have page_size validation with MAX_PAGE_SIZE
+
+  - id: test_dataset_schema_page_size_validation
+    type: fail_to_pass
+    origin: static
+    description: Dataset schema must have page_size validation with MAX_PAGE_SIZE
+
+  - id: test_mcp_core_clamps_page_size
+    type: fail_to_pass
+    origin: static
+    description: mcp_core.py must clamp page_size to MAX_PAGE_SIZE
+
+  - id: test_main_py_has_middleware
+    type: fail_to_pass
+    origin: static
+    description: __main__.py must add default middleware stack
+
+  - id: test_chart_schema_uses_default_page_size
+    type: fail_to_pass
+    origin: static
+    description: Chart schema must use DEFAULT_PAGE_SIZE as default
+
+  - id: test_dashboard_schema_uses_default_page_size
+    type: fail_to_pass
+    origin: static
+    description: Dashboard schema must use DEFAULT_PAGE_SIZE as default
+
+  - id: test_dataset_schema_uses_default_page_size
+    type: fail_to_pass
+    origin: static
+    description: Dataset schema must use DEFAULT_PAGE_SIZE as default
+
+  # Pass-to-pass checks (repo CI tests)
+  - id: test_constants_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: constants.py has valid Python syntax (py_compile)
+
+  - id: test_chart_schemas_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: chart/schemas.py has valid Python syntax (py_compile)
+
+  - id: test_dashboard_schemas_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: dashboard/schemas.py has valid Python syntax (py_compile)
+
+  - id: test_dataset_schemas_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: dataset/schemas.py has valid Python syntax (py_compile)
+
+  - id: test_mcp_core_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: mcp_core.py has valid Python syntax (py_compile)
+
+  - id: test_main_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: __main__.py has valid Python syntax (py_compile)
+
+  - id: test_chart_schema_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: chart/schemas.py has valid AST with ListChartsRequest class
+
+  - id: test_dashboard_schema_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: dashboard/schemas.py has valid AST with ListDashboardsRequest class
+
+  - id: test_dataset_schema_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: dataset/schemas.py has valid AST with ListDatasetsRequest class

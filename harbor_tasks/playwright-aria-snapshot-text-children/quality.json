@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (packages/injected/src/ariaSnapshot.ts), the function (textContributesInfo), the utility (longestCommonSubstring), and provides concrete test cases with expected inclusion/exclusion behavior that map directly to the test assertions. The test for function existence checks 'function textContributesInfo' and 'longestCommonSubstring' \u2014 both explicitly mentioned. All behavioral test cases (numeric/code/symbol, partial overlap, exclusions) are enumerated in the instructi"
+      "reason": "Instruction names the file path packages/injected/src/ariaSnapshot.ts, the function textContributesInfo, the longestCommonSubstring utility, and provides all test-case name/text pairs used in the tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the buggy behavior (text children dropped when they shouldn't be) and provides expected input/output cases, but does not specify the exact fix (removing the `node.name.length > text.length` guard). The agent must reason about what condition in textContributesInfo is wrong."
+      "reason": "Instruction describes the broken behavior and expected input/output cases without stating the specific line to remove or the exact code change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_function_exists asserts 'longestCommonSubstring' must remain in the source, and the JS harness extracts textContributesInfo via regex 'function textContributesInfo\\([^)]*\\)[^{]*\\{([\\s\\S]*?)\\n\\}'. An alternative correct fix that renames the function, restructures it (e.g., inlines it into a lambda or moves it), or uses a different overlap-detection approach (e.g., Set-based word comparison) would fail these tests even if behaviorally correct. However, the instruction does say 'This utility a"
+      "outcome": "pass",
+      "reason": "Tests only assert truthy/falsy returns of textContributesInfo for specific cases and check the function/LCS call exist; alternative correct implementations satisfying these cases would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core behavioral tests (test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, test_preserved_exclusions) extract the function from source, execute it via Node.js subprocess, and check return values. test_function_exists is text-based but is a gate/static check, not the main behavioral verification. The repo tests actually run npm commands."
+      "reason": "Tests extract and execute the textContributesInfo function via a Node.js subprocess harness and assert on return values."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub that always returns True would fail test_preserved_exclusions (which expects False for covered_hello, covered_foo, empty_text). A stub that always returns False would fail test_text_contributes_unique_short_text and test_text_contributes_partial_overlap. A stub returning None fails both. The f2p tests require genuine logic changes."
+      "reason": "Stub returning True would fail exclusion tests (covered_hello, covered_foo, empty_text); stub returning False would fail inclusion tests\u2014requires real logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All inclusion cases (short unique text, partial overlap) and exclusion cases (text subsumed by name, empty text, no name) from the instruction tables are tested. The requirement that longestCommonSubstring remain is also tested."
+      "reason": "All inclusion and exclusion cases listed in instruction.md are covered by test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, and test_preserved_exclusions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff, Pass-to-pass/pr_diff, Repo CI/CD), have descriptive names (test_text_contributes_unique_short_text, test_preserved_exclusions), and include docstrings explaining each test's purpose."
+      "reason": "Tests are organized with section header comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI/CD) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task is about fixing a function's behavior, not producing structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "Filenames, function names, and commands appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function (which is appropriate since the task domain is specific), but does not identify the exact buggy line or the specific condition to remove. The agent must analyze the function logic to determine the fix."
+      "reason": "Instruction points at the file and function responsible but does not reveal which specific lines to remove/change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', 'return cache[fullSymbol]!!', 'cache[fullSymbol] = result', and 'currentlyAnalyzing.contains(symbol)'. The instruction.md describes these conceptually but does not specify these exact literal strings, variable names like 'fullSymbol', or the exact cache declaration syntax. A developer could not discover the exact variable name 'fullSymbol' or the exact syntax 'r"
+      "reason": "Tests assert exact literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', 'return cache[fullSymbol]!!', 'cache[fullSymbol] = result', 'currentlyAnalyzing.contains(symbol)', and specific method signatures with regex patterns. The instruction.md describes these only at a conceptual level (e.g., 'Add a cache field', 'Check the cache first') but does not specify the exact variable names 'fullSymbol', 'cache', or the exact syntax like 'ret"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially describes the entire solution: add a cache field, check cache with fullSymbol, store results with 'cache[fullSymbol] = result', create a new private overload with specific parameters, and use 'symbol' (not fullSymbol) for circular dependency detection. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly tells the agent to: add a specific cache field, check the cache with a specific pattern, store results with a specific pattern, create a new private overload with specific parameters, and use 'symbol' (not 'fullSymbol') in the circular dependency check. Point 5 ('Use the right parameters...it should use the symbol parameter (not the full symbol with type arguments)') directly describes the exact implementation change needed, leaving no reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', 'if (fullSymbol in cache)', 'return cache[fullSymbol]!!', 'cache[fullSymbol] = result'. An alternative correct implementation using e.g. a HashMap, 'cache.containsKey()', 'cache.getValue()', or different variable names would fail. The tests enforce gold-specific implementation details."
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'fullSymbol' (test_cache_check_in_stabilityOf), exact syntax 'return cache[fullSymbol]!!' and 'cache[fullSymbol] = result', exact field declaration 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', and that the new method must use 'currentlyAnalyzing.contains(symbol)' not 'fullSymbol'. An alternative correct implementation using e.g., 'cachedResults', 'getOrPut', or a ConcurrentHashMap would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test (test_cache_field_exists, test_cache_check_in_stabilityOf, test_cache_write_after_computation, test_new_overloaded_stabilityOf_method, test_new_method_uses_symbol_for_circular_check, test_no_fullSymbol_in_new_method, test_stability_inferencer_class_structure) reads the file and checks for literal string presence or regex patterns. No test compiles or executes the code to verify actual caching behavior."
+      "reason": "All fail-to-pass tests (test_cache_field_exists, test_cache_check_in_stabilityOf, test_cache_write_after_computation, test_new_overloaded_stabilityOf_method, test_new_method_uses_symbol_for_circular_check, test_no_fullSymbol_in_new_method, test_stability_inferencer_class_structure) exclusively use `open(path).read()` and string/regex matching. No test compiles or executes the Kotlin code to verify actual caching behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply inserts the exact literal strings as comments or dead code into the file would pass all fail-to-pass tests, since they only check for string presence in the file content, not actual execution or behavior."
+      "reason": "All fail-to-pass tests check for the presence of specific strings in the source file. A trivial 'fix' that just appends the expected strings as comments or dead code to the file would pass all tests without implementing any actual caching behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md (cache field, cache check, cache write, method refactoring, using symbol for circular checks) are tested, though only via text matching."
+      "reason": "All five key requirements from the instruction (cache field, cache check, cache write, refactored method, symbol parameter usage) are tested, though only via text matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cache_field_exists, test_cache_check_in_stabilityOf, etc.), have docstrings with 'fail-to-pass'/'pass-to-pass' annotations, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_cache_field_exists, test_cache_check_in_stabilityOf, etc.), each has a docstring, and they are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, variable names, or commands throughout the instruction and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file path, the exact class (StabilityInferencer), the exact method (stabilityOf), and the exact internal class (SymbolForAnalysis). It also describes the exact refactoring steps including parameter names ('symbol parameter, not the full symbol with type arguments'), which constitutes significant localization leakage."
+      "reason": "The instruction names the exact file ('plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt'), the exact class ('StabilityInferencer'), the exact internal class ('SymbolForAnalysis'), and describes the exact refactoring steps including which parameter to use vs not use. This goes well beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

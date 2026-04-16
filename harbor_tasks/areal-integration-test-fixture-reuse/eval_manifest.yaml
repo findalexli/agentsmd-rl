@@ -158,6 +158,15 @@ rubric:
     to be module-scoped, the gold solution preserves the explicit `pytest.skip("GPU
     required...")` calls, adhering to the rule to exp
   category: testing
+- rule: Scope expensive fixtures appropriately (`session` > `module` > `function`)
+  source:
+    path: .claude/rules/testing.md
+    lines: 55-55
+  source_text: '- Scope expensive fixtures appropriately (`session` > `module` > `function`)'
+  evidence: The diff changes the scope of the `local_scheduler` and `gateway_controller`
+    fixtures from the default function scope to module scope using `@pytest.fixture(scope="module")`.
+  category: testing
+  verification: llm_judge
 distractors:
 - rule: Follow existing code patterns in the same module.
   collision_type: rule_conflict
@@ -180,6 +189,22 @@ distractors:
   source:
     path: AGENTS.md
     lines: 40-40
+- rule: Process Group Management
+  source:
+    path: .claude/rules/distributed.md
+    lines: 10-13
+  source_text: '## Process Group Management
+
+
+    - **Never create global process group** in module-level code
+
+    - Always pass `process_group` explicitly, don''t rely on default'
+  collision_type: scope_ambiguity
+  why_distracting: The diff changes the pytest fixture scope to `module` for `local_scheduler`
+    and `gateway_controller`. An agent might confuse pytest's `scope="module"` with
+    "module-level code" and incorrectly block the change, thinking it violates the
+    rule against module-level process groups.
+  severity: high
 hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` contain similar high-level rules.
   The task relies heavily on the explicit prompt instructions overriding the general
   repository rules found in the config files.

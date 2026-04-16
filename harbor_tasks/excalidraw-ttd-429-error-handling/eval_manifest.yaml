@@ -1,0 +1,107 @@
+source:
+  pr:
+    owner: excalidraw
+    repo: excalidraw
+    number: 10680
+    title: "fix: ttd 429 error handling"
+    base_commit: "3c8e893cab216eb1f748ec1245aeb059a1349639"
+    merge_commit: "84a309d669f69ca7c9a43e997fc694d192459f31"
+
+checks:
+  # Fail-to-pass: Translation key refactoring
+  - id: test_translation_key_moved
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Mermaid syntax error translation key moved from ttd to chat.errors section"
+
+  - id: test_ttd_dialog_uses_new_translation_key
+    type: fail_to_pass
+    origin: gold_patch
+    description: "TTDDialogOutput.tsx uses chat.errors.mermaidParseError instead of ttd.errorMermaidSyntax"
+
+  # Fail-to-pass: Error handling refactor
+  - id: test_getreadableerrormsg_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: "getReadableErrorMsg helper function should be removed from useTextGeneration.ts"
+
+  - id: test_handleerror_removed
+    type: fail_to_pass
+    origin: gold_patch
+    description: "handleError helper function should be removed from useTextGeneration.ts"
+
+  - id: test_new_error_keys_present
+    type: fail_to_pass
+    origin: gold_patch
+    description: "New error translation keys should be present in useTextGeneration.ts"
+
+  - id: test_consolidated_429_error_handling
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Consolidated error handling for 429 status and rate limiting"
+
+  - id: test_mermaid_parse_success_tracking
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Mermaid parse success should be tracked after successful parsing"
+
+  # Pass-to-pass: Repo CI/CD
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on repo code"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes"
+
+  - id: test_ttd_stream_fetch
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TTD stream fetch utility tests pass"
+
+  - id: test_mermaid_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Mermaid validation utility tests pass"
+
+  - id: test_mermaid_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Mermaid utility tests pass"
+
+  - id: test_mermaid_to_excalidraw
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MermaidToExcalidraw component tests pass"
+
+rubric:
+  - id: use_functional_components
+    description: "Use functional components with hooks (React)"
+    source: ".github/copilot-instructions.md"
+
+  - id: typescript_prefer_immutable
+    description: "Prefer implementations without allocation, use immutable data and modern operators"
+    source: ".github/copilot-instructions.md"
+
+  - id: error_handling_try_catch
+    description: "Use try/catch for async operations with proper error handling"
+    source: ".github/copilot-instructions.md"
+
+  - id: run_tests_after_changes
+    description: "Attempt to fix problems and run tests after changes"
+    source: "CLAUDE.md"
+
+  - id: prefer_typescript
+    description: "Use TypeScript for all new code with strict configuration"
+    source: "CLAUDE.md"
+
+  - id: be_succinct
+    description: "Be succinct and avoid expansive generative AI answers"
+    source: ".github/copilot-instructions.md"

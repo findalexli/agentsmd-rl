@@ -19,10 +19,10 @@ PDF rendering in the application breaks with a "No GlobalWorkerOptions.workerSrc
 
 Create a unified module at `src/libs/pdfjs/index.tsx` that wraps the `Document` component and ensures `pdfjs.GlobalWorkerOptions.workerSrc` is set before any `Document` renders. The module must:
 
-1. Define a `const workerSrc` template literal using the format `https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs` (interpolate the pdfjs version)
-2. Define an `ensureWorker()` function that checks if `pdfjs.GlobalWorkerOptions.workerSrc` is set, and if not, assigns it the `workerSrc` value
-3. Export a wrapper `Document` component that calls `ensureWorker()` in its body before rendering
-4. Export `Page` and `pdfjs` from react-pdf
+1. Define a URL template string for the PDF.js worker using the format `https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs` (interpolate the pdfjs version)
+2. Provide a way to set the worker source — if `pdfjs.GlobalWorkerOptions.workerSrc` is not already set, assign it the worker URL
+3. Export a wrapper `Document` component that applies the worker configuration before rendering
+4. Re-export `Page` and `pdfjs` from react-pdf
 
 Update the PDF viewer components to:
 - Import `Document` and `Page` from `@/libs/pdfjs` instead of directly from `react-pdf`

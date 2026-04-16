@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_fix_has_required_import checks for 'pointsEqual' import specifically; test_updateboundpoint_has_initial_arrow_guard checks for 'arrow.points' in the early return condition block alongside 'binding == null'; test_fix_does_not_break_existing_logic checks for exact strings like 'elementId !== bindableElement.id' and 'arrow.points.length > 2'. The instruction never mentions 'pointsEqual' by name as a required import, nor the exact e"
+      "reason": "Tests assert specific details not mentioned in instruction.md: test_fix_has_required_import checks that 'pointsEqual' appears in the import section; test_updateboundpoint_has_initial_arrow_guard checks for specific code structure including 'arrow.points' inside the early return condition block with 'binding == null'. The instruction hints at pointsEqual but doesn't explicitly state it must be imported, and doesn't specify the exact structural requirement of adding the check inside the existing '"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'When an arrow is in its initial creation state (last point at origin (0, 0)), the premature point update should be prevented' and 'The fix should add logic without removing or altering existing conditions' and names the exact function 'updateBoundPoint'. Combined with mentioning pointsEqual utilities in packages/math, this effectively tells the developer exactly what to change: add a pointsEqual check for (0,0) in the early return condition of updateBoundPoint"
+      "reason": "instruction.md essentially describes the fix: it says the arrow's last point starts at (0,0) during initial creation, names pointsEqual and pointFrom as useful utilities, specifies that the fix should be in the binding == null early return condition, and describes the exact patterns that must be preserved. This is tantamount to telling the agent exactly what code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_fix_has_required_import requires 'pointsEqual' specifically in the import section. test_updateboundpoint_has_initial_arrow_guard requires the fix to be inside the 'binding == null' condition block and checks for 'arrow.points' there. An alternative fix that uses manual coordinate comparison (e.g., point[0] === 0 && point[1] === 0) without importing pointsEqual, or places the guard in a separate if-block rather than extending the existing null-check condition, would fail these tests despite "
+      "reason": "test_fix_has_required_import requires 'pointsEqual' in the import section. test_updateboundpoint_has_initial_arrow_guard requires the check to be inside the 'binding == null' condition block with 'arrow.points' and specific comparison patterns. An alternative correct fix (e.g., using a different comparison method, placing the guard in a separate if-block, or checking arrow state differently) would fail these structural tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_fix_has_required_import, test_updateboundpoint_has_initial_arrow_guard, and test_fix_does_not_break_existing_logic are pure text-matching tests (reading file content and checking for string patterns). While test_move_tests_pass, test_history_tests_pass, and the pass-to-pass tests do execute subprocesses, the three core 'fix verification' tests are entirely text-based assertions."
+      "reason": "test_fix_has_required_import and test_updateboundpoint_has_initial_arrow_guard are purely text-based: they read the source file and assert on string patterns (e.g., 'pointsEqual' in import_section, 'arrow.points' in condition_block). While other tests do execute subprocesses, these two core f2p tests are text-matching only."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_move_tests_pass, test_history_tests_pass) execute actual test suites that would fail without the behavioral fix. The text-matching tests also wouldn't pass on the unmodified codebase since 'pointsEqual' isn't imported and the guard condition doesn't exist. A stub/no-op wouldn't satisfy these."
+      "reason": "The behavioral tests (test_move_tests_pass, test_history_tests_pass, test_repo_binding_tests_pass) run actual test suites that would fail without the correct fix being applied, as the test expectations in the gold patch change expected values to match the fixed behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: TypeScript compilation, move tests, history tests, ESLint, Prettier, and package tests are all covered by corresponding test functions."
+      "reason": "All success criteria listed in instruction.md (TypeScript compilation, move tests, history tests, ESLint, Prettier, element/math/common/utils/binding tests) have corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and have docstrings explaining their purpose. Pass-to-pass tests are clearly separated with a comment block. Each test function has a descriptive name like test_fix_has_required_import, test_updateboundpoint_has_initial_arrow_guard, etc."
+      "reason": "Tests are well-named, grouped into fix-specific tests and pass-to-pass CI/CD checks with clear docstrings and a section separator comment."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes, not structured data output."
+      "reason": "Task involves fixing a bug in TypeScript code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, function names, and variable names in instruction.md and tests appear correct and consistent with the codebase."
+      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/element/src/binding.ts), the exact function (updateBoundPoint), the exact package (packages/math) with point utilities, and describes the exact fix pattern (check if last point is at origin (0,0) and prevent update). This goes well beyond describing the bug \u2014 it localizes the fix to a specific function and describes the implementation approach."
+      "reason": "instruction.md names the exact file 'packages/element/src/binding.ts', the exact function patterns ('binding == null', 'elementId !== bindableElement.id', 'arrow.points.length > 2'), and even suggests the specific utilities (pointsEqual, pointFrom) to use \u2014 effectively localizing the fix to a specific condition block."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-fix task, not a config-edit task."
     }
   },
   "tier_a_fails": [

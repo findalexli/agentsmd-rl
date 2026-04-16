@@ -1,0 +1,114 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T06:59:34.808507",
+  "total_time": 2941.16,
+  "sandbox_id": "i88m4m8jntno7xt88cd92",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 722.2,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 397.05,
+      "notes": ""
+    },
+    "improve": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 866.88,
+      "notes": "syntax error or missing file: "
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: 1) Docker build succeeded, 2) NOP test reward=0 (2 fail-to-pass tests correctly fail on buggy base code, 6 pass-to-pass tests pass), 3) Gold test reward=1 (all 8 tests pass after fix applied), 4) Rubric ICR=0.0 (rubrics are about agent conventions from CLAUDE.md but this is a simple code fix with no config/doc changes - the rubric rules do not apply to this task type). The gold fix correctly adds onOpen: _onOpen to the destructuring pattern to prevent React from forwarding it to the DOM.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 314.87
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.25,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:44: test `test_react_warning_not_emitted_for_onopen` has 1 assert(s), ', 'A:[A] test_not_tautological @ tests/test_outputs.py:123: test `test_onopen_destructured_before_spread` has 1 assert(s), al', 'A:[A] test_not_tautological @ tests/test_outputs.py:144: test `test_onopen_still_invoked_via_data_in_useeffect` has 1 asse', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 16.41,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":114,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"61e21b15-dd6b-4cb7-95b5-afa690bcfb01\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
+      "time": 1.47
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2328.17,
+      "at": "2026-04-15T04:59:54.820389"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 394.93,
+      "at": "2026-04-15T12:57:11.909559"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 567.76,
+      "at": "2026-04-15T19:01:11.090635"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 3235.41,
+      "at": "2026-04-16T00:11:05.496195"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 2941.16,
+      "at": "2026-04-16T06:59:34.808507"
+    }
+  ]
+}

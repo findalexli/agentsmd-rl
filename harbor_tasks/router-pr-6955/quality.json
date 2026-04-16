@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all specific identifiers tested: `isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`, `rolldownVersion`, `rolldownOptions`, `rollupOptions`, the file paths `utils.ts`, `plugin.ts`, `preview-server-plugin/plugin.ts`, and the import pattern `import * as vite from 'vite'`. All assert'd specifics are discoverable from the instruction."
+      "reason": "The instruction names all key specifics tested: `isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`, `rolldownOptions`, `rollupOptions`, `rolldownVersion`, the three file paths (`utils.ts`, `plugin.ts`, `preview-server-plugin/plugin.ts`), and the vite import for detection. The exact export names and function names are discoverable from the instruction's description of required changes."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact export names (`isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`), the exact detection mechanism (`rolldownVersion` in vite module), the exact import pattern, and the exact usage pattern (`[bundlerOptionsKey]` computed property). This goes far beyond describing what's broken \u2014 it prescribes the exact implementation."
+      "reason": "The instruction essentially dictates the exact implementation: export a constant `isRolldown`, export `bundlerOptionsKey` that resolves between rolldownOptions/rollupOptions, export a function `getBundlerOptions`, import vite and check for `rolldownVersion`, use `[bundlerOptionsKey]` as computed property. This is a near-complete specification of the solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like `export const isRolldown`, `export const bundlerOptionsKey`, `export function getBundlerOptions`, and `[bundlerOptionsKey]`. An alternative correct fix using different names (e.g., `isVite8`, `optionsKey`, `getOptions`) or a different approach (e.g., a single helper function) would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: exact export names like `export const isRolldown`, `export const bundlerOptionsKey`, `export function getBundlerOptions`, exact string `import * as vite from 'vite'`, exact property name `rolldownVersion`, and `[bundlerOptionsKey]` in plugin.ts. An alternative correct fix using different variable names (e.g., `isVite8`, `bundlerKey`, `getOptions`) or a different detection mechanism would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (TestBundlerDetectionUtilities and TestPluginIntegration classes) are entirely text-matching: they read files and assert on string presence like `assert 'export const isRolldown' in content`. Only the pass_to_pass tests (TestPackageBuildAndQuality) execute subprocesses. No f2p test imports, calls, or executes the code."
+      "reason": "The fail_to_pass tests (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration) are ALL text-matching: every single one reads a file and does `assert 'string' in content`. While TestPackageBuildAndQuality runs subprocesses (build, lint, types), the core behavioral tests never import, call, or execute the code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the literal text `export const isRolldown = false`, `export const bundlerOptionsKey = 'rollupOptions'`, and `export function getBundlerOptions() {}` with appropriate string mentions of `rolldownOptions`, `rollupOptions`, `?.` would pass all f2p tests without implementing any actual version detection logic, since the tests only check for string presence in files."
+      "reason": "A stub that simply adds the required export declarations (e.g., `export const isRolldown = false; export const bundlerOptionsKey = 'rollupOptions'; export function getBundlerOptions() {}`) with the right string literals would pass all f2p text-matching tests without implementing actual detection logic. The pass_to_pass build/type tests might catch some issues, but the f2p tests themselves are trivially satisfiable."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (version detection, bundler options key, getBundlerOptions function, plugin.ts integration, preview-server-plugin integration) have corresponding tests."
+      "reason": "All behaviors described in the instruction (version detection via rolldownVersion, bundlerOptionsKey selection, getBundlerOptions function, plugin.ts using dynamic key, preview-server-plugin using getBundlerOptions) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into named classes (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration, TestPackageBuildAndQuality) with descriptive docstrings and comments indicating fail_to_pass vs pass_to_pass."
+      "reason": "Tests are well-organized into classes (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration, TestPackageBuildAndQuality) with descriptive names and docstrings indicating fail_to_pass vs pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands across all task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact export names (`isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`), the exact detection check (`rolldownVersion` in vite module), and the exact usage pattern (`[bundlerOptionsKey]` computed property access) \u2014 effectively prescribing the implementation rather than just describing the problem."
+      "reason": "The instruction specifies exact export names (isRolldown, bundlerOptionsKey, getBundlerOptions), the exact detection property (rolldownVersion), the exact import pattern, and that plugin.ts should use computed property syntax. This goes well beyond naming the buggy files and describes the exact solution structure."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

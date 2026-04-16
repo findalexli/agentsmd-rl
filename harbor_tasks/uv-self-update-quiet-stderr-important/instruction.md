@@ -16,20 +16,21 @@ This is problematic for users running `uv self update` in cron jobs or CI pipeli
 
 Only `uv self update -qq` (double quiet / silent mode) should suppress everything.
 
-## Relevant Files
+## Technical Context
 
-- `crates/uv/src/printer.rs` — The `Printer` enum controls stderr output based on verbosity level. Currently `stderr()` returns `Disabled` for `Quiet` mode, with no way to distinguish between routine and important messages.
-- `crates/uv/src/commands/self_update.rs` — All user-facing messages use `printer.stderr()`, which means they're all suppressed equally under `-q`.
+The codebase uses a `Printer` enum (defined in `crates/uv/src/printer.rs`) to control stderr output based on verbosity level. The enum has variants including `Silent`, `Quiet`, `Default`, `Verbose`, and `NoProgress`. The current implementation treats both `Silent` and `Quiet` identically for stderr output.
 
-## Technical Requirements
+The `self update` command implementation is in `crates/uv/src/commands/self_update.rs` where important user-facing messages are currently being suppressed when `--quiet` is used.
 
-The fix requires:
+## Requirements
 
-1. **A new method on `Printer`** that returns `Stderr` and treats `Quiet` mode differently from `Silent` mode. The method must be named `stderr_important` and:
-   - Return `Stderr::Enabled` when the printer is in `Quiet` mode (so important messages are shown under `-q`)
-   - Return `Stderr::Disabled` when the printer is in `Silent` mode (so `-qq` still suppresses everything)
-   - Return `Stderr::Enabled` for all other modes (`Default`, `Verbose`, `NoProgress`)
+The fix must satisfy the following behavioral requirements that the test suite will verify:
 
-2. **At least 3 call sites in `self_update.rs`** that use `.stderr_important()` for important messages (update notifications, offline errors, rate-limit warnings, etc.) instead of `.stderr()`.
+1. **New `stderr_important` method**: The `Printer` enum must have a method named `stderr_important` with signature `fn stderr_important(self) -> Stderr` that distinguishes between `Quiet` and `Silent` modes:
+   - Returns `Stderr::Enabled` for `Quiet` mode (allowing important messages through)
+   - Returns `Stderr::Disabled` for `Silent` mode (double-quiet suppresses all)
+   - Returns `Stderr::Enabled` for `Default`, `Verbose`, and `NoProgress` modes
 
-3. **No regression**: the existing `stderr()` method must continue returning `Disabled` for both `Quiet` and `Silent` modes.
+2. **Adoption in self-update**: The `self_update.rs` file must call `.stderr_important()` at 3 or more sites for important messages (update notifications, offline errors, rate-limit warnings, version info, etc.) so they are visible even with `--quiet`.
+
+3. **No regression**: The existing `stderr()` method must continue to return `Stderr::Disabled` for both `Quiet` and `Silent` modes, ensuring routine informational messages remain suppressed in quiet mode.

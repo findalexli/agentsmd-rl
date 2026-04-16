@@ -1,0 +1,128 @@
+task:
+  name: prometheus-tsdb-agent-getorcreate-race
+  source_pr: prometheus/prometheus#18292
+  base_commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  merge_commit: 37d85980a3028cbcdfffa17761e0a1bd2bb534a2
+  description: |
+    Fixes a race condition in the Prometheus agent's getOrCreate where concurrent
+    appends for the same label set could produce duplicate in-memory series and
+    duplicate WAL records. The fix replaces GetOrSet with SetUnlessAlreadySet,
+    which uses a "first insertion wins" approach and cleans up losing refs.
+
+difficulty: medium
+time_estimate: 30m
+
+files:
+  primary:
+    - tsdb/agent/series.go
+    - tsdb/agent/db.go
+    - tsdb/agent/db_append_v2.go
+
+tags:
+  - go
+  - race-condition
+  - concurrency
+  - tsdb
+  - prometheus
+
+checks:
+  # Fail-to-pass tests - these must fail before fix and pass after
+  - id: test_concurrent_append_same_labels
+    type: fail_to_pass
+    origin: repo_tests
+    description: |
+      Concurrent appends for same label set produce exactly one series in memory
+      and one series record in the WAL (not duplicates).
+    test_file: test_outputs.py
+
+  - id: test_set_unless_already_set_concurrent
+    type: fail_to_pass
+    origin: repo_tests
+    description: |
+      Concurrent SetUnlessAlreadySet calls for same label set produce exactly
+      one canonical series with proper cleanup of losing refs.
+    test_file: test_outputs.py
+
+  - id: test_concurrent_gc_safety
+    type: fail_to_pass
+    origin: repo_tests
+    description: |
+      Concurrent SetUnlessAlreadySet and GC do not deadlock, survivors remain
+      reachable, and GC-eligible series are removed.
+    test_file: test_outputs.py
+
+  - id: test_setunlessalreadyset_method_exists
+    type: fail_to_pass
+    origin: programmatic
+    description: |
+      SetUnlessAlreadySet method must be added to stripeSeries.
+    test_file: test_outputs.py
+
+  # Pass-to-pass tests - these must pass both before and after
+  - id: test_set_unless_already_set_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Basic SetUnlessAlreadySet functionality works correctly.
+    test_file: test_outputs.py
+
+  - id: test_method_signature_updated
+    type: pass_to_pass
+    origin: programmatic
+    description: |
+      getOrCreate signature updated to accept ref parameter.
+    test_file: test_outputs.py
+
+  - id: test_agent_package_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Agent package compiles without errors.
+    test_file: test_outputs.py
+
+  - id: test_existing_agent_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      All agent package tests pass.
+    test_file: test_outputs.py
+
+  - id: test_go_vet_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      go vet passes on agent package.
+    test_file: test_outputs.py
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      go mod verify passes - module dependencies are consistent.
+    test_file: test_outputs.py
+
+  - id: test_stripe_series_get
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      TestStripeSeries_Get test passes - verifies stripeSeries GetByHash with hash collisions.
+    test_file: test_outputs.py
+
+  - id: test_no_deadlock
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      TestNoDeadlock test passes - verifies no deadlock between GC and Set operations.
+    test_file: test_outputs.py
+
+  - id: test_agent_go_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      go fmt passes on agent package - code formatting is correct.
+    test_file: test_outputs.py
+
+# Note: Rubric rules removed because the judge evaluates config/documentation
+# file edits, but this PR only modifies code files (tsdb/agent/*.go). The
+# AGENTS.md conventions (tests, code style, commits, scope) are enforced by
+# the test suite and code review, not via config file changes.

@@ -1,0 +1,112 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T10:53:06.296091",
+  "total_time": 70.58,
+  "sandbox_id": "i4rfbb1tyc5mp5jdp0sml",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1111.74,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 658.47,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Docker build passed after adding yarn cache clean. NOP test reward=0 (tests correctly fail on buggy base code). Gold test reward=1 (all tests pass after fix). Rubric judge returned 0.0 ICR because rubric rules are for documentation tasks (docs-style/SKILL.md) but this is a code bug fix task with no config/documentation component.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 913.4
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.4,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:68: test `test_stepcontainer_has_trim_check` has 2 assert(s), all pass', 'A:[A] test_not_tautological @ tests/test_outputs.py:95: test `test_chat_has_whitespace_check` has 3 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:133: test `test_chat_content_not_inline_rendered` has 2 assert(s), all', 'lint_tier_b:3', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `apt-get install`', 'B:[B] no_network_during_tests @ tests/test.sh:7: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 11.86,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":644,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.93
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 715.17,
+      "at": "2026-04-15T11:19:41.263873"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 571.39,
+      "at": "2026-04-15T12:47:51.474222"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1315.46,
+      "at": "2026-04-15T19:01:44.538237"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5741.32,
+      "at": "2026-04-15T23:26:04.096336"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 70.58,
+      "at": "2026-04-16T10:53:06.296091"
+    }
+  ]
+}

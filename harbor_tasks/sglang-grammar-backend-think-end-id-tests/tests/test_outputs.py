@@ -6,8 +6,10 @@ PR:   #22158
 Tests verify that create_grammar_backend test calls correctly pass think_end_id
 as an explicit keyword argument instead of setting tokenizer.think_end_id.
 
-NOTE: sglang imports torch at top level, so we cannot import modules directly.
-Tests use AST analysis to verify correct API usage patterns.
+Behavioral tests execute the actual repo test methods via subprocess, with
+lightweight mocks for heavy dependencies (torch, etc.) that are not needed
+for the tested logic.
+
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
@@ -20,59 +22,103 @@ REPO = "/workspace/sglang"
 TEST_FILE = f"{REPO}/test/registered/unit/constrained/test_base_grammar_backend.py"
 PROD_FILE = f"{REPO}/python/sglang/srt/constrained/base_grammar_backend.py"
 
+# ---------------------------------------------------------------------------
+# Mock setup code: creates lightweight stubs for heavy deps (torch, etc.)
+# and loads the actual production + test modules so they can be executed.
+# ---------------------------------------------------------------------------
+MOCK_SETUP = textwrap.dedent('''\
+import sys, types
 
-def _get_class_methods(filepath, class_name):
-    """Parse file and return dict of method_name -> ast.FunctionDef for a class."""
-    source = Path(filepath).read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == class_name:
-            return {
-                item.name: item
-                for item in node.body
-                if isinstance(item, ast.FunctionDef)
-            }
-    return {}
+# Create namespace packages (avoid sglang.__init__ which needs numpy/torch)
+sglang = types.ModuleType("sglang")
+sglang.__path__ = ["/workspace/sglang/python/sglang"]
+sglang.__package__ = "sglang"
+sys.modules["sglang"] = sglang
 
+sglang_srt = types.ModuleType("sglang.srt")
+sglang_srt.__path__ = ["/workspace/sglang/python/sglang/srt"]
+sglang_srt.__package__ = "sglang.srt"
+sys.modules["sglang.srt"] = sglang_srt
+sglang.srt = sglang_srt
 
-def _get_calls_in_method(method_node, func_name):
-    """Find all Call nodes for func_name within a method."""
-    calls = []
-    for node in ast.walk(method_node):
-        if isinstance(node, ast.Call):
-            func = node.func
-            # Match direct function call: func_name(...)
-            if isinstance(func, ast.Name) and func.id == func_name:
-                calls.append(node)
-    return calls
+sglang_srt_constrained = types.ModuleType("sglang.srt.constrained")
+sglang_srt_constrained.__path__ = ["/workspace/sglang/python/sglang/srt/constrained"]
+sglang_srt_constrained.__package__ = "sglang.srt.constrained"
+sys.modules["sglang.srt.constrained"] = sglang_srt_constrained
+sglang_srt.constrained = sglang_srt_constrained
 
+# Mock torch (only used for type annotations in constrained modules)
+class _FakeTensor: pass
+_torch = types.ModuleType("torch")
+_torch.Tensor = _FakeTensor
+sys.modules["torch"] = _torch
 
-def _has_keyword_arg(call_node, keyword_name):
-    """Check if a Call node has a specific keyword argument."""
-    for kw in call_node.keywords:
-        if kw.arg == keyword_name:
-            return True
-    return False
+# Minimal ServerArgs (needed by base_grammar_backend import)
+from dataclasses import dataclass
+from typing import Optional
 
+@dataclass
+class ServerArgs:
+    grammar_backend: str = "outlines"
+    reasoning_parser: Optional[str] = None
+    constrained_json_whitespace_pattern: str = ""
+    constrained_json_disable_any_whitespace: bool = False
 
-def _get_keyword_value(call_node, keyword_name):
-    """Get the value node of a keyword argument, or None."""
-    for kw in call_node.keywords:
-        if kw.arg == keyword_name:
-            return kw.value
-    return None
+_sa_mod = types.ModuleType("sglang.srt.server_args")
+_sa_mod.ServerArgs = ServerArgs
+sys.modules["sglang.srt.server_args"] = _sa_mod
 
+# Mock CI registration (no-op)
+for _n, _p in [
+    ("sglang.test", ["/workspace/sglang/python/sglang/test"]),
+    ("sglang.test.ci", ["/workspace/sglang/python/sglang/test/ci"]),
+    ("sglang.test.ci.ci_register", None),
+]:
+    _m = types.ModuleType(_n)
+    if _p: _m.__path__ = _p
+    _m.__package__ = _n
+    sys.modules[_n] = _m
+sys.modules["sglang.test.ci.ci_register"].register_cpu_ci = lambda *a, **kw: None
+sglang.test = sys.modules["sglang.test"]
+sys.modules["sglang.test"].ci = sys.modules["sglang.test.ci"]
+sys.modules["sglang.test.ci"].ci_register = sys.modules["sglang.test.ci.ci_register"]
 
-def _count_assignments(method_node, target_attr):
-    """Count attribute assignments like self.x = ... or tokenizer.think_end_id = 42."""
-    count = 0
-    for node in ast.walk(method_node):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if (isinstance(target, ast.Attribute) and
-                        target.attr == target_attr):
-                    count += 1
-    return count
+# Load production constrained modules
+import importlib.util
+for _mod_name, _mod_path in [
+    ("sglang.srt.constrained.base_grammar_backend",
+     "/workspace/sglang/python/sglang/srt/constrained/base_grammar_backend.py"),
+    ("sglang.srt.constrained.reasoner_grammar_backend",
+     "/workspace/sglang/python/sglang/srt/constrained/reasoner_grammar_backend.py"),
+]:
+    _spec = importlib.util.spec_from_file_location(_mod_name, _mod_path)
+    _mod = importlib.util.module_from_spec(_spec)
+    sys.modules[_mod_name] = _mod
+    setattr(sglang_srt_constrained, _mod_name.rsplit(".", 1)[1], _mod)
+    _spec.loader.exec_module(_mod)
+
+# Mock backend modules referenced by @patch decorators in test file
+from unittest.mock import MagicMock as _MM
+for _backend, _cls in [
+    ("outlines_backend", "OutlinesGrammarBackend"),
+    ("xgrammar_backend", "XGrammarGrammarBackend"),
+    ("llguidance_backend", "GuidanceBackend"),
+]:
+    _fn = "sglang.srt.constrained." + _backend
+    if _fn not in sys.modules:
+        _bm = types.ModuleType(_fn)
+        setattr(_bm, _cls, _MM())
+        sys.modules[_fn] = _bm
+        setattr(sglang_srt_constrained, _backend, _bm)
+
+# Load the repo test module
+_spec = importlib.util.spec_from_file_location(
+    "test_base_grammar_backend",
+    "/workspace/sglang/test/registered/unit/constrained/test_base_grammar_backend.py",
+)
+_test_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_test_mod)
+''')
 
 
 # ---------------------------------------------------------------------------
@@ -92,91 +138,178 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_think_end_id_passed_in_reasoner_test():
-    """test_reasoner_wrapping_on_builtin_backend must pass think_end_id=42 to create_grammar_backend."""
-    methods = _get_class_methods(TEST_FILE, "TestCreateGrammarBackend")
-    assert "test_reasoner_wrapping_on_builtin_backend" in methods, \
-        "test_reasoner_wrapping_on_builtin_backend method missing"
+    """Execute test_reasoner_wrapping_on_builtin_backend and verify it passes.
 
-    method = methods["test_reasoner_wrapping_on_builtin_backend"]
-    calls = _get_calls_in_method(method, "create_grammar_backend")
-    assert len(calls) >= 1, "No create_grammar_backend call found in test_reasoner_wrapping_on_builtin_backend"
+    This test calls create_grammar_backend and asserts the result is a
+    ReasonerGrammarBackend with think_end_id=42. It only passes when
+    think_end_id is provided as an explicit keyword argument to the function.
+    """
+    script = MOCK_SETUP + textwrap.dedent('''\
+import sys, unittest
 
-    # At least one call must pass think_end_id=42
-    found = False
-    for call in calls:
-        if _has_keyword_arg(call, "think_end_id"):
-            val = _get_keyword_value(call, "think_end_id")
-            # Check the value is 42 (ast.Constant for Python 3.8+)
-            if isinstance(val, ast.Constant) and val.value == 42:
-                found = True
-                break
-    assert found, "No create_grammar_backend(..., think_end_id=42) call found"
+suite = unittest.TestSuite()
+suite.addTest(
+    _test_mod.TestCreateGrammarBackend("test_reasoner_wrapping_on_builtin_backend")
+)
+result = unittest.TextTestRunner(verbosity=0, stream=open("/dev/null", "w")).run(suite)
+if not result.wasSuccessful():
+    for _, tb in result.failures + result.errors:
+        print(tb, file=sys.stderr)
+    sys.exit(1)
+''')
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"test_reasoner_wrapping_on_builtin_backend failed when executed:\n"
+        f"{r.stderr}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_think_end_id_none_in_no_wrapping_test():
-    """test_no_reasoner_wrapping_without_think_end_id must pass think_end_id=None."""
-    methods = _get_class_methods(TEST_FILE, "TestCreateGrammarBackend")
-    assert "test_no_reasoner_wrapping_without_think_end_id" in methods, \
-        "test_no_reasoner_wrapping_without_think_end_id method missing"
+    """Execute test_no_reasoner_wrapping_without_think_end_id with a spy on
+    create_grammar_backend to verify think_end_id=None is passed as a kwarg."""
+    script = MOCK_SETUP + textwrap.dedent('''\
+import sys
+from sglang.srt.constrained.base_grammar_backend import (
+    create_grammar_backend as _real,
+)
 
-    method = methods["test_no_reasoner_wrapping_without_think_end_id"]
-    calls = _get_calls_in_method(method, "create_grammar_backend")
-    assert len(calls) >= 1, "No create_grammar_backend call found"
+_captured_kwargs = []
 
-    found = False
-    for call in calls:
-        if _has_keyword_arg(call, "think_end_id"):
-            val = _get_keyword_value(call, "think_end_id")
-            if isinstance(val, ast.Constant) and val.value is None:
-                found = True
-                break
-    assert found, "No create_grammar_backend(..., think_end_id=None) call found"
+def _spy(*args, **kwargs):
+    _captured_kwargs.append(dict(kwargs))
+    return _real(*args, **kwargs)
+
+# Replace function reference in test module so test methods call our spy
+_test_mod.create_grammar_backend = _spy
+
+import unittest
+suite = unittest.TestSuite()
+suite.addTest(
+    _test_mod.TestCreateGrammarBackend(
+        "test_no_reasoner_wrapping_without_think_end_id"
+    )
+)
+unittest.TextTestRunner(verbosity=0, stream=open("/dev/null", "w")).run(suite)
+
+found = any(
+    "think_end_id" in kw and kw["think_end_id"] is None for kw in _captured_kwargs
+)
+if not found:
+    print(
+        f"think_end_id=None not passed as kwarg: {_captured_kwargs}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+''')
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"think_end_id=None not passed as kwarg:\n{r.stderr}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_think_end_id_passed_in_no_parser_test():
-    """test_no_reasoner_wrapping_without_reasoning_parser must pass think_end_id=42."""
-    methods = _get_class_methods(TEST_FILE, "TestCreateGrammarBackend")
-    assert "test_no_reasoner_wrapping_without_reasoning_parser" in methods, \
-        "test_no_reasoner_wrapping_without_reasoning_parser method missing"
+    """Execute test_no_reasoner_wrapping_without_reasoning_parser with a spy
+    on create_grammar_backend to verify think_end_id=42 is passed as a kwarg.
+    """
+    script = MOCK_SETUP + textwrap.dedent('''\
+import sys
+from sglang.srt.constrained.base_grammar_backend import (
+    create_grammar_backend as _real,
+)
 
-    method = methods["test_no_reasoner_wrapping_without_reasoning_parser"]
-    calls = _get_calls_in_method(method, "create_grammar_backend")
-    assert len(calls) >= 1, "No create_grammar_backend call found"
+_captured_kwargs = []
 
-    found = False
-    for call in calls:
-        if _has_keyword_arg(call, "think_end_id"):
-            val = _get_keyword_value(call, "think_end_id")
-            if isinstance(val, ast.Constant) and val.value == 42:
-                found = True
-                break
-    assert found, "No create_grammar_backend(..., think_end_id=42) call found"
+def _spy(*args, **kwargs):
+    _captured_kwargs.append(dict(kwargs))
+    return _real(*args, **kwargs)
+
+_test_mod.create_grammar_backend = _spy
+
+import unittest
+suite = unittest.TestSuite()
+suite.addTest(
+    _test_mod.TestCreateGrammarBackend(
+        "test_no_reasoner_wrapping_without_reasoning_parser"
+    )
+)
+unittest.TextTestRunner(verbosity=0, stream=open("/dev/null", "w")).run(suite)
+
+found = any(
+    "think_end_id" in kw and kw["think_end_id"] == 42 for kw in _captured_kwargs
+)
+if not found:
+    print(
+        f"think_end_id=42 not passed as kwarg: {_captured_kwargs}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+''')
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"think_end_id=42 not passed as kwarg:\n{r.stderr}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_no_tokenizer_think_end_id_assignment():
-    """tokenizer.think_end_id = N assignments must be removed from reasoner tests.
+    """Run the affected test methods and verify none of them set
+    tokenizer.think_end_id as an attribute (dead code from the old API).
 
-    The old API set tokenizer.think_end_id as an attribute. The new API passes
-    it as an explicit keyword argument. Setting it on the tokenizer is dead code.
+    Uses a MagicMock subclass that detects think_end_id assignments, then
+    checks that no such assignment occurred during test execution.
     """
-    methods = _get_class_methods(TEST_FILE, "TestCreateGrammarBackend")
+    script = MOCK_SETUP + textwrap.dedent('''\
+import sys
+import unittest
+import unittest.mock
 
-    # These four methods previously had tokenizer.think_end_id = 42
-    method_names = [
-        "test_custom_backend_skips_reasoner_wrapping",
-        "test_reasoner_wrapping_on_builtin_backend",
-        "test_no_reasoner_wrapping_without_think_end_id",
-        "test_no_reasoner_wrapping_without_reasoning_parser",
-    ]
+_assignments = []
 
-    for name in method_names:
-        assert name in methods, f"{name} method missing"
-        count = _count_assignments(methods[name], "think_end_id")
-        assert count == 0, \
-            f"{name} still has {count} assignment(s) to .think_end_id — should be removed"
+class _TrackingMock(unittest.mock.MagicMock):
+    def __setattr__(self, name, value):
+        if name == "think_end_id":
+            _assignments.append(value)
+        super().__setattr__(name, value)
+
+# Replace MagicMock in test module so tokenizer mocks are tracked
+_test_mod.MagicMock = _TrackingMock
+
+suite = unittest.TestSuite()
+for name in [
+    "test_custom_backend_skips_reasoner_wrapping",
+    "test_reasoner_wrapping_on_builtin_backend",
+    "test_no_reasoner_wrapping_without_think_end_id",
+    "test_no_reasoner_wrapping_without_reasoning_parser",
+]:
+    suite.addTest(_test_mod.TestCreateGrammarBackend(name))
+
+unittest.TextTestRunner(verbosity=0, stream=open("/dev/null", "w")).run(suite)
+
+if _assignments:
+    print(
+        f"tokenizer.think_end_id set {len(_assignments)} time(s): {_assignments}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+''')
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"tokenizer.think_end_id still assigned in test methods:\n{r.stderr}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +337,14 @@ def test_production_function_has_think_end_id_param():
 # [static] pass_to_pass
 def test_test_methods_preserved():
     """All original test methods must still exist (agent didn't delete tests)."""
-    methods = _get_class_methods(TEST_FILE, "TestCreateGrammarBackend")
+    source = Path(TEST_FILE).read_text()
+    tree = ast.parse(source)
+    methods = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "TestCreateGrammarBackend":
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef):
+                    methods.add(item.name)
     required = [
         "test_reasoner_wrapping_on_builtin_backend",
         "test_no_reasoner_wrapping_without_think_end_id",

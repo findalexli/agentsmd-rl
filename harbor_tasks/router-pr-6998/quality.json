@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the exact file path (packages/solid-router/src/headContentUtils.tsx), the function name (useTags), the import (replaceEqualDeep from @tanstack/router-core), the use of Solid.createMemo with prev parameter, and replaceEqualDeep(prev, next) call \u2014 all specifics asserted in the tests."
+      "reason": "instruction.md explicitly names the file path (packages/solid-router/src/headContentUtils.tsx), the function (useTags), the import (replaceEqualDeep from @tanstack/router-core), Solid.createMemo with prev parameter, and replaceEqualDeep(prev, next) \u2014 all specifics asserted in the tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md section 'Test Requirements' explicitly states the exact fix: import replaceEqualDeep from @tanstack/router-core, return Solid.createMemo with a prev parameter callback, and call replaceEqualDeep(prev, next). This tells the agent exactly WHAT to change, not just what's broken."
+      "reason": "instruction.md's 'Test Requirements' section explicitly states the exact fix: import replaceEqualDeep, return Solid.createMemo with prev parameter, call replaceEqualDeep(prev, next). This is not describing what's broken \u2014 it's prescribing the exact implementation changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert exact patterns like 'return Solid.createMemo((prev', 'replaceEqualDeep(prev, next)', and import from '@tanstack/router-core'. An alternative correct fix using e.g. a different variable name (like 'previous' instead of 'prev'), or 'next' named differently, or a different deep-equal utility, or wrapping in a helper function, would fail these regex tests despite being functionally correct."
+      "reason": "Tests assert exact syntax patterns like 'return Solid.createMemo((prev', 'replaceEqualDeep(prev, next)' via regex. An alternative correct fix using different variable names (e.g., 'previous' instead of 'prev', or 'current' instead of 'next'), or using a different memoization approach, would fail the regex-based tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_use_tags_imports_replace_equal_deep, test_use_tags_returns_create_memo, test_use_tags_calls_replace_equal_deep) are purely text-matching with regex on file content \u2014 they never import, execute, or test actual behavior. While pass-to-pass tests do run builds/tests, the core fail-to-pass tests are all 'assert pattern in open(path).read()'."
+      "reason": "The three fail-to-pass tests (test_use_tags_imports_replace_equal_deep, test_use_tags_returns_create_memo, test_use_tags_calls_replace_equal_deep) are purely text-matching via regex on file contents with no code execution. They use patterns like `assert re.search(r\"...\", content)` and `assert \"replaceEqualDeep\" in content`."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub that simply writes the matching text patterns into headContentUtils.tsx (e.g., adding the import line and a function with 'return Solid.createMemo((prev' and 'replaceEqualDeep(prev, next)') without actually fixing the bug could pass the three f2p tests, since they only check for string patterns in the file."
+      "reason": "The f2p tests only check file text content via regex. An agent could write arbitrary non-functional code containing the matched strings (e.g., a comment '// replaceEqualDeep(prev, next)') and pass all three f2p tests without actually fixing the bug. The pass-to-pass tests do run the build/test suite but aren't f2p."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three code pattern requirements listed in instruction.md are tested (import, createMemo with prev, replaceEqualDeep call), plus all five verification checks (unit tests, types, build, eslint, publint) are tested."
+      "reason": "All three code pattern requirements listed in instruction.md are tested (import, createMemo with prev, replaceEqualDeep call), plus build/test/lint/type checks are verified."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comments into 'FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS' sections, each test has a descriptive name and docstring."
+      "reason": "Tests are clearly grouped with comments into 'FAIL-TO-PASS TESTS' and 'PASS-TO-PASS TESTS' sections, with descriptive function names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, function names, and variable names in the instruction and tests are consistent and correct."
+      "reason": "File paths, commands, variable names, and package names in instruction.md and tests are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file (packages/solid-router/src/headContentUtils.tsx), the exact function (useTags), and the exact implementation details (import replaceEqualDeep, use Solid.createMemo with prev parameter, call replaceEqualDeep(prev, next)). This completely gives away the solution location and implementation."
+      "reason": "instruction.md names the exact file (packages/solid-router/src/headContentUtils.tsx), the exact function (useTags), and the exact implementation details (import replaceEqualDeep, use Solid.createMemo with prev, call replaceEqualDeep(prev, next)). This is extreme localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

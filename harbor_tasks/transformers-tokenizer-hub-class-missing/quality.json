@@ -2,55 +2,53 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific items like 'MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS' (the exact variable name), 'TOKENIZER_MAPPING_NAMES', entries in TOKENIZER_MAPPING_NAMES for deepseek_v2/deepseek_v3/modernbert (test_new_models_resolve_in_tokenizer_mapping), ruff format/lint checks, sort_auto_mappings, check_copies, check_dummies, check_inits, check_doc_toc, test_tokenizer_mapping_names_use_single_entries, and various repo consistency checks. The instruction.md never mentions 'TOKENIZER_MAPPING_NAM"
+      "outcome": "pass",
+      "reason": "The instruction mentions MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS implicitly by referencing model types with 'incorrect Hub tokenizer classes' and names the specific model types (deepseek_v2, deepseek_v3, modernbert) and the existing ones (arctic, chameleon, etc.). It mentions TOKENIZER_MAPPING_NAMES, sorting requirements, ruff checks, and repo consistency checks. The test specifics like the set name and mapping name are discoverable from the instruction's description of expected behavior and f"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (missing model type identifiers from an override set) and lists what needs to be added, but does not specify the exact file, line numbers, or code syntax to use. The agent still needs to locate the relevant code and determine how to add the entries."
+      "reason": "The instruction describes what's broken (three model types not recognized) and hints at the pattern (look at how existing model types are handled), but does not specify exact lines to change, exact file paths, or the specific code modification needed. The agent still needs to locate the relevant data structures and determine the correct insertion points."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check membership in sets/dicts (e.g., 'deepseek_v2' in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS) rather than asserting specific line positions or implementation details. An agent could add entries in different positions within the set literal and still pass. The sort_auto_mappings check constrains ordering but that's a valid repo constraint, not a gold-specific detail."
+      "reason": "The tests check membership in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS and TOKENIZER_MAPPING_NAMES, which are the canonical data structures any correct fix must modify. Alternative implementations (e.g., adding entries in different order, different positions in the set) would all pass as long as the entries are present and sorted. The tests don't assert specific line positions or implementation details beyond the required data structure contents."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import the actual module (from transformers.models.auto.tokenization_auto import MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS) and check runtime membership, run subprocess commands (ruff, python scripts), and execute actual code. They don't just grep file text."
+      "reason": "Tests import and call the actual code (e.g., importing MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS and TOKENIZER_MAPPING_NAMES and checking membership), run subprocess commands (ruff, sort_auto_mappings, check_copies, etc.), and compile the module. They test behavior, not just text patterns in files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check that 'deepseek_v2', 'deepseek_v3', and 'modernbert' are in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS and TOKENIZER_MAPPING_NAMES. At the base commit these entries don't exist, so a stub/no-op would fail. The agent must actually modify the code to add these entries."
+      "reason": "The fail-to-pass tests check that 'deepseek_v2', 'deepseek_v3', and 'modernbert' are in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS and TOKENIZER_MAPPING_NAMES. These entries don't exist at the base commit, so a stub or no-op implementation would fail. The agent must actually add these entries to the data structures."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires adding deepseek_v2, deepseek_v3, modernbert to the override set and preserving existing entries. All of these are tested: individual membership tests for new entries, preservation test for existing entries."
+      "reason": "All six expected behaviors listed in the instruction are tested: (1) recognition in incorrect hub set, (2) resolvability in TOKENIZER_MAPPING_NAMES, (3) existing entries preserved, (4) auto mappings sorted, (5) ruff and consistency checks, (6) no Copied from block modifications."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Additional), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Additional), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task involves modifying Python source code data structures, not producing structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or model type identifiers across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the concept (override set for incorrect Hub tokenizer classes) and lists model identifiers to add, but does not name the exact file (tokenization_auto.py) or variable name (MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS). The agent must locate these."
+      "reason": "The instruction doesn't name the exact file (tokenization_auto.py) or the exact variable (MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS). It describes the problem domain and points to existing patterns to investigate, which is appropriate guidance without being a solution."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task modifying Python source files, not a config/agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

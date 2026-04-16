@@ -3,27 +3,27 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: Watchpack 'remove' event handler with wp.on('remove'), RESTART_EXIT_CODE, 'missing' option in wp.watch(), path.join(dir, distDir), path.dirname ancestor walking with .push(), and .includes(filename) guard in the change handler. All assert'd patterns in tests are discoverable from instruction.md."
+      "reason": "The instruction explicitly names the file path (packages/next/src/server/lib/start-server.ts), Watchpack methods (wp.watch, wp.on('remove'), wp.on('change')), the 'missing' option, path.join(dir, distDir), path.dirname, .push(), .includes(), Log.error(), process.exit(RESTART_EXIT_CODE), and the config file guard. All specific strings and patterns checked by the tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: create Watchpack with 'missing' option, compute path via path.join(dir, distDir), walk ancestors with path.dirname in a loop using .push(), register wp.on('remove') with .includes() guard, call Log.error() then process.exit(RESTART_EXIT_CODE), and guard the change handler with .includes(filename). This is a complete code specification, not a bug description."
+      "reason": "The instruction essentially prescribes the exact implementation: create Watchpack instance, use 'missing' option with ancestor directory paths computed via path.join(dir, distDir) and path.dirname in a loop with .push(), register 'remove' handler with .includes() guard calling Log.error() and process.exit(RESTART_EXIT_CODE), and add .includes(filename) guard to change handler. This leaves virtually no reasoning about WHAT to change \u2014 it's a step-by-step recipe."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to match exact patterns like /wp\\.on\\(\\s*'remove'/, /path\\.join\\(dir,\\s*distDir\\)/, /\\.push\\(/, /\\.includes\\(filename\\)/. An alternative correct fix using e.g., a Set with .has(), Array.find(), different variable names, or fs.watch instead of Watchpack would fail these tests despite being functionally correct."
+      "reason": "Tests use regex matching for gold-specific patterns like /path\\.join\\(dir,\\s*distDir\\)/, /\\.push\\(/, /wp\\.on\\(\\s*'remove'/, /\\.includes\\(filename\\)/. An alternative correct fix using e.g. a Set, Array.from, spread syntax, or different variable naming (e.g., absoluteDistDir instead of using path.join(dir, distDir) directly) would fail these regex-based checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_remove_event_handler, test_missing_option_in_watchpack, test_distdir_ancestor_walking, test_change_handler_guards_config_files) read the source file and use regex/string matching on its text content. None execute the code, import modules, or test actual behavior like deleting a directory and verifying a restart."
+      "reason": "All fail-to-pass tests (test_remove_event_handler, test_missing_option_in_watchpack, test_distdir_ancestor_walking, test_change_handler_guards_config_files) exclusively read the source file and check for regex/string patterns. No test actually executes the server, imports the module, or verifies runtime behavior. They are purely textual assertions."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A developer could pass all f2p tests by simply inserting a dead-code comment block containing the expected string patterns (e.g., 'wp.on(\"remove\"', 'path.join(dir, distDir)', '.push(', '.includes(filename)') without implementing any actual functionality, since the tests only do text/regex matching on the source file."
+      "reason": "Since all fail-to-pass tests only do string/regex matching on the source code, a stub that simply appends a comment block containing the required strings (e.g., 'wp.on(\"remove\"', 'RESTART_EXIT_CODE', '.includes(filename)', 'path.join(dir, distDir)', 'path.dirname(', '.push(', 'missing') would pass all tests without implementing any actual functionality."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md (Watchpack missing option, remove handler with path guard and RESTART_EXIT_CODE, ancestor walking with path.dirname and push, change handler config file guard) are covered by corresponding test functions."
+      "reason": "All four behavioral requirements from the instruction (missing option, remove handler with guard, ancestor walking, change handler guard) are covered by the four fail-to-pass tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,19 +31,19 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "This task involves modifying server startup code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (packages/next/src/server/lib/start-server.ts), the exact block ('if (isDev)' block), exact variable names (dir, distDir, wp), exact method calls (wp.on('remove'), Log.error(), process.exit(RESTART_EXIT_CODE)), and exact implementation patterns (.includes(), .push(), path.dirname loop). This goes far beyond identifying the buggy area."
+      "reason": "The instruction specifies the exact file (packages/next/src/server/lib/start-server.ts), the exact block ('if (isDev)' block), and extremely detailed implementation steps including exact method calls, variable names, and code patterns. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

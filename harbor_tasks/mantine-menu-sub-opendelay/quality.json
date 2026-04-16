@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly states all four acceptance criteria that map to the test assertions: the exact string 'openDelay?: number;', 'openDelay: 0,', the destructuring pattern 'const { children, closeDelay, openDelay, ...others }', and that the hook must receive 'openDelay,' not 'openDelay: 0,'. The file path 'packages/@mantine/core/src/components/Menu/' is mentioned. The test for 'export interface MenuSubProps' and 'export function MenuSub' are discoverable from the codebase conventions ment"
+      "reason": "Instruction explicitly states all asserted strings: 'openDelay?: number;', 'openDelay: 0,', the exact destructure pattern, and the 'openDelay,' hook argument pattern."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction's Acceptance Criteria section essentially IS the solution: it specifies exactly what strings to add ('openDelay?: number;'), exactly what to put in defaults ('openDelay: 0,'), the exact destructuring pattern ('const { children, closeDelay, openDelay, ...others }'), and exactly how to pass it to the hook ('openDelay,' not 'openDelay: 0,'). This is telling the agent precisely what to change, not just describing what's broken."
+      "reason": "The instruction dictates the exact destructure pattern 'const { children, closeDelay, openDelay, ...others }' and exact strings like 'openDelay?: number;' and 'openDelay: 0,', which essentially spell out the fix verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'const { children, closeDelay, openDelay, ...others }' which would fail if someone used a different destructuring order (e.g., 'const { children, openDelay, closeDelay, ...others }'). A correct alternative implementation that destructures in a different order or uses different variable naming patterns would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests require exact string 'const { children, closeDelay, openDelay, ...others }' \u2014 any correct alternative ordering like '{ children, openDelay, closeDelay, ...others }' would fail, even though functionally equivalent."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The four fail-to-pass tests (test_opendelay_prop_in_interface, test_opendelay_in_default_props, test_opendelay_destructured, test_opendelay_passed_to_useDelayedHover) are ALL purely text-matching: they read the file content and assert exact strings like 'openDelay?: number;' in content. None of them import, compile, or execute the component. The test_opendelay_values_vary test does attempt TypeScript compilation but only checks that 'openDelay' doesn't appear in error output, which is weak behav"
+      "outcome": "pass",
+      "reason": "Beyond string checks, tests run ESLint, Prettier, TypeScript compilation via test_opendelay_values_vary, and repo CI scripts."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass because the tests check for specific strings that must be added to the file (e.g., 'openDelay?: number;' in the interface, the destructuring pattern). The original file does not contain these strings, so the agent must actually make changes."
+      "reason": "Tests require the variable reference 'openDelay,' inside useDelayedHover call block and disallow 'openDelay: 0,' there, which forces actual wiring, not just a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four acceptance criteria from instruction.md are tested: the interface declaration, default props, destructuring pattern, and hook call parameter. Additional CI checks (prettier, eslint, conflict markers) also cover the 'must pass TypeScript type checking and ESLint' requirement."
+      "reason": "All four acceptance criteria from instruction.md map directly to the four f2p tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names (test_opendelay_prop_in_interface, test_opendelay_in_default_props, etc.), docstrings indicating fail-to-pass vs pass-to-pass, and clear assertion messages explaining what each test checks."
+      "reason": "Tests have descriptive names and docstrings labeling fail-to-pass vs pass-to-pass groupings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies component source code, not structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a code change, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in instruction.md are correct and consistent with the actual codebase structure."
+      "reason": "File paths and identifiers match the repo structure and are consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact code patterns to use: 'const { children, closeDelay, openDelay, ...others }' and 'openDelay: 0,' and states it must NOT pass 'openDelay: 0,' to the hook. This reveals the exact lines to change and what to change them to, going beyond describing the problem domain."
+      "reason": "Instruction reveals the exact destructure line and exact strings to add ('openDelay?: number;', 'openDelay: 0,', 'openDelay,' to the hook), removing the localization/implementation reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript component file, not a configuration edit task."
+      "reason": "Code-only task, no agentmd config edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

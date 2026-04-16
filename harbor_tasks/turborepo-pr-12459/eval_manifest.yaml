@@ -1,0 +1,130 @@
+# eval_manifest.yaml — vercel/turborepo#12459
+
+version: 1
+
+task:
+  repo: vercel/turborepo
+  pr_number: 12459
+  title: "fix: Prevent panic in `turbo watch` with persistent tasks"
+  base_commit: e3b89b03ff7b9a34e0f4e25bb9e25ba76a171e77
+  merge_commit: 337b2e82b9c07b14b17fc864787d8a845e5022b8
+
+  files_changed:
+    - crates/turborepo-lib/src/run/mod.rs
+    - crates/turborepo-lib/src/task_graph/visitor/mod.rs
+
+checks:
+  - id: test_cargo_check
+    description: "turbo-repo-lib compiles without errors"
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "44-54"
+      note: "Rust code must compile — modified files are in tracked paths"
+
+  - id: test_cargo_clippy
+    description: "turbo-repo-lib passes clippy lints"
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: .github/workflows/lint.yml
+      lines: "59-78"
+      note: "Clippy runs in CI on all Rust changes — code must be lint-clean"
+
+  - id: test_cargo_test_turborepo_lib
+    description: "turbo-repo-lib unit tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    note: "Repo's own test suite must continue to pass after the fix"
+
+  - id: test_repo_watch_tests
+    description: "Watch mode tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    note: "Watch mode is directly affected by the persistent task fix"
+
+  - id: test_repo_visitor_command_tests
+    description: "Visitor command tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    note: "Visitor module contains the Arc::try_unwrap fix"
+
+  - id: test_repo_task_filter_tests
+    description: "Task filter tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    note: "Task filtering in run module may interact with the fix"
+
+  - id: test_repo_fmt_check
+    description: "Rust formatting check passes"
+    type: pass_to_pass
+    origin: repo_tests
+    note: "CI runs cargo fmt --check on all Rust changes"
+
+  - id: test_try_unwrap_pattern_exists
+    description: "visitor/mod.rs uses Arc::try_unwrap instead of Arc::into_inner"
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "20-30"
+      note: >
+        When modifying core task_graph components (files in
+        crates/turborepo-lib/src/task_graph/), Arc-based concurrency
+        patterns must be safe for multi-reference scenarios in watch mode.
+        The fix must not use Arc::into_inner which panics on extra refs.
+
+  - id: test_watch_mode_guard_exists
+    description: "processes.stop() is guarded by is_watch check in execute_visitor"
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "20-30"
+      note: >
+        When modifying files in crates/turborepo-lib/src/run/, the
+        is_watch flag must be respected to prevent killing persistent
+        tasks managed by the watch coordinator.
+
+rubric:
+  - id: arch_doc_update
+    description: >
+      The two core Rust files in crates/turborepo-lib/src/run/ and
+      crates/turborepo-lib/src/task_graph/ were correctly modified with the fix.
+      Specifically, run/mod.rs has the is_watch guard and visitor/mod.rs has
+      the try_unwrap pattern. The patch correctly addresses the persistent
+      task panic issue.
+    weight: 1
+    source:
+      path: crates/turborepo-lib/src/task_graph/visitor/mod.rs
+    reference: |
+      let errors = match Arc::try_unwrap(errors) {
+          Ok(mutex) => mutex.into_inner().expect("mutex poisoned"),
+          Err(arc) => {
+              // In watch mode, fire-and-forget persistent tasks may still
+              // hold references. Drain the collected errors from the mutex.
+              std::mem::take(&mut *arc.lock().expect("mutex poisoned"))
+          }
+      };
+
+  - id: pr_title_format
+    description: >
+      The fix compiles without warnings and all tests pass. The cargo check,
+      clippy, and test commands all succeed, confirming the fix is correct.
+    weight: 1
+    source:
+      path: crates/turborepo-lib/src/run/mod.rs
+    reference: |
+      if !is_watch {
+          self.processes.stop().await;
+      }
+
+  - id: commit_hooks_enforced
+    description: >
+      The patch applies cleanly to both run/mod.rs and visitor/mod.rs without
+      conflicts. The fix is self-contained and doesn't bypass any safety checks.
+    weight: 1
+    source:
+      path: crates/turborepo-lib/src/run/mod.rs
+    reference: "if !is_watch"

@@ -1,18 +1,48 @@
-# Bug: dill serialization fails for classes defined inside CustomTestCase subclasses
+# Bug: dill serialization emits recursive-reference warnings for CustomTestCase subclasses
 
 ## Summary
 
-When using `dill.dumps()` on classes that are defined inside test methods of `CustomTestCase` subclasses (in `python/sglang/test/test_utils.py`), serialization emits recursive-reference warnings and may fail for classes defined within those test methods.
+When using `dill.dumps()` on subclasses of `CustomTestCase` (defined in `python/sglang/test/test_utils.py`), serialization emits warnings about recursive self-references, indicating a circular reference exists in the class hierarchy. Fix `CustomTestCase` so that this circular reference is eliminated.
 
-## Expected behavior
+## Observed symptom
 
-After the fix, the following must all be true:
+Calling `dill.dumps()` on a `CustomTestCase` subclass that defines `setUpClass` produces warnings containing the string `"recursive self-references"`. For example:
 
-1. **No dill warning**: `dill.dumps(SubclassOfCustomTestCase)` must not emit "recursive self-references" warnings.
-2. **No circular reference**: The wrapping mechanism must not create a reference cycle through bound-method defaults. Specifically, the wrapped `setUpClass` function must not capture the original bound method as a default parameter that holds a reference back to the class (via `__self__`).
-3. **Original still called**: The wrapped `setUpClass` must still invoke the original `setUpClass` implementation.
-4. **Normal subclass behavior**: Subclasses of subclasses must not double-wrap; `setUpClass` must be called exactly once.
+```python
+import dill, warnings
 
-## Files involved
+class MyTest(CustomTestCase):
+    @classmethod
+    def setUpClass(cls):
+        pass
+    def test_example(self):
+        pass
 
-- `python/sglang/test/test_utils.py` — the `CustomTestCase` class with its `__init_subclass__` hook
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    dill.dumps(MyTest)
+
+# w contains warnings with "recursive self-references" in the message
+```
+
+This indicates a circular reference cycle involving the subclass and its wrapped `setUpClass` method.
+
+## Requirements
+
+After fixing, all of the following must hold:
+
+1. **No dill warning**: `dill.dumps()` on a `CustomTestCase` subclass must not emit any warnings whose message contains `"recursive self-references"`.
+
+2. **No circular reference in function defaults**: Inspecting `SubclassOfCustomTestCase.setUpClass.__func__.__defaults__` must not reveal any bound method whose `__self__` attribute references the subclass. Specifically, for each default value `d`, if `hasattr(d, "__self__")` is true, then `d.__self__` must not be the subclass class itself.
+
+3. **Original setUpClass still invoked**: The safety wrapping must still correctly invoke the original `setUpClass` implementation. When `setUpClass` raises an exception, `tearDownClass` must still be called (best-effort cleanup).
+
+4. **No double-wrapping**: Subclasses of subclasses of `CustomTestCase` must not double-wrap `setUpClass`. The `_safe_setup_wrapped` attribute is used to guard against re-wrapping. Calling `setUpClass` on a grandchild class should invoke the original `setUpClass` exactly once.
+
+5. **Meaningful `__init_subclass__`**: The `CustomTestCase.__init_subclass__` method must retain meaningful logic (at least 3 non-docstring statements). Do not stub it out or remove it.
+
+6. **Code quality**: The modified file must pass `ruff` (syntax `E9` and import `F401,F821` checks), `black --check`, `isort --check`, `codespell`, and pre-commit hooks (`check-ast`, `trailing-whitespace`, `end-of-file-fixer`, `debug-statements`).
+
+## File to modify
+
+- `python/sglang/test/test_utils.py`

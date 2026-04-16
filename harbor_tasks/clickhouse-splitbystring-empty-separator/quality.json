@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'value_as_string' (test_validation_logic_structure), the method 'values.emplace_back' (test_validation_logic_structure), the lambda name 'split_by_string_creator' (multiple tests), 'castAs' function (test_required_components_exist), and the exact file path 'src/Interpreters/TokenizerFactory.cpp' (used as TARGET_FILE). The instruction never mentions the file path, variable names, or internal functio"
+      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: the variable name 'value_as_string' (test_validation_logic_structure, test_empty_string_validation_compiles), the method 'values.emplace_back' (test_validation_logic_structure), the lambda name 'split_by_string_creator' (multiple tests), and 'castAs' function (test_required_components_exist). The instruction never mentions these internal identifiers."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (empty string separators are silently accepted) and the expected error messages, but does not specify exact code changes, line numbers, or implementation details like variable names."
+      "reason": "The instruction describes what's broken (empty separator not rejected) and what the expected error messages should be, but does not specify the exact code changes, line numbers, or variable names needed to fix it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names like 'value_as_string' (test_validation_logic_structure, test_empty_string_validation_compiles), exact method call 'values.emplace_back' (test_validation_logic_structure), and require the empty check to use specifically 'value_as_string.empty()'. An alternative correct fix using a different variable name (e.g., 'sep_str') or different approach (e.g., filtering empties then checking) would fail."
+      "reason": "Tests assert on gold-specific variable names like 'value_as_string' (test_empty_string_validation_compiles: assert 'value_as_string.empty()' in creator), 'values.emplace_back' ordering (test_validation_logic_structure), and the specific pattern of extracting to value_as_string before checking. An alternative correct fix using a different variable name (e.g., 'sep_str') or different validation structure would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely text/regex matching on source file content (e.g., 'assert \"value_as_string.empty()\" in creator', 'assert msg in creator'). test_cpp_code_compiles does run clang syntax check but only on an extracted snippet with mock types, not actual behavioral execution. No test actually runs the tokenizer or checks runtime behavior."
+      "reason": "Nearly all F2P tests are string-matching on source code: e.g., test_empty_string_validation_compiles checks 'value_as_string.empty()' in creator, test_error_messages_exact checks for literal strings in source. test_cpp_code_compiles does run clang syntax check, but the core behavioral tests never execute the actual tokenizer or test that invalid queries are rejected at runtime."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The F2P tests (test_empty_string_validation_compiles, test_validation_logic_structure, test_error_messages_exact) are all string-matching tests. An agent could satisfy them by inserting dead code comments or unreachable code containing the expected strings like 'value_as_string.empty()' and the error messages without actually implementing the validation logic correctly."
+      "outcome": "pass",
+      "reason": "The F2P tests check for specific new content ('value_as_string.empty()', 'the empty string cannot be used as a separator') that doesn't exist in the original source file and absence of old text ('separators cannot be empty'). A stub or unmodified file would fail these checks."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says queries like 'SELECT tokens(...)' should be rejected with BAD_ARGUMENTS errors, but no test actually executes these SQL queries or verifies runtime behavior. The instruction also says the old message 'separators cannot be empty' must no longer appear 'anywhere in the tokenizer implementation' \u2014 test_error_messages_exact only checks within the extracted lambda, not the entire file."
+      "reason": "The instruction says queries like SELECT tokens('a bc d', 'splitByString', ['']) should be rejected with BAD_ARGUMENTS errors, but no test actually executes such a query or verifies runtime rejection behavior. Tests only check source code text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped into F2P and P2P categories with clear docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with descriptive names (test_error_messages_exact, test_validation_logic_structure, etc.), grouped by F2P vs P2P categories, and include docstrings explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction does not mention the specific file path (src/Interpreters/TokenizerFactory.cpp), line numbers, variable names, or internal implementation details. It only describes the feature and expected error messages."
+      "reason": "The instruction doesn't name the exact file (TokenizerFactory.cpp) or specific line numbers. It describes the problem at the feature/behavior level (splitByString tokenizer validation) which is appropriate."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -49,13 +49,12 @@
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

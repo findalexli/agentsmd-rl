@@ -1,108 +1,180 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 22298
-  base_commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"
-  merge_commit: "36f05810c9c7fc5fe63736439378aa6233856222"
-
+  base_commit: 4e4b4ac153e7e313bdf26e37f00188acd45c00e0
+  merge_commit: 36f05810c9c7fc5fe63736439378aa6233856222
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: files_moved_to_manual
+  type: fail_to_pass
+  origin: pr_diff
+  description: Files were moved from test/registered/8-gpu-models/ to test/manual/
+- id: register_cuda_ci_removed_from_manual_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: register_cuda_ci() calls were removed from moved files
+- id: import_ci_register_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import of ci_register was removed from moved files
+- id: files_removed_from_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: Files no longer exist in test/registered/8-gpu-models/
+- id: collect_tests_does_not_fail
+  type: pass_to_pass
+  origin: pr_diff
+  description: collect_tests() does not raise ValueError for remaining registered
+    files
+- id: remaining_registered_files_have_registration
+  type: pass_to_pass
+  origin: pr_diff
+  description: Remaining files in test/registered/8-gpu-models/ have proper CI registration
+- id: test_ci_register_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci_register module parses without errors
+- id: test_registered_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All registered test files have valid Python syntax
+- id: test_ci_register_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci_register module passes ruff linting checks
+- id: test_ci_register_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci_register module passes black formatting check
+- id: test_ci_register_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci_register module passes isort import sorting check
+- id: test_ci_register_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci_register module passes codespell spelling check
+- id: test_workflow_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow YAML files are valid
+- id: test_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is valid TOML
+- id: test_registered_dir_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Registered test files pass isort import sorting check
+- id: test_workflow_job_names_unique
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workflow job names are unique across workflows
+- id: test_pre_commit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: All pre-commit hooks pass on the codebase
+- id: test_ci_permissions_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI_PERMISSIONS.json is valid JSON
+- id: test_all_ci_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI scripts in scripts/ci/ have valid Python syntax
+rubric:
+- rule: 'Test Placement: Non-CI, manual verification tests must be placed in the test/manual/
+    directory.'
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '383'
+  source_text: '├── manual/              # Non-CI: debugging, one-off, manual verification'
+  evidence: The gold diff explicitly follows this directory convention by moving three
+    manual 8-GPU model test files (test_deepseek_v31.py, test_glm_46_fp8.py, test_qwen3_235b.py)
+    out of the CI-discovered test/registered/ directory and into the test/manual/
+    directory.
+  category: testing
+  verification: llm_judge
+- rule: Place non-CI tests (debugging, one-off, manual verification) in `test/manual/`.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 383-396
+  source_text: '├── manual/              # Non-CI: debugging, one-off, manual verification
 
-  - id: files_moved_to_manual
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Files were moved from test/registered/8-gpu-models/ to test/manual/"
+    └── run_suite.py         # CI runner (scans registered/ plus jit_kernel test/benchmark
+    files)
 
-  - id: register_cuda_ci_removed_from_manual_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "register_cuda_ci() calls were removed from moved files"
 
-  - id: import_ci_register_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Import of ci_register was removed from moved files"
+    python/sglang/jit_kernel/
 
-  - id: files_removed_from_registered
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Files no longer exist in test/registered/8-gpu-models/"
+    ├── tests/               # JIT kernel correctness tests (CI-discovered by test/run_suite.py)
 
-  - id: collect_tests_does_not_fail
-    type: pass_to_pass
-    origin: pr_diff
-    description: "collect_tests() does not raise ValueError for remaining registered files"
+    └── benchmark/           # JIT kernel benchmarks (CI-discovered by test/run_suite.py)
 
-  - id: remaining_registered_files_have_registration
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Remaining files in test/registered/8-gpu-models/ have proper CI registration"
+    ```
 
-  - id: test_ci_register_module
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ci_register module parses without errors"
 
-  - id: test_registered_files_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All registered test files have valid Python syntax"
+    **Decision rule** (see also `test/registered/README.md`):
 
-  - id: test_ci_register_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ci_register module passes ruff linting checks"
+    - Component logic, no server → `registered/unit/`
 
-  - id: test_ci_register_black
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ci_register module passes black formatting check"
+    - JIT kernel correctness / benchmarks → `python/sglang/jit_kernel/tests/` or `python/sglang/jit_kernel/benchmark/`
 
-  - id: test_ci_register_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ci_register module passes isort import sorting check"
+    - Other kernel correctness → `registered/kernels/`
 
-  - id: test_ci_register_codespell
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ci_register module passes codespell spelling check"
+    - Server needed → `registered/<category>/`
 
-  - id: test_workflow_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI workflow YAML files are valid"
-
-  - id: test_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml is valid TOML"
-
-  - id: test_registered_dir_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Registered test files pass isort import sorting check"
-
-  - id: test_workflow_job_names_unique
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Workflow job names are unique across workflows"
-
-  - id: test_pre_commit_hooks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All pre-commit hooks pass on the codebase"
-
-  - id: test_ci_permissions_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI_PERMISSIONS.json is valid JSON"
-
-  - id: test_all_ci_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All CI scripts in scripts/ci/ have valid Python syntax"
+    - Local debugging → `manual/`'
+  evidence: The gold diff correctly renames tests (test_deepseek_v31.py, test_glm_46_fp8.py,
+    test_qwen3_235b.py) from test/registered/8-gpu-models/ to test/manual/ while simultaneously
+    removing their CI registration, strictly adhering to the architectural boundary
+    that non-CI tests must be placed in test/manual/.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Always use CustomTestCase — never raw unittest.TestCase.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
+    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
+    leaks in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The test files modified in the PR currently use raw unittest.TestCase.
+    An agent reading this rule might incorrectly attempt to refactor these classes
+    to inherit from CustomTestCase. However, since these tests are explicitly being
+    moved to the manual/ directory to run locally and outside of CI, the strict CI
+    resource leak protections do not apply.
+  severity: medium
+- rule: Place tests in test/registered/<category>/
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '14'
+  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel
+    tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/`
+    (nested subfolders are allowed)
+  collision_type: rule_conflict
+  why_distracting: The gold diff explicitly moves tests out of test/registered/ and
+    into test/manual/ in order to remove them from the automated CI pipeline. An agent
+    might encounter this general testing rule and mistakenly believe that all tests
+    must reside in the registered/ directory, incorrectly moving them back or placing
+    new manual tests there.
+  severity: high
+- rule: Every CI-discovered test file must call a registration function at module
+    level
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '310'
+  source_text: 'Every CI-discovered test file must call a registration function at
+    module level:'
+  collision_type: scope_ambiguity
+  why_distracting: The PR removes the register_cuda_ci function calls precisely because
+    the tests are being moved to test/manual/ and are no longer meant to be discovered
+    by the CI suite runner. An agent might read this rule, recognize that the files
+    are tests, and incorrectly attempt to preserve or re-add the CI registration function
+    call.
+  severity: high

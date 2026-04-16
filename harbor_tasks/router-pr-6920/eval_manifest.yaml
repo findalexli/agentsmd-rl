@@ -1,0 +1,62 @@
+version: "1.0"
+
+source:
+  repo: TanStack/router
+  pr_number: 6920
+  base_commit: 773c7c9cb9c17646020286a2d8721e2f0b628f8c
+  merge_commit: bfd6e62780f1cb96c210ae405723c5ebc22b10b0
+
+checks:
+  - id: test_xmlns_xhtml_namespace_declared
+    type: fail_to_pass
+    origin: pr_behavior
+    description: xmlns:xhtml namespace is declared in sitemap generation code
+
+  - id: test_xmlns_xhtml_in_ele_call
+    type: fail_to_pass
+    origin: pr_behavior
+    description: xmlns:xhtml is declared in the .ele() call for the root element
+
+  - id: test_sitemap_xml_generation_valid
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Generated sitemap XML includes proper xmlns:xhtml declaration
+
+  - id: test_namespace_order_correct
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Both xmlns declarations are in the ele() attributes object
+
+  - id: test_package_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: start-plugin-core package builds successfully
+
+  - id: test_package_type_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes for the package
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package vitest unit tests pass (325 tests)
+
+  - id: test_repo_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: publint and attw package export validation passes
+
+  - id: test_sitemap_has_base_xmlns
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Base sitemap xmlns (sitemaps.org) is still present
+
+# Rubric section intentionally empty - this is a code-only task with no documentation edits required.
+# The judge evaluates documentation compliance, which is not applicable here.
+rubric: []

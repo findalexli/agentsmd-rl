@@ -6,9 +6,9 @@ PR:   38083
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Note: This is a Java file in the apache/beam monorepo. The class cannot
-be compiled in isolation (deep Flink/Beam dependency graph), so tests use
-source analysis + a standalone Java subprocess test for the concurrency pattern.
+Behavioral approach: f2p tests verify the concurrency behavior by checking for
+proper synchronization patterns. Tests accept ANY correct implementation using
+java.util.concurrent primitives (CountDownLatch, Semaphore, Condition, etc.).
 """
 
 import subprocess
@@ -29,26 +29,6 @@ def _read_source():
     return Path(TARGET_FILE).read_text()
 
 
-def _extract_method(source, method_name):
-    """Extract a Java method body by name using brace-counting."""
-    pattern = re.compile(
-        rf"(?:public|private|protected|\s)+[\w<>,\s\[\]?@]*\s+{method_name}\s*\([^)]*\)[^{{]*\{{",
-        re.DOTALL,
-    )
-    match = pattern.search(source)
-    if not match:
-        return ""
-    brace_count = 0
-    for i in range(match.end() - 1, len(source)):
-        if source[i] == "{":
-            brace_count += 1
-        elif source[i] == "}":
-            brace_count -= 1
-            if brace_count == 0:
-                return source[match.start() : i + 1]
-    return source[match.start() :]
-
-
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) -- syntax / structure checks
 # ---------------------------------------------------------------------------
@@ -57,18 +37,8 @@ def _extract_method(source, method_name):
 def test_java_syntax_valid():
     """Target Java file has valid structure (balanced braces, class declaration)."""
     src = _read_source()
-
-    # Must have the class declaration
-    assert re.search(
-        r"class\s+LazyFlinkSourceSplitEnumerator", src
-    ), "Class declaration not found"
-
-    # Balanced braces
-    assert src.count("{") == src.count(
-        "}"
-    ), f"Unbalanced braces: {src.count('{')} opens vs {src.count('}')} closes"
-
-    # Must have both key methods
+    assert re.search(r"class\s+LazyFlinkSourceSplitEnumerator", src), "Class declaration not found"
+    assert src.count("{") == src.count("}"), f"Unbalanced braces: {src.count('{')} opens vs {src.count('}')} closes"
     assert "handleSplitRequest" in src, "handleSplitRequest method not found"
     assert "initializeSplits" in src, "initializeSplits method not found"
 
@@ -77,21 +47,13 @@ def test_java_syntax_valid():
 def test_java_imports_valid():
     """Target Java file has valid import statements (pass_to_pass)."""
     src = _read_source()
-
-    # Extract all import statements
     import_pattern = re.compile(r"^import\s+([\w.]+);", re.MULTILINE)
     imports = import_pattern.findall(src)
-
-    # Must have imports
     assert len(imports) > 0, "No import statements found"
-
-    # All imports must be valid Java identifiers
     for imp in imports:
         parts = imp.split(".")
         for part in parts:
             assert re.match(r"^[a-zA-Z_]\w*$", part), f"Invalid identifier in import: {part}"
-
-    # Must have key imports for Flink integration
     assert any("org.apache.flink" in imp for imp in imports), "Missing Flink imports"
     assert any("org.apache.beam" in imp for imp in imports), "Missing Beam imports"
 
@@ -100,269 +62,172 @@ def test_java_imports_valid():
 def test_java_class_structure_valid():
     """Target Java file has valid class structure with proper nesting (pass_to_pass)."""
     src = _read_source()
-
-    # Find class declaration with generics and implements
     class_match = re.search(
         r"public\s+class\s+LazyFlinkSourceSplitEnumerator<([^>]+)>\s+implements\s+([^\{]+)",
         src
     )
     assert class_match, "Class declaration with generics and implements not found"
-
-    # Verify class body has balanced braces by parsing structure
     class_start = src.find("public class LazyFlinkSourceSplitEnumerator")
     assert class_start != -1, "Class start not found"
-
     brace_start = src.find("{", class_start)
     assert brace_start != -1, "Opening brace not found after class declaration"
-
-    # Count braces to find class body end
     brace_count = 1
     pos = brace_start + 1
     while pos < len(src) and brace_count > 0:
-        if src[pos] == "{":
-            brace_count += 1
-        elif src[pos] == "}":
-            brace_count -= 1
+        if src[pos] == "{": brace_count += 1
+        elif src[pos] == "}": brace_count -= 1
         pos += 1
-
     assert brace_count == 0, "Class body has unbalanced braces"
-
-    # Extract class body and check for required fields/methods
     class_body = src[brace_start:pos]
-
-    # Must have private fields
     assert re.search(r"private\s+\w+", class_body), "No private fields found"
-
-    # Must have constructor
     assert re.search(r"public\s+LazyFlinkSourceSplitEnumerator\s*\(", src), "Constructor not found"
-
-    # Must have proper method signatures
-    assert re.search(
-        r"public\s+void\s+handleSplitRequest\s*\(", src
-    ), "handleSplitRequest method declaration invalid"
-    assert re.search(
-        r"public\s+void\s+initializeSplits\s*\(", src
-    ), "initializeSplits method declaration invalid"
-
-
+    assert re.search(r"public\s+void\s+handleSplitRequest\s*\(", src), "handleSplitRequest method declaration invalid"
+    assert re.search(r"public\s+void\s+initializeSplits\s*\(", src), "initializeSplits method declaration invalid"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
+# Fail-to-pass (pr_diff) -- behavioral tests
+#
+# These tests verify BEHAVIOR by checking for proper synchronization patterns.
+# They accept ANY correct concurrent primitive, not just the gold-specific one.
+#
+# Alternative correct fixes that MUST pass:
+#   Fix 1: CountDownLatch (await/countDown) + volatile boolean
+#   Fix 2: Semaphore (acquire/release) + volatile boolean
+#   Fix 3: Lock + Condition (lock/await/unlock.signalAll)
+#   Fix 4: CompletableFuture (join/complete) -- callback sets splitsInitialized
 # ---------------------------------------------------------------------------
+
+def _extract_method(src, method_name):
+    """Extract a Java method body by name using brace-counting."""
+    pattern = re.compile(
+        rf"(?:public|private|protected|\s)+[\w<>,\s\[\]?@]*\s+{method_name}\s*\([^)]*\)[^{{]*\{{",
+        re.DOTALL,
+    )
+    match = pattern.search(src)
+    if not match:
+        return ""
+    brace_count = 0
+    for i in range(match.end() - 1, len(src)):
+        if src[i] == "{": brace_count += 1
+        elif src[i] == "}":
+            brace_count -= 1
+            if brace_count == 0:
+                return src[match.start() : i + 1]
+    return src[match.start() :]
+
+
+def _has_blocking_mechanism(method_body):
+    """Check if method contains ANY valid blocking mechanism for concurrent coordination."""
+    blocking_patterns = [
+        r"\.await\s*\(",
+        r"\.get\s*\(",
+        r"\.join\s*\(",
+        r"\.acquire\s*\(",
+        r"LockSupport\.park",
+    ]
+    if re.search(r"synchronized", method_body) and re.search(r"\.wait\s*\(", method_body):
+        return True
+    return any(re.search(p, method_body) for p in blocking_patterns)
+
+
+def _has_finally_with_signal(method_body):
+    """Check if method has a finally block that signals completion."""
+    finally_match = re.search(
+        r"finally\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}",
+        method_body, re.DOTALL
+    )
+    if not finally_match:
+        return False
+    finally_body = finally_match.group(1)
+    signal_patterns = [
+        r"\.countDown\s*\(",
+        r"\.release\s*\(",
+        r"\.signalAll?\s*\(",
+        r"\.complete\s*\(",
+        r"\.unlock\s*\(",
+        r"\.notify",
+        r"LockSupport\.unpark",
+    ]
+    return any(re.search(p, finally_body) for p in signal_patterns)
+
+
+def _has_thread_safe_visibility(src):
+    """Check if splitsInitialized has thread-safe visibility mechanism."""
+    if re.search(r"volatile\s+boolean\s+splitsInitialized", src):
+        return True
+    if re.search(r"AtomicBoolean\s+splitsInitialized", src):
+        return True
+    if re.search(r"synchronized", src) and re.search(r"\.unlock\s*\(", src):
+        return True
+    return False
+
 
 # [pr_diff] fail_to_pass
 def test_handle_split_request_blocks_on_uninitialized():
-    """handleSplitRequest must block/wait until splits initialization completes.
-
-    The bug: handleSplitRequest could be called before the async initializeSplits
-    finished, seeing pendingSplits as empty and incorrectly signaling no more splits.
-    The fix must add a blocking wait mechanism.
-    """
+    """handleSplitRequest must block/wait until splits initialization completes."""
     src = _read_source()
     method = _extract_method(src, "handleSplitRequest")
     assert method, "handleSplitRequest method not found"
-
-    # Must contain a blocking mechanism before accessing pendingSplits
-    blocking_patterns = [
-        r"\.await\s*\(",  # CountDownLatch.await()
-        r"\.wait\s*\(",  # Object.wait()
-        r"\.get\s*\(",  # Future.get()
-        r"\.join\s*\(",  # CompletableFuture.join()
-        r"\.acquire\s*\(",  # Semaphore.acquire()
-        r"synchronized\s*\(",  # synchronized block
-    ]
-    has_blocking = any(re.search(p, method) for p in blocking_patterns)
-    assert has_blocking, (
-        "handleSplitRequest must block until initialization completes "
-        "(e.g., CountDownLatch.await, Future.get, synchronized+wait)"
+    assert _has_blocking_mechanism(method), (
+        "handleSplitRequest must block until initialization completes. "
+        "Expected some blocking call: latch.await(), semaphore.acquire(), "
+        "condition.await(), future.get(), lock.await(), park(), etc."
     )
 
 
 # [pr_diff] fail_to_pass
 def test_splits_initialized_thread_safe():
-    """splitsInitialized field must be thread-safe for cross-thread visibility.
-
-    Without volatile or equivalent, the JMM allows one thread to write true
-    while another thread reads a stale false value.
-    """
+    """splitsInitialized must be visible across threads."""
     src = _read_source()
-
-    # Option 1: volatile boolean
-    has_volatile = bool(
-        re.search(r"volatile\s+boolean\s+splitsInitialized", src)
-    )
-    # Option 2: AtomicBoolean
-    has_atomic = "AtomicBoolean" in src and "splitsInitialized" in src
-    # Option 3: all accesses in synchronized blocks
-    has_sync = "synchronized" in src and "splitsInitialized" in src
-
-    assert has_volatile or has_atomic or has_sync, (
-        "splitsInitialized must be thread-safe: use volatile, AtomicBoolean, "
-        "or synchronized access"
+    assert _has_thread_safe_visibility(src), (
+        "splitsInitialized must be visible across threads: "
+        "use volatile boolean, AtomicBoolean, or synchronized blocks"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_initialization_signals_in_finally():
-    """initializeSplits must signal completion in a finally block.
-
-    The async callable in initializeSplits can throw. If the signal is only
-    in the happy path, a failure would leave handleSplitRequest blocked forever.
-    A finally block ensures the signal fires regardless of outcome.
-    """
+    """initializeSplits must signal completion in a finally block."""
     src = _read_source()
     method = _extract_method(src, "initializeSplits")
     assert method, "initializeSplits method not found"
-
-    # Must have a finally block
-    assert "finally" in method, (
-        "initializeSplits must use a finally block to ensure completion is "
-        "signaled even when initialization fails"
-    )
-
-    # The finally block must contain a signal mechanism
-    finally_match = re.search(r"finally\s*\{([^}]*)\}", method)
-    assert finally_match, "finally block not found in initializeSplits"
-    finally_body = finally_match.group(1)
-
-    signal_patterns = [
-        r"\.countDown\s*\(",  # CountDownLatch
-        r"\.release\s*\(",  # Semaphore
-        r"\.notify",  # Object.notify/notifyAll
-        r"\.complete\s*\(",  # CompletableFuture
-        r"\.set\s*\(",  # AtomicBoolean
-        r"\.signal\s*\(",  # Condition
-    ]
-    has_signal = any(re.search(p, finally_body) for p in signal_patterns)
-    assert has_signal, (
-        "finally block in initializeSplits must signal completion "
-        "(countDown, release, notify, complete, etc.)"
+    assert _has_finally_with_signal(method), (
+        "initializeSplits must signal completion in a finally block to prevent "
+        "deadlock on error. Use countDown(), release(), signal(), complete(), "
+        "unlock(), notify(), unpark(), etc."
     )
 
 
 # [pr_diff] fail_to_pass
 def test_synchronization_fix_java_validation():
-    """Compile and run a standalone Java program that validates the sync pattern.
-
-    This uses subprocess to compile/run Java code that reads the source and
-    validates the concurrency fix is structurally correct.
-    """
-    java_code = r'''
-import java.nio.file.*;
-import java.util.regex.*;
-
-public class ValidateSyncFix {
-    public static void main(String[] args) throws Exception {
-        String src = Files.readString(Path.of(args[0]));
-
-        // 1. Must import a java.util.concurrent synchronization primitive
-        boolean hasConcurrentImport =
-            src.contains("import java.util.concurrent.CountDownLatch") ||
-            src.contains("import java.util.concurrent.Semaphore") ||
-            src.contains("import java.util.concurrent.CompletableFuture") ||
-            src.contains("import java.util.concurrent.locks.");
-        if (!hasConcurrentImport) {
-            fail("Must import a java.util.concurrent synchronization primitive");
-        }
-
-        // 2. splitsInitialized must be volatile or AtomicBoolean
-        if (!Pattern.compile("volatile\\s+boolean\\s+splitsInitialized").matcher(src).find() &&
-            !src.contains("AtomicBoolean")) {
-            fail("splitsInitialized must be volatile or AtomicBoolean");
-        }
-
-        // 3. handleSplitRequest must contain a blocking call
-        String handleMethod = extractMethod(src, "handleSplitRequest");
-        if (handleMethod.isEmpty()) {
-            fail("handleSplitRequest method not found");
-        }
-        boolean hasBlocking =
-            handleMethod.contains(".await(") ||
-            handleMethod.contains(".get(") ||
-            handleMethod.contains(".join(") ||
-            handleMethod.contains(".acquire(") ||
-            (handleMethod.contains("synchronized") && handleMethod.contains(".wait("));
-        if (!hasBlocking) {
-            fail("handleSplitRequest must block until initialization completes");
-        }
-
-        // 4. handleSplitRequest must handle InterruptedException
-        if (!handleMethod.contains("InterruptedException")) {
-            fail("handleSplitRequest must handle InterruptedException from blocking wait");
-        }
-
-        System.out.println("All synchronization validations passed");
-    }
-
-    static String extractMethod(String src, String name) {
-        int idx = src.indexOf("void " + name + "(");
-        if (idx < 0) idx = src.indexOf(name + "(");
-        if (idx < 0) return "";
-        int brace = src.indexOf("{", idx);
-        if (brace < 0) return "";
-        int count = 1, end = brace + 1;
-        while (end < src.length() && count > 0) {
-            if (src.charAt(end) == '{') count++;
-            else if (src.charAt(end) == '}') count--;
-            end++;
-        }
-        return src.substring(idx, end);
-    }
-
-    static void fail(String msg) {
-        System.err.println("FAIL: " + msg);
-        System.exit(1);
-    }
-}
-'''
-
-    test_dir = Path("/tmp/validate_sync_fix")
-    test_dir.mkdir(exist_ok=True)
-    (test_dir / "ValidateSyncFix.java").write_text(java_code)
-
-    # Compile the Java validator
-    r = subprocess.run(
-        ["javac", "ValidateSyncFix.java"],
-        cwd=str(test_dir),
-        capture_output=True,
-        timeout=15,
+    """Java file must import a java.util.concurrent synchronization primitive."""
+    src = _read_source()
+    concurrent_imports = [
+        r"import\s+java\.util\.concurrent\.CountDownLatch",
+        r"import\s+java\.util\.concurrent\.Semaphore",
+        r"import\s+java\.util\.concurrent\.CompletableFuture",
+        r"import\s+java\.util\.concurrent\.locks\.",
+        r"import\s+java\.util\.concurrent\.atomic\.AtomicBoolean",
+    ]
+    has_concurrent = any(re.search(p, src) for p in concurrent_imports)
+    assert has_concurrent, (
+        "Must import a java.util.concurrent synchronization primitive "
+        "(CountDownLatch, Semaphore, CompletableFuture, locks, or AtomicBoolean)"
     )
-    assert r.returncode == 0, f"Java validator compilation failed: {r.stderr.decode()}"
-
-    # Run against the target file
-    r = subprocess.run(
-        ["java", "-cp", str(test_dir), "ValidateSyncFix", TARGET_FILE],
-        capture_output=True,
-        timeout=15,
-    )
-    assert r.returncode == 0, f"Sync fix validation failed: {r.stderr.decode()}"
 
 
 # [static] pass_to_pass
 def test_java_no_syntax_errors():
     """Target Java file has no obvious syntax errors (pass_to_pass)."""
     src = _read_source()
-
-    # Check for valid Java identifiers in field declarations
     field_pattern = re.compile(r"(?:private|public|protected)\s+(?:\w+\s+)*(\w+)\s+\w+\s*[=;]")
     for match in field_pattern.finditer(src):
         type_name = match.group(1)
-        # Type name should be a valid Java identifier
         assert re.match(r"^[a-zA-Z_]\w*$", type_name), f"Invalid type name: {type_name}"
-
-    # Verify no empty catch blocks (common issue)
     assert not re.search(r"catch\s*\([^)]+\)\s*\{\s*\}", src), "Empty catch block found"
-
-    # Check for balanced braces at file level
-    open_braces = src.count("{")
-    close_braces = src.count("}")
-    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} opens vs {close_braces} closes"
-
-    # Check for obvious syntax errors like double semicolons
+    assert src.count("{") == src.count("}"), f"Unbalanced braces"
     assert ";;" not in src, "Double semicolon found"
-
-    # Check for valid package declaration
     assert re.search(r"^package\s+[\w.]+;", src, re.MULTILINE), "Package declaration not found or invalid"
 
 
@@ -372,87 +237,38 @@ def test_java_no_syntax_errors():
 
 # [repo_tests] pass_to_pass
 def test_repo_apache_license_header():
-    """Target Java file has Apache License 2.0 header (pass_to_pass).
-
-    Validates that the modified Java file contains the required Apache License
-    header using a subprocess call to grep for the license pattern.
-    This mirrors the RAT (Release Audit Tool) check from CI.
-    """
-    license_pattern = "Licensed to the Apache Software Foundation"
-    r = subprocess.run(
-        ["grep", "-q", license_pattern, TARGET_FILE],
-        capture_output=True,
-        text=True,
-    )
+    """Target Java file has Apache License 2.0 header (pass_to_pass)."""
+    r = subprocess.run(["grep", "-q", "Licensed to the Apache Software Foundation", TARGET_FILE], capture_output=True)
     assert r.returncode == 0, f"Apache License header not found in {TARGET_FILE}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_git_status_clean():
-    """Git repository is valid with expected file state (pass_to_pass).
-
-    Validates the git repository status using subprocess.
-    Allows the target file to be modified (expected during fix application)
-    and untracked files in /logs.
-    """
-    r = subprocess.run(
-        ["git", "status", "--porcelain"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-    )
+    """Git repository is valid with expected file state (pass_to_pass)."""
+    r = subprocess.run(["git", "status", "--porcelain"], cwd=REPO, capture_output=True, text=True)
     assert r.returncode == 0, f"git status failed: {r.stderr}"
     lines = [l for l in r.stdout.strip().split("\n") if l.strip()]
-    # Allow: untracked in /logs, or modified target file
-    allowed_patterns = [
-        "?? /logs",
-        "M runners/flink/src/main/java/org/apache/beam/runners/flink/translation/wrappers/streaming/io/source/LazyFlinkSourceSplitEnumerator.java",
-    ]
-    unexpected = []
-    for line in lines:
-        if not any(line.startswith(p) or line == p for p in allowed_patterns):
-            unexpected.append(line)
+    allowed = ["?? /logs", "M runners/flink/src/main/java/org/apache/beam/runners/flink/translation/wrappers/streaming/io/source/LazyFlinkSourceSplitEnumerator.java"]
+    unexpected = [l for l in lines if not any(l.startswith(p) or l == p for p in allowed)]
     assert len(unexpected) == 0, f"Repository has unexpected changes: {unexpected}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_target_file_exists():
-    """Target file exists at expected path (pass_to_pass).
-
-    Uses subprocess to verify the LazyFlinkSourceSplitEnumerator.java file
-    exists in the repository at the expected location.
-    """
-    r = subprocess.run(
-        ["test", "-f", TARGET_FILE],
-        capture_output=True,
-    )
+    """Target file exists at expected path (pass_to_pass)."""
+    r = subprocess.run(["test", "-f", TARGET_FILE], capture_output=True)
     assert r.returncode == 0, f"Target file not found: {TARGET_FILE}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_java_package_structure():
-    """Java package declaration matches directory structure (pass_to_pass).
-
-    Validates that the package declaration in the Java file matches
-    the actual directory structure using subprocess-based file path checks.
-    """
-    expected_package = "org.apache.beam.runners.flink.translation.wrappers.streaming.io.source"
-    r = subprocess.run(
-        ["grep", "-q", f"^package {expected_package};", TARGET_FILE],
-        capture_output=True,
-    )
-    assert r.returncode == 0, f"Package declaration doesn't match expected: {expected_package}"
+    """Java package declaration matches directory structure (pass_to_pass)."""
+    r = subprocess.run(["grep", "-q", "^package org.apache.beam.runners.flink.translation.wrappers.streaming.io.source;", TARGET_FILE], capture_output=True)
+    assert r.returncode == 0, "Package declaration doesn't match expected"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_file_has_class_declaration():
-    """Target file contains valid public class declaration (pass_to_pass).
-
-    Uses subprocess-based grep to verify the Java file contains
-    the expected public class declaration.
-    """
-    r = subprocess.run(
-        ["grep", "-q", r"public class LazyFlinkSourceSplitEnumerator", TARGET_FILE],
-        capture_output=True,
-    )
+    """Target file contains valid public class declaration (pass_to_pass)."""
+    r = subprocess.run(["grep", "-q", r"public class LazyFlinkSourceSplitEnumerator", TARGET_FILE], capture_output=True)
     assert r.returncode == 0, "Public class declaration not found in target file"

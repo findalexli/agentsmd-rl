@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific internals undiscoverable from instruction.md: the file 'js/core/src/init.svelte.ts', the function '_gather_initial_tabs', the exact data structure with 'props.props.i18n' and 'props.shared_props.label', and the specific Node.js extraction/invocation pattern. The instruction only describes the high-level bug with gr.Tab and i18n, never mentioning these implementation details."
+      "outcome": "pass",
+      "reason": "Instruction names the file js/core/src/init.svelte.ts, the function _gather_initial_tabs, the fields props.props.i18n, props.shared_props.label, the initial_tabs schema (keys: label, id, elem_id, visible, interactive, scale, component_id), and the expected behavior."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md only describes the symptom (tab labels not translated) and expected behavior, without specifying what code to change or how to fix it."
+      "reason": "Instruction describes the condition (when i18n present, call it on raw label) without dictating exact code; this is specifying required behavior rather than the literal patch."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests extract and call the specific function '_gather_initial_tabs' from the specific file 'js/core/src/init.svelte.ts', and check that it reads 'node.props.props.i18n' and applies it to labels. An alternative correct fix (e.g., applying i18n translation at the Svelte component render level in a different file, or in the Tabs component itself) would fail these tests even though it correctly fixes the bug."
+      "outcome": "pass",
+      "reason": "Tests check behavioral output (labels translated, i18n function called, backward compat with no i18n) and don't assert on variable names or line numbers."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the JS function, execute it in Node.js with mock data, and verify behavioral output (translated labels, call counts). They are not simple text pattern matches on source code."
+      "reason": "Tests extract the function and execute it in Node with various inputs, checking resulting labels."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_i18n_translation_applied, test_i18n_function_actually_called, test_multiple_tabs_all_translated) check that the i18n function is actually invoked and labels are transformed. A stub/default implementation of _gather_initial_tabs that just copies raw labels would fail because labels would not be translated."
+      "reason": "F2p tests require actual translation (e.g., labels == ['Leon', 'Gato'], spy call count > 0, label == 'HELLO'); stubs returning defaults would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires tab labels to be translated with i18n and backward compatibility when no i18n is configured. Tests cover translation application, function invocation verification, multiple tabs, and the no-i18n backward compatibility case (test_no_i18n_raw_label_preserved)."
+      "reason": "Tests cover i18n translation, i18n function invocation, multiple tabs, and (implied by instruction's backward compat clause) no-i18n case."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (pass-to-pass, gates, fail-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (Pass-to-pass, Gates, Fail-to-pass) and descriptive docstrings."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "The task is a bug fix in UI component code, not producing structured data output."
+      "outcome": "pass",
+      "reason": "The initial_tabs schema keys are explicitly enumerated in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths and names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md does not mention the specific file, function name, or line numbers. It only describes the bug at the user-facing API level using gr.Tab and gr.I18n."
+      "reason": "The file and function are named, but this is appropriate scoping and the instruction does not disclose the exact line/patch."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, no config edits involved."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

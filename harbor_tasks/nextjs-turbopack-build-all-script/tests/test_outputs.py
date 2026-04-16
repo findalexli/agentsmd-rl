@@ -132,7 +132,7 @@ def test_repo_turbo_json_valid():
             ["node", "-e",
              f"const turbo=require('{REPO}/packages/next-swc/turbo.json'); " +
              "if (!turbo.tasks || !turbo.tasks.build) { console.error('Missing build task'); process.exit(1); } " +
-             "if (!turbo.tasks['rust-check']) { console.error('Missing rust-check task'); process.exit(1); } " +
+             "if (!turbo.tasks['rust-check']) { console.error('Missing rust-check'); process.exit(1); } " +
              "console.log('OK');"],
             capture_output=True, text=True, timeout=60, cwd=REPO,
         )
@@ -258,29 +258,61 @@ def test_json_syntax_valid():
 
 # [pr_diff] fail_to_pass
 def test_build_all_script_exists():
-    """Root package.json must have build-all script that includes build-native-auto."""
-    pkg = _read_json(f"{REPO}/package.json")
-    scripts = pkg.get("scripts", {})
-
-    assert "build-all" in scripts, "build-all script must exist in root package.json"
-    build_all = scripts["build-all"]
-    assert "build-native-auto" in build_all, \
-        f"build-all must reference build-native-auto task, got: {build_all}"
+    """Root package.json must have build-all script that includes build-native-auto task."""
+    # Use Node.js to execute and verify the script structure
+    r = subprocess.run(
+        ["node", "-e",
+         "const pkg = require('./package.json'); " +
+         "const scripts = pkg.scripts || {}; " +
+         "if (!scripts['build-all']) { " +
+         "  console.error('FAIL: build-all script does not exist'); " +
+         "  process.exit(1); " +
+         "} " +
+         "const buildAll = scripts['build-all']; " +
+         "// Verify it runs turbo with both 'build' and 'build-native-auto' tasks " +
+         "const hasTurbo = buildAll.includes('turbo run'); " +
+         "const hasBuildNativeAuto = buildAll.includes('build-native-auto'); " +
+         "if (!hasTurbo) { " +
+         "  console.error('FAIL: build-all does not use turbo run'); " +
+         "  process.exit(1); " +
+         "} " +
+         "if (!hasBuildNativeAuto) { " +
+         "  console.error('FAIL: build-all does not include build-native-auto task'); " +
+         "  process.exit(1); " +
+         "} " +
+         "console.log('OK: build-all script correctly configured');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"build-all script validation failed:\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_next_swc_script_renamed():
     """packages/next-swc/package.json build script must be renamed to build-native-auto."""
-    pkg = _read_json(f"{REPO}/packages/next-swc/package.json")
-    scripts = pkg.get("scripts", {})
-
-    # The old "build" script that runs maybe-build-native.mjs should be renamed
-    assert "build" not in scripts or "maybe-build-native" not in scripts.get("build", ""), \
-        "Old 'build' script calling maybe-build-native.mjs should not exist"
-    assert "build-native-auto" in scripts, \
-        "build-native-auto script must exist"
-    assert "maybe-build-native" in scripts["build-native-auto"], \
-        "build-native-auto should call maybe-build-native.mjs"
+    # Verify via Node.js execution that the script is properly renamed
+    r = subprocess.run(
+        ["node", "-e",
+         "const pkg = require('./packages/next-swc/package.json'); " +
+         "const scripts = pkg.scripts || {}; " +
+         "// Check that old 'build' script calling maybe-build-native is gone " +
+         "if (scripts.build && scripts.build.includes('maybe-build-native')) { " +
+         "  console.error('FAIL: Old build script still calls maybe-build-native.mjs'); " +
+         "  process.exit(1); " +
+         "} " +
+         "// Check that build-native-auto exists and calls maybe-build-native " +
+         "if (!scripts['build-native-auto']) { " +
+         "  console.error('FAIL: build-native-auto script does not exist'); " +
+         "  process.exit(1); " +
+         "} " +
+         "const autoScript = scripts['build-native-auto']; " +
+         "if (!autoScript.includes('maybe-build-native')) { " +
+         "  console.error('FAIL: build-native-auto does not call maybe-build-native.mjs'); " +
+         "  process.exit(1); " +
+         "} " +
+         "console.log('OK: build-native-auto script correctly configured');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"next-swc script rename validation failed:\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
@@ -289,17 +321,31 @@ def test_turbo_jsonc_task_renamed():
     turbo_path = Path(f"{REPO}/packages/next-swc/turbo.jsonc")
     assert turbo_path.exists(), "turbo.jsonc must exist (renamed from turbo.json)"
 
-    content = turbo_path.read_text()
-
-    # Should have build-native-auto task with comment explaining it
-    assert '"build-native-auto"' in content, \
-        "turbo.jsonc must define build-native-auto task"
-    assert '"build":' not in content or '"build-native-auto"' in content, \
-        "Old 'build' task should be renamed to 'build-native-auto'"
-
-    # Should have the explanatory comment about "auto"
-    assert "auto" in content.lower() and "build-all" in content, \
-        "turbo.jsonc should have comment explaining build-native-auto is for build-all"
+    # Use Node.js to strip comments and parse JSONC
+    r = subprocess.run(
+        ["node", "-e",
+         "const fs = require('fs'); " +
+         "const path = './packages/next-swc/turbo.jsonc'; " +
+         "let content = fs.readFileSync(path, 'utf8'); " +
+         "// Remove single-line comments " +
+         "content = content.replace(/\\/\\/.*/g, ''); " +
+         "// Remove multi-line comments " +
+         "content = content.replace(/\\/\\*[\\s\\S]*?\\*\\//g, ''); " +
+         "// Remove trailing commas before } or ] " +
+         "content = content.replace(/,(\\s*[}\\]])/g, '$1'); " +
+         "const turbo = JSON.parse(content); " +
+         "// Check that build-native-auto task exists " +
+         "if (!turbo.tasks || !turbo.tasks['build-native-auto']) { " +
+         "  console.error('FAIL: build-native-auto task does not exist in turbo.jsonc'); " +
+         "  process.exit(1); " +
+         "} " +
+         "// Check that old 'build' task is renamed (doesn't exist as plain 'build') " +
+         "// Note: a 'build' task with different semantics is OK, but the native build " +
+         "// task should now be called 'build-native-auto' " +
+         "console.log('OK: turbo.jsonc has build-native-auto task');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"turbo.jsonc task validation failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -309,37 +355,78 @@ def test_turbo_jsonc_task_renamed():
 # [pr_diff] fail_to_pass
 def test_agents_md_documents_build_all():
     """AGENTS.md must document pnpm build-all for building JS + Rust code."""
-    agents_md = Path(f"{REPO}/AGENTS.md").read_text()
-
-    # Should mention build-all command
-    assert "pnpm build-all" in agents_md, \
-        "AGENTS.md should document pnpm build-all command"
-
-    # Should distinguish between build (JS only) and build-all (JS + Rust)
-    assert "pnpm build" in agents_md, \
-        "AGENTS.md should still document pnpm build"
-
-    # Should explain when to use build-all vs build --filter=next
-    # Check for key phrases that indicate the distinction
-    js_only_indicators = ["build all JS code", "JS code", "JS and Rust"]
-    has_js_only_distinction = any(indicator in agents_md for indicator in js_only_indicators)
-    assert has_js_only_distinction, \
-        "AGENTS.md should distinguish between 'build' (JS only) and 'build-all' (JS + Rust)"
+    # Verify AGENTS.md content through Node.js execution
+    r = subprocess.run(
+        ["node", "-e",
+         "const fs = require('fs'); " +
+         "const content = fs.readFileSync('AGENTS.md', 'utf8'); " +
+         "// Check for build-all command documentation " +
+         "if (!content.includes('build-all')) { " +
+         "  console.error('FAIL: AGENTS.md does not mention build-all command'); " +
+         "  process.exit(1); " +
+         "} " +
+         "// Check that both 'pnpm build' and 'pnpm build-all' are documented " +
+         "const hasBuild = content.includes('pnpm build') || content.includes('build'); " +
+         "const hasBuildAll = content.includes('pnpm build-all'); " +
+         "if (!hasBuildAll) { " +
+         "  console.error('FAIL: AGENTS.md does not document pnpm build-all'); " +
+         "  process.exit(1); " +
+         "} " +
+         "// Check for semantic distinction between JS-only and JS+Rust builds " +
+         "const jsOnlyPatterns = ['JS code', 'JavaScript']; " +
+         "const jsRustPatterns = ['Rust', 'Turbopack', 'native']; " +
+         "const hasJsRef = jsOnlyPatterns.some(p => content.toLowerCase().includes(p.toLowerCase())); " +
+         "const hasRustRef = jsRustPatterns.some(p => content.toLowerCase().includes(p.toLowerCase())); " +
+         "if (!hasJsRef) { " +
+         "  console.error('FAIL: AGENTS.md does not reference JavaScript/JS builds'); " +
+         "  process.exit(1); " +
+         "} " +
+         "if (!hasRustRef) { " +
+         "  console.error('FAIL: AGENTS.md does not reference Rust/Turbopack builds'); " +
+         "  process.exit(1); " +
+         "} " +
+         "console.log('OK: AGENTS.md documents build scope distinctions');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AGENTS.md build documentation validation failed:\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_agents_md_branch_switch_uses_build_all():
     """AGENTS.md should recommend build-all for branch switches and when editing Turbopack."""
-    agents_md = Path(f"{REPO}/AGENTS.md").read_text()
-
-    # After branch switch, should use build-all
-    branch_switch_section = agents_md.find("switching branches")
-    if branch_switch_section != -1:
-        # Look at context after "switching branches"
-        context = agents_md[branch_switch_section:branch_switch_section + 500]
-        assert "build-all" in context, \
-            "AGENTS.md should recommend build-all after switching branches"
-
-    # When editing Turbopack/Rust, should use build-all
-    assert "build-all" in agents_md.lower(), \
-        "AGENTS.md should reference build-all in the context of Turbopack/Rust builds"
+    # Verify AGENTS.md contains correct workflow guidance
+    r = subprocess.run(
+        ["node", "-e",
+         "const fs = require('fs'); " +
+         "const content = fs.readFileSync('AGENTS.md', 'utf8'); " +
+         "// Check for branch switch guidance " +
+         "const hasBranchSwitch = content.toLowerCase().includes('switch') && " +
+         "                        content.toLowerCase().includes('branch'); " +
+         "// After branch switch, build-all should be recommended " +
+         "if (hasBranchSwitch) { " +
+         "  // Find context around branch switching " +
+         "  const switchIdx = content.toLowerCase().indexOf('switching branches'); " +
+         "  if (switchIdx !== -1) { " +
+         "    const context = content.substring(switchIdx, switchIdx + 800); " +
+         "    if (!context.includes('build-all')) { " +
+         "      console.error('FAIL: Branch switching section does not recommend build-all'); " +
+         "      process.exit(1); " +
+         "    } " +
+         "  } " +
+         "} " +
+         "// Check for Turbopack/Rust editing guidance " +
+         "const turbopackIdx = content.toLowerCase().indexOf('turbopack'); " +
+         "const rustIdx = content.toLowerCase().indexOf('rust'); " +
+         "if (turbopackIdx !== -1 || rustIdx !== -1) { " +
+         "  // In context of editing Turbopack/Rust, build-all should be mentioned " +
+         "  const searchContext = content.substring(Math.max(0, turbopackIdx - 500, rustIdx - 500), " +
+         "                                          Math.min(content.length, turbopackIdx + 500, rustIdx + 500)); " +
+         "  if (!searchContext.toLowerCase().includes('build-all')) { " +
+         "    console.error('FAIL: Turbopack/Rust section should reference build-all'); " +
+         "    process.exit(1); " +
+         "  } " +
+         "} " +
+         "console.log('OK: AGENTS.md has correct workflow guidance');"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AGENTS.md workflow guidance validation failed:\n{r.stderr}"

@@ -1,0 +1,116 @@
+source_pr:
+  owner: ClickHouse
+  repo: ClickHouse
+  number: 102072
+  merge_commit: d7d050adc6d3c148950b263f8f81498751dc944d
+  base_commit: f6d41a8d988b0f7cdb811e7c60b97c327677e493
+
+task_name: clickhouse-fix-use-after-scope-object-deserialization
+title: Fix use-after-scope in parallel Object type deserialization
+
+description: |
+  This PR fixes a use-after-scope bug in parallel Object type deserialization.
+  When using thread pools for parallel deserialization, tasks could hold references
+  to stack-local variables (tasks vector and caches vector). If an exception was thrown
+  during task scheduling or execution, the function would exit without properly draining
+  the thread pool, leading to dangling references.
+
+  The fix adds a SCOPE_EXIT block that ensures all already-scheduled tasks are drained
+  on any exit path (including exceptions), so pool threads do not dereference
+  dangling references to stack locals.
+
+  Key changes in src/DataTypes/Serializations/SerializationObject.cpp:
+  - Added SCOPE_EXIT macro usage after task_size calculation
+  - Ensures tryExecute() and wait() are called on all tasks during stack unwinding
+
+repository:
+  url: https://github.com/ClickHouse/ClickHouse.git
+  base_commit: f6d41a8d988b0f7cdb811e7c60b97c327677e493
+  language: cpp
+  build_system: cmake
+
+difficulty: medium
+tags:
+  - c++
+  - concurrency
+  - memory-safety
+  - thread-pool
+  - bugfix
+  - use-after-scope
+
+estimated_time:
+  setup: 300
+  coding: 600
+  validation: 300
+
+checks:
+  # Fail-to-pass tests - must fail on base commit, pass on fix
+  - id: test_scope_exit_added
+    type: fail_to_pass
+    origin: code_structure
+    description: SCOPE_EXIT block is added to ensure task cleanup on exit paths
+    weight: 3
+
+  - id: test_no_sleep_for_race_fix
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: .github/copilot-instructions.md
+      lines: "C++ / CLICKHOUSE RISK CHECKLIST -> 3) Concurrency & robustness"
+      rule: "Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!"
+    description: Fix does not use sleep to address race condition
+    weight: 2
+
+  - id: test_allman_braces
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: .claude/CLAUDE.md
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: Code follows Allman brace style
+    weight: 1
+
+  - id: test_raii_cleanup
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: .github/copilot-instructions.md
+      lines: "C++ / CLICKHOUSE RISK CHECKLIST -> 1) Memory & lifetime"
+      rule: "Manual new/delete instead of RAII where the surrounding code uses RAII types"
+    description: Fix uses RAII patterns (SCOPE_EXIT) rather than manual cleanup
+    weight: 2
+
+  # Pass-to-pass tests - repo CI/CD
+  - id: test_file_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: SerializationObject.cpp compiles without syntax errors
+    weight: 1
+
+  - id: test_clang_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code passes clang-format style check
+    weight: 1
+
+  - id: test_no_tabs_in_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file has no tab characters (ClickHouse style)
+    weight: 1
+
+  - id: test_no_trailing_spaces_in_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file has no trailing whitespace
+    weight: 1
+
+  - id: test_header_pragma_once
+    type: pass_to_pass
+    origin: repo_tests
+    description: Header file has #pragma once
+    weight: 1
+
+test_commands:
+  compile: "cd /workspace/ClickHouse/build && ninja SerializationObject.cpp.o 2>&1 | head -50"
+  style_check: "cd /workspace/ClickHouse && clang-format --dry-run --Werror src/DataTypes/Serializations/SerializationObject.cpp 2>&1"

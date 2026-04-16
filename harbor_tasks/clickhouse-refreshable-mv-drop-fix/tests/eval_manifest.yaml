@@ -1,0 +1,101 @@
+task_id: clickhouse-refreshable-mv-drop-fix
+source_pr: "ClickHouse/ClickHouse#102008"
+base_commit: a2c44f8d389407d145ee19293cb03d672df6dacf
+merge_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_storage_materialized_view_include
+    type: fail_to_pass
+    origin: programmatic
+    description: "StorageMaterializedView header is included"
+
+  - id: test_refreshable_view_check_present
+    type: fail_to_pass
+    origin: programmatic
+    description: "The refreshable view check logic is present in executeToTableImpl"
+
+  - id: test_logic_condition_includes_refreshable_check
+    type: fail_to_pass
+    origin: programmatic
+    description: "The DROP-to-TRUNCATE condition excludes refreshable views"
+
+  - id: test_comment_explains_rationale
+    type: fail_to_pass
+    origin: programmatic
+    description: "The comment explains why refreshable views need special handling"
+
+  # Pass-to-pass tests (verify code quality)
+  - id: test_target_file_exists
+    type: pass_to_pass
+    origin: programmatic
+    description: "Target file exists and is readable"
+
+  - id: test_syntax_valid_cpp
+    type: pass_to_pass
+    origin: programmatic
+    description: "File contains valid C++ syntax"
+
+  - id: test_no_sleep_in_code
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      rule: "Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!"
+    description: "Code does not use sleep to fix race conditions"
+
+  - id: test_allman_braces_style
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    description: "Code uses Allman-style braces (opening brace on new line)"
+
+  - id: test_code_compiles_with_clang
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code can be parsed by clang without syntax errors"
+
+  - id: test_repo_cpp_style_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's C++ style check script passes"
+
+  - id: test_repo_mypy_ci_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI Python scripts pass mypy type check"
+
+  - id: test_repo_yamllint_workflows
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's GitHub workflow files pass yamllint"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI Python scripts have valid syntax"
+
+# Soft/subjective rules from agent configs that should guide the solution
+rubric:
+  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    source:
+      file: AGENTS.md
+      path: ".claude/CLAUDE.md"
+    weight: medium
+
+  - rule: "Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!"
+    source:
+      file: AGENTS.md
+    weight: high
+
+  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
+    source:
+      file: AGENTS.md
+    weight: low
+
+  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()`"
+    source:
+      file: AGENTS.md
+    weight: low

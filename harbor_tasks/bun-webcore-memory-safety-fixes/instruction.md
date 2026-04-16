@@ -6,15 +6,15 @@ Bun's WebCore code (forked from WebKit) has four memory safety issues in `src/bu
 
 When a message is posted to a remote port that has already been closed, the message is unconditionally appended to the pending messages collection. These messages will never be delivered, so they accumulate indefinitely. Sending 5000 x 64KB messages to a closed MessagePort causes ~330MB of RSS growth.
 
-The fix should check whether the target port is closed before appending any message. The guard must use a computed (non-hardcoded) index into the port's closed-state array. The resulting diff should contain `m_isClosed` and `return false` around the same area as `m_pendingMessages`.
+The bug is in `MessagePortChannel::postMessageToRemote` in `src/bun.js/bindings/webcore/MessagePortChannel.cpp`. A closed port must reject new messages — the fix adds a guard that checks the closed-state array using the same computed index used to append the message, and returns `false` when the port is closed. The guard appears before any message is appended.
 
 **File:** `src/bun.js/bindings/webcore/MessagePortChannel.cpp`
 
 ## 2. JSAbortController: signal.reason lost after GC
 
-When only the AbortController (not the AbortSignal) is retained by JavaScript, and GC runs, the reason object can be collected. After that, `controller.signal.reason` returns `undefined` instead of the original abort reason. The `visitChildrenImpl` method marks the opaque root but does not visit the signal's reason value.
+When only the AbortController (not the AbortSignal) is retained by JavaScript, and GC runs, the reason object can be collected. After that, `controller.signal.reason` returns `undefined` instead of the original abort reason.
 
-The fix should ensure the signal's reason is visited during GC traversal. The resulting diff should include `reason` in a `visitChildrenImpl` context, with `signal()` and `reason()` chained in the same expression and the result passed to the visitor.
+The `visitChildrenImpl` method in `src/bun.js/bindings/webcore/JSAbortController.cpp` marks the opaque root but does not visit the signal's reason field, so the GC can collect it. The fix adds a visit call for the reason — the call chain is `signal().reason().visit(visitor)` and it appears alongside the existing `Base::visitChildren` and `addWebCoreOpaqueRoot` calls.
 
 **File:** `src/bun.js/bindings/webcore/JSAbortController.cpp`
 
@@ -22,15 +22,15 @@ The fix should ensure the signal's reason is visited during GC traversal. The re
 
 The global channel map stores raw `BroadcastChannel*` pointers. When a worker-owned channel is being destroyed while the main thread dispatches a message, the main thread can dereference a dangling pointer. The race window is between the channel's destructor running on the worker thread and the pointer assignment on the main thread.
 
-The fix should use a thread-safe weak pointer template in the global map so that lookups atomically check liveness. The map declaration should use `ThreadSafeWeakPtr<BroadcastChannel>` as its value type (not a raw pointer). The resulting diff should contain `ThreadSafeWeakPtr`.
+The map is declared as `UncheckedKeyHashMap<BroadcastChannelIdentifier, BroadcastChannel*>` in `src/bun.js/bindings/webcore/BroadcastChannel.cpp`. The value type must be changed to a thread-safe weak pointer template wrapper so that dereferencing the retrieved pointer is safe. The `.get()` method must be called when retrieving a channel from the map. The channel must still be registered in the map (via `.add()` or `.set()`), and the existing `Locker` pattern for the map must be retained.
 
 **File:** `src/bun.js/bindings/webcore/BroadcastChannel.cpp`
 
 ## 4. EventListenerMap: missing thread affinity checks
 
-Mutation operations (add, remove, clear, replace, removeFirstEventListenerCreatedFromMarkup) lack per-instance thread ownership validation. Unlike a global main-thread check, the correct approach records the owning thread per-instance on first mutation, then asserts subsequent mutations come from the same thread (exempting GC sweeper threads).
+Mutation operations (add, remove, clear, replace, removeFirstEventListenerCreatedFromMarkup) lack per-instance thread ownership validation. Unlike a global main-thread check, the correct approach records the owning thread on first mutation, then asserts subsequent mutations come from the same thread. GC sweeper threads must be exempt from this check.
 
-The fix should add a thread affinity check at the top of each mutation method, before the Locker. It requires a helper function (e.g., `releaseAssertOrSetThreadUID`) and a thread UID member (e.g., `uint32_t m_threadUID`). The helper must call `mayBeGCThread()` or `isGCThread()` for the GC exemption. At least 4 of the 5 mutators must have this check. The resulting diff should contain `thread` or `Thread` in both `.cpp` and `.h` files.
+In `src/bun.js/bindings/webcore/EventListenerMap.cpp`, each mutator must have a thread affinity check that runs before the `Locker`. In `src/bun.js/bindings/webcore/EventListenerMap.h`, a helper function and a member variable are needed to record and validate the owning thread — the helper must consult `mayBeGCThread()` or `isGCThread()` for the exemption. At least 4 of the 5 mutators need this check.
 
 **Files:**
 - `src/bun.js/bindings/webcore/EventListenerMap.h`

@@ -1,0 +1,113 @@
+version: 1
+
+task:
+  repo: openai/openai-agents-js
+  pr_number: 1129
+  base_commit: 36a368b7d477f5592aea21aab83b940533607939
+  merge_commit: 4e00b3ca2a54dd7842924d61d15f3898abf46d2f
+
+checks:
+  - id: test_pending_safety_checks_omitted_when_empty
+    type: fail_to_pass
+    origin: agent_config
+    description: >
+      Rebuilt computer_call item omits pending_safety_checks key when the
+      original providerData had an empty array. The live API rejects empty
+      pending_safety_checks on replayed computer calls with a 400 error.
+    source:
+      - file: AGENTS.md
+        rule: Run $code-change-verification before marking work complete for runtime code or tests
+      - file: packages/agents-openai/src/openaiResponsesModel.ts
+        commit: 4e00b3ca2a54dd7842924d61d15f3898abf46d2f
+        description: >
+          The getInputItems function builds computer_call input items for the
+          Responses API. It must omit pending_safety_checks when the array is
+          empty rather than sending an empty array, which the live API rejects.
+
+  - id: test_acknowledged_safety_checks_omitted_when_empty
+    type: fail_to_pass
+    origin: agent_config
+    description: >
+      Rebuilt computer_call_output item omits acknowledged_safety_checks key
+      when the original providerData had an empty array.
+    source:
+      - file: AGENTS.md
+        rule: Run $code-change-verification before marking work complete for runtime code or tests
+      - file: packages/agents-openai/src/openaiResponsesModel.ts
+        commit: 4e00b3ca2a54dd7842924d61d15f3898abf46d2f
+        description: >
+          The getInputItems function builds computer_call_result input items.
+          It must omit acknowledged_safety_checks when the array is empty.
+
+  - id: test_non_empty_pending_safety_checks_preserved
+    type: pass_to_pass
+    origin: agent_config
+    description: >
+      Non-empty pending_safety_checks arrays must still be included in rebuilt
+      computer_call items after the fix is applied.
+    source:
+      - file: AGENTS.md
+        rule: Run $code-change-verification before marking work complete for runtime code or tests
+
+  - id: test_non_empty_acknowledged_safety_checks_preserved
+    type: pass_to_pass
+    origin: agent_config
+    description: >
+      Non-empty acknowledged_safety_checks arrays must still be included in
+      rebuilt computer_call_output items after the fix is applied.
+    source:
+      - file: AGENTS.md
+        rule: Run $code-change-verification before marking work complete for runtime code or tests
+
+  - id: test_repo_test_suite
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The agents-openai package's own test suite passes, confirming no
+      regressions in other getInputItems functionality.
+
+  - id: test_repo_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The agents-openai package's TypeScript type-check passes, confirming
+      the fix is type-safe.
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The repo's ESLint linter passes, confirming no style violations.
+
+  - id: test_repo_dist_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The agents-openai package's dist type-check passes, validating
+      the full public API surface is type-safe.
+
+  - id: test_repo_targeted_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      The openaiResponsesModel test files pass, covering the exact code
+      changed by the fix.
+
+rubric:
+  - source:
+      - file: packages/agents-openai/src/openaiResponsesModel.ts
+        rule: >
+          Bug fix: when rebuilding computer_call/computer_call_result items,
+          omit pending_safety_checks and acknowledged_safety_checks keys
+          when they are empty arrays (not just falsy).
+    checks:
+      - test_pending_safety_checks_omitted_when_empty
+      - test_acknowledged_safety_checks_omitted_when_empty
+
+  - source:
+      - file: packages/agents-openai/test/openaiResponsesModel.helpers.test.ts
+        rule: >
+          Tests added or updated to cover the empty safety-checks omission case.
+    checks:
+      - test_pending_safety_checks_omitted_when_empty
+      - test_acknowledged_safety_checks_omitted_when_empty

@@ -2,11 +2,9 @@
 
 ## Problem
 
-PostHog's Insights API currently blocks access to legacy insight *endpoints* when the feature flag `"legacy-insight-endpoints-disabled"` is enabled. However, there is no equivalent gate for legacy filter *payloads* sent to modern endpoints.
+PostHog's Insights API currently allows users to create or update insights using the old `filters`-based format (without a `query` key) through POST/PATCH requests to `/api/projects/{team_id}/insights/`. Organizations being migrated away from legacy filters need a way to prevent new legacy-filter insights from being created via these API endpoints.
 
-Users can still create or update insights using the old `filters`-based format (without a `query` key) through POST/PATCH requests to `/api/projects/{team_id}/insights/`. Organizations being migrated away from legacy filters need a way to prevent new legacy-filter insights from being created via these API endpoints.
-
-When a user attempts to create or update an insight with legacy filters, and the feature flag `"legacy-insight-filters-disabled"` is enabled for their organization, the API should reject the request with HTTP 403 Forbidden and the exact error message:
+When a user attempts to create or update an insight with legacy filters, and the feature flag is enabled for their organization, the API should reject the request with HTTP 403 Forbidden and the exact error message:
 
 > "Creating or updating insights with legacy filters is not available for this user."
 
@@ -14,13 +12,19 @@ When a user attempts to create or update an insight with legacy filters, and the
 
 ### Feature Flag Integration
 
-Use the feature flag string `"legacy-insight-filters-disabled"` to control access. When checking if this flag is enabled:
-- Pass the user's `distinct_id` as a string
-- Include `groups` with `"organization"` and `"project"` keys mapped to the team's organization ID and team ID (both as strings)
-- Include `group_properties` with nested structures containing the organization and project IDs
-- Disable feature flag event tracking by setting `send_feature_flag_events=False`
+The implementation must use a module-level constant named `LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG` with the value `"legacy-insight-filters-disabled"`.
 
-If the user has no `distinct_id` or it is falsy (None, empty string), the flag check should return `False` (allowing the request).
+Create a top-level function in `posthog/api/insight.py` named `is_legacy_insight_filters_blocked(user, team)` that:
+- Returns `False` when the user has no `distinct_id` attribute, or when `distinct_id` is `None`, or when `distinct_id` is an empty string
+- When the user has a valid `distinct_id`, calls `posthoganalytics.feature_enabled()` with:
+  - The flag name passed as the first positional argument
+  - The user's `distinct_id` passed as the second positional argument (converted to string)
+  - `groups` keyword argument containing `"organization"` and `"project"` keys mapped to the team's organization ID and team ID (both as strings)
+  - `group_properties` keyword argument containing nested structures with the organization and project IDs
+  - `send_feature_flag_events=False` to disable feature flag event tracking
+- Returns whatever `posthoganalytics.feature_enabled()` returns (True when the flag is enabled for the user, False otherwise)
+
+The function must use Python type hints (mypy-strict style) for parameters and return types.
 
 ### Legacy Filter Detection
 
@@ -30,15 +34,18 @@ A request should be treated as using "legacy filters" when ALL of the following 
 
 Modern query-based requests (those with a non-empty `"query"` value) must continue to work normally, regardless of the feature flag state.
 
-### Implementation Location
+### Serializer Validation
 
-The insight API already contains similar feature flag gating logic for endpoints. Look for existing patterns involving `is_legacy_insight_endpoint_blocked` and `posthoganalytics.feature_enabled` to understand how to integrate the new filter-based gating. The validation for insight creation and update happens in the serializer layer.
+The `InsightSerializer` class in `posthog/api/insight.py` must implement a `validate(attrs)` method that:
+1. Detects when the incoming `attrs` represent a legacy filter payload (using the criteria above)
+2. Calls `is_legacy_insight_filters_blocked()` with the request user and team
+3. When the flag is enabled and the payload uses legacy filters, raises `PermissionDenied` with the exact message: "Creating or updating insights with legacy filters is not available for this user."
+4. For non-blocked requests, delegates to the parent validation by calling `super().validate(attrs)`
 
 ### Code Quality Requirements
 
 - All new functions must have Python type hints (mypy-strict style) for parameters and return types
 - Code must pass ruff lint and format checks
-- The validation must properly delegate to parent validation logic for non-blocked requests
 
 ## Expected Behavior Summary
 

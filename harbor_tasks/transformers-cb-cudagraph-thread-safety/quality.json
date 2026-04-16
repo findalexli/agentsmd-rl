@@ -3,56 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file path, the function _generation_step, the torch.cuda.graph() call, the capture_error_mode parameter, the recognized thread-safe modes ('thread_local', 'relaxed'), the code quality checks (ruff lint/format, check_types.py, check_modeling_structure.py), and the constraints (no wildcard imports, no bare type:ignore, non-stubbed function). All test specifics are discoverable from the instruction."
+      "reason": "The instruction mentions the continuous batching directory, torch.cuda.graph(), the need for thread-safe capture, and directs the agent to consult PyTorch API for keyword arguments. The tests check for capture_error_mode being thread_local/relaxed, which is discoverable from the PyTorch docs as instructed. File paths, code quality checks (ruff, type check, modeling structure), and anti-patterns (wildcard imports, bare type:ignore, assert for narrowing, getattr for backends, stub detection) are a"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'The code that creates the CUDA graph (the torch.cuda.graph() call during continuous batching capture) must pass a capture_error_mode argument set to a thread-safe mode' and lists the exact valid values ('thread_local' or 'relaxed'). This tells the agent exactly what to change and what value to use, leaving virtually no reasoning required."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (multi-threaded CUDA graph capture crashes) and tells the agent to investigate torch.cuda.graph() kwargs, but does not specify the exact parameter name (capture_error_mode) or its value (thread_local/relaxed). The agent must reason about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests accept either 'thread_local' or 'relaxed' as valid capture_error_mode values. The behavioral test extracts and executes _generation_step dynamically, so alternative implementations that pass capture_error_mode correctly will pass regardless of code structure details."
+      "reason": "The tests accept either 'thread_local' or 'relaxed' as valid capture_error_mode values (test_capture_error_mode_recognized_safe checks against {'thread_local', 'relaxed'}). They don't assert on exact line positions, variable names, or specific helper functions. Any correct fix that passes capture_error_mode with one of these values to torch.cuda.graph() would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core fail-to-pass tests (test_capture_error_mode_thread_safe, test_capture_error_mode_recognized_safe) run a subprocess that extracts _generation_step via AST, executes it with mocked torch, and captures the actual kwargs passed to torch.cuda.graph(). This is behavioral execution, not text matching."
+      "reason": "The core behavioral tests (test_capture_error_mode_thread_safe, test_capture_error_mode_recognized_safe) run a subprocess that extracts _generation_step via AST, executes it with mocked torch, and captures the actual kwargs passed to torch.cuda.graph(). This is behavioral execution, not mere text matching. The static tests also use AST parsing to check meaningful logic, not just string searching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub _generation_step (pass/return None) would never call torch.cuda.graph() with capture_error_mode, so the behavioral tests would fail with 'torch.cuda.graph() was never called' or capture_error_mode=None. The fix requires actual meaningful code that passes the argument."
+      "reason": "A stub _generation_step (pass/return None) would never call torch.cuda.graph(), so the behavioral script would report 'torch.cuda.graph() was never called' and fail. The original code without capture_error_mode would return None for that key, failing the assertion. The fix must actively add capture_error_mode='thread_local' or 'relaxed'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: capture_error_mode thread safety (two f2p tests), code quality (ruff lint, ruff format, type check, modeling structure), no wildcard imports, no bare type:ignore, non-stubbed _generation_step, and syntax validity."
+      "reason": "The instruction requires thread-safe CUDA graph capture (tested by capture_error_mode checks), code quality (ruff, format, type check, modeling structure all tested), and various anti-patterns are checked. All explicitly stated requirements have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Pass-to-pass repo_tests, Gates, Fail-to-pass pr_diff, Pass-to-pass static anti-stub+style), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section comments (Pass-to-pass repo_tests, Gates, Fail-to-pass pr_diff, Pass-to-pass static anti-stub+style), descriptive function names, and docstrings explaining each test's purpose and category."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output (JSON/CSV/API/DB schema)."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, commands, variable names, and function names in both instruction.md and tests are correct and consistent with the repository structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (continuous_api.py), the exact function (_generation_step implicitly via 'CUDA graph capture logic'), the exact API call (torch.cuda.graph()), the exact parameter (capture_error_mode), and the exact valid values ('thread_local', 'relaxed'). This leaves essentially no localization or reasoning work for the agent."
+      "outcome": "pass",
+      "reason": "The instruction points to the directory (src/transformers/generation/continuous_batching/) and mentions torch.cuda.graph() but does not name the exact file (continuous_api.py), the exact line, or the specific parameter (capture_error_mode). The directory is natural given the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -211,6 +211,44 @@ distractors:
     PowerShell functions (like Get-ReadyToReviewPRNumbers), which is inappropriate
     since those frameworks are for the C# codebase, not PowerShell scripts.
   severity: low
+- rule: Do NOT attempt to query GitHub directly with `gh` commands
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: '74'
+  source_text: '**CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt
+    to query GitHub directly with `gh` commands or `jq` if the script fails. The script
+    contains important prioritization logic (SR3 before SR4, P/0 first, etc.) that
+    cannot be replicated with ad-hoc queries.'
+  collision_type: meta_confusion
+  why_distracting: This rule applies to the AI agent *using* the skill during a review
+    session, preventing it from making raw API calls instead of using the wrapper
+    script. However, when an agent is *developing* or extending the script itself
+    (as in the gold diff), it must use `gh` commands internally to implement new features
+    like fetching approved or agent-reviewed PRs.
+  severity: high
+- rule: Strict column definition for category tables
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: '107'
+  source_text: '**DO NOT** omit any category. Each category table should include columns
+    for: PR, Title, Author, Platform/Repo, Status, Age, Updated.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly lists the required columns. The PR needs to
+    add new columns ('Assignees' and 'Agent Review') to the script output and documentation.
+    An agent might rigidly follow the old column list and resist adding the new columns
+    required by the change.
+  severity: medium
+- rule: List of Supported Categories in Copilot Instructions
+  source:
+    path: .github/copilot-instructions.md
+    lines: '238'
+  source_text: '- **Categories**: P/0, milestoned, partner, community, recent, docs-maui'
+  collision_type: scope_ambiguity
+  why_distracting: This file documents the existing categories supported by the skill.
+    The PR aims to add new categories (approved, ready-to-review, agent-reviewed).
+    An agent might think the categories are strictly limited to this global list and
+    either refuse to add new ones or incorrectly modify this unrelated context file.
+  severity: medium
 hierarchy_analysis: The repository has a single root-level copilot-instructions.md
   file. However, its contents are heavily focused on the C#/.NET MAUI core framework
   development (xUnit, platform-specific files, etc.) and do not provide specific guidance

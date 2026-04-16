@@ -17,16 +17,13 @@ import sys
 import tempfile
 import os
 from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 REPO = "/workspace/AReaL"
 
 
 def _exec_code_via_subprocess(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code via subprocess by writing to a temp file.
-
-    This avoids shell escaping issues and ensures clean execution.
-    """
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(code)
         tmp_path = f.name
 
@@ -37,7 +34,7 @@ def _exec_code_via_subprocess(code: str, timeout: int = 30) -> subprocess.Comple
             text=True,
             timeout=timeout,
             cwd=REPO,
-            env={**os.environ, 'PYTHONPATH': REPO}
+            env={**os.environ, "PYTHONPATH": REPO}
         )
         return result
     finally:
@@ -45,7 +42,6 @@ def _exec_code_via_subprocess(code: str, timeout: int = 30) -> subprocess.Comple
 
 
 def _find_class_in_ast(tree, classname):
-    """Find an ast.ClassDef node by name."""
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == classname:
             return node
@@ -53,7 +49,6 @@ def _find_class_in_ast(tree, classname):
 
 
 def _find_method_in_class(class_node, method_name):
-    """Find a method (FunctionDef) in a ClassDef node."""
     for item in class_node.body:
         if isinstance(item, ast.FunctionDef) and item.name == method_name:
             return item
@@ -65,7 +60,6 @@ def _find_method_in_class(class_node, method_name):
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
-    """Modified files must parse without errors."""
     for fname in [
         "areal/api/cli_args.py",
         "areal/utils/logging.py",
@@ -76,18 +70,18 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — TrackioConfig behavioral tests (with subprocess)
+# Fail-to-pass (pr_diff) — TrackioConfig behavioral tests
 # ---------------------------------------------------------------------------
 
 def test_trackio_config_exists_with_fields():
-    """TrackioConfig class exists with mode, project, name, space_id fields."""
-    code = '''
+    code = """
 import re
 from pathlib import Path
 from dataclasses import fields
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r\'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)\'
+# Match @dataclass ... class TrackioConfig: block
+pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -95,7 +89,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 field_names = {f.name for f in fields(TrackioConfig)}
@@ -105,20 +99,19 @@ if missing:
     print(f"FAIL: Missing fields: {missing}")
     exit(1)
 print("PASS: All required fields present")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_trackio_config_rejects_invalid_modes():
-    """TrackioConfig rejects invalid mode values with ValueError."""
-    code = '''
+    code = """
 import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r\'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)\'
+pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -126,7 +119,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 invalid_modes = ["invalid", "remote", "cloud", "off", "enabled", ""]
@@ -141,20 +134,19 @@ for bad_mode in invalid_modes:
         print(f"FAIL: Wrong exception type for mode={bad_mode!r}: {type(e).__name__}")
         exit(1)
 print("PASS: All invalid modes rejected with ValueError")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_trackio_config_accepts_valid_modes():
-    """TrackioConfig accepts all three valid mode values."""
-    code = '''
+    code = """
 import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r\'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)\'
+pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -162,7 +154,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 for mode in ("disabled", "online", "local"):
@@ -171,20 +163,19 @@ for mode in ("disabled", "online", "local"):
         print(f"FAIL: Expected mode={mode!r}, got {cfg.mode!r}")
         exit(1)
 print("PASS: All valid modes accepted")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_trackio_config_defaults():
-    """TrackioConfig defaults: mode=disabled, others None."""
-    code = '''
+    code = """
 import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r\'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)\'
+pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -192,13 +183,13 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 cfg = TrackioConfig()
 errors = []
 if cfg.mode != "disabled":
-    errors.append(f"mode should be \'disabled\', got {cfg.mode!r}")
+    errors.append(f"mode should be 'disabled', got {cfg.mode!r}")
 if cfg.project is not None:
     errors.append(f"project should be None, got {cfg.project!r}")
 if cfg.name is not None:
@@ -211,15 +202,14 @@ if errors:
         print(f"FAIL: {e}")
     exit(1)
 print("PASS: All defaults correct")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_config_trackio_field():
-    """StatsLoggerConfig has a trackio field."""
-    code = '''
+    code = """
 import ast
 from pathlib import Path
 
@@ -245,161 +235,336 @@ for node in ast.walk(cls):
             break
 
 if not trackio_found:
-    print("FAIL: StatsLoggerConfig has no \'trackio\' field")
+    print("FAIL: StatsLoggerConfig has no 'trackio' field")
     exit(1)
 
 print("PASS: StatsLoggerConfig.trackio field exists")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_init():
-    """StatsLogger.init() initializes trackio when mode != disabled."""
-    code = '''
-import ast
-from pathlib import Path
+    """Behavioral test: StatsLogger.init() calls trackio.init with correct kwargs.
+    
+    Uses mock to verify actual call arguments, without being tied to
+    the specific variable name used for the trackio import.
+    """
+    code = """
+import sys
+sys.path.insert(0, "/workspace/AReaL")
 
-REPO = "/workspace/AReaL"
-src = Path(f"{REPO}/areal/utils/stats_logger.py").read_text()
-tree = ast.parse(src)
+import unittest.mock as mock
 
-cls = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "StatsLogger":
-        cls = node
-        break
-assert cls is not None, "StatsLogger class not found"
+mock_trackio = mock.MagicMock()
+mock_init_call_args = []
 
-init_method = None
-for item in cls.body:
-    if isinstance(item, ast.FunctionDef) and item.name == "init":
-        init_method = item
-        break
-assert init_method is not None, "StatsLogger.init() not found"
+def mock_init(**kwargs):
+    mock_init_call_args.append(kwargs)
 
-has_trackio_init = False
-for node in ast.walk(init_method):
-    if isinstance(node, ast.Call):
-        func = node.func
-        if (isinstance(func, ast.Attribute)
-            and func.attr == "init"
-            and isinstance(func.value, ast.Name)
-            and func.value.id == "trackio"):
-            has_trackio_init = True
-            kw_names = {kw.arg for kw in node.keywords}
-            if "project" not in kw_names or "name" not in kw_names:
-                print("FAIL: trackio.init() missing project or name kwargs")
-                exit(1)
-            break
+mock_trackio.init = mock_init
+mock_trackio.log = mock.MagicMock()
+mock_trackio.finish = mock.MagicMock()
 
-if not has_trackio_init:
-    print("FAIL: StatsLogger.init() does not call trackio.init()")
-    exit(1)
+with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
+    import areal.utils.stats_logger as stats_logger
+    from areal.utils.stats_logger import StatsLogger
+    from dataclasses import dataclass, field
 
-print("PASS: StatsLogger.init() calls trackio.init() with project and name")
-'''
+    @dataclass
+    class DummyWandBConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummySwanlabConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummyTensorBoardConfig:
+        path: str | None = None
+
+    @dataclass
+    class DummyTrackioConfig:
+        mode: str = "online"
+        project: str | None = "my_project"
+        name: str | None = "my_name"
+        space_id: str | None = "user/my-space"
+
+    @dataclass
+    class DummyStatsLoggerConfig:
+        experiment_name: str = "test_exp"
+        trial_name: str = "test_trial"
+        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
+        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
+        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
+        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
+
+    config = DummyStatsLoggerConfig()
+    logger = StatsLogger(config)
+
+    try:
+        logger.init()
+    except Exception:
+        pass
+
+    if not mock_init_call_args:
+        print("FAIL: trackio.init was never called")
+        sys.exit(1)
+
+    call_kwargs = mock_init_call_args[0]
+
+    if "project" not in call_kwargs:
+        print("FAIL: trackio.init missing 'project' kwarg")
+        sys.exit(1)
+    if "name" not in call_kwargs:
+        print("FAIL: trackio.init missing 'name' kwarg")
+        sys.exit(1)
+    if "space_id" not in call_kwargs:
+        print("FAIL: trackio.init missing 'space_id' kwarg")
+        sys.exit(1)
+
+    print("PASS: trackio.init called with project, name, space_id kwargs")
+"""
+    r = _exec_code_via_subprocess(code)
+    assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_stats_logger_trackio_init_fallback():
+    """Behavioral test: project defaults to experiment_name, name to trial_name when None."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/AReaL")
+
+import unittest.mock as mock
+
+mock_trackio = mock.MagicMock()
+mock_init_call_args = []
+
+def mock_init(**kwargs):
+    mock_init_call_args.append(kwargs)
+
+mock_trackio.init = mock_init
+mock_trackio.log = mock.MagicMock()
+mock_trackio.finish = mock.MagicMock()
+
+with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
+    import areal.utils.stats_logger as stats_logger
+    from areal.utils.stats_logger import StatsLogger
+    from dataclasses import dataclass, field
+
+    @dataclass
+    class DummyWandBConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummySwanlabConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummyTensorBoardConfig:
+        path: str | None = None
+
+    @dataclass
+    class DummyTrackioConfig:
+        mode: str = "online"
+        project: str | None = None
+        name: str | None = None
+        space_id: str | None = "user/my-space"
+
+    @dataclass
+    class DummyStatsLoggerConfig:
+        experiment_name: str = "my_experiment"
+        trial_name: str = "my_trial"
+        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
+        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
+        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
+        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
+
+    config = DummyStatsLoggerConfig()
+    logger = StatsLogger(config)
+
+    try:
+        logger.init()
+    except Exception:
+        pass
+
+    if not mock_init_call_args:
+        print("FAIL: trackio.init was never called")
+        sys.exit(1)
+
+    call_kwargs = mock_init_call_args[0]
+
+    if call_kwargs.get("project") != "my_experiment":
+        print(f"FAIL: Expected project='my_experiment', got {call_kwargs.get('project')!r}")
+        sys.exit(1)
+    if call_kwargs.get("name") != "my_trial":
+        print(f"FAIL: Expected name='my_trial', got {call_kwargs.get('name')!r}")
+        sys.exit(1)
+
+    print("PASS: trackio.init uses experiment_name/trial_name fallback correctly")
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_commit():
-    """StatsLogger.commit() calls trackio.log when enabled."""
-    code = '''
-import ast
-from pathlib import Path
+    """Behavioral test: StatsLogger.commit() calls trackio.log when enabled."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/AReaL")
 
-REPO = "/workspace/AReaL"
-src = Path(f"{REPO}/areal/utils/stats_logger.py").read_text()
-tree = ast.parse(src)
+import unittest.mock as mock
 
-cls = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "StatsLogger":
-        cls = node
-        break
-assert cls is not None, "StatsLogger class not found"
+mock_trackio = mock.MagicMock()
+mock_trackio.init = mock.MagicMock()
+mock_trackio.finish = mock.MagicMock()
+mock_log_calls = []
 
-commit_method = None
-for item in cls.body:
-    if isinstance(item, ast.FunctionDef) and item.name == "commit":
-        commit_method = item
-        break
-assert commit_method is not None, "StatsLogger.commit() not found"
+def mock_log(**kwargs):
+    mock_log_calls.append(kwargs)
 
-has_trackio_log = False
-for node in ast.walk(commit_method):
-    if isinstance(node, ast.Call):
-        func = node.func
-        if (isinstance(func, ast.Attribute)
-            and func.attr == "log"
-            and isinstance(func.value, ast.Name)
-            and func.value.id == "trackio"):
-            has_trackio_log = True
-            break
+mock_trackio.log = mock_log
 
-if not has_trackio_log:
-    print("FAIL: StatsLogger.commit() does not call trackio.log()")
-    exit(1)
+with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
+    import areal.utils.stats_logger as stats_logger
+    from areal.utils.stats_logger import StatsLogger
+    from dataclasses import dataclass, field
 
-print("PASS: StatsLogger.commit() calls trackio.log()")
-'''
+    @dataclass
+    class DummyWandBConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummySwanlabConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummyTensorBoardConfig:
+        path: str | None = None
+
+    @dataclass
+    class DummyTrackioConfig:
+        mode: str = "online"
+        project: str | None = "my_project"
+        name: str | None = "my_name"
+        space_id: str | None = None
+
+    @dataclass
+    class DummyStatsLoggerConfig:
+        experiment_name: str = "test_exp"
+        trial_name: str = "test_trial"
+        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
+        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
+        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
+        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
+
+    config = DummyStatsLoggerConfig()
+    logger = StatsLogger(config)
+
+    try:
+        logger.init()
+    except Exception:
+        pass
+
+    mock_log_calls.clear()
+
+    logger.commit(epoch=1, step=100, global_step=100, data={"loss": 0.5})
+
+    if not mock_log_calls:
+        print("FAIL: trackio.log was never called during commit")
+        sys.exit(1)
+
+    call_kwargs = mock_log_calls[0]
+    if "loss" not in call_kwargs:
+        print(f"FAIL: trackio.log call missing 'loss' data")
+        sys.exit(1)
+
+    print("PASS: trackio.log called with data during commit")
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_close():
-    """StatsLogger.close() calls trackio.finish when enabled."""
-    code = '''
-import ast
-from pathlib import Path
+    """Behavioral test: StatsLogger.close() calls trackio.finish when enabled."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/AReaL")
 
-REPO = "/workspace/AReaL"
-src = Path(f"{REPO}/areal/utils/stats_logger.py").read_text()
-tree = ast.parse(src)
+import unittest.mock as mock
 
-cls = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.ClassDef) and node.name == "StatsLogger":
-        cls = node
-        break
-assert cls is not None, "StatsLogger class not found"
+mock_trackio = mock.MagicMock()
+mock_trackio.init = mock.MagicMock()
+mock_trackio.log = mock.MagicMock()
+mock_finish_called = []
 
-close_method = None
-for item in cls.body:
-    if isinstance(item, ast.FunctionDef) and item.name == "close":
-        close_method = item
-        break
-assert close_method is not None, "StatsLogger.close() not found"
+def mock_finish():
+    mock_finish_called.append(True)
 
-has_trackio_finish = False
-for node in ast.walk(close_method):
-    if isinstance(node, ast.Call):
-        func = node.func
-        if (isinstance(func, ast.Attribute)
-            and func.attr == "finish"
-            and isinstance(func.value, ast.Name)
-            and func.value.id == "trackio"):
-            has_trackio_finish = True
-            break
+mock_trackio.finish = mock_finish
 
-if not has_trackio_finish:
-    print("FAIL: StatsLogger.close() does not call trackio.finish()")
-    exit(1)
+with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
+    import areal.utils.stats_logger as stats_logger
+    from areal.utils.stats_logger import StatsLogger
+    from dataclasses import dataclass, field
 
-print("PASS: StatsLogger.close() calls trackio.finish()")
-'''
+    @dataclass
+    class DummyWandBConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummySwanlabConfig:
+        mode: str = "disabled"
+
+    @dataclass
+    class DummyTensorBoardConfig:
+        path: str | None = None
+
+    @dataclass
+    class DummyTrackioConfig:
+        mode: str = "online"
+        project: str | None = "my_project"
+        name: str | None = "my_name"
+        space_id: str | None = None
+
+    @dataclass
+    class DummyStatsLoggerConfig:
+        experiment_name: str = "test_exp"
+        trial_name: str = "test_trial"
+        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
+        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
+        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
+        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
+
+    config = DummyStatsLoggerConfig()
+    logger = StatsLogger(config)
+
+    try:
+        logger.init()
+    except Exception:
+        pass
+
+    mock_finish_called.clear()
+
+    logger.close()
+
+    if not mock_finish_called:
+        print("FAIL: trackio.finish was never called during close")
+        sys.exit(1)
+
+    print("PASS: trackio.finish called during close")
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_logging_helper_trackio():
-    """logging.py log helper includes trackio.log call with graceful fallback."""
-    code = '''
+    code = """
 import ast
 from pathlib import Path
 
@@ -437,7 +602,7 @@ if not has_try_trackio:
     exit(1)
 
 print("PASS: Logging helper includes trackio with graceful fallback")
-'''
+"""
     r = _exec_code_via_subprocess(code)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
@@ -448,7 +613,6 @@ print("PASS: Logging helper includes trackio with graceful fallback")
 # ---------------------------------------------------------------------------
 
 def test_trackio_config_not_stub():
-    """TrackioConfig.__post_init__ has real validation logic, not just pass/return."""
     src = Path(f"{REPO}/areal/api/cli_args.py").read_text()
     tree = ast.parse(src)
     cls = _find_class_in_ast(tree, "TrackioConfig")
@@ -465,12 +629,7 @@ def test_trackio_config_not_stub():
     )
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from .claude/rules/api-config.md
-# ---------------------------------------------------------------------------
-
 def test_trackio_config_post_init_validation():
-    """TrackioConfig uses __post_init__ with ValueError for validation."""
     src = Path(f"{REPO}/areal/api/cli_args.py").read_text()
     tree = ast.parse(src)
     cls = _find_class_in_ast(tree, "TrackioConfig")
@@ -496,7 +655,6 @@ def test_trackio_config_post_init_validation():
 
 
 def test_trackio_config_has_docstring():
-    """TrackioConfig class has a docstring (all public configs must have docstring)."""
     src = Path(f"{REPO}/areal/api/cli_args.py").read_text()
     tree = ast.parse(src)
     cls = _find_class_in_ast(tree, "TrackioConfig")
@@ -516,7 +674,6 @@ def test_trackio_config_has_docstring():
 
 
 def test_trackio_config_field_help_metadata():
-    """StatsLoggerConfig.trackio field has 'help' in metadata."""
     src = Path(f"{REPO}/areal/api/cli_args.py").read_text()
     tree = ast.parse(src)
     cls = _find_class_in_ast(tree, "StatsLoggerConfig")
@@ -543,7 +700,6 @@ def test_trackio_config_field_help_metadata():
 
 
 def test_no_wildcard_imports():
-    """No wildcard imports in modified files."""
     for fname in [
         "areal/api/cli_args.py",
         "areal/utils/logging.py",
@@ -564,7 +720,6 @@ def test_no_wildcard_imports():
 # ---------------------------------------------------------------------------
 
 def test_repo_ruff_format():
-    """Modified files are formatted according to ruff format (pass_to_pass)."""
     r = subprocess.run(
         ["ruff", "format", "--check", "areal/api/cli_args.py",
          "areal/utils/logging.py", "areal/utils/stats_logger.py"],
@@ -574,10 +729,6 @@ def test_repo_ruff_format():
 
 
 def test_repo_ruff_lint():
-    """Modified files pass ruff linter checks (pass_to_pass).
-
-    Ignores UP042 (enum inheritance style) as it's a pre-existing codebase issue.
-    """
     r = subprocess.run(
         ["ruff", "check", "--ignore", "UP042", "areal/api/cli_args.py",
          "areal/utils/logging.py", "areal/utils/stats_logger.py"],
@@ -587,7 +738,6 @@ def test_repo_ruff_lint():
 
 
 def test_repo_python_syntax():
-    """Modified files have valid Python syntax (pass_to_pass)."""
     for fname in [
         "areal/api/cli_args.py",
         "areal/utils/logging.py",
@@ -601,7 +751,6 @@ def test_repo_python_syntax():
 
 
 def test_repo_yaml_valid():
-    """Repo's YAML configuration files are syntactically valid (pass_to_pass)."""
     import yaml
 
     yaml_files = [
@@ -619,7 +768,6 @@ def test_repo_yaml_valid():
 
 
 def test_repo_json_valid():
-    """Repo's JSON files are syntactically valid (pass_to_pass)."""
     import json
 
     json_files = list(Path(REPO).rglob("*.json"))
@@ -634,7 +782,6 @@ def test_repo_json_valid():
 
 
 def test_repo_no_trailing_whitespace():
-    """Modified files have no trailing whitespace (pass_to_pass)."""
     for fname in [
         "areal/api/cli_args.py",
         "areal/utils/logging.py",
@@ -648,7 +795,6 @@ def test_repo_no_trailing_whitespace():
 
 
 def test_repo_newline_at_eof():
-    """Modified files end with a newline (pass_to_pass)."""
     for fname in [
         "areal/api/cli_args.py",
         "areal/utils/logging.py",
@@ -660,59 +806,53 @@ def test_repo_newline_at_eof():
 
 
 def test_repo_py_compile():
-    """Modified Python files compile without errors (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-m", "py_compile", "areal/api/cli_args.py",
          "areal/utils/logging.py", "areal/utils/stats_logger.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Python compilation failed:\\n{r.stderr}"
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr}"
 
 
 def test_repo_toml_valid():
-    """pyproject.toml is syntactically valid (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-c",
          "import tomllib; tomllib.load(open(\"pyproject.toml\", \"rb\"))"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"TOML validation failed:\\n{r.stderr}"
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}"
 
 
 def test_repo_docs_cli_syntax():
-    """docs/generate_cli_docs.py has valid Python syntax (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-m", "py_compile", "docs/generate_cli_docs.py"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"CLI docs script syntax failed:\\n{r.stderr}"
+    assert r.returncode == 0, f"CLI docs script syntax failed:\n{r.stderr}"
 
 
 def test_repo_ast_parse_cli_args():
-    """areal/api/cli_args.py has valid AST structure (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-c",
          "import ast; ast.parse(open(\"areal/api/cli_args.py\").read())"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"AST parse failed for cli_args.py:\\n{r.stderr}"
+    assert r.returncode == 0, f"AST parse failed for cli_args.py:\n{r.stderr}"
 
 
 def test_repo_ast_parse_stats_logger():
-    """areal/utils/stats_logger.py has valid AST structure (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-c",
          "import ast; ast.parse(open(\"areal/utils/stats_logger.py\").read())"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"AST parse failed for stats_logger.py:\\n{r.stderr}"
+    assert r.returncode == 0, f"AST parse failed for stats_logger.py:\n{r.stderr}"
 
 
 def test_repo_ast_parse_logging():
-    """areal/utils/logging.py has valid AST structure (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-c",
          "import ast; ast.parse(open(\"areal/utils/logging.py\").read())"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"AST parse failed for logging.py:\\n{r.stderr}"
+    assert r.returncode == 0, f"AST parse failed for logging.py:\n{r.stderr}"

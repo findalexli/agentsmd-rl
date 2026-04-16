@@ -1,0 +1,65 @@
+source:
+  repo: apache/airflow
+  pr_number: 64738
+  base_commit: 97deef5f615b17f618a2bf4c2e9e0f8c3ec15cde
+  merge_commit: 93d8984a40e43d94c09b82c0cdfa624a5c09bd57
+  title: "fix(scheduler): skip asset-triggered dags without SerializedDagModel"
+
+checks:
+  - id: test_missing_serialized_dag_handling
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "dags_needing_dagruns handles DAGs with ADRQ but no SerializedDagModel"
+
+  - id: test_fix_removes_orphan_dags_from_both_dicts
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Fix removes orphan dag_ids from both adrq_by_dag and dag_statuses in loop"
+
+  - id: test_fix_logs_skipped_dags_message
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Fix logs specific message about skipped DAGs not in serialized_dag table"
+
+  - id: test_fix_does_not_delete_adrq_rows
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Fix only removes from in-memory dicts, not from database"
+
+  - id: test_fix_uses_set_difference
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Fix uses set(adrq_by_dag.keys()) - ser_dag_ids pattern"
+
+  - id: test_fix_logs_sorted_dag_ids
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Fix uses sorted() for deterministic logging of skipped dag_ids"
+
+  - id: test_dag_model_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dag.py has valid Python syntax"
+
+  - id: test_dags_needing_dagruns_method_exists
+    type: pass_to_pass
+    origin: static
+    description: "dags_needing_dagruns method exists in DagModel"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dag.py passes ruff linter checks from repo CI"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dag.py passes ruff format check from repo CI"
+
+rubric:
+  - id: coding_standards_verified_by_tests
+    rule: "The code passes automated test verification including ruff linting and formatting (test_repo_ruff_lint, test_repo_ruff_format pass)"
+    source:
+      file: tests/test_outputs.py
+      lines: "test_repo_ruff_lint and test_repo_ruff_format"
+    reference: "Tests verify: ruff check passes (no lint errors), ruff format --check passes (code is properly formatted)"

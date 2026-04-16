@@ -1,0 +1,78 @@
+version: 1.0
+
+task:
+  name: mantine-use-focus-within-stale-closure
+  source_pr: mantinedev/mantine#8528
+  base_commit: 5a10ab2d17f4e5a8fc02e38cee31b6f63118d89b
+  merge_commit: 533316afbf61957119b6fd73e9d200eb46d0d062
+
+checks:
+  # Fail-to-pass: Core functional tests
+  - id: test_use_callback_ref_imported
+    type: fail_to_pass
+    origin: functional
+    description: useCallbackRef is imported from utils
+
+  - id: test_onfocus_uses_callbackref
+    type: fail_to_pass
+    origin: functional
+    description: onFocus callback uses useCallbackRef wrapper
+
+  - id: test_onblur_uses_callbackref
+    type: fail_to_pass
+    origin: functional
+    description: onBlur callback uses useCallbackRef wrapper
+
+  - id: test_handle_focus_in_no_deps
+    type: fail_to_pass
+    origin: functional
+    description: handleFocusIn useCallback has empty deps (no onFocus dependency)
+
+  - id: test_handle_focus_out_no_deps
+    type: fail_to_pass
+    origin: functional
+    description: handleFocusOut useCallback has empty deps (no onBlur dependency)
+
+  - id: test_hooks_jest_passes
+    type: fail_to_pass
+    origin: repo_tests
+    description: Jest tests for use-focus-within pass (tests the stale closure fix)
+
+  # Pass-to-pass: Quality/regression tests
+  - id: test_use_focus_within_file_exists
+    type: pass_to_pass
+    origin: structural
+    description: Target file exists and is readable
+
+  - id: test_use_callback_ref_util_exists
+    type: pass_to_pass
+    origin: structural
+    description: useCallbackRef utility is exported from utils
+
+  - id: test_hooks_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compiles without errors
+
+  - id: test_hooks_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on @mantine/hooks package
+
+  - id: test_hooks_prettier_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check passes on hooks package
+
+  - id: test_related_hooks_jest_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Jest tests for related hooks pass (use-hover, use-click-outside)
+
+  - id: test_hooks_stylelint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Stylelint passes on @mantine/hooks package
+
+rubric: []
+  # No agent config files found in this repository

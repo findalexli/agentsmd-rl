@@ -3,60 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all file paths (HttpParser.h, CLAUDE.md, package.json, scripts/pr-comments.ts), variable names (contentLengthString), error codes (HTTP_ERROR_400_BAD_REQUEST, HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH), literal strings (content-length, RFC 9112/9110), bloom filter usage (req->bf.mightHave), loop pattern (for (HttpRequest::Header *h = req->headers;...)), and documentation requirements (Reading PR Feedback section, footgun/silently omits, --json, jq, resolved/outdat"
+      "reason": "The instruction names all key file paths (HttpParser.h, CLAUDE.md, package.json, scripts/pr-comments.ts), error codes (HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH), bloom filter usage (bf.mightHave), RFC references, endpoint paths, GraphQL fields (isResolved/isOutdated), JSON output fields, --json flag, --paginate, and the pr:comments script name. All asserted specifics in tests are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction provides extremely detailed implementation steps: exact variable name 'contentLengthString' of type 'std::string_view', exact bloom filter call 'req->bf.mightHave(\"content-length\")', exact loop pattern 'for (HttpRequest::Header *h = req->headers; ...)', exact checks like 'contentLengthString.data() == nullptr' and 'h->value.length() == 0' and 'h->value.length() != contentLengthString.length()'. This is essentially dictating the exact code to write, not just describing what's brok"
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (conflicting Content-Length headers silently ignored) and what behavior is required (reject with 400, iterate headers, use bloom filter) but does not give the exact code, line numbers, or specific implementation to write. The agent must reason about the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_http_parser_has_duplicate_content_length_check asserts 'for (HttpRequest::Header *h = req->headers;' and 'contentLengthString.data() == nullptr' and 'h->value.length() != contentLengthString.length()'. An alternative correct fix using different variable names, std::find_if, or a different iteration pattern would fail these tests despite being functionally correct."
+      "reason": "Tests assert very specific implementation patterns via regex. test_http_parser_rejects_conflicting_content_length checks for 'for\\s*\\([^)]*headers[^)]*\\)' which requires a for-loop with 'headers' in the loop condition, and checks for specific functions like strncmp/memcmp/.compare or exact patterns like 'h->value.length()'. A correct alternative using while-loops, iterators, std::equal, or different variable names would fail these regex checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test is a text-matching test using patterns like 'assert X in content' or string searches on file contents. No test compiles the C++ code, sends HTTP requests, runs the TypeScript script, or verifies any actual behavior. For example, test_http_parser_has_duplicate_content_length_check just checks for string patterns in the source file."
+      "reason": "The HTTP parser tests (test_http_parser_rejects_conflicting_content_length, test_http_parser_rejects_empty_content_length, test_http_parser_uses_bloom_filter, test_http_parser_has_rfc_reference) are purely text-matching via regex on the source file \u2014 they never compile or execute the parser. The pr-comments script test does execute it, but the core security fix is only verified by grepping source code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all tests are pure text-matching, an agent could create files containing the exact expected strings without implementing any real logic. For example, pr-comments.ts could contain the strings 'gh api', '--paginate', 'graphql', '/issues/', '/pulls/', '/reviews', '/comments' as comments without any actual implementation and pass all tests."
+      "outcome": "pass",
+      "reason": "A stub implementation (empty file or no changes) would fail since the tests check for specific strings (HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH, HTTP_ERROR_400_BAD_REQUEST), iteration patterns, and bloom filter usage that don't exist in the original code. The pr-comments script must also exist and be syntactically valid."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires the script to support 'both human-readable and JSON output modes', 'can be called with PR number, URL, or defaults to current branch's PR', 'shows summary counts by type', 'handles pagination manually for GraphQL', but tests only check for string presence in files. The actual runtime behavior of the TypeScript script (pagination, output formatting, argument handling) is never tested."
+      "reason": "Instruction requires 'If all Content-Length values are identical, accept the request' but no test verifies that identical duplicate Content-Length headers are accepted. Also, the instruction requires the script to show 'summary counts by type, unresolved/resolved/outdated thread counts' and 'Labels each entry with its kind' but tests only check for string presence of 'kind' in the file, not actual behavioral output."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two categories with clear comments ('Category 1: Code behavior tests (HTTP parser)' and 'Category 2: Config/documentation update tests'), each test has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are well-organized into two categories with clear comments ('Category 1: HTTP Parser behavior tests', 'Category 2: TypeScript pr:comments script tests'), each function has a descriptive name and docstring explaining what it checks and why."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the JSON output fields for the pr-comments script: 'when, user, kind, location, body, url, resolved, outdated' and explains their semantics including that 'resolved == false' unambiguously means 'confirmed open thread'."
+      "reason": "The instruction documents the JSON output fields (when, user, kind, location, body, url, resolved, outdated) and the test (test_pr_comments_script_has_json_output_mode) checks for these field names in the script source."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction. All paths (packages/bun-uws/src/HttpParser.h, scripts/pr-comments.ts, CLAUDE.md, package.json) and identifiers are consistent between instruction and tests."
+      "reason": "All file paths (packages/bun-uws/src/HttpParser.h, CLAUDE.md, scripts/pr-comments.ts, package.json), error codes, and command names are consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file (packages/bun-uws/src/HttpParser.h), exact variable names (contentLengthString), exact type (std::string_view), exact conditional checks (contentLengthString.data() == nullptr, h->value.length() == 0, h->value.length() != contentLengthString.length()), and exact loop pattern. This goes far beyond identifying the buggy module \u2014 it prescribes the exact implementation."
+      "outcome": "pass",
+      "reason": "The instruction names the file HttpParser.h which is appropriate for the task domain, but doesn't specify exact line numbers or the precise code to change. It describes the vulnerability and requirements at a behavioral level."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch for CLAUDE.md appends a new section at the end of the file, and package.json adds a single line. Both are localized changes that don't contradict other files."
+      "reason": "The gold patch for CLAUDE.md and package.json are localized additions (appending a section and adding one script entry) without full-file rewrites, and don't contradict other tier-1 files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 5,
-  "fail_count": 6
+  "pass_count": 8,
+  "fail_count": 3
 }

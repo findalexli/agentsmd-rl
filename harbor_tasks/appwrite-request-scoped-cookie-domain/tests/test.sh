@@ -3,6 +3,9 @@
 # Install pytest if needed
 pip install pytest -q --break-system-packages 2>/dev/null
 
+# Install PHP dependencies (needed for autoloader and framework classes)
+cd /workspace/appwrite && composer install --no-interaction --ignore-platform-reqs -q 2>/dev/null
+
 # Run tests
 python3 -m pytest /tests/test_outputs.py -v --tb=short
 TEST_RESULT=$?

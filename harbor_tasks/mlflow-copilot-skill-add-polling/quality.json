@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file paths (.claude/skills/copilot/poll.sh, .claude/skills/copilot/SKILL.md), the required behavior (executable, two arguments, timeline API, copilot_work_finished event, ~1800 seconds timeout, exit non-zero without args), the allowed-tools update, and the polling documentation. The tests check these same specifics. The literal string '1800' is mentioned indirectly via 'approximately 30 minutes / 1800 seconds', and 'copilot_work_finished' and 'timeline' are explicitly n"
+      "reason": "The instruction explicitly names all key specifics tested: poll.sh path, executable requirement, bash -n validation, two arguments (owner/repo and PR number), non-zero exit without args, 'timeline' in script, 'copilot_work_finished' event, max_seconds=1800, poll.sh in allowed-tools, valid YAML frontmatter with name and allowed-tools, 'polling' word in body, reference to poll.sh usage. All existing files that pass-to-pass tests check are listed in the 'Existing .claude directory structure' sectio"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what the polling script should do (poll timeline API, check for copilot_work_finished, timeout, etc.) and what SKILL.md changes are needed, but does not give exact code, line numbers, or literal patches. A developer must still design the implementation."
+      "reason": "The instruction describes what the script should do (poll the timeline API for copilot_work_finished, use max_seconds=1800, take two args) but does not give the exact implementation code, line numbers, or specific gh command syntax. A developer still must reason about how to implement the polling loop."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_poll_script_api_and_event asserts '1800' in content or 'max_seconds' in content. An alternative correct implementation using e.g. TIMEOUT=1800 stored differently, or using a different variable name like 'MAX_WAIT=1800' would pass (since '1800' is present), but an implementation using a different timeout value (e.g., 1799 or computing 30*60) with a different variable name would fail. More critically, this test enforces specific string literals rather than behavior. However, since '1800' is e"
+      "reason": "The instruction mandates a variable named 'max_seconds' and the tests check for specific implementation details like the 'timeline' string appearing in the script (test_poll_script_references_timeline, visible in truncated test names and instruction bullet 'the word timeline must appear in the script'). However, the test_poll_script_api_and_event test uses a mock gh that handles both --jq and raw JSON approaches, which is flexible. The main concern is that 'max_seconds' as a required variable na"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_poll_script_api_and_event is purely textual: it reads the file and checks for substring presence ('timeline', 'copilot_work_finished', '1800'/'max_seconds') with no execution. test_skill_allows_poll_tool and test_skill_polling_docs also only read file content. While some tests do execute (test_poll_script_requires_args runs the script, test_poll_script_syntax_valid runs bash -n), multiple fail-to-pass tests rely solely on string matching in file contents."
+      "outcome": "pass",
+      "reason": "Tests execute poll.sh via subprocess (bash -n syntax check, running without args to verify non-zero exit, running with mock gh to verify functional behavior), check file permissions with os.access, and validate YAML by parsing it. While some tests do read file content (for frontmatter parsing), they parse it structurally via yaml.safe_load rather than simple string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty poll.sh would fail test_poll_script_requires_args (needs non-zero exit without args), test_poll_script_api_and_event (needs specific strings), and test_poll_script_syntax_valid. An empty SKILL.md would fail test_skill_allows_poll_tool and test_skill_polling_docs. No stub could pass all f2p tests."
+      "reason": "A stub poll.sh (e.g., empty file or just 'exit 0') would fail test_poll_script_requires_args (which expects non-zero exit without args) and test_poll_script_api_and_event (which checks that gh is actually called and the script exits 0 only when copilot_work_finished is detected). An empty SKILL.md would fail frontmatter validation tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors are tested: poll.sh existence/executable (test_poll_script_exists_executable), syntax (test_poll_script_syntax_valid), argument validation (test_poll_script_requires_args), API usage and event check (test_poll_script_api_and_event), SKILL.md allowed-tools update (test_skill_allows_poll_tool), and polling documentation (test_skill_polling_docs)."
+      "reason": "All behaviors from the instruction are tested: poll.sh existence/executability, bash -n validation, argument validation, timeline API usage, copilot_work_finished detection, max_seconds timeout value (referenced in instruction), SKILL.md frontmatter with poll.sh in allowed-tools, polling section in body, and all existing file integrity checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (repo_tests pass_to_pass, static pass_to_pass, pr_diff fail_to_pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Pass-to-pass repo_tests, Gates static, Fail-to-pass pr_diff), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The task produces YAML frontmatter in SKILL.md. The instruction specifies the required fields (allowed-tools with poll.sh entry) and the tests validate the YAML schema including 'name' and 'allowed-tools' keys."
+      "reason": "The task produces structured YAML frontmatter, and the instruction specifies the required fields (name, allowed-tools) that must be present. The schema is adequately documented."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,19 +39,18 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies the target files (.claude/skills/copilot/ directory) which is appropriate for the task domain. It describes what to build, not where to change existing code. No line numbers or exact code snippets are given."
+      "reason": "The instruction specifies what files to create/modify and what behavior is expected, but doesn't give exact code, line numbers, or implementation details beyond the functional requirements. The variable name 'max_seconds' is a borderline hint but is a requirement specification, not localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diff to SKILL.md is localized: one line added to allowed-tools and a new section appended. It doesn't rewrite the entire file or contradict other tier-1 files."
+      "reason": "The gold patch makes a localized addition to SKILL.md (adding one line to allowed-tools and appending a polling section) and creates a new poll.sh file. It doesn't rewrite existing files wholesale or contradict other files."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 1
 }

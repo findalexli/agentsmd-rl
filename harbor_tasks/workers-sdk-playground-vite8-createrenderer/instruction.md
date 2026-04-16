@@ -1,37 +1,33 @@
-# Fix Vite 8 / rolldown crash: TypeError: createRenderer is not a function
+# Fix Vite 8 / rolldown crash in Workers Playground
 
 ## Problem
 
-After upgrading to Vite 8 (which uses rolldown as its bundler), the Workers Playground application crashes at runtime with:
+After the Vite 8 upgrade (which replaces Rollup with rolldown as its bundler), the Workers Playground application (`packages/workers-playground`) has two critical issues that prevent it from working in production.
+
+### 1. Runtime crash: `createRenderer is not a function`
+
+The application crashes at runtime with:
 
 ```
 Uncaught TypeError: createRenderer is not a function
     at getRenderer (index-B9Sbpvoo.js:42950:28)
 ```
 
-The `@cloudflare/style-provider` package ships a hybrid ESM+CJS build. Its `es/` directory contains files that are nominally ESM but internally use `require()`. Rolldown (Vite 8's new bundler) mishandles this pattern and generates an anonymous, unreachable module initializer, leaving `createRenderer` as `undefined` at runtime.
+This error originates from the `@cloudflare/style-provider` package. This package ships a dual build: an ESM build in its `es/` directory and a CommonJS build in its `lib/` directory. The `es/` directory contains files that are nominally ESM but internally use `require()` calls. Rolldown mishandles this hybrid pattern and generates an anonymous, unreachable module initializer, leaving `createRenderer` as `undefined` at runtime. Rolldown handles pure CJS correctly via its interop layer.
 
-Additionally, the built assets are deployed to incorrect paths by Wrangler. The HTML references assets at one path, but Wrangler uploads them to a different location, resulting in broken asset loading.
+### 2. Broken asset loading in production
+
+The Workers Playground is hosted at the `/playground` path. The current Vite configuration sets `base: '/playground'`, which causes Vite to output HTML that references assets at `/playground/assets/`. However, Wrangler uploads the built assets as though they are at `/assets/`, so all asset URLs in the generated HTML are broken in production. The deployed assets need to be located under a path that includes `playground` to match how Wrangler resolves and serves them.
 
 ## Expected Behavior
 
-- The application should build and run without the `createRenderer` TypeError
-- Built assets should be deployed at paths that match how Wrangler serves them
-- The changeset policy (per AGENTS.md) must be followed for changes to published packages
+- The Workers Playground should build successfully with Vite 8 and run without the `createRenderer` TypeError
+- Built assets should be served at paths that match how Wrangler deploys them
+- The existing `react/jsx-runtime.js` alias in `vite.config.ts` must be preserved
+- The repository's changeset policy (per AGENTS.md) must be followed — changes to published packages like `@cloudflare/workers-playground` require a changeset entry in `.changeset/`
+- The solution must pass the repository's lint (`check:lint`) and format (`check:format`) checks
 
-## Configuration Requirements
-
-The Workers Playground vite configuration (`packages/workers-playground/vite.config.ts`) must satisfy all of the following:
-
-1. **style-provider alias**: In `resolve.alias`, the `@cloudflare/style-provider` package must be aliased to a path that routes to its CommonJS build (the `lib/` directory inside the package), not the ESM `es/` directory. This is required because rolldown mishandles the hybrid ESM+CJS pattern in the `es/` directory, causing `createRenderer` to be `undefined` at runtime.
-
-2. **No `base: '/playground'`**: The `base` option must not be set to `'/playground'`. That value causes Vite to generate HTML with asset references at `/playground/assets/`, while Wrangler uploads assets as if they are at `/assets/`, breaking all asset loading in production.
-
-3. **assetsDir containing `playground`**: The `build.assetsDir` option must place built assets under a path that includes the word `playground`. This ensures the asset paths in the generated HTML match where Wrangler actually deploys the files.
-
-4. **Changeset for published package**: A changeset file under `.changeset/` must exist that references `@cloudflare/workers-playground`. The repo's AGENTS.md requires a changeset for every change to a published package, and the CI will fail without it.
-
-## Files to Look At
+## Relevant Context
 
 - `packages/workers-playground/vite.config.ts` — Vite build configuration for the Workers Playground SPA
-- `.changeset/` — directory where changeset files are stored
+- `.changeset/` — directory where changeset markdown files are stored

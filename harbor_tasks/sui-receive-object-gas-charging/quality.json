@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for very specific strings like 'use move_vm_runtime::shared::views::{SizeConfig, ValueView};' (test_transfer_rs_imports_sizeconfig), 'transfer_receive_object_internal_cost_per_byte: InternalGas' (test_native_cost_params_has_new_fields), 'child_size' (test_native_receive_charges_per_byte_cost), and 'transfer_receive_object_cost_per_byte_as_option' (test_natives_cost_table_passes_new_params). While the instruction mentions SizeConfig/ValueView imports and some field names, it does not "
+      "outcome": "pass",
+      "reason": "Instruction names the field names (transfer_receive_object_cost_per_byte, transfer_receive_object_type_cost_per_byte), version 119, values Some(1)/Some(2), struct name TransferReceiveObjectInternalCostParams, file paths, and the SizeConfig/ValueView import path."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact field names ('transfer_receive_object_cost_per_byte: Option<u64>'), exact values ('Some(1)' and 'Some(2)' for version 119), exact imports ('SizeConfig and ValueView from move_vm_runtime::shared::views'), exact method calls ('child_ty.size()?' and 'child.abstract_memory_size(&SizeConfig {...})?'), and exact macro usage ('native_charge_gas_early_exit!'). This is effectively telling the agent exactly what code to write, not just describing what's broken."
+      "reason": "Instruction specifies exact field names, exact values (Some(1), Some(2)), exact import line `use move_vm_runtime::shared::views::{SizeConfig, ValueView}`, and describes charging logic precisely \u2014 leaving little reasoning beyond mechanical transcription."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'transfer_receive_object_internal_cost_per_byte: InternalGas', 'child_size', 'use move_vm_runtime::shared::views::{SizeConfig, ValueView};', 'transfer_receive_object_cost_per_byte_as_option'. An alternative correct implementation using different variable names (e.g., 'object_size' instead of 'child_size'), different import styles, or different field naming conventions would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests assert exact literal strings like `transfer_receive_object_internal_type_cost_per_byte: InternalGas` and the precise import statement `use move_vm_runtime::shared::views::{SizeConfig, ValueView};`, rejecting valid alternatives (e.g., different import grouping, different type alias)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_protocol_config_has_new_fields, test_protocol_config_sets_values_for_version_119, test_native_cost_params_has_new_fields, test_native_receive_charges_type_cost, test_native_receive_charges_per_byte_cost, test_natives_cost_table_passes_new_params, test_transfer_rs_imports_sizeconfig) ALL use 'assert string in open(path).read()' pattern with no code execution. The pass-to-pass tests do run cargo commands, but every f2p test is pure text matching."
+      "outcome": "pass",
+      "reason": "Tests include subprocess cargo check/test/clippy/fmt/doc/xlint execution in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the base commit (e.g., 'transfer_receive_object_cost_per_byte: Option<u64>', 'transfer_receive_object_internal_cost_per_byte: InternalGas'). A stub/no-op implementation wouldn't add these strings to the source files, so the tests would fail without actual changes."
+      "reason": "F2p tests require specific fields, values, and import; a stub cannot satisfy them without actually implementing the changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: new protocol config fields, per-byte gas charging in native function, compilation, and passing tests. All of these are tested - field declarations, version 119 values, native cost params, gas charging logic, imports, cargo check/clippy/test/fmt/doc."
+      "reason": "Tests cover protocol config fields, version 119 values, native params, charging logic (type and size), wiring to protocol config, and imports."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_protocol_config_has_new_fields, test_native_receive_charges_type_cost, etc.) and docstrings explaining what each test validates and whether it's fail-to-pass or pass-to-pass."
+      "reason": "Tests are individually named and documented with f2p/p2p categorization in docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Rust source code and protocol configuration, not producing structured data like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output produced by task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md match the actual repository structure and test expectations without typos."
+      "reason": "Paths and identifiers match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact field names with types, exact values for specific protocol versions, exact import paths, exact method calls, and exact macro names. The Hints section explicitly provides the implementation approach including 'child_ty.size()?' and 'child.abstract_memory_size(&SizeConfig {...})?'. This goes well beyond identifying the problem area."
+      "reason": "Instruction explicitly dictates exact import path `move_vm_runtime::shared::views::{SizeConfig, ValueView}` and exact values Some(1)/Some(2) for version 119, which are implementation details the agent should derive."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch makes localized additions to specific files (new fields in protocol config, new params in cost table, new charging logic in transfer.rs, snapshot updates) without full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

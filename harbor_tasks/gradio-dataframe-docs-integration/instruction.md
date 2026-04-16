@@ -29,13 +29,11 @@ The website documentation system needs updates to support displaying the datafra
 
 1. **Layout Server** (`js/_website/src/routes/[[version]]/docs/+layout.server.ts`):
    - Filter `js_pages` to only include documented components: `dataframe` and `js-client`
-   - The exact string being tested is: `components_to_document = ["dataframe", "js-client"]`
-   - The filtering logic being tested is: `components_to_document.includes(p)`
+   - The filtering logic should check if each component is in the list `["dataframe", "js-client"]`
 
 2. **JS Index Page** (`js/_website/src/routes/[[version]]/docs/js/+page.server.ts`):
    - Must implement dynamic URL checking to determine redirect destination
-   - The helper function should be named `urlExists`
-   - The `urlExists` function must use `method: "HEAD"` for checking
+   - Use a HEAD request to check URL availability (more efficient than GET)
    - Must redirect to `/docs/js/dataframe` if available, fallback to `/docs/js/js-client`
    - Must not hardcode redirect to `atoms`
 
@@ -44,7 +42,7 @@ The website documentation system needs updates to support displaying the datafra
    - `js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts`
    - `js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts`
    - `js/_website/src/routes/changelog/+page.server.ts`
-   
+
    Each must:
    - Import `prism-svelte` for Svelte syntax highlighting
    - Extend the `langs` map to include:

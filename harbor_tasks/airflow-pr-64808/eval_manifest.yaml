@@ -1,0 +1,82 @@
+source:
+  repo: apache/airflow
+  pr_number: 64808
+  base_commit: 6888223bfcfa753c5b7539693dfd0eafb364cbb9
+  merge_commit: 2eaed232d596e632bc57977286c195c91f424384
+  target_file: scripts/tools/initialize_virtualenv.py
+
+checks:
+  # Fail-to-pass tests - verify the bug is fixed
+  - id: test_get_dependency_groups_exists
+    type: fail_to_pass
+    origin: pr_fix
+    description: The fix adds get_dependency_groups() function to read dependency groups from pyproject.toml
+
+  - id: test_get_dependency_groups_returns_correct_groups
+    type: fail_to_pass
+    origin: pr_fix
+    description: get_dependency_groups() correctly returns keys from [dependency-groups] section
+
+  - id: test_extra_param_uses_correct_flags_for_groups
+    type: fail_to_pass
+    origin: pr_fix
+    description: Dependency groups (e.g., 'dev') use --group flag
+
+  - id: test_extra_param_uses_correct_flags_for_extras
+    type: fail_to_pass
+    origin: pr_fix
+    description: Optional extras (e.g., 'graphviz') use --extra flag instead of --group
+
+  - id: test_mixed_groups_and_extras
+    type: fail_to_pass
+    origin: pr_fix
+    description: Mixed input like 'dev,otel' correctly produces ['--group', 'dev', '--extra', 'otel']
+
+  - id: test_uv_install_requirements_accepts_path_parameter
+    type: fail_to_pass
+    origin: pr_fix
+    description: uv_install_requirements() function signature updated to accept pyproject path parameter
+
+  # Pass-to-pass tests - verify no regressions
+  - id: test_script_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Script maintains valid Python syntax
+
+  - id: test_script_can_be_loaded
+    type: pass_to_pass
+    origin: static
+    description: Script module can be loaded without errors
+
+  - id: test_check_for_package_extras_exists
+    type: pass_to_pass
+    origin: static
+    description: Existing check_for_package_extras function continues to work
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on the target script (CI check)
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on the target script (CI check)
+
+  - id: test_repo_mypy_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Mypy type checking passes on the target script (CI check)
+
+# NOTE: This PR is a pure code fix with no config/documentation edits required.
+# The rubric judge evaluates config file edits (CLAUDE.md, AGENTS.md, etc.) but
+# this task only modifies Python code. The following coding conventions are verified
+# by the pass-to-pass tests (ruff, mypy) instead of the rubric judge.
+#
+# Coding conventions verified by tests:
+# - Code passes ruff linting and formatting checks (test_repo_ruff_check, test_repo_ruff_format)
+# - Code passes mypy type checking (test_repo_mypy_typecheck)
+# - New function get_dependency_groups() exists and works correctly
+# - uv_install_requirements() accepts pyproject.toml path parameter
+# - Correct --group/--extra flag usage based on dependency type
+rubric: []

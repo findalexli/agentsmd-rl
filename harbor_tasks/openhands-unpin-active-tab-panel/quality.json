@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_conversation_store_imported checks for exact import path 'from \"#/stores/conversation-store\"'; test_setrightpanelshown_destructured checks for 'setRightPanelShown'; test_unpin_active_tab_closes_panel checks for 'setHasRightPanelToggled(false)' and 'setRightPanelShown(false)'; test_store_hooks_used checks for 'selectedTab' and 'isRightPanelShown' variable names. These specific variable/function names and import pat"
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_setrightpanelshown_destructured checks for 'setRightPanelShown' being destructured from useConversationLocalStorageState (regex pattern 'setUnpinnedTabs.*setRightPanelShown'); test_conversation_store_imported checks for exact import string 'from \"#/stores/conversation-store\"'; test_store_hooks_used checks for specific variable names 'selectedTab', 'isRightPanelShown', 'setHasRightPanelToggled' which are not named "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the broken behavior (panel stays open when unpinning active tab) and expected behavior (panel should close), but does not specify the exact code changes, variable names, or implementation approach needed."
+      "reason": "The instruction describes the broken behavior (panel stays open when unpinning active tab) and expected behavior (panel should close), but doesn't specify exact code changes like which variables to use or which lines to modify."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_unpin_active_tab_closes_panel assert exact strings like 'selectedTab === tab', 'setHasRightPanelToggled(false)', 'setRightPanelShown(false)' via text matching. An alternative correct fix using different variable names, a helper function, or a different conditional structure (e.g., closing panel via a single setState call or using a different comparison) would fail these tests."
+      "reason": "Tests assert gold-specific implementation details: test_unpin_active_tab_closes_panel checks for exact strings 'selectedTab === tab', 'setHasRightPanelToggled(false)', 'setRightPanelShown(false)'. An alternative correct fix could use different variable names (e.g., 'currentTab === tab'), different state management approaches, or inline the store access differently, and would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "F2P tests test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, test_setrightpanelshown_destructured, and test_test_file_includes_active_tab_test all use pattern `'string' in content` on file reads without executing code. Only test_vitest_context_menu_tests actually runs the code. The majority of F2P tests are pure text-matching."
+      "reason": "The f2p tests (test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, test_setrightpanelshown_destructured, test_test_file_includes_active_tab_test) are ALL purely text-matching \u2014 they read file contents and check for string presence with 'in content' or regex. None of them import, call, or execute the code. Only p2p tests (test_vitest_context_menu_tests, test_lint_passes, etc.) actually execute code."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "F2P tests like test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, and test_setrightpanelshown_destructured only check for string presence in files. An agent could add dead code comments containing these strings (e.g., '// selectedTab === tab setHasRightPanelToggled(false) setRightPanelShown(false)') without implementing any actual fix, and these tests would pass."
+      "reason": "All f2p tests (test_unpin_active_tab_closes_panel, test_conversation_store_imported, test_store_hooks_used, test_setrightpanelshown_destructured, test_test_file_includes_active_tab_test) only check for string presence in source files. A developer could add dead code containing the required strings (e.g., a comment with 'selectedTab === tab' and unused imports) without actually implementing the fix, and all f2p tests would pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: unpinning active tab closes panel, unpinning non-active tab doesn't close panel, and specific test descriptions. test_vitest_context_menu_tests runs the vitest suite, and test_test_file_includes_active_tab_test checks for both test descriptions. The core behaviors are covered."
+      "reason": "The instruction specifies: (1) unpinning active tab closes right panel, (2) unpinning non-active tab doesn't close panel, (3) store and localStorage updated. Tests cover all these through both f2p string checks and p2p vitest execution (test_vitest_context_menu_tests runs the actual test suite including the required test descriptions)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test validates (e.g., 'F2P: When unpinning the currently active tab...', 'P2P: The frontend linting must pass...')."
+      "reason": "Tests are well-named with descriptive docstrings, grouped by concern (f2p vs p2p), and each test function has a clear purpose documented in its docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing UI behavior in a React component, not producing structured data output."
+      "reason": "This task involves UI component behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md are consistent and correct (verified against the Dockerfile and test files)."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the two relevant files (context menu component and its test), which is reasonable for the task domain. It doesn't specify exact lines, variable names, or implementation details of the fix."
+      "reason": "The instruction names the relevant files (context menu component and test file) which is appropriate for the task domain, and mentions store names (useConversationStore, useConversationLocalStorageState) which are existing APIs. It doesn't specify exact lines or the specific fix implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

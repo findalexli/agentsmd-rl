@@ -1,0 +1,163 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39891
+  base_commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+  merge_commit: "9377dab3e620acaffc283122d2f061317d88da25"
+
+checks:
+  # ==========================================================================
+  # CODE BEHAVIOR TESTS (Fail-to-Pass)
+  # ==========================================================================
+  - id: video_chapter_tool_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "videoChapter tool must be defined in backend/video.ts with correct schema and handler"
+
+  - id: video_chapter_cli_command_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "video-chapter CLI command must be registered in cli-daemon/commands.ts with correct args/options"
+
+  - id: typescript_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TypeScript must compile without errors after adding video-chapter tool and command"
+
+  # ==========================================================================
+  # CONFIG/DOCUMENTATION UPDATE TESTS (AgentMD-Edit specific)
+  # ==========================================================================
+  - id: skill_md_documents_video_chapter
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md must document the video-chapter command in the DevTools examples"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "1-10"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+
+  - id: video_recording_md_has_chapter_examples
+    type: fail_to_pass
+    origin: agent_config
+    description: "video-recording.md reference guide must show chapter marker workflow examples"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md"
+      lines: "1-10"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+
+  - id: getting_started_cli_documents_video_chapter
+    type: fail_to_pass
+    origin: pr_diff
+    description: "getting-started-cli.md must list video-chapter in the command reference"
+
+  # ==========================================================================
+  # PASS_TO_PASS TESTS (Repo CI/CD compatibility)
+  # ==========================================================================
+  - id: npm_run_lint_syntax_only
+    type: pass_to_pass
+    origin: repo_tests
+    description: "npm run lint-packages should not report syntax errors in modified files"
+
+# ==========================================================================
+# CONFIG EDITS (Track 2: Gold config edits for agentmd-edit tasks)
+# These are extracted deterministically from the solve.sh patch
+# ==========================================================================
+config_edits:
+  - path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+    tier: 1
+    gold_added: "playwright-cli video-chapter \"Chapter Title\" --description=\"Details\" --duration=2000"
+    gold_removed: ""
+
+  - path: "packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md"
+    tier: 1
+    gold_added: |
+      # Add a chapter marker for section transitions
+      playwright-cli video-chapter "Getting Started" --description="Opening the homepage" --duration=2000
+    gold_removed: ""
+
+  - path: "docs/src/getting-started-cli.md"
+    tier: 2
+    gold_added: "playwright-cli video-chapter <title>    # add chapter marker to video"
+    gold_removed: "playwright-cli video-stop [filename]    # stop video recording"
+
+# ==========================================================================
+# RUBRIC RULES (Track 3: Positive rubric - conventions the gold solution follows)
+# These are extracted from the agent config files at base commit
+# ==========================================================================
+rubric:
+  - rule: "Document all DevTools commands in SKILL.md under the DevTools section"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "150-165"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    evidence: "Gold adds video-chapter to DevTools examples alongside video-start/video-stop"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Use descriptive titles in chapter markers for video recordings"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md"
+      lines: "15-50"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    evidence: "Gold examples use descriptive titles like 'Getting Started' and 'Filling Form'"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Follow TypeScript naming conventions: use camelCase for tool constants (videoStart, videoStop, videoChapter)"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    evidence: "Gold renames startVideo/stopVideo to videoStart/videoStop and adds videoChapter following camelCase pattern"
+    category: code_style
+    verification: programmatic
+
+  - rule: "All video-related CLI commands must be documented in video-recording.md reference"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "55-65"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    evidence: "Gold adds video-chapter examples to video-recording.md which is the dedicated video documentation"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "CLI commands should show practical workflow examples, not just isolated commands"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md"
+      lines: "10-30"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    evidence: "Gold shows chapter markers in a full workflow context (start -> chapter -> actions -> chapter -> stop)"
+    category: documentation
+    verification: llm_judge
+
+# ==========================================================================
+# DISTRACTORS (Track 4: Rules that seem relevant but shouldn't be followed)
+# ==========================================================================
+distractors:
+  - rule: "All video recording commands must be grouped in a single section"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "150-165"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    collision_type: scope_ambiguity
+    why_distracting: "While video-chapter is video-related, it's actually a chapter marker tool that can be used independently; grouping is not strictly required"
+    severity: low
+
+  - rule: "All tools must use kebab-case names in the CLI (e.g., browser-video-chapter)"
+    source:
+      path: "CLAUDE.md"
+      lines: "1-50"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    collision_type: rule_conflict
+    why_distracting: "The PR uses 'video-chapter' which is kebab-case, but some conventions might suggest 'browser-video-chapter' for consistency with the tool name 'browser_video_chapter'; however the PR uses the simpler 'video-chapter' to match the pattern of 'video-start' and 'video-stop'"
+    severity: medium
+
+  - rule: "CLI examples should be minimal and not include optional parameters"
+    source:
+      path: "packages/playwright-core/src/tools/cli-client/skill/SKILL.md"
+      lines: "150-165"
+      commit: "a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1"
+    collision_type: rule_conflict
+    why_distracting: "The gold solution includes --description and --duration in examples to show full capability, which contradicts a 'minimal examples' rule"
+    severity: low

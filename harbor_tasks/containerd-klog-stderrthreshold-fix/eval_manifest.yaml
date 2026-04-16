@@ -1,0 +1,62 @@
+source_pr:
+  owner: containerd
+  repo: containerd
+  pr_number: 13132
+  merge_commit: 78bcb44a342027c861b7695749d3f9813c2944c6
+  base_commit: 38dafd778ea487dc6972c7caf10e1dc91d610e91
+
+checks:
+  # Fail-to-pass tests - these verify the fix is applied correctly
+  - id: test_legacy_stderr_flag_set
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      Verifies that legacy_stderr_threshold_behavior is set to false before logtostderr.
+      This is the core fix that ensures stderrthreshold is honored when logtostderr is enabled.
+
+  - id: test_stderrthreshold_before_logtostderr
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      Verifies proper ordering of flag settings - both new flags must precede logtostderr.
+      The klog bug requires these flags to be set before enabling logtostderr.
+
+  - id: test_klog_comment_present
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      Verifies the explanatory comment about the klog fix is present.
+      Documents the kubernetes/klog#212 reference for future maintainers.
+
+  - id: test_setgloglevel_function_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: |
+      Verifies the setGLogLevel function has proper error handling and expected structure.
+      Ensures all flag settings have corresponding error checks.
+
+  # Pass-to-pass tests - these verify the code works correctly
+  - id: test_plugin_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Verifies the CRI runtime plugin compiles successfully.
+      Ensures the modified code is syntactically correct and type-compatible.
+
+  - id: test_cri_runtime_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Runs unit tests for the CRI runtime plugin.
+      Tests the config migration functionality related to the modified code.
+
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Runs go vet on the CRI runtime package.
+      Ensures code quality and catches common issues.
+
+rubric: []
+  # No agent config files were found in this repository.
+  # All relevant checks are captured as programmatic tests above.

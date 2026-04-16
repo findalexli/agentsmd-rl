@@ -1,0 +1,39 @@
+name = "payload-block-row-paste-nested-array-id"
+description = "Fix block row paste with nested array - block ID regeneration"
+difficulty = "medium"
+tags = ["typescript", "ui", "clipboard", "array-items", "id-regeneration"]
+
+[arena]
+preset = "node-ts"
+
+[workspace]
+path = "/workspace/payload"
+shell = "bash"
+
+[tests]
+timeout = 300
+
+[[checks]]
+id = "test_mergeFormStateFromClipboard_block_row_paste"
+type = "fail_to_pass"
+description = "Block row paste with nested array regenerates IDs correctly"
+
+[[checks]]
+id = "test_repo_lint"
+type = "pass_to_pass"
+description = "Repository linter passes"
+origin = "repo_tests"
+
+[agent_config]
+config_file = "CLAUDE.md"
+commit = "fac59c85155f01d1ef7e9aaeddf3362631ab3419"
+
+[rubric]
+rules = [
+  { id = "rule_prefer_functions_over_classes", source = "CLAUDE.md", description = "Prefer functions over classes (classes only for errors/adapters)" },
+  { id = "rule_prefer_single_object_params", source = "CLAUDE.md", description = "Prefer single object parameters (improves backwards-compatibility)" },
+  { id = "rule_jsdoc_complex_functions", source = "CLAUDE.md", description = "Use JSDoc for complex functions; add tags only when justified beyond type signature" },
+  { id = "rule_execution_flow_comments", source = "CLAUDE.md", description = "Skip comments when code is self-documenting. Keep for complex logic, non-obvious 'why', multi-line context, or if following a documented, multi-step flow." },
+  { id = "rule_test_self_contained", source = "CLAUDE.md", description = "Tests MUST be self-contained and clean up after themselves" },
+  { id = "rule_descriptive_test_names", source = "CLAUDE.md", description = "Use descriptive test names starting with 'should' (e.g., 'should create document with custom ID')" }
+]

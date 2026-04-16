@@ -1,0 +1,106 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13625
+  title: "refactor(frontend): replace loading spinner with static icon for task tracking"
+  base_commit: ed5ab11fccd75b5b98c9f51ebc536713dc519275
+  merge_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+
+checks:
+  # Fail-to-pass tests (behavioral verification)
+  - id: test_new_icon_file_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: New SVG icon file (u-check-circle-half.svg) must exist with valid SVG content
+
+  - id: test_v1_component_imports_correct_icon
+    type: fail_to_pass
+    origin: behavioral
+    description: V1 task-item component imports CheckCircleHalfIcon instead of LoadingIcon
+
+  - id: test_features_component_imports_correct_icon
+    type: fail_to_pass
+    origin: behavioral
+    description: Features task-item component imports CheckCircleHalfIcon instead of LoadingIcon
+
+  - id: test_v1_in_progress_no_animation
+    type: fail_to_pass
+    origin: behavioral
+    description: V1 component in_progress state does NOT use animate-spin class
+
+  - id: test_features_in_progress_no_animation
+    type: fail_to_pass
+    origin: behavioral
+    description: Features component in_progress state does NOT use animate-spin class
+
+  - id: test_v1_icon_usage_consistency
+    type: fail_to_pass
+    origin: behavioral
+    description: V1 component uses correct icons for all task states (todo, in_progress, done)
+
+  - id: test_features_icon_usage_consistency
+    type: fail_to_pass
+    origin: behavioral
+    description: Features component uses correct icons for all task states (todo, in_progress, done)
+
+  # Pass-to-pass tests (repo CI verification)
+  - id: test_repo_frontend_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend builds successfully (npm run build)
+
+  - id: test_repo_frontend_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linting passes (npm run lint)
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes (tsc --noEmit)
+
+  - id: test_repo_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation completeness check passes (npm run check-translation-completeness)
+
+rubric:
+  # Code pattern rules with gold references
+  - rule: "Import CheckCircleHalfIcon using the same pattern as other icons (#/icons/u-check-circle-half.svg?react)"
+    type: agent_config
+    source:
+      file: frontend/src/components/features/chat/task-tracking/task-item.tsx
+    reference: |
+      import CheckCircleHalfIcon from "#/icons/u-check-circle-half.svg?react";
+
+  - rule: "Replace LoadingIcon with CheckCircleHalfIcon in features component"
+    type: agent_config
+    source:
+      file: frontend/src/components/features/chat/task-tracking/task-item.tsx
+    reference: |
+      -import LoadingIcon from "#/icons/loading.svg?react";
+      +import CheckCircleHalfIcon from "#/icons/u-check-circle-half.svg?react";
+
+  - rule: "Remove animate-spin class from in_progress state in features component"
+    type: agent_config
+    source:
+      file: frontend/src/components/features/chat/task-tracking/task-item.tsx
+    reference: |
+      -        return <LoadingIcon className="w-4 h-4 text-[#ffffff] animate-spin" />;
+      +        return <CheckCircleHalfIcon className="w-4 h-4 text-[#ffffff]" />;
+
+  - rule: "Replace LoadingIcon with CheckCircleHalfIcon in v1 component"
+    type: agent_config
+    source:
+      file: frontend/src/components/v1/chat/task-tracking/task-item.tsx
+    reference: |
+      -import LoadingIcon from "#/icons/loading.svg?react";
+      +import CheckCircleHalfIcon from "#/icons/u-check-circle-half.svg?react";
+
+  - rule: "Remove animate-spin class from in_progress state in v1 component"
+    type: agent_config
+    source:
+      file: frontend/src/components/v1/chat/task-tracking/task-item.tsx
+    reference: |
+      -        return <LoadingIcon className="w-4 h-4 text-[#ffffff] animate-spin" />;
+      +        return <CheckCircleHalfIcon className="w-4 h-4 text-[#ffffff]" />;

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: the exact file path 'packages/math/src/curve.ts', the function name 'solveWithAnalyticalJacobian', the specific parameter change from 3 to 4 iterations (test_iteration_count_increased), the exact fallback code patterns like 'lineSegment(bezierEquation(c, 0), bezierEquation(c, 1 / 20))' (test_fallback_code_removed), and the specific import 'lineSegmentIntersectionPoints' (test_unused_import_removed). The instruction only vaguely says "
+      "reason": "Tests assert on specific literals like 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)', 'lineSegmentIntersectionPoints', 'lineSegment(bezierEquation(c, 0), bezierEquation(c, 1 / 20))', and the exact file path 'packages/math/src/curve.ts'. The instruction.md never mentions these function names, the iteration limit parameter, the fallback code pattern, or the specific file path. An agent reading only instruction.md cannot discover these specifics."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the symptoms (convergence issues, solver returning null) and asks the agent to identify and fix the issue. It does not specify changing iteration count from 3 to 4 or removing specific fallback code."
+      "reason": "instruction.md describes the problem (convergence issues in curve intersection) and asks the agent to identify and fix the issue, without specifying the exact change (e.g., changing iteration count from 3 to 4 or removing fallback code)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_iteration_count_increased uses regex to assert the exact call 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)'. An alternative fix (e.g., improving the Jacobian computation, using a different convergence criterion, or restructuring the solver) would fail this test. test_fallback_code_removed checks for removal of specific string literals. These tests enforce the gold solution's exact implementation."
+      "reason": "Tests assert exact string patterns like 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)' via regex, and assert absence of 'lineSegmentIntersectionPoints' anywhere in the file. An alternative correct fix (e.g., using iterLimit=5, or a different convergence approach entirely, or keeping the import but fixing the algorithm differently) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_iteration_count_increased and test_fallback_code_removed and test_unused_import_removed are purely text-matching tests using regex/string searches on file content. While some tests (test_repo_typecheck, test_repo_math_curve_tests, etc.) do execute subprocesses, the fail-to-pass tests are entirely text-based assertions."
+      "reason": "test_iteration_count_increased, test_fallback_code_removed, and test_unused_import_removed are purely text-matching tests (reading file content and checking string/regex patterns). While some tests do run subprocesses (typecheck, lint, build, vitest), the core fail-to-pass tests (test_iteration_count_increased, test_fallback_code_removed) are entirely 'assert X in open(path).read()' style."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_iteration_count_increased can be satisfied by a simple find-and-replace of '3' to '4' in one function call, without understanding the convergence bug. test_fallback_code_removed can be satisfied by deleting lines containing the matched strings. These are text-matching tests that don't verify actual intersection behavior changes."
+      "reason": "test_curve_intersection_accuracy runs 'yarn test:math -- curve' but explicitly says 'they may not exist, that's OK' and only fails on actual FAIL output. The primary f2p tests (test_iteration_count_increased, test_fallback_code_removed) are text-matching only - they check file content, not behavior. A trivial sed replacement changing '3' to '4' and removing lines would pass without understanding the convergence fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: type safety (tested by test_repo_typecheck), passing test suite (tested by test_repo_math_curve_tests, test_repo_lint, test_repo_prettier), build success (test_repo_build_math), and fixing convergence (tested albeit via text matching). All stated requirements have corresponding tests."
+      "reason": "The instruction requires: fixing convergence, removing unnecessary code, maintaining type safety, passing the test suite. Tests cover iteration count change, fallback removal, typecheck, lint, prettier, build, and curve tests - all behaviors mentioned in instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies. They are logically grouped by concern (iteration count, fallback removal, build/lint/typecheck)."
+      "reason": "Tests are well-named (test_iteration_count_increased, test_fallback_code_removed, etc.), each has a docstring explaining purpose, and they are logically grouped by concern (code changes vs. repo checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md says 'math package' and 'curve intersection logic' but doesn't name the specific file curve.ts, the function solveWithAnalyticalJacobian, or the specific parameter to change. The localization is left to the agent."
+      "reason": "instruction.md only says 'Examine the curve intersection logic in the math package' without naming exact files, line numbers, or specific function names. It describes the problem domain without localizing the bug precisely."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

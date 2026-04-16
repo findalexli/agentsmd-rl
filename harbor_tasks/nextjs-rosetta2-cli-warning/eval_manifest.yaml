@@ -82,6 +82,70 @@ distractors:
   source:
     path: AGENTS.md
     lines: 72-76
+- rule: Keep require() behind compile-time if/else branches for DCE
+  source:
+    path: AGENTS.md
+    lines: '396'
+  source_text: '- Keep `require()` behind compile-time `if/else` branches for DCE
+    (avoid early-return/throw patterns).'
+  collision_type: architecture_boundary
+  why_distracting: The diff introduces `import os from 'os'`, which is a Node-only
+    import. An agent might mistakenly apply this rule and try to use a conditional
+    `require()` behind a compile-time branch to ensure Dead Code Elimination (DCE).
+    However, `packages/next/src/bin/next.ts` is the Next.js CLI entry point, which
+    runs exclusively in a Node.js environment and is not bundled for client or edge
+    use. Thus, a standard top-level ES import is correct and safe here.
+  severity: high
+- rule: DCE-Safe require() Pattern
+  source:
+    path: .agents/skills/dce-edge/SKILL.md
+    lines: 16-32
+  source_text: "## DCE-Safe `require()` Pattern\n\nWebpack only DCEs a `require()`\
+    \ when it sits inside the dead branch of an `if/else` whose condition DefinePlugin\
+    \ can evaluate at compile time.\n\n```ts\n// CORRECT - webpack can eliminate the\
+    \ dead branch\nif (process.env.__NEXT_USE_NODE_STREAMS) {\n  require('node:stream')\n\
+    } else {\n  // web path\n}\n```\n\nWhat does NOT work:\n\n- **Early-return/throw\
+    \ guards**: webpack doesn't do control-flow analysis for throws/returns, so the\
+    \ `require()` is still traced.\n- **Bare `if` without `else`**: works for inline\
+    \ `node:*` specifiers but NOT for `require('./some-module')` that pulls a new\
+    \ file into the module graph."
+  collision_type: architecture_boundary
+  why_distracting: Similar to the AGENTS.md rule, an agent seeing a new Node module
+    (`os`) being imported might think it needs to use this complex `require()` pattern
+    to protect against edge/browser bundling failures. This is a distractor because
+    the Next.js CLI binary is never processed by Webpack for client/edge consumption,
+    so DCE rules do not apply.
+  severity: high
+- rule: Force feature flags false for edge builds
+  source:
+    path: AGENTS.md
+    lines: '397'
+  source_text: '- In edge builds, force feature flags that gate Node-only imports
+    to `false` in `define-env.ts`.'
+  collision_type: architecture_boundary
+  why_distracting: Since the diff adds `os`, a Node-only import, an agent might think
+    it needs to add a feature flag and update `define-env.ts` to force it to false
+    for edge builds. This is unnecessary because `src/bin/next.ts` is the CLI binary
+    and is never executed in the edge runtime.
+  severity: medium
+- rule: Edge Runtime Constraints
+  source:
+    path: .agents/skills/dce-edge/SKILL.md
+    lines: 48-50
+  source_text: '## Edge Runtime Constraints
+
+
+    Edge routes do NOT use pre-compiled runtime bundles. They are compiled by the
+    user''s webpack/Turbopack, so `define-env.ts` controls DCE. Feature flags that
+    gate `node:*` imports must be forced to `false` for edge builds in `define-env.ts`
+    (`isEdgeServer ? false : flagValue`), otherwise webpack will try to resolve `node:stream`
+    etc. and fail.'
+  collision_type: architecture_boundary
+  why_distracting: An agent might incorrectly assume that any Node-only import (like
+    `os`) requires handling for the Edge runtime. This rule is a distractor because
+    the Next.js CLI runs entirely on the server via Node.js, so edge constraints are
+    irrelevant.
+  severity: medium
 hierarchy_analysis: The config hierarchy consists of identical root-level files (AGENTS.md
   and CLAUDE.md) containing generic monorepo documentation. There is no deep hierarchy
   or conflicting rules.

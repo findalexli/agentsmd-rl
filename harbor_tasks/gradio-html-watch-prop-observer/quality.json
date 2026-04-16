@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all three files (js/html/Index.svelte, js/html/shared/HTML.svelte, gradio/components/html.py), describes the watch function, watch_entries, fire_watchers, the ?? vs || fix, the js_on_load docstring update, error handling, queueMicrotask for deferred execution, and JSON.stringify for deep comparison. While some test-specific details like exact variable names (changedKeys, watch_entries.push) are implementation-specific, the instruction provides enough context about the requi"
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: 'watch_entries' array name (test_watch_function_defined), 'watch_entries.push' pattern, 'fire_watchers' function name, iteration over 'entry', 'changedKeys'/'changed_keys' variable names (test_prop_changes_fire_watchers), 'JSON.stringify' for comparison, 'queueMicrotask' for deferred execution, 'watch_fn' as prop name (test_watch_exposed_in_js_on_load), and the specific 'func(' call pattern. None of these implemen"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (|| instead of ??, no watch mechanism) and what behavior is expected, but doesn't specify exact line numbers, exact code to write, or the precise implementation. The developer still needs to reason about how to implement the watch system, fire_watchers, change detection, etc."
+      "reason": "instruction.md describes what's broken (|| vs ?? coalescing, no watch mechanism) and expected behavior, but does not specify exact code changes like 'change line X to Y'. The developer must reason about implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: test_watch_function_defined requires 'watch_entries' array name, 'watch_entries.push', 'function watch(', 'function fire_watchers(', iteration over 'entry', and 'callback' string. test_prop_changes_fire_watchers requires 'changedKeys' or 'changed_keys', 'JSON.stringify', 'fire_watchers(', and 'queueMicrotask'. test_watch_exposed_in_js_on_load requires 'watch_fn' as both a Function parameter string and variable name. An alternative correct imp"
+      "reason": "Tests enforce gold-specific implementation details: test_watch_function_defined requires 'watch_entries' array name and 'watch_entries.push', 'fire_watchers' function name, iteration variable named 'entry'. test_prop_changes_fire_watchers requires 'changedKeys'/'changed_keys', 'JSON.stringify', 'queueMicrotask'. test_watch_exposed_in_js_on_load requires 'watch_fn' as the prop name. A correct alternative using different variable names (e.g., 'watchers', 'notify_watchers', 'watchCallback') would f"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is pure text/regex matching on file contents (e.g., re.search for patterns in source files, 'assert X in content'). No test actually executes the JavaScript code, renders the Svelte component, or tests runtime behavior. test_falsy_value_coalescing checks for '??' via regex, test_watch_function_defined checks for string patterns, etc."
+      "reason": "All fail-to-pass tests (test_falsy_value_coalescing, test_watch_function_defined, test_watch_exposed_in_js_on_load, test_prop_changes_fire_watchers, test_python_docstring_documents_watch) exclusively use regex/string matching on file contents. No test actually executes the JavaScript code, renders the component, or verifies runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty files, pass-only functions) would not pass these tests since they check for specific string patterns like 'watch_entries.push', 'function fire_watchers(', 'JSON.stringify', 'queueMicrotask', etc. The tests require substantive code to be present even if they only check via text matching."
+      "reason": "The tests check for specific patterns that don't exist in the original codebase (watch_entries, fire_watchers, ?? operator, watch_fn prop, watch documentation). A stub/no-op would not add these patterns to the files, so tests would fail."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies that 'Watch callbacks should only fire for changes coming from Python event listeners (backend), not for changes made from JavaScript' \u2014 this constraint is not tested at all. The instruction also says callbacks should fire 'after template re-render' \u2014 this is only checked by the presence of 'queueMicrotask' string, not actual behavior. No runtime behavioral test validates these constraints."
+      "reason": "Instruction says 'Watch callbacks should only fire for changes coming from Python event listeners (backend), not for changes made from JavaScript' \u2014 this constraint is not tested. Also, no test verifies that callbacks actually fire after re-render with correct prop values (only checks for queueMicrotask string presence). Error handling is only checked via string 'try'/'catch' presence, not actual behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear naming (test_falsy_value_coalescing, test_watch_function_defined, etc.), grouped into sections with comments (Gates, Fail-to-pass, Pass-to-pass), and each has a docstring explaining what it checks."
+      "reason": "Tests are well-organized with clear grouping comments (Gates, Fail-to-pass, Pass-to-pass sections), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Svelte components and a Python file; it does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task involves modifying Svelte/Python component code, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths (js/html/Index.svelte, js/html/shared/HTML.svelte, gradio/components/html.py), variable names, and commands are consistent and correctly spelled throughout instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact operator to use ('??' nullish coalescing instead of '||'), identifies the exact buggy pattern ('gradio.props.value || \"\"'), and specifies exact function names to create (watch, fire_watchers) and implementation details (queueMicrotask, JSON.stringify for deep comparison). The 'Files to Modify' section lists exact files and what to change in each."
+      "reason": "instruction.md explicitly states 'the value derivation uses the || operator (gradio.props.value || \"\")' and specifies to change it to '??' \u2014 this is a direct fix specification. It also names the exact files to modify and specific mechanisms (watch_entries, fire_watchers pattern implied by the design)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Svelte components and Python, not a configuration edit task."
+      "reason": "This is a code-editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
@@ -55,6 +56,6 @@
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

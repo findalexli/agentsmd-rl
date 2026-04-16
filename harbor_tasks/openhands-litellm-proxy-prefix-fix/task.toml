@@ -1,0 +1,30 @@
+name = "openhands-litellm-proxy-prefix-fix"
+difficulty = "easy"
+estimated_time = "15-30 minutes"
+tags = ["python", "bug-fix", "string-matching", "auth", "openhands"]
+
+[description]
+brief = "Fix planning agent auth error by adding litellm_proxy/ prefix check"
+detail = """
+This task involves fixing an authentication error in OpenHands' planning agent
+feature. The bug is in the _configure_llm method which only checks for the
+'openhands/' prefix to determine when to use the provider base_url. However,
+when sub-conversations inherit llm_model from the parent, the SDK transforms
+'openhands/model' to 'litellm_proxy/model', causing the check to fail and
+base_url to be None, resulting in an auth error.
+
+The fix requires adding a check for 'litellm_proxy/' prefix alongside the
+existing 'openhands/' check.
+"""
+
+[dependencies]
+required_packages = ["pytest", "pytest-asyncio", "httpx"]
+
+[environment]
+base_image = "python:3.12-slim"
+repo_url = "https://github.com/All-Hands-AI/OpenHands.git"
+base_commit = "e1afc95b6c76b7493deb5d7f7dd4ecc2a8cb719b"
+
+[evaluation]
+test_script = "/tests/test.sh"
+reward_file = "/logs/verifier/reward.txt"

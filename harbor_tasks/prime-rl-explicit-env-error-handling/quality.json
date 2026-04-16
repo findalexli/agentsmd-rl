@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Several test-specific details are not discoverable from instruction.md: (1) test_orchestrator_imports_no_get_is_truncated checks the exact import line starting with 'from prime_rl.utils.vf' and scans a specific section, but instruction.md only says the import 'should not include any get_is_truncated reference'. (2) test_trajectories_return_type_annotation checks for the exact string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' including the parameter signature 'state"
+      "reason": "The test `test_orchestrator_imports_no_get_is_truncated` checks that the import line starting with 'from prime_rl.utils.vf' does not contain 'get_is_truncated'. The test `test_trajectories_return_type_annotation` checks for the exact string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' and similarly for branch_rollout. While instruction.md mentions the `| None` pattern and mentions removing `get_is_truncated`, it does not specify the exact parameter signature `(state:"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive about the exact fixes: it says 'Return None when the trajectory is empty', 'Zero out all completion_mask entries when state[\"error\"] is set', 'Check if train_example is None before iterating over it', 'Access the truncation status directly from the rollout data structure', and even specifies the exact return type syntax '-> list[TrainingSample] | None:'. The Verification Criteria section essentially spells out the exact code changes needed, e.g., 'rollou"
+      "reason": "instruction.md essentially states the exact fixes: 'Return None when the trajectory is empty', 'Zero out all completion_mask entries when state[\"error\"] is set', 'Check if train_example is None before iterating', 'Access the truncation status directly from the rollout data structure' (with example `rollout[\"is_truncated\"]`), and specifies the exact return type annotation pattern `-> list[TrainingSample] | None:`. These are specific implementation instructions, not just descriptions of what's bro"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_trajectories_return_type_annotation does an exact string match: 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' in content. An alternative correct fix using 'Optional[list[TrainingSample]]' or 'list[TrainingSample] | None' with different parameter annotations (e.g., 'state: dict') would fail this test despite being functionally correct."
+      "reason": "test_trajectories_return_type_annotation checks for the EXACT string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' \u2014 an alternative using `Optional[list[TrainingSample]]` or `list[TrainingSample] | None` with different spacing would fail. This asserts on gold-specific formatting rather than behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "Most tests actually import and execute the code via subprocess (e.g., test_interleave_rollout_returns_none_for_empty_trajectory, test_interleave_rollout_zeros_completion_mask_on_error). While test_orchestrator_imports_no_get_is_truncated and test_trajectories_return_type_annotation are text-based checks, the majority of tests verify behavior through execution."
+      "outcome": "fail",
+      "reason": "test_trajectories_return_type_annotation and test_orchestrator_imports_no_get_is_truncated are purely text-matching tests (checking string presence/absence in source files). test_orchestrator_none_handling also appears to be text-based (checking for 'if train_example is not None:' string in file). While many tests do execute code via subprocess, these specific tests are text-only checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require actual implementation: test_interleave_rollout_returns_none_for_empty_trajectory requires returning None for empty trajectory (default behavior would crash), test_interleave_rollout_zeros_completion_mask_on_error requires active error handling logic to zero out masks, and test_interleave_rollout_normal_case_works verifies the function still works for normal cases. A stub returning None would fail the normal case test and the error masking test."
+      "reason": "The behavioral tests (e.g., test_interleave_rollout_returns_none_for_empty_trajectory, test_interleave_rollout_zeros_completion_mask_on_error) actually call the functions with specific inputs and verify outputs. A stub that always returns None would fail the error-masking tests (which expect non-None results with zeroed masks). A stub that never returns None would fail the empty-trajectory tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major behaviors described in instruction.md are tested: returning None for empty trajectories, zeroing completion_mask on error, None handling in orchestrator, truncation field access, type annotations, import changes, error metrics logging, and test fixture updates."
+      "reason": "The instruction specifies: returning None for empty trajectories (tested), zeroing completion_mask on error (tested), None checking in orchestrator (tested), removing get_is_truncated import (tested), return type annotations (tested), error=None in fixtures (tested via upstream tests), and truncation field access (tested). All major behavioral requirements are covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, grouped by gates (pass_to_pass static), fail-to-pass (pr_diff), and pass-to-pass (repo_tests/static), with descriptive function names like test_interleave_rollout_zeros_completion_mask_on_error."
+      "reason": "Tests are well-organized with clear names, docstrings, and comments grouping them into categories (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The Verification Criteria section names exact implementation details: the exact function signature pattern '-> list[TrainingSample] | None:', the exact subscript syntax 'rollout[\"is_truncated\"]', the exact import line prefix 'from prime_rl.utils.vf', and the exact conditional 'if train_example is not None:'. This goes beyond describing what's broken and specifies the exact fix."
+      "reason": "instruction.md names the exact files to modify, exact functions (interleave_rollout, branch_rollout, make_train_example), exact import to remove (get_is_truncated from prime_rl.utils.vf), exact field to use (rollout['is_truncated']), and exact return type pattern. This goes well beyond describing what's broken and provides a near-complete implementation guide."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not a config-editing task."
+      "reason": "This is primarily a code-editing task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

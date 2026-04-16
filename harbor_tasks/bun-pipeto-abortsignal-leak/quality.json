@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert very specific implementation patterns (e.g., 'JSCallbackDataWeak' literal string in test_cpp_pattern_compiles, exact file paths like 'src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp', specific patterns like 'removeFirstMatching', 'WTF_GUARDED_BY_LOCK', 'Locker', 'sizeInBytes'). While instruction.md does mention most file paths and validation requirements with regex patterns, the hidden test_cpp_pattern_compiles test validates a specific C++ compilation pattern (WeakCallbackRef,"
+      "reason": "Tests assert specific implementation patterns like JSCallbackDataWeak, JSCallbackDataStrong, visitJSFunction, m_abortAlgorithmsLock, Lock member, visitAbortAlgorithms, memoryCost with m_abortAlgorithms, addAbortAlgorithmToSignal storing via m_abortAlgorithms, and removeAbortAlgorithmFromSignal with locking. While instruction.md describes many of these patterns in the 'Required Patterns in C++ Code' section, some test-specific details like exact type names (JSCallbackDataWeak vs 'weak callback ty"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly prescribes the implementation: 'JSAbortAlgorithm.cpp must use JSCallbackDataWeak', 'AbortSignal.h must declare a typed container using Vector with Ref<AbortAlgorithm>', 'must include a Lock/Mutex member', 'addAbortAlgorithmToSignal must NOT call addAlgorithm() and must use container insertion with proper locking', 'removeAbortAlgorithmFromSignal must use removeFirstMatching/erase with proper locking', 'memoryCost must account for m_abort.*sizeInBytes'. These are not des"
+      "reason": "instruction.md explicitly states implementation details like 'JSAbortAlgorithm class must use a weak callback mechanism instead of a strong one', 'No JSCallbackDataStrong type appears', 'A weak callback type (such as JSCallbackDataWeak or equivalent)', 'AbortSignal must store abort algorithms in a typed container separate from any type-erased lambda storage', 'A lock/mutex member variable exists', 'visitAbortAlgorithms', 'memoryCost() must include accounting for the new abort algorithms containe"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: requiring 'JSCallbackDataWeak' (not any other weak reference approach), requiring 'Vector' with 'Ref<AbortAlgorithm>' specifically, requiring 'removeFirstMatching' pattern, requiring 'WTF_GUARDED_BY_LOCK' or specific lock patterns, requiring 'sizeInBytes' in memoryCost. An alternative correct fix (e.g., using weak pointers differently, using a different container type, or fixing the leak through preventing the strong reference cycle differently"
+      "reason": "Tests check for exact implementation patterns: presence of 'JSCallbackDataWeak' string in JSAbortAlgorithm.cpp, 'visitJSFunction' method, 'Lock' member in AbortSignal.h, 'm_abortAlgorithms' container name, 'visitAbortAlgorithms' method name, and specific locking patterns. An alternative correct fix (e.g., using a different weak reference mechanism, different container name, or different synchronization primitive like std::mutex) would fail these pattern-matching tests even if it correctly fixes "
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests are text-matching: they use regex patterns to grep source files for specific strings like 'JSCallbackDataWeak', 'removeFirstMatching', 'Lock', 'Locker', 'm_abort.*sizeInBytes'. While test_cpp_pattern_compiles does compile and run C++ code, it validates a standalone mock program, not the actual modified code. The tests primarily do 'assert pattern in open(path).read()' style checking rather than executing the actual changed code to verify the memory leak is fixed."
+      "reason": "Many tests are pure text/pattern matching: test_weak_callback_mechanism checks 'JSCallbackDataStrong' not in file and 'JSCallbackDataWeak' in file; test_gc_visitor_method checks 'visitJSFunction' in content; test_null_guard_in_handleEvent checks patterns in text; test_typed_algorithm_container checks 'm_abortAlgorithms' in text; test_thread_safety_locking checks 'Lock' in text; test_gc_visitor_walks_algorithms checks 'visitAbortAlgorithms' in text; test_memory_cost_accounting checks 'm_abortAlgo"
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The pass_to_pass tests (test_target_files_exist, test_static_header_structure_valid, test_static_cpp_syntax_basic, etc.) pass on the unmodified repo. The fail_to_pass tests are pattern-matching on source code, so a stub that simply inserts the right string patterns into files without actually fixing the bug would pass. For instance, adding 'JSCallbackDataWeak' as a comment in JSAbortAlgorithm.cpp would satisfy the weak callback check without fixing anything."
+      "reason": "The primary behavioral test (test_file_runs_without_error) requires the agent to create a test file AND have bun test pass it, which isn't trivially satisfiable. However, many f2p tests like test_weak_callback_mechanism, test_gc_visitor_method, test_null_guard_in_handleEvent etc. can be passed by simply inserting the right text patterns into files without actually implementing a correct fix. A developer could add dead-code comments containing 'JSCallbackDataWeak', 'visitJSFunction', etc. to pass"
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires creating a regression test file 'test/js/web/streams/pipeTo-signal-leak.test.ts' that uses bun:jsc heapStats() to verify GC behavior, but the hidden tests don't appear to actually run this test file to verify the memory leak is fixed at runtime. The tests only check source code patterns, not actual memory leak behavior."
+      "reason": "instruction.md requires 'Abort must still work: Calling controller.abort() on a signal used with pipeTo must still correctly abort the pipe and clean up all resources.' The tests only run the regression test file via 'bun test' (test_file_runs_without_error) but don't independently verify abort functionality works. The test_regression_test_no_settimeout and test_regression_test_module_imports check test file structure, not abort behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into clear categories (static/pass_to_pass, behavioral/fail_to_pass) with descriptive function names and docstrings explaining what each test validates."
+      "reason": "Tests are well-structured with descriptive function names (test_weak_callback_mechanism, test_gc_visitor_method, etc.), docstrings explaining each check, and clear grouping into static/pass_to_pass and behavioral/fail_to_pass categories with comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves C++ source code modifications, not structured data output."
+      "reason": "This task involves C++ code changes and TypeScript test creation, not structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, command names, variable names, and function names in instruction.md appear correct and consistent with the test file and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact files to modify, the exact patterns to use (JSCallbackDataWeak, WTF_GUARDED_BY_LOCK, removeFirstMatching, m_abortAlgorithms, visitAbortAlgorithms), and the exact function signatures to change (addAbortAlgorithmToSignal, removeAbortAlgorithmFromSignal, memoryCost). This goes far beyond identifying the domain and essentially dictates the implementation."
+      "reason": "instruction.md names exact files to modify AND specifies exact implementation patterns like 'JSCallbackDataWeak', 'visitAbortAlgorithms', lock/mutex members, separate typed container, null guard in handleEvent, and memoryCost accounting. This goes far beyond describing what's broken - it prescribes the exact architecture of the fix including specific type names and method signatures."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task involving C++ source files and a TypeScript test file, not a config-edit task."
     }
   },
   "tier_a_fails": [

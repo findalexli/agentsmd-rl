@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The instruction never mentions the file path 'dev/breeze/src/airflow_breeze/commands/ci_commands.py', which is hard-coded in every test (CI_COMMANDS_PATH). The instruction also never mentions the function name 'run_command' or 'console_print' by name, yet tests assert on these exact identifiers (e.g., test_no_verify_flag_in_retry checks for run_command calls, test_console_print_on_failure checks for console_print). While the instruction mentions console_print once, it doesn't mention run_command"
+      "reason": "The instruction never mentions the file path 'dev/breeze/src/airflow_breeze/commands/ci_commands.py', yet every test asserts against CI_COMMANDS_PATH pointing to that exact file. The instruction also doesn't mention 'run_command' (the function name tests look for in AST), 'console_print' is mentioned but the specific AST-based checks for function names like 'run_command' are undiscoverable. The test test_message_flag_format asserts '--message' long form must be used, which is stated in instructi"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: catch subprocess.CalledProcessError, call console_print with an informational message, run 'git add .', retry commit with '--no-verify' and '--message' (long form, not -m). This is not describing what's broken \u2014 it's prescribing the exact implementation steps, including flag format details like 'Use --message flag (long form, not -m)'."
+      "reason": "The instruction explicitly states the exact fix: catch CalledProcessError, call console_print with informational message, run 'git add .', retry commit with '--no-verify' and '--message' flags. This is not just describing what's broken \u2014 it prescribes the exact implementation steps of the solution."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: test_message_flag_format requires '--message' not '-m'; test_no_verify_flag_in_retry looks for run_command with a list containing specific strings; test_console_print_on_failure requires the exact function name 'console_print' in the except handler. An alternative correct fix using subprocess.run directly, or using print() instead of console_print, or using '-m' instead of '--message', would fail despite being functionally correct."
+      "reason": "Tests use AST inspection to check for specific implementation details: the function must be called 'run_command' (not subprocess.run), the list must contain exact string elements like 'git', 'commit', '--no-verify', '--message'. An alternative correct fix using subprocess.run directly, or using a wrapper function, or using keyword arguments instead of list elements, would fail these tests. test_message_flag_format specifically fails if someone uses '-m' even though that's functionally equivalent"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test uses AST parsing or text inspection of the source file (ast.parse + ast.walk, or string 'in source'). No test actually imports, calls, or executes the code. test_commit_message_unchanged is literally 'assert \"CI: Upgrade important CI environment\" in source'. The tests are purely static analysis of source text, not behavioral verification."
+      "reason": "All fail_to_pass tests (test_calledprocesserror_import_present, test_no_verify_flag_in_retry, test_retry_adds_files_before_commit, test_try_except_structure_around_commit, test_console_print_on_failure, test_message_flag_format) exclusively use AST parsing of the source file to check for textual/structural patterns. None of them import, call, or execute the actual code. This is sophisticated text inspection, not behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check for structural code changes (try/except blocks, specific function calls within except handlers, --no-verify flag) that would not be present in the original unmodified code. A stub or no-op would not pass these AST-based structural checks."
+      "reason": "A stub or no-op implementation would not pass these tests \u2014 the AST checks look for specific try/except structures, CalledProcessError handlers, git add/commit calls with --no-verify, and console_print calls that wouldn't exist in an empty or minimal implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md are tested: commit message format (test_commit_message_unchanged), CalledProcessError handling (test_calledprocesserror_import_present, test_try_except_structure_around_commit), console_print call (test_console_print_on_failure), git add retry (test_retry_adds_files_before_commit), --no-verify flag (test_no_verify_flag_in_retry), --message long form (test_message_flag_format)."
+      "reason": "All behaviors described in the instruction (commit message format, CalledProcessError catching, console_print call, git add retry, --no-verify flag, --message long form) are tested by the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies. They are logically grouped by concern (syntax, structure, retry logic, message format)."
+      "reason": "Tests are well-named (test_syntax_valid, test_calledprocesserror_import_present, etc.), have docstrings, and are logically organized testing individual aspects of the fix."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying Python source code, not producing structured data output."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction doesn't name the exact file or line number. It refers to 'breeze ci upgrade' command generically. The agent must locate the relevant file themselves."
+      "reason": "The instruction does not name the exact file path or line number. It refers to 'breeze ci upgrade' command which is a domain-level reference. However, it does prescribe the solution steps in detail (addressed under no_solution_leakage)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",

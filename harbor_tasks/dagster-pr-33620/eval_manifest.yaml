@@ -1,0 +1,82 @@
+version: 1
+
+PRD:
+  owner: dagster-io
+  repo: dagster
+  pr_number: 33620
+  title: "fix(dlt): drop local state before run"
+  description: |
+    Dagster DLT integration keeps local state that interferes with subsequent runs.
+    When an asset fails, running a different one on the same pipeline picks up the
+    failing job state and fails again. This fix drops local state before running.
+  base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+  merge_commit: b776602f1381cd661d3328ed7835ac0120f33111
+  files_changed:
+    - python_modules/libraries/dagster-dlt/dagster_dlt/resource.py
+    - python_modules/libraries/dagster-dlt/dagster_dlt_tests/test_asset_decorator.py
+
+target:
+  file: python_modules/libraries/dagster-dlt/dagster_dlt/resource.py
+  function: _run
+  distinctive_line: "Dlt keeps some local state that interferes with next runs"
+
+checks:
+  - id: test_drop_clears_stale_pipeline_state
+    type: fail_to_pass
+    origin: pr_test
+    description: |
+      Test that stale pipeline state is cleared before run when
+      restore_from_destination is enabled (default). Validates the drop() call
+      is made before dlt_pipeline.run().
+    source:
+      config_file: CLAUDE.md
+      commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+
+  - id: test_drop_pending_packages_when_restore_disabled
+    type: fail_to_pass
+    origin: pr_test
+    description: |
+      Test that pending packages are dropped (not full state) when
+      restore_from_destination is disabled. Preserves incremental cursors.
+    source:
+      config_file: CLAUDE.md
+      commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+
+  - id: test_dlt_resource_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's own test_asset_decorator.py tests pass
+
+  - id: test_make_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's make ruff passes on dagster-dlt module"
+    source:
+      config_file: CLAUDE.md
+      lines: "18-20"
+      commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+
+  - id: test_pytest_dlt_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI runs dagster-dlt unit tests
+
+  - id: test_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI runs ruff format check on dagster-dlt
+
+  - id: test_pytest_load_collection_component
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI runs dagster-dlt load collection component tests
+
+rubric:
+  - rule: |
+      After ANY Python code changes, ALWAYS run make ruff - this is mandatory
+      and must never be skipped. Address any linting issues before considering
+      a task complete.
+    source:
+      config_file: CLAUDE.md
+      lines: "18-20"
+      commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0

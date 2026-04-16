@@ -76,6 +76,15 @@ rubric:
     TypeScript file, consistent with Prettier formatting.
   category: style
   verification: llm_judge
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+  source_text: '- Be consistent with the style of the surrounding code.'
+  evidence: The gold diff strictly adheres to the existing tab-based indentation and
+    formatting style for the new multi-line conditional statement inside `js/core/src/gradio_helper.ts`.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: 'Repository Structure: `gradio/components/` — all Gradio components'
   collision_type: architecture_boundary
@@ -96,6 +105,24 @@ distractors:
   source:
     path: AGENTS.md
     lines: 48-49
+- rule: Use gr.HTML to create custom HTML components
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+    It supports `html_template` (with `${}` JS expressions and `{{}}` Handlebars syntax),
+    `css_template` for scoped styles, and `js_on_load` for interactivity — where `props.value`
+    updates the component value and `trigger('event_name')` fires Gradio events. For
+    reuse, subclass `gr.HTML` and define `api_info()` for API/MCP support. See the
+    [full guide](https://www.gradio.app/guides/custom-HTML-components).
+  collision_type: architecture_boundary
+  why_distracting: This rule applies exclusively to end-users writing Gradio applications
+    in Python. An agent tasked with modifying the core JS/TS frontend code (`gradio_helper.ts`)
+    might mistake this as a convention for adding frontend features, attempting to
+    use Python `gr.HTML` wrappers or string templates instead of directly editing
+    the native Svelte/TypeScript components.
+  severity: high
 hierarchy_analysis: The config is a flat single file (`AGENTS.md`). The agent must
   use the repository structure guide to correctly locate the frontend code (`js/`)
   instead of the backend components (`gradio/components/`), despite the issue mentioning

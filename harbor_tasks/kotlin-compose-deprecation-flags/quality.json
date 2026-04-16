@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all five extension properties, all four feature flags, the specific files, the suppress annotation changes, and the stabilityConfigurationFiles migration. Every test-asserted detail (file paths, property names, deprecation levels, version string '2.5.0', suppress values) is discoverable from instruction.md."
+      "reason": "instruction.md names all affected files, properties, feature flags, deprecation levels, and the API migration (stabilityConfigurationFile -> stabilityConfigurationFiles with listOf)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: e.g., 'five extension properties have DeprecationLevel.ERROR with deprecation messages containing 2.5.0', 'StrongSkipping and IntrinsicRemember feature flags have DeprecationLevel.ERROR', 'OptimizeNonSkippingGroups and PausableComposition have @Deprecated with DeprecationLevel.WARNING', 'Code accessing items with DeprecationLevel.ERROR requires DEPRECATION_ERROR suppression', and 'uses stabilityConfigurationFiles.set(listOf(...))'. This is a compl"
+      "outcome": "pass",
+      "reason": "Instruction describes what should change (levels, messages containing '2.5.0', suppress alignment) without giving exact code snippets or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests use regex to parse annotations and check for specific levels and version strings. Alternative correct implementations (different message wording, different annotation formatting) would still pass as long as they include '2.5.0' in messages and correct DeprecationLevel values. The tests don't assert exact line positions or specific internal helper names."
+      "reason": "Tests check for DeprecationLevel.ERROR/WARNING, presence of '2.5.0' in messages, and suppress sets \u2014 these are behavioral requirements, not exact message wording."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads file content as text and uses regex to find patterns like '@Deprecated' annotations and '@Suppress' annotations. No test compiles, executes, or imports the Kotlin code. They are purely text-matching tests (e.g., parse_deprecated_annotation reads file text and regex-matches)."
+      "reason": "Tests use regex parsing of file content (parse_deprecated_annotation, parse_suppress_annotation, read_file) rather than compiling/executing Kotlin code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The base commit has these properties without DeprecationLevel.ERROR (defaulting to WARNING or no annotation). A stub/default file would not contain the required DeprecationLevel.ERROR or DeprecationLevel.WARNING annotations, so these tests would fail without actual changes."
+      "reason": "Each f2p asserts specific level (ERROR/WARNING) and message content ('2.5.0'), which require the actual annotation change."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behaviors listed in the 'Expected Behavior After Fix' section are tested: extension property deprecation levels, feature flag deprecation levels, suppress annotations, and the ComposeIT migration."
+      "reason": "Tests cover the five extension properties, four feature flags, suppress annotations, and ComposeIT migration as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass tests: Deprecation annotation changes', 'Fail-to-pass tests: @Suppress annotation changes'), descriptive function names, and docstrings explaining the before/after state."
+      "reason": "Tests are grouped with section comments like '# ============ Fail-to-pass tests: Deprecation annotation changes ============' and clear function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing Kotlin source code annotations, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, property names, annotation values, and variable names in the instruction match the actual codebase and test expectations without typos."
+      "reason": "File paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files, exact property names, exact deprecation levels to use (DeprecationLevel.ERROR vs WARNING), exact suppress annotation values ('DEPRECATION_ERROR'), and exact replacement API calls (stabilityConfigurationFiles.set(listOf(...))). This goes well beyond identifying the bug and specifies the complete solution."
+      "outcome": "pass",
+      "reason": "Instruction names files but does not cite specific line numbers or provide the exact patch."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task modifying Kotlin source files, not a configuration-editing task."
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

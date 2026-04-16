@@ -290,50 +290,82 @@ print('Imports OK')
 
 # [repo_tests] fail_to_pass
 def test_identity_has_comparison_methods():
-    """Identity class has comparison magic methods (__ge__, __gt__, __le__, __lt__)."""
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
+    """Identity-wrapped integers produce correct boolean results for all comparison operators."""
+    r = _run_identity_test("""
+a = Identity(sympy.Integer(7))
+b = Identity(sympy.Integer(-2))
+c = Identity(sympy.Integer(0))
 
-    identity_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "Identity":
-            identity_class = node
-            break
+# boundary: value == rhs
+assert bool(a >= 7) is True
+assert bool(a > 7) is False
+assert bool(a <= 7) is True
+assert bool(a < 7) is False
 
-    assert identity_class is not None, "Identity class not found"
+# boundary: value vs rhs +/- 1
+assert bool(a >= 8) is False
+assert bool(a > 6) is True
+assert bool(a <= 6) is False
+assert bool(a < 8) is True
 
-    methods = {
-        n.name for n in ast.walk(identity_class)
-        if isinstance(n, ast.FunctionDef)
-    }
-    assert "__ge__" in methods, "Identity missing __ge__ (comparison support)"
-    assert "__gt__" in methods, "Identity missing __gt__ (comparison support)"
-    assert "__le__" in methods, "Identity missing __le__ (comparison support)"
-    assert "__lt__" in methods, "Identity missing __lt__ (comparison support)"
+# negative values
+assert bool(b >= -2) is True
+assert bool(b >= 0) is False
+assert bool(b > -3) is True
+assert bool(b > -2) is False
+assert bool(b <= -2) is True
+assert bool(b < -1) is True
+assert bool(b < -3) is False
+
+# zero
+assert bool(c >= 0) is True
+assert bool(c > 0) is False
+assert bool(c <= 0) is True
+assert bool(c < 0) is False
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [repo_tests] fail_to_pass
 def test_identity_has_helper_compare_method():
-    """Identity class has _identity_atom_compare helper method for fast-path comparison."""
-    source = Path(TARGET).read_text()
-    tree = ast.parse(source)
+    """Identity numeric comparisons and Max/Min complete without RecursionError."""
+    r = _run_identity_test("""
+import sys
+old_limit = sys.getrecursionlimit()
+sys.setrecursionlimit(200)
+try:
+    # Integer comparisons must complete without hitting recursion limit
+    cases = [
+        (sympy.Integer(0), 0, True),
+        (sympy.Integer(-6), 0, False),
+        (sympy.Integer(5), 3, True),
+        (sympy.Integer(-1), -1, True),
+        (sympy.Integer(10), 10, True),
+        (sympy.Integer(-100), 1, False),
+    ]
+    for val, rhs, expected in cases:
+        result = Identity(val) >= rhs
+        assert bool(result) == expected, f"Identity({val}) >= {rhs}: expected {expected}"
 
-    identity_class = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "Identity":
-            identity_class = node
-            break
+    # Rational comparisons must also work
+    assert bool(Identity(sympy.Rational(1, 7)) >= 0) is True
+    assert bool(Identity(sympy.Rational(-3, 4)) >= 0) is False
 
-    assert identity_class is not None, "Identity class not found"
+    # Max/Min internally rely on comparisons
+    assert float(sympy.Max(0, Identity(sympy.Integer(-6)))) == 0
+    assert float(sympy.Max(0, Identity(sympy.Integer(3)))) == 3
+    assert float(sympy.Min(0, Identity(sympy.Integer(-1)))) == -1
+    assert float(sympy.Min(0, Identity(sympy.Integer(50)))) == 0
+finally:
+    sys.setrecursionlimit(old_limit)
 
-    methods = {
-        n.name for n in ast.walk(identity_class)
-        if isinstance(n, ast.FunctionDef)
-    }
-    assert "_identity_atom_compare" in methods, (
-        "Identity missing _identity_atom_compare helper method - "
-        "this is needed to fix the RecursionError in comparisons"
-    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

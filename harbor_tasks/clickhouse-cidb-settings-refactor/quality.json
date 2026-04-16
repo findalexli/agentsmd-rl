@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file (ci/jobs/collect_statistics.py), the hardcoded secret names to remove, the Settings constants (SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD), the import sources (ci.praktika.settings, ci.praktika.info), the Info class, the info variable name, the CIDB constructor keyword arguments (url, user, passwd), and the removal of the Secret import. All test assertions reference these specifics which are discoverable from the instruction."
+      "reason": "Instruction names the file, the Settings/Info imports, SECRET_CI_DB_* constants, get_secret method, CIDB constructor usage, and forbidden strings/imports \u2014 all assertions in tests map to these."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: import Settings from ci.praktika.settings, import Info from ci.praktika.info, name the variable 'info', use 'info.get_secret(Settings.SECRET_CI_DB_*)' pattern, remove the old Secret import, and pass url/user/passwd to CIDB constructor. It even specifies the exact variable name ('info') and the exact pattern ('info.get_secret('). This is describing the fix, not just the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes requirements (use Settings, Info.get_secret, keyword args) without providing exact line replacements or code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: test_info_get_secret_used checks for literal string 'info.get_secret(' in code, test_settings_constants_used checks for exact strings like 'Settings.SECRET_CI_DB_URL', test_no_secret_class_import checks exact import text. An alternative correct fix using e.g. 'db_info = Info()' or 'db_info.get_secret(...)' would fail because the test requires the variable name 'info'. Similarly, wrapping Settings constants differently would fail."
+      "outcome": "pass",
+      "reason": "Tests use AST patterns and allow flexibility in variable names and kwarg names (pwd/passwd); alternative correct fixes should still pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Almost every test is purely text/AST inspection of the source file. test_no_hardcoded_secret_names uses 'assert name not in content', test_settings_constants_used uses 'assert setting in content', test_info_get_secret_used uses 'assert \"info.get_secret(\" in content'. The only execution-based tests are syntax validation (py_compile), black formatting, and AST parsing. No test actually imports or runs the modified code to verify it connects to the correct database."
+      "outcome": "pass",
+      "reason": "Tests use ast.parse and py_compile subprocess to validate structure, not just string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_no_hardcoded_secret_names, test_settings_constants_used, test_info_get_secret_used) check for specific content changes. A stub/no-op would leave the original hardcoded strings in place, failing test_no_hardcoded_secret_names. The original file lacks Settings imports and info.get_secret patterns, so tests would fail without actual changes."
+      "reason": "Tests require actual refactor (imports, Settings usage, get_secret calls, CIDB kwargs) \u2014 a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All constraints mentioned in instruction.md are tested: Settings import, Info import, info variable naming, removal of Secret import, removal of hardcoded names, use of Settings.SECRET_CI_DB_* constants, use of info.get_secret(), and CIDB constructor keyword arguments."
+      "reason": "Tests cover all instruction requirements: imports, Settings constants, get_secret usage, no hardcoded names, no Secret import, CIDB kwargs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names (test_no_hardcoded_secret_names, test_settings_imported, etc.), docstrings explaining each test's purpose, and a clear comment separating fail-to-pass from pass-to-pass tests."
+      "reason": "Tests are clearly named (test_syntax_valid, test_no_hardcoded_secret_names, etc.) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md, tests, and solution files."
+      "reason": "Filenames and constant names match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the target file (ci/jobs/collect_statistics.py), specifies exact variable naming ('info' lowercase), exact import sources, exact method patterns ('info.get_secret('), and even references specific example files (runner.py, cidb_cluster.py). The Constraints section essentially dictates the implementation line by line."
+      "outcome": "pass",
+      "reason": "Instruction names the file (ci/jobs/collect_statistics.py), which is appropriate since the task is about fixing that specific file, not localizing the bug."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold solution modifies only the target file ci/jobs/collect_statistics.py with localized changes: removing one import, adding two imports, and replacing a small block of CIDB initialization code."
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

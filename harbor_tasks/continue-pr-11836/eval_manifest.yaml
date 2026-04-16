@@ -1,0 +1,90 @@
+# eval_manifest.yaml for continue#11836
+# fix: lazy-load Ollama /api/show to reduce unnecessary requests
+
+pr_metadata:
+  owner: continuedev
+  repo: continue
+  pr_number: 11836
+  base_commit: 2f52b46ec2c59bb3bf2f5df1c4630b001676e08d
+  merge_commit: 8b9f4ab625519ef1fce5077c01493836f7120959
+  title: "fix: lazy-load Ollama /api/show to reduce unnecessary requests"
+  description: |
+    This PR fixes an issue where using AUTODETECT with many Ollama models caused ~600
+    /api/show POST requests in 5 seconds with 59 models. The problem occurred because
+    the Ollama constructor fired an HTTP request to /api/show on every model instantiation.
+
+    Key changes:
+    - Moved /api/show call from constructor to lazy ensureModelInfo() method
+    - Caches the response promise per instance
+    - Fixed null-check regex for model parameters parsing
+    - Respects explicitly configured contextLength
+
+target_files:
+  - core/llm/llms/Ollama.ts
+
+checks:
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: code_structure
+    description: The Ollama.ts file exists
+    test_function: test_file_exists
+
+  - id: test_ensureModelInfo_method_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: The ensureModelInfo lazy-loading method exists
+    test_function: test_ensureModelInfo_method_exists
+
+  - id: test_modelInfoPromise_caching_field_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: The modelInfoPromise caching field exists
+    test_function: test_modelInfoPromise_caching_field_exists
+
+  - id: test_regex_null_check_fix
+    type: fail_to_pass
+    origin: code_structure
+    description: Regex null-check fix handles null parts from match()
+    test_function: test_regex_null_check_fix
+
+  - id: test_explicit_contextLength_respected
+    type: fail_to_pass
+    origin: code_structure
+    description: Explicit contextLength is not overridden by /api/show
+    test_function: test_explicit_contextLength_respected
+
+  - id: test_autodetect_returns_promise_resolve
+    type: fail_to_pass
+    origin: code_structure
+    description: AUTODETECT model returns Promise.resolve() without calling /api/show
+    test_function: test_autodetect_returns_promise_resolve
+
+  - id: test_prettier_ollama
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check on Ollama.ts passes
+    test_function: test_prettier_ollama
+
+  - id: test_eslint_ollama
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check on Ollama.ts passes
+    test_function: test_eslint_ollama
+
+  - id: test_prettier_llm_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check on core/llm/llms/ directory passes
+    test_function: test_prettier_llm_dir
+
+  - id: test_eslint_llm_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check on core/llm/llms/ directory passes
+    test_function: test_eslint_llm_dir
+
+# Agent config files found at base commit:
+# - .claude/skills/docs-style/SKILL.md (not relevant to this PR - about documentation style)
+#
+# No relevant soft/subjective rules apply to this PR's changes.
+rubric: []

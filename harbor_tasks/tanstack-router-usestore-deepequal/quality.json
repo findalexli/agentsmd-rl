@@ -3,56 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both file paths (Scripts.tsx, headContentUtils.tsx), the function names (useStore, deepEqual, useTags, getAssetScripts, getScripts), the import source (@tanstack/router-core), and the counts (2 useStore calls in Scripts.tsx, 5 in useTags). All test-asserted specifics (file paths, function counts, scope function 'useTags') are discoverable from the instruction."
+      "reason": "The instruction names both file paths (Scripts.tsx, headContentUtils.tsx), the hook name (useTags), the counts (2 and 5 useStore calls), the useStore function, the third-argument comparator pattern, and the @tanstack/router-core package. All test-asserted specifics (file paths, function scope 'useTags', counts 2 and 5, argument count >= 3) are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: pass `deepEqual` as the third argument to all 7 useStore calls, specifies exact import lines, exact formatting patterns like `getAssetScripts,\\n    deepEqual,`, and even states the exact import syntax. This is a direct specification of WHAT to change, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (missing comparator arguments) and hints to look at @tanstack/router-core exports, but doesn't specify the exact function name (deepEqual), exact line numbers, or exact code to write. A developer still needs to figure out which utility to use and how to apply it."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use AST analysis to check that useStore calls have a function identifier as their third argument. They don't check the specific name 'deepEqual' - they check for any identifier. An alternative using a custom comparator function (e.g., `isEqual` from lodash) passed as the third argument would also pass. However, the p2p build/type tests would constrain to valid comparators."
+      "reason": "Tests use AST analysis to check that useStore calls have >= 3 arguments. Any correct fix that adds a third comparator argument (whether deepEqual, shallow equal, a custom inline function, or any other comparator) would pass. Tests don't check for specific variable names, import statements, or the identity of the comparator function."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The f2p tests use TypeScript compiler API via Node.js subprocess to perform AST-based analysis of the source files, not simple string matching. The p2p tests run actual build, type-check, unit test, and prettier commands. This verifies structural properties and behavior rather than raw text."
+      "reason": "The f2p tests use TypeScript's compiler API to parse the AST and count call expression arguments, which is behavioral/structural analysis rather than simple string matching. The p2p tests run actual build, type-check, unit test, and prettier subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that useStore calls have >= 3 arguments with a function identifier as the third argument. A stub or no-op implementation would not add these arguments to existing useStore calls, so these tests would fail on the base commit and require actual code changes."
+      "reason": "A stub or no-op implementation would not pass the f2p tests. The tests verify that useStore calls have exactly 3 arguments in the actual source files. Without modifying the source to add comparator arguments, the existing 2-argument calls would cause assertion failures (e.g., data['with_comparator'] == data['total'] would fail)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: the import of deepEqual in both files (via AST checking for function comparators), all 7 useStore calls having deepEqual as third argument, the useTags scope having exactly 5 calls, and the p2p tests cover build, types, unit tests, prettier, and docs."
+      "reason": "The instruction requires all 7 useStore calls to get comparators, the code to pass unit tests, type checks, build, build validation, prettier, and docs checks. All of these are tested: f2p tests verify the comparator addition (2 in Scripts.tsx, 5 in useTags), and p2p tests verify all CI checks pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_scripts_has_deep_equal_import, test_use_tags_use_store_calls_have_deep_equal, etc.), clear docstrings explaining what each test verifies, and a logical separation between fail-to-pass and pass-to-pass tests with comments."
+      "reason": "Tests are well-organized with clear docstrings, separated into f2p (fail-to-pass) and p2p (pass-to-pass) categories with comments, and have descriptive function names like test_scripts_use_store_calls_have_deep_equal and test_use_tags_use_store_calls_have_deep_equal."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing React component code, not producing structured data output."
+      "reason": "The task doesn't produce structured data output like JSON/CSV/API/DB; it's a code fix task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, function names, and variable names in the instruction are all correct and consistent with the actual repository structure."
+      "reason": "All file paths (packages/react-router/src/Scripts.tsx, packages/react-router/src/headContentUtils.tsx), command names, function names (useStore, useTags), and package names (@tanstack/router-core, @tanstack/react-store) are correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files (Scripts.tsx, headContentUtils.tsx), exact function to import (deepEqual), exact import source (@tanstack/router-core), exact formatting patterns (`getAssetScripts,\\n    deepEqual,`), and exact counts of useStore calls. This goes well beyond identifying the buggy area and specifies the exact solution."
+      "reason": "The instruction explicitly names both exact files, states the exact count of useStore calls in each (2 in Scripts.tsx, 5 in headContentUtils.tsx), identifies the specific hook (useTags), and says to add a third comparator argument. It even says 'Look at what utilities the @tanstack/router-core package already exports that could serve as a comparator.' This significantly narrows the solution space beyond what's needed to describe the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TypeScript source files, not configuration files."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

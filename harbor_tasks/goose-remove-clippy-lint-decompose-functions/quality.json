@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: the five helper function names (resolve_provider_and_model, resolve_session_id, handle_resumed_session_workdir, resolve_and_load_extensions, configure_session_prompts), the file paths (builder.rs, clippy.toml, scripts/clippy-lint.sh, etc.), the exact strings like 'cargo clippy --all-targets', 'Merge without running clippy', 'CI handles this (clippy)', 'clippy.toml', 'too-many-lines-threshold', and the requirement of >=10 function "
+      "reason": "All asserted file paths, helper function names, literal strings ('Merge without running clippy', 'CI handles this (clippy)', 'cargo clippy --all-targets', 'clippy.toml', 'too-many-lines-threshold'), and the >=10 fn requirement are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact replacement strings (e.g., 'cargo clippy --all-targets -- -D warnings'), exact helper function names to create, exact phrases to use in documentation files ('Merge without running clippy', 'CI handles this (clippy)'). This tells the agent precisely WHAT to write rather than describing what's broken and letting the agent reason about the fix."
+      "outcome": "pass",
+      "reason": "Instruction describes what to refactor and what files to update, but does not provide literal code/line replacements beyond the required string tokens."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact function names like 'fn resolve_provider_and_model', 'fn resolve_session_id', etc. A correct alternative decomposition using different helper names (e.g., 'fn setup_provider', 'fn get_session_id') would fail. Similarly, tests check for exact strings like 'Merge without running clippy' and 'CI handles this (clippy)' \u2014 alternative correct phrasings would fail."
+      "reason": "Tests assert on specific helper function names (resolve_provider_and_model, resolve_session_id, handle_resumed_session_workdir, resolve_and_load_extensions, configure_session_prompts) \u2014 an alternative valid decomposition using different names would fail, though instruction does specify these exact names so it's consistent with instruction."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching: checking for string presence in files (e.g., 'fn resolve_provider_and_model' in content, 'cargo clippy --all-targets' in content). The pass-to-pass tests do run cargo fmt/check/clippy which verify behavior, but the core fail-to-pass tests (test_build_session_decomposed, test_clippy_toml_created, test_old_infrastructure_removed, test_agents_md_standard_clippy, etc.) are all 'assert string in open(path).read()' style checks."
+      "outcome": "pass",
+      "reason": "Tests execute cargo fmt, cargo check, cargo clippy subprocesses in addition to text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/default implementation would not pass these tests. The agent must actually create clippy.toml with the right content, delete specific files, modify documentation files to contain specific strings, and refactor builder.rs to contain specific function declarations. These require substantive file modifications."
+      "reason": "Cargo clippy/check subprocess tests require actual code compilation and linting to succeed; stubs wouldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: deletion of old scripts, creation of clippy.toml, updates to all five documentation files, decomposition of build_session into the five named helpers, balanced braces, and >=10 function declarations. The CI workflow file update (.github/workflows/ci.yml) mentioned in the gold patch isn't in the instruction, so that's not a gap."
+      "reason": "Each instruction requirement (file deletions, clippy.toml, doc updates, helper functions, build_session calling them) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (fail-to-pass behavioral, fail-to-pass config updates, pass-to-pass repo tests, pass-to-pass static checks), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped under commented sections: fail-to-pass behavioral, config file updates, pass-to-pass CI, and static checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task doesn't produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "File paths and commands appear correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact helper function names (resolve_provider_and_model, resolve_session_id, etc.), exact replacement strings for documentation files, and exact file paths. While the file paths are reasonable for the task domain, specifying exact function names for the decomposition is excessive localization that removes the design decision from the agent."
+      "outcome": "pass",
+      "reason": "Instruction names the file to refactor (builder.rs) which is legitimate task scoping, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The config edits (documentation files, Justfile) are localized changes replacing script references with standard commands, not full-file rewrites. The gold patch shows targeted line-level changes."
+      "reason": "Config edits are localized string replacements for clippy command references across specific listed files."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

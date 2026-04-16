@@ -115,6 +115,31 @@ distractors:
   source:
     path: AGENTS.md
     lines: 52-53
+- rule: Use gr.HTML for custom HTML components
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 112-112
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with modifying the `Textbox` component to add copy
+    handling and accessibility might mistake this as an instruction to write a Python
+    user application wrapping `gr.HTML`. In reality, this PR alters the Gradio core
+    library's Svelte implementation (`Textbox.svelte`).
+  severity: high
+- rule: Python Event Listeners Signature
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 163-168
+  source_text: "All event listeners share the same signature:\n\n```python\ncomponent.event_name(\n\
+    \    fn: Callable | None | Literal[\"decorator\"] = \"decorator\",\n    inputs:\
+    \ Component | Sequence[Component] | set[Component] | None = None,"
+  collision_type: architecture_boundary
+  why_distracting: Because the PR heavily modifies frontend event listener and dispatching
+    mechanisms in `js/tootils/src/render.ts` (`notify_listeners`, `listen`, `fireEvent`),
+    an agent might confuse the Python Gradio event signatures described here with
+    the Javascript/DOM event system and try to apply Python event wireups.
+  severity: high
 hierarchy_analysis: There is only a single root-level configuration file (`AGENTS.md`)
   containing generic repository contribution guidelines. No complex hierarchy or overriding
   is present.

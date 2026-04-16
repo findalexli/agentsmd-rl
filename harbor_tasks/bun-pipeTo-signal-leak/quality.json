@@ -3,43 +3,43 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: e.g., test_abort_signal_header_compiles_with_new_members asserts 'm_abortAlgorithms', 'm_abortAlgorithmsLock', 'wtf/Lock.h', and 'template<typename Visitor> void visitAbortAlgorithms(Visitor&)' \u2014 none of these member names or exact signatures are in the instruction. test_add_abort_algorithm_uses_new_vector asserts 'signal.m_abortAlgorithms.append' and 'Locker locker { signal.m_abortAlgorithmsLock }', which are und"
+      "reason": "Tests assert on specific file paths (e.g., src/bun.js/bindings/webcore/AbortSignal.cpp, JSAbortAlgorithm.cpp, JSAbortAlgorithm.h, JSAbortSignalCustom.cpp, AbortSignal.h), specific class/method names (JSCallbackDataWeak, visitJSFunction, visitAbortAlgorithms, m_abortAlgorithms, m_abortAlgorithmsLock, addAbortAlgorithmToSignal, removeAbortAlgorithmFromSignal, std::exchange, memoryCost, handleEvent), and specific patterns (WTF_GUARDED_BY_LOCK, removeFirstMatching). None of these are mentioned in in"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states 'The fix must break the JSCallbackDataStrong reference cycle' and 'The JSAbortAlgorithm class needs to use a weak reference pattern', directly naming what to change (switch from JSCallbackDataStrong to weak). It also says 'ensuring the callback is marked when the signal is reachable' which describes the implementation strategy. This goes beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "instruction.md describes the symptom (memory leak) and root cause (reference cycle via abort algorithms) but does not specify which files to change, what lines to modify, or the specific fix (e.g., switching Strong to Weak callbacks, adding visitAbortAlgorithms)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert extremely specific implementation details: exact member names ('m_abortAlgorithms', 'm_abortAlgorithmsLock'), exact string patterns ('signal.m_abortAlgorithms.append', 'Locker locker { signal.m_abortAlgorithmsLock }', 'abortAlgorithms = std::exchange(m_abortAlgorithms, {})'), exact function signatures ('void visitJSFunction(JSC::AbstractSlotVisitor&) override'), and exact type names ('JSCallbackDataWeak* m_data'). An alternative correct fix (e.g., using a different locking mechanism"
+      "reason": "Tests assert on gold-specific implementation details: test_jsabortalgorithm_uses_weak_callback_type checks for exactly 'JSCallbackDataWeak' vs 'JSCallbackDataStrong'; test_abortsignal_has_js_algorithm_storage checks for 'm_abortAlgorithmsLock' and 'WTF_GUARDED_BY_LOCK'; test_run_abort_steps_processes_algorithms requires 'std::exchange'; test_remove_abort_algorithm_removes_from_storage requires 'removeFirstMatching'. An alternative correct fix (e.g., breaking the cycle differently) would fail the"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are pure text-matching: they read file contents and assert substrings like 'assert \"JSCallbackDataWeak* m_data\" in h_src'. The only execution-based test (test_jsabortalgorithm_compiles_with_weak_ref) runs clang but only checks for syntax errors, not behavioral correctness. No test actually runs the code, executes the streams API, or verifies memory leak behavior."
+      "reason": "While tests use clang++ -E preprocessing (subprocess execution), most tests ultimately do string/regex matching on source or preprocessed output (e.g., count_pattern for 'new JSCallbackDataWeak', checking 'm_abortAlgorithms' in content). Tests like test_add_abort_algorithm_uses_new_storage simply check `'m_abortAlgorithms' in content` and `'.append(' in content` \u2014 pure text matching, not behavioral execution. No test actually compiles, runs code, or checks for memory leaks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply inserts the expected string patterns into the source files (e.g., adding comments containing 'm_abortAlgorithms', 'JSCallbackDataWeak* m_data', etc.) would pass all the text-matching tests without actually fixing the memory leak. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check for specific code patterns (JSCallbackDataWeak, visitJSFunction overrides, m_abortAlgorithms with Lock, visitAbortAlgorithms, etc.) that are not present in the base commit. A stub/no-op would not pass since these patterns must exist in the source files."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'When all JavaScript references to an AbortSignal are dropped and the pipe never completes, the AbortSignal should be garbage collected.' No test verifies this actual GC behavior \u2014 all tests only check source code text patterns."
+      "reason": "instruction.md says AbortSignal should be garbage collected when references are dropped. No test actually verifies garbage collection behavior or memory leak absence \u2014 tests only check structural code patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_jsabortalgorithm_compiles_with_weak_ref, test_abort_signal_visit_abort_algorithms_implemented), grouped into gates vs fail-to-pass vs pass-to-pass sections, and have docstrings explaining their purpose."
+      "reason": "Tests are well-named (test_jsabortalgorithm_uses_weak_callback_type, test_abortsignal_has_gc_visitation_method, etc.), have docstrings explaining what they verify, and are tagged with [pr_diff] fail_to_pass markers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves C++ source code modifications, not structured data output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and function names in the instruction and tests appear correct and consistent with the codebase."
+      "reason": "No obvious typos in filenames, paths, commands, or variable names in the task files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files (JSAbortAlgorithm.h, JSAbortAlgorithm.cpp, AbortSignal.h, AbortSignal.cpp, JSAbortSignalCustom.cpp), exact class/member names (JSCallbackDataStrong, m_algorithms, JSAbortAlgorithm), and the exact fix strategy ('use a weak reference pattern', 'JSCallbackDataWeak'). It also points to specific reference patterns (JSPerformanceObserverCallback, EventListenerMap::visitJSEventListeners) that are implementation hints."
+      "outcome": "pass",
+      "reason": "instruction.md describes the problem at an architectural level (reference cycle between AbortSignal and abort algorithms via closures) without naming specific files, lines, or the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -48,16 +48,13 @@
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 4
 }

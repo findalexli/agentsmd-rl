@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/@mantine/modals/src/context.ts), the types involved (MantineModals, MantineModalsOverride, MantineModalsOverwritten), the exact expected code snippet, and the tooling commands. All test assertions (file path, 'infer M', 'MantineModalsOverwritten' removal, '? M', ': Record<string, React.FC<ContextModalProps<any>>>', compilation, jest, eslint, prettier) are discoverable from the instruction."
+      "reason": "The instruction names the file path (packages/@mantine/modals/src/context.ts), the exact type definition to produce (with 'infer M', 'MantineModals', 'MantineModalsOverride'), the tooling commands, and the constraints. All asserted specifics in tests (file path, 'infer M', 'MantineModalsOverwritten' removal, '? M', ': Record<string, React.FC<ContextModalProps<any>>>', exact export line) are discoverable from the instruction which provides the exact target code block."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction contains the exact replacement code verbatim: 'export type MantineModals = MantineModalsOverride extends { modals: infer M } ? M : Record<string, React.FC<ContextModalProps<any>>>;'. This tells the agent exactly what to write, leaving no reasoning required."
+      "reason": "The instruction literally provides the exact replacement code: 'export type MantineModals = MantineModalsOverride extends { modals: infer M } ? M : Record<string, React.FC<ContextModalProps<any>>>;'. This tells the agent exactly what to write, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'export type MantineModals = MantineModalsOverride extends { modals: infer M }', '? M', and ': Record<string, React.FC<ContextModalProps<any>>>'. An alternative correct implementation using different formatting (e.g., single-line, different whitespace, using a different variable name like 'infer Modals') would fail these text-matching assertions."
+      "reason": "test_type_inference_improved asserts the exact string 'export type MantineModals = MantineModalsOverride extends { modals: infer M }' must appear in the file. test_modals_type_is_direct asserts '? M' and ': Record<string, React.FC<ContextModalProps<any>>>'. An alternative correct implementation (e.g., using a different inferred variable name like 'infer Modals') would fail these text-matching tests even if functionally equivalent."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_type_inference_improved, test_no_duplicate_modals_type, test_modals_type_is_direct) are purely text-matching assertions checking for literal strings in the source file ('infer M', '? M', 'MantineModalsOverwritten', etc.) with no behavioral execution. While pass_to_pass tests do run tsc/jest/eslint/prettier, all f2p tests are string-in-file checks."
+      "reason": "The fail_to_pass tests (test_type_inference_improved, test_no_duplicate_modals_type, test_modals_type_is_direct) are purely text-matching assertions like 'assert \"infer M\" in content' and 'assert \"? M\" in content'. They do not import, call, or execute the code. While pass_to_pass tests do run tsc/jest/eslint/prettier, ALL f2p tests are purely textual."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string patterns in the source file. An agent could simply insert the exact literal strings as comments or dead code without actually fixing the type definition, and the text-matching f2p tests would pass. The behavioral tests (tsc, jest) are pass_to_pass, not fail_to_pass."
+      "reason": "A stub that simply writes the exact expected string into the file (without understanding type semantics) would pass all f2p tests since they only check for string presence ('infer M', '? M', exact export line, absence of 'MantineModalsOverwritten'). The tests don't verify the type actually works correctly beyond what tsc --noEmit covers (which is a pass_to_pass test)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: the simplified type definition, removal of intermediate types, TypeScript compilation, Jest tests, ESLint, and Prettier checks."
+      "reason": "All behaviors required by instruction.md are tested: the simplified type definition content, removal of intermediate types, TypeScript compilation, Jest tests, ESLint, and Prettier checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings and grouped by concern (type inference, duplication, directness, compilation, linting, formatting)."
+      "reason": "Tests are well-named with descriptive docstrings and comments explaining what each test checks (e.g., 'pass_to_pass' vs 'fail_to_pass' annotations)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves TypeScript type refactoring, not structured data output."
+      "reason": "This task involves modifying TypeScript type definitions, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in file paths, commands, variable names, or type names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (packages/@mantine/modals/src/context.ts), describes the exact intermediate type to remove (MantineModalsOverwritten), and provides the complete replacement code. This goes well beyond naming the module \u2014 it specifies exactly what to change and how."
+      "reason": "The instruction names the exact file (packages/@mantine/modals/src/context.ts), describes the exact intermediate type to remove ('MantineModalsOverwritten' pattern implied), and provides the exact replacement code verbatim. This goes beyond identifying the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

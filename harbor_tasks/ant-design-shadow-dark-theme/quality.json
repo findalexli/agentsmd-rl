@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (colors.ts, ColorMap.ts, dark/colors.ts, default/colors.ts, alias.ts), the colorShadow property, shadowColor parameter, GenerateNeutralColorMap type, getShadowColor helper, FastColor usage, and the specific shadow token names. All test assertions check for these elements which are discoverable from the instruction."
+      "reason": "The instruction.md names all file paths (colors.ts, ColorMap.ts, dark/colors.ts, default/colors.ts, alias.ts), property names (colorShadow, shadowColor, getShadowColor), specific alpha multipliers (0.08, 0.12, 0.05, etc.), and all shadow token names that appear in the tests. The test assertions for specific strings like 'shadowColor?:', 'colorShadow,', 'new FastColor(mergedToken.colorShadow)', 'getShadowColor', and '@internal' are all discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly prescribes the implementation: 'A getShadowColor helper should apply alpha multipliers', 'new FastColor(mergedToken.colorShadow)', 'GenerateNeutralColorMap type should accept an optional shadowColor parameter', 'colorShadow property marked as @internal'. These are specific implementation details, not just a description of what's broken."
+      "reason": "The instruction effectively dictates the exact implementation: it specifies exact variable names (colorShadow, getShadowColor), exact default values ('rgba(255, 255, 255, 0.2)', '#000'), exact parameter signatures ('shadowColor?: string'), exact FastColor usage pattern ('new FastColor(mergedToken.colorShadow)'), and exact alpha multipliers. This leaves no design reasoning for the agent \u2014 it's a specification of the solution, not of the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_alias_uses_colorShadow checks for exact string 'new FastColor(mergedToken.colorShadow)', 'getShadowColor' helper name, and '${getShadowColor(' template literal syntax. test_colorShadow_in_dark_colors checks for exact strings like 'shadowColor?:' and 'colorShadow,'. An alternative correct fix using different variable names (e.g., 'shadowBase', 'computeShadow') or a different architecture would fail these tests."
+      "reason": "Tests assert on gold-specific implementation details: test_alias_uses_colorShadow checks for exact string 'new FastColor(mergedToken.colorShadow)' and 'getShadowColor'; test_colorShadow_in_dark_colors checks for 'shadowColor?:' and 'colorShadow,'; test_generateNeutralColorMap_signature checks for 'shadowColor?:'. An alternative correct fix using different helper names (e.g., 'deriveShadow'), different parameter names, or a different approach (e.g., inline color computation) would fail these test"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests like test_colorShadow_token_exists_in_interface, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors, test_generateNeutralColorMap_signature, test_alias_uses_colorShadow, and test_shadow_tokens_use_dynamic_color are all pure text-matching (assert 'string' in open(path).read()). While test_repo_theme_unit_tests and test_repo_theme_all_tests do run Jest, the f2p tests (the ones checking the fix) are predominantly text-based assertions."
+      "reason": "The first 6 test functions (test_colorShadow_token_exists_in_interface, test_colorShadow_in_dark_colors, test_colorShadow_in_default_colors, test_generateNeutralColorMap_signature, test_alias_uses_colorShadow, test_shadow_tokens_use_dynamic_color) are entirely file-content string matching via `assert 'X' in content`. While later tests (test_repo_theme_unit_tests, test_repo_theme_all_tests, etc.) do run subprocesses, the majority of f2p tests are pure text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'colorShadow' in the interface file, 'getShadowColor' in alias.ts). A stub/no-op implementation would not add these strings, so the tests would fail. test_shadow_tokens_use_dynamic_color also checks that hardcoded rgba(0,0,0,...) values are removed."
+      "reason": "The f2p tests check for specific strings that don't exist in the original codebase (e.g., 'colorShadow', 'shadowColor?:', 'getShadowColor', 'new FastColor(mergedToken.colorShadow)'). A stub or no-op implementation would not add these strings to the source files, so these tests would fail without actual implementation work."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: colorShadow in interface, shadowColor parameter in type definition, dark/light theme generators accepting shadowColor, FastColor usage in alias.ts, getShadowColor helper, and no hardcoded rgba(0,0,0,...) values."
+      "reason": "All behaviors specified in instruction.md are tested: colorShadow in interface, shadowColor parameter in ColorMap type, dark/light theme color generation with defaults, alias.ts dynamic shadow derivation, and all 13 shadow tokens being updated. The Jest tests also verify runtime behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_colorShadow_token_exists_in_interface, test_alias_uses_colorShadow, etc.), have docstrings explaining what they verify, and are logically grouped by component (interface, dark colors, default colors, alias, behavior)."
+      "reason": "Tests are well-named (test_colorShadow_token_exists_in_interface, test_alias_uses_colorShadow, etc.) and each has a descriptive docstring explaining what it verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code for a theme system, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction appear correct and match the actual repository structure referenced in tests."
+      "reason": "All file paths, variable names, and commands in the instruction match what the tests reference. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact property names (colorShadow, shadowColor), exact helper function names (getShadowColor), and exact usage patterns (new FastColor(mergedToken.colorShadow)). This goes well beyond identifying the buggy area - it specifies the exact implementation approach including internal helper names."
+      "reason": "The instruction names exact files, exact variable names to create (colorShadow, getShadowColor), exact default values, exact type signatures, and exact alpha multipliers. This goes far beyond describing the bug \u2014 it prescribes the implementation in detail, e.g., 'Create a FastColor instance from mergedToken.colorShadow' and 'Define a getShadowColor helper function'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source files, not a configuration editing task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

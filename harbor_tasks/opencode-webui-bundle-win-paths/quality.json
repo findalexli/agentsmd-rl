@@ -2,56 +2,53 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The instruction never names the target file `packages/opencode/script/build.ts` or the function `createEmbeddedWebUIBundle`, yet tests extract and assert on that exact function name and file path. The instruction also doesn't mention the specific test dist files (index.html, assets/style.css, assets/sub/deep.js, assets/logo.png) used in test_all_dist_files_present, nor the variable name `dir` that the test harness extracts. An agent cannot discover these specifics from instruction.md alone."
+      "outcome": "pass",
+      "reason": "The instruction describes the function name (createEmbeddedWebUIBundle), the file path (packages/opencode/script/build.ts), and all behavioral requirements (forward slashes, relative imports, sorted output, all files present, valid module structure) plus AGENTS.md coding style rules. The test-specific assertions (e.g., checking for backslash normalization patterns, import specifier relativity, sorted keys, dist file names like index.html/assets/style.css) are all discoverable from the instructio"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (backslash paths, absolute imports, non-deterministic order) and the desired properties of the fix, but does not specify exact code changes, line numbers, or replacement code."
+      "reason": "The instruction describes what is broken (backslash separators, absolute import paths, non-deterministic ordering) and what the expected behavior should be, but does not prescribe the exact fix (e.g., does not say 'use replaceAll' or 'use path.relative'). A developer must still reason about how to implement the fix."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_backslash_normalization asserts specific patterns like `replaceAll(\"\\\\\"`, `split(\"\\\\\"...join`, `path.posix.`, or helper names `toForwardSlash|normalizePath|normalizeSlash`. A correct alternative using e.g. a regex replace with `/\\\\/g` directly or a different helper name (like `fixSlashes`) would fail this test. The test constrains implementation details rather than behavior."
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties (relative imports, sorted keys, forward slashes, all files present, valid structure) and the backslash normalization test accepts many different implementation patterns (replaceAll, replace with regex, split+join, path.posix, custom normalize functions, path.sep usage). Style tests check for absence of patterns (no let/var, no loops, no any, no try/catch) rather than specific implementation details. Variable names like file_0, file_1 are part of the output f"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The tests actually execute the function via `bun run` subprocess (_run_bundle_function), parse the output, and check behavioral properties (relative imports, sorted keys, valid module structure). While some tests (backslash normalization, style checks) are AST/text-based, the core behavioral tests execute code."
+      "reason": "The tests actually execute the function via `bun run` subprocess (_run_bundle_function), parse the generated output, and verify behavioral properties. While test_backslash_normalization and style tests do source inspection, the core behavioral tests (import specifiers relative, sorted keys, all files present, valid module structure) execute the code and check its output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning empty string or None would fail: test_import_specifiers_relative requires >=2 import specifiers, test_export_keys_sorted requires >=2 keys, test_all_dist_files_present checks for specific filenames, test_valid_module_structure checks for import/export/type patterns, and test_not_stub requires >=5 meaningful lines."
+      "reason": "A stub implementation would fail: test_not_stub requires >= 5 meaningful lines; test_import_specifiers_relative requires at least 2 relative import specifiers in actual output; test_export_keys_sorted requires sorted keys from actual dist files; test_all_dist_files_present checks for specific filenames in output; test_valid_module_structure checks for import statements and export default. The fail-to-pass tests (relative imports, sorted output, backslash normalization) cannot be satisfied by the"
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from the instruction (forward slashes, relative imports, sorted output, all files present, valid module structure) are tested, plus the coding style requirements (const only, no loops, no any, no try/catch, no else, Bun.Glob)."
+      "reason": "All five explicitly stated requirements in the instruction (forward slashes, relative imports, sorted output, all files present, valid module structure) are tested, plus the AGENTS.md coding style rules are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, config-derived), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, config-derived), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "The task produces a TypeScript module string, not structured data like JSON/CSV/API/DB."
+      "outcome": "pass",
+      "reason": "The instruction describes the expected structure of the generated TypeScript module (import statements, export default mapping, type: 'file' annotation), and tests verify this schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem domain (build script, web UI bundle) without naming the exact file path or function name, leaving localization as part of the task."
+      "reason": "The instruction names the file (packages/opencode/script/build.ts) and function (createEmbeddedWebUIBundle), which is appropriate for the task domain. It describes the bugs at a behavioral level without specifying exact line numbers or the precise fix. The AGENTS.md line references are for coding style rules, not for identifying the bug location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

@@ -126,6 +126,17 @@ distractors:
     to apply this translation skill to localize these messages, but Helm chart notes
     are not part of the UI translation system.
   severity: medium
+- rule: '- **Run Helm tests in paral'
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  source_text: '- **Run Helm tests in paral'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to run or add Helm tests for this
+    change because it modifies Helm chart files, but the gold diff only updates the
+    Helm chart templates, schema, and documentation without adding or modifying any
+    tests.
+  severity: medium
 hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide
   instructions. The instructions focus heavily on Python development and testing,
   with specific commands for Helm tests that override the general `uv run pytest`

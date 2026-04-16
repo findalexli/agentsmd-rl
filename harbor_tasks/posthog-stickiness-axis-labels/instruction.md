@@ -6,6 +6,11 @@ Stickiness insights in the line graph show plain numeric x-axis labels like `1`,
 
 The regression affects all stickiness charts regardless of which interval (day, week, month) is selected. Non-stickiness insights with date-based x-axes are unaffected.
 
+## Affected Components
+
+- The tick formatting logic in `frontend/src/lib/charts/utils/dates.ts`
+- The line graph component in `frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx`
+
 ## Expected Behavior
 
 When viewing a stickiness insight:
@@ -19,15 +24,15 @@ Non-stickiness insights should continue to display date-formatted labels as befo
 
 ### dates.ts
 
-The `createXAxisTickCallback` function in `frontend/src/lib/charts/utils/dates.ts` must accept a new parameter named exactly `numericTickPrefix` that:
-- When provided, formats numeric tick values as `{prefix} {value}` (e.g., `Day 1`, `Week 2`)
-- When not provided (undefined), continues returning plain numeric strings for backward compatibility
+The tick formatting function must support an optional prefix parameter that:
+- When provided, formats numeric tick values with the prefix (e.g., `Day 1`, `Week 2`)
+- When not provided, continues returning plain numeric strings for backward compatibility
 
 The file must import dayjs from `lib/dayjs` (not directly from the `dayjs` package).
 
 ### LineGraph.tsx
 
-The line graph component in `frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx` must:
-- Access a value named exactly `isStickiness` from `insightVizDataLogic` to determine when a chart represents stickiness data
-- Pass a property named exactly `numericTickPrefix` to `createXAxisTickCallback` only when `isStickiness` is true
-- The prefix should be derived from the current interval: capitalize the interval name (`day` → `Day`, `week` → `Week`, `month` → `Month`)
+The line graph component must:
+- Determine when a chart represents stickiness data by accessing the appropriate value from `insightVizDataLogic`
+- Pass a prefix to the tick formatting function when rendering stickiness data
+- Derive the prefix from the current interval by capitalizing the interval name (`day` → `Day`, `week` → `Week`, `month` → `Month`)

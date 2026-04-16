@@ -10,8 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import json
 import os
-import re
 import subprocess
+import textwrap
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
@@ -201,21 +201,114 @@ def test_filter_empty_opts():
 
 # [pr_diff] fail_to_pass
 def test_filter_applied_in_sycl_cflags():
-    """sycl_cflags construction wraps pp_opts through filter function."""
-    source = TARGET.read_text()
-    sycl_lines = [
-        line.strip()
-        for line in source.splitlines()
-        if "sycl_cflags" in line and "pp_opts" in line and "=" in line and "common_cflags" in line
-    ]
-    assert sycl_lines, "Could not find sycl_cflags assignment with pp_opts"
-    line = sycl_lines[0]
-    assert not re.search(r"\+\s*pp_opts\s*\+", line), (
-        f"sycl_cflags still uses raw pp_opts: {line}"
-    )
-    assert "(" in line and ")" in line, (
-        f"pp_opts not wrapped in a function call: {line}"
-    )
+    """sycl_cflags construction filters MSVC include dirs when oneAPI >= 2025.3.
+
+    Tests integration by extracting the sycl_cflags computation block from
+    win_wrap_ninja_compile and executing it with controlled inputs.
+    On unpatched code, win_filter_msvc_include_dirs doesn't exist so the
+    subprocess fails.  On patched code, MSVC paths are filtered out of the
+    resulting sycl_cflags regardless of how the integration was implemented.
+    """
+    vc_tools_dir = r"C:\VS\VC\Tools\MSVC\14.38"
+    msvc_include = rf"-I{vc_tools_dir}\include"
+    pp_opts_input = ["-DFOO", msvc_include, "-I/other"]
+
+    script = textwrap.dedent(f"""\
+        import os, ast, textwrap, json
+        from pathlib import Path
+
+        source = Path({str(TARGET)!r}).read_text()
+        tree = ast.parse(source)
+
+        os.environ['VCToolsInstallDir'] = {vc_tools_dir!r}
+
+        ns = {{'os': os}}
+        exec("def _get_icpx_version(): return '20250300'", ns)
+
+        # Extract win_filter_msvc_include_dirs
+        found = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == 'win_filter_msvc_include_dirs':
+                func_src = ast.get_source_segment(source, node)
+                exec(textwrap.dedent(func_src), ns)
+                found = True
+                break
+        if not found:
+            print(json.dumps({{'error': 'win_filter_msvc_include_dirs not found'}}))
+            raise SystemExit(1)
+
+        # Find win_wrap_ninja_compile
+        wrap_func = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == 'win_wrap_ninja_compile':
+                wrap_func = node
+                break
+        if wrap_func is None:
+            print(json.dumps({{'error': 'win_wrap_ninja_compile not found'}}))
+            raise SystemExit(1)
+
+        # Find the 'if with_sycl:' block inside win_wrap_ninja_compile
+        sycl_block = None
+        for child in ast.walk(wrap_func):
+            if isinstance(child, ast.If):
+                if isinstance(child.test, ast.Name) and child.test.id == 'with_sycl':
+                    sycl_block = child
+                    break
+        if sycl_block is None:
+            print(json.dumps({{'error': 'if with_sycl block not found'}}))
+            raise SystemExit(1)
+
+        # Extract statements up to and including the first sycl_cflags assignment
+        stmts = []
+        for stmt in sycl_block.body:
+            src = ast.get_source_segment(source, stmt)
+            if src:
+                stmts.append(textwrap.dedent(src))
+            if isinstance(stmt, ast.Assign):
+                if any(isinstance(t, ast.Name) and t.id == 'sycl_cflags' for t in stmt.targets):
+                    break
+
+        # Provide mocked variables
+        ns['common_cflags'] = ['-O2']
+        ns['pp_opts'] = {pp_opts_input!r}
+        ns['_COMMON_SYCL_FLAGS'] = ['-fsycl']
+
+        # Execute the extracted statements
+        for s in stmts:
+            exec(s, ns)
+
+        sycl_cflags = ns.get('sycl_cflags')
+        if sycl_cflags is None:
+            print(json.dumps({{'error': 'sycl_cflags not assigned'}}))
+            raise SystemExit(1)
+
+        print(json.dumps(sycl_cflags))
+    """)
+
+    script_path = Path(REPO) / "_eval_integration.py"
+    script_path.write_text(script)
+    try:
+        r = subprocess.run(
+            ["python3", str(script_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
+
+    assert r.returncode == 0, f"Subprocess failed: {r.stderr}"
+    result = json.loads(r.stdout.strip())
+
+    # Verify sycl_cflags contains expected non-MSVC items
+    assert "-O2" in result, f"common_cflags not in sycl_cflags: {result}"
+    assert "-fsycl" in result, f"_COMMON_SYCL_FLAGS not in sycl_cflags: {result}"
+    assert "-DFOO" in result, f"non-MSVC define should be preserved: {result}"
+    assert "-I/other" in result, f"non-MSVC include should be preserved: {result}"
+
+    # Key assertion: MSVC paths must be filtered out
+    for item in result:
+        assert vc_tools_dir not in item, (
+            f"MSVC path not filtered from sycl_cflags: {item}"
+        )
 
 
 # ---------------------------------------------------------------------------

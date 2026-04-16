@@ -3,58 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file paths (.claude/skills/copilot/approve.sh, .claude/skills/copilot/SKILL.md), the /rerun and /approve API endpoints, the action_required conclusion, the Copilot actor, the empty-results handling with exit 0, the allowed-tools frontmatter requirement, and the documentation requirements (owner/repo, pr_number parameters). All test-asserted specifics are discoverable from the instruction."
+      "reason": "The instruction specifies the file paths (.claude/skills/copilot/approve.sh, .claude/skills/copilot/SKILL.md), required arguments (repo owner/repo, PR number), the behavior of filtering action_required runs by Copilot actor, using /rerun not /approve, exiting 0 on empty results, and updating SKILL.md frontmatter allowed-tools. All test assertions map to these explicitly described requirements. The specific actor name 'Copilot' and conclusion 'action_required' are discoverable from the task descr"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (403 error with /approve API) and the workaround (/rerun API), specifying what behavior the script must exhibit, but does not dictate exact code, line numbers, or specific implementation details like variable names. A developer must still reason about how to implement it."
+      "reason": "The instruction describes what the script should do (use /rerun API, filter by Copilot actor and action_required conclusion, handle empty results) but does not specify exact implementation details like specific variable names, line numbers, or exact code to write. A developer still needs to reason about how to implement the shell script."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_approve_sh_handles_empty_results asserts specific implementation details: '-z \"$run_ids\"' or '-z \"${run_ids}\"' as variable name checks, or the exact string 'No action_required'. A correct alternative using a different variable name (e.g., 'matching_runs', 'ids', 'workflow_ids') and a different message (e.g., 'No matching workflows found') would fail unless it happens to match one of these narrow patterns. The test also requires literal 'exit 0' in the file content, which would fail if an al"
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: that /rerun is called (not /approve), that only Copilot+action_required runs are rerun, that empty results exit 0, that approve.sh is in SKILL.md frontmatter. Alternative implementations (different variable names, different jq usage, different loop constructs) would all pass. The SKILL.md tests check for 'approve.sh' in allowed-tools and documentation of parameters, which any correct solution would include. The test_skill_md_documents_approve_workflow checks ar"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely textual checks: test_approve_sh_rerun_not_approve_api checks for '/rerun' in content, test_approve_sh_filters_copilot_action_required checks for 'action_required' and 'Copilot' strings, test_approve_sh_handles_empty_results checks for specific variable names and strings in content. Only test_approve_sh_syntax and test_approve_sh_exits_on_missing_args actually execute the script. The majority of tests are 'assert X in open(path).read()' style."
+      "outcome": "pass",
+      "reason": "The core tests (test_approve_sh_rerun_not_approve_api, test_approve_sh_filters_copilot_action_required, test_approve_sh_handles_empty_results) actually execute the script via subprocess with a mock gh CLI and verify API calls made. test_approve_sh_exits_on_missing_args executes the script and checks return code. test_approve_sh_syntax runs bash -n. The SKILL.md tests do use text inspection but that's appropriate for documentation verification."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub script like '#!/bin/bash\\nif [ -z \"$1\" ]; then exit 1; fi\\n# action_required Copilot /rerun\\nrun_ids=\"\"\\nif [ -z \"$run_ids\" ]; then echo \"No action_required\"; exit 0; fi' would pass all fail-to-pass tests without implementing any actual GitHub API interaction or meaningful workflow rerun logic. The tests only check for string presence, not actual behavior."
+      "outcome": "pass",
+      "reason": "A stub/empty approve.sh would fail: test_approve_sh_exits_on_missing_args requires nonzero exit when called without args (empty script exits 0), test_approve_sh_rerun_not_approve_api requires POST calls to /rerun endpoints, test_approve_sh_filters_copilot_action_required requires specific run ID 11111 to be rerun. A no-op script cannot satisfy these behavioral assertions."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Logs success or failure per run without aborting on individual failures' (requirement 5), but no test verifies this behavior. Also, requirement 2 (finding runs for the PR's HEAD SHA) is not behaviorally tested - only string presence of 'action_required' and 'Copilot' is checked."
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: argument validation (test_approve_sh_exits_on_missing_args), filtering by Copilot actor + action_required (test_approve_sh_filters_copilot_action_required), using /rerun not /approve (test_approve_sh_rerun_not_approve_api), empty results handling with exit 0 (test_approve_sh_handles_empty_results), SKILL.md updates (test_skill_md_approve_in_allowed_tools, test_skill_md_documents_approve_workflow), and logging per run is implicitly tested via the moc"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass behavioral tests, config/documentation tests, pass-to-pass CI checks), descriptive function names, and detailed docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass behavioral tests, config/documentation tests, pass-to-pass repo tests), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a shell script and markdown documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "The task produces a shell script and markdown documentation, not structured data like JSON/CSV/API schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths (.claude/skills/copilot/approve.sh, .claude/skills/copilot/SKILL.md, .claude/skills/copilot/poll.sh), API endpoints (/actions/runs/{id}/rerun, /actions/runs/{id}/approve), and variable names are all consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem domain and desired behavior without revealing exact code lines. Mentioning specific API endpoints (/rerun, /approve) is appropriate domain knowledge, not implementation leakage. The hint about '-z' empty string test in the instruction is borderline but acceptable as it's a well-known shell pattern."
+      "reason": "The instruction specifies the target file paths and general approach (use /rerun instead of /approve) which is the task requirement itself, not implementation leakage. It doesn't specify exact line numbers, variable names, or implementation code. The mention of patterns from poll.sh is a reasonable reference, not a solution hint."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold SKILL.md diff is localized: adding one line to allowed-tools frontmatter and appending a documentation section. It doesn't contradict other files and is a minimal, scoped edit."
+      "reason": "The gold patch makes localized edits: creates a new file (approve.sh), adds one line to SKILL.md frontmatter via sed, and appends a documentation section. These are bounded, non-contradictory changes."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

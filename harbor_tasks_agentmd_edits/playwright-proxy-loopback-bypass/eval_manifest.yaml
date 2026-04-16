@@ -1,0 +1,199 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39566
+  base_commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+  merge_commit: 28c39dc7d810d31734452a5b40d5e8376e521499
+checks:
+- id: chromium_ts_compiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript files compile without errors
+- id: proxy_loopback_logic_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Proxy bypass logic checks for localhost, 127.0.0.1, and ::1
+- id: skill_md_documents_github_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md references the new github.md skill documentation
+- id: github_md_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: github.md skill file is created with proper documentation
+- id: npm_run_check_deps_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dependency check passes on modified code
+config_edits:
+- path: .claude/skills/playwright-dev/SKILL.md
+  tier: 1
+  gold_added: '- [Uploading Fixes to GitHub](github.md) — branch naming, commit format,
+    pushing fixes for issues'
+  gold_removed: ''
+- path: .claude/skills/playwright-dev/github.md
+  tier: 1
+  gold_added: '# Uploading a Fix for a GitHub Issue
+
+
+    ## Branch naming
+
+
+    Create a branch named after the issue number:
+
+
+    ```
+
+    git checkout -b fix-39562
+
+    ```
+
+
+    ## Committing changes
+
+
+    Use conventional commit format with a scope:
+
+
+    - `fix(proxy): description` — bug fixes
+
+    - `feat(locator): description` — new features
+
+    - `chore(cli): description` — maintenance, refactoring, tests
+
+
+    The commit body must be a single line: `Fixes: https://github.com/microsoft/playwright/issues/39562`
+
+
+    Stage only the files related to the fix. Do not use `git add -A` or `git add .`.
+
+
+    ```
+
+    git add src/server/proxy.ts tests/proxy.spec.ts
+
+    git commit -m "$(cat <<''EOF''
+
+    fix(proxy): handle SOCKS proxy authentication
+
+
+    Fixes: https://github.com/microsoft/playwright/issues/39562
+
+    EOF
+
+    )"
+
+    ```
+
+
+    ## Pushing
+
+
+    Push the branch to origin:
+
+
+    ```
+
+    git push origin fix-39562
+
+    ```
+
+
+    ## Full example
+
+
+    For issue https://github.com/microsoft/playwright/issues/39562:
+
+
+    ```bash
+
+    git checkout -b fix-39562
+
+    # ... make changes ...
+
+    git add <changed-files>
+
+    git commit -m "$(cat <<''EOF''
+
+    fix(proxy): handle SOCKS proxy authentication
+
+
+    Fixes: https://github.com/microsoft/playwright/issues/39562
+
+    EOF
+
+    )"
+
+    git push origin fix-39562
+
+    ```
+
+    '
+  gold_removed: ''
+rubric:
+- rule: Assume watch is running and everything is up to date; if not, run npm run
+    build
+  source:
+    path: .claude/skills/playwright-dev/SKILL.md
+    lines: 15-17
+    commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+  verification: programmatic
+  category: workflow
+- rule: Run npm run flint to lint everything before commit
+  source:
+    path: .claude/skills/playwright-dev/SKILL.md
+    lines: '20'
+    commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+  verification: programmatic
+  category: workflow
+distractors:
+- rule: When adding a new config option, update type definitions in mcp/config.d.ts,
+    mcp/config.ts, and add environment variable mapping in configFromEnv().
+  source:
+    path: .claude/skills/playwright-dev/mcp-dev.md
+    lines: 315-395
+  source_text: "## Adding Config Options\n\nWhen you need to add a new config option,\
+    \ update these files in order:\n\n### 1. Type definition: `packages/playwright/src/mcp/config.d.ts`\n\
+    \nAdd the option to the `Config` type with JSDoc:\n\n```typescript\nexport type\
+    \ Config = {\n  // ... existing ...\n\n  /**\n   * Description of the new option.\n\
+    \   */\n  myOption?: string;\n};\n```\n\n### 2. CLI options type: `packages/playwright/src/mcp/config.ts`\n\
+    \nAdd to `CLIOptions` type:\n\n```typescript\nexport type CLIOptions = {\n  //\
+    \ ... existing ...\n  myOption?: string;\n};\n```\n\nIf the option needs to be\
+    \ in `FullConfig` (with required/resolved values), update `FullConfig` and `defaultConfig`:\n\
+    \n```typescript\nexport type FullConfig = Config & {\n  // ... existing ...\n\
+    \  myOption: string;  // required in resolved config\n};\n\nexport const defaultConfig:\
+    \ FullConfig = {\n  // ... existing ...\n  myOption: 'default-value',\n};\n```\n\
+    \n### 3. Config from CLI: `configFromCLIOptions()` in `config.ts`\n\nMap CLI option\
+    \ to config:\n\n```typescript\nconst config: Config = {\n  // ... existing ...\n\
+    \  myOption: cliOptions.myOption,\n};\n```\n\n### 4. Config from env: `configFromEnv()`\
+    \ in `config.ts`\n\nAdd environment variable mapping:\n\n```typescript\noptions.myOption\
+    \ = envToString(process.env.PLAYWRIGHT_MCP_MY_OPTION);\n// For booleans: envToBoolean(process.env.PLAYWRIGHT_MCP_MY_OPTION)\n\
+    // For numbers: numberParser(process.env.PLAYWRIGHT_MCP_MY_OPTION)\n// For comma\
+    \ lists: commaSeparatedList(process.env.PLAYWRIGHT_MCP_MY_OPTION)\n// For semicolon\
+    \ lists: semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_MY_OPTION)\n```\n\n\
+    ### 5. MCP server CLI: `packages/playwright/src/mcp/program.ts`\n\nAdd CLI flag:\n\
+    \n```typescript\ncommand\n  .option('--my-option <value>', 'description of option')\n\
+    ```\n\n### 6. Merge config (if nested)\n\nIf the option is nested, update `mergeConfig()`\
+    \ in `config.ts` to deep-merge it.\n\n**Config resolution order:** `defaultConfig`\
+    \ → config file → env vars → CLI args (last wins)."
+  collision_type: architecture_boundary
+  why_distracting: The diff involves adding logic to read an internal core environment
+    variable (`PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK`) in `chromium.ts`.
+    An agent might mistakenly classify this variable as a new 'config option' and
+    attempt to implement it according to this rule in the MCP config system (`packages/playwright/src/mcp/`),
+    which violates architecture boundaries.
+  severity: high
+- rule: Define (or update) new API methods, params, and options in documentation (`docs/src/api/class-xxx.md`).
+  source:
+    path: .claude/skills/playwright-dev/api.md
+    lines: 5-7
+  source_text: '## Step 1: Define API in Documentation
+
+
+    Define (or update) API in `docs/src/api/class-xxx.md`. For the new methods, params
+    and options use the version from package.json (without `-next`).'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying proxy bypass options might mistakenly think
+    this represents a change to public Playwright API options and erroneously try
+    to document the loopback bypass flag in `docs/src/api/` as a public feature.
+  severity: medium

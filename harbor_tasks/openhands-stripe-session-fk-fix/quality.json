@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names the file paths (enterprise/integrations/stripe_service.py, enterprise/storage/user_store.py), the function name (migrate_customer), the required call pattern (migrate_customer(session, user_id, org)), and all literal strings checked by tests (a_session_maker, session.commit(), session.execute). The test for test_repo_stripe_service_db_tests_valid checks a file at enterprise/tests/unit/test_stripe_service_db.py which is not mentioned in the instruction, but this is"
+      "reason": "The instruction.md explicitly names all file paths (enterprise/integrations/stripe_service.py, enterprise/storage/user_store.py), the function name (migrate_customer), the required parameter name (session), the literal call pattern (migrate_customer(session, user_id, org)), and the specific strings that must/must not be present (a_session_maker, session.commit(), session.execute). All test assertions map to specifics mentioned in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'The migrate_customer() function must accept a database session as its first parameter', 'must NOT create a new session using a_session_maker()', 'must NOT call session.commit()', and 'The call pattern migrate_customer(session, user_id, org) must exist in user_store.py'. Under 'Test Assertions' it literally spells out every change needed. A developer doesn't need to reason about what to change \u2014 it's fully prescribed."
+      "reason": "The instruction explicitly states the exact fix: add 'session' as first parameter, remove a_session_maker, remove session.commit(), keep session.execute, and call migrate_customer(session, user_id, org). Under 'Test Assertions' it literally spells out the required code patterns. This leaves no reasoning for the agent about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'migrate_customer(session, user_id, org)' in user_store.py and require the first parameter to be named exactly 'session'. An alternative correct fix could name the parameter 'db_session' or 'db', or could use keyword arguments like 'migrate_customer(session=session, user_id=user_id, org=org)', all of which would be correct but fail the tests."
+      "reason": "Tests assert the exact literal string 'migrate_customer(session, user_id, org)' in user_store.py (test_user_store_passes_session_to_migrate_customer, test_distinctive_fix_line_present). An alternative correct fix using a different parameter name (e.g., 'db_session') or passing the session differently (e.g., keyword argument) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are purely text/AST inspection: test_migrate_customer_signature_change parses AST for parameter names, test_migrate_customer_no_new_session checks 'a_session_maker' not in source, test_migrate_customer_uses_session_execute checks 'session.execute' in source, test_user_store_passes_session_to_migrate_customer checks literal string in file content, test_distinctive_fix_line_present checks literal string. No test actually imports, calls, or executes the code to verify the FK "
+      "reason": "Every fail-to-pass test is purely text/AST inspection: checking string presence ('migrate_customer(session, user_id, org)' in content), AST parameter names, and string absence ('a_session_maker' not in func_source). No test imports or calls migrate_customer, no test creates a database session to verify FK behavior. All tests are 'assert X in open(path).read()' style."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply has the right signature and text patterns would pass all tests. For example, 'async def migrate_customer(session, user_id, org): result = await session.execute(select(1))' with no real logic would pass every fail-to-pass test since tests only check text patterns and AST structure, not actual behavior."
+      "reason": "A stub implementation of migrate_customer that is 'async def migrate_customer(session, user_id, org): result = await session.execute(select(1))' with the corresponding call in user_store.py would pass all f2p tests, without implementing any actual Stripe customer migration logic or fixing any real FK violation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five key requirements listed in instruction.md (session as first parameter, no a_session_maker, session.execute usage, no session.commit, caller passes session) are each tested by corresponding test functions."
+      "reason": "All five key requirements from the instruction (session as first param, no a_session_maker, session.execute present, no session.commit, caller passes session) are each tested by dedicated test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_migrate_customer_signature_change, test_migrate_customer_no_new_session, etc.), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS, and are logically grouped by what they verify."
+      "reason": "Tests are well-named (test_migrate_customer_signature_change, test_migrate_customer_no_new_session, etc.), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a code bug, not producing structured data output."
+      "reason": "Task involves code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and consistent with the test files."
+      "reason": "File paths, function names, variable names, and commands in instruction.md are all correct and consistent with the test file and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files to modify, the exact function to change, the exact parameter name to add ('session'), and the exact call pattern to use. The 'Test Assertions' section explicitly lists the literal strings that must be present/absent, which is essentially the complete solution specification."
+      "reason": "The instruction names the exact files to modify, the exact function to change, and under 'Test Assertions' even specifies the exact literal strings that must be present/absent in the code. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), and describes the expected behaviors (promise vs promise, promise vs object, same reference, nested promises, thenables) that align with what the tests check. The test commands and build commands are also mentioned."
+      "reason": "The instruction names the file path (packages/solid-router/src/useRouterState.tsx), the function (deepEqual), the expected behaviors for promises (different promises return false, same reference returns true, nested objects with promises return false, thenables vs plain objects return false), and the build/test commands. All test-asserted specifics are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (deepEqual incorrectly returns true for different Promises) and expected behavior, but does not specify the exact fix (e.g., it doesn't say 'add an isPromiseLike helper function' or 'add a check after Object.is'). A developer must reason about what code to add."
+      "reason": "The instruction describes the bug (deepEqual incorrectly returns true for different Promises) and expected behavior, but does not specify the exact code change, line numbers, or implementation approach (e.g., it doesn't say 'add an isPromiseLike helper function')."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests check `src.includes('isPromiseLike(a) || isPromiseLike(b)')` as a string literal in the source file. This means the tests require a specific implementation detail \u2014 a function named exactly `isPromiseLike` called with exactly `(a)` and `(b)` in that exact pattern. An alternative correct fix (e.g., checking `typeof a.then === 'function'` inline, or naming the helper `isThenable`, or using `a instanceof Promise`) would fail the string check and thus fail the tests."
+      "reason": "The f2p tests (e.g., test_deepequal_different_promises) do NOT actually import or call the real deepEqual from the source file. Instead they read the source file as text and check `src.includes('isPromiseLike(a) || isPromiseLike(b)')` to decide whether to apply the promise check in a locally-defined deepEqual. This means a correct alternative fix that uses a different implementation (e.g., `if (a instanceof Promise || b instanceof Promise) return false` or `if (typeof a.then === 'function' || ty"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The f2p tests (test_deepequal_*) do NOT actually import or execute the real deepEqual function from the codebase. Instead, they read the source file as text, check if it contains the string 'isPromiseLike(a) || isPromiseLike(b)', and then run a locally-defined JS deepEqual function that conditionally includes promise handling based on that string check. This is fundamentally a text-matching test disguised as a behavioral test."
+      "reason": "The f2p tests do NOT actually execute the real deepEqual function from the source. They read the source file as text (`src.includes('isPromiseLike(a) || isPromiseLike(b)')`) and then run a locally reimplemented version of deepEqual that conditionally applies the fix based on the string match. This is effectively a text-based assertion masquerading as behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests define their own deepEqual implementation locally in JS and conditionally enable the promise check based on whether the source file contains the string 'isPromiseLike(a) || isPromiseLike(b)'. They don't test the actual compiled code. If the agent writes the magic string into the file without any real implementation, the locally-defined deepEqual in the test would still activate the promise check branch and pass."
+      "reason": "If the source file does NOT contain the exact string 'isPromiseLike(a) || isPromiseLike(b)', the hasPromiseCheck variable is false, and the locally-defined deepEqual in the test falls through to standard deep comparison. For test_deepequal_promise_to_nonpromise, Promise.resolve(1) vs {a:1} would have different keys and return false anyway. For test_deepequal_same_promise, Object.is handles it. Several tests could pass without any fix depending on the objects' key structures."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four expected behaviors from instruction.md are tested: different promises return false, promise vs object returns false, same promise reference returns true, and nested objects with different promises return false. Thenable objects are also tested."
+      "reason": "All four expected behaviors listed in instruction.md (different promises \u2192 false, promise vs object \u2192 false, same promise \u2192 true, nested objects with different promises \u2192 false) have corresponding test functions, plus thenable handling and build/typecheck/unit tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deepequal_different_promises, test_deepequal_same_promise, etc.), have docstrings with F2P/P2P labels, and are logically grouped by scenario."
+      "reason": "Tests are individually named with descriptive function names (test_deepequal_different_promises, test_deepequal_same_promise, etc.), have docstrings with F2P/P2P labels, and are logically grouped by behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md are correct and consistent with the repository structure."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and function which is reasonable for the task domain, but doesn't specify exact line numbers or the specific fix implementation (like adding isPromiseLike)."
+      "reason": "The instruction names the file and function (deepEqual in useRouterState.tsx), which is appropriate for a bug-fix task. It doesn't specify exact line numbers or the specific code change needed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits / config task."
     }
   },
   "tier_a_fails": [

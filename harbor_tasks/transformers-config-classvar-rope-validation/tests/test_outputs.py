@@ -7,8 +7,10 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = "/workspace/transformers"
@@ -23,8 +25,22 @@ def _run_python(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
     )
 
 
+def _run_python_file(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Execute Python code from a temp file (needed when inspect.getsource is required)."""
+    fd, path = tempfile.mkstemp(suffix=".py", dir=REPO)
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(code)
+        return subprocess.run(
+            ["python3", path],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        os.unlink(path)
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -43,7 +59,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests (subprocess-based)
+# Fail-to-pass (pr_diff) -- core behavioral tests (subprocess-based)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -106,7 +122,7 @@ from transformers.configuration_utils import PreTrainedConfig
 
 field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
 assert "transformers_version" in field_names, (
-    "transformers_version not in dataclasses.fields() — still ClassVar?"
+    "transformers_version not in dataclasses.fields() -- still ClassVar?"
 )
 
 c1 = PreTrainedConfig()
@@ -131,7 +147,7 @@ from transformers.configuration_utils import PreTrainedConfig
 
 field_names = [f.name for f in dataclasses.fields(PreTrainedConfig)]
 assert "architectures" in field_names, (
-    "architectures not in dataclasses.fields() — still ClassVar?"
+    "architectures not in dataclasses.fields() -- still ClassVar?"
 )
 
 c1 = PreTrainedConfig()
@@ -150,61 +166,121 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_auto_docstring_parameter_filtering():
-    """_process_regular_parameters, _process_parameters_section, and auto_method_docstring accept allowed_params."""
-    import inspect
-    from transformers.utils.auto_docstring import (
-        _process_regular_parameters,
-        _process_parameters_section,
-        auto_method_docstring,
-    )
+    """Docstring generation must support filtering to exclude specific parameters."""
+    r = _run_python_file("""
+import sys, inspect, io
+sys.path.insert(0, "/workspace/transformers/src")
+from transformers.utils.auto_docstring import auto_method_docstring
 
-    for fn in [_process_regular_parameters, _process_parameters_section, auto_method_docstring]:
-        assert "allowed_params" in inspect.signature(fn).parameters, (
-            f"{fn.__name__} missing 'allowed_params' parameter"
-        )
+# Dynamically discover any filtering parameter on auto_method_docstring
+sig = inspect.signature(auto_method_docstring)
+known_params = {'func', 'parent_class', 'custom_intro', 'custom_args', 'checkpoint', 'source_args_dict'}
+filter_param = None
+for name in sig.parameters:
+    if name not in known_params:
+        filter_param = name
+        break
+
+assert filter_param is not None, (
+    "auto_method_docstring should accept a filtering parameter beyond standard args"
+)
+
+# Create a mock class with a method having multiple parameters
+class MockConfig:
+    def __init__(self, alpha: int = 0, beta: str = "x", gamma: float = 1.0):
+        pass
+
+# Capture stdout where undocumented-parameter warnings are printed
+old_stdout = sys.stdout
+sys.stdout = captured = io.StringIO()
+auto_method_docstring(
+    MockConfig.__init__,
+    parent_class=MockConfig,
+    **{filter_param: {"alpha", "gamma"}},
+)
+output = captured.getvalue()
+sys.stdout = old_stdout
+
+# With filter={alpha, gamma}, only those params should be processed
+# (producing warnings about being undocumented); beta must be filtered out
+assert "alpha" in output, "alpha must be processed when in filter set"
+assert "gamma" in output, "gamma must be processed when in filter set"
+assert "beta" not in output, "beta must be excluded when not in filter set"
+print("PASS")
+""")
+    assert r.returncode == 0, f"auto_docstring parameter filtering failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_auto_docstring_filtering_behavior():
-    """allowed_params actually filters out parameters not in the set."""
-    r = _run_python("""
-import sys, inspect
+    """Parameter filtering correctly includes/excludes based on filter set."""
+    r = _run_python_file("""
+import sys, inspect, io
 sys.path.insert(0, "/workspace/transformers/src")
-from transformers.utils.auto_docstring import _process_regular_parameters
+from transformers.utils.auto_docstring import auto_method_docstring
 
-def mock_init(self, alpha: int = 0, beta: str = "x", gamma: float = 1.0):
-    pass
+# Dynamically discover the filtering parameter
+sig = inspect.signature(auto_method_docstring)
+known_params = {'func', 'parent_class', 'custom_intro', 'custom_args', 'checkpoint', 'source_args_dict'}
+filter_param = None
+for name in sig.parameters:
+    if name not in known_params:
+        filter_param = name
+        break
 
-sig = inspect.signature(mock_init)
-
-_, missing_filtered = _process_regular_parameters(
-    sig, mock_init, "MockConfig", {}, 2, [], {}, None,
-    allowed_params={"alpha", "gamma"},
-)
-assert "beta" not in missing_filtered, (
-    f"'beta' should be filtered out but found in missing_args: {list(missing_filtered.keys())}"
-)
-assert "alpha" in missing_filtered, (
-    f"'alpha' should be in missing_args but not found: {list(missing_filtered.keys())}"
-)
-assert "gamma" in missing_filtered, (
-    f"'gamma' should be in missing_args but not found: {list(missing_filtered.keys())}"
+assert filter_param is not None, (
+    "auto_method_docstring should accept a filtering parameter"
 )
 
-_, missing_all = _process_regular_parameters(
-    sig, mock_init, "MockConfig", {}, 2, [], {}, None,
+class MockConfig:
+    def __init__(self, alpha: int = 0, beta: str = "x", gamma: float = 1.0):
+        pass
+
+# Test 1: With filter = {alpha, gamma}, beta should be excluded
+old_stdout = sys.stdout
+sys.stdout = cap1 = io.StringIO()
+auto_method_docstring(
+    MockConfig.__init__, parent_class=MockConfig,
+    **{filter_param: {"alpha", "gamma"}},
 )
-assert "alpha" in missing_all and "beta" in missing_all and "gamma" in missing_all, (
-    f"Without allowed_params, all params should appear. Got: {list(missing_all.keys())}"
+out1 = cap1.getvalue()
+sys.stdout = old_stdout
+assert "alpha" in out1, "alpha must be processed when in filter"
+assert "gamma" in out1, "gamma must be processed when in filter"
+assert "beta" not in out1, "beta must be excluded when not in filter"
+
+# Test 2: Without filter, all params should be processed
+sys.stdout = cap2 = io.StringIO()
+auto_method_docstring(
+    MockConfig.__init__, parent_class=MockConfig,
 )
+out2 = cap2.getvalue()
+sys.stdout = old_stdout
+assert "alpha" in out2, "alpha must be processed without filter"
+assert "beta" in out2, "beta must be processed without filter"
+assert "gamma" in out2, "gamma must be processed without filter"
+
+# Test 3: With empty filter set, no params should be processed
+sys.stdout = cap3 = io.StringIO()
+auto_method_docstring(
+    MockConfig.__init__, parent_class=MockConfig,
+    **{filter_param: set()},
+)
+out3 = cap3.getvalue()
+sys.stdout = old_stdout
+assert "alpha" not in out3, "alpha should not be processed with empty filter"
+assert "beta" not in out3, "beta should not be processed with empty filter"
+assert "gamma" not in out3, "gamma should not be processed with empty filter"
+
 print("PASS")
 """)
-    assert r.returncode == 0, f"auto_docstring filtering test failed: {r.stderr}"
+    assert r.returncode == 0, f"auto_docstring filtering behavior test failed: {r.stderr}"
     assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff / repo_tests) — regression + anti-stub
+# Pass-to-pass (pr_diff / repo_tests) -- regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -242,48 +318,49 @@ def test_validate_rope_dispatches_for_real_config():
     config = Config()
     validate_rope(config)
     assert Config.dispatch_count > 0, (
-        "Validation function was never dispatched — validate_rope may be stubbed"
+        "Validation function was never dispatched -- validate_rope may be stubbed"
     )
 
 
 # [repo_tests] fail_to_pass
 def test_upstream_config_kwargs_complete():
-    """config_common_kwargs completeness check accounts for transformers_version as instance field."""
+    """After fix, transformers_version is instance-level and appears in missing keys."""
     r = _run_python("""
-import sys, ast as _ast
+import sys, ast
 from pathlib import Path
-
 sys.path.insert(0, "/workspace/transformers/src")
 from transformers import PreTrainedConfig
 
+# Behavioral check 1: transformers_version must be an instance attribute
+config = PreTrainedConfig()
+assert "transformers_version" in config.__dict__, (
+    "transformers_version must be an instance attribute (present in __dict__)"
+)
+
+# Behavioral check 2: compute what the repo test checks -- keys in __dict__
+# but not in config_common_kwargs. transformers_version must appear in missing
+# keys because it's now an instance-level field that was previously ClassVar.
 source = Path("/workspace/transformers/tests/utils/test_configuration_utils.py").read_text()
-tree = _ast.parse(source)
+tree = ast.parse(source)
 config_common_kwargs = None
-for node in _ast.walk(tree):
-    if isinstance(node, _ast.Assign):
+for node in ast.walk(tree):
+    if isinstance(node, ast.Assign):
         for target in node.targets:
-            if isinstance(target, _ast.Name) and target.id == "config_common_kwargs":
-                config_common_kwargs = _ast.literal_eval(node.value)
+            if isinstance(target, ast.Name) and target.id == "config_common_kwargs":
+                config_common_kwargs = ast.literal_eval(node.value)
                 break
-assert config_common_kwargs is not None, "config_common_kwargs not found"
+assert config_common_kwargs is not None, "config_common_kwargs not found in test file"
 
-base_config = PreTrainedConfig()
-missing_keys = [key for key in base_config.__dict__ if key not in config_common_kwargs]
+# transformers_version must be in __dict__ but NOT in config_common_kwargs
+# (it's a per-instance field, not a common kwarg)
+assert "transformers_version" not in config_common_kwargs, (
+    "transformers_version should not be in config_common_kwargs"
+)
 
-expected = [
-    "transformers_version",
-    "is_encoder_decoder",
-    "tokenizer_class",
-    "_name_or_path",
-    "_commit_hash",
-    "_output_attentions",
-    "_attn_implementation_internal",
-    "_experts_implementation_internal",
-]
-assert missing_keys == expected, (
-    f"config_common_kwargs completeness check failed.\\n"
-    f"  Expected missing: {expected}\\n"
-    f"  Got missing:      {missing_keys}"
+# Therefore it must appear in the computed missing keys
+missing_keys = set(config.__dict__.keys()) - set(config_common_kwargs.keys())
+assert "transformers_version" in missing_keys, (
+    "transformers_version must be in missing keys (present in __dict__ but absent from config_common_kwargs)"
 )
 print("PASS")
 """)
@@ -292,10 +369,10 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI checks
+# Pass-to-pass (repo_tests) -- repo CI checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — repo CI ruff format check
+# [repo_tests] pass_to_pass -- repo CI ruff format check
 def test_ruff_format_clean():
     """Changed files must be properly formatted (pass_to_pass)."""
     r = subprocess.run(
@@ -313,7 +390,7 @@ def test_ruff_format_clean():
     assert r.returncode == 0, f"ruff format issues:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
 
-# [repo_tests] pass_to_pass — repo CI import checks
+# [repo_tests] pass_to_pass -- repo CI import checks
 def test_transformers_imports():
     """Core transformers modules must import without errors (pass_to_pass)."""
     r = subprocess.run(
@@ -329,7 +406,7 @@ def test_transformers_imports():
     assert "All imports successful" in r.stdout
 
 
-# [repo_tests] pass_to_pass — all modified files pass ruff format check
+# [repo_tests] pass_to_pass -- all modified files pass ruff format check
 def test_ruff_format_all_modified():
     """All modified Python files must pass ruff format check (pass_to_pass)."""
     r = subprocess.run(
@@ -348,7 +425,7 @@ def test_ruff_format_all_modified():
     assert r.returncode == 0, f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
 
-# [repo_tests] pass_to_pass — all modified files pass ruff lint check
+# [repo_tests] pass_to_pass -- all modified files pass ruff lint check
 def test_ruff_lint_all_modified():
     """All modified Python files must pass ruff lint check (pass_to_pass)."""
     r = subprocess.run(
@@ -368,7 +445,7 @@ def test_ruff_lint_all_modified():
     assert r.returncode == 0, f"ruff lint check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
 
-# [repo_tests] pass_to_pass — syntax check on all modified files
+# [repo_tests] pass_to_pass -- syntax check on all modified files
 def test_syntax_all_modified():
     """All modified Python files must have valid syntax (pass_to_pass)."""
     import py_compile
@@ -385,35 +462,33 @@ def test_syntax_all_modified():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md / .ai/skills/SKILL.md
+# Config-derived (agent_config) -- rules from CLAUDE.md / .ai/skills/SKILL.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — CLAUDE.md:5 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+# [agent_config] fail_to_pass -- CLAUDE.md:5 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
 def test_check_config_attributes_allowlist():
     """ATTRIBUTES_TO_ALLOW must include transformers_version and architectures."""
-    import ast
+    r = _run_python("""
+import sys, runpy
+sys.path.insert(0, "/workspace/transformers/src")
 
-    src = Path(f"{REPO}/utils/check_config_attributes.py").read_text()
-    tree = ast.parse(src)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "ATTRIBUTES_TO_ALLOW":
-                    vals = [
-                        elt.value for elt in node.value.elts
-                        if isinstance(elt, ast.Constant)
-                    ]
-                    assert "transformers_version" in vals, (
-                        "transformers_version missing from ATTRIBUTES_TO_ALLOW"
-                    )
-                    assert "architectures" in vals, (
-                        "architectures missing from ATTRIBUTES_TO_ALLOW"
-                    )
-                    return
-    raise AssertionError("ATTRIBUTES_TO_ALLOW not found in check_config_attributes.py")
+# Execute the module and inspect the runtime value of ATTRIBUTES_TO_ALLOW
+mod = runpy.run_path("/workspace/transformers/utils/check_config_attributes.py")
+allowlist = mod["ATTRIBUTES_TO_ALLOW"]
+
+assert "transformers_version" in allowlist, (
+    "transformers_version missing from ATTRIBUTES_TO_ALLOW"
+)
+assert "architectures" in allowlist, (
+    "architectures missing from ATTRIBUTES_TO_ALLOW"
+)
+print("PASS")
+""")
+    assert r.returncode == 0, f"check_config_attributes allowlist test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+# [agent_config] pass_to_pass -- CLAUDE.md:2 @ eb3d67aaafe368863afc77e4b60fa60c2077c8b5
 def test_ruff_lint_clean():
     """Changed files must pass ruff lint."""
     r = subprocess.run(
@@ -432,7 +507,7 @@ def test_ruff_lint_clean():
     assert r.returncode == 0, f"ruff issues:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
 
-# [agent_config] pass_to_pass — .ai/skills/add-or-fix-type-checking/SKILL.md:180-186
+# [agent_config] pass_to_pass -- .ai/skills/add-or-fix-type-checking/SKILL.md:180-186
 def test_no_bare_type_ignore():
     """# type: ignore comments must include specific error codes, not bare."""
     import re
@@ -445,7 +520,7 @@ def test_no_bare_type_ignore():
     bare_pattern = re.compile(r"#\s*type:\s*ignore\s*$", re.MULTILINE)
 
 
-# [repo_tests] pass_to_pass — rope module basic functionality
+# [repo_tests] pass_to_pass -- rope module basic functionality
 def test_repo_rope_basic_functionality():
     """RotaryEmbeddingConfigMixin module loads and basic operations work (pass_to_pass)."""
     code = """
@@ -467,7 +542,7 @@ print("RoPE basic functionality: OK")
     assert "RoPE basic functionality: OK" in r.stdout
 
 
-# [repo_tests] pass_to_pass — validate rope with None (baseline behavior)
+# [repo_tests] pass_to_pass -- validate rope with None (baseline behavior)
 def test_repo_rope_validate_none():
     """RoPE validation handles None rope_parameters gracefully (pass_to_pass)."""
     code = """

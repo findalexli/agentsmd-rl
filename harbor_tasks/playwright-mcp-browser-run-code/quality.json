@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'async (page) =>' and 'single argument, page' and 'await (${params.code})(page)' in runCode.ts, and exact tool name formats like 'mcp__playwright-test__browser_run_code'. While the instruction mentions function-based approach and page argument, it does not specify these exact strings. For example, 'single argument, page' is tested but not mentioned in instruction.md, and the exact invocation pattern 'await (${params.code})(page)' with its specific syntax i"
+      "reason": "Tests assert exact strings like 'async (page) =>' , 'single argument, page' or 'page, which you can use', and 'await (${params.code})(page)' with specific count requirements (content.count('(${params.code})(page)') >= 2). The instruction.md does not specify these exact literal strings; it only gives high-level guidance like 'treat the input as a function expression and invoke it with the page argument'. The exact phrasing 'single argument, page' and the requirement for the pattern to appear at l"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states 'treat the input as a function expression and invoke it with the page argument', describes the exact parameter description content ('receives one argument (the page object)'), specifies exact file paths and alphabetical ordering positions, and even gives the example format. This is essentially telling the agent exactly what to write rather than describing what's broken."
+      "reason": "instruction.md explicitly states 'treat the input as a function expression and invoke it with the page argument', specifies removing 'async IIFE with direct ${params.code} injection', and describes the exact execution pattern. It also gives exact file paths, exact alphabetical positioning, and exact tool name formats. This is close to telling the agent exactly what to write rather than describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings: 'async (page) =>' must appear in runCode.ts, 'single argument, page' or 'page, which you can use' must appear, and 'await (${params.code})(page)' must appear at least twice. An alternative correct implementation using e.g. 'await (${params.code}).call(null, page)' or different description wording like 'takes page as its parameter' would fail these string-matching tests."
+      "reason": "Tests assert exact strings like 'await (${params.code})(page)' appearing at least twice, and exact description phrases like 'single argument, page' or 'page, which you can use'. An alternative correct implementation using e.g. 'const fn = new Function(...)' or different description wording like 'accepts a page parameter' would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_run_code_ts_uses_function_format, test_run_code_ts_wraps_function_call, test_run_code_ts_no_direct_injection, test_claude_agents_has_browser_run_code, test_github_agents_has_browser_run_code, and test_packages_agents_has_browser_run_code are ALL pure text/string matching via read_text() and 'assert X in content'. Only test_typescript_compiles and test_repo_run_code_tests execute code, but the latter has a very loose assertion (returncode in [0, 1])."
+      "reason": "Tests test_run_code_ts_uses_function_format, test_run_code_ts_wraps_function_call, test_run_code_ts_no_direct_injection, test_claude_agents_has_browser_run_code, test_github_agents_has_browser_run_code, and test_packages_agents_has_browser_run_code all exclusively use 'assert X in file.read_text()' pattern \u2014 pure text matching with no code execution. test_typescript_compiles runs tsc and test_repo_run_code_tests runs tests but with a very loose assertion (returncode in [0,1]). The f2p tests are "
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that would not be present in the original file (e.g., 'async (page) =>', 'await (${params.code})(page)'), so a stub or unchanged file would fail these tests."
+      "reason": "The f2p tests check for specific strings that don't exist in the original file (e.g., 'async (page) =>', 'await (${params.code})(page)'), so a stub or unmodified file would fail them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies updating parameter description, execution logic, and three agent config files. All these are tested: description content (test_run_code_ts_uses_function_format), execution pattern (test_run_code_ts_wraps_function_call, test_run_code_ts_no_direct_injection), and all three config files (test_claude/github/packages tests)."
+      "reason": "The instruction describes updating runCode.ts parameter description and execution logic, and adding tool to three agent config files \u2014 all of which are tested. The alphabetical ordering requirement is also tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, tagged with [f2p_code], [f2p_config], and [p2p] categories, and include docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive function names and docstrings containing tags like [f2p_code], [f2p_config], [p2p] that clearly categorize their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code and config file modifications, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, tool names, and commands in the instruction and tests appear correct and consistent."
+      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file 'packages/playwright/src/mcp/browser/tools/runCode.ts' and describes exactly what to change (parameter description wording, execution pattern change from IIFE to function invocation), which constitutes solution leakage beyond what the task domain naturally requires."
+      "reason": "instruction.md names the exact file (runCode.ts), describes the exact old pattern ('async IIFE with direct ${params.code} injection'), and the exact new pattern ('invoke it with the page argument'). It also specifies exact insertion positions in config files (after browser_press_key, before browser_select_option)."
     },
     "config_edit_scope_bounded": {
       "outcome": "fail",
-      "reason": "The gold solution in solve.sh does a full-file rewrite of both runCode.ts and playwright-test-planner.md (via heredoc 'cat >'), replacing entire file contents rather than making localized edits."
+      "reason": "The gold solution in solve.sh does a full-file rewrite of both runCode.ts and playwright-test-planner.md (using heredocs), rather than localized edits. This is disproportionate for adding one tool name to config files."
     }
   },
   "tier_a_fails": [

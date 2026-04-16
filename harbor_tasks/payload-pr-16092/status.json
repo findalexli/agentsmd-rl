@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T05:12:26.135307",
+  "total_time": 1308.83,
+  "sandbox_id": "itehmn8u8yqepyi0c3g9y",
+  "backend": "glm",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1543.39,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 209.65,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build PASS, NOP test PASS (reward=0), Gold test PASS (reward=1). Rubric judge FAILS (ICR=0.00). Rubric rules fundamentally incompatible: call_judge expects config file edits but PR modifies only SDK source files; extract_config_hunks only extracts config files (CLAUDE.md, AGENTS.md), not SDK files; CLAUDE.md cited as convention source but is not modified; rubric_validator says all rules redundant (describe gold solution, not pre-existing conventions) and recommends removal; validator says no conventions applicable to this SDK bug fix. Gold solution correctly follows all cited conventions but judge cannot verify. Core functional tests pass correctly (NOP=0, Gold=1).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1184.71
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 0.81,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:3: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 19.83,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 6962.08,
+      "at": "2026-04-14T22:51:29.609957"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 1308.83,
+      "at": "2026-04-15T05:12:26.135307"
+    }
+  ]
+}

@@ -3,58 +3,59 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files, describes the specific functions (transfer_item_warp, release_req, get_next_batch_to_run, update_running_batch), the PTX instructions (ld.global.nc.v2.b64, st.global.cg.v2.b64, ld.global.nc.b64), the 16-byte chunk division (item_size_bytes / 16), batch_is_full flag, hisparse_coordinator.retract_req(), and the None guard. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "The instruction names all three files, describes the specific functions (transfer_item_warp, release_req, get_next_batch_to_run, update_running_batch), the PTX instructions (ld.global.nc.v2.b64, st.global.cg.v2.b64, ld.global.nc.b64), the 16-byte chunk calculation (item_size_bytes / 16), the batch_is_full flag, hisparse_coordinator.retract_req, and the None check \u2014 all of which are asserted in the tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact PTX instructions to use (ld.global.nc.v2.b64, st.global.cg.v2.b64), the exact formula (item_size_bytes / 16), the exact tail handling approach (ld.global.nc.b64 for 8-byte remainder), that batch_is_full must be set to False, and that retract_req must be guarded with 'is not None'. This is effectively telling the agent exactly what code to write rather than just describing what's broken."
+      "reason": "The instruction explicitly states the exact PTX instructions to use (ld.global.nc.v2.b64, st.global.cg.v2.b64), the exact formula 'item_size_bytes / 16', the exact fix for batch_is_full (reset it after hisparse_coordinator assignment), and that retract_req must move to release_req with an 'is not None' guard. This prescribes the solution rather than just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'total_pairs = item_size_bytes / 16', 'ld.global.nc.v2.b64', 'st.global.cg.v2.b64', 'tail_8B', and 'batch_is_full = False'. An alternative correct fix using different variable names (e.g., 'num_pairs' instead of 'total_pairs'), different PTX syntax approaches, or a different reset pattern for batch_is_full would fail these text-matching tests."
+      "reason": "Tests assert on gold-specific implementation details: exact PTX instruction strings 'ld.global.nc.v2.b64' and 'st.global.cg.v2.b64', the exact expression 'item_size_bytes / 16', and the literal string 'batch_is_full = False'. An alternative correct implementation using different variable names, uint4 types, or different but equivalent PTX mnemonics would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test uses only AST parsing and string matching (e.g., 'assert \"ld.global.nc.v2.b64\" in src', 'assert \"batch_is_full = False\" in method_src'). No test imports, compiles, or executes any of the modified code. All tests are purely textual checks."
+      "reason": "All fail-to-pass tests are purely text/AST inspection: they check for string patterns like 'ld.global.nc.v2.b64' in source, AST walking for method names, and substring searches like 'batch_is_full = False'. No test imports, compiles, or executes any code."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The f2p tests check for specific patterns that don't exist in the base commit (e.g., retract_req in release_req, batch_is_full = False in get_next_batch_to_run, 128-bit PTX instructions). A stub or no-op implementation would not contain these specific strings/patterns."
+      "outcome": "fail",
+      "reason": "test_retract_req_removed_from_scheduler checks that 'retract_req' is NOT in update_running_batch \u2014 a stub/empty method trivially passes. test_batch_is_full_reset_after_hisparse just checks for string presence of 'batch_is_full = False' in get_next_batch_to_run \u2014 adding a dead comment with that string would pass. These are text searches, not behavioral checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three bugs described in instruction.md are tested: 128-bit transfer (test_transfer_item_warp_128bit_alignment), retract_req move (test_hisparse_coordinator_retract_in_release_req, test_retract_req_removed_from_scheduler), and batch_is_full reset (test_batch_is_full_reset_after_hisparse)."
+      "reason": "All three bugs described in the instruction (128-bit transfer, retract_req relocation, batch_is_full reset) have corresponding test functions checking for their resolution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with clear section comments (Gates, Fail-to-pass, Pass-to-pass anti-stub), each test has a descriptive name and docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes, not structured data output."
+      "reason": "Task involves code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, function names, PTX instruction names, and variable names are all correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact function names (transfer_item_warp), exact file paths, exact PTX instruction mnemonics (ld.global.nc.v2.b64), exact formulas (item_size_bytes / 16), and exact variable concepts (batch_is_full, tail_8B). This goes well beyond describing the bug domain and essentially specifies the implementation."
+      "reason": "The instruction names exact file paths and exact function names (transfer_item_warp in hisparse.cuh, retract_req in scheduler.py's update_running_batch, batch_is_full in get_next_batch_to_run), eliminating the localization aspect of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

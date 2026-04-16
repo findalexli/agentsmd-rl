@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'shared::{gas::GasMeter, linkage_context}', 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();', 'linkage_context::LinkageContext::new(linkage_table).unwrap();', and 'StoredPackage::from_module_for_testing_with_linkage('. While instruction.md describes these conceptually, it does not specify the exact method name 'from_module_for_testing_with_linkage' (singular 'module') \u2014 it only says 'a method that accepts linkage context'."
+      "reason": "Tests assert exact literal strings like 'shared::{gas::GasMeter, linkage_context}', 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();', 'linkage_context::LinkageContext::new(linkage_table).unwrap();', and 'StoredPackage::from_module_for_testing_with_linkage('. While instruction.md hints at these patterns, it does not name the exact method 'from_module_for_testing_with_linkage' (singular 'module') \u2014 it only says 'a method that accepts linkage context'. The exact va"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md essentially dictates the exact solution: import linkage_context from move_vm_runtime::shared, create identity mapping linkage table from packages keys, instantiate LinkageContext::new() with that table, and use a method that accepts linkage context with cloned context. Combined with the exact file and function name, this leaves virtually no reasoning for the developer \u2014 it's a step-by-step recipe."
+      "reason": "The instruction explicitly tells the agent to: import linkage_context from move_vm_runtime::shared, create a linkage table mapping each address to itself using packages.keys(), instantiate LinkageContext::new() with that table, and change to a method that accepts linkage context with cloned parameter. This is essentially the complete solution, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings: 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();' and 'linkage_context::LinkageContext::new(linkage_table).unwrap();'. An alternative correct implementation using different variable names (e.g., 'lnk_table'), different collection methods, or a different coding style would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests assert exact literal strings: 'let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();' and 'let linkage_context = linkage_context::LinkageContext::new(linkage_table).unwrap();'. An alternative correct fix using different variable names (e.g., 'link_table'), different collection methods, or slightly different formatting would fail these text-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_linkage_context_import_present, test_linkage_table_construction, test_linkage_context_creation, test_stored_package_with_linkage, test_old_method_not_used, test_linkage_context_passed_to_stored_package) are ALL 'assert string in open(path).read()' text-matching tests. While there are also compilation/test-running tests (test_code_compiles, test_unit_tests_run), the core f2p tests are purely textual."
+      "reason": "The fail-to-pass tests (test_linkage_context_import_present, test_linkage_table_construction, test_linkage_context_creation, test_stored_package_with_linkage, test_linkage_context_passed_to_stored_package, test_old_method_not_used) are ALL purely text-matching assertions using 'assert pattern in content'. While there are compilation/test-running tests (test_code_compiles, test_unit_tests_run), the core f2p tests are entirely text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for the presence of specific strings in the source file. An agent could simply append the required strings as comments (e.g., '// shared::{gas::GasMeter, linkage_context}') to pass the text-matching tests. While test_code_compiles would catch non-compiling changes, the f2p text tests themselves are trivially satisfiable without actually fixing the bug."
+      "reason": "The f2p tests only check for the presence of specific strings in the source file. A stub that simply inserts the exact string patterns as comments (e.g., '// let linkage_table = packages.keys().copied().map(|addr| (addr, addr)).collect();') would pass the text-matching tests. The compilation test would catch this, but the f2p text tests themselves are trivially satisfiable without a real fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (import linkage_context, create linkage table, create LinkageContext, update package loading, compilation check) are tested by the test suite."
+      "reason": "All four requirements from instruction.md (import, linkage table, LinkageContext creation, updated package loading) are tested, along with compilation verification."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, categorized as fail-to-pass vs pass-to-pass, and each test function has a clear purpose description."
+      "reason": "Tests are well-named with descriptive docstrings indicating fail-to-pass vs pass-to-pass, and each test function has a clear purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Rust source code, not producing structured data output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and method names in the instruction and tests are consistent and correctly spelled."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies the exact file (test_runner.rs), exact function (setup_test_storage), exact module to import (linkage_context from move_vm_runtime::shared), and exact constructor (LinkageContext::new()). This provides far too much localization detail, effectively serving as a complete implementation guide."
+      "reason": "instruction.md names the exact function ('setup_test_storage'), exact file path, exact module to import ('linkage_context from move_vm_runtime::shared'), exact data structure pattern ('BTreeMap where each address maps to itself'), and exact constructor ('LinkageContext::new()'). This goes well beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Rust source file, not a configuration edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

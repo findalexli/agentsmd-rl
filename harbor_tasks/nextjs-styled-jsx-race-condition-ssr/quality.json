@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific function names like `extract_added_lines`, `is_agent_instruction_file`, `is_code_file`, `is_doc_file`, `gh_json`, and specific pattern variables like `AGENT_INSTRUCTION_PATTERNS`, `CONFIG_RE`, etc. The instruction.md only mentions `extract_config_hunks` and `is_config_file` (implicitly via 'config files'). Functions like `extract_added_lines`, `is_agent_instruction_file`, `is_code_file`, `is_doc_file`, `gh_json`, and exports like `AGENT_INSTRUCTION_PATTERNS` are not ment"
+      "outcome": "pass",
+      "reason": "Instruction mentions extract_config_hunks, renamed file handling with b/ path, and config file patterns like CLAUDE.md and AGENTS.md which are standard agent instruction files referenced in tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (old filename used instead of new, 'rename to' directive not handled) and what the fix should achieve (use new filename), but doesn't specify exact code changes like 'add a rename_to variable' or 'change line X'."
+      "reason": "Instruction describes what's broken (rename handling) without dictating specific implementation like 'track rename_to variable'."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check behavioral outcomes (keys in returned dicts, counts, boolean membership checks) rather than implementation details. Alternative implementations that correctly parse 'rename to' directives would pass regardless of internal variable names or approach."
+      "reason": "Tests only check return dict keys/values of extract_config_hunks, not internal variable names or implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "All tests execute Python code via subprocess, import modules, call functions, and check return values. No test reads source files and checks for string patterns."
+      "reason": "Tests execute subprocess calls that import and invoke extract_config_hunks with real diffs."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_renamed_config_file_extracted requires extracting 'CLAUDE.md' from a diff where b/ path is 'random.txt' - a stub returning empty dict or using only b/ path would fail. test_extract_added_lines_from_renamed_hunk requires both correct rename handling AND content extraction. These cannot be satisfied by trivial stubs."
+      "reason": "Stub returning {} would fail test_renamed_config_file_extracted (needs CLAUDE.md key); stub returning all filenames would fail test_renamed_non_config_file_ignored."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: handling renamed files with new filename, identifying config files after rename, and preserving non-rename functionality. All three are tested (test_renamed_config_file_extracted, test_renamed_non_config_file_ignored, test_regular_config_file_still_works, etc.)."
+      "reason": "Tests cover renamed config extraction, non-config ignore, preserved non-rename functionality, and edge cases per instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped into sections with comments ('Fail-to-pass tests', 'Pass-to-pass tests', 'Module imports correctly'), have descriptive names, and include docstrings explaining each test case."
+      "reason": "Tests organized with section comments ('Fail-to-pass tests', 'Pass-to-pass tests') and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces dict[str, str] return values from functions, not a formal structured data output like JSON API or CSV. The return type is implicitly documented through examples."
+      "reason": "Task returns Python dict, no external structured data schema required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in instruction.md or test files."
+      "reason": "Filenames and function names (taskforge/config.py, extract_config_hunks) are consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the function (`extract_config_hunks`) and file (`taskforge/config.py`) which is appropriate for the task scope. It describes the bug conceptually (uses old filename instead of new) without pointing to specific lines or exact variable names to change."
+      "reason": "Instruction names the function to fix (extract_config_hunks) which is required scope, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (fixing a Python function), not an agentmd-edits task."
+      "reason": "This is a code fix task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

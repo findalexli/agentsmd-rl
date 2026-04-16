@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the file path (dagster_dlt/resource.py), the exact comment strings, the method names (dlt_pipeline.drop(), drop_pending_packages(), restore_from_destination), and the requirement that clearing happens before run(). All assert'd specifics in tests are discoverable from the instruction."
+      "reason": "The instruction names the file path (dagster_dlt/resource.py), the exact comment strings ('Dlt keeps some local state that interferes with next runs', 'restore_from_destination is enabled (default)', 'restore_from_destination is disabled'), the method names (drop(), drop_pending_packages(), restore_from_destination), and the requirement that clearing happens before run(). All asserted specifics in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: check restore_from_destination, call dlt_pipeline.drop() when enabled, call dlt_pipeline.drop_pending_packages() when disabled, and specifies exact comment strings. Requirements 1-7 together fully specify the code to write, leaving no reasoning for the agent."
+      "reason": "The instruction explicitly states the exact implementation: check restore_from_destination, call drop() when enabled, call drop_pending_packages() when disabled, and specifies exact comment strings. Requirements 1-7 essentially dictate the complete code to write, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_drop_behavior_with_restore_enabled checks for exact code pattern 'if dlt_pipeline.config.restore_from_destination:' followed by 'dlt_pipeline.drop()' in specific if/else structure within _run method. An alternative correct fix using e.g. a helper method, different variable names, or a different conditional structure would fail these text-matching tests."
+      "reason": "test_drop_behavior_with_restore_enabled asserts the exact pattern 'if dlt_pipeline.config.restore_from_destination:' followed by 'dlt_pipeline.drop()' in an if branch and 'dlt_pipeline.drop_pending_packages()' in an else branch within _run method. An alternative correct fix (e.g., using a helper function, different variable names, or different control flow structure) would fail these rigid structural checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, and test_drop_called_before_run are all pure text-matching tests (reading file content and asserting string presence/ordering). While test_dagster_dlt_unit_tests and test_dagster_dlt_import execute code, the F2P tests are entirely text-based with no behavioral verification."
+      "reason": "The F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) are ALL text-matching tests using 'assert X in content' on file contents. While P2P tests do run subprocesses (ruff, unit tests, imports), the core F2P tests that verify the bug fix never import or call the code to check behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) only check for string presence in the source file. An agent could simply insert the exact comment and code strings as dead code (unreachable block) and pass all F2P tests without actually fixing the bug."
+      "reason": "All F2P tests are pure text-matching on file contents. A stub that simply inserts the expected comments and method call strings as dead code (never executed) into resource.py would pass all F2P tests without actually fixing the bug."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 requirements from instruction.md are tested: restore_from_destination check (req 1-2), drop_pending_packages for disabled case (req 3), ordering before run() (req 4), and all three exact comment strings (req 5-7)."
+      "reason": "All 7 requirements from instruction.md are covered: restore_from_destination check (tests 1-2), drop() for enabled case (test 2), drop_pending_packages() for disabled case (tests 1-2), before run() ordering (test 4), and all three exact comment strings (test 3)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, labeled as F2P or P2P, grouped by purpose (fix verification vs regression), and have descriptive names."
+      "reason": "Tests are well-organized with clear docstrings, labeled as F2P (fail-to-pass) vs P2P (pass-to-pass) with section comments, and descriptive function names like test_drop_behavior_with_restore_enabled."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces a code fix, not structured data output."
+      "reason": "This task involves modifying Python source code, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact method names (dlt_pipeline.drop(), drop_pending_packages()), exact conditional logic (check restore_from_destination), exact comment strings, and that the fix goes in the _run method before pipeline.run(). This is essentially the complete implementation specification."
+      "reason": "The instruction names the exact file (resource.py), specifies exact method names to call (drop(), drop_pending_packages()), exact attribute to check (dlt_pipeline.config.restore_from_destination), and exact comment strings to include. This goes far beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

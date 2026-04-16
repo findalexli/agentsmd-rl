@@ -60,6 +60,64 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 76-77
+- rule: Flatten imports to one item per use statement. Do not use nested braces.
+  source:
+    path: crates/.devx-style.md
+    lines: 23-31
+  source_text: "3. Flatten imports to one item per use statement. Do not use nested\
+    \ braces.\n    ```rust\n    // Good\n    use std::collections::HashMap;\n    use\
+    \ std::collections::HashSet;\n\n    // Bad\n    use std::collections::{HashMap,\
+    \ HashSet};\n    ```"
+  collision_type: scope_ambiguity
+  why_distracting: This strict flattening rule is found in `crates/.devx-style.md`
+    and applies to the core Sui crates. However, the changes in the gold diff happen
+    inside `external-crates/move/`, which maintains its own distinct code styles (as
+    seen by the existing `use serde::{...}` block). Following this rule would create
+    out-of-scope stylistic churn in external dependencies.
+  severity: medium
+- rule: Order items in each file (Imports, Modules, Constants...)
+  source:
+    path: crates/.devx-style.md
+    lines: 1-18
+  source_text: '# Rust Code Ordering
+
+
+    Order items in each file as follows:
+
+
+    1. Imports (`use` statements)
+
+    2. Modules (`mod` declarations)
+
+    3. Constants and statics (`const`, `static`)
+
+    4. Type definitions (`struct`, `enum`, `union`)
+
+    5. Type aliases (`type`)
+
+    6. Inherent `impl` blocks
+
+    7. Trait implementations (`impl Trait for Type`)
+
+    8. Free functions (`fn`)
+
+    9. Tests (`#[cfg(test)]` module)'
+  collision_type: architecture_boundary
+  why_distracting: This file ordering constraint is strictly for the `crates/` architecture.
+    Attempting to reorganize files inside `external-crates/` to match this convention
+    would incorrectly blur architectural boundaries.
+  severity: low
+- rule: 'Use #[tokio::test] for async tests, not #[test]'
+  source:
+    path: CLAUDE.md
+    lines: '118'
+  source_text: '   - **All unit tests must work properly** - use `#[tokio::test]`
+    for async tests, not `#[test]`'
+  collision_type: would_cause_bug
+  why_distracting: An agent reading this might mistakenly replace `#[test]` with `#[tokio::test]`
+    in `unit_tests/value_test.rs`. However, these specific tests are entirely synchronous;
+    changing the attribute would cause compilation failures.
+  severity: high
 hierarchy_analysis: The configuration hierarchy is flat for this task, consisting
   only of root-level `AGENTS.md` and `CLAUDE.md` files. No crate-specific configuration
   files are provided or needed.
@@ -77,4 +135,35 @@ rubric:
   evidence: The task requires verifying the removal of methods, which aligns with
     the preferred 'cargo check' command for checking code without building.
   category: tooling
+  verification: llm_judge
+- rule: 'NEVER use linting suppressions like #[allow(dead_code)] - fix underlying
+    issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '117'
+  source_text: '   - **NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any
+    other linting suppressions** - fix the underlying issues instead'
+  evidence: The PR fixes an unused code warning by fully deleting the `simple_deserialize`
+    implementations and the unused `use anyhow::Result as AResult;` import, instead
+    of suppressing the warnings.
+  category: rubric
+  verification: llm_judge
+- rule: Do NOT comment the obvious; avoid commenting self-descriptive function calls
+  source:
+    path: CLAUDE.md
+    lines: 122-133
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    ...
+
+    **When NOT to comment**:
+
+    ...
+
+    - Self-descriptive function calls'
+  evidence: The newly added `deser_annotated_value` test helper function is completely
+    self-descriptive and wraps a single BCS call. It does not include unnecessary
+    doc comments.
+  category: rubric
   verification: llm_judge

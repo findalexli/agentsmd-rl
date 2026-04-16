@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all five files that tests check (shared.ts, tasks.ts, sdkUsage.ts, writing-tasks.mdc, triggering.mdx), describes removing `triggerAndPoll` from implementation/export/import/docs/references, and lists the methods that must be preserved (trigger, batchTrigger, triggerAndWait). The test for `tasks.trigger()` and `batch.trigger()` in the docs table is implicitly covered by 'other SDK methods must remain intact' and the docs file being listed. The changeset file created in solve"
+      "reason": "All test-asserted file paths (packages/trigger-sdk/src/v3/shared.ts, packages/trigger-sdk/src/v3/tasks.ts, references/v3-catalog/src/trigger/sdkUsage.ts, .cursor/rules/writing-tasks.mdc, docs/triggering.mdx), function/method names (triggerAndPoll, trigger, batchTrigger, triggerAndWait, batchTriggerAndWait), and the string 'triggerAndPoll' are all explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to remove (the triggerAndPoll function, its export, references, and documentation) but does not specify exact line numbers, sed commands, or specific replacement text. A developer must still figure out how to locate and remove each reference."
+      "reason": "instruction.md describes what needs to be removed and from which files, but does not specify exact line numbers, sed commands, or replacement text. A developer must still reason about how to make the changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for absence of 'triggerAndPoll' in specific files and presence of other method names. Any correct removal approach (manual editing, sed, programmatic rewrite) would pass as long as triggerAndPoll is gone and other methods remain. Tests don't assert on specific line numbers, variable names, or implementation details unique to the gold solution."
+      "reason": "Tests check for absence of 'triggerAndPoll' in specific files, presence of other methods, valid syntax, and balanced imports \u2014 all behavioral properties that any correct removal would satisfy regardless of implementation approach (e.g., different sed patterns, manual editing, etc.)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are text/string-matching checks: `assert 'triggerAndPoll' not in content`, regex searches on file contents, and string presence checks. While some use `subprocess.run(['node', ...])` to execute Node.js, those Node scripts themselves just do `fs.readFileSync` and string matching. No test actually imports the module, instantiates the SDK, or verifies that calling `tasks.triggerAndPoll` raises an error. Tests like test_repo_prettier_check and test_repo_ts_node_syntax do execute too"
+      "reason": "Most fail_to_pass tests (test_triggerandpoll_function_removed, test_triggerandpoll_not_exported, test_sdk_usage_no_triggerandpoll, test_cursor_rules_no_triggerandpoll, test_docs_triggering_no_triggerandpoll) are essentially regex-based text searches on file contents via Node.js (e.g., /triggerAndPoll/.test(content)). While some use regex to parse exports, none actually import/execute the SDK module or test runtime behavior. They are effectively 'assert string in file.read()' checks wrapped in No"
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests check that 'triggerAndPoll' is absent from files where it currently exists in the base commit. A stub/no-op solution (doing nothing) would fail because the string is present in the original files. The agent must actively remove the references to pass."
+      "reason": "The fail_to_pass tests check for the absence of 'triggerAndPoll' in files that currently contain it. A stub or no-op change would leave the original code intact and fail these tests. The agent must actively remove the function and its references."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: function removal from shared.ts, export removal from tasks.ts, import removal from tasks.ts, reference removal from sdkUsage.ts, doc updates in writing-tasks.mdc and triggering.mdx, and preservation of other methods."
+      "reason": "All requirements from instruction.md are tested: function removal from shared.ts, removal from tasks export, removal from example code, removal from documentation files (.cursor/rules and docs/triggering.mdx), and preservation of other methods."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, categorized by type (static pass_to_pass, pr_diff fail_to_pass, repo_tests pass_to_pass), and each test has a clear single responsibility."
+      "reason": "Tests are well-named (e.g., test_triggerandpoll_function_removed, test_other_task_methods_preserved), have docstrings explaining what they check, and are annotated with [static]/[pr_diff] and pass_to_pass/fail_to_pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves removing code/documentation, not producing structured data output."
+      "reason": "Task involves code/documentation removal, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and commands in the instruction and tests are correctly spelled and match the actual repository structure."
+      "reason": "All file paths, function names, and commands in instruction.md and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly lists all five exact file paths to modify under 'Files to Look At', including non-obvious ones like '.cursor/rules/writing-tasks.mdc'. This removes the need for the agent to locate affected files, which is a significant part of the task's reasoning challenge."
+      "reason": "instruction.md explicitly lists exact file paths including .cursor/rules/writing-tasks.mdc and docs/triggering.mdx under 'Files to Look At', which removes the need for the agent to localize where documentation references exist. This is borderline but acceptable for the main SDK files; however, listing the cursor rules file and docs file is leakage since discovering all documentation references is part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/documentation removal task, not a config-edit task."
+      "reason": "This is primarily a code and documentation removal task, not a config-edit task."
     }
   },
   "tier_a_fails": [

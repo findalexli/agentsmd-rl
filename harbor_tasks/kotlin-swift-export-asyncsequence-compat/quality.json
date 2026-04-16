@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the target file path, function name `asyncSequence`, parameter `for` of type `any KotlinTypedFlow<T>`, return type `KotlinFlowSequence<T>`, the exact deprecation message `Use \\`asAsyncSequence()\\` from Swift Export`, delegation to `asAsyncSequence()`, and documentation requirements mentioning KMP-NativeCoroutines and migration. All test-asserted specifics (file paths, function signatures, deprecation text, generic constraints, implementation body) are discoverable from "
+      "reason": "Instruction names the file path, the function name pattern asyncSequence(for:), types KotlinTypedFlow<T> and KotlinFlowSequence<T>, the exact deprecation message, and documentation requirements."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact function signature, the exact deprecation message string, the exact implementation body ('delegate to asAsyncSequence()'), and even the exact documentation keywords. This is essentially dictating the complete solution rather than describing a problem to solve."
+      "outcome": "pass",
+      "reason": "Instruction describes what to add and its behavior without giving exact code lines or implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use regex patterns that allow reasonable formatting variations (whitespace flexibility via \\s*). Alternative correct implementations with different whitespace, different comment wording (as long as 'KMP-NativeCoroutines' appears), or return statement variations (e.g., with/without explicit 'return') would pass. The tests check structural correctness rather than exact character matches."
+      "reason": "Tests accept various parameter names and flexible function body (any `.asAsyncSequence()` call), and check signature patterns rather than exact text."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_asyncsequence_function_exists, test_asyncsequence_deprecation_annotation, test_asyncsequence_documentation_comment, test_asyncsequence_implementation_correct, test_asyncsequence_generic_constraint) are ALL regex-based text searches on file content. While test_swift_syntax_valid does run `swiftc -parse`, the core behavioral tests never compile and execute the function. They only assert patterns exist in the source text."
+      "outcome": "pass",
+      "reason": "Tests invoke swiftc -parse and swift-format subprocess to actually compile/lint the Swift file, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would fail test_asyncsequence_function_exists (regex for full function signature), test_asyncsequence_deprecation_annotation (regex for @available annotation), test_asyncsequence_implementation_correct (regex for flow.asAsyncSequence() in body), and test_swift_syntax_valid (swiftc parse). These cannot be satisfied without actual implementation."
+      "reason": "Tests require the function signature, delegation to asAsyncSequence(), deprecation annotation with specific message, and doc comments; a stub cannot satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: function signature (test_asyncsequence_function_exists), deprecation annotation (test_asyncsequence_deprecation_annotation), implementation delegation (test_asyncsequence_implementation_correct), documentation (test_asyncsequence_documentation_comment), and generic constraints (test_asyncsequence_generic_constraint)."
+      "reason": "Tests cover generic type safety, deprecation message, documentation, and delegation behavior as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_asyncsequence_function_exists, test_asyncsequence_deprecation_annotation), have docstrings marking them as 'Fail-to-pass' or 'pass-to-pass', and the file has a module-level docstring explaining purpose."
+      "reason": "Tests are individually named with clear docstrings describing pass-to-pass vs fail-to-pass purposes."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Swift source code, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task is Swift code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, type names (KotlinTypedFlow, KotlinFlowSequence, asAsyncSequence), and other identifiers are consistent across instruction.md and tests with no typos."
+      "reason": "Paths and names are consistent throughout."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact target file path 'native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift', provides the complete function signature, the exact deprecation message string, and the exact implementation body. This goes well beyond describing what's broken \u2014 it's a complete specification of the solution."
+      "outcome": "pass",
+      "reason": "Instruction names the target file which is appropriate for the task since the agent needs to know where to add the shim."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (adding a Swift function), not a configuration edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

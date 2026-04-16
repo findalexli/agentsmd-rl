@@ -1,0 +1,111 @@
+source_pr:
+  owner: gohugoio
+  repo: hugo
+  number: 14515
+  merge_commit: 4a641d1594bd893e4baf147c562342bf050e87d2
+  base_commit: 8b7b6af92c0c01e258b52e1e0658e9f296f74410
+
+task:
+  name: hugo-replace-deprecated-parser-apis
+  title: "Replace deprecated parser.ParseDir and doc.New in Hugo"
+  description: |
+    The PR replaces deprecated Go parser APIs in tpl/internal/templatefuncsRegistry.go:
+    - parser.ParseDir (deprecated since Go 1.25) → manual file iteration using parser.ParseFile
+    - doc.New (deprecated) → doc.NewFromFiles
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_no_deprecated_parser_parse_dir
+    type: fail_to_pass
+    origin: behavioral
+    description: "parser.ParseDir should not be used (deprecated since Go 1.25)"
+
+  - id: test_no_deprecated_doc_new
+    type: fail_to_pass
+    origin: behavioral
+    description: "doc.New should not be used (deprecated)"
+
+  - id: test_parse_dir_helper_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: "New parseDir helper function should exist"
+
+  - id: test_parse_dir_uses_parser_parse_file
+    type: fail_to_pass
+    origin: behavioral
+    description: "parseDir should use parser.ParseFile (non-deprecated)"
+
+  - id: test_uses_doc_new_from_files
+    type: fail_to_pass
+    origin: behavioral
+    description: "Should use doc.NewFromFiles instead of doc.New"
+
+  - id: test_ast_import_added
+    type: fail_to_pass
+    origin: behavioral
+    description: "go/ast package should be imported for []*ast.File return type"
+
+  # Pass-to-pass tests (quality checks)
+  - id: test_parse_dir_not_exported
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      lines: "Never export symbols that's not needed outside of the package."
+    description: "parseDir helper should not be exported (lowercase name)"
+
+  - id: test_code_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified code should compile successfully"
+
+  - id: test_package_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Tests for tpl/internal should pass"
+
+  - id: test_check_script_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check.sh should compile the package"
+
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's go vet passes on modified package"
+
+  - id: test_repo_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's gofmt check passes on modified package"
+
+  - id: test_repo_build_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's full build passes"
+
+# Rubric for code style (simplified for code-only tasks)
+# The judge uses fallback evaluation when no API key is available,
+# checking if key code patterns from the gold reference exist in the diff.
+rubric:
+  - criterion: "parseDir implementation"
+    description: "parseDir function uses non-deprecated APIs and follows Go idioms"
+    reference: |
+      func parseDir(fset *token.FileSet, dir string) ([]*ast.File, error) {
+      	entries, err := os.ReadDir(dir)
+      	if err != nil {
+      		return nil, err
+      	}
+      	var files []*ast.File
+      	for _, e := range entries {
+      		if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") {
+      			continue
+      		}
+      		f, err := parser.ParseFile(fset, filepath.Join(dir, e.Name()), nil, parser.ParseComments)
+      		if err != nil {
+      			return nil, err
+      		}
+      		files = append(files, f)
+      	}
+      	return files, nil
+      }

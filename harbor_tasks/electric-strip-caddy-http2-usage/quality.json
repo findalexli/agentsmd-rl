@@ -1,58 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all the specific files (vite.config.ts, README.md for both examples, package.json files, AGENTS.md, troubleshooting.md), the specific version (^1.0.13), specific paths (tanstack-db-web-starter, burn), specific strings (localhost:5173, localhost:4000, localhost:4001, caddy), and the vite-plugin-caddy concept. The test assertions check for things like 'caddyPlugin', 'vite-plugin-caddy', 'host: true', 'localhost:5173', '1.0.13', 'subdomain sharding', 'HTTP/2 proxy (Caddy/nginx"
+      "reason": "Instruction names all relevant files (vite.config.ts, tanstack README.md, burn README.md, both package.json, AGENTS.md, website troubleshooting docs), the version string 1.0.13, the localhost:5173/4000 ports, the old domain tanstack-start-db-electric-starter.localhost, host: true, and subdomain sharding keywords."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (Caddy is unnecessary now) and the expected behavior (remove Caddy references, update to v1.0.13+, update docs). It gives bullet points of what the end state should look like but doesn't give exact line changes or replacement text. The agent still needs to figure out the actual edits."
+      "reason": "Instruction describes what needs to change (remove Caddy, use v1.0.13, point to localhost:5173/4000) but doesn't prescribe exact line edits or code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for absence of Caddy-related strings, presence of version strings and documentation keywords, file deletion, and valid structure. They don't assert on specific variable names, exact line positions, or implementation details that would vary between correct alternatives. Any correct removal of Caddy and update to v1.0.13+ would pass."
+      "reason": "Tests check for absence of Caddy references, presence of version string and localhost URLs, and deleted files \u2014 alternative phrasings/implementations would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are pure text/content checks: 'assert X not in file.read()', 'assert Y in file.read()', 'assert not path.exists()'. The pass-to-pass tests do execute Node.js scripts and run pnpm install, but the core fail-to-pass tests (test_vite_config_no_caddy, test_caddy_plugin_deleted, test_burn_caddyfile_deleted, test_agents_md_updated_gotcha, test_tanstack_readme_no_caddy, test_burn_readme_direct_port, test_troubleshooting_docs_subdomain_sharding) only check for string presen"
+      "reason": "Most tests are textual assertions (e.g., 'localhost:5173' in readme, '1.0.13' in agents_md, 'subdomain sharding' in troubleshooting); only pnpm lockfile test actually executes code, and no behavioral execution of the vite/electric stack occurs."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stub/default implementations. They require actual file modifications (deleting files, editing content to remove specific strings and add others). A no-op would fail because the existing files contain Caddy references that the tests assert must be absent."
+      "reason": "Each f2p requires actual content changes (version bump, file deletion, removed strings, new URLs); a stub couldn't pass them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors explicitly required by instruction.md are tested: vite.config.ts Caddy removal, Caddyfile deletion, README updates for both examples, package.json version bumps, AGENTS.md update, and troubleshooting doc update. The `host: true` removal is tested (test_vite_config_no_host_true) even though it was only implicitly mentioned in instructions."
+      "reason": "All requirements in the instruction's expected-behavior bullet list are covered by corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (fail-to-pass code changes, fail-to-pass config/doc changes, pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments 'Fail-to-pass: Code changes', 'Fail-to-pass: Config/documentation changes', and 'Pass-to-pass' with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing documentation, configuration files, and removing files \u2014 no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "Task is documentation/config cleanup, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test file."
+      "reason": "Paths like examples/tanstack-db-web-starter, examples/burn/assets/package.json, website/docs/guides/troubleshooting.md appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact files and exact expected content: 'tanstack-db-web-starter vite.config.ts should not import any Caddy plugin and should not set server.host: true', 'README.md should direct users to localhost:5173', 'burn README.md should reference localhost:4000 directly (not port 4001)', 'Both example package.json files should depend on @electric-sql/client version ^1.0.13'. These are very specific prescriptions of the exact changes needed, reducing the task to mechanical"
+      "outcome": "pass",
+      "reason": "Instruction names the affected files (which is appropriate given the task is explicitly about removing references across known files) without citing specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to specific sections of files (removing Caddy sections, updating version strings, updating URLs). It doesn't do full-file rewrites and changes are consistent with the instruction."
+      "reason": "Gold patch makes localized edits to AGENTS.md, READMEs, package.json dep version, and deletes specific Caddy-related files without full-file rewrites of unrelated content."
     }
   },
   "tier_a_fails": [
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

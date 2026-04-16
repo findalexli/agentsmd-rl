@@ -3,55 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names RUN_URL_PATTERN (module-level name ending in _PATTERN), resolve_urls(), get_jobs(), the file paths (.claude/skills/src/skills/commands/analyze_ci.py, SKILL.md), the regex group requirements (group(1) = owner/repo, group(2) = run ID), the filtering by conclusion=='failure', and the documentation requirements. All test-asserted specifics (pattern name, function name, file paths, group behavior, exclusion of /job/ URLs) are discoverable from the instruction."
+      "reason": "The instruction names the file paths (.claude/skills/src/skills/commands/analyze_ci.py, .claude/skills/analyze-ci/SKILL.md), the _PATTERN naming convention, resolve_urls function, get_jobs method, group(1)/group(2) capture requirements, the 'actions/runs/N' URL format, '/job/' exclusion requirement, and error message/documentation requirements. All test assertions reference specifics discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is needed (accept run URLs, define a pattern, dispatch in resolve_urls, update docs) but does not give exact code changes, line numbers to modify, or the literal regex string. A developer must still reason about the implementation."
+      "reason": "The instruction describes the desired behavior (accept run URLs, define a _PATTERN regex, update resolve_urls dispatch, update docs) but does not specify exact code changes, line numbers to modify, or the precise regex string. A developer must still reason about the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert the exact variable name 'RUN_URL_PATTERN' (test_run_url_pattern_matches_run_urls, test_resolve_urls_dispatches_run_pattern) and use AST extraction specifically looking for re.compile() calls assigned to names ending in '_PATTERN'. While the instruction does mention 'a module-level name ending in _PATTERN', it doesn't mandate the exact name 'RUN_URL_PATTERN'. An alternative correct implementation using e.g. 'WORKFLOW_RUN_URL_PATTERN' would fail. Additionally, test_resolve_urls_dispat"
+      "outcome": "pass",
+      "reason": "Tests check for any module-level name ending in '_PATTERN' that matches run URLs (not a specific variable name like RUN_URL_PATTERN), test behavioral dispatch via resolve_urls with mocked clients, and check SKILL.md content loosely. Alternative implementations (different regex patterns, different variable names like WORKFLOW_RUN_PATTERN, different ordering logic) would all pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests are predominantly text/AST inspection: test_run_url_pattern_matches_run_urls extracts regex from source text and tests it independently (not importing the module), test_resolve_urls_dispatches_run_pattern checks for string 'RUN_URL_PATTERN' and 'get_jobs' in function source text, test_help_text_mentions_run_url scans source lines for substrings, test_skill_md_documents_run_urls checks file content strings. None of them import the module or execute the actual code paths."
+      "outcome": "pass",
+      "reason": "Most tests execute the module with mocked dependencies: test_run_url_pattern_matches_run_urls imports and tests regex patterns, test_resolve_urls_dispatches_run_pattern calls resolve_urls with a mock client and checks API calls, test_help_text_mentions_run_url exercises the argparse registration and resolve_urls error path. Only test_skill_md_documents_run_urls is text-based, but the majority test behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty file, pass, return None) would not pass: test_run_url_pattern_matches_run_urls requires a compiled regex named RUN_URL_PATTERN that actually matches specific URLs and captures digit groups; test_run_url_pattern_excludes_job_urls requires it NOT match job URLs; test_resolve_urls_dispatches_run_pattern requires an async function resolve_urls referencing RUN_URL_PATTERN and get_jobs. These require non-trivial implementation."
+      "reason": "A stub implementation would fail: test_run_url_pattern_matches_run_urls requires a _PATTERN regex that actually matches run URLs with correct groups; test_resolve_urls_dispatches_run_pattern requires resolve_urls to call get_jobs and return results; test_run_url_pattern_excludes_job_urls requires the pattern to NOT match job URLs. These cannot be satisfied by empty/default returns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All key behaviors from the instruction are tested: regex pattern definition and matching (test_run_url_pattern_matches_run_urls), exclusion of job URLs (test_run_url_pattern_excludes_job_urls), dispatch in resolve_urls (test_resolve_urls_dispatches_run_pattern), help text update (test_help_text_mentions_run_url), and SKILL.md documentation (test_skill_md_documents_run_urls)."
+      "reason": "All key behaviors from instruction.md are tested: regex pattern definition with correct groups (test_run_url_pattern_matches_run_urls), job URL exclusion (test_run_url_pattern_excludes_job_urls), resolve_urls dispatch with get_jobs call (test_resolve_urls_dispatches_run_pattern), error message mentioning run URLs (test_help_text_mentions_run_url), and SKILL.md documentation (test_skill_md_documents_run_urls). The filtering to failed jobs is implicitly tested through the mock returning a job with"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass, Config/doc update, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with descriptive names (test_run_url_pattern_matches_run_urls, test_run_url_pattern_excludes_job_urls, etc.), docstrings, clear section comments (Gates, Fail-to-pass, Pass-to-pass), and each test maps to a specific behavioral requirement."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, variable names, or commands across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify (which is appropriate given the task domain) but doesn't specify exact line numbers or the literal code to write. The file references are necessary context, not localization hints."
+      "reason": "The instruction names the files to modify (which is appropriate given the task domain) but does not specify exact line numbers or the precise code changes needed. The _PATTERN naming convention is a requirement, not a hint about existing code."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold diff to SKILL.md is localized (adding a few lines in Usage and Examples sections) and doesn't contradict other files. The analyze_ci.py changes are also surgical additions."
+      "outcome": "not_applicable",
+      "reason": "This is a code-change task, not an agentmd-edits/config-only task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -8,32 +8,15 @@ Requests to `GET /console/` (and potentially other unmatched routes) are enterin
 Call to a member function getLabel() on null
 ```
 
-This is happening because there are two places in `app/controllers/shared/api.php` where `$route` is obtained from `$utopia->getRoute()` and then used without checking if it's null.
-
 ## Your Task
 
 Modify `app/controllers/shared/api.php` to guard against null routes before dereferencing them.
 
-### Specific Requirements
+### Requirements
 
-1. **First location (Http::init action)**: After `$route = $utopia->getRoute();`, add a null check. If `$route` is null, throw an `AppwriteException` with the error code `GENERAL_ROUTE_NOT_FOUND`.
+1. **First location**: In the `Http::init()` action, after `$route = $utopia->getRoute();`, add a null check before any use of `$route`. If `$route` is null, throw an `AppwriteException` with error code `GENERAL_ROUTE_NOT_FOUND`.
 
-2. **Second location (shutdown action)**: There's another place in the file where `$route = $utopia->getRoute();` is called, followed by `$route->getMatchedPath()`. Add the same null guard here before the route is used.
-
-### Error Handling Pattern
-
-Use this exact pattern for both guards:
-
-```php
-$route = $utopia->getRoute();
-if ($route === null) {
-    throw new AppwriteException(AppwriteException::GENERAL_ROUTE_NOT_FOUND);
-}
-```
-
-### Relevant Files
-
-- **Primary**: `app/controllers/shared/api.php` - This is where the fix must be implemented
+2. **Second location**: In the shutdown action, after the second occurrence of `$route = $utopia->getRoute();`, add the same null guard before `$route` is used.
 
 ### Validation
 

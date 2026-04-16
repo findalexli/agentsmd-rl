@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names both file paths (download.ts, crBrowser.ts), the Download class, cancel() method, cancelDownload(uuid), _downloads collection, CRBrowserContext, Target.disposeBrowserContext, the UUID instance field requirement (this.<field>), and public naming convention from CLAUDE.md. All test assertions reference these same elements which are discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_context_close_cancels_downloads checks for '_downloads' string in the 50 lines before 'Target.disposeBrowserContext', test_cancel_uses_instance_field checks for 'this.\\w+' pattern in cancel() body, and test_download_cancel_method runs a Node script checking for 'cancelDownload(this.<field>)' pattern. The instruction mentions '_downloads' only indirectly and doesn't specify that cancel() must use 'this.<field>' pat"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add a cancel() method that calls cancelDownload(this.<field>), iterate _downloads before Target.disposeBrowserContext calling cancel() on each. It specifies exact method names, exact delegation pattern, and exact placement. This leaves no reasoning for the agent about WHAT to change."
+      "reason": "Instruction.md essentially describes the exact fix: 'The Download class should provide a public method (no underscore prefix) that cancels the download by delegating to this browser context method, using a stored instance field (not a closure-captured constructor argument)' and 'before the context is fully disposed via Target.disposeBrowserContext, any active downloads associated with that context must be cancelled first'. This tells the agent exactly what to implement rather than just describin"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_download_cancel_method requires the cancel() method body to match /cancelDownload\\(this\\.\\w+\\)/ specifically. test_context_close_cancels_downloads requires '.cancel()' and '_downloads' to appear in the 50 lines before 'Target.disposeBrowserContext'. An alternative correct fix that e.g. used a different iteration variable name or called a wrapper method would fail. The regex pattern for cancel method extraction (2-space indent specifically) is also gold-specific."
+      "reason": "test_download_cancel_method asserts 'cancelDownload(this.\\w+)' regex pattern in cancel() body, requiring a specific implementation style. test_context_close_cancels_downloads requires '_downloads' to appear within 50 lines before 'Target.disposeBrowserContext' and '.cancel()' in the same block. An alternative correct fix that e.g. used a different collection name or placed cancellation logic in a helper method called from elsewhere would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_context_close_cancels_downloads, test_cancel_uses_instance_field, test_cancel_method_public_naming, test_not_stub) are purely text/regex-based checks on source code content. test_download_cancel_method runs a node script but only parses source text, never imports or executes the code. Only test_repo_typecheck and test_repo_build actually compile/execute the code."
+      "reason": "Most fail-to-pass tests are pure text/regex analysis: test_context_close_cancels_downloads uses re.search on source text, test_cancel_uses_instance_field uses regex on source text, test_cancel_method_public_naming uses regex on source text. test_download_cancel_method runs a Node script but it only parses source text, never instantiates or calls the Download class. No test actually executes the cancel() method or verifies runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub cancel() {} would fail test_not_stub (requires body length > 5 and 'cancelDownload' in body), test_cancel_uses_instance_field (requires this.xxx reference), and test_download_cancel_method (requires cancelDownload(this.<field>) pattern). The tests do require substantive implementation."
+      "reason": "A stub cancel() method (empty body or pass) would fail test_not_stub which checks len(body) > 5 and 'cancelDownload' in body, and test_download_cancel_method which checks for 'cancelDownload(this.<field>)' pattern. The tests do require non-trivial implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three main behaviors from the instruction are tested: cancel() method existence and implementation (test_download_cancel_method, test_cancel_uses_instance_field), public naming (test_cancel_method_public_naming), and cancelling downloads before disposal (test_context_close_cancels_downloads)."
+      "reason": "The instruction specifies two behaviors: (1) Download exposes a public cancel() method using instance field delegating to cancelDownload, and (2) CRBrowserContext cancels downloads before disposal. Both are tested by test_download_cancel_method, test_cancel_uses_instance_field, test_cancel_method_public_naming, and test_context_close_cancels_downloads."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, docstrings explaining each check, and comments mapping to eval_manifest categories."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications, not structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in file paths, method names, variable names, or commands across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names both exact files to modify, specifies the exact method name (cancel()), the exact delegation call (cancelDownload with this.<field>), the exact collection (_downloads), and the exact placement (before Target.disposeBrowserContext). This goes well beyond identifying the buggy area."
+      "reason": "Instruction.md names the exact files (download.ts, crBrowser.ts), the exact method name (cancelDownload), specifies implementation details like 'stored instance field (not a closure-captured constructor argument)', 'no underscore prefix', and 'Target.disposeBrowserContext'. This goes well beyond describing the bug domain and prescribes the exact solution architecture."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

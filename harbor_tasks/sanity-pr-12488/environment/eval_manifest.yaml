@@ -1,0 +1,94 @@
+manifest_version: "1.0"
+source_pr:
+  owner: sanity-io
+  repo: sanity
+  pr_number: 12488
+  base_commit: d5c2b1ca31014526cf1178c34443879131bd9452
+  merge_commit: 500e41315c1c792c0235a3f12e6b4450bc504c83
+
+checks:
+  # Fail-to-pass tests (core behavior changes - should fail on base, pass on gold)
+  - id: test_static_readonly_fields_skipped_during_document_paste
+    type: fail_to_pass
+    origin: behavior
+    description: "Static readOnly fields are excluded when pasting at document level (isDocumentLevelPaste check)"
+    weight: 1.0
+
+  - id: test_i18n_strings_exist
+    type: fail_to_pass
+    origin: behavior
+    description: "i18n warning strings for skipped read-only fields exist in copy-paste locale bundle"
+    weight: 1.0
+
+  - id: test_readonly_context_type_defined
+    type: fail_to_pass
+    origin: behavior
+    description: "ReadOnlyContext type is defined for passing currentUser to readOnly evaluation"
+    weight: 0.5
+
+  - id: test_collateObjectValue_accepts_readOnlyContext
+    type: fail_to_pass
+    origin: behavior
+    description: "collateObjectValue function accepts readOnlyContext parameter"
+    weight: 0.5
+
+  - id: test_skipped_field_names_tracking
+    type: fail_to_pass
+    origin: behavior
+    description: "Code tracks skipped read-only field names for warning messages"
+    weight: 0.5
+
+  - id: test_readonly_field_warning_generation
+    type: fail_to_pass
+    origin: behavior
+    description: "Warning messages are generated with proper i18n keys for skipped fields"
+    weight: 0.5
+
+  # Pass-to-pass tests (repo CI/CD and existing functionality)
+  - id: test_transferValue_function_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "transferValue.ts source file exists"
+    weight: 0.2
+
+  - id: test_transferValue_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "transferValue unit test suite passes (regression test)"
+    weight: 0.8
+
+rubric:
+  - rule: "Use pnpm as package manager (NOT npm)"
+    source: "AGENTS.md:9-15"
+    weight: 0.2
+
+  - rule: "Build packages before testing (pnpm build)"
+    source: "AGENTS.md:17-18, 62-63"
+    weight: 0.2
+
+  - rule: "Follow conventional commit format for PR titles: type(scope): lowercase description"
+    source: "AGENTS.md:287-330"
+    weight: 0.2
+
+  - rule: "Use vitest --project flag for running single test files"
+    source: "AGENTS.md:128-141"
+    weight: 0.2
+
+  - rule: "Run lint:fix before committing"
+    source: "AGENTS.md:53-60"
+    weight: 0.2
+
+  - rule: "Follow test-driven development with vertical slices (one test -> one implementation)"
+    source: ".agents/skills/tdd/SKILL.md:18-42"
+    weight: 0.1
+
+  - rule: "Tests should verify behavior through public interfaces, not implementation details"
+    source: ".agents/skills/tdd/SKILL.md:8-15"
+    weight: 0.1
+
+  - rule: "Add i18n strings to appropriate locale bundle when adding user-facing messages"
+    source: "packages/sanity/src/core/i18n/bundles/copy-paste.ts pattern"
+    weight: 0.1
+
+reward_threshold: 1.0
+max_reward: 5.0

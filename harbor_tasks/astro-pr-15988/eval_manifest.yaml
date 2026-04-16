@@ -1,0 +1,134 @@
+# Evaluation manifest for withastro/astro#15988
+# CSS from dynamically imported components not injected on first dev server load
+
+source:
+  owner: withastro
+  repo: astro
+  pr_number: 15988
+  base_commit: "335a204161f5a7293c128db570901d4f8639c6ed"
+  merge_commit: "c93b4a02fdf3b477d1668a8576f23d4526f25d87"
+  title: "Inject styles from dynamically imported components on first dev server load"
+
+  files_changed:
+    - "packages/astro/src/vite-plugin-css/index.ts"
+    - "packages/astro/test/css-dynamic-import-dev.test.js"
+    - "packages/astro/test/fixtures/css-dynamic-import-dev/"
+    - ".changeset/fix-dynamic-import-css-dev.md"
+
+checks:
+  - id: test_ensure_modules_loaded_function_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: "ensureModulesLoaded function must be defined in vite-plugin-css/index.ts"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_ensure_modules_loaded_called_before_collect
+    type: fail_to_pass
+    origin: agent_config
+    description: "ensureModulesLoaded must be called before collectCSSWithOrder"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_propogated_asset_query_param_reference
+    type: pass_to_pass
+    origin: agent_config
+    description: "Code references PROPAGATED_ASSET_QUERY_PARAM constant"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_vite_plugin_css_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "vite-plugin-css module must compile without errors"
+
+  - id: test_ensure_modules_loaded_signature
+    type: fail_to_pass
+    origin: agent_config
+    description: "ensureModulesLoaded must have correct async signature"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_ensure_modules_loaded_recursion
+    type: fail_to_pass
+    origin: agent_config
+    description: "ensureModulesLoaded must recursively traverse module graph"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_transform_result_check_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: "Must check transformResult to detect untransformed modules"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_fetch_module_called_for_untransformed
+    type: fail_to_pass
+    origin: agent_config
+    description: "Must call env.fetchModule for untransformed modules"
+    source: withastro/astro@335a204 AGENTS.md
+
+  - id: test_repo_knip
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's knip passes (part of lint:ci)"
+    source: withastro/astro@335a204 .github/workflows/ci.yml
+
+  - id: test_repo_tsc_noEmit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type-check passes on astro package"
+    source: withastro/astro@335a204 packages/astro/package.json
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass"
+    source: withastro/astro@335a204 packages/astro/package.json
+
+  - id: test_repo_biome_lint_vite_plugin_css
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Biome lint passes on vite-plugin-css directory"
+    source: withastro/astro@335a204 package.json
+
+rubric:
+  - id: style_formatting
+    rule: "Run pnpm format to auto-format code; pnpm lint to lint"
+    source: withastro/astro@335a204 AGENTS.md
+    weight: 1
+
+  - id: nodejs_scripting
+    rule: "Use node -e for scripting tasks, not python"
+    source: withastro/astro@335a204 AGENTS.md
+    weight: 1
+
+  - id: monorepo_structure
+    rule: "All packages live in packages/; core Astro is packages/astro"
+    source: withastro/astro@335a204 AGENTS.md
+    weight: 1
+
+  - id: test_commands
+    rule: "Use pnpm test with --match/-m flags for filtering tests"
+    source: withastro/astro@335a204 AGENTS.md
+    weight: 1
+
+  - id: prefer_unit_tests
+    rule: "Prefer unit tests over integration tests; write unit-testable code"
+    source: withastro/astro@335a204 .agents/skills/astro-developer/testing.md
+    weight: 1
+
+  - id: unique_outdir
+    rule: "Every test fixture MUST have a unique outDir to avoid cache pollution"
+    source: withastro/astro@335a204 .agents/skills/astro-developer/testing.md
+    weight: 1
+
+  - id: nodejs_api_restrictions
+    rule: "Code in runtime/ folders cannot use Node.js APIs"
+    source: withastro/astro@335a204 .agents/skills/astro-developer/constraints.md
+    weight: 1
+
+  - id: type_imports
+    rule: "Use import type { ... } for type-only imports"
+    source: withastro/astro@335a204 .agents/skills/astro-developer/constraints.md
+    weight: 1
+
+  - id: explicit_extensions
+    rule: "Use explicit file extensions (.js) in imports"
+    source: withastro/astro@335a204 .agents/skills/astro-developer/constraints.md
+    weight: 1

@@ -81,3 +81,51 @@ rubric:
   type: pass_to_pass
   origin: repo_tests
   description: CI shell scripts pass shellcheck validation
+- rule: Maintainability & simplicity - avoid duplicated logic
+  source:
+    path: .github/copilot-instructions.md
+    lines: 30-31
+  source_text: "5) **Maintainability & simplicity**\n   - Over-engineering, duplicated\
+    \ logic, fragile patterns."
+  evidence: The gold diff successfully removes duplicated checking for `variable_width_formatter`
+    by extracting it outside the `if (mysql_M_is_month_name)` branch. Previously,
+    checking for 'W' was duplicated across both branches.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Serialization versioning for formats
+  source:
+    path: .github/copilot-instructions.md
+    lines: 115-116
+  source_text: "- **Serialization versioning**  \n  Any format (columns, aggregates,\
+    \ protocol, settings serialization, replication metadata) must be versioned. Check\
+    \ upgrade/downgrade resilience and the impact on existing clusters."
+  collision_type: scope_ambiguity
+  why_distracting: The modified file is named `formatDateTime.cpp` and it parses string
+    date/time formats, but the instruction is about on-disk storage or wire protocols.
+    An agent could see the keyword 'format' and mistakenly require versioning for
+    this simple formatting bug fix.
+  severity: high
+- rule: Configurability of magic constants
+  source:
+    path: .github/copilot-instructions.md
+    lines: 124-125
+  source_text: "- **Configurability**  \n  Avoid magic constants; represent important\
+    \ thresholds or alternative behaviors as settings with sensible defaults."
+  collision_type: meta_confusion
+  why_distracting: The characters {'W'} and {'M'} are string format specifiers, not
+    magical configuration thresholds. An agent might mistakenly request these characters
+    be moved into system settings.
+  severity: medium
+- rule: Feature rollout via experimental settings
+  source:
+    path: .github/copilot-instructions.md
+    lines: 122-123
+  source_text: "- **Feature rollout**  \n  New features/behaviors must be gated behind\
+    \ an **experimental** setting (e.g. `allow_experimental_simd_acceleration`) until\
+    \ proven safe. The gate can later be made ineffective at GA."
+  collision_type: scope_ambiguity
+  why_distracting: This change is a bug fix or refactor for existing date formatting
+    logic, not a brand new architectural feature. An agent might incorrectly block
+    the PR by asking to hide this correction behind a new experimental flag.
+  severity: medium

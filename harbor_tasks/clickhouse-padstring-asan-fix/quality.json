@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md names all key specifics tested: PaddedPODArray<UInt8>, insertFromItself, reinterpret_cast removal, pad_string.data(), empty pad string handling in executeImpl, num_chars == 0 comparison, 1'000'000 digit separator, validateFunctionArguments, FunctionArgumentDescriptors, removal of ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH error codes, and the file path src/Functions/padString.cpp."
+      "reason": "The instruction.md explicitly names all key specifics tested: PaddedPODArray<UInt8> for pad_string, insertFromItself(), removal of reinterpret_cast, empty pad string handling in executeImpl, num_chars == 0 explicit comparison, 1'000'000 digit separator, validateFunctionArguments, removal of ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH error codes, and the file path src/Functions/padString.cpp."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Change pad_string field from String to PaddedPODArray<UInt8>', 'Use insert() and insertFromItself() methods instead of += for string expansion', 'Move empty pad string handling from PaddingChars::init() to executeImpl()', 'Update numCharsInPadString() to use .size() instead of .length()', 'Remove reinterpret_cast when accessing pad_string.data()'. These are step-by-step implementation instructions, not a description of what's broken."
+      "reason": "The instruction.md under 'Expected fix approach' explicitly states exactly what to change: 'Change pad_string field from String to PaddedPODArray<UInt8>', 'Use insert() and insertFromItself() methods instead of +=', 'Move empty pad string handling from PaddingChars::init() to executeImpl()', etc. This is a step-by-step implementation guide, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'PaddedPODArray<UInt8> pad_string' as field declaration, 'insertFromItself' method name, '1\\'000\\'000' literal, 'validateFunctionArguments' helper, 'num_chars == 0' exact comparison style. An alternative correct fix (e.g., using a custom aligned allocator, or manual buffer with extra padding, or different naming) would fail these tests despite being functionally correct."
+      "reason": "Tests assert on gold-specific implementation details: test_padding_chars_uses_padded_pod_array checks for exact string 'PaddedPODArray<UInt8> pad_string', test_no_string_concatenation_in_pad_init checks for 'insertFromItself', test_explicit_num_chars_comparison checks for 'if (num_chars == 0)', test_max_new_length_digit_separator checks for '1\\'000\\'000', test_validate_function_arguments_used checks for 'validateFunctionArguments'. An alternative correct fix (e.g., using a custom allocator, or a"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely textual grep: 'assert \"PaddedPODArray<UInt8> pad_string\" in padding_chars_class', 'assert \"insertFromItself\" in padding_chars_class', 'assert \"1\\'000\\'000\" in content', etc. The only behavioral check is a clang syntax check in test_padding_chars_uses_padded_pod_array, but most tests are string-in-file assertions with no execution of the actual padString functions."
+      "reason": "Nearly all fail-to-pass tests are pure text-matching: they read the .cpp file and assert on specific strings like 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', '1\\'000\\'000', etc. The only execution-based check is a syntax check via clang that allows many errors to pass. No test actually compiles and runs the code to verify the buffer overflow is fixed."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "An agent could pass all fail-to-pass tests by simply text-editing the file to include the exact strings being searched for (e.g., adding comments containing 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', '1\\'000\\'000', 'validateFunctionArguments') without actually implementing the fix. No test verifies runtime behavior of leftPad/rightPad."
+      "reason": "A stub implementation that simply text-replaces the specific strings the tests look for (e.g., adding 'PaddedPODArray<UInt8> pad_string' and 'insertFromItself' as comments) could pass the tests without actually fixing the heap-buffer-overflow bug. The tests don't execute the code."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'Maintain UTF-8 support through utf8_offsets' and 'Preserve all existing functionality for both ASCII and UTF-8 padding operations', but no test verifies actual padding behavior, UTF-8 handling, or that the ASan overflow is actually fixed."
+      "reason": "The instruction says 'Maintain UTF-8 support through utf8_offsets' and 'Preserve all existing functionality for both ASCII and UTF-8 padding operations', but no test verifies UTF-8 correctness or actual padding behavior. The instruction also mentions a test SQL file 04070_pad_string_asan_overflow.sql but no test executes it."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names, docstrings explaining fail-to-pass vs pass-to-pass categorization, and clear assertion messages."
+      "reason": "Tests are well-organized with descriptive names (test_padding_chars_uses_padded_pod_array, test_no_string_concatenation_in_pad_init, etc.), docstrings explaining the rationale, and a clear separation between FAIL-TO-PASS and PASS-TO-PASS groups."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (src/Functions/padString.cpp), class names (PaddingChars), method names (executeImpl, appendTo, init), and all other identifiers appear correct and consistent."
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact fields ('pad_string'), exact method changes ('Use insert() and insertFromItself() methods'), exact replacement types ('PaddedPODArray<UInt8>'), and specific style changes ('Use explicit num_chars == 0 comparison'). This goes far beyond identifying the buggy file/class \u2014 it prescribes the exact implementation."
+      "reason": "The instruction names the exact class (PaddingChars), exact methods (init(), appendTo(), executeImpl()), exact field name (pad_string), and exact replacement type (PaddedPODArray<UInt8>), along with 5 numbered specific code changes. This goes far beyond identifying the buggy file."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task modifying a single C++ source file, not a config edit task."
     }
   },
   "tier_a_fails": [

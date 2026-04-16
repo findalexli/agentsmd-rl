@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (packages/wrangler/src/type-generation/index.ts, packages/wrangler/src/__tests__/type-generation.test.ts), function names (collectCoreBindings, collectCoreBindingsPerEnvironment), config keys (ai_search_namespaces, ai_search), type strings (AiSearchNamespace, AiSearchInstance), and the helper patterns (addBinding, bindings.push with bindingCategory/name/type). All specifics checked by the tests are discoverable from instruction.md."
+      "reason": "instruction.md names the files (type-generation/index.ts, type-generation.test.ts), functions (collectCoreBindings, collectCoreBindingsPerEnvironment), config keys (ai_search_namespaces, ai_search), and type names (AiSearchNamespace, AiSearchInstance) that tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the developer HOW to fix it: 'vpc_services bindings call addBinding(binding, \"Fetcher\", \"vpc_services\", envName)' as a template, and 'They need to handle: ai_search_namespaces config \u2192 type \"AiSearchNamespace\"' and 'ai_search config \u2192 type \"AiSearchInstance\"'. It also specifies the exact pattern for collectCoreBindingsPerEnvironment with bindings.push({bindingCategory, name, type}). This is a recipe, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "instruction describes what's missing and expected output but doesn't prescribe exact code/lines; agent must still figure out the implementation pattern."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_core_bindings_ai_search_namespace and test_core_bindings_ai_search_instance do text-based searches for specific patterns: they look for 'ai_search_namespaces' within the collectCoreBindings function body, check for '\"AiSearchNamespace\"' string literal, and require 'addBinding' call nearby. test_per_env_bindings_ai_search checks for 'bindingCategory' and specific string patterns. An alternative correct implementation using a different internal structure (e.g., a lookup table or di"
+      "outcome": "pass",
+      "reason": "Tests check for string presence of type names and addBinding usage within function boundaries; multiple valid implementations using addBinding would pass, though they do constrain use of addBinding which is a reasonable existing helper."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_core_bindings_ai_search_namespace, test_core_bindings_ai_search_instance, test_per_env_bindings_ai_search_namespace, test_per_env_bindings_ai_search) all read the source file as text and use string matching (indexOf, includes, regex) to verify the presence of specific patterns. They never import, execute, or call the functions. The pass-to-pass tests do run the actual test suite (test_repo_wrangler_type_generation_tests), but the core fail-to-pass tests are purely te"
+      "outcome": "pass",
+      "reason": "Tests run pnpm vitest for type-generation.test.ts and ai-search.test.ts, and run build/typecheck \u2014 actual execution, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass these tests. The f2p tests check that specific strings like 'AiSearchNamespace', 'AiSearchInstance', 'ai_search_namespaces', 'addBinding', 'bindingCategory' appear within specific function bodies in the source file. A default/empty implementation wouldn't contain these strings. Additionally, test_repo_wrangler_type_generation_tests runs the actual test suite which checks generated output."
+      "reason": "The vitest test expects specific output lines like 'AI_SEARCH_NS_BINDING: AiSearchNamespace;' which stub implementations cannot produce without the actual fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires both collectCoreBindings and collectCoreBindingsPerEnvironment to handle ai_search_namespaces\u2192AiSearchNamespace and ai_search\u2192AiSearchInstance. Tests cover both functions for both binding types, plus the actual test suite runs which verify end-to-end behavior including per-environment mode."
+      "reason": "Both binding types and both functions (simple and per-environment modes) are covered by the repo tests and static checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with clear names (test_core_bindings_ai_search_namespace, test_per_env_bindings_ai_search_instance, etc.), docstrings explaining what each checks, and clear separation between pass-to-pass (gates/static checks) and fail-to-pass (core behavioral) tests with section headers."
+      "reason": "Tests are grouped by section comments (Gates, Pass-to-pass, Fail-to-pass) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces TypeScript type declarations, not structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output; generates TypeScript code whose expected form is shown in instruction."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, function names, config keys, and type names in the instruction are correct and consistent with the codebase."
+      "reason": "Filenames, paths, and identifiers all match the repository."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names both functions to modify (collectCoreBindings, collectCoreBindingsPerEnvironment), describes the exact pattern to follow ('vpc_services bindings call addBinding(binding, \"Fetcher\", \"vpc_services\", envName)'), and maps config keys to exact types. This goes beyond naming obvious files and essentially provides the implementation template."
+      "outcome": "pass",
+      "reason": "Instruction names the module/functions to modify, appropriate since localization isn't the task \u2014 the task is implementing the missing mapping."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no agentmd config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

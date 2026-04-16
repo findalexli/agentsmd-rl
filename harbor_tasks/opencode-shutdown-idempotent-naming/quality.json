@@ -3,60 +3,61 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific strings not mentioned in instruction.md: 'let stopped = false', 'if (stopped) return', 'stopped = true' (test_stop_function_is_idempotent); exact variable names 'root', 'file', 'network', 'external' replacing 'baseCwd', 'workerPath', 'networkOpts', 'shouldStartServer' (test_short_variable_names); exact function signatures 'async function target()' and 'async function input(' (test_helper_functions_extracted); exact AGENTS.md strings like 'THIS RULE IS MANDATORY FOR AGE"
+      "reason": "Tests assert very specific literals not mentioned in instruction.md: e.g., 'let stopped = false', 'if (stopped) return', 'stopped = true' (test_stop_function_is_idempotent); exact variable names 'root', 'file', 'network', 'external' replacing 'baseCwd', 'workerPath', 'networkOpts', 'shouldStartServer' (test_short_variable_names); exact function signatures 'async function target()' and 'async function input(' (test_helper_functions_extracted); exact AGENTS.md strings like 'THIS RULE IS MANDATORY "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'Add withTimeout import from @/util/timeout, remove unused iife import', 'Extract helper functions - A function to resolve the worker path - A function to handle piped stdin + prompt', 'Use try/finally to ensure stop() is called', 'Simplify shutdown() RPC handler \u2014 the timeout logic should now be the caller's responsibility'. These are direct prescriptions of WHAT to change, not just descriptions of what's broken."
+      "reason": "instruction.md explicitly states the exact changes: 'A function to resolve the worker path', 'A function to handle piped stdin + prompt', 'Add withTimeout import from @/util/timeout, remove unused iife import', 'Use try/finally to ensure stop() is called', specific variable renames, and exact AGENTS.md section structure. This goes well beyond describing what's broken and tells the agent exactly WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names ('let stopped = false', 'const root =', 'const file =', 'const network =', 'const external ='), exact function names ('async function target()', 'async function input('), exact idempotency pattern ('if (stopped) return', 'stopped = true'), and exact AGENTS.md text ('THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE', specific bullet point wordings). An alternative correct fix using e.g. 'let closed = false' or 'function resolveW"
+      "reason": "Tests assert gold-specific implementation details: exact variable name 'stopped' (not e.g. 'done' or 'closed'), exact helper function names 'target()' and 'input()' via string matching, exact renamed variables 'root'/'file'/'network'/'external', and exact AGENTS.md prose like 'THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE'. Any alternative correct fix using different names (e.g., 'shutdown_complete', 'resolveWorker()', 'base' instead of 'root') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_stop_function_is_idempotent, test_stop_unregisters_process_listeners, test_stop_calls_worker_terminate, test_worker_shutdown_simplified, test_helper_functions_extracted, test_short_variable_names, test_agents_md_has_naming_enforcement, test_agents_md_naming_rules_bullet_points) use only string-in-file assertions like 'assert X in content'. No test imports, calls, or executes any code to verify actual behavior."
+      "reason": "All fail-to-pass tests (test_stop_function_is_idempotent, test_stop_unregisters_process_listeners, test_stop_calls_worker_terminate, test_worker_shutdown_simplified, test_helper_functions_extracted, test_short_variable_names, test_agents_md_has_naming_enforcement, test_agents_md_naming_rules_bullet_points) use only 'assert ... in content' string matching on file contents. No test imports, calls, or executes the actual code to verify behavior."
     },
     "test_not_tautological": {
-      "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings that are NOT present in the base commit (e.g., 'let stopped = false', 'async function target()', renamed variables). A stub/no-op implementation would not add these strings, so the tests would fail."
+      "outcome": "fail",
+      "reason": "All fail-to-pass tests are pure text-matching assertions (e.g., 'assert \"let stopped = false\" in content'). An agent could satisfy them by inserting dead-code comments or unreachable code containing the exact strings without actually implementing idempotent shutdown. The tests don't verify runtime behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (idempotent stop, listener cleanup, worker terminate, helper extraction, variable renaming, AGENTS.md update, worker simplification) are tested, though only via string matching."
+      "reason": "The tests do cover the main behavioral requirements from instruction.md: idempotent stop, listener cleanup, worker terminate, helper extraction, variable naming, worker simplification, and AGENTS.md updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Pass-to-pass, Fail-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are well-grouped with section comments (Gates, Pass-to-pass, Fail-to-pass for pr_diff, Fail-to-pass for agent_config), descriptive names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "The test file test_outputs.py has a truncated comment: 'Missin' at the end of test_agents_md_naming_rules_bullet_points (line ending with 'Missin')."
+      "reason": "The truncated test file shows 'Missin' (truncated word for 'Missing') in test_agents_md_naming_rules_bullet_points, suggesting a typo or truncation issue in the test assertion message."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files, exact import changes ('Add withTimeout import from @/util/timeout, remove unused iife import'), exact helper function purposes, and exact variable renames. This goes beyond identifying the buggy module and prescribes the exact solution structure."
+      "reason": "instruction.md names exact files (thread.ts, worker.ts, AGENTS.md), exact import changes ('Add withTimeout import from @/util/timeout, remove unused iife import'), exact function names to create ('target()', 'input()'), and exact variable renames ('baseCwd' \u2192 'root', etc.). This goes far beyond pointing to the relevant module."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md change is localized \u2014 adding a new subsection under an existing section, not a full-file rewrite. The gold patch adds content without contradicting other files."
+      "reason": "The AGENTS.md change is a localized addition of a new subsection under an existing section, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "no_typos",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 3,
+  "fail_count": 7
 }

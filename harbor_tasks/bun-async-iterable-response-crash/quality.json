@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific strings like 'PASS: Consumed 6 bytes from async iterable Response', 'PASS: Direct stream closed without crashing', 'PASS: Direct stream flushed without crashing', 'PASS: Double consumption prevented'. These exact strings are embedded in the JS test code within the test file but are not discoverable from instruction.md. Also, test_source_files_exist checks specific file paths which ARE mentioned in instruction.md. However, the test_close_direct_stream_sink_guard and test_flu"
+      "outcome": "pass",
+      "reason": "Instruction names the three files and the relevant functions; tests exercise behaviors (Response.bytes(), double-consumption rejection, direct stream close/flush) all described in the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md explicitly states the root cause: 'the async iterable path sets an internal property to null rather than undefined, and the subsequent check in the consumption functions does not account for this distinction' and 'The direct consumption path does not properly mark the stream as consumed' and 'C++ wrapper functions that call into JavaScript builtins do not check for pending exceptions after the call returns.' These are very specific descriptions of what to change (check null vs und"
+      "outcome": "pass",
+      "reason": "Instruction describes symptoms (null vs undefined check, stream not locked, missing exception checks) but does not give the exact code changes like '!= null' or 'var sink = this.$sink; if (!sink) return;'."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests verify behavioral outcomes (bytes consumed correctly, double consumption rejected, streams closed/flushed without crashing) rather than implementation details. Alternative fixes (e.g., using strict null checks differently, different locking mechanisms) would pass as long as they produce correct behavior."
+      "reason": "Tests assert behavior (6 bytes consumed, second consumption rejected with locked/disturbed-like message, no crash on flush/close) rather than specific variable names or line positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute JavaScript code via Bun subprocess and check return codes and stdout output. test_source_files_exist checks file existence. The behavioral tests actually run code and verify runtime behavior, not just text patterns in source files."
+      "reason": "Tests execute Bun subprocess on JS code that constructs Responses and ReadableStreams and check runtime output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests exercise actual runtime behavior: test_null_excluded_from_direct_stream_path creates an async iterable Response and calls .bytes() which would crash on the unfixed code. A stub/no-op wouldn't produce 'PASS: Consumed 6 bytes' output with exit code 0. The tests require the actual Bun runtime to execute correctly."
+      "reason": "A stub cannot produce 6 bytes from an async iterable Response nor reject the second consumption; behavior must be implemented."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction.md describes 3 bugs but tests cover additional behaviors not explicitly described: sink guards in onCloseDirectStream and onFlushDirectStream (test_close_direct_stream_sink_guard, test_flush_direct_stream_sink_guard) are tested but only vaguely referenced in instruction.md via 'Relevant Files' listing. The close/flush sink null guard issues are not described as bugs in the instruction."
+      "outcome": "pass",
+      "reason": "Tests cover null-dereference fix, double-consumption prevention, sink guards for close/flush, and C++ exception handling as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_null_excluded_from_direct_stream_path, test_stream_locked_on_direct_consumption, etc.), have detailed docstrings explaining the bug and fix, and are logically grouped into pass-to-pass and fail-to-pass sections."
+      "reason": "Tests are grouped with section headers (pass-to-pass, fail-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing runtime bugs in a JavaScript engine, not producing structured data output."
+      "reason": "Task is a code bug fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and commands appear correct and consistent between instruction.md and the test file."
+      "reason": "File paths and function names appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names specific internal functions (onCloseDirectStream, onFlushDirectStream, readableStreamToArrayBufferDirect) and specific files, and describes the exact nature of checks that are wrong ('sets an internal property to null rather than undefined', 'does not check for pending exceptions after the call returns'). This significantly narrows the search space beyond what a bug report should provide."
+      "outcome": "pass",
+      "reason": "Instruction names modules/files involved but does not pinpoint line numbers or exact code; this is acceptable since the agent needs to localize within them."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration editing task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

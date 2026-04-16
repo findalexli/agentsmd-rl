@@ -1,59 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: nextTestSetup from e2e-utils, fetchViaHTTP from next-test-utils, __dirname for fixture directory, pages/api/single.js and pages/api/multiple.js fixture files, edge runtime config, Response.json(), req-id headers, Promise.all, JSON schemas {id: <req-id>} and {id: <req-id>, nestedId: 'nested-'+<req-id>}, and the prohibition on createNext inside test bodies and inline template strings."
+      "reason": "Instruction specifies the JSON response schemas, header name 'req-id', edge runtime requirement, Response.json() usage, fixture file location, fetchViaHTTP usage, Promise.all concurrency, and prohibition on createNext inside it/test bodies \u2014 all things tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'Import and use nextTestSetup from e2e-utils', 'Reference the fixture directory using __dirname', specifies exact fixture file names, exact JSON return schemas, exact config lines, and the exact handler behavior. This is a detailed implementation specification, not just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken (race condition, inline strings) and required outcomes but doesn't prescribe nextTestSetup or specific code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_single_fixture_executes_correctly and test_multiple_fixture_executes_correctly actually execute the fixture files via Node.js VM, which allows some implementation flexibility. However, test_uses_nexttestsetup asserts the literal string 'nextTestSetup' in the test file, test_uses_fixture_directory asserts '__dirname' or 'import.meta' or 'path.join'/'path.resolve' \u2014 these are specific implementation details. An alternative correct fix using a different setup helper (e.g., a custom beforeAll w"
+      "outcome": "pass",
+      "reason": "Tests check for fixture files under pages/api or app/api with flexible regex (_find_fixture), behavioral output via mocked execution, and absence of createNext in test bodies \u2014 alternative correct fixes (e.g., using beforeAll vs nextTestSetup) would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_single_fixture_executes_correctly and test_multiple_fixture_executes_correctly actually execute the fixture handler code in a Node.js subprocess and verify return values. While some tests (test_uses_fetchViaHTTP, test_uses_nexttestsetup, test_no_inline_route_code) are text-based, the critical f2p tests do execute code."
+      "reason": "Tests execute fixture handlers via Node subprocess with mocked Request/Response and assert on actual JSON output, plus AST-based detection of createNext placement."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fixture execution tests (test_single_fixture_executes_correctly, test_multiple_fixture_executes_correctly) actually run the handler code and check that it returns the correct JSON with the right id/nestedId values. A stub/empty file would fail these tests. test_no_per_test_instance_creation checks code structure in a meaningful way."
+      "reason": "f2p tests require actual handler execution returning correct id/nestedId values from AsyncLocalStorage \u2014 a stub couldn't satisfy the runtime behavior check."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: nextTestSetup usage, fixture files existence and correctness, no inline route code, fetchViaHTTP usage, concurrent requests with req-id via Promise.all, edge runtime config in fixtures, and elimination of per-test createNext."
+      "reason": "All instruction-required behaviors (two handlers with correct schemas, edge runtime via fixture files, fetchViaHTTP, Promise.all with req-id, no createNext in test body) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass, pass_to_pass, agent_config), descriptive function names, and docstrings explaining each check's purpose."
+      "reason": "Tests are grouped with section comments (Fail-to-pass, Pass-to-pass, Config-derived) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact JSON schemas: {id: <req-id>} for single.js and {id: <req-id>, nestedId: 'nested-'+<req-id>} for multiple.js, and tests verify these schemas."
+      "reason": "Instruction documents the exact JSON schemas {\"id\": \"<id>\"} and {\"id\": \"<id>\", \"nestedId\": \"nested-<id>\"}."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers (test/e2e/edge-async-local-storage/index.test.ts, fetchViaHTTP, req-id) match across files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact helper function to use (nextTestSetup), exact import path (e2e-utils), exact fixture file names and locations (pages/api/single.js, pages/api/multiple.js), exact API signatures (Response.json()), and exact directory reference method (__dirname). This goes well beyond identifying what's broken and specifies implementation details."
+      "outcome": "pass",
+      "reason": "Instruction names the test file (which is the task target) but doesn't point at specific buggy lines or prescribe the fix mechanism."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no AGENTS.md config edits required."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

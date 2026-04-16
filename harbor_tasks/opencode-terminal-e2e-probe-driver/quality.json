@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all critical specifics: file paths (packages/app/src/testing/terminal.ts, e2e/actions.ts, e2e/fixtures.ts, e2e/AGENTS.md), exports (terminalAttr, terminalProbe), the literal string 'data-pty-id', the window path window.__opencode_e2e.terminal.terminals[id], method names (init, connect, render, settle, drop), state fields (connected, rendered, settled), helper names (waitTerminalReady, runTerminal), and the terminalSelector reference. All test assertions map to information d"
+      "reason": "Instruction names all relevant paths (testing/terminal.ts, terminal.tsx, actions.ts, fixtures.ts, AGENTS.md), the terminalAttr constant value 'data-pty-id', the window structure __opencode_e2e.terminal.terminals[id], fields connected/rendered/settled, and helper names waitTerminalReady/runTerminal."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the precise method signatures (init(), connect(), render(data: string), settle(), drop()), the exact window state path (window.__opencode_e2e.terminal.terminals[id]), the exact export name 'terminalAttr' with its value 'data-pty-id', the exact fields (connected: boolean, rendered: string, settled: number), and the exact helper function signatures. This leaves virtually no design decisions for the agent \u2014 it's a specification of the solution"
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior and API surface without dictating exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_terminal_attr_constant checks the exact export name 'terminalAttr' with exact value 'data-pty-id'; test_terminal_probe_state_tracking checks the exact export name 'terminalProbe', exact method names (init, connect, render, settle), and exact state shape {connected, rendered, settled}; test_syntax_check checks for literal strings 'terminalAttr' and 'terminalProbe' in source. An alternative correct implementation using different naming (e."
+      "outcome": "pass",
+      "reason": "Tests use flexible discovery (Object.values find, name substring matching for init/connect/render/settle/cleanup) rather than asserting specific function names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Core behavioral tests (test_terminal_probe_state_tracking, test_terminal_probe_drop, test_terminal_probe_noop_without_window, test_terminal_attr_constant) actually import and execute the TypeScript module via node --experimental-strip-types, then check runtime behavior. test_syntax_check does text search but is supplementary. Repo tests run typecheck, unit tests, and prettier as subprocesses."
+      "reason": "Tests execute the module via node --experimental-strip-types, call probe methods, and inspect window state; some integration tests inspect source but core f2p tests run code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning default values would fail: test_terminal_attr_constant checks the specific string 'data-pty-id'; test_terminal_probe_state_tracking checks that after calling init/connect/render/settle, state has connected=true, rendered='hello world', settled=1 \u2014 a no-op stub would leave these as defaults (false/empty/0); test_terminal_probe_drop checks that an entry is actually removed after drop()."
+      "reason": "test_terminal_probe_tracks_state asserts rendered='hello world' and settled=1 after calls, which a stub returning defaults cannot satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Several behaviors required by instruction.md are NOT tested: (1) integration of probe into terminal.tsx (no test checks terminal.tsx changes), (2) waitTerminalReady and runTerminal helper implementations in actions.ts (only AGENTS.md documentation is checked, not actual code), (3) fixture setup in fixtures.ts with page.addInitScript (no test), (4) the terminal root element having data-pty-id attribute in the component."
+      "outcome": "pass",
+      "reason": "Tests cover probe state tracking, cleanup, noop without window, terminal.tsx integration, actions helpers, and fixtures init script setup."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI/CD, Config/documentation), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Integration tests) and tagged [static]/[pr_diff]."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact schema for window.__opencode_e2e.terminal.terminals[id] with fields connected: boolean, rendered: string, settled: number, and the overall structure { enabled: true, terminals: {} }."
+      "reason": "Window state schema {enabled, terminals} and per-terminal fields {connected, rendered, settled} are documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or function names across instruction.md and test files."
+      "reason": "Paths and identifiers in instruction are consistent with tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files to modify (terminal.tsx, testing/terminal.ts, actions.ts, fixtures.ts, selectors.ts, AGENTS.md), exact export names (terminalAttr, terminalProbe), exact method signatures, exact state field names and types, and exact DOM attribute values. This goes well beyond identifying the problem domain \u2014 it's a complete implementation specification."
+      "outcome": "pass",
+      "reason": "Instruction names files but does not point to specific buggy lines; localization to these files is inherent to the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code task, not a config-edit task."
+      "reason": "Not an agentmd-config-edits task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

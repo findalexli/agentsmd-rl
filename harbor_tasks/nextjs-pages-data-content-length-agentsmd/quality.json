@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific patterns like 'Buffer.from(JSON.stringify(result.value.pageData))' and 'Buffer.from(previousCacheEntry.value.html)' which are not mentioned in instruction.md. The instruction says to inspect code paths but never names these exact string patterns. Also, test_agents_md_smoke_test_gotchas_syntax checks for 'Quick smoke testing' text and 'new-test --args true' which aren't quoted in the instruction. The test_handler_not_stub checks for specific keywords like 'CachedRouteKind' a"
+      "reason": "Tests assert specific patterns like 'Buffer.from(JSON.stringify(result.value.pageData))' and 'Buffer.from(previousCacheEntry.value.html)' which are exact code strings not mentioned in instruction.md. Tests also check for specific keywords in the handler like 'CachedRouteKind', 'generateEtags' (test_handler_not_stub), line count thresholds (>200 lines, >100 code lines), and the exact string 'pnpm new-test -- --args' \u2014 while the AGENTS.md syntax is described, the Buffer.from patterns being the spe"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'verify that the response body is in the correct form that enables header generation' and directly tells the agent that Buffer.from wrapping is the problem (by saying 'passed to RenderResult in a way that allows Content-Length and ETag headers to be generated'). For AGENTS.md, it literally states the exact corrected syntax: 'The correct syntax must include a double-dash (--) separator: pnpm new-test -- --args' and says 'These must be corrected to pnpm n"
+      "reason": "The instruction explicitly states the fix: 'The response body... must be passed to RenderResult in a way that allows Content-Length and ETag headers to be generated' and 'verify that the response body is in the correct form that enables header generation.' Combined with pointing to exact line numbers (~740 and ~526) and the specific code paths, plus stating the exact corrected syntax 'pnpm new-test -- --args', this tells the agent exactly what to change. For AGENTS.md, it literally says 'These m"
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check for absence of specific buggy patterns (Buffer.from wrapping) rather than asserting a specific fix implementation. An agent could theoretically use toString(), or pass the string directly, or use any other non-Buffer approach. The AGENTS.md tests check for presence of correct syntax which is the only valid fix."
+      "outcome": "fail",
+      "reason": "test_data_response_path_no_buffer asserts 'Buffer.from(JSON.stringify(result.value.pageData))' is NOT in code, and test_isr_fallback_path_no_buffer asserts 'Buffer.from(previousCacheEntry.value.html)' is NOT in code. An alternative fix could wrap the Buffer differently (e.g., using a custom toStringBuffer helper, or passing the string through an intermediate variable before RenderResult) and still contain Buffer.from with different arguments \u2014 but someone who removes Buffer.from entirely and ins"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax) are purely text-matching with 'assert X not in code' or 'assert X in content'. test_string_render_result_enables_headers does execute a subprocess but it runs a self-contained Node script that doesn't import or test actual project code\u2014it recreates a simplified mock. The repo lint/typecheck/unit tests do execute real code bu"
+      "reason": "test_data_response_path_no_buffer and test_isr_fallback_path_no_buffer are purely text-matching tests ('assert X not in code'). test_agents_md_new_test_forward_args and test_agents_md_smoke_test_gotchas_syntax are also purely text-matching. test_string_render_result_enables_headers does execute a subprocess (node -e) but it runs a self-contained simulation, not the actual code. The majority of fail-to-pass tests are string-in-file checks with no execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for absence of specific buggy patterns (Buffer.from(...)) and presence of specific corrected strings in AGENTS.md. A stub implementation (empty file or default returns) would fail test_handler_not_stub which requires >200 lines and specific keywords. The AGENTS.md tests require specific string patterns that wouldn't exist by default."
+      "reason": "The f2p tests check for absence of specific buggy patterns (Buffer.from wrapping) and presence of specific correct syntax in AGENTS.md. A stub/empty file would fail test_handler_not_stub (requires >200 lines and specific keywords) and the AGENTS.md tests require specific content. The default/unmodified repo would fail these tests since it contains the buggy patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes fixing Buffer.from wrapping in two code paths and fixing AGENTS.md syntax in two places\u2014all four are tested. The behavioral verification test (test_string_render_result_enables_headers) is also mentioned in the instruction."
+      "reason": "The instruction describes fixing Content-Length/ETag for data responses (two code paths) and fixing AGENTS.md syntax (two locations). All four are tested: test_data_response_path_no_buffer, test_isr_fallback_path_no_buffer, test_agents_md_new_test_forward_args, test_agents_md_smoke_test_gotchas_syntax."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass pr_diff, fail-to-pass AGENTS.md, pass-to-pass behavioral, pass-to-pass repo tests) and descriptive docstrings for each test function."
+      "reason": "Tests are well-organized with clear section comments (Fail-to-pass pr_diff, Pass-to-pass behavioral verification, Pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,22 +39,23 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives exact line numbers ('around line 740', 'around line 526'), exact variable names ('previousCacheEntry.value.html'), exact code paths ('isNextDataRequest code path'), and the exact fix for AGENTS.md ('must include a double-dash (--) separator: pnpm new-test -- --args'). This eliminates the need for any bug localization reasoning."
+      "reason": "The instruction specifies exact line numbers ('around line 740' and 'around line 526') in the buggy code, names the exact code paths (isNextDataRequest, previousCacheEntry.value.html), and for AGENTS.md explicitly states the exact fix ('pnpm new-test -- --args'). This goes beyond describing what's broken and into specifying exactly where and what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold AGENTS.md diff is localized to specific lines (syntax corrections in two sections) and doesn't contradict other files. The code diff is similarly scoped to removing Buffer.from wrapping in two locations."
+      "reason": "The AGENTS.md gold diff is localized to two small sections (changing 3 lines in the non-interactive section and 1 line in the Test Gotchas section), not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 5,
+  "fail_count": 5
 }

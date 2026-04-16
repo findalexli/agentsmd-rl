@@ -2,52 +2,51 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example, test_node_and_version_extraction requires exact patterns like 'const auto & node = node_with_version.first' and 'const auto version = node_with_version.second', and test_removal_tracking requires exact pattern 'if (code == Coordination::Error::ZOK)\\n++removed'. The instruction says 'Track successful removals' and 'Count how many nodes are successfully removed' but does not specify the"
+      "outcome": "pass",
+      "reason": "All test assertions check for patterns explicitly described in instruction.md: the vector<pair<String,int32_t>> type, emplace_back with two args, tryRemove with version, ZBADVERSION handling alongside ZNONODE, removal counting with 'Removed {}/{} stale processing nodes', LOG_TRACE messages for removal and skip, the function name cleanupPersistentProcessingNodes, and the file path. Every asserted string/pattern is discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Replace the Strings nodes_to_remove declaration with std::vector<std::pair<String, int32_t>>', 'pass both the node path and its recorded version', specific log message strings, specific error codes to handle, and the exact format of the final log message. This is a step-by-step implementation guide, not a problem description."
+      "reason": "The instruction explicitly tells the agent exactly what to change: replace 'Strings nodes_to_remove' with 'std::vector<std::pair<String, int32_t>>', pass version to tryRemove, handle ZBADVERSION alongside ZNONODE, use specific log format strings like 'Removed {}/{} stale processing nodes' and 'Removing stale processing node: {}'. This is essentially a line-by-line specification of the fix, not just a description of the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: test_node_and_version_extraction requires exact variable name 'node_with_version' with '.first' and '.second' access (structured bindings like 'auto [node, version]' would fail). test_removal_tracking requires exact pattern 'size_t removed = 0' and 'if (code == Coordination::Error::ZOK)\\n++removed' with specific newline placement. An alternative using structured bindings, different counter names, or different control flow would fail."
+      "reason": "Tests assert on gold-specific implementation details: test_version_in_nodes_to_remove requires exactly std::vector<std::pair<String, int32_t>>, test_node_and_version_extraction requires .first/.second or structured bindings, test_removal_tracking requires the exact log format 'Removed {}/{} stale processing nodes'. An alternative using a struct instead of pair, or a map, or different log formatting would fail despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file and does regex pattern matching on the text content (e.g., re.search on file content). No test compiles, links, or executes the C++ code. All tests are variations of 'assert pattern in open(path).read()'."
+      "reason": "Every test reads the source file as text and uses regex pattern matching (re.search on file content). No test compiles the code, executes it, or checks runtime behavior. E.g., test_tryremove_with_version just does re.findall(tryremove_pattern, func_content). This is purely textual assertion."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns that don't exist in the original file (e.g., std::vector<std::pair<String, int32_t>>, ZBADVERSION handling, version parameter in tryRemove). A stub or unmodified file would not pass these tests."
+      "reason": "The original file has 'Strings nodes_to_remove' and 'tryRemove(node)' with one argument. A stub/unchanged file would fail tests like test_version_in_nodes_to_remove (no pair declaration), test_tryremove_with_version (tryRemove has one arg), test_zbadversion_handling (no ZBADVERSION), etc. The tests require actual code modifications."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (version-aware storage, version-passing to tryRemove, ZBADVERSION handling, log messages, removal tracking) have corresponding test functions."
+      "reason": "All behaviors listed in instruction.md are tested: version storage in pairs (test_version_in_nodes_to_remove), version passed to tryRemove (test_tryremove_with_version), ZBADVERSION handling (test_zbadversion_handling), removal tracking (test_removal_tracking), log before removal (test_log_trace_for_removal), log on skip (test_log_trace_for_skip), and old declaration removal (implicit in requiring the new type)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_version_in_nodes_to_remove, test_tryremove_with_version, etc.), each has a docstring explaining what it checks, and they're logically grouped by concern."
+      "reason": "Tests are well-named (test_version_in_nodes_to_remove, test_tryremove_with_version, etc.), each has a docstring explaining what behavioral aspect it verifies, and they are logically grouped by the aspect of the fix they validate."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves C++ source code modification, not structured data output."
+      "reason": "This task modifies C++ source code, not structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "File paths, function names, variable names, and error codes are all correctly spelled throughout instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file path (src/Storages/ObjectStorageQueue/ObjectStorageQueueMetadata.cpp), the exact function name (cleanupPersistentProcessingNodes), the exact data structure change (Strings -> std::vector<std::pair<String, int32_t>>), exact variable names, and exact log message strings. This goes far beyond naming the buggy module."
+      "reason": "instruction.md names the exact file (src/Storages/ObjectStorageQueue/ObjectStorageQueueMetadata.cpp), the exact function (cleanupPersistentProcessingNodes), the exact variable to replace ('Strings nodes_to_remove'), and the exact replacement type (std::vector<std::pair<String, int32_t>>). This goes well beyond identifying the buggy area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -56,6 +55,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

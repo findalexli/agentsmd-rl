@@ -1,0 +1,29 @@
+name = "oxc-latin1-deserialize"
+title = "Optimize string deserialization with latin1Slice for NAPI parser"
+description = "Speed up decoding strings in raw transfer by implementing Latin1 decoding optimizations, replacing TextDecoder with Buffer.prototype.latin1Slice for 1-byte-per-char strings, removing string-concatenation loops in favor of String.fromCharCode.apply, and increasing the native call threshold from 9 to 64 bytes."
+difficulty = "medium"
+tags = ["javascript", "performance", "parser", "napi"]
+time_limit = 600
+
+[metadata]
+owner = "oxc-project"
+repo = "oxc"
+pr_number = 21021
+base_commit = "55e1e9b1d22c30f8ec9bf937c66c4d5d428a6116"
+merge_commit = "012c924a046b2dc14c0f381b188743fc24226b79"
+
+[target_files]
+primary = [
+    "tasks/ast_tools/src/generators/raw_transfer.rs",
+]
+generated = [
+    "apps/oxlint/src-js/generated/deserialize.js",
+    "napi/parser/src-js/generated/deserialize/js.js",
+    "napi/parser/src-js/generated/deserialize/js_parent.js",
+    "napi/parser/src-js/generated/deserialize/js_range.js",
+    "napi/parser/src-js/generated/deserialize/js_range_parent.js",
+    "napi/parser/src-js/generated/deserialize/ts.js",
+    "napi/parser/src-js/generated/deserialize/ts_parent.js",
+    "napi/parser/src-js/generated/deserialize/ts_range.js",
+    "napi/parser/src-js/generated/deserialize/ts_range_parent.js",
+]

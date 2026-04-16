@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The tests assert on the specific function name `get_foreign_key_names` (e.g., test_get_foreign_key_names_exists, test_drop_fks_uses_helper_function). While instruction.md does mention this exact function name and signature, test_drop_fks_uses_helper_function does a source-code grep asserting that `drop_fks_for_table` calls `get_foreign_key_names` internally \u2014 this refactoring requirement is stated in instruction.md but the test checks the literal string in source code, which is a very specific i"
+      "reason": "The instruction specifies `get_foreign_key_names(table_name: str) -> set[str]` and mentions refactoring `drop_fks_for_table`, but test `test_drop_fks_uses_helper_function` asserts that the string 'get_foreign_key_names' appears in the source body of `drop_fks_for_table` via source code inspection. While the instruction does mention refactoring drop_fks_for_table to use the helper, the specific assertion mechanism (source code text search) and exact function name matching are discoverable. Howeve"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly prescribes the exact solution: implement a helper called `get_foreign_key_names(table_name: str) -> set[str]` that uses SQLAlchemy inspector API, have `create_fks_for_table()` call this helper, and refactor `drop_fks_for_table()` to use it. This is not just describing what's broken \u2014 it specifies WHAT to change and HOW."
+      "reason": "The instruction explicitly specifies the exact helper function name `get_foreign_key_names`, its exact signature `(table_name: str) -> set[str]`, that it must use the SQLAlchemy inspector API, and that both `create_fks_for_table` and `drop_fks_for_table` must call it. This prescribes the implementation rather than just describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce a specific implementation: test_get_foreign_key_names_exists checks for a function with the exact name `get_foreign_key_names`; test_drop_fks_uses_helper_function greps source code for `get_foreign_key_names` inside `drop_fks_for_table`. An alternative correct fix (e.g., using a different helper name like `existing_fk_names()`, or inlining the check without a helper) would fail these tests despite being functionally correct."
+      "reason": "Tests require a specific helper function named `get_foreign_key_names` (test_get_foreign_key_names_exists), require it returns a set (test_get_foreign_key_names_returns_set), and require `drop_fks_for_table` calls this specific helper by name via source code inspection (test_drop_fks_uses_helper_function). An alternative correct fix that inlined the check or used a differently-named helper would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "test_drop_fks_uses_helper_function reads source code text and asserts `'get_foreign_key_names' in line` \u2014 this is pure text matching with no execution. While other tests do call functions, this specific fail-to-pass test is purely text-based."
+      "reason": "test_drop_fks_uses_helper_function reads the source file and checks if the string 'get_foreign_key_names' appears in the body of drop_fks_for_table \u2014 this is pure text inspection (`source.split('\\n')`, string matching) with no execution of the function."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check non-trivial behavior: test_get_foreign_key_names_returns_set verifies specific set contents {'fk_test_1', 'fk_test_2'}, test_create_fks_skips_existing_foreign_key verifies create_foreign_key was NOT called and a log message was emitted. A stub returning None or empty set would fail the contents checks."
+      "reason": "The fail-to-pass tests require non-trivial behavior: get_foreign_key_names must return specific sets based on mocked inspector data (not just empty set or None), and create_fks_for_table must check existing FKs and skip creation. A stub returning None or empty would fail test_get_foreign_key_names_returns_set which checks for specific FK names in the result."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: checking if FK exists before creation (test_create_fks_skips_existing_foreign_key), logging when skipping (same test checks log), the helper function existence and behavior (multiple tests), and refactoring drop_fks_for_table (test_drop_fks_uses_helper_function)."
+      "reason": "The instruction requires: (1) check if FK exists before creating \u2014 tested by test_create_fks_skips_existing_foreign_key, (2) skip with log message \u2014 tested by log assertion, (3) get_foreign_key_names helper \u2014 tested by multiple tests, (4) refactor drop_fks_for_table \u2014 tested by test_drop_fks_uses_helper_function."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS), descriptive names, and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly grouped into 'FAIL-TO-PASS' and 'PASS-TO-PASS' sections with descriptive names and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact helper function signature `get_foreign_key_names(table_name: str) -> set[str]`, specifies it must use SQLAlchemy inspector API, and prescribes that both `create_fks_for_table()` and `drop_fks_for_table()` must call it. This goes well beyond identifying the buggy file/function and essentially dictates the implementation."
+      "reason": "The instruction specifies the exact function name `get_foreign_key_names`, its exact signature, that it must use SQLAlchemy inspector API, and that `drop_fks_for_table` must be refactored to use it. This goes beyond describing what's broken and prescribes implementation details."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

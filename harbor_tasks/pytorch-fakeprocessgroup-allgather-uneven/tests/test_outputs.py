@@ -3,65 +3,163 @@ Task: pytorch-fakeprocessgroup-allgather-uneven
 Repo: pytorch/pytorch @ 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
 PR:   177291
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-NOTE: Full PyTorch build takes hours. Tests use:
-1. clang -fsyntax-only to verify C++ compiles
-2. Python simulation of the loop logic to verify behavioral fix
+Behavioral tests that extract the allgather loop from FakeProcessGroup.hpp,
+compile it in a minimal C++ harness with mock tensor types, and verify
+runtime behavior with different tensor size configurations.
 """
 
-import json
 import subprocess
+import tempfile
 from pathlib import Path
 
 REPO = "/workspace/pytorch"
 TARGET = Path(REPO) / "torch/csrc/distributed/c10d/FakeProcessGroup.hpp"
 
 
-def _extract_allgather_loop() -> str:
-    """Extract the allgather method's loop body from the header."""
+def _extract_allgather_loop_body() -> str:
+    """Extract the for-loop body from the allgather method.
+
+    Returns the code between checkCollectiveError() and the return statement,
+    which contains the for-loop and any guards added by a fix.
+    """
     source = TARGET.read_text()
-
-    # Find the allgather method - it spans multiple lines with signature on one
-    # line and 'override {' on a subsequent line
     lines = source.split('\n')
-    in_signature = False
-    in_allgather = False
-    brace_count = 0
-    method_lines = []
 
-    for line in lines:
-        # Start of allgather signature
-        if 'allgather(' in line and 'c10::intrusive_ptr<Work>' in line:
-            in_signature = True
-            method_lines.append(line)
+    # Find allgather method signature (not _allgather_base)
+    method_start = -1
+    for i, line in enumerate(lines):
+        if ('allgather(' in line and 'intrusive_ptr' in line
+                and '_allgather' not in line):
+            method_start = i
+            break
+
+    assert method_start >= 0, "Could not find allgather method"
+
+    # Find the opening brace of the method body
+    body_start = -1
+    brace_depth = 0
+    for i in range(method_start, min(method_start + 10, len(lines))):
+        if '{' in lines[i]:
+            body_start = i + 1
+            brace_depth = lines[i].count('{') - lines[i].count('}')
+            break
+
+    assert body_start >= 0, "Could not find allgather method body start"
+
+    # Collect lines between opening brace and closing brace,
+    # skipping checkCollectiveError and the return statement
+    body_lines = []
+    for i in range(body_start, len(lines)):
+        line = lines[i]
+        brace_depth += line.count('{') - line.count('}')
+        if brace_depth <= 0:
+            break
+        stripped = line.strip()
+        if stripped.startswith('return '):
             continue
+        if 'checkCollectiveError' in stripped:
+            continue
+        body_lines.append(line)
 
-        if in_signature:
-            method_lines.append(line)
-            # Check for override and opening brace
-            if 'override' in line:
-                in_signature = False
-                in_allgather = True
-                brace_count = line.count('{') - line.count('}')
-                continue
-
-        if in_allgather:
-            method_lines.append(line)
-            brace_count += line.count('{') - line.count('}')
-            if brace_count == 0:
-                break
-
-    if method_lines:
-        return '\n'.join(method_lines)
-
-    return ""
+    result = '\n'.join(body_lines)
+    assert result.strip(), "Extracted allgather loop body is empty"
+    return result
 
 
-# -----------------------------------------------------------------------------
+# C++ test harness template.
+# LOOP_BODY_PLACEHOLDER and SCENARIO_PLACEHOLDER are replaced at runtime.
+_CPP_HARNESS = r"""
+#include <vector>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <cstdint>
+
+struct Tensor {
+    int64_t _dim0;
+    bool was_copied;
+
+    Tensor() : _dim0(0), was_copied(false) {}
+    Tensor(int64_t d0) : _dim0(d0), was_copied(false) {}
+
+    int64_t size(int dim) const {
+        return dim == 0 ? _dim0 : 1;
+    }
+
+    std::vector<int64_t> sizes() const {
+        return {_dim0, 1};
+    }
+
+    int64_t numel() const { return _dim0; }
+
+    void copy_(const Tensor& other) {
+        if (_dim0 != other._dim0) {
+            throw std::runtime_error("copy_ shape mismatch");
+        }
+        was_copied = true;
+    }
+};
+
+void checkCollectiveError() {}
+
+int main() {
+    std::vector<std::vector<Tensor>> outputTensors;
+    std::vector<Tensor> inputTensors;
+
+    std::string scenario = "SCENARIO_PLACEHOLDER";
+    if (scenario == "matching") {
+        outputTensors = {{Tensor(5), Tensor(5)}};
+        inputTensors = {Tensor(5)};
+    } else {
+        outputTensors = {{Tensor(5), Tensor(4)}};
+        inputTensors = {Tensor(5)};
+    }
+
+    try {
+LOOP_BODY_PLACEHOLDER
+    } catch (const std::exception& e) {
+        std::cout << "CRASH:" << e.what() << std::endl;
+        return 2;
+    }
+
+    for (size_t i = 0; i < outputTensors[0].size(); i++) {
+        std::cout << "tensor_" << i
+                  << "_copied=" << outputTensors[0][i].was_copied
+                  << std::endl;
+    }
+
+    return 0;
+}
+"""
+
+
+def _build_and_run(loop_body: str, scenario: str) -> subprocess.CompletedProcess:
+    """Compile and run the C++ test harness with the extracted loop body."""
+    source = _CPP_HARNESS.replace(
+        "LOOP_BODY_PLACEHOLDER", loop_body
+    ).replace(
+        "SCENARIO_PLACEHOLDER", scenario
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src = Path(tmpdir) / "test.cpp"
+        exe = Path(tmpdir) / "test"
+        src.write_text(source)
+
+        comp = subprocess.run(
+            ["clang++", "-std=c++17", "-o", str(exe), str(src)],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert comp.returncode == 0, f"Compilation failed:\n{comp.stderr}"
+
+        return subprocess.run(
+            [str(exe)], capture_output=True, text=True, timeout=10,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def test_header_balanced_braces():
@@ -93,280 +191,168 @@ def test_header_balanced_braces():
 
 
 def test_syntax_valid():
-    """C++ code must be syntactically valid (clang -fsyntax-only)."""
-    # Extract just the allgather method and wrap in minimal context for parsing
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
-
-    # Write a minimal test file that includes the header for syntax checking
-    test_cpp = Path(REPO) / "_syntax_check.cpp"
-
-    # Create a minimal file that includes the header
-    # We need to handle the case where dependencies aren't available
-    cpp_content = f'''
-// Minimal syntax check for FakeProcessGroup.hpp
-// This verifies the code structure is valid C++
-
-// Forward declarations to satisfy parsing
-namespace c10 {{
-    template<typename T> class intrusive_ptr;
-    class ScalarType;
-}}
-
-namespace torch {{
-    class Tensor {{
-    public:
-        long size(int dim) const {{ return 0; }}
-        void copy_(const torch::Tensor& other) {{}}
-    }};
-}}
-
-// Simplified check - verify the pattern exists
-// The actual header is complex; we verify key patterns exist
-'''
-
-    test_cpp.write_text(cpp_content)
-
-    try:
-        # Run clang in syntax-only mode
-        r = subprocess.run(
-            ["clang", "-fsyntax-only", "-std=c++17", "-xc++", str(test_cpp)],
-            capture_output=True, text=True, timeout=30, cwd=REPO,
-        )
-        # We expect this to work for our minimal file
-        assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
-    finally:
-        test_cpp.unlink(missing_ok=True)
+    """The extracted allgather loop must compile as valid C++."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "matching")
+    assert result.returncode == 0, (
+        f"Allgather loop did not compile or run:\n"
+        f"{result.stdout}\n{result.stderr}"
+    )
 
 
-# -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - behavioral tests via subprocess
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- behavioral tests via C++ compilation & execution
+# ---------------------------------------------------------------------------
 
 
 def test_allgather_size_guard_present():
-    """allgather must have a size(0) comparison guard before copy_."""
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
+    """allgather with uneven tensors must not crash and must still copy matching ones."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "uneven")
 
-    # Check for size comparison pattern
-    has_size_check = (
-        "tensor.size(0)" in loop_code and
-        "inputTensors[0].size(0)" in loop_code and
-        "!=" in loop_code
+    assert result.returncode != 2, (
+        "allgather loop crashed on uneven tensors (no size guard):\n"
+        f"{result.stdout}"
     )
-    assert has_size_check, (
-        "Missing size(0) comparison guard in allgather loop. "
-        "Expected: if (tensor.size(0) != inputTensors[0].size(0))"
+    assert result.returncode == 0, (
+        f"allgather loop failed unexpectedly:\n"
+        f"{result.stdout}\n{result.stderr}"
+    )
+    # Matching tensor (same size as input) must still be copied
+    assert "tensor_0_copied=1" in result.stdout, (
+        f"Matching tensor was not copied:\n{result.stdout}"
     )
 
 
 def test_allgather_continue_present():
-    """Mismatched tensors must be skipped via continue statement."""
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
+    """Mismatched-size tensors must be skipped; matching ones must be copied."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "uneven")
 
-    # The fix adds: if (size mismatch) { continue; }
-    has_continue = "continue;" in loop_code
-    assert has_continue, (
-        "Missing 'continue;' statement in allgather loop. "
-        "Mismatched-size tensors will not be skipped."
+    assert result.returncode == 0, (
+        f"allgather loop crashed or failed:\n"
+        f"{result.stdout}\n{result.stderr}"
+    )
+    # Matching tensor must still be copied
+    assert "tensor_0_copied=1" in result.stdout, (
+        f"Matching tensor was not copied:\n{result.stdout}"
+    )
+    # Mismatched tensor must NOT be copied
+    assert "tensor_1_copied=0" in result.stdout, (
+        "Mismatched tensor was modified when it should have been skipped:\n"
+        f"{result.stdout}"
     )
 
 
 def test_allgather_uneven_behavior_simulation():
-    """Simulated loop behavior: uneven tensors are skipped without crash.
+    """allgather: matching tensors copied, mismatched tensors skipped."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "uneven")
 
-    This test simulates the C++ allgather loop logic in Python to verify
-    the fix correctly handles uneven tensor sizes without crashing.
-    """
-    SIMULATION_SCRIPT = """
-import sys
-
-# Simulate the allgather loop behavior
-class MockTensor:
-    def __init__(self, shape0, data=None):
-        self._shape0 = shape0
-        self._data = data
-        self.copied = False
-
-    def size(self, dim):
-        if dim == 0:
-            return self._shape0
-        return 1
-
-    def copy_(self, other):
-        # In real PyTorch, this would crash if shapes don't match
-        if self._shape0 != other._shape0:
-            raise RuntimeError(f"Shape mismatch: {self._shape0} vs {other._shape0}")
-        self._data = other._data
-        self.copied = True
-
-# Simulate the FIXED allgather loop
-def fixed_allgather(output_tensors, input_tensor):
-    for tensor in output_tensors:
-        # The fix: check sizes before copy
-        if tensor.size(0) != input_tensor.size(0):
-            continue
-        tensor.copy_(input_tensor)
-
-# Test: uneven output tensors (the bug scenario)
-input_tensor = MockTensor(5, "ones")
-output_tensors = [MockTensor(5), MockTensor(4)]  # Uneven sizes
-
-try:
-    fixed_allgather(output_tensors, input_tensor)
-
-    # Verify behavior
-    assert output_tensors[0].copied, "First tensor (size 5) should be copied"
-    assert not output_tensors[1].copied, "Second tensor (size 4) should be skipped"
-
-    print("PASS: Uneven allgather handled correctly")
-    sys.exit(0)
-except Exception as e:
-    print(f"FAIL: {e}")
-    sys.exit(1)
-"""
-
-    r = subprocess.run(
-        ["python3", "-c", SIMULATION_SCRIPT],
-        capture_output=True, text=True, timeout=15,
+    assert result.returncode == 0, (
+        f"allgather loop crashed or failed:\n"
+        f"{result.stdout}\n{result.stderr}"
     )
-    assert r.returncode == 0, f"Behavior simulation failed: {r.stderr}"
-    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
+    assert "tensor_0_copied=1" in result.stdout, (
+        f"Matching tensor was not copied:\n{result.stdout}"
+    )
+    assert "tensor_1_copied=0" in result.stdout, (
+        f"Mismatched tensor was modified:\n{result.stdout}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (pr_diff) -- regression & structure checks
+# ---------------------------------------------------------------------------
 
 
 def test_original_broken_behavior():
-    """Original code (without fix) would crash on uneven tensors.
+    """allgather with all-matching tensors must copy all of them.
 
-    This test simulates the ORIGINAL buggy allgather loop to confirm
-    the bug exists and our simulation is accurate.
+    Verifies the core copy logic works regardless of whether a size guard
+    is present -- when all tensors match, they should all be filled.
     """
-    BROKEN_SIMULATION = """
-import sys
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "matching")
 
-class MockTensor:
-    def __init__(self, shape0, data=None):
-        self._shape0 = shape0
-        self._data = data
-        self.copied = False
-
-    def size(self, dim):
-        return self._shape0 if dim == 0 else 1
-
-    def copy_(self, other):
-        if self._shape0 != other._shape0:
-            raise RuntimeError(f"copy_ failed: shape {self._shape0} != {other._shape0}")
-        self.copied = True
-
-# Original buggy loop (no size guard)
-def broken_allgather(output_tensors, input_tensor):
-    for tensor in output_tensors:
-        # No guard - directly copy (crashes on mismatch)
-        tensor.copy_(input_tensor)
-
-# Test with uneven tensors
-input_tensor = MockTensor(5, "ones")
-output_tensors = [MockTensor(5), MockTensor(4)]
-
-try:
-    broken_allgather(output_tensors, input_tensor)
-    print("FAIL: Should have crashed but did not")
-    sys.exit(1)
-except RuntimeError as e:
-    print(f"PASS: Confirmed bug exists - {e}")
-    sys.exit(0)
-"""
-
-    r = subprocess.run(
-        ["python3", "-c", BROKEN_SIMULATION],
-        capture_output=True, text=True, timeout=15,
+    assert result.returncode == 0, (
+        f"allgather loop failed on matching tensors:\n"
+        f"{result.stdout}\n{result.stderr}"
     )
-    assert r.returncode == 0, f"Broken simulation failed unexpectedly: {r.stderr}"
-    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
-
-
-# -----------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) - regression + anti-stub
-# -----------------------------------------------------------------------------
+    assert "tensor_0_copied=1" in result.stdout, (
+        f"First matching tensor was not copied:\n{result.stdout}"
+    )
+    assert "tensor_1_copied=1" in result.stdout, (
+        f"Second matching tensor was not copied:\n{result.stdout}"
+    )
 
 
 def test_allgather_copy_present():
-    """copy_ must still be present in the allgather loop (regression check)."""
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
+    """copy_ must still work for matching tensors (regression check)."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "matching")
 
-    has_copy = "copy_(" in loop_code and "inputTensors[0]" in loop_code
-    assert has_copy, (
-        "copy_ statement missing from allgather loop. "
-        "Even-sized tensors will not be filled."
+    assert result.returncode == 0, (
+        f"allgather loop failed:\n{result.stdout}\n{result.stderr}"
+    )
+    assert "copied=1" in result.stdout, (
+        f"No tensors were copied -- copy_ may be missing:\n{result.stdout}"
     )
 
 
 def test_allgather_loop_structure():
-    """allgather must have a for-loop over outputTensors[0]."""
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
+    """allgather loop must iterate over and process all output tensors."""
+    loop_body = _extract_allgather_loop_body()
+    result = _build_and_run(loop_body, "matching")
 
-    # Check for loop structure
-    has_for_loop = "for" in loop_code and "outputTensors" in loop_code
-    assert has_for_loop, "Missing for-loop over outputTensors in allgather"
-
-
-# [agent_config] pass_to_pass - check from CLAUDE.md rules
-# (These are config-derived tests that ensure agent followed instructions)
+    assert result.returncode == 0, (
+        f"allgather loop structure is broken:\n"
+        f"{result.stdout}\n{result.stderr}"
+    )
+    assert "tensor_0_copied=" in result.stdout, (
+        "Loop did not process first tensor"
+    )
+    assert "tensor_1_copied=" in result.stdout, (
+        "Loop did not process second tensor"
+    )
 
 
 def test_no_over_engineering():
-    """Change should be minimal - only add size guard and continue."""
-    loop_code = _extract_allgather_loop()
-    assert loop_code, "Could not extract allgather method"
-
-    # Count lines in loop body (approximate)
+    """Change should be minimal -- only add size guard and continue."""
+    loop_code = _extract_allgather_loop_body()
     lines = [l.strip() for l in loop_code.split('\n') if l.strip()]
-
-    # The fix should add ~3 lines: if check, continue, and closing brace
-    # Original loop had ~3 lines: for, copy_, return
-    # Fixed loop should have ~5-7 lines
     assert len(lines) < 20, (
         f"Loop body too complex ({len(lines)} lines). "
         "Change should be minimal per CLAUDE.md guidelines."
     )
 
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass gates (origin: repo_tests)
-# These verify the repo's own CI checks pass on the code
-# All use subprocess.run() to execute actual CI commands
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def test_repo_fake_pg_python_syntax():
-    """FakeProcessGroup test file must have valid Python syntax (pass_to_pass).
-
-    Runs `python3 -m py_compile` which is a lightweight CI check for Python
-    syntax validity. Mirrors PyTorch CI Python compilation checks.
-    """
+    """FakeProcessGroup test file must have valid Python syntax."""
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
-
     r = subprocess.run(
         ["python3", "-m", "py_compile", str(test_file)],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Python syntax error in test_fake_pg.py: {r.stderr}"
+    assert r.returncode == 0, (
+        f"Python syntax error in test_fake_pg.py: {r.stderr}"
+    )
 
 
 def test_repo_clang_format():
-    """FakeProcessGroup.hpp must pass clang-format check (pass_to_pass).
-
-    PyTorch CI runs clang-format on all C++ changes. This test verifies
-    the header file follows the project's formatting guidelines.
-    """
+    """FakeProcessGroup.hpp must pass clang-format check."""
     import pytest
 
     r = subprocess.run(
-        ["bash", "-c", "command -v clang-format || (apt-get update -qq && apt-get install -y -qq clang-format)"],
+        ["bash", "-c",
+         "command -v clang-format || "
+         "(apt-get update -qq && apt-get install -y -qq clang-format)"],
         capture_output=True, text=True, timeout=120,
     )
     if r.returncode != 0:
@@ -383,98 +369,90 @@ def test_repo_clang_format():
 
 
 def test_repo_ruff_check():
-    """test_fake_pg.py must pass ruff check per PyTorch CI (pass_to_pass).
-
-    PyTorch CI uses ruff for Python linting. This test verifies the test
-    file passes ruff's linting rules.
-    """
+    """test_fake_pg.py must pass ruff check per PyTorch CI."""
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
-
-    # Install ruff if not available
-    r = subprocess.run(
+    subprocess.run(
         ["pip", "install", "ruff", "-q"],
         capture_output=True, text=True, timeout=60,
     )
-
     r = subprocess.run(
         ["ruff", "check", str(test_file)],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"ruff check failed for test_fake_pg.py:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, (
+        f"ruff check failed for test_fake_pg.py:\n"
+        f"{r.stdout[-500:]}{r.stderr[-500:]}"
+    )
 
 
 def test_repo_internal_fake_pg_syntax():
-    """Internal fake_pg.py module must have valid Python syntax (pass_to_pass).
-
-    Verifies the FakeProcessGroup backend registration module can be parsed
-    using `python3 -m py_compile`, matching PyTorch CI Python checks.
-    """
-    internal_file = Path(REPO) / "torch/testing/_internal/distributed/fake_pg.py"
+    """Internal fake_pg.py module must have valid Python syntax."""
+    internal_file = (
+        Path(REPO) / "torch/testing/_internal/distributed/fake_pg.py"
+    )
     assert internal_file.exists(), f"Internal module not found: {internal_file}"
-
     r = subprocess.run(
         ["python3", "-m", "py_compile", str(internal_file)],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Python syntax error in internal fake_pg.py: {r.stderr}"
+    assert r.returncode == 0, (
+        f"Python syntax error in internal fake_pg.py: {r.stderr}"
+    )
 
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Static pass_to_pass gates (origin: static)
-# These are file-content checks that don't run CI commands
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 def test_repo_header_file_exists():
-    """FakeProcessGroup.hpp must exist and be readable (pass_to_pass)."""
+    """FakeProcessGroup.hpp must exist and be readable."""
     assert TARGET.exists(), f"Target file not found: {TARGET}"
     assert TARGET.is_file(), f"Target is not a file: {TARGET}"
-    # Verify we can read it
     content = TARGET.read_text()
     assert len(content) > 0, "Target file is empty"
-    assert "FakeProcessGroup" in content, "File does not contain FakeProcessGroup class"
+    assert "FakeProcessGroup" in content, (
+        "File does not contain FakeProcessGroup class"
+    )
 
 
 def test_repo_test_fake_pg_ast_valid():
-    """test_fake_pg.py must have valid Python AST (pass_to_pass).
-
-    This test parses the test file's AST to ensure it is structurally
-    valid Python code that could be executed (deps notwithstanding).
-    """
+    """test_fake_pg.py must have valid Python AST."""
     import ast
 
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
-
     content = test_file.read_text()
     try:
         ast.parse(content)
     except SyntaxError as e:
-        raise AssertionError(f"Python AST parsing failed for test_fake_pg.py: {e}")
+        raise AssertionError(
+            f"Python AST parsing failed for test_fake_pg.py: {e}"
+        )
 
 
 def test_repo_header_utf8_valid():
-    """FakeProcessGroup.hpp must be valid UTF-8 (pass_to_pass).
-
-    PyTorch CI requires all source files to be valid UTF-8 encoded.
-    """
+    """FakeProcessGroup.hpp must be valid UTF-8."""
     r = subprocess.run(
-        ["python3", "-c", "import pathlib; pathlib.Path('" + str(TARGET) + "').read_text(encoding='utf-8')"],
+        ["python3", "-c",
+         "import pathlib; pathlib.Path('"
+         + str(TARGET)
+         + "').read_text(encoding='utf-8')"],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"FakeProcessGroup.hpp is not valid UTF-8: {r.stderr}"
+    assert r.returncode == 0, (
+        f"FakeProcessGroup.hpp is not valid UTF-8: {r.stderr}"
+    )
 
 
 def test_repo_header_no_tabs():
-    """FakeProcessGroup.hpp must use spaces, not tabs (pass_to_pass).
-
-    PyTorch uses spaces for indentation per .clang-format configuration.
-    """
+    """FakeProcessGroup.hpp must use spaces, not tabs."""
     content = TARGET.read_text()
     tab_lines = []
     for i, line in enumerate(content.split('\n'), 1):
         if '\t' in line:
             tab_lines.append(i)
-
-    assert len(tab_lines) == 0, f"Found tabs on lines: {tab_lines[:10]} - PyTorch uses spaces"
+    assert len(tab_lines) == 0, (
+        f"Found tabs on lines: {tab_lines[:10]} -- PyTorch uses spaces"
+    )

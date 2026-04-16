@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test assertions reference file paths (components/slider/index.tsx), commands (npx tsc --noEmit, npx eslint, npx biome lint, npx jest), patterns (@ts-ignore, @ts-expect-error, as any), and function names (onInternalChangeComplete) that are explicitly mentioned in instruction.md."
+      "reason": "Instruction names the file components/slider/index.tsx, the function onInternalChangeComplete, restProps, @ts-ignore, as any, and the exact verification commands used by tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md essentially describes the exact fix approach: it says restProps should be handled so 'TypeScript should understand that onAfterChange and onChange are not part of the spread' and mentions eliminating 'as any' while using 'proper type casting'. Combined with the three specific issues described, this heavily constrains the solution space to exactly what the gold patch does (Omit type assertion and recasting onChangeComplete)."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken (ts-ignore, as any, restProps spread conflict) without prescribing exact replacement code like 'as Omit<SliderProps, ...>'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_restprops_type_narrowing asserts specific implementation patterns: 'as Omit<SliderProps' or 'as Pick<' or that '{...restProps}' is not in content. An alternative valid fix like destructuring onAfterChange/onChange from restProps before spreading (e.g., `const {onAfterChange, onChange, ...rcProps} = restProps; <RcSlider {...rcProps}`) would fail this test since it wouldn't match any of the three conditions (it would still contain 'restProps' and '{...rcProps}' not '{...restProps}')."
+      "reason": "test_restprops_type_narrowing asserts `'as Omit<SliderProps' in content or 'as Pick<' in content or ('{...restProps}' not in content and 'restProps' in content)`, which rejects valid alternative fixes like destructuring restProps into a new variable or using a type helper that doesn't match these literals."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_no_ts_ignore_comment, test_onchangecomplete_no_any, test_restprops_type_narrowing, and test_no_explicit_any are purely text-based assertions (reading file content and checking for string patterns). While test_repo_tsc, test_repo_eslint_slider, etc. do execute subprocesses, the f2p tests (1-3) are entirely text-grep based with no execution."
+      "outcome": "pass",
+      "reason": "Tests run tsc, eslint, biome, and jest via subprocess, not just grep file contents."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for removal of specific patterns (@ts-ignore, as any) that exist in the base commit, and test_repo_tsc verifies tsc --noEmit passes. A stub or no-op wouldn't remove these patterns from the existing file, and wouldn't make tsc pass."
+      "reason": "tsc and jest tests require the file to compile and behave correctly; a stub would not satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: removal of @ts-ignore (test_no_ts_ignore_comment), elimination of 'as any' (test_onchangecomplete_no_any, test_no_explicit_any), restProps type narrowing (test_restprops_type_narrowing), tsc passing (test_repo_tsc), eslint (test_repo_eslint_slider), biome (test_repo_biome_lint_slider), and jest tests (test_repo_slider_type_tests, test_repo_slider_unit_tests)."
+      "reason": "All instruction requirements (no @ts-ignore, no as any in onInternalChangeComplete, restProps narrowed, tsc/eslint/biome/jest pass) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining origin (behavior, agent_config, repo_tests) and what each test verifies."
+      "reason": "Each test has a docstring explaining origin and purpose, with clear function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing TypeScript type errors in a component file, not producing structured data."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and references in instruction.md and tests are correct and consistent."
+      "reason": "Paths and commands match the repo structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names specific implementation details: 'onInternalChangeComplete callback', 'onChangeComplete?.(nextValues) uses as any', 'restProps includes onAfterChange and onChange properties'. These are specific code-level details that essentially locate and describe the exact lines to change, going beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction points to the file but doesn't leak exact line numbers or replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no agentmd config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

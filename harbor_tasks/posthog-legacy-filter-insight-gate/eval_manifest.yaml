@@ -110,6 +110,60 @@ rubric:
     architectural guidelines.
 
     '
+- rule: Always filter querysets by team_id — in serializers, access the team via self.context["get_team"]()
+  source:
+    path: AGENTS.md
+    lines: '87'
+  source_text: '- Always filter querysets by `team_id` — in serializers, access the
+    team via `self.context["get_team"]()`'
+  evidence: The updated serializer's `validate` method explicitly accesses the team
+    via `self.context["get_team"]()` to pass it to the `is_legacy_insight_filters_blocked`
+    function.
+  category: architecture
+  verification: llm_judge
+- rule: Reduce nesting with early returns and guard clauses
+  source:
+    path: AGENTS.md
+    lines: '105'
+  source_text: '- Reduce nesting: Use early returns, guard clauses, and helper methods
+    to avoid deeply nested code'
+  evidence: 'The new `is_legacy_insight_filters_blocked` function uses an early return
+    guard clause (`if not distinct_id: return False`) instead of wrapping the main
+    logic in a nested if-block.'
+  category: style
+  verification: llm_judge
+- rule: Python tests should not have doc comments
+  source:
+    path: AGENTS.md
+    lines: '101'
+  source_text: '- Python tests: do not add doc comments'
+  evidence: The two new test methods (`test_creating_legacy_filter_insight_blocked_with_feature_flag`
+    and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`) are written
+    without docstrings.
+  category: style
+  verification: llm_judge
+- rule: Implement built-in error handling at the view level
+  source:
+    path: .cursor/rules/django-python.mdc
+    lines: '23'
+  source_text: '- Implement error handling at the view level and use Django''s built-in
+    error handling mechanisms.'
+  evidence: The validation check raises `PermissionDenied(...)`, which is the built-in
+    exception mechanism in DRF/Django for permission errors, rather than returning
+    a custom error response format.
+  category: error handling
+  verification: llm_judge
+- rule: Unit tests should focus on a single use-case
+  source:
+    path: .cursor/rules/django-python.mdc
+    lines: 97-98
+  source_text: "- A good unit test should:\n    - focus on a single use-case at a\
+    \ time"
+  evidence: The patch adds two separate tests (`test_creating_legacy_filter_insight_blocked_with_feature_flag`
+    and `test_creating_query_insight_not_blocked_by_legacy_filter_flag`), testing
+    the blocked and not-blocked scenarios independently.
+  category: testing
+  verification: llm_judge
 distractors:
 - rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
   collision_type: scope_ambiguity
@@ -133,6 +187,43 @@ distractors:
   source:
     path: AGENTS.md
     lines: 66-68
+- rule: Every field has help_text
+  source:
+    path: .agents/skills/improving-drf-endpoints/SKILL.md
+    lines: '49'
+  source_text: 1. **Every field has `help_text`** — describes purpose, format, constraints,
+    valid values
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies a DRF serializer file (`insight.py`), so an agent
+    might be triggered to run an audit and add missing `help_text` to existing fields.
+    However, the PR's scope is strictly adding a feature flag validation check, so
+    refactoring existing field schemas would be an out-of-scope distraction.
+  severity: medium
+- rule: Fetch the entity via read_data
+  source:
+    path: products/posthog_ai/skills/auditing-experiments-flags/SKILL.md
+    lines: '17'
+  source_text: 1. Fetch the entity via `read_data` (e.g., `read_data("experiments",
+    id)` or `read_data("feature_flags", id)`).
+  collision_type: meta_confusion
+  why_distracting: Because the PR implements a feature flag, an agent might incorrectly
+    think it needs to audit the flag in PostHog's database using MCP tools like `read_data`.
+    The objective is to write the Python backend code to evaluate the flag locally,
+    not audit the application's runtime configuration.
+  severity: medium
+- rule: Disable flags using posthog:update-feature-flag
+  source:
+    path: products/feature_flags/skills/cleaning-up-stale-feature-flags/SKILL.md
+    lines: '66'
+  source_text: '1. **Disable** the flag (`active: false`) using `posthog:update-feature-flag`.
+    This stops it from being evaluated but keeps the configuration intact. If something
+    breaks, re-enabling is instant.'
+  collision_type: meta_confusion
+  why_distracting: The PR introduces a constant named `LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG`
+    with the value `legacy-insight-filters-disabled`. The wording might mislead an
+    agent into treating this as a stale flag cleanup task, attempting to use the MCP
+    tool to disable a flag rather than implementing the Python logic check.
+  severity: medium
 hierarchy_analysis: The config hierarchy is relatively flat, with `.cursorrules` providing
   generic AI behavior and `AGENTS.md` providing PostHog-specific guidelines. The agent
   must apply the DRF guidelines from `AGENTS.md` but must use judgment to avoid over-applying

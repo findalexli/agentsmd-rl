@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (gradio/node_server.py, js/tootils/src/app-launcher.ts), the function names (verify_server_startup, waitForServerReady, launchGradioApp), the timeout parameter (>=10.0), the requirement to import http, and the behavioral requirements (reject TCP-only, reject 5xx, accept 200). All test assertions map to things described in the instruction."
+      "reason": "Instruction names verify_server_startup behavior, 10.0s timeout, HTTP polling, and TS launcher requirements; tests check app-launcher.ts path and 'waitForServerReady'/'import http' strings which are derivable from the instruction's requirement to 'Import the Node.js http module'."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly says 'Create a function named waitForServerReady()', 'Import the http module (add import http from \"http\")', 'The default timeout parameter should be at least 10.0 seconds', and specifies using HTTP-based polling instead of TCP socket. These are implementation-level directives, not just descriptions of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required behavior but doesn't state exact line changes or function signatures to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_ts_http_readiness_polling checks for the exact string 'waitForServerReady' and 'import http' in the TypeScript file. An alternative correct fix could use a different function name (e.g., 'pollServerHealth') or use fetch/axios instead of the http module, and would fail these string-matching tests despite being functionally correct."
+      "reason": "test_ts_http_readiness_polling asserts the literal string 'waitForServerReady' in app-launcher.ts, forcing that specific function name; a correct alternative naming (e.g., 'pollServerHealth') would fail despite meeting the instruction."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_ts_http_readiness_polling is purely text-matching ('assert \"waitForServerReady\" in content' and 'assert \"import http\" in content') with no execution or behavioral verification. While most Python tests do execute code, this TypeScript test is entirely string-based."
+      "outcome": "pass",
+      "reason": "Most tests import verify_server_startup and call it against real HTTP/TCP servers; only the TS check is text-based, but behavior is genuinely exercised for Python."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_verify_rejects_tcp_only_server, test_verify_rejects_500_error, test_verify_default_timeout_increased) cannot be satisfied by stub implementations. The original verify_server_startup uses TCP socket checks and would return True for TCP-only servers, and has a default timeout of 5.0. A stub returning False would fail test_verify_accepts_healthy_server."
+      "reason": "A stub returning False would fail test_verify_accepts_healthy_server; returning True would fail test_verify_rejects_500_error and test_verify_returns_false_no_server."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: HTTP-based polling (test_verify_rejects_tcp_only_server), increased timeout (test_verify_default_timeout_increased), rejecting 5xx (test_verify_rejects_500_error), accepting 200 (test_verify_accepts_healthy_server), waitForServerReady function and http import in TS (test_ts_http_readiness_polling)."
+      "reason": "Tests cover TCP-only rejection, 500 rejection, 200 acceptance, no-server false, timeout increase, and TS HTTP polling \u2014 matching the instruction's enumerated behaviors."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section headers (fail_to_pass, pass_to_pass, repo_tests) and annotated with [pr_diff]/[static]/[repo_tests] tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task doesn't produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across the instruction and test files."
+      "reason": "Paths and names (gradio/node_server.py, js/tootils/src/app-launcher.ts, verify_server_startup) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifically names the exact function (verify_server_startup), the exact parameter to change (timeout from 5.0 to >=10.0), the exact new function to create (waitForServerReady), and the exact import to add ('import http from \"http\"'). This goes well beyond identifying what's broken and prescribes implementation details."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem area (readiness check, test launcher) without naming exact file paths or line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no agent config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

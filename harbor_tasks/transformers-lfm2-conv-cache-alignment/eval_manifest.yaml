@@ -114,11 +114,53 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Lfm2_moe modules can be imported without errors
-rubric: []  # Rubric rules removed - judge looks for config file edits but this task only modifies Python source files
-# Note: The gold solution correctly follows the repo conventions:
-# - It modifies modular_lfm2.py (the source of truth) as per the modular file pattern
-# - It removes code rather than adding, making the PR as brief as possible
-# - It doesn't introduce direct inheritance between model files
+rubric:
+- rule: Edit modular files instead of generated modeling files
+  source:
+    path: CLAUDE.md
+    lines: 64-67
+  source_text: 'We try to avoid direct inheritance between model-specific files in
+    `src/transformers/models/`. We have two mechanisms to manage the resulting code
+    duplication:
+
+
+    1) The older method is to mark classes or functions with `# Copied from ...`.
+    Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block,
+    as it will be reverted by `make fix-repo`. Ideally you should edit the code it''s
+    copying from and propagate the change, but you can break the `# Copied from` link
+    if needed.
+
+    2) The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files **can** inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files from the `modular` file. When
+    a `modular` file is present, generated files should not be edited, as changes
+    will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See
+    [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md)
+    for a full guide on adding a model with `modular`, if needed, or you can inspect
+    existing `modular` files as examples.'
+  evidence: The gold diff includes modifications to `src/transformers/models/lfm2/modular_lfm2.py`
+    (e.g., adding `update_conv_state`) which are then mirrored in `modeling_lfm2.py`
+    and `modeling_lfm2_moe.py`, demonstrating the developer edited the modular file
+    and ran `make fix-repo` rather than only editing the generated files directly.
+  category: rubric
+  verification: llm_judge
+- rule: Do not edit generated modeling files directly if a modular file exists
+  source:
+    path: .github/copilot-instructions.md
+    lines: 27-29
+  source_text: "- \"Modular\" files. These files briefly define models by composing\
+    \ them using inheritance from other models. They are not meant to be used directly.\
+    \ Instead, the style tools\n  automatically generate a complete modeling file,\
+    \ like `modeling_bert.py`, from the modular file like `modular_bert.py`. If a\
+    \ model has a modular file, the modeling file\n  should never be edited directly!\
+    \ Instead, changes should be made in the modular file, and then you should run\
+    \ `make fixup` to update the modeling file automatically."
+  evidence: The gold diff modifies `modular_lfm2.py` in addition to the generated
+    `modeling_lfm2.py` and `modeling_lfm2_moe.py` files. The presence of edits in
+    `modular_lfm2.py` proves this rule was followed to prevent changes from being
+    overwritten.
+  category: rubric
+  verification: llm_judge
 distractors:
 - rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
     do not proceed to PR-ready output.'
@@ -141,6 +183,59 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 55-55
+- rule: Bugfix PRs should minimize diff size without large comments or new functions
+  source:
+    path: .github/copilot-instructions.md
+    lines: 15-15
+  source_text: '- PRs should be as brief as possible. Bugfix PRs in particular can
+    often be only one or two lines long, and do not need large comments, docstrings
+    or new functions in this case. Aim to minimize the size of the diff.'
+  collision_type: rule_conflict
+  why_distracting: The gold diff fixes a bug by actively introducing a new helper
+    function `update_conv_state` (17 lines) and a large multi-line explanatory comment
+    about cache initialization constraints. Following this rule would lead an agent
+    to attempt a convoluted inline fix, compromising code readability and breaking
+    encapsulation, or completely omitting the necessary explanatory comment.
+  severity: high
+- rule: Do not add helper methods or abstractions just to satisfy the type checker
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 196-197
+  source_text: "- Do not add helper methods or abstractions just to satisfy the type\
+    \ checker\n     (especially for only 1-2 occurrences)"
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff adds a helper method `update_conv_state` that is
+    used exactly in 2 occurrences per model to manage cache updates. An agent seeing
+    the explicit `if past_key_values is not None` guard added in the PR might conflate
+    the cache logic bug fix with a type check fix and mistakenly apply this rule,
+    avoiding the creation of the necessary helper method.
+  severity: medium
+- rule: Narrow unions with isinstance() / if x is None / hasattr()
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 38-57
+  source_text: "a. **Narrow unions with `isinstance()` / `if x is None` / `hasattr()`**.\n\
+    \      This is the primary tool for resolving union-type errors. `ty` narrows\n\
+    \      through all of these patterns, including the negative forms:\n      ```python\n\
+    \      # Narrow X | None — use `if ...: raise`, never `assert`\n      if x is\
+    \ None:\n          raise ValueError(\"x must not be None\")\n      x.method()\
+    \  # ty knows x is X here\n\n      # Narrow str | UploadFile\n      if isinstance(field,\
+    \ str):\n          raise TypeError(\"Expected file upload, got string\")\n   \
+    \   await field.read()  # ty knows field is UploadFile here\n\n      # Narrow\
+    \ broad union parameters early in a function body\n      # (common for methods\
+    \ accepting e.g. list | dict | BatchEncoding)\n      if isinstance(encoded_inputs,\
+    \ (list, tuple)):\n          raise TypeError(\"Expected a mapping, got sequence\"\
+    )\n      encoded_inputs.keys()  # ty sees only the dict/mapping types now\n  \
+    \    ```"
+  collision_type: meta_confusion
+  why_distracting: The old code accesses `.conv_cache` without properly narrowing
+    `past_key_values`, which is a `Union[..., None]`. An agent might think the objective
+    is purely to satisfy the type checker by adding `if past_key_values is not None:`
+    type guards around the existing logic. However, the PR is actually a functional
+    logic fix that redesigns how `past_seen_tokens` and state are tracked via a new
+    `has_previous_state` flag and `update_conv_state` method. Narrowing the type alone
+    would leave the logical bug intact.
+  severity: high
 hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
   agent must navigate the meta-instructions regarding PR coordination (which should
   be ignored in a benchmark context) while strictly adhering to the architectural

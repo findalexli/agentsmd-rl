@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (function name `asRef`, regex `/^(f\\d+)?e\\d+$/`, return values like `{ ref: refOrSelector }` and `{ ref: '', selector: refOrSelector }`, parameter names `target`/`startElement`/`endElement`, `selector?: string`, file paths, `.omit()` with `selector: true`/`startSelector: true`/`endSelector: true`, `does not match any elements` error message, SKILL.md path and required content) are all explicitly named in instruction.md."
+      "reason": "The instruction names all key file paths, function names (asRef, refLocator, refLocators, filteredTools), parameter names (target, startElement, endElement, selector, startSelector, endSelector), the regex pattern, return value structures, error messages ('does not match any elements'), and schema details (z.string().optional(), .omit()) that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: exact function name `asRef`, exact signature, exact regex pattern, exact return values for each branch, exact parameter renames, exact `.omit()` call with exact keys. This is not describing what's broken but telling the agent exactly what code to write line by line."
+      "reason": "The instruction explicitly specifies exact implementation details: the regex pattern `^(f\\d+)?e\\d+$`, the exact return values of the classification helper (`{ ref: refOrSelector }`, `{ ref: '', selector: refOrSelector }`, `{}`), exact parameter renames (target, startElement, endElement), exact method signatures (selector?: string), exact .omit() call with `{ selector: true, startSelector: true, endSelector: true }`. This is effectively dictating the solution, not just describing what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation details like `refOrSelector.match(/^(f\\d+)?e\\d+$/)` as a literal string in source, `return { ref: refOrSelector }` and `return { ref: '', selector: refOrSelector }` and `return {}` as exact source strings, `asRef(target)` as exact call pattern, `this.page.locator(param.selector)` as exact string. An alternative correct implementation using e.g. `new RegExp(...)`, different variable names, or a different but equivalent code structure would fail these text-matc"
+      "reason": "Tests assert on exact implementation strings like `return { ref: refOrSelector }`, `return { ref: '', selector: refOrSelector }`, `return {}`, `function asRef(refOrSelector`, `refOrSelector.match(/^(f\\d+)?e\\d+$/)`, `this.page.locator(param.selector)`. An alternative correct implementation (e.g., using a different function name, different return structure, or `test()` instead of `match()`) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is purely text-matching via `assert 'X' in file.read_text()`. While `test_asref_function_classifies_inputs` does execute a TypeScript snippet, it runs a *reimplementation* of asRef (not the actual code from the repo), so it only verifies the logic pattern exists as text in the source. No test actually imports or calls the real code."
+      "reason": "Almost all tests are pure text-matching: `assert 'function asRef(refOrSelector' in commands_ts`, `assert 'return { ref: refOrSelector }' in commands_ts`, `assert 'this.page.locator(param.selector)' in tab_ts`, etc. The one test that executes code (test_asref_function_classifies_inputs) re-implements the function from scratch rather than importing/calling the actual code, so it doesn't verify the real implementation's behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests (e.g., `test_tool_schemas_include_selector`, `test_filtered_tools_strips_selector`, `test_tab_reflocator_accepts_selector`) can be satisfied by simply adding the asserted strings anywhere in the file without implementing actual functionality. For example, adding `// selector: z.string().optional()` as a comment or dead code would pass `test_tool_schemas_include_selector`."
+      "reason": "The test_asref_function_classifies_inputs test runs a self-contained re-implementation of asRef, not the actual code. A stub that just adds the exact string patterns to commands.ts without any real logic would pass most tests. For example, test_cli_commands_use_target_param just counts regex matches for `target: z.string()` \u2014 inserting 7 commented-out lines with that pattern would pass."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Key behaviors like 'when selector is provided, create a locator using page.locator(selector)' and 'when selector matches no elements, throw error' are only tested via string presence checks, not actual behavioral execution. The actual routing logic (auto-detecting ref vs selector at runtime) is never tested with real code execution."
+      "outcome": "pass",
+      "reason": "The tests cover all major behavioral requirements: asRef classification, CLI parameter renames, drag parameter renames, tab.ts selector support, tool schema selector fields, filteredTools stripping, and SKILL.md documentation updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names (`test_asref_function_classifies_inputs`, `test_cli_commands_use_target_param`, etc.), grouped by category (gates, fail-to-pass, config/doc), and have docstrings explaining each test's purpose."
+      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Config/doc), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it modifies source code and documentation."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in instruction.md match those used in tests and solution without typos."
+      "reason": "File paths, variable names, commands, and patterns in the instruction are consistent with the test expectations and the codebase structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact function signatures (`function asRef(refOrSelector: string | undefined): { ref?: string, selector?: string }`), exact regex patterns, exact return values for each branch, exact parameter renames, and exact `.omit()` arguments. This goes far beyond naming the buggy file/module and essentially dictates the implementation."
+      "reason": "The instruction specifies exact implementation details: the regex `^(f\\d+)?e\\d+$`, exact return value structures, exact parameter names, exact .omit() arguments, and exact method signatures. This goes far beyond describing the problem or expected behavior \u2014 it dictates the exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The SKILL.md edit is a localized addition of a documentation section, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "The SKILL.md edit is a localized addition of documentation about selector support, not a full-file rewrite, and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

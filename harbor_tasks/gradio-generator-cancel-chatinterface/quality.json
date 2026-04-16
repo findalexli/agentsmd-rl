@@ -2,32 +2,32 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (gradio/chat_interface.py, gradio/utils.py), function/method names (_stream_fn, _examples_stream_fn, SyncToAsyncIterator.aclose, safe_aclose_iterator), the requirement for aclosing from contextlib, and the async/await behavior requirements are all explicitly stated."
+      "outcome": "fail",
+      "reason": "Tests assert specifically for `aclosing` by name (e.g., test_aclosing_used_in_stream_fn checks `item.context_expr.func.id == 'aclosing'`). The instruction.md says 'async with statement should be used for proper async context management' but never names `aclosing` from `contextlib`. An agent could use a different async context manager pattern (e.g., a custom one or `asynccontextmanager`) and fail these tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'The `aclosing` context manager from `contextlib` must be used', 'SyncToAsyncIterator.aclose() must be an async method', 'safe_aclose_iterator() must await the aclose() calls'. These are not just descriptions of what's broken but prescriptions of exactly what to change (add async keyword, add await, wrap with aclosing). A competent developer doesn't need to reason about what to change."
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (aclose not awaitable, generators not closed on cancel) but does not specify exact code changes like 'add async keyword' or 'wrap with aclosing()'. A developer must reason about the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_aclosing_used_in_stream_fn and test_aclosing_used_in_examples_stream_fn use AST inspection to check for specifically `aclosing` by name (item.context_expr.func.id == 'aclosing'). An alternative correct fix using a try/finally block to call generator.aclose() would also properly clean up generators but would fail these tests."
+      "reason": "Tests test_aclosing_used_in_stream_fn and test_aclosing_used_in_examples_stream_fn use AST checks that specifically require `aclosing` by name (`item.context_expr.func.id == 'aclosing'`). An alternative correct fix using a try/finally block, a custom async context manager, or `contextlib.asynccontextmanager` would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests actually execute code: test_aclose_is_coroutine checks asyncio.iscoroutine(result), test_aclose_closes_underlying_generator runs asyncio.run() and checks generator cleanup, test_safe_aclose_iterator_awaits_generic_async_iterator runs async code. While some tests (aclosing in stream_fn/examples_stream_fn) are AST-based, they verify structural properties, and the behavioral tests dominate."
+      "reason": "Several tests (test_aclose_is_coroutine, test_aclose_closes_underlying_generator, test_safe_aclose_iterator_awaits_generic_async_iterator, test_safe_aclose_iterator_awaits_sync_to_async) extract and execute code via exec/asyncio.run, actually calling functions and checking behavior. The AST tests (test_aclosing_used_in_stream_fn/examples) are structural but not purely text-matching \u2014 they parse and walk the AST. The mix includes substantial behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub aclose() returning None would fail test_aclose_is_coroutine (which checks asyncio.iscoroutine). A stub safe_aclose_iterator with just 'pass' would fail test_safe_aclose_not_stub and test_safe_aclose_iterator_awaits_generic_async_iterator (mock.closed would remain False). The AST tests for aclosing require actual structural changes."
+      "reason": "test_aclose_is_coroutine checks `asyncio.iscoroutine(result)` which fails if aclose is a plain sync method. test_aclose_closes_underlying_generator checks that the finally block runs after await. A stub returning None or pass would fail these. test_aclose_not_stub explicitly checks for non-stub bodies."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four explicit requirements from instruction.md are tested: aclosing in _stream_fn (test_aclosing_used_in_stream_fn), aclosing in _examples_stream_fn (test_aclosing_used_in_examples_stream_fn), aclose returns coroutine (test_aclose_is_coroutine), safe_aclose_iterator awaits (test_safe_aclose_iterator_awaits_generic_async_iterator and test_safe_aclose_iterator_awaits_sync_to_async)."
+      "reason": "All four requirements from instruction.md are tested: (1) generator iteration wrapped with async context management in _stream_fn and _examples_stream_fn, (2) SyncToAsyncIterator.aclose() returns coroutine, (3) safe_aclose_iterator properly awaits, (4) syntax validity."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are clearly named, grouped with comments (Gates, Fail-to-pass, Pass-to-pass), and each has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,19 +35,19 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact methods (_stream_fn, _examples_stream_fn), exact classes (SyncToAsyncIterator), exact files, and even specifies the exact fix mechanism (use aclosing from contextlib, make aclose async, add await). This goes well beyond describing the bug domain."
+      "reason": "instruction.md explicitly names the exact classes/functions to modify (`SyncToAsyncIterator.aclose()`, `safe_aclose_iterator()`, `_stream_fn`, `_examples_stream_fn`) and describes the precise nature of each fix (e.g., 'aclose() method is not awaitable', 'calls aclose() without awaiting it'). This goes beyond describing what's broken and tells the agent exactly where and what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],

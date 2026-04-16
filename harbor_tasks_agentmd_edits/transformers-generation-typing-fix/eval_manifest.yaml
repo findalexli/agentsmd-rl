@@ -1,0 +1,167 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 44233
+  base_commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+  merge_commit: "a2da4b16633ef9c2679b3a9e300b938851c6b80a"
+
+checks:
+  # Config/instruction file update checks (required for agentmd-edit tasks)
+  - id: agents_md_updated_for_type_checker
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AGENTS.md must be updated to mention 'type checker' in make style description"
+
+  # Code behavior tests (structural changes)
+  - id: typing_module_moved_to_root
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_typing.py must be moved from utils/ to src/transformers/ root"
+
+  - id: generative_protocol_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenerativePreTrainedModel protocol must be defined in _typing.py"
+
+  - id: whisper_config_protocol_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "WhisperGenerationConfigLike protocol must be defined in _typing.py"
+
+  - id: check_types_script_created
+    type: fail_to_pass
+    origin: pr_diff
+    description: "utils/check_types.py wrapper script must be created for type checking"
+
+  - id: logging_import_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "logging.py must import from new _typing location (.._typing not ._typing)"
+
+  - id: generation_utils_has_self_annotations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Generation utils.py must have self: GenerativePreTrainedModel annotations"
+
+  - id: candidate_generator_has_cast
+    type: fail_to_pass
+    origin: pr_diff
+    description: "candidate_generator.py should use typing.cast for type safety"
+
+  - id: streamers_has_proper_annotations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "streamers.py should have updated type annotations (PreTrainedTokenizerBase, list[int])"
+
+  - id: makefile_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Makefile should use new check_types.py wrapper and define ty_check_dirs"
+
+  # Pass-to-pass tests (basic functionality)
+  - id: imports_resolve
+    type: pass_to_pass
+    origin: static
+    description: "Critical imports should resolve without errors"
+
+  - id: generation_config_has_tensor_annotations
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GenerationConfig should have tensor type annotations (_bos_token_tensor, etc.)"
+
+  - id: stopping_criteria_tensor_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "stopping_criteria.py should use torch.Tensor not torch.tensor"
+
+  - id: model_signature_alignments
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Model files (clvp, musicgen, musicgen_melody) should have aligned method signatures"
+
+# Config edits extracted from gold patch (Track 2)
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: "- `make style`: runs formatters, linters and type checker, necessary to pass code style checks"
+    gold_removed: "- `make style`: runs formatters and linters, necessary to pass code style checks"
+
+# Rubric rules from agent configs (Track 3)
+rubric:
+  - rule: "Code style checks must pass via make style/make check-repo"
+    source:
+      path: "AGENTS.md"
+      lines: "2-5"
+      commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+    evidence: "PR updates type checking infrastructure for style compliance"
+    category: process
+    verification: programmatic
+
+  - rule: "Use modular files for new models; generated modeling files should not be edited directly"
+    source:
+      path: "AGENTS.md"
+      lines: "8-15"
+      commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+    evidence: "Config describes modular vs copied patterns"
+    category: architecture
+    verification: llm_judge
+
+  - rule: "Keep PRs brief; minimize diff size for bugfix PRs"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "12-14"
+      commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+    evidence: "Copilot instructions emphasize minimal diffs"
+    category: style
+    verification: llm_judge
+
+  - rule: "When writing tests, add to existing files unless adding a new model"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15-16"
+      commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+    evidence: "Testing guidelines in copilot-instructions"
+    category: testing
+    verification: llm_judge
+
+  - rule: "Copied from blocks should not be edited directly; edit base and propagate"
+    source:
+      path: "AGENTS.md"
+      lines: "8-10"
+      commit: "78ff3a1cb5070ff639857f9caa702dc9934bb59c"
+    evidence: "Copy synchronization rules in AGENTS.md"
+    category: maintenance
+    verification: llm_judge
+
+# Distractors (Track 4) - rules that might seem relevant but shouldn't apply
+distractors:
+  - rule: "Add extensive docstrings to all modified functions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "12-14"
+    collision_type: scope_ambiguity
+    why_distracting: "Copilot instructions say brief PRs don't need large comments/docstrings; this is a typing PR not a documentation PR"
+    severity: medium
+
+  - rule: "Create new test files for each model modified"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15-16"
+    collision_type: scope_ambiguity
+    why_distracting: "Instructions say add to existing files unless adding NEW model; these are existing model updates"
+    severity: medium
+
+  - rule: "Use ty check directly in Makefile without a wrapper script"
+    source:
+      path: "Makefile"
+    collision_type: architecture_boundary
+    why_distracting: "PR specifically creates a wrapper script check_types.py to handle ty invocation properly"
+    severity: high
+
+  - rule: "Move all type aliases to a separate typing_stubs package"
+    source:
+      path: "AGENTS.md"
+    collision_type: architecture_boundary
+    why_distracting: "The PR keeps types within the src/transformers hierarchy, just reorganizing _typing.py location"
+    severity: medium

@@ -60,6 +60,43 @@ rubric:
     without changing any agent instruction files (CLAUDE.md, AGENTS.md, etc.). This
     is a pure code fix that requires no documentation or config updates.
   category: architecture
+- rule: 'Variables/functions: camelCase'
+  source:
+    path: .serena/memories/style_and_conventions.md
+    lines: 42-42
+  source_text: '- Variables/functions: camelCase'
+  evidence: The diff introduces new local variables named `limit`, `updated`, and
+    `newAction` which correctly use camelCase.
+  category: A
+  verification: llm_judge
+- rule: 'Constants: UPPER_SNAKE_CASE for true constants, camelCase otherwise'
+  source:
+    path: .serena/memories/style_and_conventions.md
+    lines: 43-43
+  source_text: '- Constants: UPPER_SNAKE_CASE for true constants, camelCase otherwise'
+  evidence: The diff declares block-scoped variables using `const` (limit, updated,
+    newAction). Since these are local block-scoped variables and not true global constants,
+    they correctly use camelCase instead of UPPER_SNAKE_CASE.
+  category: A
+  verification: llm_judge
+- rule: 'Trailing commas: es5'
+  source:
+    path: .serena/memories/style_and_conventions.md
+    lines: 14-14
+  source_text: '- Trailing commas: es5'
+  evidence: 'The diff includes a trailing comma in the multiline object literal assignment:
+    `count: previous.count + 1,`.'
+  category: A
+  verification: llm_judge
+- rule: 'Brace style: 1tbs (one true brace style)'
+  source:
+    path: .serena/memories/style_and_conventions.md
+    lines: 16-16
+  source_text: '- Brace style: 1tbs (one true brace style)'
+  evidence: The diff maintains and structures the conditional logic utilizing `} else
+    {` on a single line, conforming to the One True Brace Style (1tbs).
+  category: A
+  verification: llm_judge
 distractors:
 - rule: Test files typically follow the pattern `*.test.ts`, `*.test.tsx`, `*.spec.ts`,
     or `*.spec.tsx`
@@ -88,6 +125,17 @@ distractors:
   collision_type: scope_ambiguity
   why_distracting: The agent might try to upgrade Storybook packages instead of fixing
     the bug in the ActionLogger component.
+  severity: low
+- rule: 'Use `vi.mock()` with the `spy: true` option for all package and file mocks'
+  source:
+    path: .cursor/rules/spy-mocking.mdc
+    lines: 13-13
+  source_text: '1. Use `vi.mock()` with the `spy: true` option for all package and
+    file mocks'
+  collision_type: scope_ambiguity
+  why_distracting: This is a testing convention, but the current change modifies a
+    React component in `index.tsx` without changing any tests. An agent might see
+    this testing convention and mistakenly write or modify tests that are out of scope.
   severity: low
 hierarchy_analysis: The configuration hierarchy is relatively flat. `CLAUDE.md` delegates
   to `AGENTS.md` for general repository instructions, while `.cursorrules` provides

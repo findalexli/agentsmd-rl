@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths like MODULE_PATH, function names like _get_chart_type_schema_impl, constant names like VALID_CHART_TYPES, dict names like _CHART_TYPE_ADAPTERS and _CHART_EXAMPLES, chart type keys, config class names, string literals like 'adapter is None', 'error', 'valid_chart_types', license text patterns, decorator names, import paths, __init__.py and app.py modifications) are explicitly described in instruction.md."
+      "reason": "All test-asserted specifics \u2014 file paths (get_chart_type_schema.py, __init__.py, app.py), function names (_get_chart_type_schema_impl, get_chart_type_schema), variable names (_CHART_TYPE_ADAPTERS, VALID_CHART_TYPES, _CHART_EXAMPLES), chart type keys (xy, table, pie, pivot_table, mixed_timeseries, handlebars, big_number), config class names (XYChartConfig, PieChartConfig, etc.), response keys (error, valid_chart_types, hint, chart_type, schema, examples), 'adapter is None' check, 'if include_exam"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive \u2014 it specifies exact variable names, exact dict entries, exact function signatures, exact conditional checks ('adapter is None'), exact decorator parameters, exact import statements, and exact response schemas. This leaves virtually no reasoning for the agent; it's essentially a copy-paste specification rather than a problem description. The agent doesn't need to reason about WHAT to change, only transcribe the instructions."
+      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: exact variable names, exact dict structure ('\"xy\": TypeAdapter(XYChartConfig)'), exact function signatures, exact conditional checks ('adapter is None', 'if include_examples'), exact import statements, and exact response schemas. A competent developer would not need to reason about WHAT to change \u2014 it's fully specified line-by-line."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact regex patterns like r'[\"\\']xy[\"\\']\\s*:\\s*TypeAdapter\\(XYChartConfig\\)' (TestXYChartTypeAdapter), exact string 'adapter is None' in source (TestInvalidTypeHandling), exact string 'if include_examples' (TestIncludeExamplesParameter), exact regex for example patterns like '\"chart_type\":\\s*\"xy\"'. An alternative correct implementation using e.g. 'if chart_type not in _CHART_TYPE_ADAPTERS' instead of 'adapter is None', or 'when include_exampl"
+      "reason": "Tests use regex to match exact code patterns like r'[\"\\']xy[\"\\']\\s*:\\s*TypeAdapter\\(XYChartConfig\\)' (TestXYChartTypeAdapter), exact string checks like 'adapter is None' (TestInvalidTypeHandling), and 'if include_examples' (TestIncludeExamplesParameter). An alternative correct implementation using e.g. 'adapter = _CHART_TYPE_ADAPTERS.get(chart_type); if not adapter:' or 'if include_examples is True:' would fail these text-matching tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the file as text and checks for string/regex patterns \u2014 e.g., 'assert \"adapter is None\" in content', 'assert re.search(pattern, content)', 'assert \"VALID_CHART_TYPES\" in content'. No test imports the module, calls any function, or executes the code. All tests are purely textual/AST-based checks with no behavioral verification."
+      "reason": "Every single test relies on reading file content as text and checking for string patterns (e.g., 'assert \"get_chart_type_schema\" in content', regex matches, AST node name checks). No test imports, calls, or executes the actual code. This is purely textual/structural verification with no behavioral testing."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub file containing all the right string literals and function definitions (with pass bodies) would pass many tests. For example, TestModuleExists just checks os.path.isfile, TestValidChartTypesConstant just checks 'VALID_CHART_TYPES' in content, TestChartExamplesDefined just checks '_CHART_EXAMPLES' in content. Since no test actually executes the code, a syntactically valid but functionally empty implementation with the right names and string patterns would pass."
+      "reason": "A stub file containing the right string patterns (function defs with correct names, variable assignments with correct names, string literals matching expected patterns) but no actual working logic would pass all tests. For example, a file with 'def _get_chart_type_schema_impl(chart_type, include_examples=True): pass' and the right string constants would satisfy the AST and text checks without implementing any real behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that json_schema() is called on the adapter and results are returned in a specific dict structure, but no test actually verifies the runtime behavior of _get_chart_type_schema_impl or get_chart_type_schema \u2014 no test calls these functions or checks their return values."
+      "reason": "The instruction specifies behavioral requirements like 'call adapter.json_schema() to produce the JSON Schema', 'Build a result dict containing chart_type and schema keys', correct error response structure, and the @tool decorator delegation pattern. None of these behaviors are actually tested \u2014 tests only check for text patterns in the source file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into separate classes (TestGetChartTypeSchemaModuleExists, TestXYChartTypeAdapter, TestInvalidTypeHandling, etc.) with descriptive names and docstrings."
+      "reason": "Tests are well-organized into named classes (TestGetChartTypeSchemaModuleExists, TestXYChartTypeAdapter, TestInvalidTypeHandling, etc.) with descriptive docstrings and method names."
     },
     "structured_data_schema": {
       "outcome": "pass",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file path to create (superset/mcp_service/chart/tool/get_chart_type_schema.py), exact files to modify (__init__.py, app.py), exact variable names, exact function signatures, and even exact code patterns like 'adapter is None'. This goes far beyond describing behavior \u2014 it's a complete implementation specification."
+      "outcome": "pass",
+      "reason": "The instruction specifies exact file paths and implementation details, but this is a 'create new file' task where the file locations are inherently part of the task specification, not debugging localization leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task creating a new module and making small additions to existing files, not a config-edit task."
+      "reason": "This is a code-only task (creating a new Python module and editing existing files), not a config-edit task."
     }
   },
   "tier_a_fails": [
@@ -54,9 +54,8 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 5
 }

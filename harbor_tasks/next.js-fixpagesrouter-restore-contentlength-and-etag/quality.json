@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (pages-handler.ts, render-result.ts, send-payload.ts, AGENTS.md), the specific patterns tested (e.g., `new RenderResult(JSON.stringify(result.value.pageData),`, `new RenderResult(previousCacheEntry.value.html,`, `pnpm new-test -- --args`), and the class/function names (RenderResult, isDynamic, sendRenderResult, getHandler). The AGENTS.md documentation update pattern is also explicitly described. All assert targets in tests are discoverable from instr"
+      "reason": "All file paths (pages-handler.ts, render-result.ts, send-payload.ts, AGENTS.md), literal strings (e.g., 'new RenderResult(JSON.stringify(result.value.pageData),', 'new RenderResult(previousCacheEntry.value.html,', 'pnpm new-test -- --args'), function names (isDynamic, sendRenderResult, generateETag), and class names (RenderResult) referenced in tests are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Buffer.from(JSON.stringify(result.value.pageData)) should be replaced with just JSON.stringify(result.value.pageData)' and 'Buffer.from(previousCacheEntry.value.html) should be replaced with just previousCacheEntry.value.html'. It also gives the exact AGENTS.md replacement text. This is a direct solution specification, not a problem description."
+      "reason": "instruction.md explicitly states the exact fix: 'Buffer.from(JSON.stringify(result.value.pageData)) should be replaced with just JSON.stringify(result.value.pageData)' and 'Buffer.from(previousCacheEntry.value.html) should be replaced with just previousCacheEntry.value.html', plus the exact AGENTS.md replacement. This leaves zero reasoning for the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests in test_pages_handler_uses_string_not_buffer assert exact string patterns like `new RenderResult(JSON.stringify(result.value.pageData),` and `new RenderResult(previousCacheEntry.value.html,`. An alternative correct fix (e.g., calling `.toString()` on the Buffer, or using a different variable to hold the stringified value before passing it) would fail these literal substring checks even if functionally correct."
+      "reason": "test_pages_handler_uses_string_not_buffer asserts exact literal strings like 'new RenderResult(JSON.stringify(result.value.pageData),' and 'new RenderResult(previousCacheEntry.value.html,'. An alternative correct fix (e.g., using `.toString()` on the Buffer, or extracting the string to a variable first) would fail these text-matching assertions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_render_result_isdynamic_with_string, test_pages_handler_uses_string_not_buffer, test_send_payload_generates_headers_for_static) are all purely text-matching: they read file contents and assert on string patterns like `assert 'new RenderResult(JSON.stringify(result.value.pageData),' in content`. No code is imported, executed, or behaviorally tested. The ESLint/Prettier tests do execute subprocesses but are pass-to-pass gates, not behavioral verification of the fi"
+      "reason": "The core fail-to-pass tests (test_render_result_isdynamic_with_string, test_pages_handler_uses_string_not_buffer, test_send_payload_generates_headers_for_static) all use `assert 'literal' in file.read_text()` pattern \u2014 pure text grep on source files. None import modules, instantiate classes, or execute the code to verify behavioral outcomes like actual header presence."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_send_payload_generates_headers_for_static merely checks that the strings 'isDynamic' and 'generateETag' or 'ETag' exist in send-payload.ts. These strings already exist in the unmodified file, so a stub (no changes at all) passes this test. Similarly, test_render_result_isdynamic_with_string checks for `typeof this.response !== 'string'` which already exists in the base commit."
+      "reason": "test_render_result_isdynamic_with_string checks that 'return typeof this.response !== \"string\"' exists in render-result.ts, but this string already exists in the base commit (it's existing code, not something the fix changes). test_send_payload_generates_headers_for_static checks 'isDynamic' and 'ETag' exist in send-payload.ts, which also already exist in the base commit. These tests pass without any fix being applied."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) RenderResult receives strings not Buffers \u2014 tested by test_pages_handler_uses_string_not_buffer, (2) isDynamic correctly identifies strings \u2014 tested by test_render_result_isdynamic_with_string, (3) Content-Length/ETag headers for static responses \u2014 tested by test_send_payload_generates_headers_for_static, (4) AGENTS.md documentation update \u2014 tested by test_agents_md_new_test_syntax. All explicitly required behaviors are covered."
+      "reason": "All behaviors described in instruction.md are covered: the Buffer.from removal in pages-handler.ts, the isDynamic string check in render-result.ts, header generation logic in send-payload.ts, and the AGENTS.md documentation update (test_agents_md_new_test_syntax)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names, and docstrings explaining each test's purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes and documentation updates, not structured data output (JSON/CSV/API/DB)."
+      "reason": "This task involves fixing source code and documentation, not producing structured data output."
     },
     "no_typos": {
-      "outcome": "pass",
-      "reason": "File paths, commands, variable names, and patterns in instruction.md are consistent with the actual repository structure and test expectations. No typos detected in the instruction."
+      "outcome": "fail",
+      "reason": "The gold patch in solve.sh introduces a typo in AGENTS.md: 'node packages/next/dist/dist/bin/next dev' has a doubled 'dist/dist/' which is incorrect (should be 'dist/bin/next'). This is propagated into the solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact buggy patterns with their replacements: 'Buffer.from(JSON.stringify(result.value.pageData)) should be replaced with just JSON.stringify(result.value.pageData)'. It also specifies the exact file locations and even the test verification patterns. This goes far beyond naming the relevant module \u2014 it specifies exact lines to change."
+      "reason": "instruction.md names the exact buggy patterns ('Buffer.from(JSON.stringify(result.value.pageData))' and 'Buffer.from(previousCacheEntry.value.html)'), specifies the exact files and the exact replacement code. This eliminates localization and diagnosis as part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md edit in the gold patch is localized to specific lines updating the pnpm new-test syntax documentation, and doesn't contradict other files."
+      "reason": "The AGENTS.md edit is localized to specific lines updating the pnpm new-test syntax documentation, consistent with what instruction.md describes."
     }
   },
   "tier_a_fails": [
@@ -54,8 +54,9 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "no_typos",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 5
+  "pass_count": 4,
+  "fail_count": 6
 }

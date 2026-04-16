@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the target file path, all variable names (current_header_id, guide_slug, y, slug), CSS classes (sticky, hidden, lg:block, float-right, etc.), type fields (text, href, level), color classes (text-orange-500, text-gray-600), calculation patterns ((slug.level - 2) * 0.75rem), and structural requirements that the tests check for. The tests assert on patterns like 'current_header_id', 'guide_slug', 'sticky', 'float-right', specific CSS classes, and indentation calculations \u2014 all"
+      "reason": "Instruction names the target file path, the guide_slug fields (text/href/level), pretty_name header, sticky right sidebar, indentation by level, and scroll-tracking highlight \u2014 all test-asserted specifics are derivable."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction provides extremely specific implementation details that essentially dictate the exact solution: exact variable name 'current_header_id', exact reactive statement pattern '$: if (y !== undefined ...)', exact CSS classes in exact order, exact indentation formula '(slug.level - 2) * 0.75rem', exact class changes 'remove mx-auto, add lg:min-w-0 and lg:pl-8'. This goes far beyond describing what's broken \u2014 it prescribes the precise fix."
+      "outcome": "pass",
+      "reason": "Instruction describes what to add (TOC, scroll tracking, indentation) without prescribing variable names like current_header_id or specific line edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_scroll_tracking_reactive checks for exact variable name 'current_header_id' and exact reactive pattern '$: if'; test_right_sidebar_with_slug_links checks for exact CSS classes 'sticky' and anchor elements in specific each blocks; test_indentation_based_on_heading_level checks for exact pattern '(slug.level - 2)'. An alternative correct implementation using different variable names (e.g., 'activeSection'), different scroll tracking approa"
+      "outcome": "pass",
+      "reason": "Tests check for {#each} over guide_slug, sticky/hidden lg:block container, level-based indentation, and scroll highlighting via behavior rather than gold-specific identifiers."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The tests primarily use regex pattern matching on the file content (e.g., re.findall, re.search) and Node.js scripts that parse the file text rather than executing the component. Tests like test_scroll_tracking_reactive just check for string patterns like 'current_header_id' and '$:' in the script text. No test actually renders the Svelte component or checks runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests parse the Svelte file via Node.js, run pnpm install, and inspect structural/behavioral properties rather than simple text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific structural additions (right sidebar with slug links, scroll tracking reactive statements, indentation calculations, conditional rendering) that don't exist in the base commit. A stub or no-op would not add these patterns to the file, so these tests would fail."
+      "reason": "f2p tests require actual TOC each-block with anchor links, sticky sidebar class, level-based indentation, and scroll-tracking reactive logic \u2014 a stub cannot satisfy them."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires 'Previous/next guide navigation links remain functional' (requirement 6) and 'Existing left sidebar navigation is preserved' (requirement 5), but while pass_to_pass tests check basic structure, no test specifically verifies that existing navigation functionality is preserved after the change."
+      "outcome": "pass",
+      "reason": "Tests cover the iteration over guide_slug, sidebar styling, indentation by level, scroll highlight, and conditional render as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear categories (pass_to_pass gate tests vs fail_to_pass behavioral tests), descriptive function names (test_right_sidebar_with_slug_links, test_scroll_tracking_reactive, etc.), and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section headers (Gates/Fail-to-pass) and descriptive names/docstrings."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the guide_slug type schema with three fields (text: string, href: string, level: number) which matches what the tests verify."
+      "outcome": "not_applicable",
+      "reason": "Task produces UI Svelte component, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or CSS class names in the instruction."
+      "reason": "Paths and identifiers in instruction match the repo file path and type names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file to modify ('js/_website/src/routes/[[version]]/guides/[guide]/+page.svelte'), specifies exact class changes ('Remove the mx-auto centering', 'Add lg:min-w-0', 'Add lg:pl-8'), and provides exact implementation patterns like 'Declare a variable named current_header_id of type string'. This is excessive localization that eliminates the need for any debugging or reasoning."
+      "outcome": "pass",
+      "reason": "Instruction names the file (which is the task target itself) without pointing at specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

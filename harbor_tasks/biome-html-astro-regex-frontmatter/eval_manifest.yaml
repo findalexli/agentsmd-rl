@@ -1,0 +1,106 @@
+name: biome-html-astro-regex-frontmatter
+version: 1.0.0
+
+origin:
+  owner: biomejs
+  repo: biome
+  pr_number: 9728
+  base_commit: "467fd87"
+  merge_commit: "5085424"
+  title: "fix(html): handle escaped regex literals in astro frontmatter"
+
+description: |
+  Fix for #9696: Astro frontmatter parsing for regex literals like `/\d{4}/`.
+  The lexer now resolves a deferred `/` before generic escape handling,
+  so regex literals starting with an escaped character are recognized correctly.
+
+environment:
+  Dockerfile: environment/Dockerfile
+  image_build_cmd: "cd /workspace/task/environment && docker build -t task-env ."
+
+solution:
+  solve_cmd: solution/solve.sh
+  patch_content: |
+    (full diff available in solve.sh HEREDOC)
+
+tests:
+  test_cmd: tests/test.sh
+
+check:
+  - id: test_issue_9187_regex_with_escape_and_quantifier
+    description: "Unit test for escaped regex with quantifier (issue_9187)"
+    type: fail_to_pass
+    origin: pr_test
+    details:
+      test_file: crates/biome_html_parser/src/lexer/mod.rs
+      test_function: issue_9187_regex_with_escape_and_quantifier
+      expected: "quotes_seen.is_empty() == true (no unclosed state)"
+      base_behavior: "FAILS - QuotesSeen incorrectly tracks escaped regex, leaving non-empty state"
+      fixed_behavior: "PASSES - regex literal closes cleanly"
+
+  - id: test_astro_frontmatter_regex_parsing
+    description: "Astro frontmatter file with regex literal parses correctly"
+    type: fail_to_pass
+    origin: pr_test
+    details:
+      test_file: crates/biome_html_parser/tests/html_specs/ok/astro/issue_9696.astro
+      expected: "parse succeeds, AST contains correct frontmatter content"
+      base_behavior: "FAILS - lexer misclassifies closing `/` due to wrong escape handling order"
+      fixed_behavior: "PASSES - frontmatter parsed correctly with regex literal"
+
+  - id: test_html_parser_tests
+    description: "All biome_html_parser tests pass (no regressions)"
+    type: pass_to_pass
+    origin: repo_tests
+    details:
+      command: cargo test -p biome_html_parser
+      timeout: 300
+
+  - id: test_cargo_check
+    description: "biome_html_parser compiles without errors"
+    type: pass_to_pass
+    origin: repo_tests
+    details:
+      command: cargo check -p biome_html_parser
+      timeout: 300
+
+  - id: test_clippy_html_parser
+    description: "clippy passes on biome_html_parser (CI lint)"
+    type: pass_to_pass
+    origin: repo_tests
+    details:
+      command: cargo clippy -p biome_html_parser -- -D warnings
+      timeout: 300
+
+  - id: test_lexer_quotes_seen_unit_tests
+    description: "QuotesSeen lexer unit tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    details:
+      command: cargo test -p biome_html_parser lexer::quotes_seen
+      timeout: 120
+
+rubric:
+  - id: tests_required
+    source_ref: "AGENTS.md: All code changes MUST include tests"
+    description: "Bug fixes must include a test that reproduces the bug and validates the fix"
+    reference: "Added test function issue_9187_regex_with_escape_and_quantifier in crates/biome_html_parser/src/lexer/mod.rs"
+    weight: 1
+
+  - id: run_full_test_suite
+    source_ref: "AGENTS.md: Run full test suite before committing"
+    description: "All tests must pass before the fix is considered complete"
+    reference: "All biome_html_parser tests pass (281 tests)"
+    weight: 1
+
+  - id: verify_all_cases
+    source_ref: "AGENTS.md: Verify your solution works for all relevant cases, not just the first one you find"
+    description: "The fix should handle not just the reported case but similar patterns (e.g., various escape sequences with regex quantifiers)"
+    reference: "Test covers regex literal with escaped character followed by quantifier"
+    weight: 1
+
+  - id: clippy_warnings
+    source_ref: "biome-developer/SKILL.md: Run just l before committing to catch Clippy warnings"
+    description: "Code should be free of Clippy/lint warnings"
+    reference: "cargo clippy -p biome_html_parser passes with no warnings"
+    weight: 1

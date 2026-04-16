@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific details not mentioned in instruction.md: exact version comment format '# Airflow 3.2+' (test_partition_fields_have_version_comments), exact ordering relative to 'logical_date' and 'run_after' (test_partition_fields_ordering), and the exact comment strings like '\"partition_key\",  # Airflow 3.2+'. The instruction says 'study the existing entries to determine the correct format' but doesn't specify the exact comment convention '# Airflow 3.2+' nor the exact placement betw"
+      "reason": "Tests assert very specific details not mentioned in instruction.md: exact version comment format '# Airflow 3.2+' (test_partition_fields_have_version_comments), exact ordering relative to 'logical_date' and 'run_after' (test_partition_fields_ordering), and exact comment strings like '\"partition_key\",  # Airflow 3.2+'. The instruction says 'study the existing entries to determine the correct format' but doesn't specify the exact comment convention or placement between logical_date and run_after."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (missing partition_key and partition_date from DagRunInfo.includes) and expected behavior, but does not specify exact lines to change or exact code to write. The developer must still determine the correct format and placement."
+      "reason": "The instruction describes what's broken (partition_key and partition_date missing from DagRunInfo includes list) and asks the agent to figure out the correct format and placement by studying existing entries. It doesn't specify exact line numbers or the exact text to add."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce very specific implementation details: test_partition_fields_have_version_comments requires exact string '\"partition_key\",  # Airflow 3.2+' and test_partition_fields_ordering requires partition_key before partition_date, both after logical_date and before run_after. A correct alternative using '# Added in Airflow 3.2' or placing them after run_after would fail despite being functionally correct."
+      "reason": "Tests assert on exact formatting like '\"partition_key\",  # Airflow 3.2+' (test_partition_fields_have_version_comments) and exact ordering between logical_date and run_after (test_partition_fields_ordering). A correct alternative using '# Airflow 3.2' instead of '# Airflow 3.2+', or placing fields after run_after but still in the includes list, would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering, test_partition_fields_only_in_dagrun_info, test_no_duplicate_partition_fields) ALL use string matching via 'in content' or regex on the source file text. They never import or instantiate DagRunInfo. The pass-to-pass tests do run unit tests/linting as subprocesses, but the core fail-to-pass tests are pu"
+      "reason": "The fail-to-pass tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering) all use string matching on file content with patterns like 'assert '\"partition_key\"' in content'. While there are pass-to-pass tests that run unit tests and linting, the core fail-to-pass tests are purely text-based assertions on file content rather than behavioral tests."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings ('partition_key', 'partition_date') that are genuinely absent from the base commit file. A stub or no-op implementation would not add these strings to the source file, so the tests would still fail."
+      "reason": "The fail-to-pass tests check for the presence of 'partition_key' and 'partition_date' in the DagRunInfo includes list, which are not present in the base commit. A stub or no-op implementation would not pass these tests since the strings must actually be added to the source file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) adding partition_key and partition_date to DagRunInfo.includes, (2) correct version annotation, (3) proper positioning, (4) existing tests and linting pass. All of these are tested."
+      "reason": "The instruction requires: (1) adding partition_key and partition_date to DagRunInfo includes, (2) correct version annotation, (3) appropriate position, (4) each field exactly once, (5) existing tests and linting pass. All of these are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with clear docstrings indicating their purpose, and organized into logical groupings (content checks, ordering, syntax, linting, unit tests)."
+      "reason": "Tests are well-named and organized: test_dagrun_info_includes_partition_fields, test_partition_fields_have_version_comments, test_partition_fields_ordering, etc. Each test has a clear docstring explaining its purpose and whether it's fail-to-pass or pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves editing a Python source file's list, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "The task involves modifying a Python class attribute list, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the class 'DagRunInfo' and its 'includes' list attribute, and tells the agent exactly what to add ('partition_key' and 'partition_date'). While it doesn't give exact line numbers, it essentially specifies the exact fix location and content, making localization trivial."
+      "reason": "The instruction explicitly names 'DagRunInfo' class and its 'includes' list, which is quite specific. It also names the exact file path via the test command (providers/openlineage/.../utils/utils.py). While this is somewhat domain-appropriate, combined with naming the exact class and attribute, it significantly narrows the localization task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-edit task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

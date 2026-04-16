@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (constant names _POLL_DELAY_S=3, _NUM_POLL_ATTEMPTS=4, removal of _TITLE_POLL_DELAYS_S, async function _poll_for_title with parameters httpx_client/url/session_api_key, return type str|None, warning log level, await _poll_for_title call, ruff check command, unit test path) are explicitly stated in instruction.md."
+      "reason": "All test assertions check for elements explicitly described in instruction.md: constant names (_POLL_DELAY_S=3, _NUM_POLL_ATTEMPTS=4), removal of _TITLE_POLL_DELAYS_S, the _poll_for_title async function with its specific parameters (httpx_client, url, session_api_key), return type str|None, warning log level, use of constants in the function, await _poll_for_title() in __call__, valid Python syntax, ruff check, and existing unit tests. File paths are also specified in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives the exact function signature, exact constant names and values, exact log level change, and exact calling pattern ('await _poll_for_title(...)'), leaving virtually no reasoning for the developer about WHAT to change\u2014it is a detailed specification of the solution, not just a description of the problem."
+      "reason": "The instruction explicitly specifies the exact solution: exact constant names and values (_POLL_DELAY_S = 3, _NUM_POLL_ATTEMPTS = 4), exact function signature for _poll_for_title, exact parameter names, exact return type, and that __call__ must use 'await _poll_for_title(...)'. This leaves virtually no reasoning for the agent \u2014 it's a detailed implementation specification, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact constant names (_POLL_DELAY_S, _NUM_POLL_ATTEMPTS), exact values (3, 4), exact function name (_poll_for_title), exact parameter names (httpx_client, url, session_api_key), and exact string patterns like 'await _poll_for_title('. An alternative correct fix using different naming (e.g., _RETRY_DELAY, _MAX_RETRIES, _fetch_title) would fail despite being functionally correct."
+      "reason": "Tests enforce gold-specific implementation details: exact function name '_poll_for_title', exact parameter names 'httpx_client'/'url'/'session_api_key', exact constant names '_POLL_DELAY_S' and '_NUM_POLL_ATTEMPTS' with exact values. An alternative correct fix (e.g., using a different function name like '_fetch_title_with_retries', different parameter names, or a class method instead of module function) would fail these tests despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_new_poll_constants_exist, test_call_method_uses_poll_for_title, test_warning_log_level_for_failed_polls) use string-in-file checks like `'_POLL_DELAY_S = 3' in content` and `'await _poll_for_title(' in content`. While some tests do AST parsing and the repo unit tests are run via subprocess, the core f2p tests are predominantly text matching rather than behavioral execution."
+      "reason": "Most f2p tests are purely textual/AST inspection: test_new_poll_constants_exist uses string-in-content checks, test_poll_for_title_function_exists walks AST, test_poll_for_title_uses_constants checks ast.unparse output for string containment, test_call_method_uses_poll_for_title checks '_poll_for_title(' in content. Only test_repo_unit_tests_for_modified_module and test_repo_ruff_check_modified_file actually execute code. The core f2p tests never import or call the function."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty file, pass-only class) would fail these tests since they check for specific constants, function definitions with specific parameters, and specific string patterns that wouldn't exist without actual implementation work."
+      "reason": "A stub implementation (empty file or pass-only functions) would not pass these tests. The tests check for specific constant values (3 and 4), specific function existence with specific parameters, specific string patterns in the source. While they are text-based, they cannot be satisfied by trivial stubs without actual implementation matching the specification."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicitly required behaviors from instruction.md are tested: new constants exist with correct values, old constant removed, _poll_for_title function exists with correct signature/parameters/return type, uses new constants internally, __call__ awaits _poll_for_title, warning log level, valid Python, ruff check, and existing unit tests pass."
+      "reason": "All requirements from instruction.md are tested: new constants with correct values, removal of old constant, _poll_for_title function with correct signature, warning log level, use of new constants in the function, __call__ using await _poll_for_title(), valid Python syntax, ruff check, and existing unit tests passing."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_new_poll_constants_exist, test_poll_for_title_function_exists, etc.), have docstrings with FAIL-TO-PASS/PASS-TO-PASS labels, and are logically grouped by concern."
+      "reason": "Tests are well-named (test_new_poll_constants_exist, test_poll_for_title_function_exists, etc.), have docstrings explaining what they check including FAIL-TO-PASS/PASS-TO-PASS categorization, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task is a code refactoring task that does not produce structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, variable names, or function names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file path, exact constant names to create/remove, exact function signature with parameter names and return type, and exact calling pattern. This goes well beyond identifying the buggy area\u2014it specifies the complete solution structure."
+      "reason": "The instruction names the exact file (set_title_callback_processor.py), exact old constant (_TITLE_POLL_DELAYS_S), exact new constant names and values, exact function signature, and exact method to modify (__call__). This goes well beyond identifying the problem area \u2014 it fully specifies the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

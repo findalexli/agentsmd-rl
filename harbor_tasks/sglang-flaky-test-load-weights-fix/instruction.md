@@ -10,19 +10,39 @@ if is_in_ci():
     remote_instance_loader_backend = random.choice(["nccl", "transfer_engine"])
 ```
 
-When the random selection picks certain combinations, the test hangs during initialization on 2-GPU H100 runners. Investigation shows the hangs are tied to a configuration flag that gets set conditionally based on the randomly-selected backend.
+When the random selection picks certain combinations, the test hangs during initialization on 2-GPU H100 runners.
+
+## Required Changes
+
+1. **Add a FIXME comment** about the random behavior. Add the following comment immediately before the `random.choice()` calls in the CI conditional block:
+   ```python
+   # FIXME: refactor this test to have less random behavior
+   ```
+
+2. **Stabilize the configuration parameter** that causes the hang. The parameter `remote_instance_weight_loader_start_seed_via_transfer_engine` is currently set conditionally based on the randomly-selected backend. Change it to be **hardcoded to `False`** instead of being conditional on the backend type.
+
+   Before:
+   ```python
+   remote_instance_weight_loader_start_seed_via_transfer_engine=(
+       remote_instance_loader_backend == "transfer_engine"
+   )
+   ```
+
+   After:
+   ```python
+   remote_instance_weight_loader_start_seed_via_transfer_engine=False
+   ```
 
 ## Expected Behavior
 
-The test should be more deterministic. The flaky combination causes a hang during initialization that manifests as a timeout. Making the configuration stable (rather than conditional on the random backend selection) resolves the hangs.
+The test should be more deterministic. Making the configuration stable (by hardcoding `remote_instance_weight_loader_start_seed_via_transfer_engine` to `False` and adding the FIXME comment) resolves the hangs on 2-GPU runners.
 
 ## Files to Look At
 
 - `test/registered/distributed/test_load_weights_from_remote_instance.py` — The distributed test that loads weights from a remote instance
 
-Look at the `init_process_dst` function (where `sgl.Engine` is initialized) and the `test_load_weights_from_remote_instance` method (where `random.choice` is called).
-
 ## Notes
 
 - This is a GPU-dependent integration test.
-- The fix should stabilize the configuration that causes the hang by making it unconditional rather than dependent on random selection.
+- The fix should stabilize the configuration that causes the hang by making `remote_instance_weight_loader_start_seed_via_transfer_engine` unconditional (hardcoded to `False`) rather than dependent on random backend selection.
+- The FIXME comment must exactly match: `# FIXME: refactor this test to have less random behavior`

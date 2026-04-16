@@ -1,21 +1,23 @@
 # Fix failing T5ModelIntegrationTest and Qwen2IntegrationTest
 
-## Problem
-
 Two integration tests are currently failing in the transformers repository.
 
-### Qwen2 test_speculative_generation
+## Qwen2 test_speculative_generation
 
-The test loads the tokenizer and model from different model sizes. The tokenizer and model should both use the same model series for correct vocabulary alignment.
+**File:** `/workspace/transformers/tests/models/qwen2/test_modeling_qwen2.py`
 
-Additionally, this test uses a plain string for expected output, but other tests in the same file (e.g., `test_model_450m_logits`) handle platform-specific expected values using an `Expectations` class. This test should similarly use the `Expectations` wrapper for its expected output. The Expectations dictionary keys follow a `("cuda", <memory_in_gb>)` format — other tests in the same file use `("cuda", 8)` for CUDA devices with 8GB memory.
+The test loads the tokenizer from model `Qwen/Qwen2-7B` but loads the model from `Qwen/Qwen2-0.5B`. The tokenizer and model should both use the same model identifier for correct vocabulary alignment.
 
-### T5 test_compile_static_cache
+Additionally, this test uses a plain string for expected output comparison. Other tests in the same file (e.g., `test_model_450m_logits`) handle platform-specific expected values using an `Expectations` class with device-specific dictionary keys like `("cuda", 8)` for CUDA devices with 8GB memory. The test should follow this same pattern.
 
-This test uses `tokenizer.batch_decode()` to decode outputs, but `batch_decode()` is designed for batch processing. For single tensor outputs from `generate()`, the correct method is `tokenizer.decode()`. The test has three calls to `batch_decode()` that should each use `decode()` instead.
+## T5 test_compile_static_cache
 
-## What to Fix
+**File:** `/workspace/transformers/tests/models/t5/test_modeling_t5.py`
 
-1. In the Qwen2 test, ensure the tokenizer uses the same model size as the model it paired with. The `Expectations` wrapper should be used for the expected output string, with device-specific keys matching the format used by other tests in the same file.
+The test uses `tokenizer.batch_decode()` to decode single tensor outputs from `generate()`. For single-item tensor outputs, the appropriate method is `tokenizer.decode()`.
 
-2. In the T5 test, replace all uses of `batch_decode()` with `decode()` for single-item tensor outputs.
+## Summary of Required Changes
+
+1. In Qwen2's `test_speculative_generation`: The tokenizer should use `Qwen/Qwen2-0.5B` to match the model. The expected output should use the `Expectations` wrapper with device-specific keys following the `("cuda", <memory_in_gb>)` format.
+
+2. In T5's `test_compile_static_cache`: All calls to `batch_decode()` for single-item outputs should be changed to use `decode()`.

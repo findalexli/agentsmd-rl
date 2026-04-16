@@ -2,23 +2,35 @@
 
 ## Context
 
-vLLM's CPU backend supports thread affinity binding via `VLLM_CPU_OMP_THREADS_BIND` (or automatic NUMA-aware binding). In `vllm/v1/worker/cpu_worker.py`, the `CPUWorker.init_device()` method calls `torch.ops._C.init_cpu_threads_env()` to bind OpenMP threads to specific CPU cores for optimal performance.
+vLLM's CPU backend supports thread affinity binding via `VLLM_CPU_OMP_THREADS_BIND` (or automatic NUMA-aware binding). After thread binding is established, calling `torch.set_num_threads()` disrupts the carefully configured thread affinity, leading to performance degradation on multi-socket CPU systems.
 
 ## Problem
 
-After thread binding is established in `init_device()`, other parts of the codebase (or downstream libraries) may call `torch.set_num_threads()`. This disrupts the carefully configured thread binding, leading to performance degradation on multi-socket CPU systems. The thread affinity set up during `init_device()` gets overridden, and threads may migrate across NUMA nodes.
+Once CPU thread binding has been configured, subsequent calls to `torch.set_num_threads()` override the thread affinity setup, causing threads to migrate across NUMA nodes. The current implementation does not protect against this disruption.
 
 ## Expected Behavior
 
-Once CPU thread binding has been configured in `init_device()`, subsequent calls to `torch.set_num_threads()` must not change the thread count. Additionally, the system must emit a log warning (at WARNING level or higher) when `torch.set_num_threads` is called after thread binding, so that developers are informed when something attempts to change the thread configuration. The warning message must mention `set_num_threads` or the word `skip`.
+After thread binding is established, subsequent calls to `torch.set_num_threads()` must not change the actual thread count. When code attempts to call `set_num_threads` after binding, the system must:
+
+1. Prevent the thread count from changing (noop behavior)
+2. Emit a log warning at WARNING level or higher mentioning `set_num_threads` or `skip`
 
 ## Implementation Requirements
 
-- The file `vllm/v1/worker/cpu_worker.py` must continue to define the `CPUWorker` class with its `init_device` method.
-- The method `init_device` must still call `init_worker_distributed_environment` and `set_random_seed`.
-- The Python syntax must be valid (no syntax errors).
+- Implement the fix using monkey-patching via assignment (`torch.set_num_threads = ...`)
+- Define a replacement function (nested within the method that establishes thread binding) that logs the warning and ignores the call
+- The replacement function must use the logger named `vllm.v1.worker.cpu_worker`
+- The `CPUWorker` class with its `init_device` method must continue to exist
+- The method must continue to call `init_worker_distributed_environment` and `set_random_seed`
+- The Python syntax must be valid (no syntax errors)
 - The code must pass the repository's pre-commit checks:
   - ruff lint (no violations)
   - typos (no typos)
   - SPDX license header (valid format)
   - mypy type checking (must pass with `--ignore-missing-imports --follow-imports=silent`)
+
+## Testing
+
+When correctly implemented, calling `torch.set_num_threads(n)` after thread binding is established will:
+- Leave `torch.get_num_threads()` unchanged at its baseline value
+- Log a warning message mentioning `set_num_threads` or `skip`

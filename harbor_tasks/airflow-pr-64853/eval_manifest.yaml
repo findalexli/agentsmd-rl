@@ -1,0 +1,55 @@
+source:
+  repo: apache/airflow
+  pr_number: 64853
+  base_commit: 64ac0919840381ce708c5ce4bddd96f9b20ef4aa
+  merge_commit: 1514e296e1a591387ae4e4aa835d364bdc8e11ed
+  title: "Fix Gantt view 'Error invalid date' on running DagRun"
+  target_files:
+    - airflow-core/src/airflow/ui/src/layouts/Details/Gantt/utils.ts
+
+checks:
+  - id: test_dayjs_used_for_date_parsing
+    type: fail_to_pass
+    origin: behavioral
+    description: Verify dayjs().valueOf() is used instead of new Date().getTime() for date parsing in scale calculations
+
+  - id: test_no_nan_for_iso_dates
+    type: fail_to_pass
+    origin: behavioral
+    description: Test that ISO date strings with various timezone formats are parsed without returning NaN
+
+  - id: test_scale_min_max_not_nan
+    type: fail_to_pass
+    origin: behavioral
+    description: Test that scale min/max calculations produce valid numbers, not NaN
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation succeeds without errors
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint linting passes on the UI codebase
+
+  - id: test_vitest_gantt_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Vitest tests for Gantt utils pass (if test file exists)
+
+  - id: test_repo_vitest_full
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full vitest test suite for UI passes
+
+  - id: test_repo_prettier_gantt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check on Gantt directory passes
+
+rubric:
+  - id: code_only_fix
+    description: "This is a code-only bug fix - no documentation changes required"
+    rule: "For minimal bug fixes that only change implementation details (like switching from new Date() to dayjs()), no documentation updates to CLAUDE.md or AGENTS.md are required"
+    reference: "No config/documentation changes needed - the fix is self-documenting through the code"

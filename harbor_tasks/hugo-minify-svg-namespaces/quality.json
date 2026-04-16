@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific version (v2.24.11), the exact config string (KeepNamespaces with []string{\"\", \"x-bind\"}), the test file (minifiers/minifiers_test.go), the issue number (#14669), the exact test strings (x-bind:href=\"myicon\" and :href=\"myicon\"), and the commands (go test ./minifiers/..., go build ./, go vet ./minifiers/...). All asserted specifics in tests are discoverable from the instruction."
+      "reason": "The instruction explicitly names: go.mod with v2.24.11, minifiers/config.go with KeepNamespaces []string{\"\", \"x-bind\"}, minifiers/minifiers_test.go with #14669, x-bind:href=\"myicon\", :href=\"myicon\", and the commands go test ./minifiers/..., go build ./, go vet ./minifiers/.... All asserted paths, strings, and values in tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Configure the SVG minifier's KeepNamespaces option with the value []string{\"\", \"x-bind\"}' and 'Update the tdewolff/minify dependency in go.mod to version v2.24.11'. This is not describing what's broken \u2014 it's prescribing the exact implementation changes."
+      "reason": "The instruction explicitly states the exact fix: update to v2.24.11, configure KeepNamespaces with []string{\"\", \"x-bind\"}, and add specific test cases with exact strings. It tells the agent precisely WHAT to change and HOW, leaving no reasoning about the solution required."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_config_has_keep_namespaces asserts the exact string 'KeepNamespaces: []string{\"\", \"x-bind\"}' in config.go. An alternative correct fix that formats the code differently (e.g., multi-line slice literal, different whitespace, or using a variable) would fail this text-matching test."
+      "reason": "test_config_has_keep_namespaces asserts the exact string 'KeepNamespaces: []string{\"\", \"x-bind\"}' in config.go. An alternative correct fix (e.g., different formatting, variable assignment, or using a helper) would fail this text-matching test. Similarly, test_go_mod_dependencies_updated checks for the exact string 'github.com/tdewolff/minify/v2 v2.24.11'."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The three fail-to-pass tests (test_go_mod_dependencies_updated, test_config_has_keep_namespaces, test_minifiers_test_has_alpine_cases) are purely text-matching assertions like 'assert ... in content'. While pass-to-pass tests do execute code (go test, go build, go vet), the core fail-to-pass tests only check file contents, not behavior."
+      "reason": "The fail-to-pass tests (test_go_mod_dependencies_updated, test_config_has_keep_namespaces, test_minifiers_test_has_alpine_cases) are purely text-matching with 'assert X in open(path).read()'. While pass-to-pass tests do execute code (go test, go build, go vet), the core f2p tests only check file contents, not behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in files. An agent could satisfy test_go_mod_dependencies_updated by just editing the version string in go.mod, test_config_has_keep_namespaces by inserting the exact string as a comment, and test_minifiers_test_has_alpine_cases by adding the strings as comments. The actual behavioral test (test_repo_minifiers_test) is pass-to-pass, not fail-to-pass, so it doesn't verify the bug fix works."
+      "reason": "The f2p tests only check that specific strings exist in files. An agent could simply append the required strings as comments to the files (e.g., add '// KeepNamespaces: []string{\"\", \"x-bind\"}' as a comment) without actually implementing the fix. The go test pass-to-pass test would catch this only if the existing tests break, but the f2p tests themselves are trivially satisfiable without a real fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: dependency update (test_go_mod_dependencies_updated), SVG config (test_config_has_keep_namespaces), regression tests (test_minifiers_test_has_alpine_cases), and existing tests passing (test_repo_minifiers_test, test_repo_go_build, test_repo_go_vet)."
+      "reason": "All four requirements from the instruction are tested: dependency update (test_go_mod_dependencies_updated), SVG config (test_config_has_keep_namespaces), regression tests (test_minifiers_test_has_alpine_cases), and existing tests passing (test_repo_minifiers_test, test_repo_go_build, test_repo_go_vet)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly labeled as 'Fail-to-pass' or 'Pass-to-pass', and grouped logically by purpose."
+      "reason": "Tests are well-named with descriptive function names, have docstrings explaining whether they are fail-to-pass or pass-to-pass, and are logically grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (minifiers/config.go), the exact option name (KeepNamespaces), the exact value ([]string{\"\", \"x-bind\"}), and the exact dependency version (v2.24.11). This goes far beyond describing the bug \u2014 it prescribes the exact code change."
+      "reason": "The instruction names the exact file (minifiers/config.go), the exact option (KeepNamespaces), the exact value ([]string{\"\", \"x-bind\"}), the exact dependency version (v2.24.11), and the exact test file (minifiers/minifiers_test.go). This is far beyond describing what's broken \u2014 it prescribes the exact implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to go.mod, minifiers/config.go, and minifiers/minifiers_test.go \u2014 all small, scoped edits rather than full-file rewrites."
+      "reason": "The gold patch makes localized edits to go.mod, minifiers/config.go (adding one field), and minifiers/minifiers_test.go (adding test cases). No full-file rewrites or contradictions."
     }
   },
   "tier_a_fails": [

@@ -1,0 +1,93 @@
+source_pr:
+  owner: excalidraw
+  repo: excalidraw
+  number: 10682
+  merge_commit: acf54c6f3846bea889e9acc5b6144bec4ee3016c
+  base_commit: 3c8e893cab216eb1f748ec1245aeb059a1349639
+
+checks:
+  # TypeScript type checking (pass_to_pass)
+  - id: test_typescript_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  # CI linting checks (pass_to_pass)
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check passes
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check passes
+
+  - id: test_repo_dropdown_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dropdown menu unit tests pass
+
+  # Fail-to-pass tests for the badge prop feature
+  - id: test_dropdown_menu_item_has_badge_prop
+    type: fail_to_pass
+    origin: agent_config
+    description: DropdownMenuItem component accepts a badge prop
+    source:
+      file: CLAUDE.md
+      lines: "TypeScript throughout with strict configuration"
+
+  - id: test_menu_item_content_has_badge_prop
+    type: fail_to_pass
+    origin: agent_config
+    description: MenuItemContent component accepts and renders badge prop
+    source:
+      file: CLAUDE.md
+      lines: "TypeScript throughout with strict configuration"
+
+  - id: test_actions_uses_badge_prop
+    type: fail_to_pass
+    origin: behavioral
+    description: Actions.tsx uses badge prop instead of child element
+
+  - id: test_font_picker_list_uses_badge_prop
+    type: fail_to_pass
+    origin: behavioral
+    description: FontPickerList.tsx uses badge prop instead of child element
+
+  - id: test_ttd_dialog_trigger_uses_badge_prop
+    type: fail_to_pass
+    origin: behavioral
+    description: TTDDialogTrigger.tsx uses badge prop instead of child element
+
+  - id: test_badge_rendered_in_correct_position
+    type: fail_to_pass
+    origin: behavioral
+    description: Badge is rendered after text content but before shortcut
+
+# Rubric rules from agent config files
+rubric:
+  - id: use_typescript
+    description: Use TypeScript for all new code
+    source:
+      file: .github/copilot-instructions.md
+
+  - id: use_functional_components
+    description: Use functional components with hooks
+    source:
+      file: .github/copilot-instructions.md
+
+  - id: follow_hooks_rules
+    description: Follow the React hooks rules (no conditional hooks)
+    source:
+      file: .github/copilot-instructions.md
+
+  - id: keep_components_focused
+    description: Keep components small and focused
+    source:
+      file: .github/copilot-instructions.md
+
+  - id: use_pascal_case_components
+    description: Use PascalCase for component names, interfaces, and type aliases
+    source:
+      file: .github/copilot-instructions.md

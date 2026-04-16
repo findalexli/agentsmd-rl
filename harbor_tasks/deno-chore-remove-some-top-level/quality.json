@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies all key paths (bench_util -> tests/bench_util, docs/tsgo.md -> cli/tsc/README.md, Cargo.toml workspace members, tools/lint.js function renames, allowed directory list). The test assertions check for 'Typescript-Go Integration' and 'deno_typescript_go_client_rust'/'typescript-go' in cli/tsc/README.md - while the exact string 'Typescript-Go Integration' isn't literally in the instruction, the instruction says to append docs/tsgo.md content to cli/tsc/README.md, and the ag"
+      "reason": "Instruction names bench_util/, tests/bench_util/, docs/tsgo.md, cli/tsc/README.md, tools/lint.js, the 'Typescript-Go Integration' section, cargo check -p deno_bench_util, and the directories cli/tests/tools."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: 'Rename listTopLevelFiles() to listTopLevelEntries()', 'Update the logic to extract the first path component', 'Use a Set instead of array for O(1) lookups', 'remove bench_util, add tests/bench_util', 'Update deno_bench_util path dependency to point to ./tests/bench_util'. These are precise implementation instructions, not just descriptions of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what to move and what behavior to achieve without dictating specific code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests for lint.js (test_lint_js_detects_top_level_directories, test_lint_js_blocks_unauthorized_top_level) write their own standalone test scripts rather than importing from tools/lint.js, so they don't assert on the agent's specific implementation in lint.js. The Cargo.toml and file-move tests check behavioral outcomes (workspace members, file existence, cargo check passing) rather than exact implementation details. An alternative correct fix would pass these tests."
+      "reason": "Tests check behavioral outcomes (cargo check passes, file existence, lint detects directories) rather than specific implementation details; the lint tests reimplement the logic independently."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute cargo check subprocess (test_cargo_check_passes, test_bench_util_compiles), run Node.js scripts that actually call git and process files (test_lint_js_detects_top_level_directories, test_lint_js_blocks_unauthorized_top_level), parse TOML structure (test_cargo_toml_valid), and check file existence (test_bench_util_moved). Only test_docs_tsgo_moved is purely text-based assertion, but most tests verify behavior through execution."
+      "reason": "Tests execute cargo check subprocesses and run node scripts to verify lint.js behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail_to_pass tests require real changes: test_cargo_check_passes requires bench_util to exist at tests/bench_util with correct Cargo.toml references; test_bench_util_compiles requires the crate to actually compile at the new path; test_lint_js_blocks_unauthorized_top_level would fail if bench_util still exists at the old location (it would be an unauthorized top-level entry). A stub/no-op implementation cannot satisfy these."
+      "reason": "f2p tests require actual cargo compilation and actual directory moves; stubs wouldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from the instruction are tested: bench_util move (test_bench_util_moved, test_bench_util_compiles, test_cargo_check_passes), Cargo.toml updates (test_cargo_toml_valid), docs/tsgo.md move (test_docs_tsgo_moved), and lint.js functionality (test_lint_js_detects_top_level_directories, test_lint_js_blocks_unauthorized_top_level). The lint.js function renaming and Set usage aren't directly tested but those are implementation details."
+      "reason": "All three requirements (move bench_util, move tsgo.md, update lint.js) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (Gates/pass_to_pass, Fail-to-pass/pr_diff) and annotated with tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves file moves and code refactoring, not producing structured data output."
+      "reason": "Task doesn't produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact function renames ('Rename listTopLevelFiles() to listTopLevelEntries()', 'Rename ensureNoNewTopLevelFiles() to ensureNoNewTopLevelEntries()'), exact implementation details ('Use a Set instead of array for O(1) lookups'), and exact allowed directory list. This goes beyond identifying the problem and prescribes the exact solution."
+      "outcome": "pass",
+      "reason": "Instruction names tools/lint.js as the file to fix, but localization is not part of the task \u2014 the problem is explicitly about that script."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The Cargo.toml changes are localized (workspace members list and one path dependency line), not a full-file rewrite."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

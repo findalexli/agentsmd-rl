@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests check for very specific implementation details not mentioned in instruction.md. For example, test_subagent_footer_token_cost checks for '.cache' property access, 'Intl.NumberFormat' usage, and 'currency' string. test_subagent_footer_exists_with_navigation checks for 'onMouseUp'/'onClick'/'onMouseDown'/'onPress' event handlers. test_dialog_model_control_flow checks for exact code patterns like 'dialog.replace' and 'dialog.clear' appearing after the if-block closing brace. While instruction."
+      "reason": "Tests assert on specific implementation details not fully discoverable from instruction.md alone. For example, test_subagent_footer_style_compliance checks for absence of 'try', 'catch', 'for (', and 'let ' via regex, and test_subagent_footer_token_cost checks for '.cache' property access and 'Intl.NumberFormat' or 'Locale' usage. While many of these are mentioned in instruction.md, test_dialog_model_no_else_block checks that 'dialog.clear()' is not inside an else block and that a 'return' state"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly describes the fix for dialog-model.tsx: 'When the variant list is empty after model selection, the dialog state does not behave correctly \u2014 it should clear but does not.' Combined with the specific file path and the description of the exact behavioral issue, this heavily constrains the solution to moving the dialog.clear() call outside the if-else block, which is exactly the gold patch. However, it doesn't literally say 'change line X to Y', so this is borderline. The "
+      "reason": "instruction.md says 'The session index file currently has a `<box height={1} />` element that should be removed' \u2014 this specifies exactly what to change. It also says 'remove any import statement that imports a symbol that is never used' and specifically names 'useSync' from '@tui/context/sync'. The dialog-model fix says 'must not use an else block \u2014 restructure the control flow so that when the variant list is empty, the dialog clears without wrapping it in an else branch' which strongly hints "
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_dialog_model_control_flow asserts a very specific code pattern: it checks that after the closing brace of `if (local.model.variant.list().length > 0)`, the text `dialog.clear()` appears. This corresponds exactly to the gold patch's refactoring (moving dialog.clear outside the else block with a return statement). An alternative correct fix like keeping the if-else structure but fixing the logic differently would fail this test. Similarly, test_subagent_footer_exists_with_navigation checks fo"
+      "reason": "Tests are heavily text-matching and would fail valid alternatives. test_subagent_footer_exists_with_navigation requires exact strings like 'export function SubagentFooter' or 'export const SubagentFooter' \u2014 a default export with different naming would fail. test_dialog_model_no_else_block looks for a specific pattern with 'return' after 'dialog.replace' \u2014 an alternative valid restructuring (e.g., using early return before the if block, or using a ternary) might not match. test_subagent_footer_to"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_subagent_footer_exists_with_navigation, test_subagent_footer_token_cost, test_dialog_model_control_flow, test_dialog_variant_no_unused_imports, test_session_imports_subagent_footer, test_session_renders_subagent_footer) all use Node.js to read file contents and check for string patterns like `code.includes('Parent')`, `code.includes('Intl.NumberFormat')`, `code.includes('onMouseUp')`. None of them actually import, instantiate, or execute the components. They are fund"
+      "reason": "Most fail-to-pass tests (test_subagent_footer_exists_with_navigation, test_subagent_footer_token_cost, test_subagent_footer_style_compliance, test_dialog_model_no_else_block, test_dialog_variant_no_unused_import, test_session_index_imports_subagent, test_session_index_show_when_parentID) read file contents and check for string inclusion/regex patterns rather than importing, executing, or rendering the components. None of them actually call or render the SubagentFooter component."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty file would fail since tests check for specific exports (SubagentFooter), specific string content (Parent, Next, tokens, Intl.NumberFormat), and specific patterns. An empty or minimal stub would not contain these required strings."
+      "reason": "A stub/empty file would not pass the tests \u2014 they check for specific content like 'export function SubagentFooter', navigation labels ('Parent', 'Prev', 'Next'), token access patterns, and event handlers. The dialog tests check for absence of specific patterns. The typecheck test would also catch type errors. A trivial implementation cannot satisfy all these constraints simultaneously."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction mentions 'Only appears when the session has a parentID (conditionally rendered)' but the test_session_renders_subagent_footer only checks that `<Show when={session()?.parentID}>` and `<SubagentFooter` appear in the session index file - it doesn't verify actual conditional rendering behavior. The instruction's requirement about keyboard shortcut hints is not tested beyond checking for navigation label strings."
+      "reason": "instruction.md requires the component to 'show cost information in USD using currency formatting' and 'display three navigation controls' with specific behaviors. The tests only check for string presence in source code, not actual rendering behavior. The instruction says 'when a user selects a model that has no variants available, the dialog should close' but no test actually simulates this interaction \u2014 it only checks source code patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/pass_to_pass/fail_to_pass), descriptive function names (test_subagent_footer_exists_with_navigation, test_dialog_model_control_flow), and docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Pass-to-pass, Fail-to-pass), descriptive function names (test_subagent_footer_exists_with_navigation, test_dialog_model_no_else_block), and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves creating/modifying TSX UI components, not producing structured data like JSON/CSV/API/DB schemas."
+      "reason": "This task produces UI component code (TSX), not structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, component names, and variable names in the instruction are consistent and correctly spelled throughout."
+      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the test file references."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names specific files (dialog-model.tsx, dialog-variant.tsx) and describes the exact nature of the bugs: 'unused import' in dialog-variant.tsx and the specific control flow issue with dialog.clear in dialog-model.tsx. For dialog-variant.tsx, the instruction literally says 'Contains a lint error (unused import) that must be removed' which tells the agent exactly what to do."
+      "reason": "instruction.md explicitly identifies the exact element to remove: '<box height={1} />' in the session index, names the exact unused import ('useSync' from '@tui/context/sync'), and specifies exact file paths. It also prescribes the exact control flow restructuring pattern ('must not use an else block'). These go beyond describing what's broken and into specifying exact locations and changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TSX component creation and modification, not a configuration edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

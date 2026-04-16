@@ -97,18 +97,30 @@ print("PASS")
 
 # [pr_diff] fail_to_pass
 def test_create_dataloader_dispatches_eval_sampler():
-    """create_dataloader uses EvalDistributedSampler for ValidDatasetConfig."""
+    """create_dataloader uses a no-padding sampler for ValidDatasetConfig."""
     r = _run_py(_PREAMBLE + """
 valid_config = ValidDatasetConfig()
 valid_config.batch_size = 4
+dataset = list(range(12))
 loader = create_dataloader(
-    list(range(12)), rank=0, world_size=2, dataset_config=valid_config
+    dataset, rank=0, world_size=2, dataset_config=valid_config
 )
 sampler = loader.sampler
-assert type(sampler).__name__ == "EvalDistributedSampler", (
-    f"Expected EvalDistributedSampler, got {type(sampler).__name__}"
-)
-assert not sampler.drop_last, "Sampler drop_last should be False for validation"
+
+# Behavioral check: validation sampler must NOT pad
+# When all ranks contribute their indices, total should equal dataset size (no padding)
+dataset_size = len(dataset)
+# Simulate what would happen across ranks 0 and 1 (world_size=2)
+indices_r0 = list(loader.sampler)
+# Get indices for rank 1 by creating a new loader
+loader_r1 = create_dataloader(dataset, rank=1, world_size=2, dataset_config=valid_config)
+indices_r1 = list(loader_r1.sampler)
+
+# Key behavioral assertions: no padding, no dropped last batch for validation
+combined = indices_r0 + indices_r1
+assert len(combined) == len(set(combined)), "Duplicate indices found (padding)"
+assert len(combined) == dataset_size, f"Expected {dataset_size} total indices, got {len(combined)} (padding or dropping)"
+assert not loader.sampler.drop_last, "Validation sampler must have drop_last=False"
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -163,7 +175,7 @@ print("PASS")
 
 # [pr_diff] pass_to_pass
 def test_training_config_unchanged():
-    """Training config still uses standard DistributedSampler with drop_last=True."""
+    """Training config still uses a sampler that drops the last batch."""
     r = _run_py(_PREAMBLE + """
 train_config = _DatasetConfig()
 train_config.batch_size = 4
@@ -171,10 +183,9 @@ loader = create_dataloader(
     list(range(12)), rank=0, world_size=2, dataset_config=train_config
 )
 sampler = loader.sampler
-assert type(sampler).__name__ == "DistributedSampler", (
-    f"Expected DistributedSampler for training, got {type(sampler).__name__}"
-)
-assert sampler.drop_last, "Sampler drop_last should be True for training"
+
+# Behavioral check: training sampler must have drop_last=True
+assert sampler.drop_last, "Training sampler must have drop_last=True"
 print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -262,20 +273,29 @@ def test_no_wildcard_imports():
 
 # [agent_config] pass_to_pass — AGENTS.md:100-101 @ fdca82dc
 def test_explicit_type_hints_in_eval_sampler():
-    """EvalDistributedSampler.__init__ must have explicit type annotations on all parameters."""
-    tree = ast.parse(FILE.read_text())
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "EvalDistributedSampler":
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    for arg in item.args.args:
-                        if arg.arg == "self":
-                            continue
-                        assert arg.annotation is not None, (
-                            f"EvalDistributedSampler.__init__ parameter '{arg.arg}' missing type annotation"
-                        )
-                    return  # found and checked
-    assert False, "EvalDistributedSampler.__init__ not found in dataloader.py"
+    """Any sampler class used for validation must have explicit type annotations on all __init__ params."""
+    # Check that SOME sampler class (used for validation) has type-annotated __init__ params
+    # We check by inspecting actual behavior - create a dataloader with ValidDatasetConfig
+    # and verify the sampler has type-annotated init by checking the source of the class
+    r = _run_py(_PREAMBLE + """
+# Find the sampler class used for validation
+valid_config = ValidDatasetConfig()
+loader = create_dataloader(list(range(12)), rank=0, world_size=2, dataset_config=valid_config)
+sampler_cls = type(loader.sampler)
+
+# Check that the class has an __init__ with type annotations on all non-self params
+import inspect
+sig = inspect.signature(sampler_cls.__init__)
+for name, param in sig.parameters.items():
+    if name == 'self':
+        continue
+    assert param.annotation is not inspect.Parameter.empty, (
+        f"Parameter '{name}' in {sampler_cls.__name__}.__init__ missing type annotation"
+    )
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [agent_config] pass_to_pass — AGENTS.md:90-92 @ fdca82dc

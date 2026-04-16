@@ -1,96 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21428
-  base_commit: "75682f1d2f60797fb438da8fd6fe40e92e1a26fe"
-  merge_commit: "7c7b2a8c97816b84c6c90ebe28e7e1a9ea334888"
-
+  base_commit: 75682f1d2f60797fb438da8fd6fe40e92e1a26fe
+  merge_commit: 7c7b2a8c97816b84c6c90ebe28e7e1a9ea334888
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "kda_backend.py must parse without syntax errors"
-
-  - id: test_repo_syntax_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax compilation check via py_compile"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linter check on kda_backend.py passes"
-
-  - id: test_repo_black_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Black formatting check on kda_backend.py passes"
-
-  - id: test_repo_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "isort import ordering check on kda_backend.py passes"
-
-  - id: test_repo_codespell
-    type: pass_to_pass
-    origin: repo_tests
-    description: "codespell spelling check on kda_backend.py passes"
-
-  - id: test_repo_import_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "AST structure check verifies KDAKernelDispatcher class exists"
-
-  - id: test_repo_file_not_empty
-    type: pass_to_pass
-    origin: repo_tests
-    description: "File must have substantial content with expected class"
-
-  - id: test_repo_no_wildcard_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "File should not use wildcard imports (repo code style check)"
-
-  - id: import_kda_backend_no_cuda_crash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Importing kda_backend must not crash with a cuda ModuleNotFoundError on non-CUDA platforms"
-
-  - id: cutedsl_import_not_at_module_level
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CuteDSLKDAKernel must not be imported at module level (must be deferred/lazy)"
-
-  - id: dispatcher_class_intact
-    type: pass_to_pass
-    origin: static
-    description: "KDAKernelDispatcher class must exist with __init__ method"
-
-  - id: cutedsl_still_referenced
-    type: pass_to_pass
-    origin: static
-    description: "CuteDSLKDAKernel must still be referenced in the file (not deleted)"
-
-  - id: triton_import_still_toplevel
-    type: pass_to_pass
-    origin: static
-    description: "TritonKDAKernel must remain a top-level import (only CuteDSL should be lazified)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File must have real content with all key identifiers present"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: kda_backend.py must parse without syntax errors
+- id: test_repo_syntax_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax compilation check via py_compile
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter check on kda_backend.py passes
+- id: test_repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Black formatting check on kda_backend.py passes
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: isort import ordering check on kda_backend.py passes
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: codespell spelling check on kda_backend.py passes
+- id: test_repo_import_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: AST structure check verifies KDAKernelDispatcher class exists
+- id: test_repo_file_not_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: File must have substantial content with expected class
+- id: test_repo_no_wildcard_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: File should not use wildcard imports (repo code style check)
+- id: import_kda_backend_no_cuda_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Importing kda_backend must not crash with a cuda ModuleNotFoundError
+    on non-CUDA platforms
+- id: cutedsl_import_not_at_module_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: CuteDSLKDAKernel must not be imported at module level (must be deferred/lazy)
+- id: dispatcher_class_intact
+  type: pass_to_pass
+  origin: static
+  description: KDAKernelDispatcher class must exist with __init__ method
+- id: cutedsl_still_referenced
+  type: pass_to_pass
+  origin: static
+  description: CuteDSLKDAKernel must still be referenced in the file (not deleted)
+- id: triton_import_still_toplevel
+  type: pass_to_pass
+  origin: static
+  description: TritonKDAKernel must remain a top-level import (only CuteDSL should
+    be lazified)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File must have real content with all key identifiers present
 rubric:
-  - rule: "Prefer following the existing module organization first."
-    source:
-      path: ".claude/skills/add-sgl-kernel/SKILL.md"
-      lines: "161"
-      commit: "75682f1d2f60797fb438da8fd6fe40e92e1a26fe"
-
-  - rule: "Keep Python launchers thin, but still validate the basic invariants (is_cuda, supported dtype, out metadata)."
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "384-385"
-      commit: "75682f1d2f60797fb438da8fd6fe40e92e1a26fe"
+- rule: Prefer following the existing module organization first.
+  source:
+    path: .claude/skills/add-sgl-kernel/SKILL.md
+    lines: '161'
+    commit: 75682f1d2f60797fb438da8fd6fe40e92e1a26fe
+- rule: Keep Python launchers thin, but still validate the basic invariants (is_cuda,
+    supported dtype, out metadata).
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 384-385
+    commit: 75682f1d2f60797fb438da8fd6fe40e92e1a26fe
+- rule: Validate basic invariants (like is_cuda) in Python launchers before execution.
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '385'
+  source_text: '- Keep Python launchers thin, but still validate the basic invariants
+    (`is_cuda`, supported dtype, `out` metadata). In the current JIT/FFI path, invalid
+    tensors are not always rejected safely before launch'
+  evidence: 'The gold diff explicitly validates that the environment is CUDA-enabled
+    by adding `if not is_cuda(): raise ValueError("KDA CuTe DSL backend requires CUDA")`
+    before importing and launching the CUDA backend module.'
+  category: error handling
+  verification: llm_judge
+distractors:
+- rule: Use sys.modules stubs to make failing module imports succeed on CPU CI.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '101'
+  source_text: Use `unittest.mock.patch` / `MagicMock` to mock dependencies and isolate
+    the logic under test. If the module fails to import on CPU CI (e.g., imports `torch`
+    or CUDA ops at module level), use `sys.modules` stubs to make the import succeed.
+    See existing tests in `test/registered/unit/` for examples.
+  collision_type: architecture_boundary
+  why_distracting: The PR fixes an issue where CUDA operations are imported at the
+    module level (which would cause failures on CPU CI). An agent following this testing
+    rule might mistakenly try to resolve the CPU CI failure by adding `sys.modules`
+    stubs to the test files, instead of correcting the root cause by applying a lazy
+    import in the application code (`kda_backend.py`) as the gold diff does.
+  severity: high

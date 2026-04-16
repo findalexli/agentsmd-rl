@@ -1,0 +1,23 @@
+name = "moby-cancelreadcloser-race-fix"
+description = "Fix race condition in cancelReadCloser by calling sync.Once wrapped close function directly"
+category = "race-condition"
+difficulty = "medium"
+tags = ["go", "concurrency", "race-condition", "docker", "client"]
+
+[timing]
+estimated_time = "30m"
+timeout = "10m"
+
+[repository]
+url = "https://github.com/moby/moby"
+base_commit = "20d257b457d24d222bd7fc3a5781d09abf23f989"
+merge_commit = "5eaa3ce495d28341b0c4cbe76089ff9e82fef204"
+pr_number = 52280
+
+[paths]
+readme = "instruction.md"
+manifest = "eval_manifest.yaml"
+dockerfile = "environment/Dockerfile"
+solve_script = "solution/solve.sh"
+test_script = "tests/test.sh"
+test_output = "tests/test_outputs.py"

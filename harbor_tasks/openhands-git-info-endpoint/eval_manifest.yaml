@@ -1,0 +1,181 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13787
+  title: "Added new v1 endpoint for user git info and deprecated old endpoint"
+  merge_commit: e3246c27d44d57d438e4870762a70ad15e2027e9
+  base_commit: 0c5e30ab33a2286821df5b5012abc2345a9002ce
+
+checks:
+  # ==========================================================================
+  # Fail-to-pass tests - Core behavioral changes that fail at base, pass after fix
+  # ==========================================================================
+
+  - id: test_user_git_info_model_importable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UserGitInfo model can be imported and instantiated at runtime"
+
+  - id: test_user_git_info_optional_fields
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UserGitInfo optional fields default to None"
+
+  - id: test_user_alias_works
+    type: fail_to_pass
+    origin: pr_diff
+    description: "User alias works as an alias for UserGitInfo at runtime"
+
+  - id: test_user_git_info_serializable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UserGitInfo serializes to JSON correctly"
+
+  - id: test_new_git_info_endpoint_importable
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New /git-info endpoint function can be imported"
+
+  - id: test_user_context_has_get_user_git_info_abstract
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UserContext defines abstract get_user_git_info method"
+
+  - id: test_specify_user_context_has_get_user_git_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SpecifyUserContext has get_user_git_info abstract method"
+
+  - id: test_auth_user_context_implements_get_user_git_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "AuthUserContext implements get_user_git_info method"
+
+  - id: test_user_auth_has_get_user_git_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "UserAuth base class implements get_user_git_info"
+
+  - id: test_endpoint_returns_user_git_info_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New endpoint has correct UserGitInfo return type annotation"
+
+  - id: test_old_endpoint_has_deprecated_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old /info endpoint is marked deprecated in FastAPI router"
+
+  - id: test_new_endpoint_raises_401_when_not_authenticated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "New endpoint raises 401 when get_user_git_info returns None"
+
+  - id: test_service_types_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "service_types.py compiles without syntax errors"
+
+  - id: test_user_router_compiles
+    type: fail_to_pass
+    origin: pr_diff
+    description: "user_router.py compiles without syntax errors"
+
+  # ==========================================================================
+  # Pass-to-pass tests - Repo integrity tests that should pass before and after
+  # ==========================================================================
+
+  - id: test_service_types_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "service_types.py is syntactically valid Python (AST parse)"
+
+  - id: test_user_router_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "user_router.py is syntactically valid Python (AST parse)"
+
+  - id: test_user_context_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "user_context.py is syntactically valid Python"
+
+  - id: test_auth_user_context_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "auth_user_context.py is syntactically valid Python"
+
+  - id: test_specify_user_context_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "specifiy_user_context.py is syntactically valid Python"
+
+  - id: test_user_auth_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "user_auth.py is syntactically valid Python"
+
+  - id: test_git_routes_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "git.py routes file is syntactically valid Python"
+
+  - id: test_repo_ruff_check_service_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check passes on service_types.py"
+
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on modified files"
+
+  - id: test_repo_mypy_service_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MyPy type check passes on service_types.py"
+
+  - id: test_repo_mypy_user_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MyPy type check passes on user_router.py"
+
+  - id: test_repo_python_syntax_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All modified Python files compile without syntax errors"
+
+  - id: test_new_unit_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "New unit test file for git info endpoint exists"
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "New unit tests for git info pass"
+
+rubric:
+  - rule: "Follow pre-commit hook installation requirement"
+    source: "AGENTS.md:39"
+    weight: 0.5
+
+  - rule: "Run pre-commit hooks before pushing changes"
+    source: "AGENTS.md:42"
+    weight: 0.5
+
+  - rule: "Use pytest for backend testing"
+    source: "AGENTS.md:92"
+    weight: 0.5
+
+  - rule: "Use relative imports without enterprise. prefix in enterprise code"
+    source: "AGENTS.md:159"
+    weight: 0.5
+
+  - rule: "Add proper deprecation notices when changing API endpoints"
+    source: "PR context"
+    weight: 1.0
+
+  - rule: "Maintain backwards compatibility when renaming models"
+    source: "PR context"
+    weight: 1.0

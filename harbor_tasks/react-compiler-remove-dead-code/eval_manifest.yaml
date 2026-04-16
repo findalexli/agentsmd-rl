@@ -67,19 +67,17 @@ checks:
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo'''s ESLint check runs (yarn lint). Base commit has 8 pre-existing errors.
+  description: Repo'''s ESLint check runs (yarn lint). Base commit has 8 pre-existing
+    errors.
 rubric:
-- rule: Dead code removal should be complete - including type definitions, imports, class properties, switch cases, and unused file deletion
+- rule: Dead code removal should be complete - including type definitions, imports,
+    class properties, switch cases, and unused file deletion
   source:
     path: compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Program.ts
-  reference: |
-    // CompileProgramMetadata type removed
-    // compileProgram now returns void instead of CompileProgramMetadata | null
-    export function compileProgram(
-      program: NodePath<t.Program>,
-      pass: CompilerPass,
-    ): void {
-      // ... returns void (no return value with metadata)
+  reference: "// CompileProgramMetadata type removed\n// compileProgram now returns\
+    \ void instead of CompileProgramMetadata | null\nexport function compileProgram(\n\
+    \  program: NodePath<t.Program>,\n  pass: CompilerPass,\n): void {\n  // ... returns\
+    \ void (no return value with metadata)\n"
 distractors:
 - rule: This repository uses Sapling (`sl`) for version control. Use `sl status`,
     `sl addremove`, and `sl commit`.
@@ -112,6 +110,56 @@ distractors:
   source:
     path: compiler/CLAUDE.md
     lines: 35-42
+- rule: When the compiler encounters an unsupported but known pattern, use CompilerError.throwTodo()
+    instead of CompilerError.invariant().
+  source:
+    path: compiler/CLAUDE.md
+    lines: 234-247
+  source_text: "When the compiler encounters an unsupported but known pattern, use\
+    \ `CompilerError.throwTodo()` instead of `CompilerError.invariant()`. Todo errors\
+    \ cause graceful bailouts in production; Invariant errors are hard failures indicating\
+    \ unexpected/invalid states.\n\n```typescript\n// Unsupported but expected pattern\
+    \ - graceful bailout\nCompilerError.throwTodo({\n  reason: `Support [description\
+    \ of unsupported feature]`,\n  loc: terminal.loc,\n});\n\n// Invariant is for\
+    \ truly unexpected/invalid states - hard failure\nCompilerError.invariant(false,\
+    \ {\n  reason: `Unexpected [thing]`,\n  loc: terminal.loc,\n});"
+  collision_type: rule_conflict
+  why_distracting: The PR removes dead code including an obsolete output mode ('client-no-memo').
+    An agent might mistakenly apply this rule to replace the obsolete mode with a
+    'throwTodo()' error, instead of completely deleting it as intended.
+  severity: high
+- rule: 'Adding a New Flag: Add to ReactFeatureFlags.js and fork files, and gate tests.'
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: 47-52
+  source_text: '## Adding a New Flag
+
+
+    1. Add to `ReactFeatureFlags.js` with default value
+
+    2. Add to each fork file (`*.www.js`, `*.native-fb.js`, etc.)
+
+    3. If it should vary in www/RN, set to `__VARIANT__` in the fork file
+
+    4. Gate tests with `@gate flagName` or inline `gate()`'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies the React Compiler's configuration schema (Environment.ts).
+    An agent might confuse compiler options with React core feature flags and attempt
+    to add or remove flags in ReactFeatureFlags.js and its forks, which belong to
+    a completely different domain (React core).
+  severity: high
+- rule: Feature flags are configured in src/HIR/Environment.ts.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 215-215
+  source_text: Feature flags are configured in src/HIR/Environment.ts, for example
+    enableJsxOutlining.
+  collision_type: meta_confusion
+  why_distracting: The PR removes the 'client-no-memo' output mode from Environment.ts.
+    Since this file also houses compiler feature flags, an agent might mistake 'client-no-memo'
+    for a feature flag rather than an output mode, and potentially look for @enable-style
+    pragmas to remove in tests.
+  severity: low
 hierarchy_analysis: The root `CLAUDE.md` correctly directs the agent to the `/compiler/`
   directory and its specific instructions. The `compiler/CLAUDE.md` provides detailed
   workflows, but introduces tooling conflicts (Sapling vs Git) that the agent must

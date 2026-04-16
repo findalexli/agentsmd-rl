@@ -130,6 +130,20 @@ rubric:
     npx cypress run --expose grep="user",grepTags="@critical @smoke"
 
     npx cypress run --expose grep="login'
+- rule: Documentation for published @cypress/* packages
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 68-69
+  source_text: "- **@cypress/* packages**: Published to npm - breaking changes critical\n\
+    \  - Focus: Backward compatibility, documentation, comprehensive testing, API\
+    \ stability"
+  evidence: The PR thoroughly updates `npm/grep/README.md` to document the API migration
+    from v5 to v6. It updates all CLI usage examples to reflect the new `--expose`
+    flag and adds a dedicated 'Migration' section explaining the deprecation of `Cypress.env()`
+    in favor of `Cypress.expose()`, directly fulfilling the mandate for documentation
+    on critical breaking changes.
+  category: documentation
+  verification: llm_judge
 config_edits:
 - path: npm/grep/README.md
   tier: 2
@@ -172,3 +186,47 @@ config_edits:
     @smoke+-@regression\"\nnpx cypress run --env grepUntagged=true\n  env: {\n   \
     \ \"cy:smoke\": \"cypress run --env grepTags=@smoke\",\n    \"cy:critical\": \"\
     cypress run --env grepTags=@critical\",\n    \"cy:"
+distractors:
+- rule: Backward compatibility for published @cypress/* packages
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 68-69
+  source_text: "- **@cypress/* packages**: Published to npm - breaking changes critical\n\
+    \  - Focus: Backward compatibility, documentation, comprehensive testing, API\
+    \ stability"
+  collision_type: rule_conflict
+  why_distracting: This rule mandates backward compatibility for npm-published packages.
+    However, this specific PR is executing a planned breaking change (migrating from
+    v5 to v6) by removing support for `Cypress.env` and replacing it with `Cypress.expose`.
+    An agent strictly following this rule would incorrectly try to implement a fallback
+    mechanism to preserve `Cypress.env` compatibility, which contradicts the goal
+    of the migration.
+  severity: high
+- rule: Command-line argument parsing in cli package
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 56-57
+  source_text: "- **cli**: Main command-line interface - user-facing entry point\n\
+    \  - Focus: Command-line argument parsing, user experience, error handling, cross-platform\
+    \ compatibility"
+  collision_type: architecture_boundary
+  why_distracting: The PR updates README examples and `package.json` scripts to use
+    the new `--expose` CLI argument instead of `--env`. An agent might mistakenly
+    think it needs to implement the parsing for `--expose` in the core `cli` package
+    due to this rule. However, the PR is strictly scoped to the `npm/grep` plugin
+    consuming the already-parsed `expose` object from the Cypress config, without
+    modifying the core CLI parser.
+  severity: medium
+- rule: Configuration schema changes in @packages/config
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 80-81
+  source_text: "- **@packages/config**: Configuration management\n  - Focus: Configuration\
+    \ schema changes, validation logic, backward compatibility"
+  collision_type: scope_ambiguity
+  why_distracting: The PR changes configuration property names (from `env` to `expose`)
+    and updates `cypress.config.ts` within the `npm/grep` test configuration. An agent
+    might mistakenly interpret this as a global configuration schema change and attempt
+    to modify the core `@packages/config` package to support the new `expose` property,
+    overstepping the scope of merely updating the grep plugin.
+  severity: medium

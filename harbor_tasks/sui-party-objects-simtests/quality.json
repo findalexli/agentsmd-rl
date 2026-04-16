@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "The test `test_new_deny_list_test_exists` asserts the exact function name `coin_deny_list_v2_party_owner_test`, but instruction.md never explicitly states this exact function name. The instruction says 'A new test function must be added' but doesn't specify this precise name. Similarly, `test_imports_added_to_stress_tests` checks for exact import statements like `use move_core_types::language_storage::{StructTag, TypeTag};` and `use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI"
+      "reason": "The test `test_new_deny_list_test_exists` asserts the exact function name `coin_deny_list_v2_party_owner_test`, which is never mentioned in instruction.md. The instruction says 'A new test function must be added' but doesn't specify this exact name. Also, `test_new_test_has_proper_test_structure` checks for `effects.status().is_err()` as an exact string, which is mentioned in instruction.md under 'Expected Test Structure', so that's discoverable. But the function name `coin_deny_list_v2_party_ow"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to do: remove specific guard patterns (`if sui_simulator::has_mainnet_protocol_config_override() { return; }`), add specific imports (exact `use` statements), call specific functions in a specific order, and check for specific error types. It essentially dictates the implementation rather than just describing the broken behavior."
+      "reason": "The instruction explicitly states exactly what to remove ('if sui_simulator::has_mainnet_protocol_config_override() { return; }'), lists exact import lines to add (e.g., 'use move_core_types::language_storage::{StructTag, TypeTag};'), specifies exact function calls to make, and provides the exact assertion pattern. This is essentially a step-by-step implementation guide rather than a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact import statements like `use move_core_types::language_storage::{StructTag, TypeTag};` and `use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID};`. An alternative correct fix could import these differently (e.g., separate use statements, different grouping) and still compile/work but fail these text-matching tests. Also `effects.status().is_err()` is checked as a literal string match."
+      "reason": "Tests assert exact import strings like 'use move_core_types::language_storage::{StructTag, TypeTag};' and 'use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID};'. An alternative correct fix could import these differently (separate use statements, different grouping) and still compile/work but fail the text-matching tests. Also, the exact function name `coin_deny_list_v2_party_owner_test` is asserted but an alternative valid name would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Many tests are pure text-matching: `test_new_deny_list_test_exists` checks `'async fn coin_deny_list_v2_party_owner_test()' in content`, `test_imports_added_to_stress_tests` checks exact import strings, `test_new_test_has_proper_test_structure` checks for string presence. While `test_cargo_check_passes`, `test_rustfmt_check`, `test_cargo_clippy_e2e_tests` do execute subprocesses, the core functional tests (test_new_deny_list_test_exists, test_imports_added_to_stress_tests, test_new_test_has_prop"
+      "reason": "Most tests are pure text-matching: `test_new_deny_list_test_exists`, `test_deny_list_test_has_deny_address_assertion`, `test_imports_added_to_stress_tests`, `test_mainnet_protocol_config_guards_removed_from_party_tests`, `test_new_test_has_proper_test_structure` all use `assert '...' in content` patterns. While `test_cargo_check_passes`, `test_rustfmt_check`, `test_cargo_clippy_e2e_tests` do execute subprocesses, the majority of tests (7 out of 13) are purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific content that doesn't exist in the original code (e.g., the new test function, new imports, removal of guard patterns), and cargo check/clippy verify compilation. A stub or no-op wouldn't pass these checks."
+      "reason": "The tests check for the presence of new code (new function, removed guards) and compilation. A stub or no-op implementation would fail `test_cargo_check_passes` since the new test function needs to reference real types and APIs, and the guard removal tests verify actual changes to existing code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Both tasks are tested: Task 1 (removing guards) is verified by test_mainnet_protocol_config_guards_removed_from_party_tests and test_party_tests_no_longer_skip_mainnet. Task 2 (new test) is verified by test_new_deny_list_test_exists, test_deny_list_test_has_deny_address_assertion, and test_new_test_has_proper_test_structure."
+      "reason": "Both tasks are tested: Task 1 (removing mainnet guards) is verified by `test_mainnet_protocol_config_guards_removed_from_party_tests` and `test_party_tests_no_longer_skip_mainnet`. Task 2 (new deny list test) is verified by `test_new_deny_list_test_exists`, `test_deny_list_test_has_deny_address_assertion`, and `test_new_test_has_proper_test_structure`. Compilation is verified by `test_cargo_check_passes`."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies."
+      "reason": "Tests are well-named with descriptive function names like `test_new_deny_list_test_exists`, `test_mainnet_protocol_config_guards_removed_from_party_tests`, `test_cargo_check_passes`, etc. Each test has a docstring explaining its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Rust test code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "This task involves modifying Rust test files, not producing structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, function names, commands, and variable names in the instruction and tests appear correct and consistent with the Sui codebase conventions."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files, exact function names, exact guard patterns to remove (`if sui_simulator::has_mainnet_protocol_config_override() { return; }`), exact imports to add, and exact method calls to use. This goes beyond naming buggy files and essentially prescribes the exact code changes."
+      "reason": "The instruction specifies exact file paths, exact guard patterns to remove, exact import lines to add (e.g., 'use move_core_types::language_storage::{StructTag, TypeTag};'), and exact function call sequences. This goes well beyond describing what's broken and essentially dictates the implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task involving Rust test file modifications, not configuration edits."
     }
   },
   "tier_a_fails": [

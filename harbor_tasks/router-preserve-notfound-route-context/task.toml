@@ -1,0 +1,43 @@
+name = "router-preserve-notfound-route-context"
+description = "Fix notFound() errors to preserve routeId context when thrown from components"
+repository = "TanStack/router"
+pr_number = 7077
+base_commit = "d1174179082d896a9674532994a4d6b38238c37e"
+merge_commit = "796406da66cfb12b518bb3ca326c9d541368fb06"
+
+# Task categorization
+category = "bugfix"
+difficulty = "medium"
+tags = ["react", "solid", "vue", "router", "error-handling", "typescript"]
+
+# Time estimates (in minutes)
+estimated_time = { min = 30, max = 90 }
+
+# Files that should be focused on for this task
+[focus_files]
+react = [
+  "packages/react-router/src/Match.tsx",
+]
+solid = [
+  "packages/solid-router/src/Match.tsx",
+  "packages/solid-router/src/not-found.tsx",
+]
+vue = [
+  "packages/vue-router/src/Match.tsx",
+]
+
+[environment]
+# Docker build context
+dockerfile = "environment/Dockerfile"
+image_name = "task-env"
+
+# Pre-install dependencies to speed up iteration
+pre_install = [
+  "pnpm install",
+  "pnpm build",
+]
+
+[evaluation]
+# Test commands
+test_script = "tests/test.sh"
+reward_file = "/logs/verifier/reward.txt"

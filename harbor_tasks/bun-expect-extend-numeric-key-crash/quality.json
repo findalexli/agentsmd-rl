@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (src/bun.js/test/expect.zig), the function (extend), the three targets (expect_proto, expect_constructor, expect_static_proto), the unsafe method (.put()), and the safe alternatives (putMayBeIndex, initFast, isIndex/parseIndex). It also mentions JSPropertyIterator, Bun__JSWrappingFunction__create, applyCustomMatcher, and the READ_ONLY method list. All test assertions check for these named entities, which are discoverable from the instruction."
+      "reason": "instruction.md names the file src/bun.js/test/expect.zig, the three targets (expect_proto, expect_constructor, expect_static_proto), the acceptable methods (putMayBeIndex, initFast, isIndex/parseIndex), the read-only methods list, and required preserved symbols (JSPropertyIterator, Bun__JSWrappingFunction__create, applyCustomMatcher)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states to replace .put() with putMayBeIndex() (or initFast with boolean, or isIndex/parseIndex checks) on all three targets. It essentially prescribes the exact fix: 'Use putMayBeIndex() \u2014 a method that handles both string keys and numeric index keys' and 'Do not use bare .put() calls'. This is the solution, not just a description of the bug."
+      "outcome": "pass",
+      "reason": "Instruction lists multiple acceptable approaches (putMayBeIndex, initFast with bool, isIndex/parseIndex + continue) rather than dictating the exact fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests accept multiple alternative fixes: putMayBeIndex, initFast with a boolean parameter, or isIndex/parseIndex checks with continue/break/return. They don't assert on exact line numbers or specific variable names beyond the three targets. All three alternative approaches would pass the tests."
+      "reason": "Tests accept any of the three approaches via _iterator_skips_indices early-exit and generic 'safe setter' detection excluding read-only methods and bare .put()."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests use regex pattern matching on source code text (e.g., checking for '.put(' patterns, looking for 'putMayBeIndex' strings, checking for 'applyCustomMatcher' in text). No test actually compiles or runs the Zig code, executes the JS reproduction case, or verifies runtime behavior. Every test is essentially 'assert pattern in open(path).read()' style."
+      "reason": "All tests are static regex inspections of expect.zig source (_get_extend_body, re.search for method names); no test builds bun or executes the reproduction `Bun.jest().expect.extend({1073741820: Request})` to verify the crash is fixed."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_no_bare_put_on_registration_targets, test_index_safe_property_setting, test_all_three_targets_use_safe_setter) would fail on the original code which has bare .put() calls. A stub or no-op implementation wouldn't pass because the tests also check for the presence of safe setter methods on all three targets."
+      "reason": "Tests require removal of bare .put() on all three targets AND presence of a non-read-only setter method, which a stub couldn't satisfy without an actual structural change."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements from instruction.md are tested: (1) all three targets handled, (2) safe property-setting methods used, (3) core logic preserved (iterator, wrapper function, applyCustomMatcher), (4) no bare .put() calls. The acceptable read-only methods and config rules are also checked."
+      "reason": "Tests cover all three targets, safe-setter requirement, preservation of iterator/wrapper/applyCustomMatcher, and agent-config rules mentioned in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass, config-derived), descriptive function names, docstrings explaining each test's purpose, and annotations referencing the source (e.g., src/CLAUDE.md line numbers)."
+      "reason": "Tests are grouped under commented section headers: 'Fail-to-pass', 'Pass-to-pass', 'Config-derived' with tags like [pr_diff], [static], [agent_config]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a crash in source code; it doesn't produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is a code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "Paths and symbol names (expect.zig, putMayBeIndex, Bun__JSWrappingFunction__create) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (src/bun.js/test/expect.zig), the exact function (extend), the exact method to replace (.put() \u2192 putMayBeIndex()), and the exact three variable names (expect_proto, expect_constructor, expect_static_proto). This goes far beyond describing the bug and essentially provides the complete fix specification."
+      "outcome": "pass",
+      "reason": "Instruction names the file but not the exact line; localization within the file is still the agent's job, and the file is clearly relevant to the domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (Zig source file fix), not a config/agent-md edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

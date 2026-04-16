@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all specific file paths (framework-helpers.ts, workers-helpers.ts, mocks.ts, to-exist.ts, frameworks.test.ts, workers.test.ts), all function names (runC3ForFrameworkTest, verifyDeployment, etc.), the type ExpectStatic, the eslint-disable comment pattern, and the throw new Error() replacement. All test assertions reference items discoverable from the instruction."
+      "reason": "instruction.md names all the specific files, function names (8 framework helpers, 2 workers helpers), test files, and behaviors (expect as parameter, at least 3 validation checks, justified eslint-disable in to-exist.ts) that the tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly prescribes the fix: add 'expect: ExpectStatic' as a typed parameter to specific functions, use type-only import for ExpectStatic, replace expect.fail() with throw new Error(), and pass expect as argument at call sites. This goes beyond describing what's broken \u2014 it specifies exactly what code changes to make."
+      "outcome": "pass",
+      "reason": "Instruction describes what to change (refactor to accept expect param, remove comments, use throw new Error) without giving exact diffs or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex like r'\\bexpect\\s*:' to check parameter names, requiring the parameter to be named exactly 'expect'. An alternative correct fix could use a different parameter name (e.g., 'expectFn') or use a different injection pattern (e.g., context object), but would fail the tests. Similarly, test_mocks_throw_error requires exactly 'throw new Error(' pattern \u2014 alternatives like 'throw new TypeError(' would not count."
+      "outcome": "pass",
+      "reason": "Tests check for 'expect:' as a parameter (any position), throw new Error count >= 3, and expect as first-positional in call sites \u2014 reasonable structural checks that allow alternative implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_eslint_disable_comments_resolved, test_helpers_accept_expect_param, test_call_sites_pass_expect) are purely text-based: they read file contents and check regex patterns. They do not execute the code. Only test_mocks_throw_error uses node to parse text. The pass-to-pass tests (typecheck, unit tests, build) do execute code, but the core f2p tests are textual assertions."
+      "outcome": "pass",
+      "reason": "Tests run pnpm turbo typecheck, unit tests, build, lint, and format in addition to regex structural checks \u2014 actual execution of the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would fail because: (1) the base files still contain eslint-disable comments that test_eslint_disable_comments_resolved checks for absence of, (2) functions don't have expect parameters that test_helpers_accept_expect_param checks for, (3) mocks.ts still uses expect.fail() that test_mocks_throw_error rejects. The pass-to-pass typecheck test also ensures the code compiles."
+      "reason": "f2p tests require actual refactoring (param injection, removing imports, replacing expect.fail with throw) \u2014 a stub cannot satisfy e.g. the typecheck + param injection + call-site updates together."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: eslint-disable removal (test_eslint_disable_comments_resolved), to-exist.ts justification, expect parameter injection (test_helpers_accept_expect_param), mocks.ts throw new Error (test_mocks_throw_error), call site updates (test_call_sites_pass_expect), and typecheck/build/unit tests pass."
+      "reason": "All behaviors listed in instruction.md (eslint-disable cleanup, param injection for named functions, mocks.ts changes, call site updates, lint/build/tests) have corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (pass-to-pass, fail-to-pass), descriptive function names (test_eslint_disable_comments_resolved, test_helpers_accept_expect_param), and docstrings explaining what each test verifies."
+      "reason": "Tests are divided with section comments ('Pass-to-pass', 'Fail-to-pass') and each test has a clear docstring and tag."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task, not one that produces structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, and variable names in the instruction match those referenced in the tests and solution."
+      "reason": "Filenames and function names are consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files AND exact function signatures (e.g., 'accept expect as a typed parameter (e.g., expect: ExpectStatic)'), specific function lists per file, and exact replacement patterns (expect.fail() -> throw new Error()). This is essentially a complete implementation specification, not just a bug description."
+      "outcome": "pass",
+      "reason": "Instruction names files but that is the task scope; no line numbers or exact code changes are revealed."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config-edit task."
+      "reason": "This is a code refactor task, not an agentmd/config edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -1,7 +1,7 @@
 """Tests for appwrite-variable-id-optional task.
 
 Verifies that the createProjectVariable endpoint correctly makes variableId optional
-with a default value of 'unique()' to match other variable creation endpoints.
+with a default value that generates unique IDs.
 """
 
 import subprocess
@@ -24,6 +24,35 @@ def php_syntax_valid():
     return result.returncode == 0
 
 
+def extract_param_info(param_line):
+    """Parse the variableId param line to extract key information.
+
+    Returns dict with 'default' (the default value string) and 'is_optional' (bool).
+    """
+    # Find param name
+    name_match = re.search(r"->param\s*\(\s*'([^']+)'", param_line)
+    if not name_match:
+        return None
+
+    # After name, find default (2nd arg - quoted string)
+    rest = param_line[name_match.end():]
+    comma_pos = rest.find(',')
+    if comma_pos == -1:
+        return None
+
+    after_name = rest[comma_pos+1:].strip()
+    default_match = re.match(r"'([^']*)'", after_name)
+    default = default_match.group(1) if default_match else None
+
+    # The optional flag is the 5th argument, which comes just before the injects array
+    # Pattern: , [dbForProject] at end of param definition
+    # The optional flag is right before this pattern
+    opt_match = re.search(r',\s*(true|false)\s*,\s*\[', param_line)
+    is_optional = opt_match.group(1).lower() == 'true' if opt_match else False
+
+    return {'default': default, 'is_optional': is_optional}
+
+
 def test_php_syntax_valid():
     """Verify the modified PHP file has valid syntax."""
     result = subprocess.run(
@@ -35,88 +64,116 @@ def test_php_syntax_valid():
 
 
 @pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
-def test_variable_id_param_optional_with_unique_default():
-    """Verify variableId param is optional (5th param is true) with 'unique()' default."""
+def test_variable_id_param_optional():
+    """Verify variableId param is marked as optional.
+
+    In Appwrite's param system, the optional flag is the 5th argument.
+    A truthy value means the param is optional (not required).
+    """
     with open(TARGET_FILE, 'r') as f:
         content = f.read()
 
-    # Extract just the param line using line-based extraction
+    # Find the variableId param line
     lines = content.split('\n')
     param_line = None
     for line in lines:
         if "->param('variableId'" in line:
             param_line = line
             break
-    
-    assert param_line is not None, "Could not find variableId param line"
-    
-    # Check for the key elements
-    assert "'unique()'" in param_line, "variableId param should have 'unique()' as default"
-    assert "true" in param_line, "variableId param should have true as optional flag"
 
+    assert param_line is not None, "Could not find variableId param definition"
 
-@pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
-def test_variable_id_matches_function_and_sites_behavior():
-    """Verify the fix matches patterns used in Functions and Sites variable endpoints."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
+    info = extract_param_info(param_line)
+    assert info is not None, f"Could not parse param line: {param_line[:100]}"
 
-    # Find the param line
-    lines = content.split('\n')
-    param_line = None
-    for line in lines:
-        if "->param('variableId'" in line:
-            param_line = line
-            break
-    
-    assert param_line is not None, "Could not find variableId param line"
-    
-    # Check for unique() and CustomId
-    assert "'unique()'" in param_line, "variableId param should use 'unique()' default"
-    assert "CustomId" in param_line, "variableId param should use CustomId validator"
-
-
-@pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
-def test_variable_id_param_not_required():
-    """Verify variableId param is explicitly marked as optional."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # Find the param line
-    lines = content.split('\n')
-    param_line = None
-    for line in lines:
-        if "->param('variableId'" in line:
-            param_line = line
-            break
-    
-    assert param_line is not None, "Could not find variableId param line"
-    
-    # The param structure is:
-    # ->param('variableId', 'unique()', fn(...) => new CustomId(...), 'description...', true, ['dbForProject'])
-    # We need to verify that the 5th argument (optional) is 'true'
-    
-    # Split by comma and find the argument after the description (which ends with '...chars.\'')
-    # The line should end with: true, ['dbForProject'])
-    parts = param_line.split(',')
-    
-    # Look for the 'true' part that's before the injects array
-    # The last two parts should be: " true" and " ['dbForProject'])"
-    # or if split differently, we need to find "true" as a standalone argument
-    found_true = False
-    for i, part in enumerate(parts):
-        part = part.strip()
-        # Check if this part is 'true' and the next part is the injects array
-        if part == 'true' and i + 1 < len(parts):
-            next_part = parts[i + 1].strip()
-            if next_part.startswith('[') or 'dbForProject' in next_part:
-                found_true = True
-                break
-    
-    assert found_true, (
-        f"variableId param must be optional (5th argument should be 'true').\n"
+    assert info['is_optional'], (
+        f"variableId param must be optional (5th argument should be truthy).\n"
         f"The optional flag must be true to allow requests without variableId.\n"
-        f"Param line: {param_line[:100]}..."
+        f"Found optional flag: {info['is_optional']}"
+    )
+
+
+@pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
+def test_variable_id_has_non_empty_default():
+    """Verify variableId param has a non-empty default value.
+
+    A non-empty default is required for optional params so that when no variableId
+    is provided, a valid unique ID is generated automatically.
+    """
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    lines = content.split('\n')
+    param_line = None
+    for line in lines:
+        if "->param('variableId'" in line:
+            param_line = line
+            break
+
+    assert param_line is not None, "Could not find variableId param definition"
+
+    info = extract_param_info(param_line)
+    assert info is not None, f"Could not parse param line"
+
+    default = info.get('default')
+    assert default is not None, f"variableId param has no default value"
+    assert default != '', f"variableId param default must be non-empty for optional params with auto-generation"
+
+
+@pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
+def test_variable_id_uses_custom_id_validator():
+    """Verify variableId param uses the CustomId validator.
+
+    The CustomId validator is required to validate user-provided variableIds
+    while allowing auto-generated unique IDs.
+    """
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    lines = content.split('\n')
+    param_line = None
+    for line in lines:
+        if "->param('variableId'" in line:
+            param_line = line
+            break
+
+    assert param_line is not None, "Could not find variableId param definition"
+
+    assert 'CustomId' in param_line, (
+        f"variableId param must use CustomId validator to validate user-provided IDs.\n"
+        f"CustomId not found in param line."
+    )
+
+
+@pytest.mark.skipif(not php_syntax_valid(), reason="PHP syntax errors prevent structural analysis")
+def test_variable_id_matches_pattern_used_elsewhere():
+    """Verify variableId param follows the same optional pattern as other variable endpoints.
+
+    Functions and Sites variable endpoints use optional variableId with auto-generation.
+    This test ensures the Project variable endpoint follows the same pattern.
+    """
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    lines = content.split('\n')
+    param_line = None
+    for line in lines:
+        if "->param('variableId'" in line:
+            param_line = line
+            break
+
+    assert param_line is not None, "Could not find variableId param definition"
+
+    info = extract_param_info(param_line)
+    assert info is not None, f"Could not parse param line"
+
+    # Both conditions must be true: optional AND non-empty default
+    is_optional = info.get('is_optional', False)
+    has_valid_default = info.get('default') not in (None, '')
+
+    assert is_optional and has_valid_default, (
+        f"variableId must be optional with non-empty default (like Functions/Sites endpoints).\n"
+        f"Optional: {is_optional}, Default: '{info.get('default')}'"
     )
 
 

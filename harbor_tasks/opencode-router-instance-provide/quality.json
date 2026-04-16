@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (router.ts, instance.ts, server.ts, workspace-router-middleware.ts, worktree.ts), the export name WorkspaceRouterMiddleware, Instance.provide, InstanceBootstrap, directory query param, x-opencode-directory header, worktree adaptor fetch, and the requirement for \u22652 Instance.provide calls. All test assertions reference specifics discoverable from the instruction."
+      "reason": "Instruction names router module, WorkspaceRouterMiddleware export, InstanceRoutes, Instance.provide, InstanceBootstrap, directory query param, x-opencode-directory header, worktree adaptor fetch throwing, old middleware removal, and server.ts import \u2014 all assertions in tests are derivable."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'Export a middleware function named WorkspaceRouterMiddleware', 'The router must have at least two separate Instance.provide calls', 'For worktree workspaces, call Instance.provide directly with the workspace's directory', and 'The old workspace-router-middleware.ts should be removed'. These go beyond describing what's broken and dictate the exact solution structure."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and expected behavior (branches, consolidation) without giving specific code diffs or line changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests enforce very specific implementation details: test_workspace_routing_branches requires exactly >=2 Instance.provide calls in the AST, requires a string literal 'workspace', and requires adaptor.fetch pattern. test_instance_provide_in_router checks for InstanceBootstrap in AST arguments. A correct alternative that e.g. uses a helper function wrapping Instance.provide or uses a different variable naming convention could fail these AST-based checks."
+      "outcome": "pass",
+      "reason": "Tests check for AST patterns (Instance.provide calls, InstanceBootstrap, query('directory'), 'x-opencode-directory' literal, adaptor.fetch) which any reasonable implementation following the spec would include."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are AST-based text/structure inspections (parsing TypeScript source with ts.createSourceFile and walking the AST for specific patterns), not behavioral execution tests. test_instance_provide_in_router checks for 'Instance.provide' call patterns in source. test_workspace_routing_branches counts AST nodes. test_directory_resolution_in_router looks for string literals. Only test_router_exports_middleware and test_instance_routes_importable actually import and check run"
+      "outcome": "pass",
+      "reason": "Tests use bun to import modules and parse TypeScript AST via the typescript compiler, actually loading and analyzing code structure rather than grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub file or empty implementation would not pass: test_router_exports_middleware requires WorkspaceRouterMiddleware to be an exported function; test_instance_provide_in_router requires specific AST patterns; test_old_middleware_deleted requires file deletion; test_workspace_routing_branches requires >=2 Instance.provide calls plus workspace and adaptor patterns."
+      "reason": "Tests require \u22652 Instance.provide calls with InstanceBootstrap, removal from instance.ts, deletion of old file, and specific header/query literals \u2014 a stub can't satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All explicit requirements from instruction.md are tested: new router.ts with WorkspaceRouterMiddleware export, Instance.provide with InstanceBootstrap, removal from instance.ts, old middleware deleted, server.ts import updated, directory resolution, worktree handling, >=2 Instance.provide calls, and adaptor fetch for remote workspaces."
+      "reason": "Each required behavior in instruction (single entry point, directory resolution, three branches, delegation, cleanup) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Fail-to-pass' and 'Pass-to-pass'), descriptive function names (test_router_exports_middleware, test_instance_provide_removed_from_instance_ts), and docstrings explaining each test's purpose."
+      "reason": "Tests grouped under clear section headers 'Fail-to-pass' and 'Pass-to-pass' with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data output."
+      "reason": "Task is code refactoring, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths and identifiers are consistent throughout instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact new file path (packages/opencode/src/server/router.ts), the exact export name (WorkspaceRouterMiddleware), specifies that workspace-router-middleware.ts should be deleted, and dictates the exact number of Instance.provide calls (at least two). This is excessive localization that removes the need for the agent to reason about the solution."
+      "outcome": "pass",
+      "reason": "Instruction names the files to investigate (appropriate as localization is part of setup), but doesn't name specific lines to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, no config edits involved."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -6,16 +6,23 @@ The ACP (Agent Client Protocol) server currently exposes the `QuestionTool` unco
 
 ## Requirements
 
-1. **Add an environment variable flag** `OPENCODE_ENABLE_QUESTION_TOOL` that controls whether QuestionTool is available.
+1. **Add environment variable flag in `packages/opencode/src/flag/flag.ts`**:
+   - Add `OPENCODE_ENABLE_QUESTION_TOOL` as a truthy flag in the `Flag` namespace
+   - The flag should read from the `OPENCODE_ENABLE_QUESTION_TOOL` environment variable
 
-2. **Update the tool registry gating logic**:
+2. **Update the tool registry gating logic in `packages/opencode/src/tool/registry.ts`**:
    - QuestionTool should remain enabled for `app`, `cli`, and `desktop` clients (existing behavior)
    - QuestionTool should be disabled for `acp` client by default
-   - QuestionTool should be enabled for `acp` when `OPENCODE_ENABLE_QUESTION_TOOL=1` is set
+   - QuestionTool should be enabled for `acp` when `Flag.OPENCODE_ENABLE_QUESTION_TOOL` is truthy
 
-3. **Update documentation**:
-   - Add a "Question Tool Opt-In" section to the ACP README explaining the flag and how to enable it
-   - Add `OPENCODE_ENABLE_QUESTION_TOOL` to the environment variable glossary in the project documentation
+3. **Update documentation in `packages/opencode/src/acp/README.md`**:
+   - Add a "Question Tool Opt-In" section that:
+     - States that ACP excludes `QuestionTool` by default
+     - Shows the command `OPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp`
+     - Includes a warning to "Enable this only for ACP clients that support interactive question prompts"
+
+4. **Update the environment variable glossary in `.opencode/agent/translator.md`**:
+   - Add `OPENCODE_ENABLE_QUESTION_TOOL` to the list of environment variables
 
 ## Safety Note
 

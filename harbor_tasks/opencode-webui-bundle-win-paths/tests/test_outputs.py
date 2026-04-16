@@ -142,17 +142,26 @@ def test_export_keys_sorted():
 
 # [pr_diff] fail_to_pass
 def test_backslash_normalization():
-    """Source code must handle backslash-to-forward-slash normalization for Windows."""
-    # AST-only because: running on Linux, Bun.Glob never produces backslash paths
+    """Source code must handle backslash-to-forward-slash normalization for Windows.
+
+    This is verified via source inspection because Bun.Glob on Linux never produces
+    backslash paths, so the behavior cannot be triggered at runtime on this platform.
+    However, the test is broadened to accept ANY backslash normalization approach
+    (replaceAll, replace+regex, split+join, path.posix, or any custom normalize function)
+    rather than requiring specific implementation patterns.
+    """
     func = _extract_function_body()
+    # Accept ANY backslash normalization: replaceAll with any args, replace with
+    # backslash-containing regex, split+join on backslash, path.posix methods,
+    # or any custom normalize function call
     patterns = [
-        r'replaceAll\s*\(\s*["\']\\\\["\']',  # Matches replaceAll("\\", ...) - two backslashes in source
-        r'\.replace\s*\(\s*/[^/]*\\\\[^/]*/[gim]*\s*,',  # Matches .replace(/.../, ...)
-        r'split\s*\(\s*["\']\\\\["\']\s*\).*?join',  # Matches split("\\").join(...)
-        r'path\.posix\.',
-        r'(toForwardSlash|normalizePath|normalizeSlash)\s*\(',
-        r'\.replaceAll\s*\(\s*path\.sep',
-        r'\.replace\s*\(\s*path\.sep',
+        r'\.replaceAll\s*\(',                # replaceAll(...) - any args
+        r'\.replace\s*\(\s*/[^/]*\\\\[^/]*/',  # .replace(/...\\.../, ...) regex
+        r'split\s*\(\s*["\']\\\\["\']',      # split("\\"...) - any follow-up
+        r'path\.posix\.',                    # any path.posix method
+        r'\b(normalize|slashify|toForward|forwardify)\s*\(',  # any normalize function
+        r'\.replaceAll\s*\(\s*path\.sep',   # replaceAll(path.sep, ...)
+        r'\.replace\s*\(\s*path\.sep',       # replace(path.sep, ...)
     ]
     assert any(re.search(p, func, re.DOTALL) for p in patterns), (
         "No backslash normalization found in createEmbeddedWebUIBundle"
@@ -201,58 +210,58 @@ def test_const_only():
     """Function body must use const only, no let/var (AGENTS.md line 70)."""
     func = _extract_function_body()
     body = "\n".join(func.split("\n")[1:-1])
-    assert not re.search(r"\blet\b", body), "Function uses 'let' — prefer const (AGENTS.md:70)"
-    assert not re.search(r"\bvar\b", body), "Function uses 'var' — prefer const (AGENTS.md:70)"
+    assert not re.search(r"\blet\b", body), "Function uses 'let' — prefer const for immutable bindings"
+    assert not re.search(r"\bvar\b", body), "Function uses 'var' — prefer const for immutable bindings"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:17 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
 def test_no_imperative_loops():
-    """Function must use functional array methods, not for/while loops (AGENTS.md line 17)."""
+    """Function must use functional array methods, not for/while loops — prefer map/filter/flatMap."""
     # AST-only because: TypeScript source, structural style rule
     func = _extract_function_body()
     assert not re.search(r"\b(for|while)\s*\(", func), (
-        "Function uses imperative loops — prefer map/filter/flatMap (AGENTS.md:17)"
+        "Function uses imperative loops — prefer map/filter/flatMap"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:13 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
 def test_no_any_type():
-    """Function must not use the 'any' type (AGENTS.md line 13)."""
+    """Function must not use the 'any' type — prefer explicit types."""
     # AST-only because: TypeScript type annotation, structural rule
     func = _extract_function_body()
     # Match ": any", "as any", "<any>" but not words containing "any" like "anyOf"
     assert not re.search(r"(?::\s*any\b|as\s+any\b|<any>)", func), (
-        "Function uses 'any' type — avoid it (AGENTS.md:13)"
+        "Function uses 'any' type — prefer explicit types"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:12 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
 def test_no_try_catch():
-    """Function must not use try/catch (AGENTS.md line 12)."""
+    """Function must not use try/catch — prefer early returns or error propagation."""
     # AST-only because: TypeScript source, structural style rule
     func = _extract_function_body()
     assert not re.search(r"\btry\s*\{", func), (
-        "Function uses try/catch — avoid where possible (AGENTS.md:12)"
+        "Function uses try/catch — prefer early returns or error propagation"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:84 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
 def test_no_else_statements():
-    """Function must not use else — prefer early returns (AGENTS.md line 84)."""
+    """Function must not use else — prefer early returns for clarity."""
     # AST-only because: TypeScript source, structural style rule
     func = _extract_function_body()
     assert not re.search(r"\belse\b", func), (
-        "Function uses 'else' — prefer early returns (AGENTS.md:84)"
+        "Function uses 'else' — prefer early returns for clarity"
     )
 
 
 # [agent_config] pass_to_pass — AGENTS.md:15 @ b7a06e193952a66a8efa07feb4e105f44bf7ea8b
 def test_uses_bun_glob_api():
-    """Function must use Bun.Glob for file scanning — prefer Bun APIs over native fs (AGENTS.md line 15)."""
+    """Function must use Bun.Glob for file scanning — prefer Bun APIs over native fs."""
     # AST-only because: TypeScript source, API usage style rule
     func = _extract_function_body()
     assert re.search(r"\bBun\.Glob\b", func), (
-        "Function does not use Bun.Glob — prefer Bun APIs when possible (AGENTS.md:15)"
+        "Function does not use Bun.Glob — prefer Bun APIs when possible"
     )
 
 

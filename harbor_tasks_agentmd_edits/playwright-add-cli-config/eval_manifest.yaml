@@ -1,0 +1,126 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 38971
+  base_commit: "71e5079b735eda08a72b0fac58a3dd02fde6bb9f"
+  merge_commit: "fe5b234f4e2a0607d4d000ee3886d5b44291cc55"
+
+# Track 1: Code correctness checks
+checks:
+  # TypeScript syntax checks
+  - id: config_command_exists_in_commands
+    type: fail_to_pass
+    origin: pr_diff
+    description: "config command must be declared in commands.ts with proper schema"
+
+  - id: config_category_in_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Category type must include 'config' category"
+
+  - id: config_in_help_generator
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Help generator must include config category"
+
+  # Program logic checks
+  - id: session_list_returns_map
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Session list must return Map<string, boolean> instead of array"
+
+  - id: config_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SessionManager must have configure() method"
+
+  - id: config_uses_relative_path
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Config file path should be displayed as relative path"
+
+  - id: daemon_config_has_viewport
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default daemon config must include viewport contextOptions"
+
+  # Config documentation checks (REQUIRED for agentmd-edit tasks)
+  - id: skill_md_documents_config_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md must document the new config command with examples"
+
+  - id: skill_md_has_config_examples
+    type: fail_to_pass
+    origin: pr_diff
+    description: "SKILL.md Configuration section must have bash code block examples"
+
+  # Pass-to-pass checks
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript must compile without errors"
+
+  - id: cli_help_shows_config_category
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLI help must show Configuration category"
+
+# Track 2: Gold config edits (extracted from solve.sh)
+config_edits:
+  - path: "packages/playwright/src/mcp/terminal/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Configuration
+      ```bash
+      # configure the session
+      playwright-cli config my-config.json
+      # Configure named session
+      playwright-cli --session=mysession config my-config.json
+      # Start with configured session
+      playwright-cli open --config=my-config.json
+      ```
+    gold_removed: ""
+
+# Track 3: Positive rubric - conventions from agent configs
+rubric:
+  - rule: "Use consistent formatting in command examples (backticks for commands)"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "28-32"
+      commit: "71e5079b735eda08a72b0fac58a3dd02fde6bb9f"
+    evidence: "Gold uses backticks like `playwright-cli config` consistent with existing examples"
+    category: "documentation_style"
+    verification: llm_judge
+
+  - rule: "Category 'config' should be placed logically between 'devtools' and 'session' in help categories"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "70-85"
+      commit: "71e5079b735eda08a72b0fac58a3dd02fde6bb9f"
+    evidence: "Gold places config before session, matching the section order in SKILL.md"
+    category: "organization"
+    verification: llm_judge
+
+  - rule: "Session commands should use Map instead of array for live tracking"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "60-70"
+      commit: "71e5079b735eda08a72b0fac58a3dd02fde6bb9f"
+    evidence: "Gold refactors from array to Map for O(1) lookup of session state"
+    category: "code_quality"
+    verification: llm_judge
+
+  - rule: "Configuration sections should include all three usage patterns: basic, named session, and startup"
+    source:
+      path: "packages/playwright/src/mcp/terminal/SKILL.md"
+      lines: "28-50"
+      commit: "71e5079b735eda08a72b0fac58a3dd02fde6bb9f"
+    evidence: "Gold documents all three config usage patterns matching existing section structure"
+    category: "documentation_completeness"
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that seem relevant but shouldn't apply
+# (none for this task - all SKILL.md conventions are relevant)
+distractors: []

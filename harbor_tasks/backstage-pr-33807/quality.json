@@ -1,59 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/cli-module-build/src/lib/runner/startEmbeddedDb.ts), the function (startEmbeddedDb()), the key calls (pg.initialise(), fs.writeFile with PID_FILE, pg.start()), the EmbeddedPostgres constructor, the try block structure, and the PID_FILE constant. All asserted specifics in tests (file path, function name, method names, constant names) are discoverable from the instruction."
+      "reason": "Instruction names the file path, function names (startEmbeddedDb, pg.initialise, pg.start, cleanStaleDatabases), and the PID_FILE constant that tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction heavily hints at the fix: 'the sequence of operations must satisfy what pg.initialise() requires of its working directory', 'the directory already contains a backstage.pid file when initialization begins', and the detailed description of the try block ordering. While it doesn't say 'move line X to line Y', the description makes it almost trivially obvious that the PID file write must be moved after pg.initialise(). The 'What to Look For' section essentially describes the correct "
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom and hints at sequencing but doesn't explicitly state 'move PID write after initialise'; it says the try block 'must correctly sequence' these operations, leaving the actual fix to the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "The tests check structural properties (PID_FILE write after pg.initialise(), no PID_FILE before EmbeddedPostgres constructor, PID_FILE in try block between initialise and start). Any correct fix that moves the PID write to after initialise and before start within the try block would pass, regardless of exact formatting or other minor variations."
+      "outcome": "fail",
+      "reason": "Tests assert strict ordering `initPos < pidPos < startPos` via literal substring `PID_FILE` in the try block; an alternative valid fix that removes the pre-init PID write entirely without writing PID file in the try block, or uses a different constant reference, would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All three fail-to-pass tests (test_pid_write_after_initialise, test_embedded_postgres_initialise_and_pid_sequence, test_no_standalone_pid_write_before_embedded_postgres) exclusively use text/regex matching on the source file content. They never import, call, or execute the TypeScript code. The pass-to-pass tests do run subprocesses but skip if node_modules aren't installed. The core fail-to-pass tests are purely textual assertions."
+      "reason": "Tests read the source via `fs.readFileSync`, regex-match the function and try block, and check `indexOf` positions of literal strings like 'await pg.initialise()' and 'PID_FILE'; the 'behavioral' simulation uses a mock and never executes the actual startEmbeddedDb function."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check ordering of statements in the source file. The base (buggy) commit has PID write before initialise(), so the tests would fail on the unmodified code. A stub/no-op implementation wouldn't pass because the tests require specific code patterns to exist in specific relative positions."
+      "reason": "A stub/no-op wouldn't satisfy the ordering assertions since the test requires specific literal strings present in the correct order in the actual source file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug as PID file being written before pg.initialise() causing the directory to not be empty. The tests verify this exact behavior: PID write must come after initialise(), must be in the try block, and must not appear before the EmbeddedPostgres constructor."
+      "reason": "The instruction's claimed bug (initialise failing due to pre-existing PID file) is verified by the ordering check and simulated mock."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass vs pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+      "reason": "Tests have descriptive names and docstrings explaining the fail-to-pass intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in TypeScript source code, not producing structured data output."
+      "reason": "Task is a code bug fix, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, constant names, and variable names in the instruction match those used in the tests and solution."
+      "reason": "Paths and identifiers (startEmbeddedDb.ts, PID_FILE, pg.initialise) match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (startEmbeddedDb.ts), the exact function (startEmbeddedDb()), and describes the precise ordering issue ('the directory already contains a backstage.pid file when initialization begins'). The 'What to Look For' section essentially describes the correct code pattern: 'the sequence of operations must satisfy what pg.initialise() requires of its working directory', making localization trivial."
+      "outcome": "pass",
+      "reason": "Instruction names the file (which is necessary context) but doesn't point to a specific line or state the exact fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd/config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

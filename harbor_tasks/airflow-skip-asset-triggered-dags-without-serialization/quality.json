@@ -3,60 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file to modify (airflow-core/src/airflow/models/dag.py), the method (dags_needing_dagruns), variable names (missing_from_serialized, ser_dag_ids, adrq_by_dag), the exact log string, and behavioral expectations that correspond to test assertions. All test-specific literals (log message text, variable names, file paths) are discoverable from instruction.md."
+      "reason": "The instruction names the exact file paths (airflow-core/src/airflow/models/dag.py, airflow-core/tests/unit/models/test_dag.py), the exact method (DagModel.dags_needing_dagruns()), the exact test names, the exact log string, the class name TestDagModel, the models involved (AssetDagRunQueue, SerializedDagModel), and all behavioral specifics that the hidden tests check. The hidden tests verify these same elements \u2014 file existence, test names, log strings, no session.commit(), ruff/mypy passing, a"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent the exact implementation: use 'missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids', use 'del adrq_by_dag[dag_id]', create 'ser_dag_ids' as a set of dag_ids. This is essentially the complete code patch, not just a description of what's broken."
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT is broken (DAGs without SerializedDagModel are included in triggered_date_by_dag) and WHAT the fix should achieve (skip them, preserve ADRQ rows, emit a log), but does not specify HOW to implement it \u2014 no line numbers, no code snippets of the fix, no variable names like 'missing_from_serialized' or 'ser_dag_ids'. The developer must reason about the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_adrq_without_serialized_dag_is_excluded checks for exact variable names 'missing_from_serialized' and 'ser_dag_ids' via string matching in the source code, and checks for 'del adrq_by_dag[dag_id]' or 'adrq_by_dag.pop'. An alternative correct fix using different variable names (e.g., 'orphan_dags', 'serialized_ids') would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "The hidden tests primarily run the agent's own test methods via subprocess (test_adrq_without_serialized_dag_is_excluded, test_adrq_rows_preserved_after_skip, test_multiple_orphan_dags_sorted_log) and check ruff/mypy/existing tests. They don't assert on specific variable names or implementation details of the fix in dag.py. The text-based check (test_no_session_commit_in_dags_needing_dagruns) just checks absence of 'session.commit()'. Alternative implementations (e.g., filtering via a subquery, "
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The key f2p test (test_adrq_without_serialized_dag_is_excluded) is purely text-matching: it reads dag.py as a string and checks 'missing_from_serialized in method_body', 'ser_dag_ids in method_body', and 'del adrq_by_dag[dag_id] in method_body'. It does NOT execute the code or call dags_needing_dagruns(). While some P2P tests run subprocess pytest, the central bug-fix verification is entirely text-based."
+      "outcome": "pass",
+      "reason": "Most tests execute code via subprocess (pytest runs, ruff, mypy). The F2P tests (test_adrq_without_serialized_dag_is_excluded, test_adrq_rows_preserved_after_skip, test_multiple_orphan_dags_sorted_log) run actual pytest on the repo's test methods which call DagModel.dags_needing_dagruns() with real DB sessions. Only test_no_session_commit_in_dags_needing_dagruns and test_repo_unit_tests_exist are text-based, but these are P2P checks, not the primary behavioral verification."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p test test_adrq_without_serialized_dag_is_excluded only checks if certain strings exist in the source file. An agent could satisfy it by adding a dead-code comment containing those variable names without actually implementing the fix. No behavioral execution verifies the bug is actually fixed."
+      "outcome": "pass",
+      "reason": "The F2P tests run the agent's newly written test methods which call DagModel.dags_needing_dagruns() and assert the dag_id is NOT in triggered_date_by_dag, that ADRQ rows remain, and that log messages appear. A stub implementation (returning empty dict) would fail existing P2P tests like test_dags_needing_dagruns_not_too_early and test_dags_needing_dagruns_only_unpaused which verify normal scheduling still works. The fix must be real."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires: (1) skip orphan DAGs from triggered_date_by_dag, (2) preserve ADRQ rows, (3) emit INFO log with exact message, (4) sort DAG IDs. The hidden tests only do text matching on the source code for the f2p test, not actually testing behaviors 1-4 at runtime. The behavioral tests from the gold solution (test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing) are in the solution patch but truncated/not in the actual test_outputs.py."
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) DAGs without SerializedDagModel excluded from triggered_date_by_dag \u2014 tested by test_adrq_without_serialized_dag_is_excluded; (2) ADRQ rows preserved \u2014 tested by same test and test_adrq_rows_preserved_after_skip; (3) INFO log with exact string and sorted DAG IDs \u2014 tested by test_multiple_orphan_dags_sorted_log; (4) no session.commit() \u2014 tested by test_no_session_commit_in_dags_needing_dagruns; (5) existing tests pass \u2014 tested by test_repo_unit_tests_pass and test_re"
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names, docstrings explaining purpose (P2P vs F2P), and clear grouping by concern (linting, type checking, unit tests, behavioral verification)."
+      "reason": "Tests are well-structured with clear docstrings, grouped by P2P and F2P categories (explicitly commented), and have descriptive function names indicating what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data like JSON/CSV/API responses; it modifies internal Python method behavior."
+      "reason": "The task doesn't produce structured data like JSON/CSV/API responses. It modifies Python code and the 'output' is behavioral (method return values and log messages)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, method names, and commands in instruction.md appear correct and consistent with the codebase."
+      "reason": "File paths, method names, class names, test names, and the exact log string are all consistent between instruction.md and the hidden test files. No typos detected."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (missing_from_serialized, ser_dag_ids), exact code patterns ('missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids'), and exact deletion syntax ('del adrq_by_dag[dag_id]'). This goes far beyond naming the buggy file/method \u2014 it provides the complete implementation."
+      "reason": "The instruction explicitly names the exact method to modify (DagModel.dags_needing_dagruns() in airflow-core/src/airflow/models/dag.py) and describes the specific internal data structure (triggered_date_by_dag dictionary) and the specific internal variables/tables involved (adrq_by_dag, SerializedDagModel). While the file is somewhat obvious from the domain, the method-level specificity and internal variable names go beyond what's needed and reduce the localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 8,
+  "fail_count": 1
 }

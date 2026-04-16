@@ -2,7 +2,7 @@
 
 ## Bug Description
 
-The exec approval system has a security gap in its interpreter detection. When a user selects "allow always" for a command, the system persists the executable path to an allowlist so future invocations are auto-approved. For interpreters like `python`, `node`, `ruby`, and `perl`, the system correctly identifies them as programs that can execute arbitrary inline code (via flags like `-c`, `-e`, `--eval`) and refuses to persist them — because allowing the interpreter binary would auto-approve _any_ inline code passed to it.
+The exec approval system in `src/infra/exec-approvals-allowlist.ts` has a security gap in its interpreter detection. When a user selects "allow always" for a command, the system persists the executable path to an allowlist so future invocations are auto-approved. For interpreters like `python`, `node`, `ruby`, and `perl`, the system in `src/infra/exec-inline-eval.ts` correctly identifies them as programs that can execute arbitrary inline code (via flags like `-c`, `-e`, `--eval`) and refuses to persist them — because allowing the interpreter binary would auto-approve _any_ inline code passed to it.
 
 However, **awk-family programs** (`awk`, `gawk`, `mawk`, `nawk`) are not handled. Unlike the other interpreters, awk accepts inline programs as **positional arguments** rather than through flags. For example:
 
@@ -20,11 +20,11 @@ This creates a security bypass scenario:
 
 ## Expected Behavior
 
-1. **Inline program detection** — The system must detect when awk/gawk/mawk/nawk is invoked with an inline program passed as a positional argument (not via `-f`/`--file`). Value flags like `-F` (field separator), `-v` (variable assignment), `-i`, `-l`, `-W` and their long-form equivalents should be skipped when scanning for the positional program argument. The `--` double-dash separator marks the end of options; anything after it should be treated as a positional argument.
+1. **Inline program detection** — The `detectInterpreterInlineEvalArgv` function in `src/infra/exec-inline-eval.ts` must detect when awk/gawk/mawk/nawk is invoked with an inline program passed as a positional argument (not via `-f`/`--file`). Value flags like `-F` (field separator), `-v` (variable assignment), `-i`, `-l`, `-W` and their long-form equivalents should be skipped when scanning for the positional program argument. The `--` double-dash separator marks the end of options; anything after it should be treated as a positional argument.
 
-2. **Interpreter recognition** — Awk-family executables must be recognized as interpreter-like, so they are not persisted to the allow-always allowlist. This includes bare names (`awk`, `gawk`, `mawk`, `nawk`) and paths (e.g., `/usr/bin/awk`, `/usr/local/bin/awk`). Wildcard patterns like `**/gawk` should also be recognized.
+2. **Interpreter recognition** — The `isInterpreterLikeAllowlistPattern` function in `src/infra/exec-inline-eval.ts` must recognize awk-family executables as interpreter-like, so they are not persisted to the allow-always allowlist. This includes bare names (`awk`, `gawk`, `mawk`, `nawk`) and paths (e.g., `/usr/bin/awk`, `/usr/local/bin/awk`). Wildcard patterns like `**/gawk` should also be recognized.
 
-3. **Allowlist filtering** — The allow-always persist logic must not store awk-family executable paths.
+3. **Allowlist filtering** — The allowlist logic in `src/infra/exec-approvals-allowlist.ts` must import and call `isInterpreterLikeAllowlistPattern` from `src/infra/exec-inline-eval.ts` to filter out awk-family executable paths before persisting them.
 
 ### Return Value Schema
 

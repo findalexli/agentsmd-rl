@@ -2,28 +2,28 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests import and call `_json_schema_to_python_type` from `gradio_client.utils`, but instruction.md never names this function. Tests also reference specific schema structures (FILE_DATA_SCHEMA, IMAGE_DATA_SCHEMA, GALLERY_ITEM_SCHEMA, PLAIN_OBJECT_SCHEMA) with exact keys like `$defs`, `Meta`, `anyOf`, `const: gradio.FileData` \u2014 while the instruction describes some of these characteristics, it never mentions the function `_json_schema_to_python_type` by name, nor does it mention the file `client/py"
+      "outcome": "pass",
+      "reason": "The instruction names the target function `_json_schema_to_python_type`, the module `gradio_client.utils`, the helper `value_is_file`, the expected return string `\"filepath\"`, the schema characteristics (path property, meta with gradio.FileData, $defs, etc.), and the behavior for nested/plain objects. All test-asserted specifics (the literal 'filepath', dict(...) format, schema keys like 'path', 'meta', '_type', 'gradio.FileData') are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (return 'filepath' for file schemas, keep 'dict(...)' for non-file schemas) and the detection heuristics, but does not specify exact code changes, line numbers, or implementation details like helper function names (_is_file_schema, _resolve_ref, etc.)."
+      "reason": "The instruction describes what behavior should change (file schemas should display as 'filepath') and the detection heuristics, but does not specify exact code changes, line numbers, or implementation approach. A developer must still reason about how to implement the detection logic."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests directly call `_json_schema_to_python_type(schema, defs)` with a specific two-argument signature. An alternative correct implementation that changes the function signature, renames it, or implements the logic in a different function would fail. However, the tests do check behavioral outputs ('filepath', 'dict(...)') rather than internal helpers like `_is_file_schema`, so this is partially mitigated. The main concern is that `_json_schema_to_python_type` is a private function whose exact na"
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests only check behavioral outputs: that `_json_schema_to_python_type` returns 'filepath' for file schemas and 'dict(...)' for non-file schemas. They don't assert on internal helper function names like `_is_file_schema`, specific variable names, or line positions. An alternative implementation (e.g., inline detection without a helper function) would pass equally well."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import `_json_schema_to_python_type` and call it with schema dicts, asserting on return values. Linting/formatting tests run subprocesses. No test simply greps file contents for strings."
+      "reason": "Tests import and call `_json_schema_to_python_type` with actual schema dicts and assert on return values. Subprocess tests compile and lint actual code. No test merely greps source text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (test_file_schema_returns_filepath, test_image_like_schema_returns_filepath, test_nested_file_shows_filepath_in_dict) assert specific return values like 'filepath' that the unmodified code would not produce \u2014 it would return verbose dict representations instead. A stub returning None or empty string would also fail."
+      "reason": "A stub `_json_schema_to_python_type` returning None or empty string would fail test_file_schema_returns_filepath (asserts == 'filepath'). Always returning 'filepath' would fail test_non_file_object_still_dict (asserts startswith 'dict(' and 'filepath' not in result). The tests require real logic distinguishing file from non-file schemas."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: file-type schemas returning 'filepath' (test_file_schema_returns_filepath, test_image_like_schema_returns_filepath), nested file schemas (test_nested_file_shows_filepath_in_dict), plain objects still showing dict (test_non_file_object_still_dict), and the value_is_file helper is mentioned in instruction but tested indirectly through the main function."
+      "reason": "The instruction specifies: file schemas return 'filepath', non-file objects show dict format, nested file fields show filepath within dict, and value_is_file should work correctly. Tests cover all these: test_file_schema_returns_filepath, test_image_like_schema_returns_filepath, test_nested_file_shows_filepath_in_dict, test_non_file_object_still_dict. The value_is_file behavior is implicitly tested through the schema detection logic."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,27 +31,24 @@
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction describes the JSON schema characteristics for file-type detection (path property, meta property with gradio.FileData, $defs structure) which matches the test schemas."
+      "reason": "The instruction documents the JSON schema characteristics for file-type detection (path property, meta with gradio.FileData via $ref or default), and the expected output format ('filepath' string vs 'dict(...)' format)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction does not name specific files or line numbers. It describes the behavior at a conceptual level without pointing to exact source locations. The mention of `value_is_file` is a public API concept, not an implementation detail leak."
+      "reason": "The instruction names the target function `_json_schema_to_python_type` and module `gradio_client.utils`, which is appropriate since the task domain makes these the obvious targets. It also mentions `value_is_file` which is reasonable. No specific line numbers or exact code patches are given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not a config-edit task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

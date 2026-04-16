@@ -1,58 +1,63 @@
-# AI Assistant Results Performance Fix
+# Performance Issue: SQL Editor Results Component
 
 ## Problem
 
-When using the AI Assistant in Supabase Studio with queries returning 1000+ rows, the page becomes unresponsive. Chrome traces show that every keystroke takes approximately 250ms to process, with 70,000+ function calls per long task.
+In the Supabase Studio SQL Editor, executing queries that return 1000+ rows causes the page to become severely unresponsive. Chrome DevTools traces show each keystroke takes approximately 250ms to process, with over 70,000 function calls per long task.
 
-The performance bottleneck is in the Results component and QueryBlock component used to display SQL query results.
+The root cause is that the Results component at `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx` renders a separate `ContextMenu_Shadcn_` component inside every cell's `renderCell` callback. With a large result set, this creates thousands of document-level keydown listeners, degrading keyboard responsiveness.
 
-## Files to Modify
+A secondary issue exists in `apps/studio/components/ui/QueryBlock/QueryBlock.tsx`, where the container wrapping the Results component uses `overflow-auto`, causing double scrollbar problems in Firefox.
 
-- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx`
-- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts`
-- `apps/studio/components/ui/QueryBlock/QueryBlock.tsx`
+## Task
 
-## Requirements
+Fix the performance problem and the layout issue described above. The solution must satisfy all of the acceptance criteria below.
 
-### Results.tsx
+## Acceptance Criteria
 
-The Results component must be refactored with the following:
+### 1. Single Shared Context Menu in Results.tsx
 
-- Import `useCallback`, `useMemo`, and `useRef` from React (in addition to existing imports)
-- Import `formatCellValue` and `formatClipboardValue` from `./Results.utils`
-- Define a ref named `contextMenuCellRef` (typed as an object with `column` and `value` fields, or null)
-- Define a ref named `triggerRef` (typed as `HTMLDivElement`)
-- Define a function named `handleContextMenu` wrapped in `useCallback`
-- Wrap the `columns` definition in `useMemo`
-- Render a single `<ContextMenu_Shadcn_>` component at the component level (outside `renderCell`)
-- The `renderCell` callback must NOT contain `ContextMenu_Shadcn_` or `ContextMenu_Shadcn`
-- The renderCell function should call `formatCellValue` to display cell values
+The Results component (`apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx`) must be refactored so that:
 
-### Results.utils.ts
+- There is exactly **one** `<ContextMenu_Shadcn_>` element rendered at the component level, outside of `renderCell`. The `renderCell` callback must **not** contain any `ContextMenu_Shadcn_` or `ContextMenu_Shadcn` elements.
+- The component uses `useRef` to manage shared state for the context menu:
+  - A ref named `contextMenuCellRef` to store the column and value of the cell that was right-clicked
+  - A ref named `triggerRef` for a hidden trigger element that is repositioned to the cursor location on right-click
+- A function named `handleContextMenu` is defined using `useCallback` to coordinate opening the shared context menu at the cursor position.
+- The `columns` array is memoized using `useMemo`.
+- Cell values are formatted for display using `formatCellValue` (imported from `./Results.utils`).
+- Clipboard values are formatted using `formatClipboardValue` (also imported from `./Results.utils`).
 
-The utility file must export the following functions:
+### 2. Utility Functions in Results.utils.ts
 
-- `formatClipboardValue` — formats values for clipboard: returns empty string for null, `JSON.stringify` for objects/arrays, string representation for primitives
-- `formatCellValue` — formats values for display: returns `'NULL'` for null, value as-is for strings, `JSON.stringify` for others
-- `formatResults` (already exists, keep it)
-- `convertResultsToCSV` (already exists, keep it)
-- `convertResultsToMarkdown` (already exists, keep it)
-- `convertResultsToJSON` (already exists, keep it)
-- `getResultsHeaders` (already exists, keep it)
+The file `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.ts` must export these functions (in addition to the already-existing `formatResults`, `convertResultsToCSV`, `convertResultsToMarkdown`, `convertResultsToJSON`, and `getResultsHeaders`):
 
-### QueryBlock.tsx
+- **`formatClipboardValue`** — formats a value for clipboard operations:
+  - Returns empty string `''` for `null`
+  - Returns `JSON.stringify(value)` for objects and arrays
+  - Returns the string representation for primitives
 
-- The component must include the CSS class `flex-1`
-- The container `<div>` wrapping `<Results rows={results}>` must have both CSS classes `flex flex-col` and `max-h-64` on the same line
+- **`formatCellValue`** — formats a value for cell display:
+  - Returns the string `'NULL'` for `null`
+  - Returns the value as-is for strings
+  - Returns `JSON.stringify(value)` for all other types
 
-### Test Files
+### 3. QueryBlock Layout Fix
+
+In `apps/studio/components/ui/QueryBlock/QueryBlock.tsx`:
+
+- The component must use the CSS class `flex-1`.
+- The `<div>` container that wraps `<Results rows={results}>` must use `flex flex-col` and `max-h-64` CSS classes (replacing the previous `overflow-auto` approach) to fix the double-scrollbar issue in Firefox.
+
+### 4. Test Files
 
 Create the following test files:
 
-- `apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.test.ts`
-- `apps/studio/tests/components/SQLEditor/Results.utils.test.ts` — must contain `describe('formatClipboardValue'` and/or `describe('formatCellValue'`
-- `apps/studio/tests/components/SQLEditor/Results.test.tsx` — must test that only one context menu is rendered regardless of row count, using a variable named `contextMenuMountCount` with the assertion `expect(contextMenuMountCount).toBe(1)`
+- **`apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.utils.test.ts`** — basic test file for the utility functions.
 
-### Formatting
+- **`apps/studio/tests/components/SQLEditor/Results.utils.test.ts`** — must contain `describe('formatClipboardValue'` and/or `describe('formatCellValue'` blocks testing the utility functions' behavior.
 
-- All code must pass `pnpm run test:prettier`
+- **`apps/studio/tests/components/SQLEditor/Results.test.tsx`** — must verify that only a single context menu is rendered regardless of how many rows are displayed. The test must use a variable named `contextMenuMountCount` that tracks how many times `ContextMenu_Shadcn_` mounts, and assert `expect(contextMenuMountCount).toBe(1)`.
+
+### 5. Code Formatting
+
+All modified and new files must pass `pnpm run test:prettier`.

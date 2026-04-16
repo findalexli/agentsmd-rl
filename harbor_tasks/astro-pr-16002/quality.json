@@ -2,52 +2,51 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'const stream = fs.createReadStream(file, opts)', 'res.on(\"close\", () => stream.destroy())', 'let stream: ReturnType<typeof createReadStream> | undefined', 'stream = createReadStream(fullPath)', and 'stream?.destroy()'. While instruction.md mentions capturing stream variables and destroying them, it does not specify these exact literal strings (e.g., the exact variable name 'stream', the exact type annotation 'ReturnType<typeof createReadStream> | undefine"
+      "outcome": "pass",
+      "reason": "The instruction explicitly names the exact file paths (packages/integrations/partytown/src/sirv.ts, packages/integrations/node/src/serve-app.ts), the exact variable declarations, assignments, and cleanup patterns that the tests assert on. All literal strings checked by tests are present in the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The Verification Criteria section explicitly states the fix: 'A read stream variable is captured before piping, and the stream is explicitly destroyed when the response closes' and 'A read stream variable is declared outside the try block... assigned inside the try block, and destroyed in the catch block on errors.' This describes exactly WHAT to change, not just what's broken."
+      "reason": "The instruction explicitly states the exact code to write: 'const stream = fs.createReadStream(file, opts)', 'stream.pipe(res)', 'res.on(\"close\", () => stream.destroy())', 'let stream: ReturnType<typeof createReadStream> | undefined', 'stream = createReadStream(fullPath)', 'stream?.destroy()'. This is the complete solution, not just a description of the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'const stream = fs.createReadStream(file, opts)' and 'res.on(\"close\", () => stream.destroy())'. An alternative correct fix using a different variable name (e.g., 'readStream'), or using res.on('close', function() { ... }), or using a finally block instead of catch, would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact literal strings like 'const stream = fs.createReadStream(file, opts)', 'res.on(\"close\", () => stream.destroy())', 'let stream: ReturnType<typeof createReadStream> | undefined', 'stream?.destroy()'. Alternative correct fixes (e.g., using a different variable name, using stream.on('error', ...) pattern, using try-finally instead of catch, or using a helper function) would fail these string-matching tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_partytown_stream_cleanup and test_node_serve_app_stream_cleanup) are purely text-matching tests using 'assert X in content' on file contents. They do not execute the code, call functions, or verify runtime behavior. The pass-to-pass tests do run builds/lints but those aren't the core behavioral tests."
+      "reason": "The two fail-to-pass tests (test_partytown_stream_cleanup, test_node_serve_app_stream_cleanup) exclusively use 'assert ... in content' pattern \u2014 they read the source file and check for literal strings. They never import, call, or execute the code to verify actual fd leak prevention behavior. The pass-to-pass tests do run builds/lints but those aren't the f2p tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check for literal strings in source files. An agent could simply insert the exact expected strings as dead code (comments or unreachable code) and pass both test_partytown_stream_cleanup and test_node_serve_app_stream_cleanup without actually fixing the bug."
+      "reason": "The f2p tests only check for string presence in source files. An agent could satisfy them by simply inserting the exact literal strings as dead code comments (e.g., '// const stream = fs.createReadStream(file, opts)') without actually fixing the fd leak. No behavioral verification occurs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md (stream cleanup in sirv.ts, stream cleanup in serve-app.ts, TypeScript compilation, Biome linting, build success) are covered by corresponding tests."
+      "reason": "All behaviors described in the instruction (stream capture, pipe, destroy on close for partytown; declare outside try, assign inside try, destroy in catch for node; TypeScript compilation; Biome linting; build success; unit tests) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_partytown_stream_cleanup, test_node_serve_app_stream_cleanup), have docstrings explaining purpose and whether they are fail-to-pass or pass-to-pass, and are logically grouped by integration."
+      "reason": "Tests are well-named (test_partytown_stream_cleanup, test_node_serve_app_stream_cleanup, etc.), have docstrings explaining fail-to-pass vs pass-to-pass nature, and are logically grouped by package and concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing file descriptor leaks in source code, not producing structured data output."
+      "reason": "The task does not produce structured data (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md are consistent with the actual codebase and test expectations."
+      "reason": "File paths, variable names, commands, and patterns are consistent between instruction.md, tests, and solution with no apparent typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact files (sirv.ts, serve-app.ts), exact functions (send(), readErrorPageFromDisk()), and the Verification Criteria section describes the exact implementation pattern (variable declared outside try block, assigned inside, destroyed in catch). This goes well beyond describing what's broken."
+      "reason": "The instruction provides the exact code lines to add in each file, including variable declarations, method calls, and event handler patterns. This goes far beyond identifying the buggy file/area \u2014 it gives the complete implementation."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -57,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 4,
+  "fail_count": 5
 }

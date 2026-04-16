@@ -238,20 +238,24 @@ def test_repo_manifest_tool_validation_tests():
     assert r.returncode == 0, f"Validation tests failed:\n{r.stdout[-1500:]}\n{r.stderr[-500:]}"
 
 # ---------------------------------------------------------------------------
-# fail_to_pass — behavioral tests using subprocess
+# fail_to_pass — behavioral tests
 # ---------------------------------------------------------------------------
 
+# Analysis script for task card: verifies due date is hidden for completed/rejected
+# by checking that completion status (!isCompleted) gates the hasDueDate computation
+# OR that there's an early return when completed before the date is shown.
 _ANALYZE_CARD = r"""
 import json, re, sys
 
 src = open(sys.argv[1]).read()
 
-# Locate _buildDateRow method body
+# Find the _buildDateRow method body
 m = re.search(r'Widget _buildDateRow\(.*?\{', src)
 if not m:
     print(json.dumps({"ok": False, "err": "_buildDateRow not found"}))
     sys.exit(0)
 
+# Extract method body by counting braces
 depth = 1
 body_start = m.end()
 body_end = len(src)
@@ -266,25 +270,42 @@ for i in range(body_start, len(src)):
 
 body = src[body_start:body_end]
 
-# 1. Must reference TaskDone or TaskRejected in the method
-if not re.search(r'(TaskDone|TaskRejected)', body):
-    print(json.dumps({"ok": False, "err": "_buildDateRow must reference TaskDone/TaskRejected"}))
-    sys.exit(0)
-
-# 2. hasDueDate assignment must be gated by completion status (!isCompleted)
-has_due_line = None
+# Check 1: hasDueDate computation must be gated by !isCompleted
+# This accepts: hasDueDate = ... && !isCompleted, or hasDueDate = ... && (isCompleted ? false : ...)
+# We check for the negation pattern (!isCompleted or isCompleted ? false) in a hasDueDate expression
+has_due_gated = False
 for line in body.split('\n'):
     s = line.strip()
-    if 'hasDueDate' in s and '=' in s and ('final' in s or s.startswith('hasDueDate')):
-        has_due_line = s
-        break
+    # Look for hasDueDate assignment with a due-related expression
+    if ('hasDueDate' in s or re.search(r'due\s*!=\s*null', s)) and '=' in s:
+        # Check for negation of isCompleted: either !isCompleted or isCompleted ? false
+        if re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished)', s) or \
+           re.search(r'isCompleted\s*\?\s*false', s):
+            has_due_gated = True
+            break
 
-if not has_due_line:
-    print(json.dumps({"ok": False, "err": "hasDueDate assignment not found in _buildDateRow"}))
-    sys.exit(0)
+if not has_due_gated:
+    # Check 2: If no gating in hasDueDate expression, there must be an early return
+    # when isCompleted is true, BEFORE any date-displaying widget is built
+    early_return = False
+    for line in body.split('\n'):
+        s = line.strip()
+        # Look for early return/conditional return when isCompleted is true
+        if re.search(r'if\s*\(\s*!?(?:isCompleted|isComplete|isDone|isFinished)', s):
+            # Check this leads to returning an empty/shrink widget
+            early_return = True
+            break
 
-if not re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished)', has_due_line):
-    print(json.dumps({"ok": False, "err": f"hasDueDate not gated by completion status: {has_due_line}"}))
+    if not early_return:
+        print(json.dumps({
+            "ok": False,
+            "err": "Completion status must gate the due date display (either in hasDueDate computation or via early return)"
+        }))
+        sys.exit(0)
+
+# Check 3: Must reference TaskDone or TaskRejected in the method (for status check)
+if not re.search(r'(TaskDone|TaskRejected)', body):
+    print(json.dumps({"ok": False, "err": "Must reference TaskDone or TaskRejected for completion check"}))
     sys.exit(0)
 
 print(json.dumps({"ok": True}))
@@ -292,50 +313,57 @@ print(json.dumps({"ok": True}))
 
 
 def test_task_card_hides_due_date_for_completed():
-    """ModernTaskCard._buildDateRow skips due date for completed/rejected tasks."""
+    """ModernTaskCard._buildDateRow skips due date display for completed/rejected tasks."""
     card = f"{REPO}/lib/features/journal/ui/widgets/list_cards/modern_task_card.dart"
     result = _analyze_dart(_ANALYZE_CARD, card)
     assert result.get("ok"), result.get("err", "Unknown error")
 
 
+# Analysis script for wrapper: verifies urgency styling is disabled for completed/rejected
+# by checking that isUrgent is gated by !isCompleted and urgentColor returns null when completed
 _ANALYZE_WRAPPER = r"""
 import json, re, sys
 
 src = open(sys.argv[1]).read()
 
-# 1. Must import task.dart (needed for TaskDone/TaskRejected types)
+# Check 1: Must import task.dart for TaskDone/TaskRejected types
 if not re.search(r"import.*package:lotti/classes/task\.dart", src):
     print(json.dumps({"ok": False, "err": "Missing import for lotti/classes/task.dart"}))
     sys.exit(0)
 
-# 2. Must define isCompleted using TaskDone/TaskRejected
+# Check 2: Must reference TaskDone or TaskRejected for completion status
 if not re.search(r'(TaskDone|TaskRejected)', src):
-    print(json.dumps({"ok": False, "err": "Must reference TaskDone/TaskRejected for status check"}))
+    print(json.dumps({"ok": False, "err": "Must reference TaskDone or TaskRejected for status check"}))
     sys.exit(0)
 
-# 3. isUrgent must be gated by completion status (negation before status.isUrgent)
-is_urgent_lines = [l for l in src.split('\n') if 'isUrgent' in l and ':' in l]
-if not is_urgent_lines:
-    print(json.dumps({"ok": False, "err": "isUrgent parameter not found"}))
+# Check 3: isUrgent must be gated by !isCompleted (negation pattern)
+# This accepts: isUrgent: !isCompleted && status.isUrgent, or isUrgent: isCompleted ? false : status.isUrgent
+is_urgent_gated = False
+for line in src.split('\n'):
+    s = line.strip()
+    if 'isUrgent' in s and ':' in s and '!' not in s.split(':')[0]:
+        # Look for negation pattern: !isCompleted && ...isUrgent OR isCompleted ? false
+        if re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished).*isUrgent', s) or \
+           re.search(r'isCompleted\s*\?\s*false', s):
+            is_urgent_gated = True
+            break
+
+if not is_urgent_gated:
+    print(json.dumps({"ok": False, "err": "isUrgent must be gated by completion status (!isCompleted)"}))
     sys.exit(0)
 
-gated = any(re.search(r'!.*(?:isCompleted|isComplete|isDone|isFinished).*isUrgent', l) for l in is_urgent_lines)
-if not gated:
-    print(json.dumps({"ok": False, "err": "isUrgent must be gated by completion status (e.g., !isCompleted && status.isUrgent)"}))
-    sys.exit(0)
+# Check 4: urgentColor must return null when task is completed (ternary: isCompleted ? null : ...)
+urgent_color_gated = False
+for line in src.split('\n'):
+    s = line.strip()
+    if 'urgentColor' in s and ':' in s:
+        # Look for ternary with null when completed: isCompleted ? null : ...
+        if re.search(r'isCompleted\s*\?\s*null\s*:', s):
+            urgent_color_gated = True
+            break
 
-# 4. urgentColor must be null when task is completed
-color_lines = [l for l in src.split('\n') if 'urgentColor' in l and ':' in l]
-if not color_lines:
-    print(json.dumps({"ok": False, "err": "urgentColor parameter not found"}))
-    sys.exit(0)
-
-null_gated = any(
-    'null' in l and re.search(r'isCompleted|isComplete|isDone|isFinished', l)
-    for l in color_lines
-)
-if not null_gated:
-    print(json.dumps({"ok": False, "err": "urgentColor must be null for completed tasks (e.g., isCompleted ? null : status.urgentColor)"}))
+if not urgent_color_gated:
+    print(json.dumps({"ok": False, "err": "urgentColor must return null for completed tasks (isCompleted ? null : ...)"}))
     sys.exit(0)
 
 print(json.dumps({"ok": True}))

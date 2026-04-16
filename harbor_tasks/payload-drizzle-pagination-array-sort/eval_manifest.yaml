@@ -1,0 +1,182 @@
+# Test for pagination fix with array field sorting
+test:
+  description: Verify pagination works correctly when sorting by array sub-field
+
+  checks:
+    - id: test_findmany_fix
+      type: fail_to_pass
+      description: Check oneToManyJoinedTableNames/groupBy/min-max pattern exists in findMany.ts
+      origin: agent_config
+      source:
+        file: CLAUDE.md
+        lines: "127-145"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+
+    - id: test_buildquery_is_one_to_many
+      type: fail_to_pass
+      description: Check isOneToMany field exists in BuildQueryJoinAliases type
+      origin: agent_config
+      source:
+        file: CLAUDE.md
+        lines: "127-145"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+
+    - id: test_addjointable_is_one_to_many
+      type: fail_to_pass
+      description: Check isOneToMany parameter exists in addJoinTable function
+      origin: agent_config
+      source:
+        file: CLAUDE.md
+        lines: "127-145"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+
+    - id: test_gettablecolumn_is_one_to_many
+      type: fail_to_pass
+      description: Check isOneToMany flag is passed when joining array parent tables
+      origin: agent_config
+      source:
+        file: CLAUDE.md
+        lines: "127-145"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+
+    - id: test_repo_drizzle_lint
+      type: pass_to_pass
+      origin: repo_tests
+      description: Repo's ESLint passes for the drizzle package
+
+    - id: test_repo_drizzle_lint_target_files
+      type: pass_to_pass
+      origin: repo_tests
+      description: Repo's ESLint passes for the modified source files
+
+    - id: test_repo_typescript_build_drizzle
+      type: pass_to_pass
+      origin: repo_tests
+      description: Drizzle swc build passes
+
+  rubric:
+    - id: test_cleanup_after_self
+      description: "Tests MUST be self-contained and clean up after themselves"
+      source:
+        file: CLAUDE.md
+        lines: "127-130"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+    - id: descriptive_test_names
+      description: "Use descriptive test names starting with 'should'"
+      source:
+        file: CLAUDE.md
+        lines: "137"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+    - id: one_behavior_per_test
+      description: "One test should verify one behavior - keep tests focused"
+      source:
+        file: CLAUDE.md
+        lines: "138"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+    - id: prefer_functions_over_classes
+      description: "Prefer functions over classes (classes only for errors/adapters)"
+      source:
+        file: CLAUDE.md
+        lines: "52"
+        commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+
+pr:
+  owner: payloadcms
+  repo: payload
+  number: 15908
+  title: "fix(drizzle): pagination applied incorrectly when sorting by a field inside an array field"
+  base_commit: 6a9e36734119b6c8bc9633f9e212e0a29faa07df
+  merge_commit: 0f67215dc81825ba6c843a303c5a1823ab03ecaa
+
+target_files:
+  - packages/drizzle/src/find/findMany.ts
+  - packages/drizzle/src/queries/addJoinTable.ts
+  - packages/drizzle/src/queries/buildQuery.ts
+  - packages/drizzle/src/queries/getTableColumnFromPath.ts
+
+patch:
+  distinctive_line: "oneToManyJoinedTableNames"
+  content: |
+    diff --git a/packages/drizzle/src/find/findMany.ts b/packages/drizzle/src/find/findMany.ts
+    index d6dfb2a14a5..fa23efe8030 100644
+    --- a/packages/drizzle/src/find/findMany.ts
+    +++ b/packages/drizzle/src/find/findMany.ts
+    @@ -1,6 +1,6 @@
+     import type { FindArgs, FlattenedField, TypeWithID } from 'payload'
+
+    -import { inArray } from 'drizzle-orm'
+    +import { asc, desc, inArray, max, min } from 'drizzle-orm'
+
+     import type { DrizzleAdapter } from '../types.js'
+
+    @@ -96,20 +96,59 @@ export const findMany = async function find({
+
+       const db = await getTransaction(adapter, req)
+
+    -  const selectDistinctResult = await selectDistinct({
+    -    adapter,
+    -    db,
+    -    joins,
+    -    query: ({ query }) => {
+    -      if (orderBy) {
+    -        query = query.orderBy(() => orderBy.map(({ column, order }) => order(column)))
+    -      }
+    -      return query.offset(offset).limit(limit)
+    -    },
+    -    selectFields,
+    -    tableName,
+    -    where,
+    -  })
+    +  const oneToManyJoinedTableNames = new Set(
+    +    joins.filter((j) => j.isOneToMany).map((j) => getNameFromDrizzleTable(j.table)),
+    +  )
+    +
+    +  const hasSortOnOneToMany =
+    +    oneToManyJoinedTableNames.size > 0 &&
+    +    orderBy?.some(({ column }) =>
+    +      oneToManyJoinedTableNames.has(getNameFromDrizzleTable(column.table)),
+    +    )
+    +
+    +  let selectDistinctResult: { id: number | string }[] | undefined
+    +
+    +  // avoid duplicate results by using a group query instead of select distinct when there is a sort on a one-to-many joined table
+    +  if (hasSortOnOneToMany) {
+    +    const mainTable = adapter.tables[tableName]
+    +    let groupQuery = (db as any).select({ id: mainTable.id }).from(mainTable).$dynamic()
+    +
+    +    if (where) {
+    +      groupQuery = groupQuery.where(where)
+    +    }
+    +
+    +    joins.forEach(({ type, condition, table }) => {
+    +      groupQuery = groupQuery[type ?? 'leftJoin'](table, condition)
+    +    })
+    +
+    +    groupQuery = groupQuery.groupBy(mainTable.id)
+    +
+    +    groupQuery = groupQuery.orderBy(() =>
+    +      orderBy.map(({ column, order }) => {
+    +        if (oneToManyJoinedTableNames.has(getNameFromDrizzleTable(column.table))) {
+    +          return order === asc ? asc(min(column)) : desc(max(column))
+    +        }
+    +        return order(column)
+    +      }),
+    +    )
+    +
+    +    selectDistinctResult = await groupQuery.offset(offset).limit(limit)
+    +  } else {
+    +    selectDistinctResult = await selectDistinct({
+    +      adapter,
+    +      db,
+    +      joins,
+    +      query: ({ query }) => {
+    +        if (orderBy) {
+    +          query = query.orderBy(() => orderBy.map(({ column, order }) => order(column)))
+    +        }
+    +        return query.offset(offset).limit(limit)
+    +      },
+    +      selectFields,
+    +      tableName,
+    +      where,
+    +    })
+    +  }

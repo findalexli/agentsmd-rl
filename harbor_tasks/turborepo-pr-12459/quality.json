@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_try_unwrap_pattern_exists checks for 'Arc::try_unwrap' and 'Arc::into_inner(errors)' patterns, and test_watch_mode_guard_exists checks for 'if !is_watch' guard around 'processes.stop()'. The instruction.md mentions the target files and methods but never mentions Arc::into_inner, Arc::try_unwrap, processes.stop(), or is_watch. These specific implementation details tested by the hidden tests are not discoverable from the instruction alone."
+      "outcome": "pass",
+      "reason": "Instruction names the target files and methods (finish() in visitor/mod.rs, execute_visitor() in run/mod.rs) and all test commands."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the bug (turbo watch crashes with persistent tasks) and identifies target files/methods, but does not specify the exact fix (e.g., replacing Arc::into_inner with Arc::try_unwrap, or guarding processes.stop() with is_watch)."
+      "reason": "Instruction describes the crash symptom without specifying Arc::try_unwrap or the is_watch guard as the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_try_unwrap_pattern_exists specifically checks for 'try_unwrap' near 'errors' and 'mutex' context. An alternative correct fix (e.g., using Arc::strong_count check, or cloning the mutex contents before into_inner, or restructuring to avoid Arc entirely) would fail this test. test_watch_mode_guard_exists checks for the exact regex pattern 'if\\s+!\\s*is_watch\\s*\\{' before processes.stop(), so an alternative like early-return or a different guard variable name would fail."
+      "reason": "test_try_unwrap_pattern_exists requires 'Arc::try_unwrap' and test_watch_mode_guard_exists requires literal 'if !is_watch' pattern; alternative correct fixes (e.g., using Weak, restructuring ownership, or a different guard variable/method) would fail these literal-string checks."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_try_unwrap_pattern_exists and test_watch_mode_guard_exists are purely text-matching tests (reading file contents and checking for string patterns). While other tests (cargo check, cargo test, clippy) do execute the code, the two f2p-specific tests are entirely text-based assertions."
+      "outcome": "pass",
+      "reason": "Most tests invoke cargo check/test/clippy/fmt as subprocesses; two are text-inspection but majority execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_cargo_check, test_cargo_clippy, test_try_unwrap_pattern_exists, test_watch_mode_guard_exists) cannot be satisfied by a stub. The base commit has a real compilation/runtime bug with Arc::into_inner, and the text-matching tests require specific code patterns to be present that don't exist in the base commit."
+      "reason": "The cargo test and clippy invocations require compiled working code; they cannot be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All verification commands listed in instruction.md (cargo check, clippy, cargo test, watch tests, visitor command tests, task filter tests, fmt check) have corresponding test functions in test_outputs.py."
+      "reason": "Compile, clippy, watch tests, visitor tests, task filter tests, and fmt are all verified as specified in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cargo_check, test_try_unwrap_pattern_exists, test_watch_mode_guard_exists, etc.) with descriptive docstrings explaining what each test verifies and why."
+      "reason": "Tests have descriptive names and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code fixes, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names specific methods ('finish() method, error collection' and 'execute_visitor() method, process cleanup') in the Target Files section. While the files are reasonable to mention, specifying the exact method names (finish, execute_visitor) and their concerns (error collection, process cleanup) significantly narrows the search space and leaks localization information."
+      "outcome": "pass",
+      "reason": "Instruction names target files/methods at module level, which is acceptable scope guidance without revealing the exact lines or fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

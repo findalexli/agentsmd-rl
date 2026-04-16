@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "All test-asserted specifics are discoverable from instruction.md: file paths (src/libs/pdfjs/index.tsx, worker.ts, pdf.worker.ts, the two viewer components, CLAUDE.md), the `workerSrc` template literal format with npmmirror URL, `ensureWorker()` function name, `GlobalWorkerOptions.workerSrc`, imports from `@/libs/pdfjs`, 'Trigger condition', 'Workflow:', 'ToolSearch' \u2014 all explicitly mentioned in the instructions."
+      "outcome": "fail",
+      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_ensure_worker_sets_src checks for 'const workerSrc' as a template literal variable name, 'ensureWorker()' as a function call string, and the exact pattern 'const workerSrc\\s*=\\s*`([^`]+)`'. The instruction says 'Provide a way to set the worker source' but doesn't mandate a variable named 'workerSrc' or a function named 'ensureWorker'. Also test_claude_md_linear_section_updated checks for exact strings 'Trigger con"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to implement: 'Define a const workerSrc template literal using the format https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs', 'Define an ensureWorker() function', 'Export a wrapper Document component that calls ensureWorker() in its body', and specifies exact CLAUDE.md restructuring including 'Step 1 must mention using ToolSearch'. This is a detailed implementation specification, not just a descriptio"
+      "reason": "The instruction explicitly states the exact URL template to use ('https://registry.npmmirror.com/pdfjs-dist/${pdfjs.version}/files/build/pdf.worker.min.mjs'), specifies to create a wrapper Document component that applies worker configuration before rendering, to re-export Page and pdfjs, and gives exact steps for CLAUDE.md restructuring including 'Step 1 must mention using ToolSearch'. This is essentially a specification of the solution, not a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: `const workerSrc` as a template literal (regex match), the exact function name `ensureWorker()`, and that it appears as a call `ensureWorker()` in the file. An alternative correct fix could use a different variable name (e.g., `WORKER_URL`), a different function name (e.g., `initWorker`), or set workerSrc inline in the Document wrapper without a separate function \u2014 all would fix the bug but fail the tests."
+      "reason": "test_ensure_worker_sets_src asserts 'const workerSrc' regex pattern and 'ensureWorker()' as literal strings in the file. An alternative correct fix could use a different variable name (e.g., 'const WORKER_URL'), a different function name (e.g., 'initWorker'), or inline the logic in the Document component without a named function \u2014 all would fail the regex and string checks despite being correct solutions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_ensure_worker_sets_src extracts the workerSrc template and executes it via Node subprocess to verify it correctly sets workerSrc with version interpolation. While many tests do use text matching (imports, CLAUDE.md content), the core behavioral test actually executes code, so not every test is purely text-based."
+      "reason": "test_ensure_worker_sets_src executes a Node subprocess to verify the workerSrc template actually works when interpolated with a version string. The pass-to-pass tests run eslint, stylelint, circular dependency checks, and vitest test suites. However, many f2p tests (old files removed, import checks) are text-based. The mix includes enough behavioral execution to pass."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_ensure_worker_sets_src) cannot be satisfied by a stub \u2014 the Node execution verifies that the extracted template literal actually produces a URL containing the version and 'pdf.worker'. The old file deletion tests require actual file removal. The import tests require real content changes in existing files."
+      "reason": "The f2p tests cannot be satisfied by stubs: test_ensure_worker_sets_src requires a file with specific patterns AND executes Node to verify the workerSrc template interpolates correctly. test_old_worker_files_removed requires actual file deletion. test_pdf_viewer_imports_unified and test_pdf_preview_imports_unified require modifying existing files. These require substantive changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: unified module creation with workerSrc/ensureWorker/Document wrapper, old file deletion, import updates in both viewer components, CLAUDE.md restructuring with Trigger condition/Workflow/ToolSearch, plus pass-to-pass CI checks (lint, tests, circular deps)."
+      "reason": "All major behaviors from instruction.md are tested: unified module creation, worker source setting, old file removal, import updates in both viewer components, CLAUDE.md restructuring, and Document component usage preservation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_ensure_worker_sets_src, test_old_worker_files_removed, etc.), have docstrings explaining rationale, and are grouped with a clear separator comment for pass-to-pass CI/CD checks."
+      "reason": "Tests are well-named (test_ensure_worker_sets_src, test_old_worker_files_removed, etc.), have detailed docstrings explaining why each check matters, and are logically grouped into f2p tests and pass-to-pass CI checks with a clear comment separator."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces source code files and documentation, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, URLs, and commands in instruction.md match what's expected in the tests without typos."
+      "reason": "File paths, variable names, and commands in instruction.md match those in the test file and solution without typos."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the exact URL format for workerSrc, exact function name 'ensureWorker()', exact variable name 'workerSrc', exact structure of CLAUDE.md changes including 'Step 1 must mention using ToolSearch'. This goes beyond identifying what's broken and prescribes the exact solution."
+      "reason": "The instruction explicitly names all files involved, specifies exact import paths to change ('Import Document and Page from @/libs/pdfjs instead of directly from react-pdf'), the exact URL template string, the exact function behavior ('if pdfjs.GlobalWorkerOptions.workerSrc is not already set, assign it'), and exact CLAUDE.md subsection names. This goes beyond describing what's broken into prescribing the exact fix."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code task, not an agentmd-edits task focused on config files."
+      "outcome": "pass",
+      "reason": "The CLAUDE.md edit is localized to the Linear Issue Management section, and the gold diff shows a bounded change to that section only, not a full-file rewrite."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
@@ -55,5 +56,5 @@
     "instruction_no_hint_leakage"
   ],
   "pass_count": 6,
-  "fail_count": 3
+  "fail_count": 4
 }

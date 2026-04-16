@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the script path (scripts/update-example-deps.mjs), the packages/ and examples/ directories, reading package.json files, the version field, dependencies/devDependencies, caret format (^x.y.z), outputting 'Done', and integrating with changeset:version script. All test assertions reference these elements which are discoverable from the instruction."
+      "reason": "Instruction names script path scripts/update-example-deps.mjs, Done output, changeset:version script, packages/ and examples/ directories, caret format, and both dependency types - all test assertions map to these."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to be built (a script that updates example deps) and its requirements, but does not give the exact implementation, specific code, or line-by-line changes. A developer must reason about how to implement the solution."
+      "reason": "Instruction describes what to do but not the specific implementation (globSync, Object.fromEntries, etc.)."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_script_uses_caret_version_format checks for specific string patterns like '`^${' in the source code. An alternative correct implementation using string concatenation (e.g., '^' + version) instead of template literals would fail this test. Similarly, test_script_reads_workspace_packages checks for 'packages' in content.lower() and 'package.json' in content - alternative implementations using different variable names or glob patterns could fail."
+      "outcome": "pass",
+      "reason": "Tests check for substrings like 'packages', 'version', '^', 'dependencies', 'devDependencies' which any reasonable implementation would contain; don't assert specific variable names or exact output format."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several fail_to_pass tests are purely text-matching on source code: test_script_reads_workspace_packages asserts 'packages' in content.lower() and 'version' in content; test_script_uses_caret_version_format asserts '`^${' in content; test_script_handles_both_dep_types asserts 'devDependencies' in content. These inspect source text rather than behavior."
+      "outcome": "pass",
+      "reason": "Tests execute the script via subprocess.run with node, check return codes and stdout, run eslint/prettier, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_script_updates_example_dependencies finds an example using a workspace package but only asserts the script exits with returncode 0 - it never checks that any dependency was actually updated. A script that does nothing but exits 0 would pass this test. Similarly test_script_runs_without_error only checks returncode 0."
+      "reason": "A stub script that just contains the words 'packages', 'version', 'dependencies', 'devDependencies', '^' as comments/strings and prints 'Done' would pass all f2p tests - e.g., test_script_reads_workspace_packages only greps content, test_script_updates_example_dependencies returns early if no example uses the package and otherwise only checks returncode==0."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Output which examples were updated (one per line, e.g., Updated examples/foo/package.json)' but no test verifies this output format. Also, no test verifies that example package.json files actually have their versions updated to the correct caret versions after script execution."
+      "outcome": "pass",
+      "reason": "Tests cover script existence, execution, Done output, changeset:version integration, caret format, both dep types."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings that include fail_to_pass/pass_to_pass annotations, clearly grouped by what they verify."
+      "reason": "Tests have descriptive names and docstrings indicating fail_to_pass vs pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a script and modifies JSON files, but the schema of package.json is a well-known standard and doesn't need explicit documentation."
+      "reason": "Task modifies package.json files but follows existing npm schema; no new structured output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem and requirements without revealing specific implementation details like exact line numbers, variable names, or code snippets from the solution."
+      "reason": "Instruction points to the obvious files/locations relevant to a new feature without naming specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes a minimal, localized change to package.json (one line in the changeset:version script) and adds one new file, which is consistent with the task requirements."
+      "reason": "Gold patch only modifies one line in package.json's changeset:version script, localized change."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

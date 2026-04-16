@@ -20,23 +20,23 @@ The child process should be able to write to the file descriptor provided by the
 
 ## Expected Behavior
 
-1. **Numeric fd passthrough**: Numeric values in the `stdio` array should be passed through to the child process as-is (duplicated for the child). The implementation must use a signed integer type for deserialization, and error messages should reference "file descriptor", not "resource id".
+1. **Numeric fd passthrough**: Numeric values in the `stdio` array should be treated as real OS file descriptors, duplicated and passed through to child processes. The enum representing stdio options should be renamed from `StdioOrRid` to `StdioOrFd`, with the `Rid(ResourceId)` variant replaced by `Fd(i32)`.
 
-2. **Inherit mode with redirected output**: When `stdio: "inherit"` is used, the child process should inherit the runtime's actual stdout/stderr handles, which may have been redirected (e.g., during `deno test` for output capture). This requires the runtime to capture its own stdout/stderr handles during initialization and provide them when spawning children.
+2. **Deserialization and error messages**: Numeric fd values must be parsed using signed integer logic (`as_i64()`). Error messages should reference "file descriptor", not "resource id":
+   - Invalid number: `"Expected a non-negative integer file descriptor"`
+   - Wrong type: `Expected a file descriptor, "inherit", "piped", or "null"`
 
-## What to Look At
+3. **FD duplication**: When converting a numeric fd for child process use, duplicate it with `libc::dup()` and wrap the result via `from_raw_fd` for safe ownership transfer.
 
-The following areas may need changes to support this feature:
+4. **Handle inheritance for stdout/stderr**: The IO extension should define a public struct `ChildProcessStdio` with `pub stdout: StdFile` and `pub stderr: StdFile` fields. This struct holds the runtime's actual output handles. The process extension should import it via `use deno_io::ChildProcessStdio` and access it via `state.borrow::<ChildProcessStdio>()` when handling inherit mode — replacing the old approach of constructing from hardcoded resource IDs.
 
-- `ext/process/lib.rs` — Handles stdio configuration for child processes. The deserialization logic for numeric values needs to handle OS file descriptors. The inherit mode needs to use handles captured at runtime, not hardcoded values.
-- `ext/io/lib.rs` — IO extension initialization. The runtime's stdout/stderr handles need to be captured so child processes can inherit redirected output.
-- `ext/node/polyfills/internal/child_process.ts` — Node.js child_process polyfill. The comment explaining numeric stdio values may need updating.
-- `tests/unit_node/child_process_test.ts` — A test exercising numeric fd in the stdio array should be present (or added).
+5. **Extra stdio support**: The `extra_stdio` field in `SpawnArgs` should be typed as `Vec<StdioOrFd>` to accept both piped and numeric fd entries.
+
+6. **Preserved behavior**: String variants `"inherit"`, `"piped"`, `"null"`, and `"ipc_for_internal_use"` must continue to work. The `ChildStdio` struct must retain `stdin`, `stdout`, and `stderr` fields typed with the renamed enum. The `FileResource` import is no longer needed in the process extension.
 
 ## Constraints
 
-- String variants (`inherit`, `piped`, `null`, `ipc_for_internal_use`) must continue to work.
-- The `ChildStdio` struct fields (`stdin`, `stdout`, `stderr`) must still be typed with a stdio option type.
-- All existing unit tests (`deno_io --lib`, `deno_process --lib`) must pass.
-- `cargo check` and `cargo clippy` must pass with no warnings.
-- `cargo fmt` must pass.
+- `cargo check -p deno_io` and `cargo check -p deno_process` must pass.
+- `cargo clippy -p deno_process -p deno_io -- -D warnings` must pass.
+- `cargo fmt` must pass on modified files.
+- `cargo test -p deno_io --lib` and `cargo test -p deno_process --lib` must pass.

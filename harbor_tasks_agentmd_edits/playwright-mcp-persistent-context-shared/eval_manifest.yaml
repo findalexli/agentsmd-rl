@@ -1,0 +1,132 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39601
+  base_commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+  merge_commit: "8708b7e3407ee43cda83a99ae1a9e7430b9d32bf"
+
+# Track 1: Code correctness checks
+checks:
+  # Code removal checks (fail_to_pass - should fail on base, pass on fix)
+  - id: shared_browser_context_option_removed_from_program
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The --shared-browser-context CLI option must be removed from program.ts"
+
+  - id: shared_browser_context_removed_from_config_types
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sharedBrowserContext property must be removed from config.d.ts"
+
+  - id: shared_browser_context_removed_from_config_ts
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sharedBrowserContext must be removed from config.ts"
+
+  - id: shared_browser_context_removed_from_configIni
+    type: fail_to_pass
+    origin: pr_diff
+    description: "sharedBrowserContext must be removed from configIni.ts"
+
+  # New functionality checks
+  - id: program_ts_has_userdatadir_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts must use userDataDir to determine shared browser behavior"
+
+  - id: program_ts_has_lazy_browser_creation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts must lazily create shared browser on first client connection"
+
+  - id: program_ts_has_browser_cleanup
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts must clear sharedBrowser reference on client disconnect"
+
+  # Config update check (fail_to_pass - CLAUDE.md should NOT have this line on base)
+  - id: claude_md_has_co_authored_by_rule
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must contain the new rule about Co-Authored-By agents"
+
+  # Pass-to-pass checks
+  - id: typescript_compiles
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must compile without errors"
+
+# Track 2: Gold config edits (for agentmd-edit tasks)
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: "Never add Co-Authored-By agents in commit message."
+    gold_removed: ""
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "Remove unused imports and types when removing features"
+    source:
+      path: "CLAUDE.md"
+      lines: "97-125"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    evidence: "Gold removes sharedBrowserContext from all type definitions and config files consistently"
+    category: refactoring
+    verification: llm_judge
+
+  - rule: "Use semantic commit messages with conventional format"
+    source:
+      path: "CLAUDE.md"
+      lines: "97-99"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    evidence: "Gold PR uses 'fix(mcp): persistent context is always shared' following the semantic format"
+    category: process
+    verification: programmatic
+
+  - rule: "Always run npm run flint before committing"
+    source:
+      path: "CLAUDE.md"
+      lines: "103-106"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    evidence: "Gold changes maintain TypeScript compilation and lint compliance"
+    category: quality
+    verification: programmatic
+
+  - rule: "Update agent instruction files when changing conventions"
+    source:
+      path: "CLAUDE.md"
+      lines: "97-125"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    evidence: "Gold PR updates CLAUDE.md with new commit message rule alongside code changes"
+    category: documentation
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that create collisions
+distractors:
+  - rule: "Commit messages should credit all contributors with Co-Authored-By"
+    source:
+      path: "CLAUDE.md"
+      lines: "97-125"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    collision_type: rule_conflict
+    why_distracting: "Directly contradicts the new rule added by the PR which explicitly forbids Co-Authored-By lines"
+    severity: high
+
+  - rule: "CLI options should remain for backward compatibility even when deprecated"
+    source:
+      path: "CLAUDE.md"
+      lines: "97-125"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    collision_type: would_cause_bug
+    why_distracting: "PR removes the option completely rather than deprecating - keeping it would leave dead code"
+    severity: medium
+
+  - rule: "Always add tests when removing features to verify behavior"
+    source:
+      path: "CLAUDE.md"
+      lines: "108-120"
+      commit: "114f3a296a78dfbc1eb6631bb358e9fe9b1677bb"
+    collision_type: scope_ambiguity
+    why_distracting: "Gold PR removes test files that tested the removed feature - adding new tests would be wrong for a removal PR"
+    severity: low

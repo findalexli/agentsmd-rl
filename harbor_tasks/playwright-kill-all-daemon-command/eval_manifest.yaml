@@ -74,9 +74,71 @@ rubric:
     path: packages/playwright/src/skill/SKILL.md
     lines: 168-176
     commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- rule: Register CLI command in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-28
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The diff registers 'killAll' by appending it to the 'commandsArray' and
+    exporting it in 'packages/playwright/src/mcp/terminal/commands.ts'.
+  category: architecture
+  verification: llm_judge
+- rule: Update skill documentation and references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The diff adds the 'kill-all' command description to both 'packages/playwright/src/skill/SKILL.md'
+    and 'packages/playwright/src/skill/references/session-management.md'.
+  category: documentation
+  verification: llm_judge
+- rule: Update central SKILL.md file when adding commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 45-45
+  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`.
+    It contains documentation for all available CLI commands and MCP tools. Update
+    it whenever you add new commands or tools.
+  evidence: The diff explicitly adds 'playwright-cli kill-all' and its description
+    to 'packages/playwright/src/skill/SKILL.md'.
+  category: documentation
+  verification: llm_judge
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
   gold_added: 'playwright-cli kill-all  # forcefully kill all daemon processes (for
     stale/zombie processes)'
   gold_removed: ''
+distractors:
+- rule: Implement corresponding MCP tool for CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 24-24
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: An agent reading this might mistakenly try to create an underlying
+    MCP browser tool for 'kill-all'. However, 'kill-all' interacts directly with OS
+    processes (using execSync) and does not map to a browser-level capability, so
+    it correctly leaves toolName as '' and avoids implementing an MCP tool.
+  severity: high
+- rule: Create and register MCP Tool
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 8-12
+  source_text: '## Adding MCP Tools
+
+    - Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`
+
+    - Place new tests in `tests/mcp/mcp-<category>.spec.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: This applies to browser interaction tools, but the 'kill-all' command
+    is a pure daemon session management feature that belongs only to the terminal
+    UI layer, making these instructions distracting and irrelevant to the current
+    task.
+  severity: medium

@@ -3,60 +3,56 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes the arrays (variable_width_formatter, variable_width_formatter_M_is_month_name, etc.), the function name (containsOnlyFixedWidthMySQLFormatters), the formatter (%W), and the specific flag combinations and expected return values. The tests check these same elements, all discoverable from the instruction."
+      "reason": "The instruction names the function `containsOnlyFixedWidthMySQLFormatters`, the file `src/Functions/formatDateTime.cpp`, the `%W` formatter, and the expected behavior with `mysql_M_is_month_name` flag. The tests check these same elements. The test also checks the buggy vs fixed implementation logic which is discoverable from the instruction's description of the bug."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the four arrays and says 'The fix should ensure %W is always detected as variable-width, independent of the conditional flag checks for other formatters.' Combined with listing the exact arrays including 'variable_width_formatter_M_is_month_name' which contains 'W', this essentially tells the agent to remove 'W' from that array and add an unconditional check \u2014 the exact gold patch. The instruction goes beyond describing what's broken and effectively describes the"
+      "reason": "The instruction explicitly states 'The function containsOnlyFixedWidthMySQLFormatters should return false (indicating variable-width) when the format string contains %W, regardless of configuration settings' and 'The %M formatter behavior should remain unchanged.' This, combined with the specific function name and file location, essentially tells the developer exactly what to change: make %W unconditionally variable-width in the named function. However, the instruction does not specify the exact"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests compile and run a hardcoded C++ program (FUNCTION_LOGIC) embedded in test_outputs.py that contains both BUGGY and FIXED implementations. The tests verify behavior of THESE embedded implementations, not the agent's actual code changes. For example, test_w_with_m_is_month_name checks that the embedded buggy version returns true and the embedded fixed version returns false. The agent's changes to the actual source file are only checked in test_patch_applied, which does `grep -q \"variable_"
+      "reason": "The tests compile and run a hardcoded C++ program (FUNCTION_LOGIC) that contains both BUGGY and FIXED implementations. The tests verify the FIXED implementation matches expected behavior AND that the BUGGY implementation exhibits bugs. Since the test embeds its own C++ code rather than testing the agent's actual changes to formatDateTime.cpp, alternative correct fixes to the actual source file would not be tested at all. The tests don't import or call the agent's modified code - they test a hard"
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests (test_w_with_m_is_month_name, test_w_with_various_flags, test_m_with_m_is_month_name, test_fixed_width_formatters, test_w_combined) compile and execute a C++ program with HARDCODED implementations embedded in the test file \u2014 they do NOT test the agent's actual code changes. The test_patch_applied test is purely text-based: it greps for the literal string \"variable_width_formatter_M_is_month_name = {'M'}\" in the source file. The tests never import or execute the agent's modified code."
+      "outcome": "pass",
+      "reason": "Tests compile a C++ program and execute it as a subprocess, checking return codes. They verify behavioral outcomes (function return values) rather than checking text content of source files."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The behavioral tests (test_w_with_m_is_month_name, test_w_with_various_flags, etc.) test hardcoded C++ code embedded within test_outputs.py, not the agent's code. They always pass regardless of what the agent does. Only test_patch_applied checks the agent's work, and it's a simple grep that could be satisfied by just inserting the expected string anywhere in the file."
+      "reason": "The tests compile and execute a hardcoded C++ program embedded in the test file itself (FUNCTION_LOGIC), not the agent's modified code. The test_source_file_patched test does check that the source file was modified (grep for specific patterns), but the behavioral tests (test_w_with_m_is_month_name, test_w_with_various_flags, etc.) test the embedded FIXED implementation which is already correct in the test file. A stub/no-op agent that simply applies the gold patch would pass, but so would an age"
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that containsOnlyFixedWidthMySQLFormatters returns false for %W regardless of settings. The tests embed a fixed implementation rather than testing the agent's actual changes to formatDateTime.cpp, so the actual behavioral requirement is not verified against the agent's code."
+      "outcome": "pass",
+      "reason": "The instruction specifies three behaviors: %W returns false with mysql_M_is_month_name=true, %W returns false with mysql_M_is_month_name=false, and %M behavior unchanged. All three are tested (test_w_with_m_is_month_name, test_w_with_various_flags, test_m_with_m_is_month_name)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_w_with_m_is_month_name, test_w_with_various_flags, test_m_with_m_is_month_name, etc.) and have docstring-level comments explaining the bug and what each test verifies."
+      "reason": "Tests are well-structured with descriptive function names (test_w_with_m_is_month_name, test_w_with_various_flags, test_m_with_m_is_month_name, test_fixed_width_formatters, test_source_file_patched) and include a docstring explaining the bug."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, variable names, or function names across instruction.md and test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the four internal arrays (variable_width_formatter, variable_width_formatter_M_is_month_name, variable_width_formatter_leading_zeros, variable_width_formatter_e_with_space_padding) and describes how %W should be moved from conditional to unconditional checking. This leaks the exact implementation structure and essentially describes the fix."
+      "outcome": "pass",
+      "reason": "The instruction names the file and function, which is reasonable for this task domain. It does not specify exact line numbers or the exact code change needed (like 'move W out of else block' or 'remove W from the M_is_month_name array')."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

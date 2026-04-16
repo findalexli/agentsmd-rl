@@ -1,0 +1,31 @@
+name = "hugo-replace-deprecated-parser-apis"
+difficulty = "medium"
+time_estimate = "15-30 minutes"
+tags = ["go", "deprecation", "parser", "ast", "hugo"]
+
+[description]
+brief = "Replace deprecated Go parser APIs (parser.ParseDir and doc.New) with their modern equivalents"
+detail = """
+This task involves replacing deprecated Go standard library APIs in Hugo's template function registry:
+- Replace parser.ParseDir (deprecated since Go 1.25) with manual file iteration using parser.ParseFile
+- Replace doc.New (deprecated) with doc.NewFromFiles
+
+The changes are in tpl/internal/templatefuncsRegistry.go which parses Go documentation for Hugo's template functions.
+"""
+
+[source]
+pr_url = "https://github.com/gohugoio/hugo/pull/14515"
+repo = "hugo"
+owner = "gohugoio"
+merge_commit = "4a641d1594bd893e4baf147c562342bf050e87d2"
+base_commit = "8b7b6af92c0c01e258b52e1e0658e9f296f74410"
+
+[environment]
+base_image = "golang:1.24-bookworm"
+setup_commands = [
+    "apt-get update && apt-get install -y python3 python3-pip bc",
+]
+
+[solution]
+type = "patch"
+file = "solution/solve.sh"

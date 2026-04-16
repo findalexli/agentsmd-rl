@@ -120,6 +120,25 @@ distractors:
   source:
     path: AGENTS.md
     lines: 38-41
+- rule: Create custom HTML components with gr.HTML and css_template for customized
+    styling
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+    It supports `html_template` (with `${}` JS expressions and `{{}}` Handlebars syntax),
+    `css_template` for scoped styles, and `js_on_load` for interactivity — where `props.value`
+    updates the component value and `trigger('event_name')` fires Gradio events. For
+    reuse, subclass `gr.HTML` and define `api_info()` for API/MCP support. See the
+    [full guide](https://www.gradio.app/guides/custom-HTML-components).
+  collision_type: architecture_boundary
+  why_distracting: Since the PR aims to apply styling to tables, an agent might incorrectly
+    believe it should create a custom Gradio Python component using `gr.HTML` with
+    a `css_template` instead of natively editing the Svelte website's global CSS file
+    (`js/_website/src/lib/assets/style.css`). This confuses the Python library backend
+    domain with the JavaScript website frontend domain.
+  severity: high
 hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
   at the root level. There are no overlapping or conflicting rules between multiple
   files.

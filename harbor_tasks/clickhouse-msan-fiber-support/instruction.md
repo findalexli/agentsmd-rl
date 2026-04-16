@@ -4,39 +4,32 @@
 
 The ClickHouse codebase has issues with Memory Sanitizer (MSan) support for fiber context tracking. There are two related problems:
 
-1. **Missing `BOOST_USE_MSAN` definition**: The boost fiber implementation has MSan annotations (`__msan_start_switch_fiber`/`__msan_finish_switch_fiber`) around every `swapcontext` call, but they are gated on `BOOST_USE_MSAN` which is never defined in the CMake configuration. Without these annotations, MSan loses track of shadow memory across fiber context switches, causing false positives.
+1. **Missing MSan fiber annotations**: The boost fiber implementation has MSan annotations (`__msan_start_switch_fiber`/`__msan_finish_switch_fiber`) around context switches, but the build system doesn't enable them for memory sanitizer builds. Without these annotations, MSan loses track of shadow memory across fiber context switches, causing false positives.
 
 2. **Struct padding shadow tracking**: MSan tracks shadow per-field in LLVM IR, not per-byte of the padded struct representation. When a struct with padding is returned by value, the padding bytes have no shadow entry and appear "uninitialized" in the caller — even if the callee value-initialized the struct. On the main thread stack this is harmless (OS zero-initializes pages), but on heap-allocated fiber stacks the dirty shadow can propagate via stack slot reuse, causing false positives in unrelated code.
 
-## Expected State After Fix
+## Required Changes
 
 ### CMake Build Configuration
 
-The file `contrib/boost-cmake/CMakeLists.txt` handles sanitizer-specific compile definitions for the `_boost_context` target. It currently defines `BOOST_USE_ASAN` and `BOOST_USE_TSAN` but lacks memory sanitizer support. After the fix, the file should contain:
-- A definition of `BOOST_USE_MSAN` for memory sanitizer builds
-- The CMake condition pattern `elseif (SANITIZE MATCHES "memory")`
-- The compile definition `target_compile_definitions(_boost_context PUBLIC BOOST_USE_MSAN)`
-- The three sanitizer definitions must appear in order: ASAN before MSAN before TSAN
+The file `contrib/boost-cmake/CMakeLists.txt` handles sanitizer-specific compile definitions for the `_boost_context` target. It currently enables sanitizer support for Address Sanitizer and Thread Sanitizer but lacks memory sanitizer support.
+
+Add memory sanitizer support following the same pattern used for other sanitizers. The sanitizer definitions must appear in alphabetical order (ASAN, then MSAN, then TSAN).
 
 ### Fiber Header
 
-The file `src/Common/Fiber.h` has an outdated comment containing the text `"defines.h should be included before fiber.hpp"` — this is no longer accurate and must be removed. The replacement comment should:
-- Mention `BOOST_USE_MSAN` alongside `BOOST_USE_ASAN`, `BOOST_USE_TSAN`, and `BOOST_USE_UCONTEXT`
-- Contain the text `"are defined via CMake for sanitizer builds"`
+The file `src/Common/Fiber.h` has an outdated comment about `defines.h` that should be included before `fiber.hpp`. This is no longer accurate and needs to be updated. The comment should explain that `BOOST_USE_MSAN`, `BOOST_USE_ASAN`, `BOOST_USE_TSAN`, and `BOOST_USE_UCONTEXT` are defined via CMake for sanitizer builds.
 
 ### FiberStack Source
 
-The file `src/Common/FiberStack.cpp` contains a call to `__msan_unpoison(data, num_bytes)` with an explanatory comment. The current comment incorrectly explains the false positives by saying `"stack slots are reused across function calls"` — this explanation is wrong and must be removed. The corrected comment should explain the real reason:
-- MSan doesn't track shadow for struct padding bytes through return values
-- The comment should mention `"struct padding"`
-- The comment should reference per-field shadow tracking (using the term `"per-field"` or `"LLVM IR"`)
+The file `src/Common/FiberStack.cpp` contains a call to `__msan_unpoison(data, num_bytes)` with an explanatory comment. The current comment incorrectly explains the false positives by saying "stack slots are reused across function calls" — this explanation is wrong and must be corrected. The comment should explain the real reason: MSan doesn't track shadow for struct padding bytes through return values because it uses per-field shadow tracking in LLVM IR.
 
 ### Dragonbox MSan Test File
 
-A new test file `src/Common/tests/gtest_dragonbox_msan.cpp` should be created to document the MSan struct padding limitation. The test must:
-- Use the exact test name: `TEST(DragonboxMSan, ReturnValuePaddingShadowIsLost)`
+Create a new test file `src/Common/tests/gtest_dragonbox_msan.cpp` to document the MSan struct padding limitation. The test must:
+- Be named `ReturnValuePaddingShadowIsLost` in the `DragonboxMSan` test suite
 - Be guarded by a `MEMORY_SANITIZER` preprocessor check
-- Use the dragonbox library (the test should reference `dragonbox`)
+- Use the dragonbox library
 - Discuss struct padding in the test or its comments
 - Demonstrate the issue using dragonbox's `unsigned_fp_t<double>` type, which has 4 bytes of padding after a `uint64_t` + `int` (total `sizeof` is 16)
 

@@ -59,7 +59,8 @@ checks:
   type: pass_to_pass
   origin: repo_tests
 rubric:
-- rule: Add rubric rules section to CLAUDE.md or .github/copilot-instructions.md with coding standards and workflow guidelines
+- rule: Add rubric rules section to CLAUDE.md or .github/copilot-instructions.md with
+    coding standards and workflow guidelines
   source:
     path: .github/copilot-instructions.md
 - rule: Work in `packages/*` for editor features
@@ -94,6 +95,24 @@ rubric:
     and `packages/excalidraw/tests/history.test.tsx` to account for the new arrow
     coordinates, aligning with the in
   category: testing
+- rule: Work in `packages/*` for editor features.
+  source:
+    path: CLAUDE.md
+    lines: 14-14
+  source_text: '1. **Package Development**: Work in `packages/*` for editor features'
+  evidence: The diff modifies the element binding logic, which is an editor feature,
+    inside `packages/element/src/binding.ts`.
+  category: architecture
+  verification: llm_judge
+- rule: Use TypeScript throughout the codebase.
+  source:
+    path: CLAUDE.md
+    lines: 34-34
+  source_text: '- TypeScript throughout with strict configuration'
+  evidence: The diff modifies `.ts` and `.tsx` files and utilizes TypeScript generics,
+    such as `pointFrom<LocalPoint>(0, 0)`.
+  category: language
+  verification: llm_judge
 distractors:
 - rule: 'App Development: Work in `excalidraw-app/` for app-specific features'
   collision_type: architecture_boundary

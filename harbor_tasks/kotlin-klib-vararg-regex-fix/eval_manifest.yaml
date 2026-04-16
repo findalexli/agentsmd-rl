@@ -1,0 +1,71 @@
+source_pr:
+  repository: "JetBrains/kotlin"
+  number: 5751
+  title: "KT-85149: Fix Klib dump parsing qualified names adjacent to vararg symbol"
+  merge_commit: "7bf5fd6811ac1f00ebf03b980a9a7e4954f5455c"
+  base_commit: "731ea08ab113c6d87abdb9d5d6f10299d4547395"
+
+task:
+  name: "kotlin-klib-vararg-regex-fix"
+  description: "Fix regex in Klib dump parser to correctly handle qualified names adjacent to vararg symbol (...)"
+  repository: "https://github.com/JetBrains/kotlin"
+  primary_files:
+    - "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+checks:
+  # F2P tests - these fail on base commit, pass on fix
+  - id: test_vararg_parsing_with_dot_qualified_name
+    type: fail_to_pass
+    origin: behavioral
+    description: "Parsing 'kotlin/DoubleArray...' correctly identifies type and vararg flag"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+  - id: test_vararg_regex_pattern_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: "Regex pattern has correct structure with negative lookahead for vararg symbol"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+  - id: test_vararg_parsing_various_types
+    type: fail_to_pass
+    origin: behavioral
+    description: "Regex correctly handles various qualified name patterns with vararg"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+  # P2P tests - these pass on both base and fix
+  - id: test_kotlin_syntax_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cursor.kt compiles with kotlinc successfully"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+  - id: test_kotlin_parser_module_files
+    type: pass_to_pass
+    origin: static
+    description: "All parser source files exist and are readable"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/"
+
+  - id: test_file_exists_and_readable
+    type: pass_to_pass
+    origin: static
+    description: "Target file exists and contains expected content"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+  - id: test_both_regexes_present
+    type: pass_to_pass
+    origin: static
+    description: "Both regex patterns exist in the file"
+    file: "compiler/util-klib-abi/src/org/jetbrains/kotlin/library/abi/parser/Cursor.kt"
+
+rubric:
+  - rule: "Commit message references the YouTrack issue KT-85149"
+    source: "docs/code_authoring_and_core_review.md"
+    type: process
+
+  - rule: "Follow Kotlin code style - match surrounding code formatting"
+    source: "AGENTS.md"
+    type: style
+
+  - rule: "When fixing regex issues, ensure the fix handles edge cases like multiple dots"
+    source: "behavioral"
+    type: quality

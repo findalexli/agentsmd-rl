@@ -1,0 +1,63 @@
+source:
+  owner: apache
+  repo: airflow
+  pr_number: 64781
+  base_commit: 7a998637b743eeed20d82770dc0c0f2fbe12123b
+  merge_commit: fd1962fa027c8b937fc5d4b8ed0d43544bfa3d94
+  target_file: dev/breeze/src/airflow_breeze/commands/ci_commands.py
+
+checks:
+  - id: test_pre_image_commands_exist
+    type: fail_to_pass
+    origin: behavioral
+    description: pre_image_commands list exists for Dockerfile-updating commands
+
+  - id: test_post_image_commands_exist
+    type: fail_to_pass
+    origin: behavioral
+    description: post_image_commands list exists for post-build commands
+
+  - id: test_update_uv_lock_in_post_image_commands
+    type: fail_to_pass
+    origin: behavioral
+    description: update-uv-lock is in post_image_commands (runs after image build)
+
+  - id: test_ci_image_build_between_command_lists
+    type: fail_to_pass
+    origin: behavioral
+    description: CI image build occurs between pre and post command loops
+
+  - id: test_dockerfile_updating_commands_in_pre_image
+    type: fail_to_pass
+    origin: behavioral
+    description: Dockerfile-updating commands are in pre_image_commands
+
+  - id: test_file_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: ci_commands.py has valid Python syntax
+
+  - id: test_upgrade_function_exists
+    type: pass_to_pass
+    origin: static
+    description: The upgrade function exists in ci_commands.py
+
+  - id: test_ruff_lint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ci_commands.py passes ruff lint checks
+
+  - id: test_ruff_format_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ci_commands.py passes ruff format checks
+
+  - id: test_breeze_commands_dir_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: All breeze command files pass ruff lint
+
+rubric:
+  - id: no_unnecessary_config_changes
+    rule: This is a code-only fix. The solution should NOT modify agent config files (CLAUDE.md, AGENTS.md, etc.) since the fix is purely in Python code. No config file modifications are expected or required.
+    weight: 1

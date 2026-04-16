@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the file path `torch/csrc/Stream.cpp`, function names `THPStream_enter`, `THPStream_exit`, `THPStream_dealloc`, the assertion string `Stream's context should not be initialized`, the dict keys `_ctx_stream` and `_ctx_device_index`, the use of `PyList_New(0)`, `PyList_Append`, `Py_None` sentinel, `Py_CLEAR`, `PyObject_ClearWeakRefs`, `tp_free`, `getCurrentStream`, `setCurrentStream`, `HANDLE_TH_ERRORS`/`END_HANDLE_TH_ERRORS`, and `structmember.h`. A"
+      "reason": "The instruction explicitly names the target file (torch/csrc/Stream.cpp), function names (THPStream_enter, THPStream_exit, THPStream_dealloc), key strings ('_ctx_stream', '_ctx_device_index', 'context should not be initialized'), API calls (PyList_New(0), PyList_Append, getCurrentStream, setCurrentStream, Py_CLEAR, PyObject_ClearWeakRefs, tp_free), and sentinel values (Py_None). All specifics checked by the tests are discoverable from the instruction."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly specifies implementation details like 'use PyList_New(0)', 'push Py_None as sentinel', 'use PyList_Append', 'use keys _ctx_stream and _ctx_device_index', 'call PyObject_ClearWeakRefs before Py_CLEAR', and detailed control flow for enter/exit. This is not just describing what's broken \u2014 it prescribes the exact fix, leaving almost no reasoning for the agent."
+      "reason": "The instruction is essentially a complete implementation specification: it dictates exact API calls (PyList_New(0), PyList_Append), exact dict key names ('_ctx_stream', '_ctx_device_index'), exact sentinel values (Py_None), exact ordering (PyObject_ClearWeakRefs before Py_CLEAR before tp_free), and exact control flow (no-op fast path comparing stream_id, push None, etc.). This goes far beyond describing what's broken \u2014 it prescribes the exact fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details: test_context_uses_stack checks for 'PyList_New(0)' literally, test_enter_pushes_to_stack checks for exact dict key strings '_ctx_stream' and '_ctx_device_index', test_noop_when_stream_already_current checks for 'Py_None' and 'cur_stream', test_exit_pops_from_stack checks for 'PyList_GET_ITEM' or 'PyList_GetItem'. A correct alternative using e.g. std::vector<std::pair<...>> in C++ with different key names would fail these tests despite being func"
+      "reason": "Tests assert on gold-specific implementation details: exact dict key names '_ctx_stream' and '_ctx_device_index' (test_enter_pushes_to_stack), exact use of PyList_New(0) (test_context_uses_stack), exact use of PyList_Append (test_enter_pushes_to_stack), exact use of PyList_GET_ITEM/PyList_GetItem (test_exit_pops_from_stack), exact variable name 'cur_stream' (test_noop_when_stream_already_current). An alternative correct fix using e.g. std::vector<std::pair<...>> in C++ with different key names w"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every f2p test reads the source file as text and searches for string patterns (e.g., checking if 'PyList_New(0)' appears in source, checking if '_ctx_stream' string literal is present). No test compiles or executes the code, imports modules, or verifies runtime behavior. This is purely textual/structural analysis."
+      "reason": "Every fail-to-pass test reads the C++ source file as text and checks for string patterns (e.g., checking if 'PyList_New(0)' appears in source, if '_ctx_stream' is in the text, if 'cur_stream' variable name exists). None compile or execute the code. This is pure textual/structural analysis, not behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific structural patterns (PyList_New, PyList_Append, getCurrentStream before setCurrentStream, Py_CLEAR in dealloc, etc.) that would not be present in the original buggy code or a stub. A stub or no-op would fail because the original file has the blocking TORCH_CHECK assertion and uses dict.release() instead of list operations."
+      "reason": "A stub or no-op implementation would not pass these tests. The tests check for presence of specific API calls (PyList_New, PyList_Append, getCurrentStream before setCurrentStream, etc.) and absence of the old buggy pattern (dict.release() assignment, TORCH_CHECK assertion). Simply leaving the file unchanged or writing a trivial stub would fail multiple checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six required behaviors from the instruction (remove assertion, stack-based context, enter pushes, exit pops, dealloc clears, no-op fast path) each have a corresponding test function, plus there's a test for preserved patterns (HANDLE_TH_ERRORS, structmember.h)."
+      "reason": "All six required behaviors from the instruction (remove assertion, stack-based context, enter pushes, exit pops, dealloc clears, no-op fast path) have corresponding test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_reentrance_assertion_removed, test_context_uses_stack, test_enter_pushes_to_stack, etc.), each has a docstring, and there's a clear separation between gate tests and f2p tests with comments."
+      "reason": "Tests are well-named (test_reentrance_assertion_removed, test_context_uses_stack, test_enter_pushes_to_stack, test_exit_pops_from_stack, test_dealloc_clears_context, test_noop_when_stream_already_current) and have docstrings explaining what each checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,15 +35,15 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names throughout the instruction and test files."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify (torch/csrc/Stream.cpp), exact function names, exact assertion text to remove, exact API calls to use (PyList_New, PyList_Append), exact dict key names (_ctx_stream, _ctx_device_index), and exact ordering of operations in the destructor. This goes far beyond identifying the buggy component."
+      "reason": "The instruction names the exact file (torch/csrc/Stream.cpp) and exact functions (THPStream_enter, THPStream_exit, THPStream_dealloc) with precise implementation details including exact API calls, variable names, key strings, and ordering. This is extreme localization that removes all need for the agent to reason about where or what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying C++ source, not a config edit task."
+      "reason": "This is a code-only task, not a config-edit task."
     }
   },
   "tier_a_fails": [

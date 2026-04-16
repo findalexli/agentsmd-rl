@@ -1,0 +1,142 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 38517
+  base_commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+  merge_commit: "c9bfd527ad32c485079b03f6153a3fd2849a421c"
+  description: "Change browser_run_code argument to accept a JavaScript function instead of raw code snippets"
+
+# Track 2: Gold config edits (extracted from solve.sh)
+config_edits:
+  - path: "examples/todomvc/.claude/agents/playwright-test-planner.md"
+    tier: 1
+    gold_added: "mcp__playwright-test__browser_run_code"
+    gold_removed: ""
+  - path: "examples/todomvc/.github/agents/playwright-test-planner.agent.md"
+    tier: 1
+    gold_added: "playwright-test/browser_run_code"
+    gold_removed: ""
+  - path: "packages/playwright/src/agents/playwright-test-planner.agent.md"
+    tier: 1
+    gold_added: "playwright-test/browser_run_code"
+    gold_removed: ""
+
+# Track 1: Hard tests (binary pass/fail)
+checks:
+  # Code behavior tests
+  - id: runCode_uses_function_wrapper
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The runCode.ts tool must wrap code parameter as a function call"
+
+  - id: runCode_updated_description
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The codeSchema description must document the function-based approach"
+
+  - id: runCode_no_raw_code_injection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The old raw code injection pattern should be removed"
+
+  # Config update tests
+  - id: agent_config_claude_includes_tool
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The .claude/agents/playwright-test-planner.md must include browser_run_code tool"
+
+  - id: agent_config_github_includes_tool
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The .github/agents/playwright-test-planner.agent.md must include browser_run_code tool"
+
+  - id: agent_config_packages_includes_tool
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The packages/playwright/src/agents/playwright-test-planner.agent.md must include browser_run_code tool"
+
+  # Test file update
+  - id: specs_updated_to_function_format
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The test file must use the new function-based code format"
+
+  # Pass-to-pass tests
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files must have valid syntax"
+
+  - id: file_structure_preserved
+    type: pass_to_pass
+    origin: static
+    description: "The runCode.ts file structure must remain valid with proper exports"
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "Agent config files must use consistent tool naming format (mcp__playwright-test__browser_run_code for .claude, playwright-test/browser_run_code for .github)"
+    source:
+      path: "examples/todomvc/.claude/agents/playwright-test-planner.md"
+      lines: "1-10"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    evidence: "Gold uses mcp__ prefix in .claude files and playwright-test/ prefix in .github files"
+    category: naming
+    verification: llm_judge
+
+  - rule: "Tool updates should be synchronized across all agent definition files"
+    source:
+      path: "packages/playwright/src/agents/playwright-test-planner.agent.md"
+      lines: "1-30"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    evidence: "Gold adds browser_run_code to all 3 agent config files consistently"
+    category: consistency
+    verification: llm_judge
+
+  - rule: "TypeScript function parameters should be properly typed and documented"
+    source:
+      path: "packages/playwright/src/mcp/browser/tools/runCode.ts"
+      lines: "1-60"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    evidence: "Gold updates zod schema description to explain the function parameter"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Code injection patterns should be safe (no raw string interpolation of user input)"
+    source:
+      path: "packages/playwright/src/mcp/browser/tools/runCode.ts"
+      lines: "40-60"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    evidence: "Gold uses proper function invocation pattern with page parameter"
+    category: security
+    verification: programmatic
+    check_cmd: "! grep -q '\${params.code};' /workspace/playwright/packages/playwright/src/mcp/browser/tools/runCode.ts"
+
+# Track 4: Distractors - conventions that create collisions
+distractors:
+  - rule: "All Playwright code should use explicit type annotations"
+    source:
+      path: "packages/playwright/src/mcp/browser/tools/runCode.ts"
+      lines: "1-30"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    collision_type: scope_ambiguity
+    why_distracting: "The codebase uses inferred types extensively; forcing explicit types would be inconsistent with existing style"
+    severity: low
+
+  - rule: "Agent configs should be alphabetically sorted"
+    source:
+      path: "examples/todomvc/.github/agents/playwright-test-planner.agent.md"
+      lines: "10-30"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    collision_type: rule_conflict
+    why_distracting: "The gold adds browser_run_code in alphabetical position (after browser_press_key, before browser_select_option), which happens to be sorted, but this is not the primary concern of the PR"
+    severity: low
+
+  - rule: "All agent tools should have corresponding test coverage in the same PR"
+    source:
+      path: "tests/mcp/run-code.spec.ts"
+      lines: "1-20"
+      commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
+    collision_type: scope_ambiguity
+    why_distracting: "Tests exist and were updated, but the primary task is the tool implementation and config updates, not adding new test coverage"
+    severity: low

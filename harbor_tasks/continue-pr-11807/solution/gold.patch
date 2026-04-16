@@ -1,0 +1,188 @@
+diff --git a/core/config/yaml/models.ts b/core/config/yaml/models.ts
+index 9e7a9ccdd..932e483c9 100644
+--- a/core/config/yaml/models.ts
++++ b/core/config/yaml/models.ts
+@@ -9,6 +9,38 @@ import { LLMClasses } from "../../llm/llms";
+ 
+ const AUTODETECT = "AUTODETECT";
+ 
++const ENV_STRING_KEYS = [
++  "apiType",
++  "apiVersion",
++  "deployment",
++  "deploymentId",
++  "projectId",
++  "region",
++  "profile",
++  "accessKeyId",
++  "secretAccessKey",
++  "modelArn",
++  "aiGatewaySlug",
++  "accountId",
++] as const;
++
++function applyEnvOptions(
++  options: LLMOptions,
++  env: Record<string, string | boolean | number>,
++): void {
++  if (
++    "useLegacyCompletionsEndpoint" in env &&
++    typeof env.useLegacyCompletionsEndpoint === "boolean"
++  ) {
++    options.useLegacyCompletionsEndpoint = env.useLegacyCompletionsEndpoint;
++  }
++  for (const key of ENV_STRING_KEYS) {
++    if (key in env && typeof env[key] === "string") {
++      (options as any)[key] = env[key];
++    }
++  }
++}
++
+ function getModelClass(
+   model: ModelConfig,
+ ): (typeof LLMClasses)[number] | undefined {
+@@ -49,9 +81,12 @@ async function modelConfigToBaseLLM({
+     config.requestOptions,
+   );
+ 
++  const contextLength =
++    model.contextLength ?? model.defaultCompletionOptions?.contextLength;
++
+   let options: LLMOptions = {
+     ...rest,
+-    contextLength: model.defaultCompletionOptions?.contextLength,
++    contextLength,
+     completionOptions: {
+       ...(model.defaultCompletionOptions ?? {}),
+       model: model.model,
+@@ -85,14 +120,14 @@ async function modelConfigToBaseLLM({
+ 
+   // Model capabilities - need to be undefined if not found
+   // To fallback to our autodetection
+-  if (capabilities?.find((c) => c === "tool_use")) {
++  if (capabilities?.includes("tool_use")) {
+     options.capabilities = {
+       ...options.capabilities,
+       tools: true,
+     };
+   }
+ 
+-  if (capabilities?.find((c) => c === "image_input")) {
++  if (capabilities?.includes("image_input")) {
+     options.capabilities = {
+       ...options.capabilities,
+       uploadImage: true,
+@@ -110,48 +145,8 @@ async function modelConfigToBaseLLM({
+   // But we decided to move to nested `env` in YAML
+   // Since types vary and we don't want to blindly spread env for now,
+   // Each one is handled individually here
+-  const env = model.env ?? {};
+-  if (
+-    "useLegacyCompletionsEndpoint" in env &&
+-    typeof env.useLegacyCompletionsEndpoint === "boolean"
+-  ) {
+-    options.useLegacyCompletionsEndpoint = env.useLegacyCompletionsEndpoint;
+-  }
+-  if ("apiType" in env && typeof env.apiType === "string") {
+-    options.apiType = env.apiType;
+-  }
+-  if ("apiVersion" in env && typeof env.apiVersion === "string") {
+-    options.apiVersion = env.apiVersion;
+-  }
+-  if ("deployment" in env && typeof env.deployment === "string") {
+-    options.deployment = env.deployment;
+-  }
+-  if ("deploymentId" in env && typeof env.deploymentId === "string") {
+-    options.deploymentId = env.deploymentId;
+-  }
+-  if ("projectId" in env && typeof env.projectId === "string") {
+-    options.projectId = env.projectId;
+-  }
+-  if ("region" in env && typeof env.region === "string") {
+-    options.region = env.region;
+-  }
+-  if ("profile" in env && typeof env.profile === "string") {
+-    options.profile = env.profile;
+-  }
+-  if ("accessKeyId" in env && typeof env.accessKeyId === "string") {
+-    options.accessKeyId = env.accessKeyId;
+-  }
+-  if ("secretAccessKey" in env && typeof env.secretAccessKey === "string") {
+-    options.secretAccessKey = env.secretAccessKey;
+-  }
+-  if ("modelArn" in env && typeof env.modelArn === "string") {
+-    options.modelArn = env.modelArn;
+-  }
+-  if ("aiGatewaySlug" in env && typeof env.aiGatewaySlug === "string") {
+-    options.aiGatewaySlug = env.aiGatewaySlug;
+-  }
+-  if ("accountId" in env && typeof env.accountId === "string") {
+-    options.accountId = env.accountId;
++  if (model.env) {
++    applyEnvOptions(options, model.env);
+   }
+ 
+   const llm = new cls(options);
+diff --git a/gui/src/redux/slices/configSlice.ts b/gui/src/redux/slices/configSlice.ts
+index 202abbfbb..887566892 100644
+--- a/gui/src/redux/slices/configSlice.ts
++++ b/gui/src/redux/slices/configSlice.ts
+@@ -1,7 +1,7 @@
+ import { ConfigResult, ConfigValidationError } from "@continuedev/config-yaml";
+ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+ import { BrowserSerializedContinueConfig } from "core";
+-import { DEFAULT_MAX_TOKENS } from "core/llm/constants";
++import { DEFAULT_CONTEXT_LENGTH } from "core/llm/constants";
+ 
+ export type ConfigState = {
+   configError: ConfigValidationError[] | undefined;
+@@ -86,7 +86,7 @@ export const configSlice = createSlice({
+     selectSelectedChatModelContextLength: (state): number => {
+       return (
+         state.config.selectedModelByRole.chat?.contextLength ||
+-        DEFAULT_MAX_TOKENS
++        DEFAULT_CONTEXT_LENGTH
+       );
+     },
+     selectSelectedChatModel: (state) => {
+diff --git a/packages/config-yaml/src/schemas/models.ts b/packages/config-yaml/src/schemas/models.ts
+index 8d3555829..737f6c67f 100644
+--- a/packages/config-yaml/src/schemas/models.ts
++++ b/packages/config-yaml/src/schemas/models.ts
+@@ -180,6 +180,7 @@ const baseModelFields = {
+   model: z.string(),
+   apiKey: z.string().optional(),
+   apiBase: z.string().optional(),
++  contextLength: z.number().optional(),
+   maxStopWords: z.number().optional(),
+   roles: modelRolesSchema.array().optional(),
+   capabilities: modelCapabilitySchema.array().optional(),
+diff --git a/packages/config-yaml/src/validation.ts b/packages/config-yaml/src/validation.ts
+index 16f3a7c4e..54fe89ba9 100644
+--- a/packages/config-yaml/src/validation.ts
++++ b/packages/config-yaml/src/validation.ts
+@@ -58,18 +58,16 @@ export function validateConfigYaml(
+       }
+     }
+     // Max tokens not too close to context length
+-    if (
+-      model.defaultCompletionOptions?.contextLength &&
+-      model.defaultCompletionOptions?.maxTokens
+-    ) {
+-      const difference =
+-        model.defaultCompletionOptions?.contextLength -
+-        model.defaultCompletionOptions?.maxTokens;
++    const effectiveContextLength =
++      model.contextLength ?? model.defaultCompletionOptions?.contextLength;
++    const effectiveMaxTokens = model.defaultCompletionOptions?.maxTokens;
++    if (effectiveContextLength && effectiveMaxTokens) {
++      const difference = effectiveContextLength - effectiveMaxTokens;
+ 
+       if (difference < 1000) {
+         errors.push({
+           fatal: false,
+-          message: `Model "${model.name}" has a contextLength of ${model.defaultCompletionOptions?.contextLength} and a maxTokens of ${model.defaultCompletionOptions?.maxTokens}. This leaves only ${difference} tokens for input context and will likely result in your inputs being truncated.`,
++          message: `Model "${model.name}" has a contextLength of ${effectiveContextLength} and a maxTokens of ${effectiveMaxTokens}. This leaves only ${difference} tokens for input context and will likely result in your inputs being truncated.`,
+         });
+       }
+     }

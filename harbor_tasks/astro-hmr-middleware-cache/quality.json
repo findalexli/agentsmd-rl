@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all six file paths, the method name `clearMiddleware()` with `void` return type, the `resolvedMiddleware` field, `configureServer` hook, `server.watcher.on('change', ...)`, the HMR event name `astro:middleware-updated`, `import.meta.hot.on()`, delegation pattern `this.pipeline.clearMiddleware()`, and the debug log message `Middleware cache cleared due to file change`. All assert targets in tests are discoverable from instruction.md."
+      "reason": "instruction.md lists all 6 relevant file paths and describes the required method names (clearMiddleware implied by 'invalidate the middleware cache'), HMR event patterns, and configureServer hook."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction effectively specifies the exact implementation: add `clearMiddleware()` method that clears `this.resolvedMiddleware`, add delegation methods in DevApp and AstroServerApp, add `configureServer` hook with `server.watcher.on('change', ...)`, send HMR event `astro:middleware-updated`, listen via `import.meta.hot.on()`, and emit specific debug log string. This is not just describing what's broken \u2014 it prescribes the solution in detail."
+      "outcome": "pass",
+      "reason": "Instruction describes what must be observable (methods, hooks, HMR events) without specifying exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert exact method signatures like `clearMiddleware(): void`, exact delegation pattern `this.pipeline.clearMiddleware()`, exact string `normalizedSrcDir`, exact HMR event name format, and exact debug log message `Middleware cache cleared due to file change`. An alternative correct fix using different method names, a different cache invalidation strategy, or different logging would fail these tests."
+      "reason": "Tests hard-code the method name 'clearMiddleware' (e.g. test_pipeline_clear_middleware_method_exists asserts 'clearMiddleware' in compiled), but instruction.md only says 'a method to invalidate the middleware cache' \u2014 a valid alternative like 'invalidateMiddleware' would fail tests despite satisfying the instruction."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_pipeline_clear_middleware_method_exists, test_dev_app_clear_middleware_method_exists, test_vite_plugin_app_clear_middleware_method_exists, test_middleware_vite_plugin_has_configure_server, test_dev_entrypoint_has_hmr_listener, test_create_astro_server_app_has_hmr_listener) are ALL purely regex/string matching on file contents with patterns like `re.search(pattern, content)` and `assert 'string' in content`. None import, call, or execute the code to verify actual HMR "
+      "outcome": "pass",
+      "reason": "Tests invoke esbuild via subprocess to compile TypeScript and analyze compiled output, rather than just reading source text."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A developer could pass all f2p tests by simply appending dead code blocks containing the exact expected strings to each file (e.g., adding a never-called `clearMiddleware(): void { this.resolvedMiddleware = undefined }` method). The tests only check text patterns, not that the code actually executes or clears any cache."
+      "outcome": "pass",
+      "reason": "Tests require specific behavior like setting resolvedMiddleware to void 0 and delegation calls to pipeline.clearMiddleware, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors explicitly listed in the Verification section of instruction.md (clearMiddleware method, delegation, configureServer hook, HMR event, debug log) are tested."
+      "reason": "Each verification point in instruction.md maps to a test (pipeline method, DevApp, AstroServerApp, configureServer, HMR dispatch, entrypoint listeners, debug log)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_pipeline_clear_middleware_method_exists), have docstrings explaining FAIL-TO-PASS vs PASS-TO-PASS classification, and are logically grouped by component."
+      "reason": "Tests have descriptive names, docstrings with FAIL-TO-PASS markers, and are grouped logically by component."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, event names, and variable names in instruction.md match those in the tests without typos."
+      "reason": "File paths and identifiers appear consistent between instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction lists all six exact files to modify, names exact methods to add (clearMiddleware), exact field names (resolvedMiddleware), exact hook names (configureServer), exact HMR event names (astro:middleware-updated), and exact debug log strings. This goes far beyond describing the bug \u2014 it's a detailed implementation specification."
+      "outcome": "pass",
+      "reason": "Instruction names files but localization is part of the context (6 files listed generically); doesn't point to specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config file edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

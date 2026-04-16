@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four file paths tested (componentMap.desktop.ts, componentMap.ts, desktopRouter.config.desktop.tsx, desktopRouter.config.tsx), the specific missing entries (Stats, Creds), the missing route (/onboarding), and the three skill files (.agents/skills/react/SKILL.md, .agents/skills/spa-routes/SKILL.md, .agents/skills/code-review/SKILL.md) with their required content keywords (sync/pair/drift, desktopRouter.config.desktop, both/parity/drift, desktopRouter, SPA/routing). All a"
+      "reason": "Instruction names all relevant files, the Stats/Creds keys, /onboarding route, and the three skill files with required terms (sync/pair/drift, both/parity/drift, SPA/routing)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (missing entries for Stats/Creds, missing /onboarding route, skill docs need updating) and what the expected behavior should be, but does not specify exact code changes like 'add this import on line X' or 'insert this exact code block'. The agent must still reason about HOW to implement the fixes."
+      "reason": "Instruction describes what's missing and what must be added but does not prescribe exact code; agent must figure out how to add imports/routes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_react_skill_documents_desktop_sync_rule check for '.desktop' in content AND ('sync'|'pair'|'drift'), and test_spa_routes_skill_documents_desktop_parity checks for 'desktopRouter.config.desktop' AND ('both'|'parity'|'drift'). These are flexible keyword checks. However, test_componentmap_desktop_imports_stats asserts 'import Stats from' or 'import Stats' as literal strings, and test_componentmap_desktop_imports_creds similarly. An alternative correct fix using re-exports (e.g., `ex"
+      "outcome": "pass",
+      "reason": "Tests check for key presence (Stats/Creds), path presence (/onboarding), and keyword presence in markdown\u2014alternative valid implementations would still pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several key tests are pure text-matching: test_componentmap_desktop_imports_stats/creds use `assert 'import Stats from' in content`, test_react_skill_documents_desktop_sync_rule checks for keyword presence in markdown, test_spa_routes_skill_documents_desktop_parity and test_code_review_skill_has_spa_routing_check also just check string presence. The componentMap key extraction tests use regex via Node.js (not actual imports), and the ESLint/Prettier tests verify syntax but not runtime behavior. "
+      "outcome": "pass",
+      "reason": "Tests import componentMap via tsx execution, run ESLint/Stylelint, and extract keys via TS AST, not just string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for content that doesn't exist in the base commit (Stats/Creds entries in componentMap.desktop.ts, /onboarding route in desktop router, skill file content). A stub or no-op implementation would not add these entries, so the tests cannot be trivially satisfied without making actual changes."
+      "reason": "Tests require actual keys/paths matching web counterparts, and skill docs must contain specific tokens like 'desktopRouter.config.desktop'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: Stats and Creds entries in componentMap.desktop.ts, superset check against web componentMap, /onboarding route in desktop router, superset check against web router paths, and all three skill file documentation requirements."
+      "reason": "All three code fixes and three skill doc updates required by instruction have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail-to-pass code behavior, fail-to-pass agent_config, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with comment headers like 'Fail-to-pass code behavior tests' and 'Pass-to-pass repo tests'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves code fixes and documentation updates, not producing structured data like JSON/CSV/API responses."
+      "reason": "No structured data output is produced by this task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, component names (Stats, Creds), route paths (/onboarding), and skill file paths are consistently spelled correctly throughout instruction.md and tests."
+      "reason": "Paths and filenames appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files involved (which is necessary context) but doesn't specify exact line numbers or exact code to write. It describes the problem at a high level (missing entries, missing routes) and points to reference files for comparison."
+      "reason": "Instruction names the files to look at (appropriate for this sync task) but doesn't give exact line numbers or code."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold solution makes localized additions (adding imports and map entries, appending a route, adding sections to skill docs). The skill file edits are bounded to adding specific paragraphs/sections rather than full rewrites."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits config task; this is a code+docs sync task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

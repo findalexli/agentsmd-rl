@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction explicitly names all key literals tested: `scrollbars === 'x'`, `scrollbars === 'y'`, `${overscrollBehavior} auto`, `auto ${overscrollBehavior}`, `scrollbarSize, overscrollBehavior, scrollbars`, `overrideOverscrollBehavior`, the function body with curly braces pattern, and the `if (overscrollBehavior && scrollbars)` guard. All assert'd strings in the tests are discoverable from the instruction."
+      "reason": "Instruction explicitly specifies the function signature, variable name `overrideOverscrollBehavior`, guard `if (overscrollBehavior && scrollbars)`, and the template literals that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides the exact implementation: specific variable name `overrideOverscrollBehavior`, exact destructuring order `scrollbarSize, overscrollBehavior, scrollbars`, exact guard condition `if (overscrollBehavior && scrollbars)`, exact template literals, and even specifies using curly braces rather than concise arrow. This is a complete recipe, not a problem description."
+      "reason": "Instruction dictates exact code: variable name `overrideOverscrollBehavior`, exact guard `if (overscrollBehavior && scrollbars)`, exact template literals `` `${overscrollBehavior} auto` `` and `` `auto ${overscrollBehavior}` ``, and function signature form \u2014 leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name `overrideOverscrollBehavior` (test_overrideOverscrollBehavior_variable), exact destructuring order `scrollbarSize, overscrollBehavior, scrollbars` (test_varsResolver_has_scrollbars_param), exact function body style with curly braces (test_varsResolver_is_function_not_arrow_in_body), and exact guard `if (overscrollBehavior && scrollbars)` (test_overscrollBehavior_and_scrollbars_check). An alternative correct fix using diffe"
+      "reason": "Tests assert literal strings like `overrideOverscrollBehavior`, `if (overscrollBehavior && scrollbars)`, and `scrollbarSize, overscrollBehavior, scrollbars }) => {` \u2014 a semantically equivalent fix using different names or a ternary would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_varsResolver_x_scrollbar_sets_y_to_auto through test_overscrollBehavior_and_scrollbars_check are all purely text-matching: `assert '...' in content` after reading the file. They never import, call, or execute the code to verify runtime behavior. The pass-to-pass tests (jest, prettier, eslint, stylelint) do execute subprocesses, but all fail-to-pass tests are text-only."
+      "reason": "All 7 unit tests for the fix use `assert '...' in content` on the source file; only the pass_to_pass repo tests execute code, and they don't verify the new behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since the f2p tests only check for string presence in the source file (e.g., `assert 'overrideOverscrollBehavior' in content`), a stub that simply appends the expected strings as comments to the file would pass all f2p tests without actually implementing any bug fix."
+      "outcome": "pass",
+      "reason": "The string-matching tests still require the fix's literals to be present; a stub implementation would not satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md (x-scrollbar handling, y-scrollbar handling, variable naming, guard condition, function body style, parameter destructuring) are tested."
+      "reason": "Each requirement in instruction.md (signature, variable, guard, x/y branches) has corresponding asserts."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped into fail-to-pass and pass-to-pass sections with a clear separator comment."
+      "reason": "Tests have descriptive names, docstrings, and a commented separator between fix tests and pass_to_pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the task files."
+      "reason": "Paths, variable names, and commands are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact function signature, exact variable names, exact conditional structure, and exact template literal values \u2014 going far beyond naming the buggy file/component. It effectively provides the complete implementation."
+      "reason": "Instruction names the exact file/component (`ScrollArea` varsResolver), the exact variable to introduce, exact guard expression, and exact template literal outputs \u2014 localization is not required of the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

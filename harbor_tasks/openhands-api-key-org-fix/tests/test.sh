@@ -4,8 +4,8 @@ set -e
 # Change to tests directory
 cd /workspace/task/tests
 
-# Install pytest and any required dependencies
-pip install pytest -q
+# Install pytest and pytest-asyncio for async test support
+pip install pytest pytest-asyncio -q
 
 # Run the tests and capture output
 pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log || true

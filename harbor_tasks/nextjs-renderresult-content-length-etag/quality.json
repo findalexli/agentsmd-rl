@@ -2,51 +2,52 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names both files (pages-handler.ts, render-result.ts), the AGENTS.md file, the Buffer.from wrapping issue, the RenderResult class, isDynamic behavior, Content-Length/ETag headers, and the pnpm new-test syntax fix. All test assertions check things derivable from the instruction."
+      "outcome": "fail",
+      "reason": "The tests check for specific patterns like 'Buffer.from(JSON.stringify' and 'Buffer.from(previousCacheEntry.value.html)' and verify 'typeof this.response !== \\'string\\'' in render-result.ts. The instruction.md never mentions Buffer.from(), never mentions the isDynamic property or its string-check logic, and never mentions that the root cause is wrapping with Buffer.from(). These test-specific details are undiscoverable from instruction.md alone. Additionally, the AGENTS.md test checks for exact "
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction says 'The response type passed to RenderResult must be compatible with static/bufferable handling' and 'isDynamic getter may incorrectly return true' \u2014 combined with pointing to exactly two files and the RenderResult constructor, this strongly implies removing Buffer.from() wrappers. The AGENTS.md section explicitly says 'Update them to use pnpm new-test -- --args', which is the exact fix."
+      "reason": "The instruction says 'Data requests and cached HTML responses served by the Pages Router are not returning with proper caching headers' but combined with 'Files to Examine' pointing to exactly two files, and the AGENTS.md section explicitly stating 'Find any instances of pnpm new-test --args... Update them to use pnpm new-test -- --args', it prescribes the exact fix for the AGENTS.md portion. However, the code fix portion only describes the symptom, so it's borderline. The AGENTS.md fix is expli"
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_no_buffer_from_in_data_request uses a regex specifically checking for absence of 'Buffer.from(' before JSON.stringify. test_no_buffer_from_in_cached_html checks for exact string 'Buffer.from(previousCacheEntry.value.html)'. An alternative valid fix (e.g., modifying isDynamic to handle Buffer differently, or using a different buffering approach) would fail these text-matching tests even if behaviorally correct."
+      "reason": "test_no_buffer_from_in_data_request uses a regex 'isNextDataRequest[^,]+\\?\\s*new\\s+RenderResult\\(\\s*(Buffer\\.from\\()?JSON\\.stringify' which is very specific to the gold solution's approach of removing Buffer.from(). An alternative correct fix (e.g., computing Content-Length and ETag manually after Buffer.from, or changing the isDynamic logic in RenderResult) would fail this test. The tests assert on implementation details (absence of Buffer.from) rather than behavioral outcomes."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_no_buffer_from_in_data_request, test_no_buffer_from_in_cached_html, test_render_result_accepts_string) are all pure text/regex searches on source files. They do `content = handler_file.read_text()` and check for string patterns. No code is imported, executed, or behaviorally tested. The pass-to-pass tests do run linters/syntax checks but those aren't the behavioral tests."
+      "reason": "The core fail-to-pass tests (test_no_buffer_from_in_data_request, test_no_buffer_from_in_cached_html, test_render_result_accepts_string) are purely text-matching: they read file contents and check for string patterns like 'Buffer.from(JSON.stringify' and 'typeof this.response !== \\'string\\''. They never import, instantiate, or execute the RenderResult class or pages handler. The pass-to-pass tests do run linters/syntax checks, but no f2p test verifies actual behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "test_render_result_accepts_string only checks that the string \"typeof this.response !== 'string'\" exists in render-result.ts \u2014 this already exists in the base commit and passes without any changes. The test doesn't verify any actual behavioral fix. Similarly, the other f2p tests only check for absence of specific text patterns."
+      "reason": "test_render_result_accepts_string only checks that 'typeof this.response !== \\'string\\'' exists in the source file, which is already present in the base commit (it's existing code in render-result.ts). This test passes without any code changes at all. test_no_buffer_from_in_data_request and test_no_buffer_from_in_cached_html could be 'fixed' by simply deleting the Buffer.from wrapper text without understanding the actual bug."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'Data requests should return with Content-Length and ETag headers' and 'Cached HTML responses should also include these headers'. No test actually verifies that responses include Content-Length or ETag headers \u2014 the tests only check source code text patterns."
+      "reason": "The instruction says responses 'should return with Content-Length and ETag headers' but no test actually verifies that Content-Length or ETag headers are present in HTTP responses. The tests only check for absence of Buffer.from() in source code, which is an indirect proxy."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "This task does not produce structured data output (JSON/CSV/API/DB)."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, command names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths, commands, and variable names in instruction.md and tests are consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact two files to modify, describes the isDynamic getter issue, mentions RenderResult constructor, and for AGENTS.md gives the exact before/after text ('pnpm new-test --args' \u2192 'pnpm new-test -- --args'). This is too specific for a task where localization should be part of the challenge."
+      "outcome": "pass",
+      "reason": "The instruction names the files to examine (pages-handler.ts, render-result.ts) which is reasonable for the task domain, and describes symptoms rather than the exact buggy lines or Buffer.from root cause."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md edit is localized (changing specific command syntax patterns), and the code changes are localized removals of Buffer.from() wrappers. Neither contradicts other files."
+      "reason": "The AGENTS.md edit is localized (specific line substitutions for pnpm new-test syntax) and doesn't contradict other files."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
@@ -54,8 +55,7 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
   "pass_count": 4,
   "fail_count": 6

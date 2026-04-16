@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (prerelease.json, changes.ts, publish.ts, AGENTS.md, CONTRIBUTING.md), field names (channel, tag), variable names (remixPrereleaseChannel), literal strings ('--tag next', 'channel: string', obj.channel, etc.), and interface names (RemixPrereleaseConfig) that the tests assert on."
+      "reason": "All assertions (channel field, 'channel' in obj, obj.channel, config: { channel:, semver.inc, remixPrereleaseChannel, --tag next, pnpm publish, 'prerelease channels', \"channel\": \"alpha\", \"next\") are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details like 'must check for \\'channel\\' in obj', 'must validate with .trim()', 'must return config: { channel: ... }', 'variable remixPrereleaseChannel', and '--tag next'. This tells the agent exactly WHAT to change line-by-line rather than describing the broken behavior."
+      "reason": "Instruction specifies nearly exact code tokens: `'channel' in obj`, `obj.channel`, `obj.channel.trim()`, `config: { channel: ... }`, `semver.inc`, `remixPrereleaseChannel`, `--tag next` \u2014 leaving little for the agent to reason about beyond copy-paste."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact string 'config: { channel:' in source (test_changes_ts_reads_channel_field), exact variable name 'remixPrereleaseChannel' (test_publish_uses_next_dist_tag), exact string 'obj.channel.trim()' (test_not_stub). An alternative correct implementation using e.g. 'prereleaseChannel' variable name, or 'config: {channel:' (different spacing), or 'obj.channel?.trim()' would fail these text-matching tests."
+      "reason": "Tests assert on specific variable name `remixPrereleaseChannel`, exact substrings like `'channel' in obj` and `config: { channel:`, which lock to gold implementation; an equally correct fix using e.g. `obj['channel']` or different variable name would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_changes_ts_reads_channel_field, test_publish_uses_next_dist_tag, test_not_stub) are purely text-matching with 'assert X in source' patterns. They read source files as strings and check for literal substrings rather than importing/calling the code or executing it. Only the pass-to-pass gates (lint, typecheck, changes:validate) actually execute code."
+      "outcome": "pass",
+      "reason": "Tests run subprocesses (changes:validate, changes:preview, eslint, typecheck, format) in addition to string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings like 'channel: string', 'remixPrereleaseChannel', '--tag next' that don't exist in the original codebase (which uses 'tag'). A stub or no-op wouldn't contain these strings, so the tests would fail."
+      "reason": "f2p tests check concrete behavior (JSON field rename, --tag next substring, channel validation) that a stub would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: prerelease.json channel field, changes.ts interface/function updates, publish.ts variable rename and --tag next, AGENTS.md documentation, CONTRIBUTING.md documentation."
+      "reason": "All behaviors listed in instruction.md (config rename, interface update, publishing tag, docs) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into labeled sections (Gates/pass_to_pass, Fail-to-pass code changes, Fail-to-pass config/docs, Anti-stub) with descriptive function names and docstrings."
+      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass code changes, config/documentation, anti-stub)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The prerelease.json schema is documented in the instruction: it must have a 'channel' field with value 'alpha', and the test verifies this exact schema."
+      "reason": "prerelease.json schema ({\"channel\": \"alpha\"}) is documented explicitly in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and field names in the instruction are correct and consistent with the test assertions."
+      "reason": "Paths and variable names consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation patterns like 'must check for \\'channel\\' in obj', 'must validate with .trim()', 'must return config: { channel: ... }', and exact variable name 'remixPrereleaseChannel'. These are line-level implementation hints that go far beyond describing the problem."
+      "reason": "Instruction names exact code details like `.trim()`, `semver.inc`, `'channel' in obj`, `obj.channel`, `config: { channel: ... }`, and the variable name `remixPrereleaseChannel` \u2014 this is implementation-level dictation, not just localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diff (prerelease.json) is a single-field rename from 'tag' to 'channel', which is a localized edit consistent with the instruction."
+      "reason": "Config edits (prerelease.json, AGENTS.md, CONTRIBUTING.md) are small localized diffs."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 7,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 3
 }

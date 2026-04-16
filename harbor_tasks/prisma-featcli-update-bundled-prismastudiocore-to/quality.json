@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: transaction procedure with executeTransaction, error handling pattern, @radix-ui/react-toggle and chart.js/auto import map entries, deps=react@ pinning, /favicon.ico GET route with SVG and link tag, REACT_VERSION constant with ${REACT_VERSION} template literals, AGENTS.md documentation requirements, and preservation of existing BFF procedures (query, sequence, sql-lint). All asserted strings and patterns in tests are discoverable from the instructi"
+      "reason": "Instruction names Studio.ts, AGENTS.md, 'procedure === \\'transaction\\'', 'if (error)', executeTransaction is implied via 'executor's transaction method', REACT_VERSION = '19.2.0', @radix-ui/react-toggle, chart.js/auto, esm.sh, /favicon.ico, app.get, link rel=icon, deps=react@."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, essentially dictating the implementation: use 'const REACT_VERSION', reference via '${REACT_VERSION}', call 'executor.executeTransaction', check 'if (error)', use 'serializeBffError', add 'app.get' for '/favicon.ico', add '<link rel=\"icon\">' tag, use 'esm.sh/chart.js@<version>/auto' URL pattern, use '?deps=react@' query parameters. This leaves very little reasoning for the developer about WHAT to change."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required patterns but leaves implementation choices like URL versions and handler placement to the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_react_version_constant checks for exact strings '${REACT_VERSION}' and 'const REACT_VERSION'; test_transaction_procedure_handler checks for exact string 'executeTransaction' and 'if (error)'; test_import_map_includes_chartjs checks for 'esm.sh/chart.js@'. An alternative correct fix using e.g. 'REACT_VER', 'const reactVersion', or a different error-handling pattern would fail."
+      "outcome": "pass",
+      "reason": "Tests check for generic patterns (substrings like 'executeTransaction', 'deps=react@', '${REACT_VERSION}') that any correct implementation would include."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_transaction_procedure_handler, test_favicon_endpoint, test_import_map_includes_radix_toggle, test_import_map_includes_chartjs, test_react_version_constant, test_agents_md_*) are ALL purely text-based: they read file contents and check for string patterns with 'assert X in content'. None execute the server, make HTTP requests, or call any functions. The pass_to_pass tests do run linting/prettier/vitest but the core behavioral tests are pure text matching."
+      "outcome": "pass",
+      "reason": "Tests run subprocesses (prettier, eslint, vitest, node --check) in addition to text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While tests are text-based, they cannot be satisfied by a stub/empty implementation. The agent must actually add specific code patterns (executeTransaction, transaction procedure handler, import map entries, REACT_VERSION constant, favicon route, AGENTS.md content) to the existing files. A no-op or default return wouldn't pass."
+      "reason": "f2p tests require multiple specific tokens together (e.g., executeTransaction + if (error) + procedure === 'transaction'), not satisfiable by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are covered by tests: transaction handling, favicon endpoint, import map entries for radix-toggle and chart.js, React version pinning, REACT_VERSION constant, AGENTS.md documentation, and preservation of existing BFF procedures."
+      "reason": "All instruction requirements (transaction, favicon, imports, REACT_VERSION, AGENTS.md docs) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear grouping comments (pass_to_pass static checks vs fail_to_pass behavioral tests), descriptive function names (test_transaction_procedure_handler, test_favicon_endpoint, etc.), and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped under pass_to_pass and fail_to_pass section comments with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and identifiers are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (packages/cli/src/Studio.ts) and describes very specific implementation details like using 'const REACT_VERSION', '${REACT_VERSION}' template literals, 'executor.executeTransaction', 'serializeBffError', and 'app.get' route pattern. It goes beyond describing what's broken and prescribes the exact implementation approach."
+      "outcome": "pass",
+      "reason": "Instruction names the file (Studio.ts) which is necessary for the task domain; no line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md edit in the gold solution is localized - adding a few bullet points to the existing 'CLI commands' section, not a full-file rewrite. It doesn't contradict other files."
+      "reason": "AGENTS.md gold diff adds a few localized bullet points under existing 'CLI commands' section."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

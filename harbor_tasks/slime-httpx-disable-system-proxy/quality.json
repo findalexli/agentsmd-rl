@@ -3,27 +3,27 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (slime/utils/http_utils.py), both affected locations (init_http_client and _HttpPosterActor.__init__ inside _init_ray_distributed_post), the httpx.AsyncClient class, and the desired behavior (no system proxy). Tests check trust_env=False, proxy mounts, connection limits/timeout preservation, and linting \u2014 all discoverable from the instruction's description of the two clients and their required behavior."
+      "reason": "The instruction names the file `slime/utils/http_utils.py`, the two functions `init_http_client()` and `_HttpPosterActor.__init__()` (inside `_init_ray_distributed_post`), and describes the required behavior (disable system proxy for intra-cluster clients). Tests check `trust_env=False`, `_mounts` being empty, connection limits, and timeout \u2014 all of which are directly discoverable from the instruction's description of the bug (proxy env vars being read) and the requirement (communicate without s"
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (clients reading proxy env vars causing 503 errors) and where (two specific client creation sites), but does not say 'add trust_env=False' or specify the exact code change. A developer must reason about the httpx API to determine the fix."
+      "reason": "The instruction describes what is broken (clients reading proxy env vars causing 503 errors) and which functions are affected, but does not specify the exact fix (e.g., it never says 'add trust_env=False'). A developer must reason about the httpx API to determine the correct parameter."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_ray_actor_trust_env_disabled uses AST inspection to check for exactly 'trust_env=False' as a keyword argument in the AsyncClient call. An alternative correct fix like setting httpx.Client(proxy=None) or wrapping the client creation in a context that clears env vars, or using a custom transport, would fail this AST-based test. The test enforces one specific implementation detail (trust_env=False keyword) rather than testing behavior."
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: `client._trust_env` is False, `client._mounts` is empty (no proxy transports), and the client is an `httpx.AsyncClient` with proper limits/timeout. Alternative correct fixes (e.g., passing `proxy=None`, or setting `trust_env=False` with a different comment, or using a custom transport) would need to produce the same observable behavior. The key assertion `trust_env=False` is the canonical httpx way to disable proxy env reading, and any correct fix must effe"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Most tests actually execute the code: test_init_client_trust_env_disabled and test_init_client_proxy_not_mounted run subprocesses that import and call init_http_client, then inspect the resulting client object's properties. test_init_client_preserves_config executes and checks connection pool settings. Only test_ray_actor_trust_env_disabled uses AST inspection, but the majority of tests verify behavior through execution."
+      "reason": "All fail-to-pass tests execute Python subprocesses that import the module, create actual httpx.AsyncClient instances, and inspect runtime properties (`_trust_env`, `_mounts`, `isinstance` checks). The syntax check uses `ast.parse`. No test is purely text-matching on source code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check client._trust_env is False and client._mounts is empty \u2014 the default httpx.AsyncClient has trust_env=True and would have proxy mounts when HTTP_PROXY is set. A stub or no-op implementation would fail these assertions. The AST test requires the specific keyword to be present in the source."
+      "reason": "The fail-to-pass tests would fail on the original code because `httpx.AsyncClient()` defaults to `trust_env=True`, which causes `_trust_env` to be True and `_mounts` to contain proxy transports when HTTP_PROXY is set. A stub or no-op would not pass these assertions. The tests explicitly set proxy env vars before importing and assert the opposite of default behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires both clients to communicate without using system proxy. Tests verify this for init_http_client (trust_env=False, no proxy mounts) and _HttpPosterActor (AST check for trust_env=False). Additional tests ensure existing functionality is preserved (connection limits, timeout)."
+      "reason": "The instruction requires both clients (init_http_client and _HttpPosterActor) to communicate without system proxy. Tests cover both: `test_init_client_trust_env_disabled` and `test_init_client_proxy_not_mounted` for the first, `test_ray_actor_trust_env_disabled` for the second. Additional tests verify preserved functionality (connection limits, timeout)."
     },
     "informative_test_structure": {
       "outcome": "pass",
@@ -31,26 +31,24 @@
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python source code, not producing structured data output."
+      "reason": "The task does not produce structured data (JSON/CSV/API/DB); it modifies Python source code to change httpx client behavior."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md and tests."
+      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file and the two specific client creation sites, which is appropriate for this task since the bug is about proxy behavior, not about locating the code. It does not mention trust_env, the specific parameter, or line numbers."
+      "reason": "The instruction names the file and the two specific functions, which is appropriate since the task domain makes localization straightforward. It does not mention specific line numbers or the exact parameter to change (`trust_env=False`)."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

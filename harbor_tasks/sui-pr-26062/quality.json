@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction.md names all file paths (parser.rs, value.rs, writer.rs, interpreter.rs, mod.rs), specific patterns like 'None | Some(Transform::Json)', 'format_as_str', 'transform: *transform', 'Option<Transform>', 'pub(crate) fn format_as_str', the test name 'test_format_single_bare_expression_falls_back_to_json', and all cargo commands. Every assert target in the tests is discoverable from the instruction."
+      "outcome": "fail",
+      "reason": "Tests assert very specific string patterns like 'transform: None | Some(Transform::Json)' in writer.rs, 'transform: *transform' in interpreter.rs, 'pub(crate) fn format_as_str' in value.rs, and 'format_as_str' in writer.rs. While instruction.md does mention most of these patterns, the test test_transform_enum_no_default checks that the derive line immediately before 'pub enum Transform' does NOT contain 'Default' \u2014 this exact structural check (derive on the line immediately preceding the enum de"
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details: 'Writer should use pattern matching with None | Some(Transform::Json)', 'check transform.is_none()', 'interpreter should pass transform through directly (via *transform) rather than calling unwrap_or_default()', 'format_as_str method on Atom should be pub(crate)'. These are not descriptions of broken behavior but precise code changes to make."
+      "reason": "instruction.md explicitly states the exact changes: 'Transform enum should not derive Default', 'Str variant should not have #[default] attribute', 'transform field should be Option<Transform>', 'writer should use pattern matching with None | Some(Transform::Json)', 'interpreter should pass transform through directly via *transform rather than calling unwrap_or_default()', 'format_as_str should be pub(crate)'. These are precise code-level instructions, not descriptions of broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_writer_handles_none_transform assert exact string patterns like 'transform: None | Some(Transform::Json)' and 'transform.is_none()'. test_interpreter_passes_transform_directly asserts 'transform: *transform'. These are gold-specific implementation details; a correct alternative (e.g., using a match statement with different formatting, or using 'ref transform' instead of '*transform') would fail these text-matching tests."
+      "reason": "Tests like test_writer_handles_none_transform assert exact string matches: 'transform: None | Some(Transform::Json)' must appear in writer.rs, 'transform.is_none()' must appear, 'format_as_str' must appear. test_interpreter_passes_transform_directly asserts 'transform: *transform' must appear. An alternative correct implementation that uses different variable names, different pattern matching syntax (e.g., match with separate arms), or a different approach to passing transform would fail these t"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_transform_enum_no_default, test_strand_value_has_optional_transform, test_writer_handles_none_transform, test_interpreter_passes_transform_directly, test_format_as_str_is_pub_crate, and test_unit_test_exists are all pure text-matching (assert 'X' in open(path).read()). Only test_bare_struct_formatting and test_display_tests_pass execute the code. The majority of f2p tests are text-grep only."
+      "reason": "Tests test_transform_enum_no_default, test_strand_value_has_optional_transform, test_writer_handles_none_transform, test_interpreter_passes_transform_directly, test_format_as_str_is_pub_crate, and test_unit_test_exists are ALL pure text-matching tests using 'assert X in open(path).read()' with no execution. Only test_cargo_check, test_cargo_clippy, test_bare_struct_formatting, and test_display_tests_pass actually execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-matching f2p tests check for specific code patterns that wouldn't exist in the base commit (e.g., 'Option<Transform>' instead of 'Transform', removal of 'unwrap_or_default()'). The behavioral test test_bare_struct_formatting runs actual code and checks '1 passed'. A stub or no-op wouldn't satisfy these."
+      "reason": "The f2p tests check for specific code changes that differ from the base commit state. For example, the base has 'transform: Transform' not 'transform: Option<Transform>', has '#[default]' on Str, and doesn't have the unit test. A stub or no-op implementation would fail these checks. test_bare_struct_formatting runs the actual unit test and checks for '1 passed'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md (Transform enum no Default, Option<Transform>, writer logic, interpreter pass-through, pub(crate) format_as_str, unit test existence, cargo check/clippy/fmt/doc/xlint/test) are tested."
+      "reason": "All behaviors listed in instruction.md are tested: Transform enum no Default derive, Option<Transform> field, writer logic patterns, interpreter direct pass-through, pub(crate) format_as_str, unit test existence, and the actual behavioral test for bare struct/enum JSON formatting."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Transform enum no longer has #[default] on Str variant - f2p check'), grouped logically from compilation checks to structural checks to behavioral checks."
+      "reason": "Tests are well-named with descriptive docstrings explaining what each tests (e.g., 'Transform enum no longer has #[default] on Str variant - f2p check'), and are logically grouped by concern area."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output like JSON/CSV/API; it modifies Rust source code."
+      "reason": "The task modifies Rust code internals; it doesn't produce structured data output like JSON/CSV/API/DB schemas."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in the instruction are all correctly spelled and match the actual codebase."
+      "reason": "File paths, commands, variable names, and function names in instruction.md all appear correct and consistent with the test file and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact files to modify, exact code patterns to use ('None | Some(Transform::Json)', 'transform: *transform', 'pub(crate) fn format_as_str'), and even specifies to remove #[default] attribute and Default derive. This goes far beyond describing what's broken."
+      "reason": "instruction.md explicitly names the exact files to modify (parser.rs, value.rs, writer.rs, interpreter.rs), the exact fields and types to change (e.g., 'transform field in Strand::Value should be Option<Transform>'), the exact pattern matching to use ('None | Some(Transform::Json)'), and the exact method to call ('unwrap_or_default()' should be replaced with '*transform'). This is detailed implementation guidance, not just domain-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,6 +47,7 @@
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -121,6 +121,63 @@ distractors:
   source:
     path: AGENTS.md
     lines: 45-55
+- rule: '**Always use `bun.*` APIs instead of `std.*`.**'
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+  source_text: '**Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace
+    (`@import("bun")`) provides cross-platform wrappers that preserve OS error info
+    and never use `unreachable`. Using `std.fs`, `std.posix`, or `std.os` directly
+    is wrong in this codebase.'
+  collision_type: architecture_boundary
+  why_distracting: An agent modifying threading logic might see the use of `std.Thread`
+    and `std.Thread.SpawnConfig` in the diff and mistakenly try to replace it with
+    a hypothetical `bun.Thread` or `bun.sys.Thread` API. However, this rule is intended
+    for file system and OS-level APIs (like fs, posix, os), while the threading implementation
+    still correctly relies on standard Zig thread APIs.
+  severity: high
+- rule: '**Always use `bun.*` APIs instead of `std.*`.**'
+  source:
+    path: src/AGENTS.md
+    lines: '16'
+  source_text: '**Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace
+    (`@import("bun")`) provides cross-platform wrappers that preserve OS error info
+    and never use `unreachable`. Using `std.fs`, `std.posix`, or `std.os` directly
+    is wrong in this codebase.'
+  collision_type: architecture_boundary
+  why_distracting: Identical to the rule in src/CLAUDE.md. An agent might mistakenly
+    attempt to rewrite standard Zig threading code (`std.Thread`) into a `bun.*` wrapper,
+    breaking compilation.
+  severity: high
+- rule: Use `bun.sys` instead of `std.fs` or `std.posix` for cross-platform syscalls
+    with proper error handling.
+  source:
+    path: .claude/skills/zig-system-calls/SKILL.md
+    lines: '8'
+  source_text: Use `bun.sys` instead of `std.fs` or `std.posix` for cross-platform
+    syscalls with proper error handling.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume thread spawning involves system calls (e.g.,
+    clone) and thus try to apply `bun.sys` abstractions. However, `bun.sys` is primarily
+    for file descriptors and I/O, while `std.Thread` is appropriately used for thread
+    pool management.
+  severity: medium
+- rule: Always use `bun.*` APIs instead of `std.*`
+  source:
+    path: src/CLAUDE.md
+    lines: 16-16
+  source_text: '**Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace
+    (`@import("bun")`) provides cross-platform wrappers that preserve OS error info
+    and never use `unreachable`. Using `std.fs`, `std.posix`, or `std.os` directly
+    is wrong in this codebase.'
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff explicitly uses and maintains `std.Thread.SpawnConfig`
+    and `std.Thread.spawn` because threading is not part of the `bun` namespace overrides
+    (unlike `std.fs` or `std.posix`). An agent following the broad instruction 'Always
+    use bun.* APIs instead of std.*' might incorrectly try to replace the `std.Thread`
+    usage with a non-existent `bun.Thread` or mistakenly use `bun.spawnSync` (which
+    is for processes, not threads).
+  severity: high
 hierarchy_analysis: The repository has identical `AGENTS.md` and `CLAUDE.md` files
   at both the root and `src/` levels. The root level focuses on building and testing,
   while the `src/` level focuses on Zig conventions. The agent must apply the `src/`

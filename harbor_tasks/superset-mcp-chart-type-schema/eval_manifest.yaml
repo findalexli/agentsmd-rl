@@ -1,0 +1,206 @@
+# Evaluation manifest for superset-mcp-chart-type-schema task
+
+source:
+  repo: apache/superset
+  pr_number: 39142
+  base_commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+  merge_commit: 5f9fc31ae23cc25e7892780ccdcc17ab29bcc61a
+
+checks:
+  # Module existence and export checks
+  - id: test_module_file_exists
+    type: fail_to_pass
+    origin: pr_requirements
+    description: The get_chart_type_schema.py module file must exist
+
+  - id: test_function_in_init_exports
+    type: fail_to_pass
+    origin: pr_requirements
+    description: get_chart_type_schema must be exported in chart/tool/__init__.py
+
+  - id: test_imported_in_app
+    type: fail_to_pass
+    origin: agent_config
+    description: Tool must be imported in app.py for MCP registration
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "Critical Convention: Tool, Prompt, and Resource Registration"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  # Function definition checks
+  - id: test_impl_function_exists_in_ast
+    type: fail_to_pass
+    origin: pr_requirements
+    description: _get_chart_type_schema_impl function must be defined
+
+  - id: test_public_function_exists
+    type: fail_to_pass
+    origin: pr_requirements
+    description: get_chart_type_schema public function must be defined
+
+  - id: test_public_function_has_docstring
+    type: fail_to_pass
+    origin: agent_config
+    description: Function must have a meaningful docstring
+    source:
+      file: CLAUDE.md
+      lines: "Docstrings: Required for new functions/classes"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  # Chart type constant checks
+  - id: test_valid_chart_types_defined
+    type: fail_to_pass
+    origin: pr_requirements
+    description: VALID_CHART_TYPES constant must be defined
+
+  - id: test_seven_chart_types_in_adapters
+    type: fail_to_pass
+    origin: pr_requirements
+    description: All 7 chart types must be defined in _CHART_TYPE_ADAPTERS
+
+  # Type adapter checks
+  - id: test_xy_type_adapter_uses_xychartconfig
+    type: fail_to_pass
+    origin: pr_requirements
+    description: XY chart type adapter must use XYChartConfig
+
+  - id: test_pie_type_adapter_uses_piechartconfig
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Pie chart type adapter must use PieChartConfig
+
+  # Error handling checks
+  - id: test_impl_returns_error_for_invalid_type
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Implementation must return error with valid_chart_types for invalid types
+
+  # Parameter handling checks
+  - id: test_include_examples_parameter_defined
+    type: fail_to_pass
+    origin: pr_requirements
+    description: include_examples parameter must be defined
+
+  - id: test_include_examples_controls_examples_in_response
+    type: fail_to_pass
+    origin: pr_requirements
+    description: include_examples must control whether examples are included
+
+  # Examples checks
+  - id: test_chart_examples_dict_defined
+    type: fail_to_pass
+    origin: pr_requirements
+    description: _CHART_EXAMPLES dict must be defined
+
+  - id: test_examples_have_chart_type_field
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Examples must have chart_type field matching the type
+
+  # Schema generation checks
+  - id: test_json_schema_method_called
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Implementation must call json_schema() to generate schema
+
+  - id: test_schema_included_in_result
+    type: fail_to_pass
+    origin: pr_requirements
+    description: Result must include 'schema' key
+
+  # Agent config compliance checks
+  - id: test_module_has_license_header
+    type: fail_to_pass
+    origin: agent_config
+    description: Module must have Apache Software Foundation license header
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "CRITICAL: Apache License Headers"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  - id: test_chart_type_adapters_defined
+    type: fail_to_pass
+    origin: agent_config
+    description: Module must use Pydantic TypeAdapters for schema generation
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "Use Pydantic Schemas"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  - id: test_tool_decorator_applied
+    type: fail_to_pass
+    origin: agent_config
+    description: Function must use @tool decorator for MCP registration
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "Always Use Authentication"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  - id: test_tool_decorator_imported
+    type: fail_to_pass
+    origin: agent_config
+    description: tool decorator must be imported from superset_core
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "Tool Development Patterns"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  - id: test_tool_annotations_used
+    type: fail_to_pass
+    origin: agent_config
+    description: Tool must use ToolAnnotations for LLM-friendly metadata
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "Use Pydantic Schemas - LLM-friendly schema generation"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  - id: test_readonly_hint_set
+    type: fail_to_pass
+    origin: agent_config
+    description: Tool must set readOnlyHint=True since it's a read operation
+    source:
+      file: superset/mcp_service/CLAUDE.md
+      lines: "ToolAnnotations"
+      commit: 8e811de5643022a97f6cb1890aa513197b7312e4
+
+  # Pass-to-pass: Repo CI commands that must pass before and after the fix
+  - id: test_ruff_check_mcp_service_chart_tool
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on mcp_service/chart/tool directory
+
+  - id: test_ruff_check_mcp_service_app
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on mcp_service/app.py
+
+  - id: test_ruff_format_check_mcp_service_chart_tool
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff formatting check passes on mcp_service/chart/tool directory
+
+  - id: test_python_syntax_chart_tool_init
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax is valid in chart/tool/__init__.py
+
+  - id: test_python_syntax_mcp_app
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax is valid in mcp_service/app.py
+
+rubric:
+  - id: modern_type_hints
+    rule: The new get_chart_type_schema.py module uses Python type hints (Dict, Any from typing module)
+
+  - id: docstring_quality
+    rule: The get_chart_type_schema function has a meaningful docstring explaining what it does
+
+  - id: error_handling_structured
+    rule: Error responses include error message, valid_chart_types list, and hint text
+
+  - id: module_level_adapters
+    rule: TypeAdapters are defined at module level as _CHART_TYPE_ADAPTERS dict, not inside functions
+
+  - id: discovery_tag
+    rule: The @tool decorator uses tags=["discovery"] to mark this as a discovery tool

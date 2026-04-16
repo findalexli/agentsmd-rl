@@ -1,58 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_isBidi_in_test_signature` checks that `isBidi` appears in the test function signature, and `test_bidi_cookie_rejection_condition` checks for `|| isBidi` combined with the chromium condition. The instruction.md never mentions `isBidi` as a fixture parameter, nor does it specify that the fix involves adding `isBidi` to the function signature or OR-combining it with the chromium check. These specific implementation details (the exact variable name `isBidi`, the `|| isBidi` pattern) a"
+      "outcome": "pass",
+      "reason": "Instruction names both files (tests/library/browsercontext-fetch.spec.ts and tests/bidi/expectations/moz-firefox-nightly-library.txt) and the test title used in assertions."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (test doesn't account for BiDi protocol behavior) and expected outcome (test should handle BiDi, expectations file should no longer list it) without specifying the exact code change like 'add isBidi to the signature' or 'use || isBidi'."
+      "reason": "Instruction describes the problem (BiDi case not handled) without specifying the exact code change or variable names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_bidi_cookie_rejection_condition requires the exact pattern `|| isBidi` on a line that also contains `browserName === 'chromium'` and `value === 'None'`. An alternative valid fix could use a helper variable like `const rejectNone = browserName === 'chromium' || isBidi` and then reference that variable, which would fail the test. Similarly, test_isBidi_in_test_signature requires `isBidi` on the same line as `SameSite` and `async`, which is very gold-specific."
+      "reason": "test_bidi_cookie_rejection_condition requires the exact pattern '|| isBidi' OR-combined with chromium on a single line; an equivalent fix like a separate `if (isBidi && value==='None')` branch or reordering to `isBidi || browserName==='chromium'` would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core f2p tests (test_isBidi_in_test_signature, test_bidi_cookie_rejection_condition, test_bidi_expectation_removed) all perform text/string matching on file contents \u2014 checking for specific strings in source code rather than executing the test or verifying runtime behavior. They are essentially `assert 'foo' in open(path).read()` checks."
+      "outcome": "pass",
+      "reason": "Tests also run npm build, eslint, tsc, generate_channels, etc. as subprocesses, beyond just text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns (isBidi in signature, || isBidi in condition, removal from expectations file) that aren't present in the original code. A stub/no-op wouldn't pass because the original files don't contain these patterns."
+      "reason": "f2p tests require specific code additions (isBidi in signature, OR-combined condition, removal of expectation line) which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires two things: (1) update the test logic for BiDi protocol handling and (2) remove the test from the BiDi expectations file. Both are tested via test_isBidi_in_test_signature + test_bidi_cookie_rejection_condition and test_bidi_expectation_removed respectively."
+      "reason": "Both required behaviors (update test logic for BiDi, remove expectation entry) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing test source code and an expectations text file, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code/test fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands are all correctly spelled and consistent between instruction.md and the test file."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions the two files to look at and the approximate location (~line 1155), but since localization to the correct test and file is a natural part of the task description (not an unwarranted hint), this is acceptable. It doesn't name the exact fix."
+      "reason": "Instruction points to the right files but doesn't give the exact line fix; localization to 'around line 1155' is acceptable guidance."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold diff is minimal: one line added to a function signature, one condition modified, and one line removed from an expectations file. It's well-localized and doesn't contradict other files."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 8,
+  "fail_count": 1
 }

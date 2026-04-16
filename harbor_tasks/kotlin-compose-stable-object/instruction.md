@@ -12,23 +12,44 @@ This occurs because the compiler incorrectly adds a `$stable` property to track 
 
 ## Expected Behavior
 
-1. **Stability Inference**: The compiler must recognize that Kotlin objects (both regular objects and companion objects) are inherently stable singletons. When analyzing type stability, an `isObject` check should return `Stability.Stable`, similar to how enum classes and enum entries are handled. The existing baseline marker in the stability inference code is:
-   ```
-   if (declaration.isEnumClass || declaration.isEnumEntry) return Stability.Stable
-   ```
+The Compose compiler should recognize that Kotlin objects (both regular objects and companion objects) are inherently stable singletons. The following specific requirements must be met:
 
-2. **IR Lowering for Object References**: When determining if an expression is static, the compiler should treat all objects (not just companion objects) as static. This requires checking `symbol.owner.isObject` instead of only checking for companion objects.
+### 1. Stability Inference
 
-3. **Generated IR Output**: The transformed IR for composable calls on objects should use literal stability flags (e.g., `0b0110`) instead of `Object.%stable` references (like `MaterialTheme.%stable`, `BoxScope.%stable`, `HasDefault.%stable`, etc.).
+When analyzing type stability, the compiler should treat objects as stable. The stability inference code at `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt` currently contains this baseline marker:
+
+```
+if (declaration.isEnumClass || declaration.isEnumEntry) return Stability.Stable
+```
+
+The stability inference logic should be updated to also return `Stability.Stable` for objects. The resulting code must contain:
+
+```
+if (declaration.isObject) return Stability.Stable
+```
+
+### 2. IR Lowering for Object References
+
+When determining if an expression is static, the compiler currently only checks for companion objects. The lowering code at `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt` should treat all objects (not just companion objects) as static.
+
+The resulting code must contain:
+
+```
+if (symbol.owner.isObject) true
+```
+
+### 3. Generated IR Output
+
+The transformed IR for composable calls on objects should use literal stability flags (e.g., `0b0110`) instead of `Object.%stable` references (like `MaterialTheme.%stable`, `BoxScope.%stable`, `HasDefault.%stable`, etc.).
 
 ## Test Requirements
 
 Add the following test methods:
 
-1. **`testObjectTypesAreStable`** in `ComposerParamTransformTests.kt`
+1. **`testObjectTypesAreStable`** in `ComposerParamTransformTests.kt` (located at `plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/ComposerParamTransformTests.kt`)
    - Purpose: Verify that composable method invocations on objects treat the object type as stable without generating `Object.%stable` references in the IR output
 
-2. **`testNoStablePropertyOnCompanionObjects`** in `RunComposableTests.kt`
+2. **`testNoStablePropertyOnCompanionObjects`** in `RunComposableTests.kt` (located at `plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/RunComposableTests.kt`)
    - Purpose: Verify that companion objects do not get duplicate `$stable` properties that cause JVM bytecode verification errors
 
 ## Golden File Requirements
@@ -56,12 +77,11 @@ The following golden files must have `.%stable` references (such as `BoxScope.%s
 - `plugins/compose/compiler-hosted/integration-tests/src/jvmTest/resources/golden/androidx.compose.compiler.plugins.kotlin.LambdaMemoizationTransformTests/composableLambdaInInlineDefaultParam[useFir = false].txt`
 - `plugins/compose/compiler-hosted/integration-tests/src/jvmTest/resources/golden/androidx.compose.compiler.plugins.kotlin.LambdaMemoizationTransformTests/composableLambdaInInlineDefaultParam[useFir = true].txt`
 
-## Implementation Notes
+## Implementation Scope
 
-The fix involves:
-1. Modifying stability inference logic to recognize objects as inherently stable
-2. Updating static expression detection to treat all objects (not just companion objects) as static
-3. Creating test methods to verify the behavior
-4. Updating golden files to reflect the corrected IR output with literal stability flags
+The fix involves changes in:
+- `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt` - stability inference logic
+- `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt` - static expression detection
+- Test files and golden files as specified above
 
-For reference, the compiler plugin source is located at `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/` with analysis logic in the `analysis/` subdirectory and lowering transformations in the `lower/` subdirectory.
+The compiler plugin source is located at `plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/` with analysis logic in the `analysis/` subdirectory and lowering transformations in the `lower/` subdirectory.

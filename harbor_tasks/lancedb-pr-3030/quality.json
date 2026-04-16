@@ -3,57 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions _combine_hybrid_results, query.py, _relevance_score, pa.unify_schemas, with_row_ids, _rowid, num_rows, pa.float32(), vector_results, fts_results, LanceHybridQueryBuilder \u2014 all key identifiers checked in the tests. The tests check for patterns like 'return early' in lowercase (test_patch_code_structure), which is hinted at by the instruction's description of 'return early with a properly constructed empty table'. The file path python/python/lancedb/query.py is explicitly "
+      "reason": "The instruction mentions all key elements tested: the method name `_combine_hybrid_results`, the file `python/python/lancedb/query.py`, `_relevance_score` column, `pa.unify_schemas()`, `with_row_ids` flag, `_rowid` column, `pa.float32()` type, and the class `LanceHybridQueryBuilder`. The specific string 'return early' checked in test_patch_code_structure is implied by the instruction's description of returning early. All assert targets are discoverable from instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially describes the exact fix: check for zero rows, return early with unified schema, append _relevance_score column of pa.float32(), and drop _rowid if with_row_ids=False. The Hints section further specifies 'pa.unify_schemas()' and 'pa.float32()'. This leaves almost no reasoning for the developer \u2014 it's a step-by-step recipe, not just a problem description."
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (crash on empty results) and requirements (early return with specific properties) but does not give the exact code, line numbers, or specific implementation. A developer still needs to reason about where to add the check and how to construct the empty table."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_patch_code_structure checks for 'return early' in lowercase content, test_pa_unify_schemas_usage requires 'pa.unify_schemas' literally, test_empty_results_early_return_exists requires 'num_rows == 0' pattern, test_with_row_ids_handling requires both 'with_row_ids' and '_rowid' and 'drop' in the AST. Alternative valid fixes (e.g., using len(table) == 0, or schema.empty_table(), or different column dropping approaches) would fail these tex"
+      "reason": "Tests assert on gold-specific implementation details via text matching: test_patch_code_structure checks for 'return early' in content (case-insensitive), test_empty_results_early_return_exists checks for 'num_rows == 0' via AST unparsing, test_pa_unify_schemas_usage checks for literal string 'pa.unify_schemas', test_combined_schema_includes_both checks for 'vector_results.schema' and 'fts_results.schema'. A correct alternative using e.g. `len(vector_results) == 0` or `vector_results.shape[0] =="
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every f2p test is purely text/AST inspection of the source file \u2014 none actually imports the module, instantiates the class, calls _combine_hybrid_results with empty tables, or verifies runtime behavior. All tests use patterns like `'pa.unify_schemas' in content`, `re.findall(pattern, content)`, and AST walking. No test executes the fixed code."
+      "reason": "Every f2p test is purely text/AST-based inspection of the source file. No test imports the module, instantiates objects, or calls `_combine_hybrid_results` with empty tables to verify actual behavior. All tests use patterns like `assert 'pa.unify_schemas' in content` or AST walking to check source code structure rather than executing the fix."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since all f2p tests are source-text matching (not behavioral), an agent could write a comment block containing all the required strings ('return early', 'num_rows == 0', 'pa.unify_schemas', 'append_column(\"_relevance_score\"', 'with_row_ids', '_rowid', 'drop', 'vector_results.schema', 'fts_results.schema') without implementing any actual fix, and all tests would pass."
+      "reason": "Since all f2p tests are text-matching on source code, a developer could add a dead-code comment block containing all the checked strings (e.g., `# return early to avoid errors in reranking`, `num_rows == 0`, `pa.unify_schemas`, `vector_results.schema`, `fts_results.schema`) without actually implementing the fix, and all tests would pass. No behavioral execution validates the fix works."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires: (1) _relevance_score column \u2014 tested in test_relevance_score_column_added, (2) schema merging with unify_schemas \u2014 tested in test_pa_unify_schemas_usage and test_combined_schema_includes_both, (3) with_row_ids handling \u2014 tested in test_with_row_ids_handling. All stated requirements have corresponding tests."
+      "outcome": "fail",
+      "reason": "The instruction requires the method to 'return early with a properly constructed empty table' that has the correct schema and columns, but no test actually calls the method with empty inputs to verify the returned table has the correct schema, columns, or that no IndexError is raised. The behavioral requirements are only checked via text matching."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_empty_results_early_return_exists, test_relevance_score_column_added, etc.), have docstrings explaining purpose and pass/fail type (F2P/P2P), and are logically grouped by feature."
+      "reason": "Tests are well-named (e.g., test_empty_results_early_return_exists, test_relevance_score_column_added), have docstrings explaining what they check, and include P2P/F2P annotations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying Python code to handle empty PyArrow tables, not producing structured data output like JSON/CSV/API responses."
+      "reason": "The task involves modifying Python code to handle empty PyArrow tables, not producing structured data output like JSON/CSV/API/DB."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (python/python/lancedb/query.py), method names (_combine_hybrid_results), variable names (_relevance_score, _rowid, with_row_ids), and function references are all consistent and correctly spelled across instruction and tests."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact method (_combine_hybrid_results), exact class (LanceHybridQueryBuilder), exact file (python/python/lancedb/query.py), and even specifies the exact API calls to use (pa.unify_schemas, pa.float32, append_column). This goes well beyond identifying the buggy area \u2014 it prescribes the implementation."
+      "reason": "The instruction explicitly names the exact file (`python/python/lancedb/query.py`), the exact method (`_combine_hybrid_results`), the exact class (`LanceHybridQueryBuilder`), and gives specific implementation hints like using `pa.unify_schemas()` and `pa.float32()`. While naming the file is reasonable, the hints section essentially prescribes the implementation approach."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

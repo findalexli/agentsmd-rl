@@ -1,0 +1,88 @@
+version: 1
+
+metadata:
+  owner: prisma
+  repo: prisma
+  repo_short: prisma
+  base_commit: 1a3c4986d8c560d87a388a7545371138bcc8f5a1
+  merge_commit: f2ca67e71d82a57dc5324a8cb5e6ed0d903c996a
+  pr_number: 29395
+  task_name: prisma-adapter-pg-statement-name-generator
+  task_title: "feat: pg statement name generator"
+  source_pr: https://github.com/prisma/prisma/pull/29395
+
+checks:
+  - id: test_statementNameGenerator_option_exists
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: The PrismaPgOptions type includes statementNameGenerator
+
+  - id: test_statementNameGenerator_called_in_query
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: When statementNameGenerator is provided, it is called and result passed to pg.Client#query()
+
+  - id: test_statementNameGenerator_type_defined
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: The StatementNameGenerator type is exported with correct signature
+
+  - id: test_adapter_pg_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: The pg.test.ts file contains the new test cases for statementNameGenerator
+
+  - id: test_pg_ts_has_new_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: The test file imports SqlQuery from driver-adapter-utils
+
+  - id: test_prisma_pg_options_has_statementNameGenerator_docs
+    type: pass_to_pass
+    origin: agent_config
+    source: AGENTS.md
+    description: Documentation comments are added for the new statementNameGenerator option
+
+  - id: test_repo_eslint_adapter_pg
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ESLint passes on adapter-pg package
+
+  - id: test_repo_vitest_errors_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo vitest errors test suite passes
+
+  - id: test_repo_prettier_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Prettier check passes on adapter-pg
+
+rubric:
+  - id: doc_comments_on_exported_items
+    source:
+      path: packages/adapter-pg/src/pg.ts
+    description: Documentation comments should be written for exported items. The PR adds doc comments to the new PrismaPgOptions fields explaining their purpose and behavior.
+    reference: |
+      The PR adds JSDoc comments to all PrismaPgOptions fields including:
+      - schema?: string with comment "The name of the schema to use in generated queries"
+      - disposeExternalPool?: boolean with multi-line comment about pool.end() behavior
+      - onPoolError?: (err: Error) => void with comment "Callback attached to the pool's 'error' events"
+      - onConnectionError?: (err: Error) => void with comment "Callback attached to connection's 'error' events"
+      - userDefinedTypeParser?: UserDefinedTypeParser with multi-line comment about parser behavior
+      - statementNameGenerator?: StatementNameGenerator with multi-line comment about statement caching
+    weight: 1
+
+  - id: adapter_option_pattern
+    source:
+      path: packages/adapter-pg/src/pg.ts
+    description: When adding new options to driver adapters, follow the established pattern of defining the option type, adding it to the options interface, and using it in the implementation.
+    reference: |
+      The PR follows the adapter option pattern by:
+      1. Defining the new type: export type StatementNameGenerator = (query: SqlQuery) => string
+      2. Adding the option to PrismaPgOptions interface: statementNameGenerator?: StatementNameGenerator
+      3. Using the option in queryRaw: name: this.pgOptions?.statementNameGenerator?.(query)
+    weight: 2

@@ -2,58 +2,60 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific structural patterns like `assertRaises`/`assertRaisesRegex` combined with `dumps` (test_default_raises_covered), assignment into `node.meta` via subscript (test_raw_node_in_meta), `loads` in dump (test_ignore_true_round_trip), class naming containing 'ignore_raw_node' (test_has_ignore_raw_node_tests), and CI patterns like `# Owner(s):` label and `run_tests()` main block. While the instruction mentions the behavioral requirements (default raises AssertionError, ignore_raw"
+      "outcome": "pass",
+      "reason": "The instruction names the file paths (torch/fx/_graph_pickler.py, test/fx/test_graph_pickler.py), class names (GraphPickler, Options), the option (ignore_raw_node), the expected error (AssertionError), and all structural requirements (class name pattern, method count, assertion types, meta injection pattern). The test oracle checks are all discoverable from the instruction's 'Required test patterns' table."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what behavior needs to be tested (default raises AssertionError, ignore_raw_node=True replaces with None) and suggests an approach (inject raw Node into meta, use dumps/loads), but doesn't specify exact code, line numbers, or the precise implementation. The agent still needs to reason about how to construct the test class, set up fixtures, etc."
+      "outcome": "fail",
+      "reason": "The instruction explicitly tells the agent exactly what to write: construct a traced graph module, inject a raw Node via `node.meta[\"key\"] = node`, use `assertRaises(AssertionError)` with `GraphPickler.dumps`, call `GraphPickler.loads` for round-trip, class name must contain 'ignore_raw_node', etc. The 'Required test patterns' table is essentially a specification of the solution code structure, leaving almost no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce very specific AST patterns: test_raw_node_in_meta requires assignment to `node.meta` via subscript on an attribute named 'meta' (ast.Subscript + ast.Attribute with attr='meta'); test_default_raises_covered requires `assertRaises`/`assertRaisesRegex` specifically (not pytest.raises or try/except); test_has_ignore_raw_node_tests requires the test to be inside a ClassDef containing 'ignore_raw_node' in its AST dump. An alternative correct implementation using standalone test functions"
+      "reason": "The tests enforce very specific structural patterns via AST inspection: class name must contain 'ignore_raw_node', must use assertRaises/assertRaisesRegex with 'dumps', must have subscript assignment to '.meta', must call 'loads'. Alternative correct implementations that use different patterns (e.g., pytest.raises instead of assertRaises, or a different meta injection approach like setattr) would fail these AST checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_has_ignore_raw_node_tests, test_default_raises_covered, test_ignore_true_round_trip, test_raw_node_in_meta) are ALL purely AST-based static analysis \u2014 they parse the source file and check for specific patterns like 'assertRaises in dump', 'loads in dump', subscript assignment to .meta. None of them actually execute the agent's test code to verify it passes. The pass-to-pass tests also only do syntax/structure checks. No test actually runs the agent's tests."
+      "reason": "The fail-to-pass tests (test_has_ignore_raw_node_tests, test_default_raises_covered, test_ignore_true_round_trip, test_raw_node_in_meta) are ALL pure AST/text inspection \u2014 they parse the source file and check for string patterns like 'assertRaises' in ast.dump, 'loads' in ast.dump, subscript assignments to .meta, etc. None of them actually execute the agent's tests or import/call the code. The pass-to-pass tests similarly only do AST analysis."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "Since the f2p tests only check AST structure (presence of certain patterns in the source code) and never execute the tests, an agent could write test methods containing the right keywords and patterns (assertRaises, dumps, loads, node.meta['key'] = ..., ignore_raw_node) that are syntactically correct but semantically wrong (e.g., asserting the wrong thing, testing unrelated behavior) and still pass all checks."
+      "reason": "A stub implementation that simply writes syntactically valid test methods with the right AST patterns (e.g., containing assertRaises, dumps, loads, meta assignment) but with no real logic would pass all the f2p tests, since they only do AST inspection and never execute the test code. For example, test_default_raises_covered only checks that 'assertRaises' and 'dumps' appear in the AST dump of a test method."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires testing two behaviors: (1) default raises AssertionError, (2) ignore_raw_node=True round-trips as None. Both are checked via test_default_raises_covered and test_ignore_true_round_trip respectively, plus test_raw_node_in_meta ensures the setup is correct."
+      "reason": "The instruction requires testing two behaviors (default raises AssertionError, ignore_raw_node=True round-trips to None), and the test oracle checks for both patterns: test_default_raises_covered checks for assertRaises+dumps, and test_ignore_true_round_trip checks for ignore_raw_node+loads."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_has_ignore_raw_node_tests, test_default_raises_covered, test_ignore_true_round_trip, test_raw_node_in_meta) and grouped into pass-to-pass and fail-to-pass sections with comments."
+      "reason": "The test oracle functions are well-named (test_has_ignore_raw_node_tests, test_default_raises_covered, test_ignore_true_round_trip, test_raw_node_in_meta, test_not_stub) and grouped into sections with clear comments (Gates, Fail-to-pass, Pass-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces test code, not structured data like JSON/CSV/API/DB."
+      "reason": "This task is about writing unit tests, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names `torch/fx/_graph_pickler.py` and `test/fx/test_graph_pickler.py` which are the obvious relevant files for this domain. It doesn't specify exact line numbers or internal implementation details of the pickler. The task is about writing tests, so naming the target file is appropriate."
+      "outcome": "fail",
+      "reason": "The instruction names the exact file to edit (test/fx/test_graph_pickler.py), the exact source file (torch/fx/_graph_pickler.py), the exact class and option name (GraphPickler.Options, ignore_raw_node), and provides a detailed structural specification of the solution in the 'Required test patterns' table. For a test-writing task, specifying exact AST patterns like 'self.assertRaises(AssertionError, ...)' combined with 'self.GraphPickler.dumps(...)' is excessive localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (adding tests), not a config edit task."
+      "reason": "This is a code-only task (adding tests), not a config-edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
+    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 4,
+  "fail_count": 5
 }

@@ -1,0 +1,89 @@
+source_pr:
+  owner: langchain-ai
+  repo: langchain
+  number: 36322
+  merge_commit: 389f7ad1bc15123b8b901e61d0a1785b0a14815f
+  base_commit: 475408fa620996e1958d18a0789ed5bf9fdee054
+  title: "revert: Revert \"fix(core): trace invocation params in metadata\""
+
+checks:
+  # Fail-to-pass checks
+  - id: test_get_metadata_invocation_params_method_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "The _get_metadata_invocation_params method should be completely removed"
+
+  - id: test_stream_method_no_invocation_params_in_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: "stream() method should not call _get_metadata_invocation_params"
+
+  - id: test_astream_method_no_invocation_params_in_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: "astream() method should not call _get_metadata_invocation_params"
+
+  - id: test_generate_method_no_invocation_params_in_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: "generate() method should not call _get_metadata_invocation_params"
+
+  - id: test_agenerate_method_no_invocation_params_in_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: "agenerate() method should not call _get_metadata_invocation_params"
+
+  - id: test_fake_chat_model_with_secrets_class_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "FakeChatModelWithSecrets test class should be removed from test_base.py"
+
+  - id: test_init_params_tests_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: "All invocation params related tests should be removed"
+
+  - id: test_invocation_params_not_in_run_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: "Behavioral test - invocation params should not appear in run metadata"
+
+  # Pass-to-pass checks
+  - id: test_repo_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for chat_models continue to pass"
+
+  - id: test_repo_chat_models_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for chat_models continue to pass"
+
+  - id: test_repo_ruff_lint_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on package code"
+
+  - id: test_repo_ruff_lint_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on test code"
+
+  - id: test_repo_mypy_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's mypy type checking passes on modified file"
+
+  - id: test_repo_syntax_check
+    type: pass_to_pass
+    origin: structural
+    description: "Modified files have valid Python syntax"
+
+  - id: test_import_langchain_core
+    type: pass_to_pass
+    origin: structural
+    description: "langchain_core imports work correctly"
+
+# Note: Rubric removed for this revert task - the checks above (fail_to_pass and
+# pass_to_pass) are sufficient to validate proper code removal. This is a code-only
+# revert that doesn't modify agent config files like CLAUDE.md or AGENTS.md.

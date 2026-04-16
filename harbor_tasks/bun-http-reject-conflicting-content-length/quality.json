@@ -3,61 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All assert'd specifics \u2014 file paths (HttpParser.h, scripts/pr-comments.ts, CLAUDE.md, package.json), literal strings ('strncmp(h->key.data(), \"content-length\", 14)', 'contentLengthString.data() == nullptr', 'h->value.length() == 0', 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', 'pr:comments', 'pr-comments.ts', 'bun run pr:comments', 'gh pr view'), variable names (contentLengthString), and schema keys (when, user, kind, location, body, url, resolved, outdated) \u2014 are all explicitly named in instruct"
+      "reason": "The instruction names all key specifics tested: conflicting Content-Length \u2192 400, empty Content-Length \u2192 400, identical Content-Length accepted, scripts/pr-comments.ts file, --json flag, PR number argument, package.json pr:comments entry pointing to pr-comments.ts, CLAUDE.md documentation with pr:comments, JSON schema keys (when, user, kind, location, body, url, resolved, outdated). All assert targets are discoverable from the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies the exact implementation: use 'req->bf.mightHave(\"content-length\")' to short-circuit, iterate with 'for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )', check key with 'h->key.length() == 14 && !strncmp(h->key.data(), \"content-length\", 14)', store in 'std::string_view contentLengthString', check 'h->value.length() == 0', use 'contentLengthString.data() == nullptr', compare with 'strncmp(h->value.data(), contentLengthString.data(), contentLengthString.leng"
+      "outcome": "pass",
+      "reason": "The instruction describes the desired behavior (reject conflicting Content-Length with 400, create pr-comments.ts, etc.) but does not specify exact code changes, line numbers, or implementation details like the bloom filter check or specific loop structure used in the gold patch."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact implementation strings like 'strncmp(h->key.data(), \"content-length\", 14)', 'strncmp(h->value.data(), contentLengthString.data()', 'contentLengthString.data() == nullptr', and 'h->value.length() == 0'. An alternative correct fix using different variable names (e.g., 'clValue' instead of 'contentLengthString'), different comparison methods (e.g., std::string_view::operator==), or different iteration patterns would fail these text-matching tests despite being functionally correc"
+      "outcome": "pass",
+      "reason": "The HTTP parser tests are behavioral: they send raw TCP requests and check for HTTP 400/200 responses, not implementation internals. The pr-comments tests check file existence, transpilability, argument acceptance, and package.json entries \u2014 all of which any correct implementation would satisfy. No gold-specific variable names or internal helpers are asserted."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core C++ tests (test_http_parser_validates_duplicate_content_length, test_http_parser_rejects_empty_content_length, test_http_parser_content_length_parsing_preserved) are purely text-matching: they read the source file and assert substrings exist. They never compile the code, run it, or send HTTP requests to verify behavior. The pr-comments.ts test only checks transpilation, not runtime behavior. The only behavioral tests are pass-to-pass repo tests (lint, ban-words, bun-types, smuggling tes"
+      "outcome": "pass",
+      "reason": "The HTTP parser tests create actual Bun servers, send raw TCP requests, and verify HTTP response codes. The pr-comments tests transpile and execute the script, check runtime behavior. The package.json test loads JSON and runs 'bun run pr:comments'. The CLAUDE.md test does use text search but also verifies the documented command runs. The majority of tests are execution-based."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub pr-comments.ts that is simply an empty valid TypeScript file (e.g., 'export {}') would pass test_pr_comments_script_parses. For the C++ tests, since they're text-matching, an agent could just append a comment block containing all the required strings without implementing any logic, and the tests would pass."
+      "outcome": "pass",
+      "reason": "The HTTP parser tests send actual malicious requests and verify 400 responses \u2014 a stub server returning 200 would fail. The pr-comments tests require a parseable TypeScript file that accepts arguments and a --json flag. A stub empty file would fail transpilation or argument checks. These are non-trivial to satisfy without real implementation."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires the script to 'accept PR number, URL, or current branch as input', 'support --json flag', fetch three GitHub endpoints, and present chronological listings. None of this runtime behavior is tested \u2014 only transpilation is checked. The instruction also requires identical duplicates to be accepted, but no test verifies this acceptance behavior."
+      "outcome": "pass",
+      "reason": "All behaviors from the instruction are tested: conflicting CL rejection (400), empty CL rejection (400), identical CL acceptance (200), pr-comments.ts existence and parseability, PR number argument, --json flag, package.json entry, and CLAUDE.md documentation. The JSON schema keys are checked in test_claude_md_documents_pr_comments (truncated but referenced)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section comments (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), each function has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests are well-named (test_http_parser_rejects_conflicting_duplicate_content_length, test_pr_comments_script_parses, etc.), grouped by concern (HTTP parser behavioral tests vs. PR comments tooling tests), and each has a detailed docstring explaining the RFC reference or rationale."
     },
     "structured_data_schema": {
-      "outcome": "fail",
-      "reason": "The instruction documents the JSON schema (when, user, kind, location, body, url, resolved, outdated) but no test validates that the script actually produces output conforming to this schema. The only test for pr-comments.ts checks transpilation, not output format."
+      "outcome": "pass",
+      "reason": "The instruction explicitly documents the JSON output schema keys: when, user, kind, location, body, url, resolved, outdated. The CLAUDE.md test verifies these keys are documented."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and literal strings in instruction.md and tests are consistent and free of typos."
+      "reason": "No typos found in filenames (pr-comments.ts, HttpParser.h, CLAUDE.md, package.json), paths, commands (bun run pr:comments), or variable names throughout the instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation details: the precise loop pattern ('for (HttpRequest::Header *h = req->headers; (++h)->key.length(); )'), exact variable names ('contentLengthString'), exact comparison expressions, and exact error return value. This goes far beyond naming the file or describing the bug \u2014 it provides the complete code solution."
+      "outcome": "pass",
+      "reason": "The instruction names HttpParser.h as a file to look at, which is appropriate for the task domain (HTTP parser fix). It doesn't specify exact line numbers, function names within the file, or the specific implementation approach (bloom filter, loop structure, etc.)."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs (package.json, CLAUDE.md) are localized additions \u2014 a single line in package.json and an appended section in CLAUDE.md \u2014 and don't contradict other files."
+      "reason": "The gold patch makes localized edits: appending a section to CLAUDE.md, adding one line to package.json scripts, modifying a specific section of HttpParser.h, and creating a new file. No full-file rewrites or contradictions with other files."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "structured_data_schema",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 0
 }

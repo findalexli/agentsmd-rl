@@ -95,6 +95,33 @@ distractors:
     `console.print` messages added in the script, but this is an internal container
     script that does not use Airflow's translation infrastructure.
   severity: low
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use breeze.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  source_text: '- **Never run pytest, python, or airflow commands directly on the
+    host** — always use `breeze`.'
+  collision_type: architecture_boundary
+  why_distracting: An agent might think it needs to modify the script's internal commands
+    to use `breeze` instead of running Python/Airflow directly. However, this script
+    is located in `scripts/in_container/`, meaning it is already designed to be executed
+    *inside* the Breeze container environment. Wrapping commands in `breeze` here
+    would break the containerized execution architecture.
+  severity: high
+- rule: Place temporary scripts in dev/ (mounted as /opt/airflow/dev/ inside Breeze).
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  source_text: '- Place temporary scripts in `dev/` (mounted as `/opt/airflow/dev/`
+    inside Breeze).'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might mistakenly believe that the script being modified
+    (`scripts/in_container/install_airflow_and_providers.py`) should be moved to the
+    `dev/` directory since it interacts with the container environment. However, this
+    is a permanent infrastructure script for building/running the container, not a
+    temporary developer script.
+  severity: medium
 hierarchy_analysis: Flat structure with identical AGENTS.md and CLAUDE.md files containing
   general repository commands. No specific coding guidelines are present.
 version: '2.0'

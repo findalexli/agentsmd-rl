@@ -45,9 +45,15 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_closure_no_self_recursion():
-    """fn variable in from_model must not shadow the closure, preventing infinite recursion.
-    Extracts the actual variable name via AST, then simulates the closure pattern
-    in a subprocess to verify no recursion occurs."""
+    """Verify query_huggingface_inference_endpoints doesn't cause closure recursion.
+
+    The bug is that the nested function create_endpoint_fn captures 'fn' from
+    the outer scope. If the outer scope reassigns 'fn' via 'fn = kwargs.pop("fn")',
+    the closure captures the wrong value.
+
+    This test verifies the ACTUAL source code for the buggy pattern and ensures
+    the fix is applied (different variable name for the popped value).
+    """
     source = Path(f"{REPO}/gradio/external.py").read_text()
     tree = ast.parse(source)
 
@@ -57,9 +63,10 @@ def test_closure_no_self_recursion():
          if isinstance(n, ast.FunctionDef) and n.name == "from_model"),
         None,
     )
-    assert from_model is not None, "from_model function not found in external.py"
+    assert from_model is not None, "from_model function not found"
 
-    # Find: <var> = <...>.pop("fn", ...)
+    # Find the pattern: some_var = kwargs.pop("fn", ...)
+    # The fix changes 'fn' local var to 'interface_fn' or similar
     pop_var = None
     for node in ast.walk(from_model):
         if (
@@ -76,30 +83,13 @@ def test_closure_no_self_recursion():
             pop_var = node.targets[0].id
             break
 
-    assert pop_var is not None, "kwargs.pop('fn', ...) assignment not found in from_model"
-
-    # Behaviorally verify in a subprocess: simulate the closure pattern with a
-    # low recursion limit. If pop_var == 'fn', query() recurses into itself.
-    r = _run_python(f"""
-import sys
-sys.setrecursionlimit(50)
-
-def pipeline(*data):
-    return 'pipeline_result'
-
-fn = pipeline
-def query(*data):
-    return fn(*data)
-
-kwargs = {{'fn': query}}
-{pop_var} = kwargs.pop('fn', None)
-result = query('test_input')
-print(result)
-""")
-    assert r.returncode == 0, (
-        f"Recursion or error with var '{pop_var}': {r.stderr}"
+    assert pop_var is not None, "kwargs.pop('fn', ...) assignment not found"
+    # The fix renames 'fn' to something else to avoid shadowing
+    # If it's still 'fn', the bug is not fixed
+    assert pop_var != "fn", (
+        f"Bug not fixed: local variable is still named 'fn' (causes closure shadowing). "
+        f"Should use a different name like 'interface_fn'."
     )
-    assert "pipeline_result" in r.stdout, f"Unexpected output: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
@@ -210,7 +200,11 @@ def test_too_many_requests_still_handled():
 
 # [static] pass_to_pass
 def test_handle_hf_error_not_stub():
-    """handle_hf_error has real branching logic, not just pass/return."""
+    """handle_hf_error has real branching logic, not just pass/return.
+
+    The instruction requires 'at least 2 if-branches and at least 3 raise statements'.
+    This test verifies the function has actual error-handling structure.
+    """
     source = Path(f"{REPO}/gradio/external_utils.py").read_text()
     tree = ast.parse(source)
     for node in ast.walk(tree):
@@ -327,4 +321,3 @@ def test_repo_external_consolidated():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Consolidated external tests failed:\n{r.stdout[-1500:]}{r.stderr[-500:]}"
-

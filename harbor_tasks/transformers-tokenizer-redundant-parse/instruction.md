@@ -22,7 +22,9 @@ The file should be parsed once. The `post_processor`, `padding`, and `truncation
 - `tokenizer_truncation` — the truncation configuration object
 - `tokenizer_object` — the full tokenizer object (returned when the base class path is taken, i.e., no custom `__init__`)
 
-The optimized path must avoid calling `TokenizerFast.from_file()` for model types where a lighter-weight alternative suffices. The model type is declared in the `model.type` field of `tokenizer.json`: `BPE`, `WordPiece`, `WordLevel`, and `Unigram` are the recognized types. Older `tokenizer.json` files may omit the `type` field entirely — in that case a fallback to the original (non-optimized) behavior is acceptable.
+The optimized path must avoid calling `TokenizerFast.from_file()` for model types where a lighter-weight alternative suffices. The `TokenizerFast` class also provides a `from_str(json_string)` class method that constructs a tokenizer from a JSON string rather than reading from a file — this can be used to construct a tokenizer from modified JSON content without disk I/O.
+
+The model type is declared in the `model.type` field of `tokenizer.json`: `BPE`, `WordPiece`, `WordLevel`, and `Unigram` are the recognized types. For `BPE`, `WordPiece`, and `WordLevel` model types, the fix should avoid calling `from_file` entirely and use `from_str` instead. `Unigram` tokenizers require a real vocabulary to initialize correctly in the Rust backend, so they must continue to use `from_file`. Older `tokenizer.json` files may omit the `type` field entirely — in that case a fallback to the original `from_file` behavior is acceptable.
 
 ## Relevant files
 

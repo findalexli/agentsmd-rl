@@ -106,7 +106,8 @@ checks:
 - id: test_repo_editorconfig_assert
   type: pass_to_pass
   origin: repo_tests
-  description: 'Repo CI: EditorConfig compliance (UTF-8, LF endings, final newline, no trailing whitespace)'
+  description: 'Repo CI: EditorConfig compliance (UTF-8, LF endings, final newline,
+    no trailing whitespace)'
 distractors:
 - rule: Use `$set` for private map methods (`map.$set(key, value);`)
   collision_type: would_cause_bug
@@ -119,6 +120,32 @@ distractors:
   source:
     path: src/js/AGENTS.md
     lines: 63-65
+- rule: map.$set(key, value);                   // Private methods
+  source:
+    path: src/js/CLAUDE.md
+    lines: '69'
+  source_text: map.$set(key, value);                   // Private methods
+  collision_type: would_cause_bug
+  why_distracting: An agent might see `map.$set` listed as a valid private method
+    syntax in the config file and incorrectly apply `$set` to `SafeMap` instances
+    in Node compatibility polyfills. In fact, the previous code used `expectedCounts.$set(key,
+    ...)` and the gold diff actively removes it, substituting it with `SafeMapPrototypeSet.$call(...)`.
+    The `$set` rule likely only applies to global JSC intrinsics in `builtins/` and
+    causes a bug if applied in `node/` polyfills.
+  severity: high
+- rule: map.$set(key, value);                   // Private methods
+  source:
+    path: src/js/AGENTS.md
+    lines: '69'
+  source_text: map.$set(key, value);                   // Private methods
+  collision_type: would_cause_bug
+  why_distracting: An agent might see `map.$set` listed as a valid private method
+    syntax in the config file and incorrectly apply `$set` to `SafeMap` instances
+    in Node compatibility polyfills. In fact, the previous code used `expectedCounts.$set(key,
+    ...)` and the gold diff actively removes it, substituting it with `SafeMapPrototypeSet.$call(...)`.
+    The `$set` rule likely only applies to global JSC intrinsics in `builtins/` and
+    causes a bug if applied in `node/` polyfills.
+  severity: high
 hierarchy_analysis: The config hierarchy is deep, with JS-builtin-specific rules located
   in `src/js/AGENTS.md`. The agent must apply the `.$call` rule from this file while
   actively rejecting the `map.$set` example in the exact same file due to the specific

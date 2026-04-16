@@ -10,17 +10,14 @@ Additionally, calling `handle.update()` during a render function creates an infi
 
 1. **API change**: `handle.update()` should no longer accept a task callback. Instead, it should return a `Promise<AbortSignal>` that resolves after the update completes. The returned signal is aborted when the component updates again or is removed. This allows callers to `await handle.update()` and use the signal for further async work.
 
-2. **Cascading update guard**: The scheduler must detect and stop infinite cascading update loops (e.g., when `handle.update()` is called during a render function). The scheduler implementation must:
-   - Define a module-level constant specifying the maximum threshold of cascading updates allowed during a single flush
-   - Track a counter that increments each time a cascading update occurs
-   - When the threshold is exceeded, report an error with the message "infinite loop detected"
+2. **Cascading update guard**: The scheduler must detect and stop infinite cascading update loops (e.g., when `handle.update()` is called during a render function). When cascading updates exceed a threshold during a single flush, the scheduler must report an error with the message `"infinite loop detected"`.
 
-3. **Cleanup**: When a component is removed, the `renderCtrl` controller must also be aborted alongside the connected controller. The `remove()` function in `component.ts` must call `abort()` on `renderCtrl`.
+3. **Cleanup**: When a component is removed, cleanup must also be performed for any render-level controller. The `remove()` function must abort this controller.
 
 ## Files to Look At
 
-- `packages/component/src/lib/component.ts` — The `Handle` interface and `createComponent` function. The `update` method signature and implementation need to change. The `remove()` function needs to abort `renderCtrl`.
-- `packages/component/src/lib/scheduler.ts` — The `flush()` function needs cascading update protection with a counter and max threshold.
+- `packages/component/src/lib/component.ts` — The `Handle` interface and `createComponent` function. The `update` method signature and implementation need to change. The `remove()` function needs to perform additional cleanup.
+- `packages/component/src/lib/scheduler.ts` — The `flush()` function needs cascading update protection.
 - `packages/component/AGENTS.md` — Agent guide that documents the Handle API. Must be updated to reflect the new Promise-based `handle.update()` signature and usage patterns.
 - `packages/component/README.md` — Package README with API reference. Must be updated for the new `handle.update()` signature.
 - `packages/component/docs/handle.md` — Dedicated handle documentation. Must be updated for the new API.

@@ -1,0 +1,74 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17181
+  base_commit: 76b61b943139741f3ea4adce5c6cfeb2e4ab8435
+  merge_commit: cc496f59bd9807fb16e0c7f5b51b1d376e2fb874
+
+checks:
+  - id: test_map_remote_value_case_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ConvertTo switch has MapRemoteValue to Dictionary case
+
+  - id: test_object_remote_value_case_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ConvertTo switch has ObjectRemoteValue to Dictionary case
+
+  - id: test_dictionary_conversion_method_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: ConvertRemoteValuesToDictionary private method exists
+
+  - id: test_dictionary_method_handles_key_value_pairs
+    type: fail_to_pass
+    origin: pr_diff
+    description: Dictionary conversion method processes key-value pairs correctly
+
+  - id: test_dictionary_method_handles_empty_values
+    type: fail_to_pass
+    origin: pr_diff
+    description: Dictionary conversion method handles null/empty remoteValues
+
+  - id: test_existing_array_conversion_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: Existing ArrayRemoteValue conversion case still present
+
+  - id: test_existing_list_conversion_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: Existing ArrayRemoteValue to List conversion case still present
+
+  - id: test_remote_value_file_has_valid_syntax
+    type: pass_to_pass
+    origin: pr_diff
+    description: RemoteValue.cs has valid C# syntax
+
+  - id: test_repo_dotnet_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format style check
+
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format whitespace check
+
+  - id: test_repo_dotnet_format_analyzers
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi code passes dotnet format analyzers check
+
+rubric:
+  - id: internal_api_change
+    rule: Internal API addition does not require documentation updates - ConvertRemoteValuesToDictionary is a private method used only within the existing public ConvertTo API
+    reference: "No documentation edits required. The change adds private implementation details that don't affect the public API surface."
+
+  - id: no_breaking_changes
+    rule: No breaking changes that would require changelog or migration documentation - the change only adds new functionality
+    reference: "No documentation edits required. Existing behavior unchanged, only new conversion capabilities added."
+
+  - id: follows_existing_patterns
+    rule: Follows existing code patterns in the file - dictionary conversion matches array/list conversion implementation style
+    reference: "No documentation edits required. Implementation follows the same pattern as ConvertRemoteValuesToArray and ConvertRemoteValuesToGenericList."

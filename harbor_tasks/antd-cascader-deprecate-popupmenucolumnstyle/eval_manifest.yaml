@@ -1,0 +1,139 @@
+version: "1.0"
+source:
+  pr_url: "https://github.com/ant-design/ant-design/pull/57557"
+  base_commit: "ffe7ccf17f689af990c4757c8197c8727c8f4184"
+  merge_commit: "75feea4c5543ef2dc68f7832c2774d592fe4a032"
+  repository: "ant-design/ant-design"
+  pr_number: 57557
+
+task:
+  name: "antd-cascader-deprecate-popupmenucolumnstyle"
+  title: "Deprecate Cascader popupMenuColumnStyle in favor of styles.popup.listItem"
+  description: |
+    The Cascader component had inconsistent deprecation documentation.
+    The `popupMenuColumnStyle` property was still documented as the replacement
+    for `dropdownMenuColumnStyle`, but the actual recommended API is `styles.popup.listItem`.
+    This PR updates all deprecation warnings and documentation to consistently
+    point to `styles.popup.listItem` as the replacement.
+
+  difficulty: "easy"
+  estimated_time: "30m"
+
+  tags:
+    - "documentation"
+    - "api-deprecation"
+    - "react"
+    - "typescript"
+
+  primary_files:
+    - "components/cascader/index.tsx"
+    - "components/cascader/index.en-US.md"
+    - "components/cascader/index.zh-CN.md"
+  secondary_files:
+    - "docs/react/migration-v6.en-US.md"
+    - "docs/react/migration-v6.zh-CN.md"
+
+checks:
+  # Fail-to-pass checks - these should fail on base commit and pass after fix
+  - id: "test_source_code_deprecation_messages"
+    type: "fail_to_pass"
+    origin: "task"
+    description: "Source code deprecation warnings reference 'styles.popup.listItem'"
+    file_paths:
+      - "components/cascader/index.tsx"
+
+  - id: "test_english_documentation_updated"
+    type: "fail_to_pass"
+    origin: "task"
+    description: "English documentation shows correct deprecation info for both properties"
+    file_paths:
+      - "components/cascader/index.en-US.md"
+
+  - id: "test_chinese_documentation_updated"
+    type: "fail_to_pass"
+    origin: "task"
+    description: "Chinese documentation shows correct deprecation info for both properties"
+    file_paths:
+      - "components/cascader/index.zh-CN.md"
+
+  - id: "test_migration_documentation_updated"
+    type: "fail_to_pass"
+    origin: "task"
+    description: "Migration documentation (v6) references 'styles.popup.listItem'"
+    file_paths:
+      - "docs/react/migration-v6.en-US.md"
+      - "docs/react/migration-v6.zh-CN.md"
+
+  - id: "test_no_old_popupmenucolumnstyle_reference"
+    type: "fail_to_pass"
+    origin: "task"
+    description: "Code no longer suggests using 'popupMenuColumnStyle' as replacement"
+    file_paths:
+      - "components/cascader/index.tsx"
+
+  # Pass-to-pass checks - these should pass on both base and fix
+  - id: "test_cascader_syntax_valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Cascader component has valid syntax and structure"
+
+  - id: "test_package_json_valid"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Package dependencies are installed correctly"
+
+  - id: "test_cascader_unit_tests"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Cascader component unit tests pass (npm test -- --testPathPatterns=cascader)"
+
+  - id: "test_cascader_index_test"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Cascader main index tests pass (npm test -- --testPathPatterns=cascader/__tests__/index.test)"
+
+  - id: "test_repo_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's biome linter passes (npm run lint:biome)"
+
+rubric:
+  - id: "documentation_consistency"
+    description: "Documentation in all languages should be consistent and updated"
+    source:
+      file: "CLAUDE.md"
+      lines: "55-79"
+    criteria: |
+      Both English and Chinese documentation must be updated to reference
+      the same replacement API ('styles.popup.listItem'). The migration
+      documentation must also be updated to match.
+
+  - id: "code_documentation_alignment"
+    description: "Code deprecation warnings must align with documentation"
+    source:
+      file: "CLAUDE.md"
+      lines: "82-117"
+    criteria: |
+      The JSDoc comments and runtime deprecation messages in the code
+      must reference the same replacement API as documented in the
+      component docs. They should not contradict each other.
+
+  - id: "deprecation_mapping_correctness"
+    description: "Deprecation mapping must be complete and accurate"
+    source:
+      file: "copilot-instructions.md"
+      lines: "376-385"
+    criteria: |
+      All deprecated properties should be mapped to their correct
+      replacements. The mapping should use consistent API patterns
+      (e.g., 'styles.popup.listItem' instead of intermediate deprecated APIs).
+
+scoring:
+  fail_to_pass_weight: 0.7
+  pass_to_pass_weight: 0.2
+  rubric_weight: 0.1
+
+  thresholds:
+    excellent: 0.95
+    good: 0.80
+    passing: 0.65

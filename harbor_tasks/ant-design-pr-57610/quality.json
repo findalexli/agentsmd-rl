@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific string patterns like \"'&:hover, &:focus-visible'\" (exact quote style), \"'&:focus-visible': genFocusOutline(token)\" (exact syntax), and \"...genFocusStyle(token)\" that are not explicitly stated in instruction.md. The instruction mentions genFocusOutline and genFocusStyle utilities but doesn't specify the exact string forms the tests check for. Also, the import path pattern r\"import\\s*\\{[^}]*genFocusOutline[^}]*\\}\\s*from\\s*['\\\"]\\.\\./\\.\\./style['\\\"]\" is specific but only l"
+      "outcome": "pass",
+      "reason": "Instruction names all files, the literal strings 'genFocusOutline', 'genFocusStyle', 'focus-visible', 'focusTrap: false', version '~1.9.0', and the exact doc strings required by tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (missing focus indicators, missing docs, outdated dependency) and names utilities/files to use, but doesn't specify exact code changes like 'change line X to Y'. It describes requirements at a functional level."
+      "reason": "Instruction describes what to add (focus utilities, focus-visible selector, documentation) without specifying exact line numbers or code to write."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact string patterns like \"'&:hover, &:focus-visible'\" (test_image_cover_has_focus_visible_selector), \"'&:focus-visible': genFocusOutline(token)\" (test_preview_operation_has_focus_visible_outline), and \"...genFocusStyle(token)\" (test_image_component_uses_focus_style). An alternative correct implementation using different CSS-in-JS syntax (e.g., template literals, different property ordering, or wrapping in a helper) would fail these text-matching tests despite being functionally co"
+      "outcome": "pass",
+      "reason": "Tests check for presence of utility names and strings in compiled output and docs, which any correct implementation would include."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (TestFocusVisibleStyles, TestDocumentation, TestSemanticDemo, TestDependencyUpgrade) are ALL pure text/string matching via 'assert X in open(path).read()'. None import code, render components, or test actual focus behavior. The pass-to-pass tests do run subprocesses (eslint, tsc, npm test) but the core fail-to-pass tests are entirely textual."
+      "outcome": "pass",
+      "reason": "Tests compile TypeScript via node subprocess, run eslint/biome/remark, and execute the repo's jest test suite, not just grep source."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific strings (genFocusOutline, genFocusStyle, focusTrap, etc.) that don't exist in the original files. A stub/no-op implementation wouldn't add these strings, so the tests would correctly fail."
+      "reason": "A stub could not pass: style compilation must contain focus-visible/genFocusOutline, package.json version must be updated, docs must contain focusTrap strings, and jest a11y tests must pass."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires focus-visible styling for preview toolbar action buttons specifically, but tests only check for genFocusOutline/genFocusStyle generically without verifying toolbar-specific application. The instruction's requirement #4 about focus escaping inline previews is only tested by checking 'focusTrap: false' text, not actual focus trapping behavior."
+      "outcome": "pass",
+      "reason": "All 6 requirements (focus styles, version upgrade, English docs, Chinese docs, inline focusTrap:false) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into classes (TestFocusVisibleStyles, TestDependencyUpgrade, TestDocumentation, TestSemanticDemo, TestTypeScriptCompilation, TestCodeQuality, TestRepoTests) with descriptive method names and docstrings indicating fail_to_pass vs pass_to_pass."
+      "reason": "Tests are organized in named classes like TestFocusVisibleStyles, TestDependencyUpgrade, TestDocumentation, TestSemanticDemo, TestRepoTests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data output like JSON/CSV/API/DB. It modifies source code and documentation files."
+      "reason": "Task is about UI component styling and docs, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in both instruction.md and tests are consistent and correct (components/image/style/index.ts, genFocusOutline, genFocusStyle, focusTrap, etc.)."
+      "reason": "Filenames and identifiers match between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact utility functions (genFocusOutline, genFocusStyle), exact import paths ('components/style/' directory), exact CSS selectors to use (hover + focus-visible), and exact prop configurations (focusTrap: false). While the affected files are listed, the instruction goes beyond describing what's broken to specifying implementation details like which utilities to import and use."
+      "outcome": "pass",
+      "reason": "Instruction identifies the files to modify as part of the task scope but doesn't point to specific lines; file enumeration is appropriate given multi-file scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized changes across 5 files with small, targeted diffs (adding import lines, adding table rows in docs, adding a prop in demo, updating a version string). No full-file rewrites."
+      "reason": "package.json edit is a single dependency version bump, and other edits are localized diffs."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

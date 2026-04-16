@@ -2,44 +2,44 @@
   "model": "claude-opus-4-6",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction mentions all key specifics: PopconfirmSemanticType, PopconfirmSemanticAllType, PurePanel.tsx (via 'panel implementation file'), classNames?.icon, styles?.icon, the test fixture values ('custom-icon', 'dynamic-icon', {color: 'blue'}, {color: props.placement === 'top' ? 'green' : 'transparent'}), the demo semantic name 'icon', and the file paths within components/popconfirm/. The exact regex patterns in tests (e.g., clsx usage pattern) are implementation-specific but derivable from"
+      "outcome": "fail",
+      "reason": "Tests assert exact regex patterns like `className={clsx(\\`${prefixCls}-message-icon\\`, classNames?.icon)}` and `style={styles?.icon}` in test_icon_classnames_applied and test_icon_styles_applied. The instruction never specifies these exact code patterns (e.g., using clsx, the exact template literal format). Also, test_overlay_props_use_correct_type asserts exact strings like `classNames?: PopconfirmSemanticAllType['classNames']` which are not fully specified in instruction.md. The test_semantic_"
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'The internal interface used for the overlay component's props must reference PopconfirmSemanticAllType[\"classNames\"] and PopconfirmSemanticAllType[\"styles\"]', and specifies exact type names, exact fixture values, and even the exact className combining approach. It essentially prescribes the solution rather than just describing the bug."
+      "outcome": "pass",
+      "reason": "The instruction describes what behavior is broken and what the expected outcome should be, but does not specify exact code changes like 'change line X to Y'. It describes the problem and expected behavior at a high level."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact regex patterns like `className={clsx(\\`${prefixCls}-message-icon\\`, classNames?.icon)}` and `style={styles?.icon}` and exact type references like `PopconfirmSemanticAllType['classNames']`. An alternative correct fix using different syntax (e.g., `cx()` instead of `clsx()`, or `classNames.icon` instead of `classNames?.icon`, or a wrapper component approach) would fail these regex-based tests."
+      "reason": "Tests use exact regex patterns for implementation details. For example, test_icon_classnames_applied requires `className={clsx(\\`${prefixCls}-message-icon\\`, classNames?.icon)}` \u2014 an alternative using `cx()` or `classnames()` or a different ordering would fail. test_overlay_props_use_correct_type requires exact string `classNames?: PopconfirmSemanticAllType['classNames']` \u2014 using a different but correct type annotation format would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_icon_classnames_applied, test_icon_styles_applied, test_type_definition_includes_icon, test_overlay_props_use_correct_type, test_semantic_demo_updated, test_semantic_test_file_updated) are ALL `assert 'X' in open(path).read()` or regex matches on file content. They never import, render, or execute the component. The pass-to-pass tests do run subprocesses but those aren't the f2p tests."
+      "reason": "The fail-to-pass tests (test_icon_classnames_applied, test_icon_styles_applied, test_type_definition_includes_icon, test_overlay_props_use_correct_type, test_semantic_demo_updated, test_semantic_test_file_updated) are ALL purely text-matching via `assert 'X' in open(path).read()` or regex on file contents. They never import, render, or execute the component. The pass-to-pass tests do run subprocesses, but the core f2p tests are all text-based."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests only check file content via string/regex matching. An agent could write the exact string patterns into the files without actually implementing working functionality (e.g., putting the right strings in comments) and pass the text-matching tests. For example, test_icon_classnames_applied just checks that 'classNames?.icon' appears in the file and a regex matches - a commented-out line with that pattern would pass."
+      "reason": "All fail-to-pass tests check file contents with string/regex matching. An agent could satisfy them by inserting the exact expected strings as comments or dead code without implementing actual behavior. For example, adding `// classNames?.icon` and `// styles?.icon` as comments in PurePanel.tsx would pass test_icon_classnames_applied's first assertion."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (classNames.icon, styles.icon, type definitions, demo update, test file update) are tested. The pass-to-pass tests cover lint, TypeScript, unit tests, a11y, and demo tests."
+      "reason": "The instruction requires: classNames.icon support, styles.icon support, type definitions (PopconfirmSemanticType/PopconfirmSemanticAllType), demo updates, and test file updates. All of these are tested in the test suite."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Fail-to-pass: Verify that classNames?.icon is applied to the icon span element') and logically grouped by concern."
+      "reason": "Tests are well-named (test_icon_classnames_applied, test_icon_styles_applied, etc.) with docstrings indicating fail-to-pass vs pass-to-pass, and organized by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact type names (PopconfirmSemanticAllType), exact internal interface details ('OverlayProps must reference PopconfirmSemanticAllType'), and exact file roles. While it doesn't say 'line 42', it essentially prescribes the exact code structure changes needed, going beyond describing what's broken."
+      "reason": "The instruction explicitly names exact type names (PopconfirmSemanticType, PopconfirmSemanticAllType), exact test fixture values ('custom-icon', 'dynamic-icon', { color: 'blue' }), and specifies which files to modify. While it doesn't give line numbers, it provides very specific implementation details that go beyond describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,7 +47,7 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"

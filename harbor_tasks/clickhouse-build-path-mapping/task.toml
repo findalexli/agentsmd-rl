@@ -1,0 +1,22 @@
+name = "clickhouse-build-path-mapping"
+title = "ClickHouse: Fix build path mapping for clean stack traces"
+description = """
+Update the build system and DWARF parser to produce clean relative paths in stack traces.
+The current implementation leaves DW_AT_comp_dir pointing at the build directory and uses
+-ffile-prefix-map without a trailing slash, producing polluted paths like
+"./ci/tmp/fast_build/./src/Common/Exception.cpp" instead of "src/Common/Exception.cpp".
+"""
+difficulty = "medium"
+tags = ["c++", "cmake", "build-system", "dwarf", "debug-info"]
+pr_url = "https://github.com/ClickHouse/ClickHouse/pull/102000"
+estimated_time = "30m"
+category = "build-improvement"
+
+[environment]
+base_image = "ubuntu:24.04"
+language = "cpp"
+dependencies = ["cmake", "ninja", "clang-18", "python3"]
+
+[solution]
+type = "patch"
+files = ["CMakeLists.txt", "src/Common/Dwarf.cpp"]

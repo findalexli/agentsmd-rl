@@ -3,35 +3,35 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the function `toRealDirname`, the variable `basePath`, the use of `fs.realpathSync`, `_nodeModulePaths(basePath)`, `ENOENT` error handling, the file `packages/@expo/require-utils/src/load.ts`, and the `compileModule` function signature \u2014 all of which are asserted in the tests. The tests also check for `evalModule`/`loadModule` exports and source file presence, which are part of the existing package structure."
+      "reason": "The instruction names all key specifics tested: `toRealDirname` function, `basePath` variable, `realpathSync`, `ENOENT` handling, `_nodeModulePaths`, the file path `packages/@expo/require-utils/src/load.ts`, and the symlink resolution behavior. The test for package exports (`evalModule`, `loadModule`) checks standard exports which are implied by the existing package. All asserted specifics are discoverable from instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides the exact implementation structure including the function name `toRealDirname`, variable name `basePath`, the exact code pattern with try/catch blocks for ENOENT, and even a near-complete code example. This goes beyond describing what's broken \u2014 it prescribes exactly what to write."
+      "reason": "The instruction explicitly states the exact implementation: 'Create a helper function named toRealDirname', 'Uses fs.realpathSync to resolve any symlinks', 'Pass this basePath to Module._nodeModulePaths(basePath)', 'If realpathSync fails with ENOENT, resolve the directory instead'. This is a complete specification of the fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: `function toRealDirname` (exact function name), `_nodeModulePaths(basePath)` (exact variable name), `basePath` variable, `ENOENT` string in the toRealDirname function, and `try {` blocks within that function. An alternative correct fix (e.g., using a different helper name like `resolveRealDir`, or inlining the logic, or using a variable named `resolvedDir`) would fail these tests despite being functionally correct."
+      "reason": "test_source_uses_realpath_for_module_paths checks source text for 'realpathSync' and 'ENOENT' literals, and checks that _nodeModulePaths is not called with 'path.dirname(filename)'. An alternative correct fix (e.g., using `fs.realpathSync.native`, or using `fs.realpath` with await, or naming the variable differently) could fail these text-based assertions. The instruction also mandates specific names like `toRealDirname` and `basePath` which the tests implicitly enforce."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_toRealDirname_exists, test_compileModule_uses_basePath, test_nodeModulePaths_uses_resolved_path, test_realpath_called_before_nodeModulePaths, test_enoent_error_handling) are all text-matching tests using `assert 'X' in content` on the source file. None of them actually call the function, create symlinks, or test runtime behavior. test_package_exports runs node but only checks pre-existing exports, not the new fix."
+      "reason": "test_source_uses_realpath_for_module_paths is purely text-based: it reads the source file and asserts on string contents ('realpathSync' in content, 'ENOENT' in content, regex matching _nodeModulePaths arguments). While other tests (symlink resolution, ENOENT handling) do execute subprocesses, they test Node.js fs behavior directly rather than the actual modified code. The fail-to-pass tests don't actually import or call the modified compileModule/evalModule functions."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests can be satisfied by inserting the right strings into load.ts without implementing any actual functionality. For example, adding a comment containing `function toRealDirname`, `fs.realpathSync`, `basePath`, `_nodeModulePaths(basePath)`, `ENOENT`, and `try {` would pass all assertions since the tests only check for string presence in the file."
+      "reason": "test_symlinked_path_resolution_behavior and test_enoent_handling_behavior are standalone Node.js scripts that test generic fs.realpathSync behavior, not the actual patched code. They would pass even without any changes to load.ts because they test Node.js built-in symlink resolution. test_source_uses_realpath_for_module_paths is a text check that requires code changes but doesn't verify behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires that symlinked path resolution actually works at runtime (module resolution succeeds for symlinked paths), but no test creates symlinks or verifies runtime module resolution behavior. The tests only check for string patterns in source code."
+      "reason": "The instruction requires that compileModule actually resolves symlinks when computing module paths, but no test actually calls compileModule or evalModule with a symlinked path to verify the fix works end-to-end. The subprocess tests only verify generic Node.js fs.realpathSync behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies. Tests are grouped logically (fail-to-pass vs pass-to-pass) with clear comments."
+      "reason": "Tests are well-named with descriptive docstrings, clearly separated into fail-to-pass and pass-to-pass categories with comments explaining what each test verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
     },
     "no_typos": {
       "outcome": "pass",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify (`packages/@expo/require-utils/src/load.ts`), the exact function name to create (`toRealDirname`), the exact variable name (`basePath`), and provides a near-complete code example of the solution. This is excessive implementation detail leakage."
+      "reason": "The instruction specifies the exact file to modify ('packages/@expo/require-utils/src/load.ts'), the exact function name to create ('toRealDirname'), the exact variable name to use ('basePath'), and the exact implementation pattern (try realpathSync, catch ENOENT, resolve directory). This goes far beyond naming the buggy module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

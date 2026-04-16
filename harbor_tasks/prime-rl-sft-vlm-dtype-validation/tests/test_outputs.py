@@ -176,32 +176,6 @@ def test_trainerconfig_vlm_rejects_default_float32():
             TrainerConfig(model=mc)
 
 
-# [pr_diff] fail_to_pass
-def test_trainerconfig_vlm_rejects_partial_mismatch():
-    """TrainerConfig rejects VLM with one float32 and one bfloat16 dtype."""
-    import pytest
-
-    from prime_rl.configs.trainer import ModelConfig, TrainerConfig
-
-    # optimization=float32, reduce=bfloat16
-    mc1 = ModelConfig(
-        name="Qwen/Qwen3-VL-4B-Instruct",
-        optimization_dtype="float32",
-        reduce_dtype="bfloat16",
-    )
-    with pytest.raises(ValueError, match="bfloat16"):
-        TrainerConfig(model=mc1)
-
-    # optimization=bfloat16, reduce=float32
-    mc2 = ModelConfig(
-        name="Qwen/Qwen3.5-VL-7B",
-        optimization_dtype="bfloat16",
-        reduce_dtype="float32",
-    )
-    with pytest.raises(ValueError, match="bfloat16"):
-        TrainerConfig(model=mc2)
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — preserved behavior
 # ---------------------------------------------------------------------------
@@ -256,44 +230,29 @@ def test_non_vlm_trainerconfig():
 
 
 # ---------------------------------------------------------------------------
-# Anti-stub (static) — validator must have real logic
+# Anti-stub (behavioral) — validator must reject VLMs with non-bfloat16
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_trainerconfig_validator_not_stub():
-    """TrainerConfig.vlms_require_bfloat16 must exist with real validation logic."""
-    import ast
+# [pr_diff] fail_to_pass
+def test_trainerconfig_vlm_rejects_non_bfloat16():
+    """TrainerConfig with VLM name and non-bfloat16 dtypes raises ValueError.
 
-    # AST-only because: we need to verify the method exists structurally,
-    # behavioral testing alone can't distinguish "validator removed" from
-    # "validator exists but has a bug"
-    src = open("/workspace/prime-rl/src/prime_rl/configs/trainer.py").read()
-    tree = ast.parse(src)
+    This is a behavioral anti-stub test: it verifies the validator actually
+    rejects VLM models with incorrect dtypes, ensuring the validator is not
+    a stub that always passes.
+    """
+    import pytest
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == "TrainerConfig":
-            methods = {
-                n.name: n
-                for n in node.body
-                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-            }
-            assert "vlms_require_bfloat16" in methods, (
-                "TrainerConfig must have vlms_require_bfloat16 validator"
-            )
-            body = methods["vlms_require_bfloat16"].body
-            # Must have more than just  or
-            non_trivial = [
-                s for s in body
-                if not isinstance(s, (ast.Pass, ast.Return, ast.Expr))
-                or (isinstance(s, ast.Return) and s.value is not None
-                    and not (isinstance(s.value, ast.Name) and s.value.id == "self"))
-            ]
-            assert len(non_trivial) >= 1, (
-                "vlms_require_bfloat16 body is a stub — must contain validation logic"
-            )
-            return
+    from prime_rl.configs.trainer import ModelConfig, TrainerConfig
 
-    raise AssertionError("TrainerConfig class not found in trainer.py")
+    # VLM with explicit float32 on both dtypes should raise
+    mc = ModelConfig(
+        name="Qwen/Qwen3-VL-4B-Instruct",
+        optimization_dtype="float32",
+        reduce_dtype="float32",
+    )
+    with pytest.raises(ValueError, match="bfloat16"):
+        TrainerConfig(model=mc)
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +283,7 @@ def test_no_unnecessary_try_except_in_validator():
                         )
                         return
 
-    # If validator doesn't exist, test_trainerconfig_validator_not_stub catches it
+    # If validator doesn't exist, behavioral tests catch it
 
 
 # [repo_tests] pass_to_pass

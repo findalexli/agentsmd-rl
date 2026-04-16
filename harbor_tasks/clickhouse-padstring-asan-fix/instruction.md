@@ -1,48 +1,38 @@
 # Fix heap-buffer-overflow in leftPad/rightPad functions
 
-The `leftPad` and `rightPad` functions (defined in `src/Functions/padString.cpp`) have a heap-buffer-overflow vulnerability that triggers Address Sanitizer (ASan) errors.
+The `leftPad` and `rightPad` functions have a heap-buffer-overflow vulnerability that triggers Address Sanitizer (ASan) errors when processing certain inputs.
 
-## Problem
+## Problem Description
 
-When padding strings with short pad strings (especially those < 16 characters), the code reads beyond allocated memory boundaries. The issue is in the `PaddingChars` class which stores the padding pattern in a `String` and uses `memcpySmallAllowReadWriteOverflow15` for fast copying - this function requires 15 bytes of read padding beyond the buffer size, which `std::string` does not provide.
+When padding strings with short pad strings (especially those under 16 characters), the code reads beyond allocated memory boundaries. The issue occurs in the padding character pattern storage mechanism which uses `memcpySmallAllowReadWriteOverflow15` for fast copying. This function requires 15 bytes of readable memory beyond the buffer's actual content, which the current container does not provide.
 
-## Where to look
+## Affected Code
 
-- **Primary file**: `src/Functions/padString.cpp`
-- **Key class**: `PaddingChars` - handles the padding character pattern
-- **Key methods**:
-  - `init()` - currently initializes pad_string with String concatenation
-  - `appendTo()` - writes padding characters using writeSlice
-  - `executeImpl()` - the main execution entry point
+- **File**: `src/Functions/padString.cpp`
 
-## Expected fix approach
+## Requirements
 
-The solution should use a container that provides the required memory padding. The codebase has `PaddedPODArray<UInt8>` which provides exactly the 15-byte read padding needed by `memcpySmallAllowReadWriteOverflow15`.
+The fix must satisfy the following requirements:
 
-Key changes needed:
-1. Change `pad_string` field from `String` to `PaddedPODArray<UInt8>`
-2. Use `insert()` and `insertFromItself()` methods instead of `+=` for string expansion
-3. Move empty pad string handling from `PaddingChars::init()` to `executeImpl()`
-4. Update `numCharsInPadString()` to use `.size()` instead of `.length()`
-5. Remove `reinterpret_cast` when accessing `pad_string.data()` (now returns `UInt8*` directly)
+1. **Memory Safety**: The padding character storage must provide at least 15 bytes of readable memory padding beyond its size to safely work with `memcpySmallAllowReadWriteOverflow15`.
 
-## Additional improvements included in the fix
+2. **Container Selection**: Use `PaddedPODArray<UInt8>` from `<Common/PODArray.h>` for the internal padding character storage. This container provides the required memory safety guarantees.
 
-The PR also includes these cleanup improvements:
-- Replace manual argument validation with `validateFunctionArguments()` helper
-- Remove unused error codes (`ILLEGAL_TYPE_OF_ARGUMENT`, `NUMBER_OF_ARGUMENTS_DOESNT_MATCH`)
-- Use C++14 digit separator `1'000'000` for `MAX_NEW_LENGTH`
-- Use explicit `num_chars == 0` comparison instead of `!num_chars`
-- Reorder includes alphabetically
-- Use proper constructor initialization list formatting (Allman style)
+3. **String Expansion**: When expanding the padding pattern, use `insertFromItself()` method instead of string concatenation operators.
 
-## Testing
+4. **Direct Access**: Access the container's data directly without `reinterpret_cast` - the container's `data()` method returns the appropriate pointer type.
 
-The existing test file `tests/queries/0_stateless/04070_pad_string_asan_overflow.sql` demonstrates the issue with various pad string lengths. A correct fix should:
-- Use `PaddedPODArray<UInt8>` for the pad string storage
-- Handle empty pad strings properly
-- Maintain UTF-8 support through `utf8_offsets`
-- Preserve all existing functionality for both ASCII and UTF-8 padding operations
+5. **Empty Pad Handling**: Empty pad string checks must be handled in the main execution entry point (`executeImpl`) rather than in initialization code.
+
+6. **Style Requirements**:
+   - Use explicit comparison `num_chars == 0` instead of implicit boolean conversion
+   - Use C++14 digit separator `1'000'000` for the `MAX_NEW_LENGTH` constant
+   - Use `validateFunctionArguments()` helper for argument validation
+   - Define `FunctionArgumentDescriptors` for argument validation
+
+7. **Cleanup**: Remove unused error codes `ILLEGAL_TYPE_OF_ARGUMENT` and `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` from the ErrorCodes namespace.
+
+8. **Preservation**: Maintain existing UTF-8 support through `utf8_offsets` and preserve all existing functionality for both ASCII and UTF-8 padding operations.
 
 ## Constraints
 

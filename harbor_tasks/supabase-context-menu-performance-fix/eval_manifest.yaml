@@ -1,116 +1,169 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "supabase/supabase"
+  repo: supabase/supabase
   pr: 44578
-  base_commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"
-  merge_commit: "fbb0770b47186ae9f3cae46f0950f63f0180c605"
-
+  base_commit: 2af6b3eaec65971a8fa6986afad44d6581075ac5
+  merge_commit: fbb0770b47186ae9f3cae46f0950f63f0180c605
 checks:
-  # Original pass_to_pass checks
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must compile without errors"
-
-  # P2P enrichment - repo_tests checks using shell commands
-  - id: test_p2p_results_utils_file_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts file exists (verified with shell test -f)"
-
-  - id: test_p2p_results_utils_has_formatresults
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts exports formatResults function (verified with grep)"
-
-  - id: test_p2p_results_utils_has_convertresultstocsv
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts exports convertResultsToCSV function (verified with grep)"
-
-  - id: test_p2p_results_utils_has_convertresultstomarkdown
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts exports convertResultsToMarkdown function (verified with grep)"
-
-  - id: test_p2p_results_utils_has_convertresultstojson
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts exports convertResultsToJSON function (verified with grep)"
-
-  - id: test_p2p_results_utils_has_getresultsheaders
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.ts exports getResultsHeaders function (verified with grep)"
-
-  - id: test_p2p_results_utils_tests_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.utils.test.ts test file exists (verified with shell test -f)"
-
-  - id: test_p2p_results_component_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.tsx component file exists (verified with shell test -f)"
-
-  - id: test_p2p_results_has_component_definition
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.tsx defines the Results component (verified with grep)"
-
-  - id: test_p2p_results_has_formatclipboardvalue
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Results.tsx has formatClipboardValue function (verified with grep)"
-
-  - id: test_p2p_queryblock_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "QueryBlock.tsx component exists (verified with shell test -f)"
-
-  - id: test_p2p_queryblock_has_flex_classes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "QueryBlock has flex layout classes (verified with grep)"
-
-  # P2P enrichment - actual repo CI test
-  - id: test_p2p_repo_prettier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code formatting passes prettier check (pnpm run test:prettier)"
-
-  # Original fail_to_pass checks
-  - id: single_context_menu_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Results.tsx uses single shared context menu instead of per-cell (prevents 1000s of keydown listeners)"
-
-  - id: results_utils_functions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "formatClipboardValue and formatCellValue utility functions work correctly and are extracted to Results.utils.ts"
-
-  - id: queryblock_flex_layout
-    type: fail_to_pass
-    origin: pr_diff
-    description: "QueryBlock uses flex layout instead of overflow-auto to fix double scrollbar issue"
-
-  - id: results_component_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "The Results component test for single context menu passes"
-
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must compile without errors
+- id: test_p2p_results_utils_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts file exists (verified with shell test -f)
+- id: test_p2p_results_utils_has_formatresults
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts exports formatResults function (verified with grep)
+- id: test_p2p_results_utils_has_convertresultstocsv
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts exports convertResultsToCSV function (verified with
+    grep)
+- id: test_p2p_results_utils_has_convertresultstomarkdown
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts exports convertResultsToMarkdown function (verified
+    with grep)
+- id: test_p2p_results_utils_has_convertresultstojson
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts exports convertResultsToJSON function (verified with
+    grep)
+- id: test_p2p_results_utils_has_getresultsheaders
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.ts exports getResultsHeaders function (verified with
+    grep)
+- id: test_p2p_results_utils_tests_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.utils.test.ts test file exists (verified with shell test -f)
+- id: test_p2p_results_component_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.tsx component file exists (verified with shell test -f)
+- id: test_p2p_results_has_component_definition
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.tsx defines the Results component (verified with grep)
+- id: test_p2p_results_has_formatclipboardvalue
+  type: pass_to_pass
+  origin: repo_tests
+  description: Results.tsx has formatClipboardValue function (verified with grep)
+- id: test_p2p_queryblock_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: QueryBlock.tsx component exists (verified with shell test -f)
+- id: test_p2p_queryblock_has_flex_classes
+  type: pass_to_pass
+  origin: repo_tests
+  description: QueryBlock has flex layout classes (verified with grep)
+- id: test_p2p_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes prettier check (pnpm run test:prettier)
+- id: single_context_menu_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: Results.tsx uses single shared context menu instead of per-cell (prevents
+    1000s of keydown listeners)
+- id: results_utils_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: formatClipboardValue and formatCellValue utility functions work correctly
+    and are extracted to Results.utils.ts
+- id: queryblock_flex_layout
+  type: fail_to_pass
+  origin: pr_diff
+  description: QueryBlock uses flex layout instead of overflow-auto to fix double
+    scrollbar issue
+- id: results_component_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The Results component test for single context menu passes
 rubric:
-  # Soft rules for LLM judge based on studio-testing skill
-  - rule: "Remove logic from components into .utils.ts files as pure functions: arguments in, return value out."
-    source:
-      path: ".claude/skills/studio-testing/SKILL.md"
-      lines: "47-51"
-      commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"
+- rule: 'Remove logic from components into .utils.ts files as pure functions: arguments
+    in, return value out.'
+  source:
+    path: .claude/skills/studio-testing/SKILL.md
+    lines: 47-51
+    commit: 2af6b3eaec65971a8fa6986afad44d6581075ac5
+- rule: 'Test every permutation of utility functions: happy path, malformed input,
+    empty values, edge cases.'
+  source:
+    path: ../.studio-testing/SKILL.md
+    lines: 69-77
+    commit: 2af6b3eaec65971a8fa6986afad44d6581075ac5
+- rule: Extract logic into .utils.ts
+  source:
+    path: .claude/skills/studio-best-practices/SKILL.md
+    lines: '175'
+  source_text: Extract logic into `.utils.ts` pure functions and test exhaustively.
+  evidence: The diff extracts `formatClipboardValue` and adds `formatCellValue` to
+    `./Results.utils.ts` and imports them.
+  category: architecture
+  verification: llm_judge
+- rule: Use useCallback for handlers passed to memoized children
+  source:
+    path: .claude/skills/studio-best-practices/SKILL.md
+    lines: '128'
+  source_text: Use `useCallback` for handlers passed to memoized children; avoid unnecessary
+    inline arrow functions.
+  evidence: The diff wraps `handleContextMenu` in `useCallback` before passing it
+    to `columns` which is wrapped in `useMemo`.
+  category: performance
+  verification: llm_judge
+- rule: Use handle prefix for internal handlers
+  source:
+    path: .claude/skills/studio-best-practices/SKILL.md
+    lines: '126'
+  source_text: '- Internal handlers: `handle` prefix (`handleSubmit`, `handleCancel`)'
+  evidence: The new context menu handler is explicitly named `handleContextMenu`.
+  category: naming
+  verification: llm_judge
+- rule: Use useMemo when passing values to memoized children
+  source:
+    path: .claude/skills/studio-best-practices/SKILL.md
+    lines: '147'
+  source_text: '`useMemo` for genuinely expensive computations (measured, not assumed).
+    Don''t wrap everything — only optimize when you have a measured problem or are
+    passing values to memoized children.'
+  evidence: The `columns` array is wrapped in `useMemo` because it evaluates columns
+    conditionally and is passed down to the `DataGrid` component.
+  category: performance
+  verification: llm_judge
+distractors:
+- rule: Prefer Children Over Render Props
+  source:
+    path: .claude/skills/vercel-composition-patterns/rules/patterns-children-over-render-props.md
+    lines: 8-12
+  source_text: 'Use `children` for composition instead of `renderX` props. Children
+    are more
 
-  - rule: "Test every permutation of utility functions: happy path, malformed input, empty values, edge cases."
-    source:
-      path: "../.studio-testing/SKILL.md"
-      lines: "69-77"
-      commit: "2af6b3eaec65971a8fa6986afad44d6581075ac5"
+    readable, compose naturally, and don''t require understanding callback
+
+    signatures.'
+  collision_type: rule_conflict
+  why_distracting: The diff uses `renderCell` and `renderHeaderCell` which are render
+    props. An AI might incorrectly flag this code or try to convert it to a children-based
+    composition, breaking the `react-data-grid` third-party API that explicitly requires
+    render props.
+  severity: high
+- rule: React 19 API Changes (no forwardRef, use())
+  source:
+    path: .claude/skills/vercel-composition-patterns/rules/react19-no-forwardref.md
+    lines: 10-12
+  source_text: '> **⚠️ React 19+ only.** Skip this if you''re on React 18 or earlier.
+
+
+    In React 19, `ref` is now a regular prop (no `forwardRef` wrapper needed), and
+    `use()` replaces `useContext()`.'
+  collision_type: scope_ambiguity
+  why_distracting: The diff relies on `useRef` and attaches `ref={triggerRef}` to
+    a standard DOM element. An agent might mistake this ref usage as an opportunity
+    to proactively apply React 19 ref conventions. However, the project is explicitly
+    on React 18 according to CLAUDE.md.
+  severity: medium

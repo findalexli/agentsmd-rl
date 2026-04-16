@@ -1,0 +1,61 @@
+source:
+  type: github_pr
+  owner: apache
+  repo: superset
+  pr_number: 39003
+  base_commit: c5bce756f0c3918620babd88d87b4cdadf3f711a
+  merge_commit: 851bbeea48519a824a4604de02d7681974d6e877
+
+checks:
+  - id: test_execute_sql_suggests_tool_limit_parameter_when_not_set
+    type: fail_to_pass
+    origin: pr_behavior
+    description: When execute_sql response is too large and no limit is set, should suggest the tool's limit parameter
+
+  - id: test_execute_sql_suggests_limit_param_for_different_queries
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Execute_sql should suggest the limit parameter for different SQL queries
+
+  - id: test_execute_sql_no_duplicate_limit_suggestion_when_already_set
+    type: fail_to_pass
+    origin: pr_behavior
+    description: When limit param is already set, should NOT suggest adding it again
+
+  - id: test_execute_sql_limit_suggestion_with_varying_inputs
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Limit suggestion should work across varying SQL query inputs
+
+  - id: test_execute_sql_suggests_sql_limit_clause
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Should suggest SQL LIMIT clause (exists before and after fix)
+
+  - id: test_generate_size_reduction_suggestions_function_exists
+    type: pass_to_pass
+    origin: pr_behavior
+    description: generate_size_reduction_suggestions function is importable and callable
+
+  - id: test_repo_ruff_check_mcp_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes on mcp_service/utils directory
+
+  - id: test_repo_ruff_format_mcp_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff formatter check passes on mcp_service/utils directory
+
+  - id: test_repo_python_compile_token_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check passes on token_utils.py
+
+rubric:
+  - id: no_agent_config_changes_required
+    rule: This code change does not require updates to agent configuration files (CLAUDE.md, AGENTS.md) since it is an internal implementation change to an existing function
+    source:
+      file: superset/mcp_service/utils/token_utils.py
+      lines: "220-227, 353-362"
+      commit: c5bce756f0c3918620babd88d87b4cdadf3f711a

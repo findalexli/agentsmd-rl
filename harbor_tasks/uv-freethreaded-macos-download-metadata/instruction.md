@@ -15,12 +15,18 @@ When the upstream NDJSON feed provides artifacts whose `platform` field contains
 
 The script defines these types used in parsing:
 
-- **`Version(major: int, minor: int, patch: int, prerelease: str)`** — version constructor. Examples: `Version(3, 15, 0, "a7")`, `Version(3, 14, 3, "")`, `Version(3, 13, 0, "rc2")`.
+- **`Version(major: int, minor: int, patch: int, prerelease: str)`** — version constructor. `str(version)` produces the version tag string (e.g. `"3.15.0a7"`, `"3.14.3"`). Examples: `Version(3, 15, 0, "a7")`, `Version(3, 14, 3, "")`, `Version(3, 13, 0, "rc2")`.
 - **`Variant`** — enum with at least `FREETHREADED` and `DEBUG` members.
-- **`CPythonFinder`** — class whose parsing method takes a `Version`, a build-date integer, and an artifact dict, and returns a `PythonDownload` object with these attributes:
-  - `build_options: list[str]` — build options extracted from the artifact
-  - `variant: Variant | None` — the resolved variant enum value
-  - `triple` — the platform triple
+- **`CPythonFinder(client)`** — class instantiated with an HTTP client (e.g. `CPythonFinder(client=None)` for offline use). Its method **`_parse_ndjson_artifact(self, version: Version, build_date: int, artifact: dict)`** parses a single artifact entry from the NDJSON feed and returns a `PythonDownload` object (or `None`).
+  - The `artifact` dict has these keys:
+    - `"url"`: download URL (e.g. `"https://example.com/cpython-3.15.0a7%2B20260320-aarch64-apple-darwin-freethreaded-install_only_stripped.tar.gz"`)
+    - `"sha256"`: the SHA-256 hash string
+    - `"platform"`: the platform triple string, possibly with a suffix (e.g. `"aarch64-apple-darwin"`, `"aarch64-apple-darwin-freethreaded"`, `"aarch64-apple-darwin-debug"`, `"x86_64-unknown-linux-gnu"`)
+    - `"variant"`: the build variant string (e.g. `"install_only_stripped"`, `"install_only"`)
+  - The returned `PythonDownload` object has these attributes:
+    - `build_options: list[str]` — build options extracted from the artifact (e.g. `["freethreaded"]`, `["debug"]`, or `[]`)
+    - `variant: Variant | None` — the resolved variant enum value (e.g. `Variant.FREETHREADED`, `Variant.DEBUG`, or `None`)
+    - `triple` — the platform triple object; `triple.platform` gives the OS string (e.g. `"linux"`)
 
 ## Symptom details
 

@@ -98,6 +98,45 @@ distractors:
   source:
     path: AGENTS.md
     lines: 16-17
+- rule: Avoid magic-string sentinels when they can change runtime meaning silently.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '152'
+  source_text: '- Avoid `?? 0`, empty-string, empty-object, or magic-string sentinels
+    when they can change runtime meaning silently.'
+  collision_type: architecture_boundary
+  why_distracting: 'An agent might see the use of `flag: "<program>"` in `detectInterpreterInlineEvalArgv`
+    as a magic-string sentinel violation and try to refactor `InterpreterInlineEvalHit`
+    into a discriminated union. However, this type is an established contract used
+    across multiple core modules, and changing it to avoid the magic string would
+    cause widespread regressions outside the scope of this security fix.'
+  severity: high
+- rule: New runtime control-flow code should not branch on string when a closed code
+    union would be reasonable.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '154'
+  source_text: '- New runtime control-flow code should not branch on `error: string`
+    or `reason: string` when a closed code union would be reasonable.'
+  collision_type: architecture_boundary
+  why_distracting: The diff uses `if (hit.flag === "<program>")` to branch on a string.
+    An agent might attempt to implement a closed code union for flags, but doing so
+    would break the existing flexible `InterpreterInlineEvalHit` contract that allows
+    arbitrary literal flag strings (like `"-e"` or `"-c"`).
+  severity: medium
+- rule: Do not edit files covered by security-focused CODEOWNERS rules.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '5'
+  source_text: '- Do not edit files covered by security-focused `CODEOWNERS` rules
+    unless a listed owner explicitly asked for the change or is already reviewing
+    it with you. Treat those paths as restricted surfaces, not drive-by cleanup.'
+  collision_type: rule_conflict
+  why_distracting: The diff modifies `src/security/audit.test.ts`, which is covered
+    by the `/src/security/ @openclaw/secops` rule in CODEOWNERS. An agent following
+    this rule might refuse to update the audit tests, failing to complete the required
+    security verification for the patch.
+  severity: high
 hierarchy_analysis: The config hierarchy is flat but contains rules with specific
   architectural scopes (core vs. extensions). The agent must correctly identify its
   current scope (`src/infra/` as core) to avoid misapplying extension import boundaries.
@@ -111,3 +150,36 @@ rubric:
   evidence: The gold solution adds tests to `src/infra/exec-approvals-allow-always.test.ts`
     and `src/infra/exec-inline-eval.test.ts` alongside the modified source files.
   category: testing
+- rule: 'Language: TypeScript (ESM). Prefer strict typing; avoid any.'
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '144'
+  source_text: '- Language: TypeScript (ESM). Prefer strict typing; avoid `any`.'
+  evidence: The added `PositionalInterpreterSpec` type utilizes strict TypeScript
+    features like `readonly string[]` and `ReadonlySet<string>`, completely avoiding
+    the use of `any`.
+  category: coding conventions
+  verification: llm_judge
+- rule: 'Tests: colocated *.test.ts.'
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '10'
+  source_text: '- Tests: colocated `*.test.ts`.'
+  evidence: The tests for `exec-inline-eval.ts` and `exec-approvals-allow-always.ts`
+    are located in their respective colocated test files `exec-inline-eval.test.ts`
+    and `exec-approvals-allow-always.test.ts`.
+  category: testing patterns
+  verification: llm_judge
+- rule: Prefer fixes that preserve user workflows over deny-by-default regressions
+    unless the boundary demands it.
+  source:
+    path: /workspace/repo/.agents/skills/security-triage/SKILL.md
+    lines: '60'
+  source_text: '   - Prefer fixes that preserve user workflows over deny-by-default
+    regressions unless the boundary demands it.'
+  evidence: The fix addresses the security boundary (preventing allow-always bypass
+    for awk inline programs) while specifically preserving the user workflow of running
+    awk script files (`awk -f script.awk`), as evidenced by the test `ignores normal
+    script execution`.
+  category: architecture
+  verification: llm_judge
