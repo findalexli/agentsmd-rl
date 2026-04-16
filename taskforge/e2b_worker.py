@@ -42,6 +42,7 @@ import os
 import re
 import signal
 import sys
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
@@ -121,6 +122,12 @@ def install_cleanup_handlers(api_key: str | None = None) -> None:
         if cleaned[0]:
             return
         cleaned[0] = True
+        # Release in-flight claims FIRST so a fast restart can pick them up
+        # immediately, even if sandbox cleanup hangs or fails.
+        try:
+            release_inflight_claims(reason=reason)
+        except Exception as e:
+            logger.warning("Claim release failed during %s: %s", reason, e)
         try:
             cleanup_orphan_sandboxes(api_key, reason=reason)
         except Exception as e:
@@ -301,6 +308,21 @@ async def create_worker_sandbox(
     if backend_env:
         envs.update(backend_env)
 
+    # OAuth fix: Claude Code CLI reads auth from ~/.claude/.credentials.json,
+    # NOT from the CLAUDE_ACCESS_TOKEN env var alone. If the backend uses
+    # bearer auth (OAuth), we'll write the credentials file to the sandbox
+    # after creation. Cache it here so we don't re-read per sandbox.
+    _oauth_creds_json: bytes | None = None
+    if backend_env and backend_env.get("CLAUDE_ACCESS_TOKEN"):
+        for candidate in (".credentials.json", ".credentials_backup.json"):
+            creds_path = Path.home() / ".claude" / candidate
+            if creds_path.exists():
+                try:
+                    _oauth_creds_json = creds_path.read_bytes()
+                    break
+                except Exception:
+                    pass
+
     # Determine the API base URL for IP probing
     api_base = backend_env.get("ANTHROPIC_BASE_URL", "") if backend_env else ""
 
@@ -362,6 +384,18 @@ async def create_worker_sandbox(
         # Start litellm proxy if using Gemini as main backend
         if backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
             await _ensure_litellm_proxy(sandbox)
+
+        # OAuth: write credentials file so `claude -p` can authenticate.
+        # The CLI reads ~/.claude/.credentials.json, NOT CLAUDE_ACCESS_TOKEN env.
+        # _run_agent runs as user "worker" (home=/home/worker), so that's the
+        # primary path. Also write to root for any root-context commands.
+        if _oauth_creds_json:
+            try:
+                await run_cmd(sandbox, "mkdir -p /home/worker/.claude /root/.claude", timeout=5)
+                await sandbox.files.write("/home/worker/.claude/.credentials.json", _oauth_creds_json)
+                await sandbox.files.write("/root/.claude/.credentials.json", _oauth_creds_json)
+            except Exception as e:
+                logger.warning("Failed to write OAuth credentials to sandbox: %s", e)
 
         return sandbox
 
@@ -1563,6 +1597,44 @@ def _refresh_timeout(sandbox: AsyncSandbox) -> None:
 # ---------------------------------------------------------------------------
 
 
+# In-flight claim tracking — releases on SIGTERM/SIGINT/atexit so killed
+# workers don't leave ghost claims that block future runs from retrying.
+# A claim is "in flight" from acquisition until run_task returns; on normal
+# completion it is unregistered (claim stays sticky as designed). On signal
+# exit, anything still registered is mid-flight work that must be released.
+_inflight_claims: set[Path] = set()
+_inflight_lock = threading.Lock()
+
+
+def _register_inflight(claim_path: Path) -> None:
+    with _inflight_lock:
+        _inflight_claims.add(claim_path)
+
+
+def _unregister_inflight(claim_path: Path) -> None:
+    with _inflight_lock:
+        _inflight_claims.discard(claim_path)
+
+
+def release_inflight_claims(reason: str = "exit") -> int:
+    """Delete any claim files still registered as in-flight. Returns count."""
+    with _inflight_lock:
+        paths = list(_inflight_claims)
+        _inflight_claims.clear()
+    n = 0
+    for p in paths:
+        try:
+            p.unlink()
+            n += 1
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logger.warning("Failed to release claim %s: %s", p.name, e)
+    if n:
+        logger.info("[%s] Released %d in-flight claims", reason, n)
+    return n
+
+
 def _claim_pr(claim_dir: Path, pr_ref: str) -> tuple[Path, bool]:
     """Atomically claim a PR for processing. Returns (claim_file, acquired).
 
@@ -1570,9 +1642,11 @@ def _claim_pr(claim_dir: Path, pr_ref: str) -> tuple[Path, bool]:
     already exists, another worker has the PR — return (path, False).
 
     The claim file holds the owning worker's PID + timestamp for observability.
-    Claim files are NEVER deleted automatically: after a task completes
-    (PASS or FAIL), the claim remains as a "this PR was handled" record, so
-    a parallel pipeline run won't re-pick it up.
+    Claim files are NEVER deleted automatically on task completion (PASS or
+    FAIL): the claim remains as a "this PR was handled" record so a parallel
+    pipeline run won't re-pick it up. The exception is signal/exit cleanup —
+    if the worker is killed mid-flight, release_inflight_claims() drops claims
+    for tasks that didn't get to finish, so the next run can retry them.
     """
     import os
     claim_dir.mkdir(parents=True, exist_ok=True)
@@ -1627,6 +1701,7 @@ async def run_task(
         start_at=start_at.value,
     )
     t_start = time.monotonic()
+    acquired_claim_path: Path | None = None
 
     # Cross-process claim: if another worker (same or different pipeline process)
     # has already claimed this PR, skip it early — before burning sandbox time.
@@ -1638,6 +1713,8 @@ async def run_task(
             result.error = "claimed_elsewhere"
             result.total_time = round(time.monotonic() - t_start, 2)
             return result
+        acquired_claim_path = claim_path
+        _register_inflight(claim_path)
 
     async with sandbox_sem:
         sandbox = None
@@ -2045,40 +2122,54 @@ async def run_task(
                         pool.report_429(backend)
                     raise _RateLimited(f"rate limited during tests_rewrite: {trerr}")
 
-                # Read tests_rewrite_status.json written by the agent
-                tr_data: dict = {}
-                try:
-                    tr_raw = await sandbox.files.read(
-                        "/workspace/task/tests_rewrite_status.json", format="text")
-                    tr_data = json.loads(tr_raw)
-                    result.tests_rewrite_outcome = tr_data
-                except Exception as e:
-                    logger.warning("[%s] tests_rewrite_status read failed: %s",
-                                   result.task_name, str(e)[:80])
+                # Round-3 silent-failure fix: if _run_agent returned "error",
+                # the agent never ran → no status file, no test changes. Log
+                # visibly and skip the re-judge (stale verdicts shouldn't be
+                # overwritten by a re-judge that sees unchanged tests).
+                if trs == "error":
+                    logger.warning("[%s] tests_rewrite AGENT ERROR (%.1fs): %s",
+                                   result.task_name, elapsed, trerr[:200])
+                    await update_sandbox_status(sandbox, "tests_rewrite", {
+                        "status": "error",
+                        "error": trerr[:300],
+                        "time": round(elapsed, 2),
+                    })
+                    # Don't proceed to read status or re-judge — skip to download
+                else:
+                    # Agent completed (status "ok") — read its output
+                    tr_data: dict = {}
+                    try:
+                        tr_raw = await sandbox.files.read(
+                            "/workspace/task/tests_rewrite_status.json", format="text")
+                        tr_data = json.loads(tr_raw)
+                        result.tests_rewrite_outcome = tr_data
+                    except Exception as e:
+                        logger.warning("[%s] tests_rewrite_status read failed: %s",
+                                       result.task_name, str(e)[:80])
 
-                if tr_data.get("abandoned"):
-                    logger.info("[%s] tests_rewrite abandoned: %s",
-                                result.task_name, tr_data.get("reason", ""))
-                elif tr_data.get("rewritten"):
-                    new_nop = tr_data.get("nop_reward")
-                    new_gold = tr_data.get("gold_reward")
-                    if new_nop is not None:
-                        result.nop_reward = float(new_nop)
-                    if new_gold is not None:
-                        result.gold_reward = float(new_gold)
-                    result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
-                    if not result.valid:
-                        logger.warning(
-                            "[%s] tests_rewrite claimed success but nop=%.1f gold=%.1f",
-                            result.task_name, result.nop_reward, result.gold_reward)
-                    else:
-                        # Re-run judge to confirm test rubrics now pass
-                        js3, judge_summary3 = await node_quality_judge(sandbox)
-                        result.judge_status_post_tests = js3
-                        result.judge_summary_post_tests = judge_summary3
-                        logger.info("[%s] post-tests-rewrite judge: %s tier_a=%s",
-                                    result.task_name, js3,
-                                    judge_summary3.get("tier_a_fails", []))
+                    if tr_data.get("abandoned"):
+                        logger.info("[%s] tests_rewrite abandoned: %s",
+                                    result.task_name, tr_data.get("reason", ""))
+                    elif tr_data.get("rewritten"):
+                        new_nop = tr_data.get("nop_reward")
+                        new_gold = tr_data.get("gold_reward")
+                        if new_nop is not None:
+                            result.nop_reward = float(new_nop)
+                        if new_gold is not None:
+                            result.gold_reward = float(new_gold)
+                        result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                        if not result.valid:
+                            logger.warning(
+                                "[%s] tests_rewrite claimed success but nop=%.1f gold=%.1f",
+                                result.task_name, result.nop_reward, result.gold_reward)
+                        else:
+                            # Re-run judge to confirm test rubrics now pass
+                            js3, judge_summary3 = await node_quality_judge(sandbox)
+                            result.judge_status_post_tests = js3
+                            result.judge_summary_post_tests = judge_summary3
+                            logger.info("[%s] post-tests-rewrite judge: %s tier_a=%s",
+                                        result.task_name, js3,
+                                        judge_summary3.get("tier_a_fails", []))
 
             # ── Node 7: Download (ONCE, only if valid) ────────────
             result.total_time = round(time.monotonic() - t_start, 2)
@@ -2118,6 +2209,21 @@ async def run_task(
                 except Exception:
                     pass
         finally:
+            # Handle the claim FIRST — before any awaits — so a re-cancellation
+            # during sandbox/backend cleanup can't strand it. On normal
+            # completion (PASS or FAIL) the file stays (sticky). On asyncio
+            # cancellation (SIGTERM/SIGINT propagated to tasks) we delete the
+            # file so the next run can retry.
+            if acquired_claim_path is not None:
+                exc = sys.exc_info()[1]
+                if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt)):
+                    try:
+                        acquired_claim_path.unlink()
+                    except FileNotFoundError:
+                        pass
+                    except Exception:
+                        pass
+                _unregister_inflight(acquired_claim_path)
             if backend_ctx and backend:
                 try:
                     await backend_ctx.__aexit__(None, None, None)

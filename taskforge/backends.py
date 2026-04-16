@@ -474,7 +474,7 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             base_url="https://api.z.ai/api/anthropic",
             api_key=_get("GLM_API_KEY"),
             model_map={"opus": "glm-5.1", "sonnet": "glm-5.1", "haiku": "glm-4.5-air"},
-            max_concurrent=30,
+            max_concurrent=int(_get("GLM_MAX_CONCURRENT") or 30),
             cost_tier=0,  # free
         ))
 
@@ -499,7 +499,7 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
                 "sonnet": "MiniMax-M2.7",
                 "haiku": "MiniMax-M2.7",
             },
-            max_concurrent=50,
+            max_concurrent=int(_get("MINIMAX_MAX_CONCURRENT") or 50),
             cost_tier=1,
         ))
 
@@ -517,9 +517,10 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
                 "haiku": "accounts/fireworks/routers/kimi-k2p5-turbo",
             },
             # Retrofit run 1: 127× 429 at max_concurrent=100 → 26× 429 at 50 —
-            # provider-side limit is tighter than our semaphore. Keep 50 but
-            # MiniMax (listed before) takes first pick of tier-1 spillover.
-            max_concurrent=50,
+            # provider-side limit is tighter than our semaphore. MiniMax
+            # (listed before) takes first pick of tier-1 spillover.
+            # Override at launch time with FIREWORKS_MAX_CONCURRENT=N.
+            max_concurrent=int(_get("FIREWORKS_MAX_CONCURRENT") or 50),
             cost_tier=1,
         ))
 
@@ -546,8 +547,8 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             base_url="https://api.anthropic.com",
             api_key=_get("ANTHROPIC_API_KEY"),
             model_map={
-                "opus": "claude-opus-4-5",
-                "sonnet": "claude-sonnet-4-5",
+                "opus": "claude-opus-4-7",
+                "sonnet": "claude-sonnet-4-6",
                 "haiku": "claude-haiku-4-5",
             },
             max_concurrent=50,
@@ -556,10 +557,13 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
 
     # OAuth — Claude Code Max subscription via subprocess-only (direct API returns 401)
     # Tier 1: share tier-1 load with MiniMax/Fireworks using Sonnet 4.6.
+    # Set OAUTH_DISABLED=1 to exclude (e.g., for Anthropic-only scaffold runs).
     # Subscription has a daily limit — if we start hitting 429s from the provider
     # itself, `consecutive_429s > 100` will auto-blacklist this backend.
     oauth_token = os.environ.get("CLAUDE_ACCESS_TOKEN", "")
-    if not oauth_token:
+    if _get("OAUTH_DISABLED") == "1":
+        oauth_token = ""
+    elif not oauth_token:
         for candidate in (".credentials.json", ".credentials_backup.json"):
             creds = Path.home() / ".claude" / candidate
             if creds.exists():
@@ -572,16 +576,21 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
                 except (json.JSONDecodeError, KeyError):
                     pass
     if oauth_token:
+        # Default to Opus for OAuth — Claude Code Max includes Opus access.
+        # OAUTH_MODEL env var overrides (e.g., "claude-sonnet-4-6" for cheaper).
+        oauth_model = os.environ.get("OAUTH_MODEL", "claude-opus-4-7")
         backends.append(Backend(
             name="oauth",
             base_url="",
             api_key=oauth_token,
             auth_type="bearer",
             model_map={
-                "opus": "claude-sonnet-4-6",
-                "sonnet": "claude-sonnet-4-6",
+                "opus": oauth_model,
+                "sonnet": oauth_model,
                 "haiku": "claude-haiku-4-5",
             },
+            # Reverted 50→15: round-3 hit 150× 429 → blacklisted at max=50.
+            # 15 keeps us inside subscription-safe range.
             max_concurrent=15,
             cost_tier=1,
             supports_direct=False,

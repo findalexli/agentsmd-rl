@@ -32,9 +32,10 @@ from taskforge.rubrics import LLM_JUDGE, Rubric
 
 JUDGE_API_ENV = "JUDGE_API_KEY"
 JUDGE_API_URL = "https://api.anthropic.com/v1/messages"
-# Opus 4.6 — our best-quality model. The model ID convention
-# (claude-opus-4-6) is the stable alias; [1m] is only in model names.
-JUDGE_MODEL = os.environ.get("JUDGE_MODEL", "claude-opus-4-6")
+# Opus 4.7 — our best-quality model (step-change improvement in agentic
+# coding over 4.6 per Anthropic docs). The model ID convention
+# (claude-opus-4-7) is the stable alias; [1m] is only in model names.
+JUDGE_MODEL = os.environ.get("JUDGE_MODEL", "claude-opus-4-7")
 
 
 # ─── Prompt construction ───────────────────────────────────────────────────
@@ -169,7 +170,7 @@ def judge_task(task_dir: Path, api_key: str = "", model: str = "") -> dict:
 
     Returns:
       {
-        "model": "claude-opus-4-6",
+        "model": "claude-opus-4-7",
         "rubric_verdicts": {rubric_name: {"outcome": ..., "reason": ...}, ...},
         "tier_a_fails": [rubric_names],
         "tier_b_fails": [rubric_names],
