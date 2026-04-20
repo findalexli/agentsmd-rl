@@ -27,6 +27,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -49,9 +50,19 @@ def dockerfile_hash(dockerfile_path: Path) -> str:
     return hashlib.sha256(dockerfile_path.read_bytes()).hexdigest()[:12]
 
 
+def sanitize_name(name: str) -> str:
+    """Sanitize task name for Docker image reference (no spaces, colons, etc)."""
+    # Docker image names: [a-z0-9]+(?:[._-][a-z0-9]+)*
+    name = name.lower()
+    name = re.sub(r'[^a-z0-9._-]', '-', name)  # replace invalid chars with hyphen
+    name = re.sub(r'-+', '-', name)              # collapse multiple hyphens
+    name = name.strip('-')                        # no leading/trailing hyphens
+    return name
+
+
 def image_ref(owner: str, task_name: str, tag: str) -> str:
     """Full ghcr.io image reference."""
-    return f"{REGISTRY}/{owner.lower()}/{REPO_NAME}/{task_name.lower()}:{tag}"
+    return f"{REGISTRY}/{owner.lower()}/{REPO_NAME}/{sanitize_name(task_name)}:{tag}"
 
 
 def find_tasks(task_dir: Path, tier_a_only: bool = False) -> list[Path]:
